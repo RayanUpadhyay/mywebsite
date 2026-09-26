@@ -186,8 +186,9 @@ h1,h2,h3,p{margin:0}
 .fhearts{font-size:22px;letter-spacing:2px;color:#FF5A6E}
 .fhearts s{color:rgba(255,255,255,.3);text-decoration:none}
 .fsp{pointer-events:auto;position:absolute;right:20px;bottom:calc(24px + env(safe-area-inset-bottom,0px));width:104px;height:104px;border-radius:50%;border:0;background:var(--sun);color:#16181D;font:800 14px/1.2 "Instrument Sans",sans-serif;white-space:pre-line;box-shadow:0 6px 20px rgba(0,0,0,.4);cursor:pointer}
+.fblock{pointer-events:auto;position:absolute;right:136px;bottom:calc(30px + env(safe-area-inset-bottom,0px));width:76px;height:76px;border-radius:50%;border:0;background:#35C8F0;color:#16181D;font:800 14px "Instrument Sans",sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.4);cursor:pointer;touch-action:none}
 .fsp:disabled{opacity:.55;cursor:default}
-.fhelp{position:absolute;left:20px;right:140px;bottom:calc(24px + env(safe-area-inset-bottom,0px));color:#C9CFD8;font-size:13px;max-width:560px;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.fhelp{position:absolute;left:20px;right:230px;bottom:calc(24px + env(safe-area-inset-bottom,0px));color:#C9CFD8;font-size:13px;max-width:560px;text-shadow:0 1px 3px rgba(0,0,0,.8)}
 .fighting .toast{top:calc(214px + env(safe-area-inset-top,0px))}
 .fquit{pointer-events:auto;margin-left:auto;border:0;border-radius:999px;padding:4px 12px;background:rgba(255,255,255,.2);color:#FFFFFF;font:600 13px "Instrument Sans",sans-serif;cursor:pointer}
 .fname span{margin-left:auto}
@@ -313,6 +314,7 @@ h1,h2,h3,p{margin:0}
   <canvas class="ffx" id="fFx" aria-hidden="true"></canvas>
   <div class="fbar"><div class="fname"><b id="fName"></b><span id="fWeapon"></span><button class="fquit" id="fQuit" type="button">Leave</button></div><div class="fhp"><i id="fHp"></i></div><div class="fhearts" id="fHearts" aria-label="Your hearts"></div><div class="fdur"><span id="fDurTxt"></span><span class="fdurbar"><i id="fDur"></i></span></div></div>
   <button class="fsp" id="fSpecial" type="button">Special</button>
+  <button class="fblock" id="fBlock" type="button">Block</button>
   <p class="fbanner" id="fBanner" hidden></p>
   <p class="fhelp" id="fHelp"></p>
   <div class="arenamsg" id="arenaMsg" hidden><h3 class="display" id="arenaTitle"></h3><p id="arenaText"></p><div class="gact"><button class="btn" id="arenaRetry" type="button">Fight again</button><button class="btn alt" id="arenaBack" type="button">Back to the lair</button></div></div>
@@ -1987,7 +1989,7 @@ h1,h2,h3,p{margin:0}
   // weapons from things I love
   const WEAPONS = [
     { id: 'mjolnir', name: 'Mjölnir', from: 'Thor', sp: 'Lightning', cd: 8, note: 'Thrown at the boss and always flies back to your hand. Special: call down lightning to stun it.' },
-    { id: 'claws', name: 'Adamantium claws', from: 'Wolverine', sp: 'Berserker lunge', cd: 6, note: 'Get up close and shred. Healing factor slowly regrows your hearts. Special: an unstoppable lunge.' },
+    { id: 'claws', name: 'Adamantium claws', from: 'Wolverine', sp: 'Berserker lunge', cd: 6, note: 'Get up close and shred. Healing factor: you regenerate hearts more than twice as fast. Special: an unstoppable lunge.' },
     { id: 'batarang', name: 'Batarangs', from: 'Batman', sp: 'Smoke bomb', cd: 9, note: 'Curving throws that home in. Special: vanish into smoke so it loses track of you.' },
     { id: 'sword', name: 'Diamond sword', from: 'Minecraft', sp: 'Sweeping edge', cd: 7, note: 'Heavy sweeps that also cut incoming shots out of the air. Special: a full spin attack.' },
     { id: 'shield', name: 'Vibranium shield', from: 'Captain America', sp: 'Shield bash', cd: 7, note: 'Ricochets off the walls and blocks shots while it’s in your hand. Special: bounce every shot back.' }
@@ -2064,6 +2066,10 @@ h1,h2,h3,p{margin:0}
   }
   function hurt(fx, fy){
     const p = A.p; if (p.inv > 0 || p.dash > 0 || A.over || A.air) return;
+    if (A.blocking && Math.abs(angDiff(p.face, Math.atan2(fy - p.y, fx - p.x))) < 1.4) {
+      wear(A.w.id === 'shield' ? .01 : .03); p.inv = .35; A.shake = .12; A.blockFlash = .25; tone(1100, .06, 'triangle', .05, 500); tone(180, .1, 'square', .03);
+      const d = Math.hypot(p.x - fx, p.y - fy) || 1; shove((p.x - fx) / d * .3, (p.y - fy) / d * .3); return;
+    }
     p.hearts--; p.inv = 1.6; p.heal = 0; A.shake = .3; tone(140, .2, 'sawtooth', .06); wear(.05);
     const d = Math.hypot(p.x - fx, p.y - fy) || 1; shove((p.x - fx) / d * .8, (p.y - fy) / d * .8); p.x = pos.x * 40; p.y = pos.z * 40; A.hurtT = .6;
     A.foes = A.foes.filter(o => o.mine || Math.hypot(o.x - p.x, o.y - p.y) > 80);
@@ -2101,7 +2107,7 @@ h1,h2,h3,p{margin:0}
         for (let k = 0; k < 10; k++) { const an = Math.random() * Math.PI * 2; b.x = clamp(q.x + Math.cos(an) * 190, B.x0 + b.r, B.x1 - b.r); b.y = clamp(q.y + Math.sin(an) * 190, B.y0 + b.r, B.y1 - b.r); if (Math.hypot(b.x - q.x, b.y - q.y) > 140) break; }
         b.vx = b.vy = 0; b.glitch = 0; for (let k = 0; k < 12; k++) { const an = k / 12 * Math.PI * 2; foe(b.x, b.y, Math.cos(an) * 170, Math.sin(an) * 170, { r: 9, col: '#3B7BFF' }); } tone(90, .1, 'square', .04, 900); rest(b, .5); } },
     reality: { wind: .5, go(b){ const q = aim(); for (let k = 0; k < 10; k++) { const an = k / 10 * Math.PI * 2; foe(q.x + Math.cos(an) * 240, q.y + Math.sin(an) * 240, -Math.cos(an) * 115, -Math.sin(an) * 115, { r: 9, col: '#E8303C', life: 3.4 }); } tone(300, .3, 'triangle', .05, 120); rest(b, .5); } },
-    snap: { wind: 3.4, fixed: 1, start(b){ b.snapHp = 0; b.tel = null; A.snapping = true; tone(60, 1.5, 'sawtooth', .06, 90); say(`${A.def.name} raised the gauntlet. Hit him hard to stop the snap!`, 3200); }, go(){ A.snapping = false; performSnap(); } },
+    snap: { wind: 3.4, fixed: 1, start(b){ b.snapHp = 0; b.tel = null; A.snapping = true; tone(60, 1.5, 'sawtooth', .06, 90); say(`${A.def.name} raised the gauntlet. Hit him hard to stop the snap!`, 3200); }, go(b){ A.snapping = false; performSnap(); rest(b, 1); } },
     // Loki: knives and illusions
     daggers: { wind: .35, start(b){ lockOn(b); }, go(b){ for (let k = -3; k <= 3; k++) { const an = b.sa + k * .14; foe(b.x + Math.cos(an) * b.r, b.y + Math.sin(an) * b.r, Math.cos(an) * 330, Math.sin(an) * 330, { r: 7, shape: 'dagger', col: '#DCE3EA' }); } tone(1200, .05, 'triangle', .03, 700); rest(b, .45); } },
     clones: { wind: .5, start(b){ b.glitch = 1; },
@@ -2129,55 +2135,69 @@ h1,h2,h3,p{margin:0}
     A.fx.push({ k: 'laser', x: b.x, y: b.y, x1, y1, h: A.C.eyeH || 1.5, w: W, life: .4, max: .4 }); A.shake = Math.max(A.shake, .2); tone(900, .35, 'sawtooth', .05, 200);
   }
   // Thanos snaps: everything around you turns to dust
+  // Thanos snaps: half of everything around you turns to dust, and so do half the other creatures in the lair.
+  // It hurts, but you survive. The dust stays (even after a reload) until you undo it or fight Thanos again.
   function performSnap(){
-    A.snapped = true; tone(1400, .08, 'square', .05); setTimeout(() => tone(50, 2.5, 'sawtooth', .07, 30), 150);
-    snapZone(fightZone(), true); A.p.hearts = 0; A.hurtT = 1; arenaEnd(false);
+    tone(1400, .08, 'square', .05); setTimeout(() => tone(50, 2.5, 'sawtooth', .07, 30), 150);
+    const p = A.p; p.hearts = Math.max(1, p.hearts - 3); A.hurtT = 1; A.shake = .6; p.inv = 1.5;
+    const others = BOSSES.filter(d => d.id !== 'thanos' && !dustedBoss(d.id)).map(d => d.id).sort(() => Math.random() - .5), gone = others.slice(0, Math.ceil(others.length / 2));
+    addSnap(fightZone(), pos.x, pos.z, gone);
+    say(`Thanos snapped. Half of everything around you is dust${gone.length ? `, and so are ${gone.map(id => BOSSES.find(d => d.id === id).name).join(', ')}` : ''}. Keep fighting!`, 5200);
   }
-  // the snap is permanent: half of everything in that place stays dust (even after a reload)
-  // until you undo it, or face Thanos again
-  let snapState = null; try { snapState = JSON.parse(localStorage.getItem('ru-snap') || 'null'); } catch (e) {}
+  let snapState = null; try { snapState = JSON.parse(localStorage.getItem('ru-snap') || 'null'); if (snapState && !snapState.list) snapState = null; } catch (e) {}
   let dust = null, snapHidden = [];
+  const dustedBoss = id => !!(snapState && snapState.bosses.includes(id));
+  const saveSnap = () => { try { snapState ? localStorage.setItem('ru-snap', JSON.stringify({ list: snapState.list.map(e => ({ z: e.z, seed: e.seed, x: e.x, y: e.y })), bosses: snapState.bosses })) : localStorage.removeItem('ru-snap'); } catch (e) {} };
   const markerSet = () => new Set(markers.concat(pageMeshes));
-  function snapPicks(sc, seed){
-    const r = rng(seed), out = [], mk = markerSet();
+  // which things a snap takes: half of what's within 10 m of where it happened (never floors or the clickable dots)
+  function snapPicks(sc, e){
+    const r = rng(e.seed), out = [], mk = markerSet(), w = new THREE.Vector3();
     sc.updateMatrixWorld(true);
     sc.traverse(o => {
-      if (!o.isMesh || o.userData.walk || o.isPoints) return;
+      if (!o.isMesh || o.userData.walk) return;
       for (let q = o; q; q = q.parent) if (q === fightG || q === viewG || mk.has(q)) return;
       const m = Array.isArray(o.material) ? o.material[0] : o.material;
       if (m && m.side === THREE.BackSide) return;
-      if (r() < .5 && o.visible) out.push(o);
+      const take = r() < .5; o.getWorldPosition(w);
+      if (take && o.visible && Math.hypot(w.x - e.x, w.z - e.y) < 10) out.push(o);
     });
     return out;
   }
-  function snapZone(z, animate){
-    unsnap(true);
-    const sc = sceneFor(z); if (!sc) return;
-    snapState = { z, seed: 1 + Math.floor(Math.random() * 1e6) }; try { localStorage.setItem('ru-snap', JSON.stringify(snapState)); } catch (e) {}
-    const hide = snapPicks(sc, snapState.seed); snapState.on = true; snapHidden = hide;
-    if (!animate) { hide.forEach(o => { o.visible = false; o.userData.snapHid = true; }); return; }
+  function hideAll(list, animate, sc){
+    list.forEach(o => { o.userData.snapHid = true; snapHidden.push(o); if (!animate) o.visible = false; });
+    if (!animate) return;
     const P = [], C = [], D = [], tmp = new THREE.Vector3(), white = new THREE.Color(0xFFFFFF);
-    hide.forEach(o => { const pa = o.geometry && o.geometry.attributes.position; o.userData.snapHid = true; const delay = Math.random() * 2.2; o.userData.dustAt = delay; if (!pa) return; const m = Array.isArray(o.material) ? o.material[0] : o.material, col = (m && m.color) || white;
+    list.forEach(o => { const pa = o.geometry && o.geometry.attributes.position, delay = Math.random() * 2.2; o.userData.dustAt = delay; if (!pa) return; const m = Array.isArray(o.material) ? o.material[0] : o.material, col = (m && m.color) || white;
       const n = Math.min(60, pa.count); for (let k = 0; k < n; k++) { tmp.fromBufferAttribute(pa, Math.floor(Math.random() * pa.count)).applyMatrix4(o.matrixWorld); P.push(tmp.x, tmp.y, tmp.z); C.push(col.r, col.g, col.b); D.push(delay); } });
+    if (dust) { dust.hide.forEach(o => o.visible = false); dust.sc.remove(dust.pts); dust.pts.geometry.dispose(); }
     const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); geo.setAttribute('color', new THREE.Float32BufferAttribute(C, 3));
     const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: .05, vertexColors: true, transparent: true, depthWrite: false })); sc.add(pts);
     const vel = new Float32Array(P.length); for (let k = 0; k < vel.length; k += 3) { vel[k] = (Math.random() - .3) * .9; vel[k + 1] = Math.random() * .7 + .15; vel[k + 2] = (Math.random() - .5) * .9; }
-    dust = { sc, hide, pts, vel, delay: D, t: 0 };
+    dust = { sc, hide: list, pts, vel, delay: D, t: 0 };
+  }
+  function addSnap(z, x, y, bosses){
+    if (!snapState) snapState = { list: [], bosses: [] };
+    const e = { z, seed: 1 + Math.floor(Math.random() * 1e6), x, y, on: true };
+    snapState.list.push(e); snapState.bosses.push(...bosses); saveSnap();
+    const sc = sceneFor(z), list = snapPicks(sc, e);
+    // the creatures it took vanish from their pods too
+    if (lairScene) pods.forEach(pd => { if (bosses.includes(pd.def.id)) pd.C.g.traverse(o => { if (o.isMesh && o.visible && !list.includes(o)) list.push(o); }); });
+    hideAll(list, true, sc); refreshLair();
   }
   function dustStep(dt){
     if (!dust) return; dust.t += dt; const t = dust.t, pa = dust.pts.geometry.attributes.position;
     dust.hide.forEach(o => { if (o.visible && t > o.userData.dustAt) o.visible = false; });
     for (let k = 0, i = 0; k < pa.count; k++, i += 3) if (t > dust.delay[k]) { pa.array[i] += dust.vel[i] * dt; pa.array[i + 1] += dust.vel[i + 1] * dt; pa.array[i + 2] += dust.vel[i + 2] * dt; }
     pa.needsUpdate = true; dust.pts.material.opacity = clamp(1 - (t - 3.5) / 3, 0, 1);
-    if (t > 7) { dust.sc.remove(dust.pts); dust.pts.geometry.dispose(); dust = null; }
+    if (t > 7) { dust.hide.forEach(o => o.visible = false); dust.sc.remove(dust.pts); dust.pts.geometry.dispose(); dust = null; }
   }
   // re-apply a stored snap when you walk into that place (scenes are built as you visit them)
-  function snapCheck(){ if (snapState && !snapState.on && fightZone() === snapState.z && sceneFor(snapState.z)) { const hide = snapPicks(sceneFor(snapState.z), snapState.seed); hide.forEach(o => { o.visible = false; o.userData.snapHid = true; }); snapHidden = hide; snapState.on = true; } }
+  function snapCheck(){ if (!snapState) return; const z = fightZone(), sc = sceneFor(z); if (!sc) return; snapState.list.forEach(e => { if (!e.on && e.z === z) { e.on = true; hideAll(snapPicks(sc, e), false, sc); } }); }
   function unsnap(quiet){
     if (dust) { dust.sc.remove(dust.pts); dust.pts.geometry.dispose(); dust = null; }
     snapHidden.forEach(o => { if (o.userData.snapHid) { o.visible = true; o.userData.snapHid = false; } }); snapHidden = [];
-    if (snapState && !quiet) { tone(400, .6, 'sine', .05, 1200); say('Reality restored. Everything’s back.', 2600); }
-    snapState = null; try { localStorage.removeItem('ru-snap'); } catch (e) {}
+    if (snapState && !quiet) { tone(400, .6, 'sine', .05, 1200); say('Reality restored. Everything (and everyone) is back.', 2800); }
+    snapState = null; saveSnap(); refreshLair();
   }
   function begin(b, rage){ const m = MOVES[b.mv]; b.st = 'wind'; b.t = m.wind * (m.fixed ? 1 : 1 - rage * .3); b.tel = null; if (m.start) m.start(b, rage); }
   function bossStep(dt){
@@ -2264,7 +2284,7 @@ h1,h2,h3,p{margin:0}
     p.fire -= dt; p.swing = Math.max(0, p.swing - dt); p.spin = Math.max(0, (p.spin || 0) - dt); p.sp = Math.max(0, p.sp - dt); p.smoke = Math.max(0, p.smoke - dt);
     // light aim assist: if the creature is roughly where you're looking, throws go to it
     const toB = Math.atan2(b.y - p.y, b.x - p.x), assist = here && Math.abs(angDiff(p.face, toB)) < .45, dir = assist ? toB : p.face;
-    const want = A.atk || A.hold; A.atk = false;
+    const want = (A.atk || A.hold) && !A.blocking; A.atk = false;
     const inArc = (w) => here && Math.abs(angDiff(p.face, Math.atan2(np.y - p.y, np.x - p.x))) < w;
     if (want && (id === 'mjolnir' || id === 'shield') && p.ready && p.fire <= 0) { p.ready = false; p.throwT = .25; const s = id === 'mjolnir' ? 560 : 600; A.shots.push({ k: id, x: p.x, y: p.y, vx: Math.cos(dir) * s, vy: Math.sin(dir) * s, t: 0, spin: 0, back: false, cool: 0, home: assist }); tone(id === 'mjolnir' ? 200 : 520, .06, 'triangle', .03, id === 'mjolnir' ? 140 : 700); }
     if (want && id === 'batarang' && p.fire <= 0) { p.fire = .45; p.throwT = .2; [-.12, .12].forEach(o => A.shots.push({ k: 'bat', x: p.x, y: p.y, vx: Math.cos(dir + o) * 400, vy: Math.sin(dir + o) * 400, t: 0, spin: 0, home: assist })); tone(900, .03, 'triangle', .02, 1300); }
@@ -2278,8 +2298,8 @@ h1,h2,h3,p{margin:0}
       A.foes = A.foes.filter(f => f.mine || !(Math.hypot(f.x - p.x, f.y - p.y) < 75 && Math.abs(angDiff(p.face, Math.atan2(f.y - p.y, f.x - p.x))) < 1.3));
       A.fx.push({ k: 'sweep', x: p.x, y: p.y, a: p.face, r: 60, life: .2, max: .2 }); tone(380, .07, 'triangle', .04, 180);
     }
-    // Wolverine's healing factor
-    if (id === 'claws') { if (p.hearts < p.max) { p.heal += dt; if (p.heal >= 9) { p.heal = 0; p.hearts++; tone(880, .12, 'sine', .05, 1320); A.nums.push({ x: p.x, y: p.y, v: '+♥', life: .9, good: 1 }); } } else p.heal = 0; }
+    // everyone slowly regenerates hearts; Wolverine's healing factor is much faster
+    { const every = id === 'claws' ? 2.5 : 6; if (p.hearts < p.max) { p.heal += dt; if (p.heal >= every) { p.heal = 0; p.hearts++; tone(880, .12, 'sine', .05, 1320); A.nums.push({ x: p.x, y: p.y, v: '+♥', life: .9, good: 1 }); } } else p.heal = 0; }
     // berserker lunge: you really move
     if (p.dash > 0) { p.dash -= dt; const d = Math.hypot(np.x - p.x, np.y - p.y) || 1; shove((np.x - p.x) / d * 22 * dt, (np.y - p.y) / d * 22 * dt); p.x = pos.x * 40; p.y = pos.z * 40;
       if (here && !p.dashHit && nearPart(p.x, p.y).e < 14) { p.dashHit = true; p.dash = 0; hitBoss(18, np.x, np.y); b.stun = Math.max(b.stun, .5); A.shake = .2; for (let k = 0; k < 3; k++) A.fx.push({ k: 'claw', x: np.x, y: np.y, a: p.face + (k - 1) * .5, flip: k % 2, life: .25, max: .25 }); } }
@@ -2363,7 +2383,9 @@ h1,h2,h3,p{margin:0}
   }
 
   // ======================= the lair: boss fights in 3D =======================
-  let lairScene = null, fightG = null, lairBoard = null, lairAnim = null;
+  // everything in a fight lives in fightG, which moves to whichever scene you're in (so it can't depend on the lair existing)
+  let lairScene = null, lairBoard = null, lairAnim = null;
+  const fightG = new THREE.Group();
   const pods = [], rack = {};
   const glowM = (color, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color, emissive: color, emissiveIntensity: .8, roughness: .5 }, o));
   function sph(r, m, x, y, z, parent, sx = 1, sy = 1, sz = 1, seg = 16){ const s = new THREE.Mesh(new THREE.SphereGeometry(r, seg, Math.max(8, seg * .75)), m); s.position.set(x, y, z); s.scale.set(sx, sy, sz); s.castShadow = true; parent.add(s); return s; }
@@ -2678,7 +2700,6 @@ h1,h2,h3,p{margin:0}
     [5.82, 7.38].forEach(x => { const r = box(.05, .05, 4.6, railM, x, 2.3, 8.95, lairScene); r.rotation.x = -Math.atan2(3, 3.6); });
     addMarkerTo(lairScene, V(6.6, 5.9, 11)).userData.egg = 'lairexit';
     addMarkerTo(lairScene, V(-8.2, 3.5, -3.4)).userData.egg = 'rackinfo';
-    fightG = new THREE.Group(); lairScene.add(fightG);
     plats.lair = [{ x0: -8.4, x1: 8.4, z0: -8.2, z1: 10.4 }];
     const flash = new THREE.PointLight(0x9FD4FF, 0, 18, 2); lairScene.add(flash);
     lairAnim = { sig, sigLight, flash };
@@ -2687,7 +2708,7 @@ h1,h2,h3,p{margin:0}
   function refreshLair(){
     if (!lairScene) return;
     drawBoard();
-    pods.forEach(p => { const c = p.plate.material.map.image, g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.fillStyle = 'rgba(11,13,20,.85)'; g.fillRect(0, 0, c.width, c.height); g.fillStyle = p.def.col; g.font = `800 40px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(`${beaten.has(p.def.id) ? '★ ' : ''}${p.def.name}`, c.width / 2, c.height / 2 + 2); p.plate.material.map.needsUpdate = true; });
+    pods.forEach(p => { const c = p.plate.material.map.image, g = c.getContext('2d'); g.clearRect(0, 0, c.width, c.height); g.fillStyle = 'rgba(11,13,20,.85)'; g.fillRect(0, 0, c.width, c.height); g.fillStyle = p.def.col; g.font = `800 40px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(dustedBoss(p.def.id) ? `${p.def.name}: dust` : `${beaten.has(p.def.id) ? '★ ' : ''}${p.def.name}`, c.width / 2, c.height / 2 + 2); p.plate.material.map.needsUpdate = true; });
     WEAPONS.forEach(w => { const r = rack[w.id]; r.back.material.color.setHex(w.id === weapon ? 0x5A4A12 : 0x16181D); r.back.material.emissive.setHex(w.id === weapon ? 0x3A2E08 : 0); });
     // the gauntlet only hangs on the rack once you've beaten Thanos
     rack.gauntlet.slot.traverse(o => o.visible = hasGauntlet);
@@ -2695,7 +2716,7 @@ h1,h2,h3,p{margin:0}
   function equip(id){ weapon = id; try { localStorage.setItem('ru-weapon', id); } catch (e) {} refreshLair(); const w = WEAPONS.find(x => x.id === id); tone(660, .08, 'triangle', .05, 990); say(`${w.name} equipped. ${w.note}`, 4200); }
   function lairIdle(dt, now){
     const t = now / 1000;
-    pods.forEach((p, i) => { if (!A || A.i !== i) p.C.anim({ st: 'roam', mv: '', a: t * 2, hp: 1, max: 1, swing: 0, mouth: 0, ring: 0, w: 1 }, t + i, .35); p.C.g.rotation.y = -Math.PI / 2 + Math.sin(t * .6 + i) * .5; p.open += ((A && A.i === i ? 1 : 0) - p.open) * Math.min(1, dt * 3); p.glass.position.y = 1.6 + p.open * 2.4; p.glass.material.opacity = .22 * (1 - p.open * .6); p.C.g.visible = p.open < .5; });
+    pods.forEach((p, i) => { if (!A || A.i !== i) p.C.anim({ st: 'roam', mv: '', a: t * 2, hp: 1, max: 1, swing: 0, mouth: 0, ring: 0, w: 1 }, t + i, .35); p.C.g.rotation.y = -Math.PI / 2 + Math.sin(t * .6 + i) * .5; p.open += ((A && A.i === i ? 1 : 0) - p.open) * Math.min(1, dt * 3); p.glass.position.y = 1.6 + p.open * 2.4; p.glass.material.opacity = .22 * (1 - p.open * .6); p.C.g.visible = p.open < .5 && !dustedBoss(p.def.id); });
     WEAPONS.forEach((w, k) => { const r = rack[w.id]; r.wm.rotation.x = w.id === weapon ? Math.sin(t * 2) * .12 : 0; r.wm.visible = (w.id !== 'gauntlet' || hasGauntlet) && !(A && w.id === weapon); });
     lairAnim.sigLight.intensity = .8 + Math.sin(t * 1.3) * .15;
   }
@@ -2747,6 +2768,7 @@ h1,h2,h3,p{margin:0}
   const fightScene = () => sceneFor(fightZone());
   function startBoss(i){
     if (!lairScene) return;
+    if (dustedBoss(BOSSES[i].id)) return say(`Thanos turned ${BOSSES[i].name} to dust. Undo the snap (or fight Thanos again) to bring them back.`, 3800);
     const at = pods[i].g.localToWorld(V(0, 0, 1.8));
     startFight(BOSSES[i], i, at.x * 40, at.z * 40, 'lair');
   }
@@ -2764,7 +2786,7 @@ h1,h2,h3,p{margin:0}
     const M = CREATURE3D[def.id](false); fightG.add(M.g); if (M.segs) M.segs.forEach(s => fightG.add(s)); A.model = M;
     buildView();
     document.body.classList.add('fighting'); hud.el.hidden = false; $('#arenaMsg').hidden = true; hud.name.textContent = def.name; hud.hp.style.background = def.col; hud.wpn.textContent = `${w.name} · ${w.from}`;
-    $('#fHelp').textContent = fine ? 'WASD to move, mouse to aim, click (or hold) to attack, E for your special, Space to jump over shockwaves.' : 'Joystick to move, drag to look, tap to attack. Jump over shockwaves with the Jump button.';
+    $('#fHelp').textContent = fine ? 'WASD to move, mouse to aim, click (or hold) to attack, right-click or Shift to block, E for your special, Space to jump shockwaves.' : 'Joystick to move, drag to look, tap to attack, hold Block to block. Jump over shockwaves with the Jump button.';
     $('#worldBack').hidden = false; $('#worldBack').textContent = 'Leave the fight'; dock.classList.remove('on');
     if (fine && canvas.requestPointerLock) canvas.requestPointerLock();
     if (!fine) $('#jumpBtn').hidden = false;
@@ -2820,7 +2842,14 @@ h1,h2,h3,p{margin:0}
     if (k === 'f' || k === 'enter') { A.hold = true; attack(); } });
   addEventListener('keyup', e => { const k = e.key.toLowerCase(); akeys[k] = false; if (A && (k === 'f' || k === 'enter')) A.hold = false; });
   addEventListener('mouseup', () => { if (A) A.hold = false; });
-  canvas.addEventListener('contextmenu', e => { if (A) { e.preventDefault(); special(); } });
+  canvas.addEventListener('contextmenu', e => { if (A) e.preventDefault(); });
+  // block: hold the right mouse button, Shift, or the Block button
+  const setBlock = on => { if (A && !A.over) A.blocking = on; else if (A) A.blocking = false; };
+  addEventListener('keydown', e => { if (A && e.key === 'Shift') setBlock(true); });
+  addEventListener('keyup', e => { if (e.key === 'Shift') setBlock(false); });
+  addEventListener('mouseup', e => { if (e.button === 2) setBlock(false); });
+  const blockBtn = $('#fBlock');
+  blockBtn.addEventListener('pointerdown', e => { e.preventDefault(); setBlock(true); }); ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => blockBtn.addEventListener(ev, () => setBlock(false)));
   function arenaEnd(won){
     A.over = true; A.won = won; A.hold = false;
     if (document.pointerLockElement) document.exitPointerLock();
@@ -2881,7 +2910,7 @@ h1,h2,h3,p{margin:0}
     A.foes.forEach(f => { if (f.home) { const dx = p.x - f.x, dy = p.y - f.y, d = Math.hypot(dx, dy) || 1; f.vx += dx / d * 90 * dt; f.vy += dy / d * 90 * dt; } f.x += f.vx * dt; f.y += f.vy * dt; f.life -= dt; });
     A.foes = A.foes.filter(f => { if (f.mine && here && hitsBoss(f.x, f.y, f.r)) { hitBoss(3, f.x, f.y); return false; } return f.life > 0 && f.x > B.x0 - 60 && f.x < B.x1 + 60 && f.y > B.y0 - 60 && f.y < B.y1 + 60; });
     A.rings.forEach(r => r.r += r.vr * dt); A.rings = A.rings.filter(r => r.r < r.max || (r.m && (r.m.parent && r.m.parent.remove(r.m), disposeDeep(r.m)), false));
-    p.inv -= dt; A.shake = Math.max(0, A.shake - dt); A.hurtT = Math.max(0, A.hurtT - dt); p.throwT = Math.max(0, p.throwT - dt);
+    p.inv -= dt; A.shake = Math.max(0, A.shake - dt); A.blockFlash = Math.max(0, (A.blockFlash || 0) - dt); A.hurtT = Math.max(0, A.hurtT - dt); p.throwT = Math.max(0, p.throwT - dt);
     A.fx.forEach(f => f.life -= dt); A.fx = A.fx.filter(f => f.life > 0 || (dropFx(f), false));
     A.nums.forEach(n => n.life -= dt); A.nums = A.nums.filter(n => n.life > 0);
     if (here) {
@@ -3003,6 +3032,7 @@ h1,h2,h3,p{margin:0}
       if (id === 'claws' && p.dash > 0) h.position.z = B0.z - .3;
       if (id === 'shield') { h.position.x = B0.x + (A.hold ? .1 : 0); h.rotation.y = .15; }
       if (id === 'batarang' && p.throwT > 0) h.rotation.z = -p.throwT * 4;
+      if (A.blocking) { if (id === 'shield') { h.position.set(-.02, -.2, -.55); h.rotation.set(0, 0, 0); } else { h.position.set(v.s * .1, -.2, -.55); h.rotation.set(.2, 0, v.s > 0 ? 1.35 : -1.35); } }
     });
   }
   const pv = new THREE.Vector3();
@@ -3028,6 +3058,7 @@ h1,h2,h3,p{margin:0}
     if (A.hurtT > 0) { const gr = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .25, W / 2, H / 2, Math.max(W, H) * .7); gr.addColorStop(0, 'rgba(200,20,30,0)'); gr.addColorStop(1, `rgba(200,20,30,${A.hurtT * .9})`); g.fillStyle = gr; g.fillRect(0, 0, W, H); }
     // aiming at something you can use?
     if (document.pointerLockElement === canvas && !A.over) { A.aimT = (A.aimT || 0) - 1 / 60; if (A.aimT <= 0) { A.aimT = .2; const q = pick(W / 2, H / 2); A.aimL = usable(q) ? labelFor(q) : ''; } if (A.aimL) { g.font = `600 15px "Instrument Sans", sans-serif`; g.textAlign = 'center'; g.fillStyle = '#FFC93C'; g.fillText(`Click: ${A.aimL}`, W / 2, H / 2 + 34); } }
+    if (A.blocking && !A.over) { g.font = `800 16px "Instrument Sans", sans-serif`; g.textAlign = 'center'; g.fillStyle = A.blockFlash > 0 ? '#FFFFFF' : '#35C8F0'; g.fillText(A.blockFlash > 0 ? 'BLOCKED!' : 'Blocking', W / 2, H / 2 - 30); }
     // crosshair
     if (!A.over) { g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2; g.beginPath(); g.arc(W / 2, H / 2, 6, 0, 7); g.stroke(); g.fillStyle = '#FFC93C'; g.beginPath(); g.arc(W / 2, H / 2, 2, 0, 7); g.fill(); }
     g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `800 22px ${DISPLAY}`; g.shadowColor = 'rgba(0,0,0,.7)'; g.shadowBlur = 6;
@@ -3073,7 +3104,7 @@ h1,h2,h3,p{margin:0}
     if (A.leap) {
       A.leap.t += dt; const u = clamp(A.leap.t / 1.8, 0, 1);
       pos.lerpVectors(A.leap.from, A.leap.to, u); pos.y += Math.sin(u * Math.PI) * 5; pitch += (-.25 - pitch) * Math.min(1, dt * 3);
-      if (u >= 1) { zone = 'city'; pos.copy(A.leap.to); A.intro = 0; A.riseY = 0; A.shake = .6; tone(60, .5, 'sawtooth', .08, 30); A.leap = null; $('#worldBack').textContent = 'Leave the fight'; $('#fHelp').textContent = fine ? 'WASD to move, mouse to aim, click to attack, E for your special, Space to jump over shockwaves. Dodge the red circles.' : 'Joystick to move, drag to look, tap to attack. Dodge the red circles.'; }
+      if (u >= 1) { zone = 'city'; pos.copy(A.leap.to); A.intro = 0; A.riseY = 0; A.shake = .6; tone(60, .5, 'sawtooth', .08, 30); A.leap = null; $('#worldBack').textContent = 'Leave the fight'; $('#fHelp').textContent = fine ? 'WASD to move, mouse to aim, click to attack, right-click or Shift to block, E for your special, Space to jump shockwaves. Dodge the red circles.' : 'Joystick to move, drag to look, tap to attack, hold Block to block. Dodge the red circles.'; }
     }
   }
   const snapBtn = $('#snapBtn'); snapBtn.onclick = () => unsnap();
@@ -3629,7 +3660,7 @@ h1,h2,h3,p{margin:0}
     return null;
   }
   let down = null, hovered = null;
-  canvas.addEventListener('pointerdown', e => { if (A && !A.over && e.pointerType === 'mouse' && fine) { if (document.pointerLockElement === canvas) { const p = pick(innerWidth / 2, innerHeight / 2); if (usable(p)) { document.exitPointerLock(); act(p); } else { A.hold = true; attack(); } } else canvas.requestPointerLock(); return; } if (tourI >= 0) endTour(true); down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false }; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointerdown', e => { if (A && !A.over && e.pointerType === 'mouse' && fine) { if (e.button === 2) { setBlock(true); return; } if (document.pointerLockElement === canvas) { const p = pick(innerWidth / 2, innerHeight / 2); if (usable(p)) { document.exitPointerLock(); act(p); } else { A.hold = true; attack(); } } else canvas.requestPointerLock(); return; } if (tourI >= 0) endTour(true); down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false }; canvas.setPointerCapture(e.pointerId); });
   canvas.addEventListener('pointermove', e => {
     if (document.pointerLockElement === canvas) { yaw -= e.movementX * .0022; pitch = clamp(pitch - e.movementY * .0022, -1.2, 1.2); return; }
     if (A && !down) return;
@@ -3781,7 +3812,7 @@ h1,h2,h3,p{margin:0}
         if (camTween) { cancel(camTween); camTween = null; }
         walkTarget = null; exitTelescope();
         yaw += turn * 1.8 * dt;
-        const sp = (A ? 4.2 : inWorld && !grounded ? 1.8 : 2.6) * dt;
+        const sp = (A ? (A.blocking ? 2 : 4.2) : inWorld && !grounded ? 1.8 : 2.6) * dt;
         const nx = pos.x + (-Math.sin(yaw) * f + Math.cos(yaw) * s) * sp;
         const nz = pos.z + (-Math.cos(yaw) * f - Math.sin(yaw) * s) * sp;
         if (valid(nx, nz)) { pos.x = nx; pos.z = nz; } else if (valid(nx, pos.z)) pos.x = nx; else if (valid(pos.x, nz)) pos.z = nz;
@@ -3808,7 +3839,8 @@ h1,h2,h3,p{margin:0}
     camera.position.copy(pos); camera.rotation.set(pitch, yaw, 0);
     dustStep(dt); snapCheck();
     const showSnap = !!snapState && !A && entered; if (snapBtn.hidden === showSnap) snapBtn.hidden = !showSnap;
-    if (A) fightFrame(dt);
+    // if anything in a fight ever throws, end the fight instead of freezing the page
+    if (A) { try { fightFrame(dt); } catch (err) { console.error(err); try { endFight(true); } catch (e2) { A = null; } say('Something went wrong, so the fight ended.', 3000); } }
     if (binaryOn) binTex.offset.y += dt * .06;
     renderer.render(sceneOf(), camera);
     requestAnimationFrame(frame);
