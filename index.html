@@ -2048,29 +2048,42 @@ h1,h2,h3,p{margin:0}
     const b = A.boss; if (b.hp <= 0 || A.over) return;
     // hitting an illusion or a drone pops it instead
     if (x !== undefined && A.mins.length) { const np = nearPart(x, y); if (np.min && np.e < 24) return popMin(np.min); }
-    n *= 2 * weaponEff(); wear(.006);
+    n *= 2 * weaponEff(); wear(.015);
     if (b.mv === 'snap' && b.st === 'wind') { b.snapHp += n; if (b.snapHp >= 50) { b.st = 'rest'; b.t = .6; b.stun = 2.5; b.tel = null; A.snapping = false; tone(200, .4, 'triangle', .06, 900); say('You stopped the snap!', 2600); } }
     b.hp -= n; b.flash = .08;
     A.nums.push({ x: (x ?? b.x) + (Math.random() - .5) * 20, y: (y ?? b.y) - 20, v: Math.round(n), life: .8 });
     tone(260 + Math.random() * 240, .04, 'square', .02);
   }
   // weapons wear down as you fight: every hit you land and every hit you take chips away at them
-  const weaponEff = () => A.bone ? .65 : .55 + .45 * A.dur;
+  // weapon condition is kept between fights (and reloads) and slowly repairs itself over time
+  let wearMap = {}; try { wearMap = JSON.parse(localStorage.getItem('ru-wear') || '{}') || {}; } catch (e) {}
+  const REPAIR_IDLE = 1 / 240, REPAIR_FIGHT = 1 / 250, FIXED_AT = .25;
+  function condition(id){ const e = wearMap[id]; if (!e) return { d: 1, broken: false }; const d = Math.min(1, e.d + (Date.now() - e.t) / 1000 * REPAIR_IDLE); return { d, broken: !!e.broken && d < FIXED_AT }; }
+  function saveCond(){ if (!A) return; wearMap[A.w.id] = { d: A.dur, t: Date.now(), broken: A.fists || A.bone }; try { localStorage.setItem('ru-wear', JSON.stringify(wearMap)); } catch (e) {} }
+  const weaponEff = () => A.fists ? 1 : A.bone ? .65 : .55 + .45 * A.dur;
   function wear(x){
-    if (!A || A.bone || A.dur <= 0) return;
+    if (!A || A.bone || A.fists) return;
     A.dur = Math.max(0, A.dur - x);
     if (A.dur > 0) return;
     tone(1800, .08, 'square', .05, 200); setTimeout(() => tone(120, .4, 'sawtooth', .05, 50), 80); A.shake = .3;
-    if (A.w.id === 'claws') { A.bone = true; hud.wpn.textContent = 'Bone claws \u00B7 Wolverine'; say('Your adamantium shattered! Bone claws out. They’re weaker, but they won’t break.', 3800); clearView(); buildView(); }
-    else say(`${A.w.name} is broken! It still works, but it’s a lot weaker now.`, 3400);
+    if (A.w.id === 'claws') { A.bone = true; hud.wpn.textContent = 'Bone claws · Wolverine'; say('Your adamantium shattered! Bone claws out until it grows back.', 3800); }
+    else { A.fists = true; hud.wpn.textContent = `Fists · ${A.w.name} broke`; say(`${A.w.name} broke! Hand-to-hand: punch with your fists until it repairs.`, 3800); }
+    clearView(); buildView(); saveCond();
+  }
+  // broken weapons slowly repair, even mid-fight
+  function repairStep(dt){
+    if (A.dur >= 1) return;
+    A.dur = Math.min(1, A.dur + dt * REPAIR_FIGHT);
+    A.saveT = (A.saveT || 0) - dt; if (A.saveT <= 0) { A.saveT = 1; saveCond(); }
+    if ((A.fists || A.bone) && A.dur >= FIXED_AT) { const wasBone = A.bone; A.fists = A.bone = false; hud.wpn.textContent = `${A.w.name} · ${A.w.from}`; tone(660, .2, 'triangle', .05, 990); say(wasBone ? 'Your adamantium grew back!' : `${A.w.name} is repaired enough to use again!`, 3000); clearView(); buildView(); }
   }
   function hurt(fx, fy){
     const p = A.p; if (p.inv > 0 || p.dash > 0 || A.over || A.air) return;
     if (A.blocking && Math.abs(angDiff(p.face, Math.atan2(fy - p.y, fx - p.x))) < 1.4) {
-      wear(A.w.id === 'shield' ? .01 : .03); p.inv = .35; A.shake = .12; A.blockFlash = .25; tone(1100, .06, 'triangle', .05, 500); tone(180, .1, 'square', .03);
+      wear(A.w.id === 'shield' ? .02 : .06); p.inv = .35; A.shake = .12; A.blockFlash = .25; tone(1100, .06, 'triangle', .05, 500); tone(180, .1, 'square', .03);
       const d = Math.hypot(p.x - fx, p.y - fy) || 1; shove((p.x - fx) / d * .3, (p.y - fy) / d * .3); return;
     }
-    p.hearts--; p.inv = 1.6; p.heal = 0; A.shake = .3; tone(140, .2, 'sawtooth', .06); wear(.05);
+    p.hearts--; p.inv = 1.6; p.heal = 0; A.shake = .3; tone(140, .2, 'sawtooth', .06); wear(.1);
     const d = Math.hypot(p.x - fx, p.y - fy) || 1; shove((p.x - fx) / d * .8, (p.y - fy) / d * .8); p.x = pos.x * 40; p.y = pos.z * 40; A.hurtT = .6;
     A.foes = A.foes.filter(o => o.mine || Math.hypot(o.x - p.x, o.y - p.y) > 80);
   }
@@ -2280,7 +2293,7 @@ h1,h2,h3,p{margin:0}
   }
   // ---------- your weapon ----------
   function weaponStep(dt){
-    const p = A.p, b = A.boss, id = A.w.id, np = nearPart(p.x, p.y), here = A.bz === A.pz;
+    const p = A.p, b = A.boss, id = A.fists ? 'fists' : A.w.id, np = nearPart(p.x, p.y), here = A.bz === A.pz;
     p.fire -= dt; p.swing = Math.max(0, p.swing - dt); p.spin = Math.max(0, (p.spin || 0) - dt); p.sp = Math.max(0, p.sp - dt); p.smoke = Math.max(0, p.smoke - dt);
     // light aim assist: if the creature is roughly where you're looking, throws go to it
     const toB = Math.atan2(b.y - p.y, b.x - p.x), assist = here && Math.abs(angDiff(p.face, toB)) < .45, dir = assist ? toB : p.face;
@@ -2289,6 +2302,10 @@ h1,h2,h3,p{margin:0}
     if (want && (id === 'mjolnir' || id === 'shield') && p.ready && p.fire <= 0) { p.ready = false; p.throwT = .25; const s = id === 'mjolnir' ? 560 : 600; A.shots.push({ k: id, x: p.x, y: p.y, vx: Math.cos(dir) * s, vy: Math.sin(dir) * s, t: 0, spin: 0, back: false, cool: 0, home: assist }); tone(id === 'mjolnir' ? 200 : 520, .06, 'triangle', .03, id === 'mjolnir' ? 140 : 700); }
     if (want && id === 'batarang' && p.fire <= 0) { p.fire = .45; p.throwT = .2; [-.12, .12].forEach(o => A.shots.push({ k: 'bat', x: p.x, y: p.y, vx: Math.cos(dir + o) * 400, vy: Math.sin(dir + o) * 400, t: 0, spin: 0, home: assist })); tone(900, .03, 'triangle', .02, 1300); }
     if (want && id === 'gauntlet' && p.fire <= 0) { p.fire = .32; p.throwT = .15; A.stoneI = ((A.stoneI || 0) + 1) % 6; A.shots.push({ k: 'stone', col: STONES[A.stoneI], x: p.x, y: p.y, vx: Math.cos(dir) * 560, vy: Math.sin(dir) * 560, t: 0, spin: 0, home: assist }); tone(600 + A.stoneI * 80, .05, 'triangle', .03, 1200); }
+    if (want && id === 'fists' && p.fire <= 0) {
+      p.fire = .35; p.swing = .2; p.flip = !p.flip;
+      if (np.e < 30 && inArc(1)) { hitBoss(2.5, np.x, np.y); A.fx.push({ k: 'ghost', x: np.x, y: np.y, r: 10, life: .15, max: .15 }); tone(150, .07, 'square', .05, 70); } else tone(320, .04, 'sine', .02, 200);
+    }
     if (want && id === 'claws' && p.fire <= 0) {
       p.fire = .18; p.swing = .15; p.flip = !p.flip;
       if (np.e < 38 && inArc(1)) { hitBoss(2.5, np.x, np.y); A.fx.push({ k: 'claw', x: np.x, y: np.y, a: p.face, flip: p.flip, life: .16, max: .16 }); tone(1500, .03, 'sawtooth', .015, 2400); } else tone(2200, .03, 'sine', .01, 1400);
@@ -2334,6 +2351,7 @@ h1,h2,h3,p{margin:0}
   function special(){
     if (!A || A.over) return;
     const p = A.p, b = A.boss; if (p.sp > 0) return;
+    if (A.fists) return say('Your weapon is broken, so no special until it repairs. Keep punching!', 2400);
     if (A.bz !== A.pz && A.w.id !== 'batarang') return say('Your special needs the creature in the same room as you.', 2400);
     p.sp = A.w.cd;
     const np = nearPart(p.x, p.y);
@@ -2422,6 +2440,9 @@ h1,h2,h3,p{margin:0}
     } else if (id === 'sword') {
       const P = .042, mats = {};
       SWORD_PX.forEach(([x, y, c]) => { box(P, P, P * 1.2, mats[c] || (mats[c] = mat(c, { roughness: .6 })), x * P, -y * P, 0, g); });
+    } else if (id === 'fists') {
+      const sk = mat(0xC68B59, { roughness: .7 }); box(.085, .075, .11, sk, 0, 0, 0, g); box(.09, .02, .1, mat(0xB27A4C, { roughness: .7 }), 0, .035, -.01, g); box(.025, .04, .05, sk, .05, -.01, .02, g);
+      const cuff = new THREE.Mesh(new THREE.CylinderGeometry(.045, .05, .12, 10), mat(0xFFC93C, { roughness: .7 })); cuff.rotation.x = Math.PI / 2; cuff.position.z = .1; g.add(cuff);
     } else if (id === 'gauntlet') {
       const gold = metal(0xD9A93A); box(.16, .2, .1, gold, 0, .08, 0, g); box(.17, .06, .11, gold, 0, -.05, 0, g);
       [-.055, -.018, .018, .055].forEach((x, k) => box(.03, .13 - Math.abs(k - 1.5) * .015, .035, gold, x, .24, 0, g)); box(.03, .1, .035, gold, -.1, .12, 0, g).rotation.z = .6;
@@ -2713,7 +2734,7 @@ h1,h2,h3,p{margin:0}
     // the gauntlet only hangs on the rack once you've beaten Thanos
     rack.gauntlet.slot.traverse(o => o.visible = hasGauntlet);
   }
-  function equip(id){ weapon = id; try { localStorage.setItem('ru-weapon', id); } catch (e) {} refreshLair(); const w = WEAPONS.find(x => x.id === id); tone(660, .08, 'triangle', .05, 990); say(`${w.name} equipped. ${w.note}`, 4200); }
+  function equip(id){ weapon = id; try { localStorage.setItem('ru-weapon', id); } catch (e) {} refreshLair(); const w = WEAPONS.find(x => x.id === id); tone(660, .08, 'triangle', .05, 990); const c = condition(id); say(`${w.name} equipped (${Math.round(c.d * 100)}% condition${c.broken ? ', still broken' : ''}). ${w.note}`, 4200); }
   function lairIdle(dt, now){
     const t = now / 1000;
     pods.forEach((p, i) => { if (!A || A.i !== i) p.C.anim({ st: 'roam', mv: '', a: t * 2, hp: 1, max: 1, swing: 0, mouth: 0, ring: 0, w: 1 }, t + i, .35); p.C.g.rotation.y = -Math.PI / 2 + Math.sin(t * .6 + i) * .5; p.open += ((A && A.i === i ? 1 : 0) - p.open) * Math.min(1, dt * 3); p.glass.position.y = 1.6 + p.open * 2.4; p.glass.material.opacity = .22 * (1 - p.open * .6); p.C.g.visible = p.open < .5 && !dustedBoss(p.def.id); });
@@ -2777,15 +2798,16 @@ h1,h2,h3,p{margin:0}
     closePanel(); tip.classList.remove('on'); hint.classList.remove('on'); Object.keys(akeys).forEach(k => akeys[k] = false);
     clearFight(); walkTarget = null;
     const C = CREATURES[def.id], w = WEAPONS.find(x => x.id === weapon);
-    A = { def, C, i, w, t: 0, over: false, won: false, shake: 0, spShown: '', dead: 0, bz, pz: fightZone(), follow: 0, fled: false, jz: 0, jv: 0, hurtT: 0, atk: false, hold: false, mins: [], haz: [], dur: 1, bone: false,
+    A = { def, C, i, w, t: 0, over: false, won: false, shake: 0, spShown: '', dead: 0, bz, pz: fightZone(), follow: 0, fled: false, jz: 0, jv: 0, hurtT: 0, atk: false, hold: false, mins: [], haz: [], dur: 1, bone: false, fists: false,
       p: { x: pos.x * 40, y: pos.z * 40, vx: 0, vy: 0, hearts: 10, max: 10, inv: 0, fire: .3, sp: 0, dash: 0, smoke: 0, heal: 0, swing: 0, spin: 0, face: lookAngle(), ready: true, flip: false, throwT: 0 },
       shots: [], foes: [], rings: [], fx: [], nums: [],
       boss: { x: bx, y: by, vx: 0, vy: 0, r: C.r, hp: def.hp * .8, max: def.hp * .8, flash: 0, a: 0, face: Math.PI / 2, st: 'roam', t: 2.2, stun: 0, h: 0, el: 0, dir: Math.random() < .5 ? 1 : -1, mv: '', swing: 0, mouth: 0, ring: 0, cd: 0, n: 0, w: 1,
         segs: Array.from({ length: C.seg || 0 }, (_, k) => ({ x: bx, y: by - (k + 1) * 6 })) } };
+    const cond = condition(w.id); A.dur = cond.d; A.bone = w.id === 'claws' && cond.broken; A.fists = w.id !== 'claws' && cond.broken;
     // the creature steps out of its pod (or out of the ground)
     const M = CREATURE3D[def.id](false); fightG.add(M.g); if (M.segs) M.segs.forEach(s => fightG.add(s)); A.model = M;
     buildView();
-    document.body.classList.add('fighting'); hud.el.hidden = false; $('#arenaMsg').hidden = true; hud.name.textContent = def.name; hud.hp.style.background = def.col; hud.wpn.textContent = `${w.name} · ${w.from}`;
+    document.body.classList.add('fighting'); hud.el.hidden = false; $('#arenaMsg').hidden = true; hud.name.textContent = def.name; hud.hp.style.background = def.col; hud.wpn.textContent = `${w.name} · ${w.from}`; if (A.fists) hud.wpn.textContent = `Fists \u00B7 ${w.name} is broken`; if (A.bone) hud.wpn.textContent = 'Bone claws \u00B7 Wolverine';
     $('#fHelp').textContent = fine ? 'WASD to move, mouse to aim, click (or hold) to attack, right-click or Shift to block, E for your special, Space to jump shockwaves.' : 'Joystick to move, drag to look, tap to attack, hold Block to block. Jump over shockwaves with the Jump button.';
     $('#worldBack').hidden = false; $('#worldBack').textContent = 'Leave the fight'; dock.classList.remove('on');
     if (fine && canvas.requestPointerLock) canvas.requestPointerLock();
@@ -2794,14 +2816,15 @@ h1,h2,h3,p{margin:0}
   }
   // the weapon you hold, drawn in front of the camera
   function buildView(){
-    const id = A.w.id, hands = id === 'claws' ? [1, -1] : [id === 'shield' ? -.4 : 1];
+    const id = A.fists ? 'fists' : A.w.id, hands = id === 'claws' || id === 'fists' ? [1, -1] : [id === 'shield' ? -.4 : 1];
     A.view = hands.map(s => {
       const holder = new THREE.Group(), w = mkWeapon(id); holder.add(w); viewG.add(holder);
       if (A.bone) w.traverse(c => { if (c.isMesh && c.material.color && c.material.color.getHex() === 0xDCE3EA) { c.material = mat(0xE3D2A6, { roughness: .9 }); c.scale.set(1.3, .8, 1.3); } });
       w.traverse(c => { if (c.isMesh && c.material.color) c.material.userData.c0 = c.material.color.clone(); });
-      holder.userData.base = id === 'shield' ? V(-.26, -.34, -.78) : V(.34 * s, -.33, -.7);
+      holder.userData.base = id === 'shield' ? V(-.26, -.34, -.78) : id === 'fists' ? V(.26 * s, -.3, -.6) : V(.34 * s, -.33, -.7);
       if (id === 'shield') w.scale.setScalar(.45); else { w.scale.setScalar(id === 'batarang' ? .55 : id === 'sword' ? .36 : .42); w.rotation.set(-1.05, 0, s > 0 ? .35 : -.35); if (id === 'mjolnir') w.position.y = -.1; }
-      const glove = sph(.04, mat(id === 'claws' ? 0xF2C230 : 0xC68B59), 0, 0, 0, holder, 1, 1, 1, 10); glove.visible = id !== 'claws' && id !== 'shield';
+      if (id === 'fists') { w.scale.setScalar(1); w.rotation.set(0, 0, 0); }
+      const glove = sph(.04, mat(id === 'claws' ? 0xF2C230 : 0xC68B59), 0, 0, 0, holder, 1, 1, 1, 10); glove.visible = id !== 'claws' && id !== 'shield' && id !== 'fists';
       w.traverse(c => { if (c.isMesh) c.castShadow = false; });
       return { holder, w, s };
     });
@@ -2809,6 +2832,7 @@ h1,h2,h3,p{margin:0}
   function clearView(){ while (viewG.children.length) { const c = viewG.children[0]; viewG.remove(c); disposeDeep(c); } }
   function endFight(instant){
     if (!A) return;
+    saveCond();
     const done = () => {
       clearFight(); A = null; hud.el.hidden = true; document.body.classList.remove('fighting'); $('#arenaMsg').hidden = true; $('#jumpBtn').hidden = true;
       if (document.pointerLockElement) document.exitPointerLock();
@@ -2915,10 +2939,10 @@ h1,h2,h3,p{margin:0}
     A.nums.forEach(n => n.life -= dt); A.nums = A.nums.filter(n => n.life > 0);
     if (here) {
       // what can hurt you: shots (Cap's shield blocks the ones in front) and shockwave rings (jump them)
-      const guard = A.w.id === 'shield' && p.ready;
+      const guard = A.w.id === 'shield' && p.ready && !A.fists;
       for (const f of A.foes) {
         if (f.mine || Math.hypot(f.x - p.x, f.y - p.y) > f.r + (guard ? 22 : 9)) continue;
-        if (guard && Math.abs(angDiff(p.face, Math.atan2(f.y - p.y, f.x - p.x))) < 1.1) { f.life = 0; tone(1250, .03, 'triangle', .02); wear(.015); continue; }
+        if (guard && Math.abs(angDiff(p.face, Math.atan2(f.y - p.y, f.x - p.x))) < 1.1) { f.life = 0; tone(1250, .03, 'triangle', .02); wear(.03); continue; }
         if (Math.hypot(f.x - p.x, f.y - p.y) < f.r + 9) { hurt(f.x, f.y); break; }
       }
       if (A.jz < .3) for (const r of A.rings) { const d = Math.hypot(p.x - r.x, p.y - r.y); if (Math.abs(d - r.r) < 9 && Math.abs(angDiff(r.gap, Math.atan2(p.y - r.y, p.x - r.x))) > r.gw) { hurt(r.x, r.y); break; } }
@@ -3021,14 +3045,14 @@ h1,h2,h3,p{margin:0}
     });
     for (const k in pool) pool[k].forEach((m, i) => { if (i >= (used[k] || 0)) m.visible = false; });
     // your weapon in front of you (it darkens as it wears out)
-    if (A.durShown !== A.dur) { A.durShown = A.dur; const k = A.bone ? 0 : (1 - A.dur) * .6, dk = new THREE.Color(0x2A2A2E); viewG.traverse(c => { if (c.isMesh && c.material.userData.c0) c.material.color.copy(c.material.userData.c0).lerp(dk, k); }); }
-    const id = A.w.id, held = !((id === 'mjolnir' || id === 'shield') && !p.ready), spd = Math.min(1, Math.hypot(p.vx, p.vy) / 120);
+    if (A.durShown !== A.dur) { A.durShown = A.dur; const k = A.bone || A.fists ? 0 : (1 - A.dur) * .6, dk = new THREE.Color(0x2A2A2E); viewG.traverse(c => { if (c.isMesh && c.material.userData.c0) c.material.color.copy(c.material.userData.c0).lerp(dk, k); }); }
+    const id = A.fists ? 'fists' : A.w.id, held = !((id === 'mjolnir' || id === 'shield') && !p.ready), spd = Math.min(1, Math.hypot(p.vx, p.vy) / 120);
     viewG.position.copy(camera.position); viewG.quaternion.copy(camera.quaternion);
     A.view.forEach(v => {
       const h = v.holder, B0 = h.userData.base; h.visible = held && !(A.over && !A.won);
       h.position.set(B0.x, B0.y + Math.sin(t * 10) * .012 * spd - (p.throwT > 0 ? .15 : 0), B0.z); h.rotation.set(0, 0, 0);
       if (id === 'sword' && (p.swing > 0 || p.spin > 0)) { const u = p.spin > 0 ? 1 - p.spin / .35 : 1 - p.swing / .25; h.rotation.set(-.3, .5 - u * 1.2, 1.1 - u * 2.4); h.position.x = B0.x - u * .35; }
-      if (id === 'claws' && p.swing > 0 && (v.s > 0) === p.flip) h.position.z = B0.z - Math.sin(p.swing / .15 * Math.PI) * .3;
+      if ((id === 'claws' || id === 'fists') && p.swing > 0 && (v.s > 0) === p.flip) h.position.z = B0.z - Math.sin(p.swing / (id === 'fists' ? .2 : .15) * Math.PI) * .35;
       if (id === 'claws' && p.dash > 0) h.position.z = B0.z - .3;
       if (id === 'shield') { h.position.x = B0.x + (A.hold ? .1 : 0); h.rotation.y = .15; }
       if (id === 'batarang' && p.throwT > 0) h.rotation.z = -p.throwT * 4;
@@ -3044,10 +3068,10 @@ h1,h2,h3,p{margin:0}
     if (A.hudHp !== hp) { hud.hp.style.width = hp + '%'; A.hudHp = hp; }
     const hs = '♥'.repeat(Math.max(0, p.hearts)) + '<s>' + '♥'.repeat(Math.max(0, p.max - p.hearts)) + '</s>';
     if (A.hudH !== hs) { hud.hearts.innerHTML = hs; A.hudH = hs; }
-    const dp = Math.round(A.dur * 100);
-    if (A.hudD !== dp + (A.bone ? 'b' : '')) { A.hudD = dp + (A.bone ? 'b' : ''); const bar = $('#fDur'); bar.style.width = (A.bone ? 100 : dp) + '%'; bar.style.background = A.bone ? '#EDE3C8' : dp > 50 ? '#7CF29A' : dp > 20 ? '#FFC93C' : '#FF5A6E'; $('#fDurTxt').textContent = A.bone ? 'Bone claws' : dp ? `Weapon ${dp}%` : 'Weapon broken'; }
-    const s = A.over ? A.w.sp : p.sp > 0 ? `${A.w.sp}\n${Math.ceil(p.sp)}s` : `${A.w.sp}\n${fine ? '(E)' : ''}`;
-    if (s !== A.spShown) { A.spShown = s; hud.sp.textContent = s; hud.sp.disabled = A.over || p.sp > 0; }
+    const dp = Math.round(A.dur * 100), dk = dp + (A.bone ? 'b' : A.fists ? 'f' : '');
+    if (A.hudD !== dk) { A.hudD = dk; const bar = $('#fDur'); bar.style.width = dp + '%'; bar.style.background = A.bone ? '#E3D2A6' : A.fists ? '#FF5A6E' : dp > 50 ? '#7CF29A' : dp > 20 ? '#FFC93C' : '#FF5A6E'; $('#fDurTxt').textContent = A.bone ? `Bone claws \u00B7 adamantium regrowing ${dp}%` : A.fists ? `Fists \u00B7 weapon repairing ${dp}%` : `Weapon ${dp}%`; }
+    const s = A.over ? A.w.sp : A.fists ? 'No special\n(broken)' : p.sp > 0 ? `${A.w.sp}\n${Math.ceil(p.sp)}s` : `${A.w.sp}\n${fine ? '(E)' : ''}`;
+    if (s !== A.spShown) { A.spShown = s; hud.sp.textContent = s; hud.sp.disabled = A.over || p.sp > 0 || A.fists; }
     const away = { room: 'is up in the house. Chase it!', lair: 'is down in the lair', roof: 'is up on the rooftop', hub: 'is on Mandalink island' }[A.bz] || 'is on another level';
     const ban = A.over ? '' : A.intro ? 'A Celestial is rising out of Bangalore…' : A.snapping ? `STOP THE SNAP! ${Math.max(0, A.boss.t).toFixed(1)}s` : A.bz === A.pz ? '' : A.bz === 'room' && A.pz === 'lair' ? `${A.def.name} escaped upstairs. Take the stairs and chase it!` : ENTRY[A.pz] ? `${A.def.name} is coming after you…` : `${A.def.name} ${away}.`;
     if (ban !== A.banShown) { A.banShown = ban; hud.banner.textContent = ban; hud.banner.hidden = !ban; }
@@ -3113,7 +3137,7 @@ h1,h2,h3,p{margin:0}
   function fightFrame(dt){
     const sdt = Math.min(dt, .033);
     if (A.intro) introStep(dt);
-    else if (!A.over && sdt > 0 && !paused()) simStep(sdt);
+    else if (!A.over && sdt > 0 && !paused()) { simStep(sdt); repairStep(sdt); }
     camera.position.y += A.jz;
     if (A.shake > 0 && !reduce) camera.position.add(pv.set((Math.random() - .5) * A.shake * .5, (Math.random() - .5) * A.shake * .5, 0));
     camera.updateMatrixWorld();
@@ -3654,7 +3678,7 @@ h1,h2,h3,p{margin:0}
     if (p.egg === 'speakers') return lofi ? 'Stop the lo-fi' : 'Play lo-fi';
     if (p.egg === 'window') return `The sky outside, right now (${istClock()} for Rayan)`;
     if (p.egg === 'pod') { const d = BOSSES[p.o.userData.bi]; return `Open the pod: ${d.name}${beaten.has(d.id) ? ' (beaten)' : ''}`; }
-    if (p.egg === 'rack') { const w = WEAPONS.find(x => x.id === p.o.userData.wid); return w.id === weapon ? `${w.name}: equipped` : `Take ${w.name} (${w.from})`; }
+    if (p.egg === 'rack') { const w = WEAPONS.find(x => x.id === p.o.userData.wid); const c = condition(w.id), pc = Math.round(c.d * 100) + '%' + (c.broken ? ', broken' : ''); return w.id === weapon ? `${w.name}: equipped (${pc})` : `Take ${w.name} (${w.from}), ${pc}`; }
     if (p.egg) return LABELS[p.egg] || null;
     if (p.section) return NAMES[p.section];
     return null;
