@@ -185,6 +185,12 @@ h1,h2,h3,p{margin:0}
 .fsp{pointer-events:auto;position:absolute;right:20px;bottom:calc(24px + env(safe-area-inset-bottom,0px));width:104px;height:104px;border-radius:50%;border:0;background:var(--sun);color:#16181D;font:800 14px/1.2 "Instrument Sans",sans-serif;white-space:pre-line;box-shadow:0 6px 20px rgba(0,0,0,.4);cursor:pointer}
 .fsp:disabled{opacity:.55;cursor:default}
 .fhelp{position:absolute;left:20px;right:140px;bottom:calc(24px + env(safe-area-inset-bottom,0px));color:#C9CFD8;font-size:13px;max-width:560px;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.fighting .toast{top:calc(214px + env(safe-area-inset-top,0px))}
+.fquit{pointer-events:auto;margin-left:auto;border:0;border-radius:999px;padding:4px 12px;background:rgba(255,255,255,.2);color:#FFFFFF;font:600 13px "Instrument Sans",sans-serif;cursor:pointer}
+.fname span{margin-left:auto}
+.fighting .jump{bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+.fbanner{position:absolute;top:calc(160px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);max-width:calc(100% - 32px);padding:10px 18px;border-radius:999px;background:#C0271C;color:#FFFFFF;font-weight:700;text-align:center}
+.fbanner[hidden]{display:none}
 .fhud .arenamsg{pointer-events:auto;inset:auto;left:50%;top:50%;transform:translate(-50%,-50%);width:min(420px,calc(100% - 32px));border-radius:22px}
 .arenamsg{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:10px;text-align:center;padding:24px;background:rgba(11,13,20,.82);border-radius:14px;color:#FFFFFF}
 .arenamsg[hidden]{display:none}
@@ -298,9 +304,10 @@ h1,h2,h3,p{margin:0}
 <div class="glitch" id="glitch" aria-hidden="true"></div>
 <div class="fhud" id="fhud" hidden>
   <canvas class="ffx" id="fFx" aria-hidden="true"></canvas>
-  <div class="fbar"><div class="fname"><b id="fName"></b><span id="fWeapon"></span></div><div class="fhp"><i id="fHp"></i></div><div class="fhearts" id="fHearts" aria-label="Your hearts"></div></div>
+  <div class="fbar"><div class="fname"><b id="fName"></b><span id="fWeapon"></span><button class="fquit" id="fQuit" type="button">Leave</button></div><div class="fhp"><i id="fHp"></i></div><div class="fhearts" id="fHearts" aria-label="Your hearts"></div></div>
   <button class="fsp" id="fSpecial" type="button">Special</button>
-  <p class="fhelp">Tap or click the floor to move (or use WASD). Your weapon attacks on its own. Red on the floor means it’s about to hit.</p>
+  <p class="fbanner" id="fBanner" hidden></p>
+  <p class="fhelp" id="fHelp"></p>
   <div class="arenamsg" id="arenaMsg" hidden><h3 class="display" id="arenaTitle"></h3><p id="arenaText"></p><div class="gact"><button class="btn" id="arenaRetry" type="button">Fight again</button><button class="btn alt" id="arenaBack" type="button">Back to the lair</button></div></div>
 </div>
 <button class="jump" id="jumpBtn" type="button" hidden>Jump</button>
@@ -1239,7 +1246,7 @@ h1,h2,h3,p{margin:0}
   const inDoor = (x, z) => vaultOpen && x > 4.2 && x <= 5.7 && z >= -.25 && z <= .85;
   const inVault = (x, z) => vaultOpen && x > 5.7 && x <= 8.0 && z >= -1.0 && z <= 1.6;
   const inHall = (x, z) => entered && ((Math.abs(x) < .45 && z > 4.2 && z <= 5.5) || (Math.abs(x) < 1.2 && z > 5.5 && z < 10.3));
-  const valid = (x, z) => inWorld ? (zone === 'lair' ? Math.abs(x) < 8.3 && z > -8.1 && z < 10.3 : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
+  const valid = (x, z) => inWorld ? (zone === 'lair' ? (Math.abs(x) < 8.3 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
   const region = x => x > 4.9 ? 'vault' : 'room';
   function flyTo(target, dir, done){
     if (inWorld) { const a = dir ? lookAngles(target, dir) : null; return moveCam(target, a ? a.yaw : null, a ? a.pitch : null, 1, done); }
@@ -1967,7 +1974,13 @@ h1,h2,h3,p{margin:0}
   let weapon = 'mjolnir'; try { const w = localStorage.getItem('ru-weapon'); if (WEAPONS.some(x => x.id === w)) weapon = w; } catch (e) {}
   const POST_CREDITS = 'Post-credits scene: the clock resets to 11:58. The Deadline always comes back. See you next term.';
   const beaten = new Set(); try { JSON.parse(localStorage.getItem('ru-bosses') || '[]').forEach(b => beaten.add(b)); } catch (e) {}
-  const AW = 480, AH = 640, TOP = 56;
+  // fight positions are in grid units (40 = 1 metre) measured from the middle of whichever room the fight is in
+  const BND = { lair: { x0: -330, x1: 330, y0: -325, y1: 270 }, room: { x0: -160, x1: 164, y0: -136, y1: 164 } };
+  const bnd = () => BND[A.bz];
+  // the lair stairs: walk up them to leave (and creatures can flee up them)
+  const onStairs = (x, z) => x > 5.85 && x < 7.35 && z > 6.5 && z < 11.25;
+  const stairsY = (x, z) => onStairs(x, z) ? clamp((z - 7) / 3.6, 0, 1) * 3 : 0;
+  function shove(dx, dz){ const nx = pos.x + dx, nz = pos.z + dz; if (valid(nx, nz)) { pos.x = nx; pos.z = nz; } else if (valid(nx, pos.z)) pos.x = nx; else if (valid(pos.x, nz)) pos.z = nz; }
   let A = null;
   const akeys = {};
   // every boss is a creature: how big it is, how it moves, and which attacks it knows
@@ -1997,7 +2010,7 @@ h1,h2,h3,p{margin:0}
   function hurt(fx, fy){
     const p = A.p; if (p.inv > 0 || p.dash > 0 || A.over) return;
     p.hearts--; p.inv = 1.3; p.heal = 0; A.shake = .3; tone(140, .2, 'sawtooth', .06);
-    const d = Math.hypot(p.x - fx, p.y - fy) || 1; p.x += (p.x - fx) / d * 40; p.y += (p.y - fy) / d * 40; p.tx = p.x; p.ty = p.y;
+    const d = Math.hypot(p.x - fx, p.y - fy) || 1; shove((p.x - fx) / d * .8, (p.y - fy) / d * .8); p.x = pos.x * 40; p.y = pos.z * 40; A.hurtT = .6;
     A.foes = A.foes.filter(o => o.mine || Math.hypot(o.x - p.x, o.y - p.y) > 80);
   }
   function steer(b, x, y, sp, dt, k = 3){ const dx = x - b.x, dy = y - b.y, d = Math.hypot(dx, dy) || 1, s = Math.min(sp, d * 3); b.vx += (dx / d * s - b.vx) * Math.min(1, dt * k); b.vy += (dy / d * s - b.vy) * Math.min(1, dt * k); }
@@ -2019,9 +2032,9 @@ h1,h2,h3,p{margin:0}
     notes: { wind: .35, go(b){ noteRing(b); rest(b, .5); } },
     skip: { wind: .4, start(b){ b.glitch = 1; },
       go(b){ const q = aim(); A.fx.push({ k: 'ghost', x: b.x, y: b.y, r: b.r, life: .4, max: .4 });
-        for (let k = 0; k < 10; k++) { const an = Math.random() * Math.PI * 2, x = clamp(q.x + Math.cos(an) * 200, b.r, AW - b.r), y = clamp(q.y + Math.sin(an) * 200, TOP + b.r, AH - b.r); b.x = x; b.y = y; if (Math.hypot(x - q.x, y - q.y) > 150) break; }
+        for (let k = 0; k < 10; k++) { const an = Math.random() * Math.PI * 2, B = bnd(), x = clamp(q.x + Math.cos(an) * 200, B.x0 + b.r, B.x1 - b.r), y = clamp(q.y + Math.sin(an) * 200, B.y0 + b.r, B.y1 - b.r); b.x = x; b.y = y; if (Math.hypot(x - q.x, y - q.y) > 150) break; }
         b.vx = b.vy = 0; b.glitch = 0; tone(90, .08, 'square', .04, 900); noteRing(b); rest(b, .5); } },
-    slam: { wind: .7, start(b){ const p = A.p, q = aim(), k = A.p.smoke > 0 ? 0 : .75; b.lx = clamp(q.x + p.vx * k, 40, AW - 40); b.ly = clamp(q.y + p.vy * k, TOP + 40, AH - 40); b.sx = b.x; b.sy = b.y; b.tel = { k: 'circle', x: b.lx, y: b.ly, r: b.r + 46 }; },
+    slam: { wind: .7, start(b){ const p = A.p, q = aim(), k = A.p.smoke > 0 ? 0 : .75; B = bnd(); b.lx = clamp(q.x + p.vx * k, B.x0 + 40, B.x1 - 40); b.ly = clamp(q.y + p.vy * k, B.y0 + 40, B.y1 - 40); b.sx = b.x; b.sy = b.y; b.tel = { k: 'circle', x: b.lx, y: b.ly, r: b.r + 46 }; },
       go(b){ b.st = 'leap'; b.t = b.lt = .5; b.vx = b.vy = 0; } },
     volley: { wind: .3, go(b){ b.st = 'volley'; b.n = 3; b.cd = 0; } },
     spiral: { wind: .35, go(b){ b.st = 'spiral'; b.t = 1.5; b.cd = 0; } },
@@ -2032,6 +2045,8 @@ h1,h2,h3,p{margin:0}
     const b = A.boss, C = A.C, rage = 1 - b.hp / b.max, q = aim(), p = A.p;
     b.flash -= dt; b.swing = Math.max(0, b.swing - dt);
     if (A.def.id === 'record') b.a += dt * (b.st === 'saw' ? 26 : 2); else if (A.def.id === 'deadline') b.a += dt * (1 + rage * 3);
+    // at half health, a creature in the lair makes a run for the stairs
+    if (A.bz === 'lair' && !A.fled && b.hp < b.max * .5 && (b.st === 'roam' || b.st === 'rest') && b.stun <= 0) { A.fled = true; b.st = 'flee'; b.tel = null; b.mouth = 0; tone(300, .5, 'sawtooth', .05, 900); say(`${A.def.name} is escaping up the stairs! Chase it.`, 3800); }
     if (b.stun > 0) {
       b.stun -= dt; b.vx *= .85; b.vy *= .85; b.tel = null; b.mouth = 0; b.ring = 0; b.glitch = 0;
       if (b.st !== 'roam') { b.st = 'roam'; b.t = .8; if (b.h) { b.h = 0; } }
@@ -2071,15 +2086,22 @@ h1,h2,h3,p{margin:0}
           if (b.cd <= 0 && b.n > 0) { b.n--; b.cd = .4; shock(b.x, b.y, b.r, 230 + rage * 60, 380); tone(1300, .08, 'square', .03); }
           if (b.n <= 0 && b.cd <= 0) { b.ring = 0; rest(b, .5); }
           break;
+        case 'flee': {
+          const up = b.y > 255 || (b.x > 244 && b.x < 284 && b.y > 230); steer(b, 264, up ? 470 : 262, C.sp * 2.6, dt, 6); faceTo(b, b.x + b.vx, b.y + b.vy, dt);
+          b.el = stairsY(b.x / 40, b.y / 40); if (b.y > 440) arrive('room');
+          break; }
         case 'rest': b.vx *= Math.max(0, 1 - dt * 5); b.vy *= Math.max(0, 1 - dt * 5); if (b.t <= 0) { b.st = 'roam'; b.t = (1.2 - rage * .5) + Math.random() * .6; if (Math.random() < .3) b.dir *= -1; } break;
       }
     }
     if (b.st === 'dash' || b.st === 'saw') b.face = Math.atan2(b.vy, b.vx);
     if (b.st !== 'leap') { b.x += b.vx * dt; b.y += b.vy * dt; }
     // walls: the buzzsaw bounces, everything else stops
-    const bounce = b.st === 'saw';
-    if (b.x < b.r || b.x > AW - b.r) { b.x = clamp(b.x, b.r, AW - b.r); b.vx = bounce ? -b.vx : 0; if (bounce) { tone(160, .05, 'square', .03); A.shake = .12; } }
-    if (b.y < TOP + b.r || b.y > AH - b.r) { b.y = clamp(b.y, TOP + b.r, AH - b.r); b.vy = bounce ? -b.vy : 0; if (bounce) { tone(160, .05, 'square', .03); A.shake = .12; } }
+    const bounce = b.st === 'saw', B = bnd();
+    if (b.st !== 'flee') {
+      if (b.x < B.x0 + b.r || b.x > B.x1 - b.r) { b.x = clamp(b.x, B.x0 + b.r, B.x1 - b.r); b.vx = bounce ? -b.vx : 0; if (bounce) { tone(160, .05, 'square', .03); A.shake = .12; } }
+      if (b.y < B.y0 + b.r || b.y > B.y1 - b.r) { b.y = clamp(b.y, B.y0 + b.r, B.y1 - b.r); b.vy = bounce ? -b.vy : 0; if (bounce) { tone(160, .05, 'square', .03); A.shake = .12; } }
+      b.el = 0;
+    }
     // the dragon's body follows its head
     let prev = b; b.segs.forEach(s => { const dx = s.x - prev.x, dy = s.y - prev.y, d = Math.hypot(dx, dy) || 1; if (d > 17) { s.x = prev.x + dx / d * 17; s.y = prev.y + dy / d * 17; } prev = s; });
     // touching it hurts (unless it's mid-air)
@@ -2087,54 +2109,59 @@ h1,h2,h3,p{margin:0}
   }
   // ---------- your weapon ----------
   function weaponStep(dt){
-    const p = A.p, b = A.boss, id = A.w.id, np = nearPart(p.x, p.y);
-    p.face = Math.atan2(np.y - p.y, np.x - p.x); p.fire -= dt; p.swing = Math.max(0, p.swing - dt); p.spin = Math.max(0, (p.spin || 0) - dt); p.sp = Math.max(0, p.sp - dt); p.smoke = Math.max(0, p.smoke - dt);
-    const aimB = Math.atan2(b.y - p.y, b.x - p.x);
-    if ((id === 'mjolnir' || id === 'shield') && p.ready && p.fire <= 0) { p.ready = false; const s = id === 'mjolnir' ? 560 : 600; A.shots.push({ k: id, x: p.x, y: p.y, vx: Math.cos(aimB) * s, vy: Math.sin(aimB) * s, t: 0, spin: 0, back: false, cool: 0 }); tone(id === 'mjolnir' ? 200 : 520, .06, 'triangle', .03, id === 'mjolnir' ? 140 : 700); }
-    if (id === 'batarang' && p.fire <= 0) { p.fire = .5; [-.7, .7].forEach(o => A.shots.push({ k: 'bat', x: p.x, y: p.y, vx: Math.cos(aimB + o) * 380, vy: Math.sin(aimB + o) * 380, t: 0, spin: 0 })); tone(900, .03, 'triangle', .02, 1300); }
-    if (id === 'claws' && p.fire <= 0 && np.e < 38) { p.fire = .18; p.swing = .15; p.flip = !p.flip; hitBoss(2.5, np.x, np.y); A.fx.push({ k: 'claw', x: p.x + Math.cos(p.face) * (np.e * .6 + 14), y: p.y + Math.sin(p.face) * (np.e * .6 + 14), a: p.face, flip: p.flip, life: .16, max: .16 }); tone(1500, .03, 'sawtooth', .015, 2400); }
-    if (id === 'sword' && p.fire <= 0) {
-      const threat = A.foes.some(f => !f.mine && Math.hypot(f.x - p.x, f.y - p.y) < 48);
-      if (np.e < 58 || threat) {
-        const fa = np.e < 58 || !threat ? p.face : (() => { const f = A.foes.find(o => !o.mine && Math.hypot(o.x - p.x, o.y - p.y) < 48); return Math.atan2(f.y - p.y, f.x - p.x); })();
-        p.fire = .45; p.swing = .25; p.swingA = fa; if (np.e < 58) hitBoss(7, np.x, np.y);
-        A.foes = A.foes.filter(f => f.mine || !(Math.hypot(f.x - p.x, f.y - p.y) < 70 && Math.abs(angDiff(fa, Math.atan2(f.y - p.y, f.x - p.x))) < 1.3));
-        A.fx.push({ k: 'sweep', x: p.x, y: p.y, a: fa, r: 60, life: .2, max: .2 }); tone(380, .07, 'triangle', .04, 180);
-      }
+    const p = A.p, b = A.boss, id = A.w.id, np = nearPart(p.x, p.y), here = A.bz === A.pz;
+    p.fire -= dt; p.swing = Math.max(0, p.swing - dt); p.spin = Math.max(0, (p.spin || 0) - dt); p.sp = Math.max(0, p.sp - dt); p.smoke = Math.max(0, p.smoke - dt);
+    // light aim assist: if the creature is roughly where you're looking, throws go to it
+    const toB = Math.atan2(b.y - p.y, b.x - p.x), assist = here && Math.abs(angDiff(p.face, toB)) < .45, dir = assist ? toB : p.face;
+    const want = A.atk || A.hold; A.atk = false;
+    const inArc = (w) => here && Math.abs(angDiff(p.face, Math.atan2(np.y - p.y, np.x - p.x))) < w;
+    if (want && (id === 'mjolnir' || id === 'shield') && p.ready && p.fire <= 0) { p.ready = false; p.throwT = .25; const s = id === 'mjolnir' ? 560 : 600; A.shots.push({ k: id, x: p.x, y: p.y, vx: Math.cos(dir) * s, vy: Math.sin(dir) * s, t: 0, spin: 0, back: false, cool: 0, home: assist }); tone(id === 'mjolnir' ? 200 : 520, .06, 'triangle', .03, id === 'mjolnir' ? 140 : 700); }
+    if (want && id === 'batarang' && p.fire <= 0) { p.fire = .45; p.throwT = .2; [-.12, .12].forEach(o => A.shots.push({ k: 'bat', x: p.x, y: p.y, vx: Math.cos(dir + o) * 400, vy: Math.sin(dir + o) * 400, t: 0, spin: 0, home: assist })); tone(900, .03, 'triangle', .02, 1300); }
+    if (want && id === 'claws' && p.fire <= 0) {
+      p.fire = .18; p.swing = .15; p.flip = !p.flip;
+      if (np.e < 38 && inArc(1)) { hitBoss(2.5, np.x, np.y); A.fx.push({ k: 'claw', x: np.x, y: np.y, a: p.face, flip: p.flip, life: .16, max: .16 }); tone(1500, .03, 'sawtooth', .015, 2400); } else tone(2200, .03, 'sine', .01, 1400);
+    }
+    if (want && id === 'sword' && p.fire <= 0) {
+      p.fire = .45; p.swing = .25; if (np.e < 58 && inArc(1.3)) hitBoss(7, np.x, np.y);
+      A.foes = A.foes.filter(f => f.mine || !(Math.hypot(f.x - p.x, f.y - p.y) < 75 && Math.abs(angDiff(p.face, Math.atan2(f.y - p.y, f.x - p.x))) < 1.3));
+      A.fx.push({ k: 'sweep', x: p.x, y: p.y, a: p.face, r: 60, life: .2, max: .2 }); tone(380, .07, 'triangle', .04, 180);
     }
     // Wolverine's healing factor
-    if (id === 'claws') { if (p.hearts < p.max) { p.heal += dt; if (p.heal >= 9) { p.heal = 0; p.hearts++; tone(880, .12, 'sine', .05, 1320); A.nums.push({ x: p.x, y: p.y - 20, v: '+♥', life: .9, good: 1 }); } } else p.heal = 0; }
-    // berserker lunge
-    if (p.dash > 0) { p.dash -= dt; const d = Math.hypot(np.x - p.x, np.y - p.y) || 1; p.x += (np.x - p.x) / d * 900 * dt; p.y += (np.y - p.y) / d * 900 * dt; p.tx = p.x; p.ty = p.y; if (!p.dashHit && np.e < 12) { p.dashHit = true; p.dash = 0; hitBoss(18, np.x, np.y); b.stun = Math.max(b.stun, .5); A.shake = .2; for (let k = 0; k < 3; k++) A.fx.push({ k: 'claw', x: np.x, y: np.y, a: p.face + (k - 1) * .5, flip: k % 2, life: .25, max: .25 }); } }
+    if (id === 'claws') { if (p.hearts < p.max) { p.heal += dt; if (p.heal >= 9) { p.heal = 0; p.hearts++; tone(880, .12, 'sine', .05, 1320); A.nums.push({ x: p.x, y: p.y, v: '+♥', life: .9, good: 1 }); } } else p.heal = 0; }
+    // berserker lunge: you really move
+    if (p.dash > 0) { p.dash -= dt; const d = Math.hypot(np.x - p.x, np.y - p.y) || 1; shove((np.x - p.x) / d * 22 * dt, (np.y - p.y) / d * 22 * dt); p.x = pos.x * 40; p.y = pos.z * 40;
+      if (here && !p.dashHit && nearPart(p.x, p.y).e < 14) { p.dashHit = true; p.dash = 0; hitBoss(18, np.x, np.y); b.stun = Math.max(b.stun, .5); A.shake = .2; for (let k = 0; k < 3; k++) A.fx.push({ k: 'claw', x: np.x, y: np.y, a: p.face + (k - 1) * .5, flip: k % 2, life: .25, max: .25 }); } }
+    const B = bnd();
     A.shots = A.shots.filter(s => {
       s.t += dt; s.spin += dt * 16; s.cool = (s.cool || 0) - dt;
       if (s.k === 'mjolnir' || s.k === 'shield') {
         if (s.back) { const dx = p.x - s.x, dy = p.y - s.y, d = Math.hypot(dx, dy) || 1; s.vx = dx / d * 720; s.vy = dy / d * 720; if (d < 20) { p.ready = true; p.fire = .08; return false; } }
         else {
-          if (s.k === 'mjolnir') { const cur = Math.atan2(s.vy, s.vx), want = Math.atan2(b.y - s.y, b.x - s.x), an = cur + clamp(angDiff(cur, want), -dt * 2.5, dt * 2.5); s.vx = Math.cos(an) * 560; s.vy = Math.sin(an) * 560; }
+          if (s.k === 'mjolnir' && s.home && here) { const cur = Math.atan2(s.vy, s.vx), want = Math.atan2(b.y - s.y, b.x - s.x), an = cur + clamp(angDiff(cur, want), -dt * 2.5, dt * 2.5); s.vx = Math.cos(an) * 560; s.vy = Math.sin(an) * 560; }
           if (s.t > (s.k === 'mjolnir' ? .8 : 1.2)) s.back = true;
         }
         s.x += s.vx * dt; s.y += s.vy * dt;
         if (!s.back) {
-          if (s.k === 'shield') { if (s.x < 10 || s.x > AW - 10) { s.vx = -s.vx; s.x = clamp(s.x, 10, AW - 10); tone(760, .03, 'triangle', .02); } if (s.y < TOP || s.y > AH - 10) { s.vy = -s.vy; s.y = clamp(s.y, TOP, AH - 10); tone(760, .03, 'triangle', .02); } }
-          else if (s.x < -20 || s.x > AW + 20 || s.y < -20 || s.y > AH + 20) s.back = true;
+          if (s.k === 'shield') { if (s.x < B.x0 || s.x > B.x1) { s.vx = -s.vx; s.x = clamp(s.x, B.x0, B.x1); tone(760, .03, 'triangle', .02); } if (s.y < B.y0 || s.y > B.y1) { s.vy = -s.vy; s.y = clamp(s.y, B.y0, B.y1); tone(760, .03, 'triangle', .02); } }
+          else if (s.x < B.x0 - 20 || s.x > B.x1 + 20 || s.y < B.y0 - 20 || s.y > B.y1 + 20) s.back = true;
         }
-        if (s.cool <= 0 && hitsBoss(s.x, s.y, 12)) {
+        if (here && s.cool <= 0 && hitsBoss(s.x, s.y, 12)) {
           if (!s.back) { hitBoss(s.k === 'mjolnir' ? 6 : 5, s.x, s.y); s.back = true; s.cool = .3; if (s.k === 'mjolnir') { A.shake = .12; tone(90, .12, 'square', .05, 50); } else tone(1100, .06, 'triangle', .04); }
           else if (!s.h2) { s.h2 = true; hitBoss(2, s.x, s.y); }
         }
         return true;
       }
-      // batarang: curves toward the boss
-      const cur = Math.atan2(s.vy, s.vx), want = Math.atan2(b.y - s.y, b.x - s.x), an = cur + clamp(angDiff(cur, want), -dt * 4, dt * 4);
-      s.vx = Math.cos(an) * 380; s.vy = Math.sin(an) * 380; s.x += s.vx * dt; s.y += s.vy * dt;
-      if (hitsBoss(s.x, s.y, 8)) { hitBoss(2.5, s.x, s.y); return false; }
+      // batarang: curves toward the creature if you threw it that way
+      if (s.home && here) { const cur = Math.atan2(s.vy, s.vx), want = Math.atan2(b.y - s.y, b.x - s.x), an = cur + clamp(angDiff(cur, want), -dt * 4, dt * 4); s.vx = Math.cos(an) * 400; s.vy = Math.sin(an) * 400; }
+      s.x += s.vx * dt; s.y += s.vy * dt;
+      if (here && hitsBoss(s.x, s.y, 8)) { hitBoss(2.5, s.x, s.y); return false; }
       return s.t < 2.2;
     });
   }
   function special(){
     if (!A || A.over) return;
     const p = A.p, b = A.boss; if (p.sp > 0) return;
+    if (A.bz !== A.pz && A.w.id !== 'batarang') return say('Your special needs the creature in the same room as you.', 2400);
     p.sp = A.w.cd;
     const np = nearPart(p.x, p.y);
     switch (A.w.id) {
@@ -2142,10 +2169,10 @@ h1,h2,h3,p{margin:0}
         A.fx.push({ k: 'bolt', x: b.x, y: b.y, life: .45, max: .45 }); hitBoss(24); b.stun = 1.4; A.shake = .4;
         A.foes = A.foes.filter(f => f.mine || Math.hypot(f.x - b.x, f.y - b.y) > 150);
         tone(55, .6, 'sawtooth', .09, 30); tone(1800, .1, 'square', .03, 300); break;
-      case 'claws': p.dash = .35; p.dashHit = false; p.inv = Math.max(p.inv, .5); tone(200, .15, 'sawtooth', .05, 500); break;
+      case 'claws': p.dash = .4; p.dashHit = false; p.inv = Math.max(p.inv, .5); tone(200, .15, 'sawtooth', .05, 500); break;
       case 'batarang': {
         p.smoke = 3; p.inv = Math.max(p.inv, 3);
-        b.decoy = { x: clamp(AW - p.x + (Math.random() - .5) * 100, 40, AW - 40), y: clamp(TOP + AH - p.y, TOP + 40, AH - 40), vx: 0, vy: 0 };
+        const B = bnd(); b.decoy = { x: clamp(B.x0 + B.x1 - p.x + (Math.random() - .5) * 100, B.x0 + 40, B.x1 - 40), y: clamp(B.y0 + B.y1 - p.y, B.y0 + 40, B.y1 - 40), vx: 0, vy: 0 };
         A.fx.push({ k: 'smoke', x: p.x, y: p.y, life: 1.4, max: 1.4 });
         for (let k = 0; k < 6; k++) { const an = k / 6 * Math.PI * 2; A.shots.push({ k: 'bat', x: p.x, y: p.y, vx: Math.cos(an) * 380, vy: Math.sin(an) * 380, t: 0, spin: 0 }); }
         tone(120, .35, 'triangle', .05, 60); break; }
@@ -2179,8 +2206,6 @@ h1,h2,h3,p{margin:0}
   }
 
   // ======================= the lair: boss fights in 3D =======================
-  // the arena uses a 480 x 640 fight grid; 40 grid units = 1 metre, centred on the arena floor
-  const WX = x => (x - 240) / 40, WZ = y => (y - 348) / 40;
   let lairScene = null, fightG = null, lairBoard = null, lairAnim = null;
   const pods = [], rack = {};
   const glowM = (color, o = {}) => new THREE.MeshStandardMaterial(Object.assign({ color, emissive: color, emissiveIntensity: .8, roughness: .5 }, o));
@@ -2224,17 +2249,6 @@ h1,h2,h3,p{margin:0}
       const st = new THREE.Mesh(new THREE.ExtrudeGeometry(starShape(.12), { depth: .02, bevelEnabled: false }), mat(0xF4F4F4, { metalness: .4, roughness: .35 })); st.position.z = .02; g.add(st);
     }
     return g;
-  }
-
-  // ---------- the hero (you) ----------
-  function mkHero(){
-    const g = new THREE.Group(), jeans = mat(0x2B3A55), hoodie = mat(0xFFC93C, { roughness: .7 }), skin = mat(0xC68B59), hair = mat(0x16181D);
-    const legs = [-.1, .1].map(z => { const l = new THREE.Group(); l.position.set(0, .5, z); g.add(l); const m = new THREE.Mesh(new THREE.CylinderGeometry(.075, .07, .5, 10), jeans); m.position.y = -.25; m.castShadow = true; l.add(m); box(.18, .07, .1, mat(0xEEF1F5), .04, -.5, 0, l); return l; });
-    const torso = cyl(.2, .18, .48, hoodie, 0, .75, 0, g, 14);
-    sph(.17, skin, 0, 1.15, 0, g); const hr = sph(.18, hair, -.03, 1.2, 0, g, 1, .7, 1); hr.position.y = 1.2;
-    const arm = s => { const a = new THREE.Group(); a.position.set(0, .95, s * .26); g.add(a); const m = new THREE.Mesh(new THREE.CylinderGeometry(.06, .055, .42, 8), hoodie); m.position.y = -.2; m.castShadow = true; a.add(m); const hand = new THREE.Group(); hand.position.y = -.42; a.add(hand); sph(.06, skin, 0, 0, 0, hand); return { a, hand }; };
-    const R = arm(1), L = arm(-1);
-    return { g, legs, R, L, torso, weapon: null };
   }
 
   // ---------- the five creatures (built facing +x) ----------
@@ -2382,7 +2396,10 @@ h1,h2,h3,p{margin:0}
     [[-6, 0], [6, 0]].forEach(([x, z]) => box(.08, .05, 14.6, edge, x, .03, z, lairScene));
     // cave walls, with rocks and stalactites
     box(18, 7, .6, stone, 0, 3.5, -11.3, lairScene); box(.6, 7, 22, stone, -9.3, 3.5, 0, lairScene); box(.6, 7, 22, stone, 9.3, 3.5, 0, lairScene);
-    box(18, .9, .3, stone, 0, .45, 11.1, lairScene);
+    // the front wall, with a lit doorway at the top of the stairs
+    box(14.8, 7, .6, stone, -1.6, 3.5, 11.5, lairScene); box(1.6, 7, .6, stone, 8.2, 3.5, 11.5, lairScene); box(1.6, 3, .6, stone, 6.6, 1.5, 11.5, lairScene); box(1.6, 1.6, .6, stone, 6.6, 6.2, 11.5, lairScene);
+    const door = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2.4), new THREE.MeshBasicMaterial({ color: 0xFFE3A8 })); door.position.set(6.6, 4.2, 11.45); door.rotation.y = Math.PI; door.userData.egg = 'lairexit'; lairScene.add(door);
+    const doorLight = new THREE.PointLight(0xFFD58A, .8, 7, 2); doorLight.position.set(6.6, 4.4, 10.6); lairScene.add(doorLight);
     for (let k = 0; k < 40; k++) { const side = k % 3, r = .5 + Math.random() * 1.2, m = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), rock);
       if (side === 0) m.position.set(-9 + Math.random() * 18, Math.random() * 7, -10.9); else m.position.set((side === 1 ? -1 : 1) * 8.9, Math.random() * 7, -11 + Math.random() * 22);
       m.rotation.set(Math.random() * 3, Math.random() * 3, 0); lairScene.add(m); }
@@ -2419,10 +2436,12 @@ h1,h2,h3,p{margin:0}
     const bc = document.createElement('canvas'); bc.width = 900; bc.height = 600;
     const bt = new THREE.CanvasTexture(bc); bt.encoding = THREE.sRGBEncoding;
     lairBoard = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 3), new THREE.MeshBasicMaterial({ map: bt })); lairBoard.userData.c = bc; lairBoard.userData.egg = 'lairboard'; lairBoard.rotation.y = -Math.PI / 2; lairBoard.position.set(8.95, 2.6, -3.4); lairScene.add(lairBoard);
-    // the way back up: stairs behind the balcony
-    const stairs = new THREE.Group(); stairs.userData.egg = 'lairexit'; stairs.position.set(6.6, 0, 9.4); lairScene.add(stairs);
-    for (let k = 0; k < 8; k++) box(1.6, .2, .4, mat(0x3A3D48, { metalness: .4, roughness: .6 }), 0, .2 + k * .35, -1.2 + k * .3, stairs);
-    addMarkerTo(lairScene, V(6.6, 2.4, 9.4)).userData.egg = 'lairexit';
+    // the stairs up to the house: walk up them to leave
+    const stepM = mat(0x3A3D48, { metalness: .4, roughness: .6 }), railM = mat(0xFFC93C, { metalness: .5, roughness: .4 });
+    for (let k = 0; k < 12; k++) { const top = (k + 1) * .25; const st = box(1.5, top, .3, stepM, 6.6, top / 2, 7.15 + k * .3, lairScene); st.userData.walk = true; }
+    box(1.5, 3, .9, stepM, 6.6, 1.5, 11, lairScene).userData.walk = true;
+    [5.82, 7.38].forEach(x => { const r = box(.05, .05, 4.6, railM, x, 2.3, 8.95, lairScene); r.rotation.x = -Math.atan2(3, 3.6); });
+    addMarkerTo(lairScene, V(6.6, 5.9, 11)).userData.egg = 'lairexit';
     addMarkerTo(lairScene, V(-8.2, 3.5, -3.4)).userData.egg = 'rackinfo';
     fightG = new THREE.Group(); lairScene.add(fightG);
     plats.lair = [{ x0: -8.4, x1: 8.4, z0: -8.2, z1: 10.4 }];
@@ -2448,114 +2467,182 @@ h1,h2,h3,p{margin:0}
     fade(() => {
       if (!lairScene) buildLair(); else refreshLair();
       saved = { pos: V(3.4, 1.6, -.2), yaw: -Math.PI / 2, pitch: 0 };
-      inWorld = true; zone = 'lair'; falling = false; vy = 0; walkTarget = null; pos.set(0, 1.6, 9.6); yaw = 0; pitch = -.28; uiZone();
-      dock.classList.remove('on'); $('#worldBack').hidden = false; $('#worldBack').textContent = 'Back upstairs';
-      say('You found the lair. Grab a weapon from the rack on the left, then open a pod.', 5200);
+      inWorld = true; zone = 'lair'; falling = false; vy = 0; walkTarget = null; pos.set(6.6, 4.6, 10.9); yaw = 0; pitch = -.32; uiZone();
+      dock.classList.remove('on'); $('#worldBack').hidden = false; $('#worldBack').textContent = A ? 'Leave the fight' : 'Back upstairs';
+      if (A) fightMoved(); else say('You found the lair. Walk down the stairs, grab a weapon from the rack on the left, then open a pod.', 5200);
     }, '#06070B');
   }
+  // up the stairs and out through the bookshelf (a fight comes with you)
+  let leaving = false;
   function leaveLair(){
-    if (A) endFight();
-    fade(() => { inWorld = false; zone = 'hub'; walkTarget = null; vy = 0; pos.copy(saved.pos); yaw = saved.yaw; pitch = saved.pitch; dock.classList.add('on'); $('#worldBack').hidden = true; $('#worldBack').textContent = 'Back to the room'; uiZone(); });
+    if (leaving) return; leaving = true; walkTarget = null;
+    fade(() => {
+      leaving = false; inWorld = false; zone = 'hub'; vy = 0; pos.set(3.5, 1.6, -.4); yaw = Math.PI / 2; pitch = 0; uiZone();
+      $('#worldBack').textContent = 'Back to the room';
+      if (A) { $('#worldBack').hidden = false; $('#worldBack').textContent = 'Leave the fight'; fightMoved(); } else { $('#worldBack').hidden = true; dock.classList.add('on'); }
+    }, '#06070B');
   }
-  // ---------- a fight in the lair ----------
-  const hud = { el: $('#fhud'), name: $('#fName'), wpn: $('#fWeapon'), hp: $('#fHp'), hearts: $('#fHearts'), sp: $('#fSpecial'), fx: $('#fFx') };
+  // walking in the lair: your height follows the stairs, and the top of the stairs takes you upstairs
+  let lairLast = null;
+  function lairMove(dt){
+    if (!valid(pos.x, pos.z) && lairLast) { pos.x = lairLast.x; pos.z = lairLast.z; walkTarget = null; }
+    lairLast = { x: pos.x, z: pos.z };
+    pos.y += (1.6 + stairsY(pos.x, pos.z) - pos.y) * Math.min(1, dt * 14);
+    if (onStairs(pos.x, pos.z) && pos.z > 11.05) leaveLair();
+  }
+  // ---------- a fight, in first person ----------
+  const hud = { el: $('#fhud'), name: $('#fName'), wpn: $('#fWeapon'), hp: $('#fHp'), hearts: $('#fHearts'), sp: $('#fSpecial'), fx: $('#fFx'), banner: $('#fBanner') };
   const fctx = hud.fx.getContext('2d');
   function sizeFx(){ const d = Math.min(devicePixelRatio, 2); hud.fx.width = innerWidth * d; hud.fx.height = innerHeight * d; fctx.setTransform(d, 0, 0, d, 0, 0); }
   addEventListener('resize', sizeFx); sizeFx();
+  const WX = x => x / 40, WZ = y => y / 40;
   let pool = {}, used = {};
   function pooled(key, make){ const P = pool[key] || (pool[key] = []), i = used[key] = (used[key] || 0) + 1; if (P.length < i) { const m = make(); fightG.add(m); P.push(m); } const m = P[i - 1]; m.visible = true; return m; }
   function disposeDeep(o){ o.traverse(c => { if (c.geometry) c.geometry.dispose(); if (c.material && !Array.isArray(c.material) && c.material.map && !Object.values(glyphTex).includes(c.material.map)) c.material.map.dispose(); }); }
-  function clearFight(){ if (!fightG) return; while (fightG.children.length) { const c = fightG.children[0]; fightG.remove(c); disposeDeep(c); } pool = {}; }
+  function clearFight(){ [fightG, viewG].forEach(G => { if (!G) return; while (G.children.length) { const c = G.children[0]; G.remove(c); disposeDeep(c); } if (G.parent) G.parent.remove(G); }); pool = {}; }
   const orbGeo = new THREE.SphereGeometry(1, 14, 10), orbMats = {};
   const orbMat = col => orbMats[col] || (orbMats[col] = glowM(new THREE.Color(col).getHex(), { emissiveIntensity: 1 }));
+  const viewG = new THREE.Group();
+  const lookAngle = () => Math.atan2(-Math.cos(yaw), -Math.sin(yaw));
+  const fightZone = () => inWorld && zone === 'lair' ? 'lair' : 'room';
+  const fightScene = () => fightZone() === 'lair' ? lairScene : scene;
   function startBoss(i){
     if (!lairScene) return;
-    closePanel(); tip.classList.remove('on'); Object.keys(keys).forEach(k => keys[k] = false); Object.keys(akeys).forEach(k => akeys[k] = false);
+    closePanel(); tip.classList.remove('on'); hint.classList.remove('on'); Object.keys(akeys).forEach(k => akeys[k] = false);
     clearFight(); walkTarget = null;
-    const def = BOSSES[i], C = CREATURES[def.id], w = WEAPONS.find(x => x.id === weapon);
-    A = { def, C, i, w, t: 0, over: false, won: false, shake: 0, spShown: '', dead: 0,
-      cam: { t: A ? 1 : 0, p0: camera.position.clone(), q0: camera.quaternion.clone() },
-      p: { x: AW / 2, y: AH - 90, tx: AW / 2, ty: AH - 90, vx: 0, vy: 0, hearts: 5, max: 5, inv: 0, fire: .8, sp: 0, dash: 0, smoke: 0, heal: 0, swing: 0, spin: 0, face: -Math.PI / 2, ready: true, flip: false },
+    const def = BOSSES[i], C = CREATURES[def.id], w = WEAPONS.find(x => x.id === weapon), bx = (-6 + i * 3) * 40, by = -300;
+    A = { def, C, i, w, t: 0, over: false, won: false, shake: 0, spShown: '', dead: 0, bz: 'lair', pz: 'lair', follow: 0, fled: false, jz: 0, jv: 0, hurtT: 0, atk: false, hold: false,
+      p: { x: pos.x * 40, y: pos.z * 40, vx: 0, vy: 0, hearts: 5, max: 5, inv: 0, fire: .3, sp: 0, dash: 0, smoke: 0, heal: 0, swing: 0, spin: 0, face: lookAngle(), ready: true, flip: false, throwT: 0 },
       shots: [], foes: [], rings: [], fx: [], nums: [],
-      boss: { x: AW / 2, y: 190, vx: 0, vy: 0, r: C.r, hp: def.hp, max: def.hp, flash: 0, a: 0, face: Math.PI / 2, st: 'roam', t: 2.2, stun: 0, h: 0, dir: Math.random() < .5 ? 1 : -1, mv: '', swing: 0, mouth: 0, ring: 0, cd: 0, n: 0, w: 1,
-        segs: Array.from({ length: C.seg || 0 }, (_, k) => ({ x: AW / 2, y: 190 - (k + 1) * 17 })) } };
-    // the creature steps out of its pod, and you step into the pit
+      boss: { x: bx, y: by, vx: 0, vy: 0, r: C.r, hp: def.hp, max: def.hp, flash: 0, a: 0, face: Math.PI / 2, st: 'roam', t: 2.2, stun: 0, h: 0, el: 0, dir: Math.random() < .5 ? 1 : -1, mv: '', swing: 0, mouth: 0, ring: 0, cd: 0, n: 0, w: 1,
+        segs: Array.from({ length: C.seg || 0 }, (_, k) => ({ x: bx, y: by - (k + 1) * 6 })) } };
+    // the creature steps out of its pod
     const M = CREATURE3D[def.id](false); fightG.add(M.g); if (M.segs) M.segs.forEach(s => fightG.add(s)); A.model = M;
-    const H = mkHero(); fightG.add(H.g); A.hero = H;
-    H.weapon = mkWeapon(w.id); (w.id === 'shield' ? H.L.hand : H.R.hand).add(H.weapon);
-    if (w.id === 'shield') { H.weapon.rotation.set(0, Math.PI / 2, 0); H.weapon.position.set(.12, 0, 0); } else H.weapon.scale.setScalar(w.id === 'batarang' ? 1.3 : 1);
-    H.smoke = new THREE.Group(); H.g.add(H.smoke); for (let k = 0; k < 7; k++) sph(.35, new THREE.MeshStandardMaterial({ color: 0x6B7080, transparent: true, opacity: .55, depthWrite: false }), Math.cos(k) * .45, .5 + (k % 3) * .3, Math.sin(k) * .45, H.smoke, 1, 1, 1, 8);
-    hud.el.hidden = false; $('#arenaMsg').hidden = true; hud.name.textContent = def.name; hud.hp.style.background = def.col; hud.wpn.textContent = `${w.name} · ${w.from}`;
-    $('#worldBack').textContent = 'Leave the fight';
+    buildView();
+    document.body.classList.add('fighting'); hud.el.hidden = false; $('#arenaMsg').hidden = true; hud.name.textContent = def.name; hud.hp.style.background = def.col; hud.wpn.textContent = `${w.name} · ${w.from}`;
+    $('#fHelp').textContent = fine ? 'WASD to move, mouse to aim, click (or hold) to attack, E for your special, Space to jump over shockwaves.' : 'Joystick to move, drag to look, tap to attack. Jump over shockwaves with the Jump button.';
+    $('#worldBack').hidden = false; $('#worldBack').textContent = 'Leave the fight'; dock.classList.remove('on');
+    if (fine && canvas.requestPointerLock) canvas.requestPointerLock();
+    if (!fine) $('#jumpBtn').hidden = false;
     tone(90, .6, 'sawtooth', .05, 45); toast.classList.remove('on');
+  }
+  // the weapon you hold, drawn in front of the camera
+  function buildView(){
+    const id = A.w.id, hands = id === 'claws' ? [1, -1] : [id === 'shield' ? -.4 : 1];
+    A.view = hands.map(s => {
+      const holder = new THREE.Group(), w = mkWeapon(id); holder.add(w); viewG.add(holder);
+      holder.userData.base = id === 'shield' ? V(-.26, -.34, -.78) : V(.34 * s, -.33, -.7);
+      if (id === 'shield') w.scale.setScalar(.45); else { w.scale.setScalar(id === 'batarang' ? .55 : id === 'sword' ? .36 : .42); w.rotation.set(-1.05, 0, s > 0 ? .35 : -.35); if (id === 'mjolnir') w.position.y = -.1; }
+      const glove = sph(.04, mat(id === 'claws' ? 0xF2C230 : 0xC68B59), 0, 0, 0, holder, 1, 1, 1, 10); glove.visible = id !== 'claws' && id !== 'shield';
+      w.traverse(c => { if (c.isMesh) c.castShadow = false; });
+      return { holder, w, s };
+    });
   }
   function endFight(instant){
     if (!A) return;
-    const p = A.p, done = () => { clearFight(); A = null; hud.el.hidden = true; $('#arenaMsg').hidden = true; $('#worldBack').textContent = 'Back upstairs'; pos.set(clamp(WX(p.x), -8, 8), 1.6, clamp(WZ(p.y) + 1.2, -8, 10.2)); yaw = 0; pitch = -.25; vy = 0; refreshLair(); };
-    if (instant) done(); else fade(done, '#06070B');
+    const done = () => {
+      clearFight(); A = null; hud.el.hidden = true; document.body.classList.remove('fighting'); $('#arenaMsg').hidden = true; $('#jumpBtn').hidden = true;
+      if (document.pointerLockElement) document.exitPointerLock();
+      if (inWorld) { $('#worldBack').textContent = 'Back upstairs'; } else { $('#worldBack').hidden = true; $('#worldBack').textContent = 'Back to the room'; dock.classList.add('on'); }
+      refreshLair();
+    };
+    if (instant) done(); else fade(done, inWorld ? '#06070B' : '#FFF8EC');
   }
-  $('#arenaRetry').onclick = () => { if (A) startBoss(A.i); };
+  // you changed rooms mid-fight
+  function fightMoved(){ A.pz = fightZone(); A.p.x = pos.x * 40; A.p.y = pos.z * 40; A.shots = A.shots.filter(s => (s.k === 'mjolnir' || s.k === 'shield') ? (p => (s.x = p.x, s.y = p.y, true))(A.p) : false); A.foes = []; A.follow = 0; }
+  // the creature changed rooms (fled upstairs, or chased you up)
+  function arrive(z){
+    const b = A.boss; A.bz = z; A.follow = 0;
+    if (z === 'room') { b.x = -20; b.y = 40; } else { b.x = 264; b.y = 240; }
+    b.vx = b.vy = 0; b.el = 0; b.h = 0; b.st = 'roam'; b.t = 1.4; b.tel = null; b.segs.forEach(s => { s.x = b.x; s.y = b.y; });
+    A.foes = []; A.rings.forEach(r => r.m && (r.m.parent && r.m.parent.remove(r.m), disposeDeep(r.m))); A.rings = [];
+    if (z === A.pz) { tone(70, .6, 'sawtooth', .07, 40); A.shake = .4; say(z === 'room' ? `${A.def.name} crashed through the bookshelf into the room!` : `${A.def.name} is back in the lair.`, 3000); }
+  }
+  $('#arenaRetry').onclick = () => { if (!A) return; const i = A.i; endFight(true); if (fightZone() !== 'lair') return enterLair(); startBoss(i); };
   $('#arenaBack').onclick = () => endFight();
   hud.sp.onclick = () => special();
-  addEventListener('keydown', e => { if (!A) return; const k = e.key.toLowerCase(); akeys[k] = true; if (e.key === 'Escape') endFight(); if ((e.key === ' ' || k === 'e') && !e.repeat && !A.over) special(); if (e.key.startsWith('Arrow') || e.key === ' ') e.preventDefault(); });
-  addEventListener('keyup', e => { akeys[e.key.toLowerCase()] = false; });
-  const fplane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0), fhit = new THREE.Vector3();
-  function fightPoint(e){ ndc.set(e.clientX / innerWidth * 2 - 1, -(e.clientY / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera); if (!ray.ray.intersectPlane(fplane, fhit)) return; A.p.tx = fhit.x * 40 + 240; A.p.ty = fhit.z * 40 + 348 - (e.pointerType === 'touch' ? 45 : 0); }
+  $('#fQuit').onclick = () => endFight();
+  function attack(){ if (A && !A.over) A.atk = true; }
+  function fightJump(){ if (A && !A.over && A.jz <= 0) { A.jv = 5.2; tone(420, .08, 'sine', .04, 620); } }
+  $('#jumpBtn').addEventListener('click', () => { if (A) fightJump(); });
+  addEventListener('keydown', e => { if (!A) return; const k = e.key.toLowerCase(); akeys[k] = true;
+    if (e.key === 'Escape' && !document.pointerLockElement) endFight();
+    if ((k === 'e' || k === 'q') && !e.repeat && !A.over) special();
+    if (e.key === ' ') { e.preventDefault(); if (!e.repeat) fightJump(); }
+    if (k === 'f' || k === 'enter') { A.hold = true; attack(); } });
+  addEventListener('keyup', e => { const k = e.key.toLowerCase(); akeys[k] = false; if (A && (k === 'f' || k === 'enter')) A.hold = false; });
+  addEventListener('mouseup', () => { if (A) A.hold = false; });
+  canvas.addEventListener('contextmenu', e => { if (A) { e.preventDefault(); special(); } });
   function arenaEnd(won){
-    A.over = true; A.won = won;
+    A.over = true; A.won = won; A.hold = false;
+    if (document.pointerLockElement) document.exitPointerLock();
     const m = $('#arenaMsg'); m.hidden = false;
     if (won) {
       beaten.add(A.def.id); try { localStorage.setItem('ru-bosses', JSON.stringify([...beaten])); } catch (e) {}
       [523, 659, 784, 1046].forEach((f, k) => setTimeout(() => tone(f, .25, 'triangle', .06), k * 110));
-      $('#arenaTitle').textContent = `${A.def.name}: defeated`; $('#arenaText').textContent = `${A.def.win} Finished off with ${A.w.name}.` + (beaten.size === BOSSES.length ? ' ' + POST_CREDITS : '');
+      $('#arenaTitle').textContent = `${A.def.name}: defeated`; $('#arenaText').textContent = `${A.def.win} Finished off with ${A.w.name}${A.bz === 'room' ? ', upstairs in my room' : ''}.` + (beaten.size === BOSSES.length ? ' ' + POST_CREDITS : '');
       if (beaten.size === BOSSES.length) secret('credits');
       refreshLair();
     } else { tone(160, .5, 'sawtooth', .05, 60); $('#arenaTitle').textContent = 'Plot armour ran out'; $('#arenaText').textContent = 'Every hero loses the first fight. Try again, or grab a different weapon from the rack.'; }
+    $('#arenaBack').textContent = inWorld ? 'Back to the lair' : 'Back to the room';
   }
-  function dropFx(f){ if (f.m) { fightG.remove(f.m); disposeDeep(f.m); f.m = null; } if (f.k === 'bolt') lairAnim.flash.intensity = 0; }
+  function dropFx(f){ if (f.m) { f.m.parent && f.m.parent.remove(f.m); disposeDeep(f.m); f.m = null; } if (f.k === 'bolt' && lairAnim) lairAnim.flash.intensity = 0; }
   function simStep(dt){
     const p = A.p, b = A.boss;
-    A.t += dt;
-    const kx = (akeys.d || akeys.arrowright ? 1 : 0) - (akeys.a || akeys.arrowleft ? 1 : 0), ky = (akeys.s || akeys.arrowdown ? 1 : 0) - (akeys.w || akeys.arrowup ? 1 : 0);
-    if (kx || ky) { p.tx = p.x + kx * 30; p.ty = p.y + ky * 30; }
-    const ox = p.x, oy = p.y;
-    if (p.dash <= 0) { p.x += (p.tx - p.x) * Math.min(1, dt * 12); p.y += (p.ty - p.y) * Math.min(1, dt * 12); }
-    p.x = clamp(p.x, 14, AW - 14); p.y = clamp(p.y, TOP + 14, AH - 14); p.tx = clamp(p.tx, 14, AW - 14); p.ty = clamp(p.ty, TOP + 14, AH - 14);
-    p.vx += ((p.x - ox) / dt - p.vx) * Math.min(1, dt * 8); p.vy += ((p.y - oy) / dt - p.vy) * Math.min(1, dt * 8);
-    bossStep(dt);
+    A.t += dt; A.pz = fightZone();
+    // you are wherever the camera is
+    const nx = pos.x * 40, ny = pos.z * 40;
+    p.vx += ((nx - p.x) / dt - p.vx) * Math.min(1, dt * 8); p.vy += ((ny - p.y) / dt - p.vy) * Math.min(1, dt * 8);
+    p.x = nx; p.y = ny; p.face = lookAngle();
+    // jumping (over shockwaves)
+    if (A.jz > 0 || A.jv > 0) { A.jv -= 16 * dt; A.jz = Math.max(0, A.jz + A.jv * dt); if (A.jz === 0) A.jv = 0; }
+    const here = A.bz === A.pz;
+    if (here) {
+      A.follow = 0;
+      bossStep(dt);
+      // you can't walk through it
+      const np = nearPart(p.x, p.y); if (np.e < 4 && b.h < .3) { const d = Math.hypot(p.x - np.x, p.y - np.y) || 1; shove((p.x - np.x) / d * (4 - np.e) / 40, (p.y - np.y) / d * (4 - np.e) / 40); }
+    } else {
+      b.tel = null;
+      // left it behind in the lair? it comes up after you
+      if (A.bz === 'lair' && A.pz === 'room') { A.follow += dt; if (A.follow > 2.5) arrive('room'); }
+    }
     weaponStep(dt);
+    const B = bnd();
     A.foes.forEach(f => { if (f.home) { const dx = p.x - f.x, dy = p.y - f.y, d = Math.hypot(dx, dy) || 1; f.vx += dx / d * 90 * dt; f.vy += dy / d * 90 * dt; } f.x += f.vx * dt; f.y += f.vy * dt; f.life -= dt; });
-    A.foes = A.foes.filter(f => { if (f.mine && hitsBoss(f.x, f.y, f.r)) { hitBoss(3, f.x, f.y); return false; } return f.life > 0 && f.x > -30 && f.x < AW + 30 && f.y > -30 && f.y < AH + 30; });
-    A.rings.forEach(r => r.r += r.vr * dt); A.rings = A.rings.filter(r => r.r < r.max || (r.m && (fightG.remove(r.m), disposeDeep(r.m)), false));
-    p.inv -= dt; A.shake = Math.max(0, A.shake - dt);
+    A.foes = A.foes.filter(f => { if (f.mine && here && hitsBoss(f.x, f.y, f.r)) { hitBoss(3, f.x, f.y); return false; } return f.life > 0 && f.x > B.x0 - 60 && f.x < B.x1 + 60 && f.y > B.y0 - 60 && f.y < B.y1 + 60; });
+    A.rings.forEach(r => r.r += r.vr * dt); A.rings = A.rings.filter(r => r.r < r.max || (r.m && (r.m.parent && r.m.parent.remove(r.m), disposeDeep(r.m)), false));
+    p.inv -= dt; A.shake = Math.max(0, A.shake - dt); A.hurtT = Math.max(0, A.hurtT - dt); p.throwT = Math.max(0, p.throwT - dt);
     A.fx.forEach(f => f.life -= dt); A.fx = A.fx.filter(f => f.life > 0 || (dropFx(f), false));
     A.nums.forEach(n => n.life -= dt); A.nums = A.nums.filter(n => n.life > 0);
-    // what can hurt you: shots (Cap's shield blocks the ones in front) and shockwave rings
-    const guard = A.w.id === 'shield' && p.ready;
-    for (const f of A.foes) {
-      if (f.mine || Math.hypot(f.x - p.x, f.y - p.y) > f.r + (guard ? 20 : 7)) continue;
-      if (guard && Math.abs(angDiff(p.face, Math.atan2(f.y - p.y, f.x - p.x))) < 1.1) { f.life = 0; tone(1250, .03, 'triangle', .02); continue; }
-      if (Math.hypot(f.x - p.x, f.y - p.y) < f.r + 7) { hurt(f.x, f.y); break; }
+    if (here) {
+      // what can hurt you: shots (Cap's shield blocks the ones in front) and shockwave rings (jump them)
+      const guard = A.w.id === 'shield' && p.ready;
+      for (const f of A.foes) {
+        if (f.mine || Math.hypot(f.x - p.x, f.y - p.y) > f.r + (guard ? 22 : 9)) continue;
+        if (guard && Math.abs(angDiff(p.face, Math.atan2(f.y - p.y, f.x - p.x))) < 1.1) { f.life = 0; tone(1250, .03, 'triangle', .02); continue; }
+        if (Math.hypot(f.x - p.x, f.y - p.y) < f.r + 9) { hurt(f.x, f.y); break; }
+      }
+      if (A.jz < .3) for (const r of A.rings) { const d = Math.hypot(p.x - r.x, p.y - r.y); if (Math.abs(d - r.r) < 9 && Math.abs(angDiff(r.gap, Math.atan2(p.y - r.y, p.x - r.x))) > r.gw) { hurt(r.x, r.y); break; } }
     }
-    for (const r of A.rings) { const d = Math.hypot(p.x - r.x, p.y - r.y); if (Math.abs(d - r.r) < 9 && Math.abs(angDiff(r.gap, Math.atan2(p.y - r.y, p.x - r.x))) > r.gw) { hurt(r.x, r.y); break; } }
     if (b.hp <= 0) arenaEnd(true); else if (p.hearts <= 0) arenaEnd(false);
   }
-  // ---------- drawing the fight in 3D ----------
+  // ---------- drawing the fight ----------
   const flat = geo => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xFF3C3C, transparent: true, opacity: .4, depthWrite: false, side: THREE.DoubleSide })); m.rotation.x = Math.PI / 2; const g = new THREE.Group(); g.add(m); return g; };
   function makeFx(f){
     const basic = (c, o = .9) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o, depthWrite: false, side: THREE.DoubleSide });
     const g = new THREE.Group();
     if (f.k === 'bolt') {
       const b = A.boss, X = WX(b.x), Z = WZ(b.y), pts = []; let x = X, z = Z;
-      for (let y = 11; y > 1; y -= 1) { pts.push(V(x, y, z)); x = X + (Math.random() - .5) * 1.2; z = Z + (Math.random() - .5) * 1.2; } pts.push(V(X, 1, Z));
+      for (let y = 9; y > 1; y -= 1) { pts.push(V(x, y, z)); x = X + (Math.random() - .5) * 1.2; z = Z + (Math.random() - .5) * 1.2; } pts.push(V(X, 1, Z));
       const curve = new THREE.CatmullRomCurve3(pts); g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 60, .09, 6), basic(0xE8F6FF, 1))); g.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 60, .25, 6), basic(0x7CC4FF, .35)));
-      lairAnim.flash.position.set(X, 3, Z); lairAnim.flash.intensity = 5;
+      if (lairAnim && A.pz === 'lair') { lairAnim.flash.position.set(X, 3, Z); lairAnim.flash.intensity = 5; }
     } else if (f.k === 'claw') {
-      g.position.set(WX(f.x), 1, WZ(f.y)); g.rotation.set(f.flip ? .6 : -.6, -f.a, 0);
+      g.position.set(WX(f.x), 1.1, WZ(f.y)); g.rotation.set(f.flip ? .6 : -.6, -f.a, 0);
       [-.14, 0, .14].forEach(z => { const m = new THREE.Mesh(new THREE.BoxGeometry(.05, .9, .03), basic(0xF2F8FF)); m.position.z = z; g.add(m); });
     } else if (f.k === 'sweep' || f.k === 'swipe') {
-      const r = f.r / 40, full = f.full, geo = full ? new THREE.RingGeometry(r - .2, r + .2, 64) : new THREE.RingGeometry(Math.max(.1, r - .25), r + .15, 40, 1, f.a - (f.w || 1.2), 2 * (f.w || 1.2));
-      const m = new THREE.Mesh(geo, basic(f.k === 'sweep' ? 0x4AEDD9 : new THREE.Color(A.def.col).getHex(), .8)); m.rotation.x = Math.PI / 2; g.add(m); g.position.set(WX(f.x), f.k === 'sweep' ? .7 : .9, WZ(f.y));
+      const r = f.r / 40, geo = f.full ? new THREE.RingGeometry(r - .2, r + .2, 64) : new THREE.RingGeometry(Math.max(.1, r - .25), r + .15, 40, 1, f.a - (f.w || 1.2), 2 * (f.w || 1.2));
+      const m = new THREE.Mesh(geo, basic(f.k === 'sweep' ? 0x4AEDD9 : new THREE.Color(A.def.col).getHex(), .8)); m.rotation.x = Math.PI / 2; g.add(m); g.position.set(WX(f.x), f.k === 'sweep' ? 1.0 : .9, WZ(f.y));
     } else if (f.k === 'smoke') {
       g.position.set(WX(f.x), 0, WZ(f.y)); for (let k = 0; k < 9; k++) { const s = sph(.3, new THREE.MeshStandardMaterial({ color: 0x6B7080, transparent: true, opacity: .7, depthWrite: false }), Math.cos(k * .7) * .3, .4, Math.sin(k * .7) * .3, g, 1, 1, 1, 8); s.userData.d = k * .7; }
     } else if (f.k === 'wave') {
@@ -2566,39 +2653,42 @@ h1,h2,h3,p{margin:0}
     fightG.add(g); return g;
   }
   function sync3D(dt){
-    const p = A.p, b = A.boss, t = A.t, H = A.hero, M = A.model;
+    const p = A.p, b = A.boss, t = A.t, M = A.model, sc3 = fightScene();
+    if (fightG.parent !== sc3) sc3.add(fightG);
+    if (viewG.parent !== sc3) sc3.add(viewG);
     used = {};
+    const here = A.bz === A.pz;
     // the creature
     const mv = Math.min(1, Math.hypot(b.vx, b.vy) / 50 + (b.st === 'wind' ? .3 : 0)), jit = b.st === 'wind' && !reduce ? .05 : 0;
-    M.g.position.set(WX(b.x) + (Math.random() - .5) * jit, b.h * 2.4, WZ(b.y) + (Math.random() - .5) * jit);
-    M.g.rotation.y = M.fixed !== undefined ? M.fixed : -b.face;
+    M.g.position.set(WX(b.x) + (Math.random() - .5) * jit, b.h * 2.4 + (b.el || 0), WZ(b.y) + (Math.random() - .5) * jit);
+    M.g.rotation.y = -b.face;
     let sc = b.flash > 0 ? 1.07 : 1;
     if (A.over && A.won) { A.dead += dt; sc = Math.max(0, 1 - A.dead * 1.2); M.g.rotation.y += A.dead * 8; }
-    M.g.scale.setScalar(sc); M.g.visible = sc > 0 && !(b.glitch && Math.random() < .4);
-    if (M.segs) M.segs.forEach((s, i) => { const q = b.segs[i], pr = i ? b.segs[i - 1] : b; s.position.x = WX(q.x); s.position.z = WZ(q.y); s.rotation.y = -Math.atan2(pr.y - q.y, pr.x - q.x); s.scale.setScalar(sc); s.visible = M.g.visible; });
+    M.g.scale.setScalar(sc * 1.2); M.g.visible = here && sc > 0 && !(b.glitch && Math.random() < .4);
+    if (M.segs) M.segs.forEach((s, i) => { const q = b.segs[i], pr = i ? b.segs[i - 1] : b; s.position.x = WX(q.x); s.position.z = WZ(q.y); s.rotation.y = -Math.atan2(pr.y - q.y, pr.x - q.x); s.scale.setScalar(sc * 1.2); s.visible = M.g.visible; if (b.el) s.position.y = .45 + stairsY(WX(q.x), WZ(q.y)); });
     M.anim(b, t, mv);
-    // the red warnings
-    if (b.tel !== A.telOf) { if (A.telM) { fightG.remove(A.telM); disposeDeep(A.telM); A.telM = null; } A.telOf = b.tel;
+    // the red warnings on the floor
+    if (b.tel !== A.telOf) { if (A.telM) { A.telM.parent && A.telM.parent.remove(A.telM); disposeDeep(A.telM); A.telM = null; } A.telOf = b.tel;
       if (b.tel) { const T = b.tel; A.telM = T.k === 'line' ? flat((() => { const gg = new THREE.PlaneGeometry(1, 1); gg.translate(.5, 0, 0); return gg; })()) : T.k === 'circle' ? flat(new THREE.CircleGeometry(1, 48)) : flat(new THREE.CircleGeometry(T.r / 40, 48, b.sa - T.w, 2 * T.w)); fightG.add(A.telM); } }
-    if (A.telM) { const T = b.tel; A.telM.children[0].material.opacity = .28 + Math.sin(t * 30) * .12; A.telM.position.y = .04;
+    if (A.telM) { const T = b.tel; A.telM.visible = here; A.telM.children[0].material.opacity = .32 + Math.sin(t * 30) * .12; A.telM.position.y = .04;
       if (T.k === 'line') { const an = Math.atan2(T.y - b.y, T.x - b.x), len = (Math.hypot(T.x - b.x, T.y - b.y) + 70) / 40; A.telM.position.x = WX(b.x); A.telM.position.z = WZ(b.y); A.telM.rotation.y = -an; A.telM.scale.set(len, 1, b.r * 1.4 / 40); }
       else if (T.k === 'circle') { A.telM.position.x = WX(T.x); A.telM.position.z = WZ(T.y); A.telM.scale.set(T.r / 40, 1, T.r / 40); }
       else { A.telM.position.x = WX(b.x); A.telM.position.z = WZ(b.y); } }
-    // shockwave rings (walk through the gap)
+    // shockwave rings (jump them, or slip through the gap)
     A.rings.forEach(r => {
       if (!r.m) { r.m = new THREE.Group(); r.m.add(new THREE.Mesh(new THREE.BufferGeometry(), glowM(new THREE.Color(r.col).getHex(), { emissiveIntensity: 1.2 }))); r.m.children[0].rotation.x = Math.PI / 2; fightG.add(r.m); }
       const m = r.m.children[0]; m.geometry.dispose(); m.geometry = new THREE.TorusGeometry(r.r / 40, .12, 6, 80, Math.PI * 2 - 2 * r.gw);
       r.m.position.set(WX(r.x), .15, WZ(r.y)); r.m.rotation.y = -(r.gap + r.gw);
     });
-    // shots coming at you
+    // shots coming at you (at chest height, so you can see them)
     A.foes.forEach(f => {
-      if (f.glyph) { const m = pooled('g' + f.glyph + f.col, () => glyphSprite(f.glyph, f.col, 1)); m.scale.setScalar(f.r / 40 * 3); m.position.set(WX(f.x), .8, WZ(f.y)); }
-      else { const m = pooled('o' + f.col, () => new THREE.Mesh(orbGeo, orbMat(f.col))); m.scale.setScalar(f.r / 40 * 1.3); m.position.set(WX(f.x), .75, WZ(f.y)); }
+      if (f.glyph) { const m = pooled('g' + f.glyph + f.col, () => glyphSprite(f.glyph, f.col, 1)); m.scale.setScalar(f.r / 40 * 3); m.position.set(WX(f.x), 1.25, WZ(f.y)); }
+      else { const m = pooled('o' + f.col, () => new THREE.Mesh(orbGeo, orbMat(f.col))); m.scale.setScalar(f.r / 40 * 1.4); m.position.set(WX(f.x), 1.2, WZ(f.y)); }
     });
     // your thrown weapons
     A.shots.forEach(s => {
       const m = pooled('w' + s.k, () => { const g = new THREE.Group(), spin = new THREE.Group(), w = mkWeapon(s.k === 'bat' ? 'batarang' : s.k); g.add(spin); spin.add(w); w.scale.setScalar(s.k === 'bat' ? 1.5 : 1.2); if (s.k === 'mjolnir') w.position.y = -.5; else w.rotation.x = -Math.PI / 2; if (s.k === 'bat') w.position.z = .12; return g; });
-      m.position.set(WX(s.x), 1, WZ(s.y)); m.rotation.y = -Math.atan2(s.vy, s.vx);
+      m.position.set(WX(s.x), 1.2, WZ(s.y)); m.rotation.y = -Math.atan2(s.vy, s.vx);
       if (s.k === 'mjolnir') m.children[0].rotation.z = -s.spin; else m.children[0].rotation.y = s.spin;
     });
     // effects
@@ -2606,59 +2696,66 @@ h1,h2,h3,p{margin:0}
       if (!f.m) f.m = makeFx(f);
       const u = Math.max(0, f.life / f.max);
       f.m.traverse(c => { if (c.material && c.material.transparent) c.material.opacity = c.material.userData.o0 === undefined ? (c.material.userData.o0 = c.material.opacity) : c.material.userData.o0 * u; });
-      if (f.k === 'bolt') lairAnim.flash.intensity = 5 * u;
+      if (f.k === 'bolt' && lairAnim) lairAnim.flash.intensity = A.pz === 'lair' ? 5 * u : 0;
       if (f.k === 'sweep' && f.full) f.m.scale.setScalar(1.2 - u * .2);
       if (f.k === 'wave') f.m.scale.setScalar(.5 + (1 - u) * 6.5);
       if (f.k === 'smoke') f.m.children.forEach(s => { const k = 1 - u; s.position.set(Math.cos(s.userData.d) * (.3 + k * 1.6), .4 + k * .8, Math.sin(s.userData.d) * (.3 + k * 1.4)); s.scale.setScalar(1 + k * .8); });
     });
     for (const k in pool) pool[k].forEach((m, i) => { if (i >= (used[k] || 0)) m.visible = false; });
-    // you
+    // your weapon in front of you
     const id = A.w.id, held = !((id === 'mjolnir' || id === 'shield') && !p.ready), spd = Math.min(1, Math.hypot(p.vx, p.vy) / 120);
-    H.g.position.set(WX(p.x), Math.abs(Math.sin(t * 14)) * .05 * spd, WZ(p.y));
-    H.g.rotation.y = -p.face + (p.spin > 0 ? (1 - p.spin / .35) * Math.PI * 2 : 0);
-    H.legs.forEach((l, k) => l.rotation.z = Math.sin(t * 14 + k * Math.PI) * .6 * spd);
-    H.g.visible = !(p.inv > 0 && p.dash <= 0 && p.smoke <= 0 && Math.floor(t * 12) % 2) && !(A.over && !A.won && A.dead > .01);
-    H.weapon.visible = held; H.smoke.visible = p.smoke > 0; if (p.smoke > 0) H.smoke.rotation.y += dt * 2;
-    let rz = .5, ry = 0, lz = 0;
-    if (id === 'sword' && p.swing > 0 && !(p.spin > 0)) { rz = 1.4; ry = -1.2 + (1 - p.swing / .25) * 2.4; }
-    if (id === 'claws') { rz = .6 + (p.swing > 0 ? Math.sin(p.swing / .15 * Math.PI) * 1 : 0) + (p.dash > 0 ? .9 : 0); lz = .9 + (p.dash > 0 ? .6 : 0); }
-    if ((id === 'mjolnir' || id === 'shield') && !held) rz = 1.3;
-    if (id === 'batarang' && p.fire > .38) rz = 1.3;
-    if (id === 'shield' && held) lz = 1.2;
-    H.R.a.rotation.set(0, ry, rz); H.L.a.rotation.set(0, 0, lz);
-    if (id !== 'shield') H.weapon.rotation.set(0, 0, -Math.PI / 2 - (rz - .5) * .9 + (id === 'sword' && p.swing <= 0 ? .9 : 0)); else H.weapon.rotation.set(0, Math.PI / 2, -lz);
-    if (id === 'claws') { if (!H.claw2) { H.claw2 = mkWeapon('claws'); H.L.hand.add(H.claw2); } H.claw2.rotation.set(0, 0, -Math.PI / 2 - (lz - .5) * .9); }
+    viewG.position.copy(camera.position); viewG.quaternion.copy(camera.quaternion);
+    A.view.forEach(v => {
+      const h = v.holder, B0 = h.userData.base; h.visible = held && !(A.over && !A.won);
+      h.position.set(B0.x, B0.y + Math.sin(t * 10) * .012 * spd - (p.throwT > 0 ? .15 : 0), B0.z); h.rotation.set(0, 0, 0);
+      if (id === 'sword' && (p.swing > 0 || p.spin > 0)) { const u = p.spin > 0 ? 1 - p.spin / .35 : 1 - p.swing / .25; h.rotation.set(-.3, .5 - u * 1.2, 1.1 - u * 2.4); h.position.x = B0.x - u * .35; }
+      if (id === 'claws' && p.swing > 0 && (v.s > 0) === p.flip) h.position.z = B0.z - Math.sin(p.swing / .15 * Math.PI) * .3;
+      if (id === 'claws' && p.dash > 0) h.position.z = B0.z - .3;
+      if (id === 'shield') { h.position.x = B0.x + (A.hold ? .1 : 0); h.rotation.y = .15; }
+      if (id === 'batarang' && p.throwT > 0) h.rotation.z = -p.throwT * 4;
+    });
   }
-  const camGoal = new THREE.PerspectiveCamera(), pv = new THREE.Vector3();
-  function fightCam(dt){
-    // narrow (portrait) screens pull the camera back and follow you more so the whole pit fits
-    const p = A.p, asp = innerWidth / innerHeight, k = asp < 1 ? Math.min(1.42, .68 / asp) : 1, fx = WX(p.x) * (asp < 1 ? .45 : .25), fz = WZ(p.y) * .2;
-    camGoal.position.set(fx, 10 * k, 9.2 * k + .2 + fz); camGoal.lookAt(fx * .7, 0, .2 + fz - (k - 1) * 3);
-    A.cam.t = Math.min(1, A.cam.t + dt / 1.1); const u = ease(A.cam.t);
-    camera.position.lerpVectors(A.cam.p0, camGoal.position, u); camera.quaternion.copy(A.cam.q0).slerp(camGoal.quaternion, u);
-    if (A.shake > 0 && !reduce) camera.position.add(pv.set((Math.random() - .5) * A.shake * 1.2, (Math.random() - .5) * A.shake * 1.2, 0));
-  }
+  const pv = new THREE.Vector3();
+  function toScreen(x, y, z){ pv.set(x, y, z).project(camera); return [(pv.x + 1) / 2 * innerWidth, (1 - pv.y) / 2 * innerHeight, pv.z < 1 && pv.z > -1]; }
   function hudUpdate(){
     const p = A.p, b = A.boss, hp = Math.round(Math.max(0, b.hp / b.max) * 1000) / 10;
     if (A.hudHp !== hp) { hud.hp.style.width = hp + '%'; A.hudHp = hp; }
     const hs = '♥'.repeat(Math.max(0, p.hearts)) + '<s>' + '♥'.repeat(Math.max(0, p.max - p.hearts)) + '</s>';
     if (A.hudH !== hs) { hud.hearts.innerHTML = hs; A.hudH = hs; }
-    const s = A.over ? A.w.sp : p.sp > 0 ? `${A.w.sp}\n${Math.ceil(p.sp)}s` : `${A.w.sp}\n(Space)`;
+    const s = A.over ? A.w.sp : p.sp > 0 ? `${A.w.sp}\n${Math.ceil(p.sp)}s` : `${A.w.sp}\n${fine ? '(E)' : ''}`;
     if (s !== A.spShown) { A.spShown = s; hud.sp.textContent = s; hud.sp.disabled = A.over || p.sp > 0; }
+    const ban = A.over ? '' : A.bz === A.pz ? '' : A.bz === 'room' ? `${A.def.name} escaped upstairs. Take the stairs and chase it!` : `${A.def.name} is coming up after you…`;
+    if (ban !== A.banShown) { A.banShown = ban; hud.banner.textContent = ban; hud.banner.hidden = !ban; }
   }
-  function toScreen(x, y, z){ pv.set(x, y, z).project(camera); return [(pv.x + 1) / 2 * innerWidth, (1 - pv.y) / 2 * innerHeight, pv.z < 1]; }
   function drawOverlay(){
-    const g = fctx, b = A.boss; g.clearRect(0, 0, innerWidth, innerHeight);
-    g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `800 20px ${DISPLAY}`; g.shadowColor = 'rgba(0,0,0,.7)'; g.shadowBlur = 6;
-    A.nums.forEach(n => { const [x, y, ok] = toScreen(WX(n.x), 2.3 + (.8 - n.life) * 1.4, WZ(n.y)); if (!ok) return; g.globalAlpha = Math.min(1, n.life * 2.5); g.fillStyle = n.good ? '#7CF29A' : '#FFFFFF'; g.fillText(n.v, x, y); });
+    const g = fctx, b = A.boss, W = innerWidth, H = innerHeight; g.clearRect(0, 0, W, H);
+    // getting hit
+    if (A.hurtT > 0) { const gr = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * .25, W / 2, H / 2, Math.max(W, H) * .7); gr.addColorStop(0, 'rgba(200,20,30,0)'); gr.addColorStop(1, `rgba(200,20,30,${A.hurtT * .9})`); g.fillStyle = gr; g.fillRect(0, 0, W, H); }
+    // crosshair
+    if (!A.over) { g.strokeStyle = 'rgba(255,255,255,.85)'; g.lineWidth = 2; g.beginPath(); g.arc(W / 2, H / 2, 6, 0, 7); g.stroke(); g.fillStyle = '#FFC93C'; g.beginPath(); g.arc(W / 2, H / 2, 2, 0, 7); g.fill(); }
+    g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `800 22px ${DISPLAY}`; g.shadowColor = 'rgba(0,0,0,.7)'; g.shadowBlur = 6;
+    A.nums.forEach(n => { const [x, y, ok] = toScreen(WX(n.x), 2 + (.8 - n.life) * 1.2, WZ(n.y)); if (!ok) return; g.globalAlpha = Math.min(1, n.life * 2.5); g.fillStyle = n.good ? '#7CF29A' : '#FFFFFF'; g.fillText(n.v, x, y); });
     g.globalAlpha = 1;
-    if (b.stun > 0 && !A.over) { g.fillStyle = '#FFC93C'; g.font = `700 20px "Instrument Sans", sans-serif`; for (let k = 0; k < 3; k++) { const an = A.t * 5 + k * 2.1, [x, y] = toScreen(WX(b.x) + Math.cos(an) * .6, b.r / 40 * 2 + 1.4, WZ(b.y) + Math.sin(an) * .6); g.fillText('✦', x, y); } }
+    if (A.bz === A.pz && !A.over) {
+      if (b.stun > 0) { g.fillStyle = '#FFC93C'; g.font = `700 22px "Instrument Sans", sans-serif`; for (let k = 0; k < 3; k++) { const an = A.t * 5 + k * 2.1, [x, y, ok] = toScreen(WX(b.x) + Math.cos(an) * .6, b.r / 40 * 2.4 + 1.6, WZ(b.y) + Math.sin(an) * .6); if (ok) g.fillText('✦', x, y); } }
+      // where is it? an arrow at the edge of the screen when it's out of view
+      pv.set(WX(b.x), 1, WZ(b.y)).applyMatrix4(camera.matrixWorldInverse);
+      const [sx, sy, ok] = toScreen(WX(b.x), 1, WZ(b.y));
+      if (!ok || sx < 0 || sx > W || sy < 0 || sy > H) {
+        pv.set(WX(b.x), 1, WZ(b.y)).applyMatrix4(camera.matrixWorldInverse);
+        const an = Math.atan2(pv.x, -pv.z), R = Math.min(W, H) * .42, x = W / 2 + Math.sin(an) * R, y = H / 2 - Math.cos(an) * R * .8;
+        g.save(); g.translate(x, y); g.rotate(an); g.fillStyle = A.def.col; g.beginPath(); g.moveTo(0, -18); g.lineTo(13, 8); g.lineTo(-13, 8); g.closePath(); g.fill(); g.restore();
+      }
+    }
     g.shadowBlur = 0;
   }
   function fightFrame(dt){
     const sdt = Math.min(dt, .033);
     if (!A.over && sdt > 0) simStep(sdt);
-    sync3D(dt); fightCam(dt); hudUpdate(); drawOverlay();
+    camera.position.y += A.jz;
+    if (A.shake > 0 && !reduce) camera.position.add(pv.set((Math.random() - .5) * A.shake * .5, (Math.random() - .5) * A.shake * .5, 0));
+    camera.updateMatrixWorld();
+    sync3D(dt); hudUpdate(); drawOverlay();
   }
 
   // ---------- entering ----------
@@ -3120,12 +3217,12 @@ h1,h2,h3,p{margin:0}
         pos.x += ux * st; pos.z += uz * st;
       }
     }
+    if (zone === 'lair') { lairMove(dt); return lairIdle(dt, now); }
     // gravity
     const plat = platformAt(pos.x, pos.z), feet = pos.y - 1.6;
     if (plat && vy <= 0 && feet <= .02 && feet > -.7) { if (!grounded && vy < -3) tone(140, .06, 'sine', .05); pos.y = 1.6; vy = 0; grounded = true; }
     else { grounded = false; vy = Math.max(vy - 18 * dt, -30); pos.y += vy * dt; }
     if (pos.y < -28 && !falling) { falling = true; enterLevel(NEXT[zone]); }
-    if (zone === 'lair') return lairIdle(dt, now);
     if (reduce) return;
     if (zone === 'hub') {
       worldAnim.tiles.forEach((t, i) => { t.position.y = t.userData.base + Math.sin(now / 700 + i) * .12; t.rotation.y += dt * .8; });
@@ -3200,9 +3297,10 @@ h1,h2,h3,p{margin:0}
     return null;
   }
   let down = null, hovered = null;
-  canvas.addEventListener('pointerdown', e => { if (A) { canvas.setPointerCapture(e.pointerId); if (!A.over) { A.drag = true; fightPoint(e); } return; } if (tourI >= 0) endTour(true); down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false }; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointerdown', e => { if (A && !A.over && e.pointerType === 'mouse' && fine) { if (document.pointerLockElement === canvas) { A.hold = true; attack(); } else canvas.requestPointerLock(); return; } if (tourI >= 0) endTour(true); down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false }; canvas.setPointerCapture(e.pointerId); });
   canvas.addEventListener('pointermove', e => {
-    if (A) { if (!A.over && (e.pointerType === 'mouse' || A.drag)) fightPoint(e); return; }
+    if (document.pointerLockElement === canvas) { yaw -= e.movementX * .0022; pitch = clamp(pitch - e.movementY * .0022, -1.2, 1.2); return; }
+    if (A && !down) return;
     if (down) {
       const dx = e.clientX - down.lx, dy = e.clientY - down.ly; down.lx = e.clientX; down.ly = e.clientY;
       if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) down.moved = true;
@@ -3225,10 +3323,11 @@ h1,h2,h3,p{margin:0}
   });
   canvas.addEventListener('pointerup', e => {
     canvas.classList.remove('grabbing');
-    if (A) { A.drag = false; return; }
+    if (document.pointerLockElement === canvas) { if (A) A.hold = false; return; }
     if (!down) return;
     const wasDrag = down.moved; down = null;
     if (wasDrag) return;
+    if (A) { attack(); return; }
     const p = pick(e.clientX, e.clientY);
     if (!p) return;
     if (p.door) return enter();
@@ -3251,7 +3350,7 @@ h1,h2,h3,p{margin:0}
       if (p.collect) return collect(p.collect);
       if (p.shrine) return combine();
       if (p.terminal) return openAIBox();
-      if (p.walk) { closePanel(); walkTarget = zone === 'roof' ? { x: clamp(p.walk.x, -5.4, 5.4), z: clamp(p.walk.z, -3.4, 3.4) } : zone === 'lair' ? { x: clamp(p.walk.x, -8.2, 8.2), z: clamp(p.walk.z, -8, 10.2) } : { x: p.walk.x, z: p.walk.z }; }
+      if (p.walk) { closePanel(); walkTarget = zone === 'roof' ? { x: clamp(p.walk.x, -5.4, 5.4), z: clamp(p.walk.z, -3.4, 3.4) } : zone === 'lair' ? (valid(p.walk.x, p.walk.z) ? { x: p.walk.x, z: p.walk.z } : { x: clamp(p.walk.x, -8.2, 8.2), z: clamp(p.walk.z, -8, 10.2) }) : { x: p.walk.x, z: p.walk.z }; }
       return;
     }
     if (p.page) return collectPage(p.page);
@@ -3300,7 +3399,7 @@ h1,h2,h3,p{margin:0}
     if (pc.classList.contains('on')) { if (e.key === 'Escape') closePC(); return; }
     if (bbEl.classList.contains('on')) { if (e.key === 'Escape') closeBuilder(); return; }
     if (aiBox.classList.contains('on')) { if (e.key === 'Escape') closeAIBox(); return; }
-    if (A) return;
+    if (A) { const k = e.key.toLowerCase(); if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) { keys[k] = true; e.preventDefault(); } return; }
     if (e.key === ' ' && inWorld) { e.preventDefault(); jump(); return; }
     if (tourI >= 0 && ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'escape'].includes(e.key.toLowerCase())) endTour(true);
     if (e.key === 'Escape') { if (simple.classList.contains('on')) showSimple(false); else { closePanel(); putBackRecord(); } return; }
@@ -3336,7 +3435,7 @@ h1,h2,h3,p{margin:0}
       t.update(t.linear ? p : ease(p));
       if (p >= 1) { tweens.splice(i, 1); t.done && t.done(); }
     }
-    if (entered && !A) {
+    if (entered) {
       let f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0);
       let s = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
       if (Math.hypot(joy.x, joy.y) > .15) { f -= joy.y; s += joy.x; }
@@ -3345,7 +3444,7 @@ h1,h2,h3,p{margin:0}
         if (camTween) { cancel(camTween); camTween = null; }
         walkTarget = null; exitTelescope();
         yaw += turn * 1.8 * dt;
-        const sp = (inWorld && !grounded ? 1.8 : 2.6) * dt;
+        const sp = (A ? 4.2 : inWorld && !grounded ? 1.8 : 2.6) * dt;
         const nx = pos.x + (-Math.sin(yaw) * f + Math.cos(yaw) * s) * sp;
         const nz = pos.z + (-Math.cos(yaw) * f - Math.sin(yaw) * s) * sp;
         if (valid(nx, nz)) { pos.x = nx; pos.z = nz; } else if (valid(nx, pos.z)) pos.x = nx; else if (valid(pos.x, nz)) pos.z = nz;
@@ -3369,7 +3468,8 @@ h1,h2,h3,p{margin:0}
       m.scale.setScalar(hovered && hovered === m.userData.section ? 1.5 : 1);
       m.visible = (entered || entering) && (!m.userData.vaultOnly || vaultOpen) && !(m.userData.hideWhenVault && vaultOpen);
     });
-    if (A) fightFrame(dt); else { camera.position.copy(pos); camera.rotation.set(pitch, yaw, 0); }
+    camera.position.copy(pos); camera.rotation.set(pitch, yaw, 0);
+    if (A) fightFrame(dt);
     if (binaryOn) binTex.offset.y += dt * .06;
     renderer.render(sceneOf(), camera);
     requestAnimationFrame(frame);
