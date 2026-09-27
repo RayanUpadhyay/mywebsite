@@ -328,6 +328,25 @@ body.fighting .povbtn{top:auto;bottom:calc(150px + env(safe-area-inset-bottom,0p
 .lkrow .tbtn{height:34px;font-size:13px;padding:0 12px}
 @media (max-width:640px){.lookpanel{top:auto;left:10px;right:10px;width:auto;max-height:55vh}}
 body.photo .povbtn{visibility:hidden}
+/* events */
+.evhud{position:fixed;inset:0;z-index:5;pointer-events:none}
+.evhud[hidden]{display:none}
+.evtop{position:absolute;top:calc(76px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);display:flex;gap:14px;align-items:center;padding:8px 16px;border-radius:999px;background:rgba(14,16,22,.8);color:#EEF1F5;font-size:14px;white-space:nowrap;max-width:calc(100% - 24px);overflow:hidden}
+.evtime{font-variant-numeric:tabular-nums;color:#FFC93C;font-weight:700}
+.evboss{position:absolute;top:calc(124px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);width:min(460px,calc(100% - 32px));color:#FFFFFF;font-weight:700;font-size:14px;text-align:center;text-shadow:0 1px 4px rgba(0,0,0,.7)}
+.evboss[hidden]{display:none}
+.evbar{display:block;height:10px;border-radius:999px;background:rgba(0,0,0,.5);overflow:hidden;margin-top:4px}
+.evbar i{display:block;height:100%;background:#C8102E;transition:width .15s}
+.evme{position:absolute;left:18px;bottom:calc(24px + env(safe-area-inset-bottom,0px));width:min(260px,45vw);color:#FFFFFF;font-weight:700;font-size:14px;text-shadow:0 1px 4px rgba(0,0,0,.7)}
+.evme .evbar i{background:#3CE870}
+.evcross{position:absolute;left:50%;top:50%;width:14px;height:14px;margin:-7px;border:2px solid rgba(255,255,255,.85);border-radius:50%}
+.evmsg{position:absolute;left:50%;top:40%;transform:translateX(-50%);color:#FFFFFF;font:800 28px "Bricolage Grotesque",sans-serif;text-shadow:0 2px 10px rgba(0,0,0,.7)}
+.evhud .fsp.cool{opacity:.45}
+.evhud .arenamsg{position:absolute;pointer-events:auto;left:50%;top:50%;transform:translate(-50%,-50%);width:min(440px,calc(100% - 32px));background:var(--tile);color:var(--ink);border-radius:22px;padding:22px;text-align:center}
+.evhud .arenamsg[hidden]{display:none}
+.evhurt{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;background:radial-gradient(circle,rgba(200,16,46,0) 45%,rgba(200,16,46,.55) 100%);transition:opacity .15s}
+body.inevent .hotbar,body.inevent .povbtn,body.inevent .snapbtn,body.inevent .dock{display:none!important}
+body.photo .evhud{visibility:hidden}
 /* at a glance */
 .brieflink{margin:0 0 16px}
 .brief{z-index:12}
@@ -428,6 +447,17 @@ body.photo .povbtn{visibility:hidden}
 <canvas class="ringfx" id="ringFx" hidden aria-hidden="true"></canvas>
 <div class="photobar" id="photoBar" hidden role="toolbar" aria-label="Photo mode"><button class="btn" id="phFilter" type="button">Filter: None</button><button class="btn alt" id="phShot" type="button">Take photo</button><button class="btn" id="phExit" type="button">Done</button></div>
 <div class="mpchip" id="mpChip" hidden aria-live="polite"></div>
+<div class="evhurt" id="evHurt" aria-hidden="true"></div>
+<div class="evhud" id="evHud" hidden>
+  <div class="evtop"><b id="evTitle"></b><span id="evScore"></span><span class="evtime" id="evTime"></span></div>
+  <div class="evboss" id="evBoss" hidden><span id="evBossName"></span><span class="evbar"><i id="evBossHp"></i></span></div>
+  <div class="evme"><span id="evHero"></span><span class="evbar"><i id="evHp"></i></span></div>
+  <div class="evcross" aria-hidden="true"></div>
+  <p class="evmsg" id="evMsg" aria-live="polite"></p>
+  <button class="fsp" id="evSp" type="button">Special</button>
+  <div class="arenamsg" id="evEnd" hidden><h3 class="display" id="evEndT"></h3><p id="evEndS"></p><div class="gact"><button class="btn" id="evAgain" type="button">Play again</button><button class="btn" id="evSwap" type="button">Change hero</button><button class="btn alt" id="evLeave" type="button">Leave</button></div></div>
+</div>
+<div class="game" id="evBox" role="dialog" aria-label="Choose your side"><div class="gbox"></div></div>
 <div class="spacehud" id="spaceHud" hidden aria-live="polite"></div>
 <div class="game" id="spaceBox" role="dialog" aria-label="Stranded in space"><div class="gbox"><h2 class="display">Stranded in space</h2><p>Thanos’s snap threw you across the galaxy. You’re floating in the wreckage near Titan.</p><p class="gmsg">Teleport home and the snap stays. Or find all six Infinity Stones and snap everyone back yourself.</p><div class="gact"><button class="btn" id="spHome" type="button">Teleport home</button><button class="btn alt" id="spQuest" type="button">Quest to get home</button></div></div></div>
 <button class="jump swingbtn" id="swingBtn" type="button" hidden>Swing</button>
@@ -1570,7 +1600,7 @@ body.photo .povbtn{visibility:hidden}
   const inDoor = (x, z) => vaultOpen && x > 4.2 && x <= 5.7 && z >= -.25 && z <= .85;
   const inVault = (x, z) => vaultOpen && x > 5.7 && x <= 8.0 && z >= -1.0 && z <= 1.6;
   const inHall = (x, z) => entered && ((Math.abs(x) < .45 && z > 4.2 && z <= 5.5) || (Math.abs(x) < 1.2 && z > 5.5 && z < 10.3));
-  const valid = (x, z) => inWorld ? (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) : zone === 'city' ? cityOK(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
+  const valid = (x, z) => inWorld ? zone === 'event' ? evValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) : zone === 'city' ? cityOK(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
   const region = x => x > 4.9 ? 'vault' : 'room';
   function flyTo(target, dir, done){
     if (inWorld) { const a = dir ? lookAngles(target, dir) : null; return moveCam(target, a ? a.yaw : null, a ? a.pitch : null, 1, done); }
@@ -3318,6 +3348,7 @@ body.photo .povbtn{visibility:hidden}
   }
   // what's in your hands (null = nothing)
   function hold(id, quiet){
+    if (EV) return;
     if (id && (!inv.includes(id) || dustedWeapon(id))) return;
     if (held === id) return;
     held = id; saveInv(); renderHotbar(); idleShown = undefined;
@@ -3383,6 +3414,7 @@ body.photo .povbtn{visibility:hidden}
     startFight(BOSSES[i], i, at.x * 40, at.z * 40, 'lair');
   }
   function startFight(def, i, bx, by, bz){
+    if (EV) return;
     if (def.id === 'thanos' && snapState) unsnap(true);
     closePanel(); tip.classList.remove('on'); hint.classList.remove('on'); Object.keys(akeys).forEach(k => akeys[k] = false);
     clearFight(); walkTarget = null;
@@ -3491,7 +3523,9 @@ body.photo .povbtn{visibility:hidden}
     if (k === 'f' || k === 'enter') { A.hold = true; attack(); } });
   addEventListener('keyup', e => { const k = e.key.toLowerCase(); akeys[k] = false; if (A && (k === 'f' || k === 'enter')) A.hold = false; });
   addEventListener('mouseup', () => { if (A) A.hold = false; });
-  canvas.addEventListener('contextmenu', e => { if (A) e.preventDefault(); });
+  canvas.addEventListener('contextmenu', e => { if (A || EV) e.preventDefault(); });
+  addEventListener('keydown', e => { if (!EV || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; const k = e.key.toLowerCase(); if (k === 'e' && !e.repeat) evSpecial(); if (k === 'f' || k === 'enter') { EV.holdAtk = true; evAttack(); } });
+  addEventListener('keyup', e => { if (EV && (e.key.toLowerCase() === 'f' || e.key === 'Enter')) EV.holdAtk = false; });
   // block: hold the right mouse button, Shift, or the Block button
   const setBlock = on => { if (A && !A.over) A.blocking = on; else if (A) A.blocking = false; };
   addEventListener('keydown', e => { if (A && e.key === 'Shift') setBlock(true); });
@@ -3797,7 +3831,7 @@ body.photo .povbtn{visibility:hidden}
   // ---------- inventory bar, pause menu, poisoning ----------
   const hotEl = $('#hotbar'), pauseEl = $('#pauseEl'), pauseBox = $('#pauseBox'), menuBtn = $('#menuBtn'), poisonFx = $('#poisonFx');
   function renderHotbar(){
-    hotEl.hidden = !entered || !inv.length;
+    hotEl.hidden = !entered || !inv.length || !!EV;
     hotEl.innerHTML = [null, ...inv].map((id, k) => { const w = id && WEAPONS.find(x => x.id === id), dz = id && dustedWeapon(id), c = id && condition(id);
       return `<button type="button" data-h="${id || ''}" class="${held === id ? 'on' : ''}${dz ? ' dust' : ''}" title="${w ? esc(w.name) : 'Hands free'}"><kbd>${k}</kbd><span class="hn">${w ? esc(w.name) + (dz ? ' (dust)' : c.broken ? ' (broken)' : '') : 'Hands free'}</span></button>`; }).join('');
   }
@@ -3851,7 +3885,7 @@ body.photo .povbtn{visibility:hidden}
     if (lvl > poisonWarned) say(lvl === 2 ? 'Severe adamantium poisoning! You\u2019ll lose hearts in fights. Put the claws away for a while.' : 'Adamantium poisoning: your healing factor has stopped working.', 4200);
     poisonWarned = lvl;
     poisonFx.style.opacity = poison >= .4 ? Math.min(1, (poison - .4) * 1.6) : 0;
-    if (hotEl.hidden !== (!inv.length)) renderHotbar();
+    if (hotEl.hidden !== (!inv.length || !!EV)) renderHotbar();
     if (menuBtn.hidden) { menuBtn.hidden = false; povBtn.hidden = false; povBtn.textContent = tpv ? '1st person' : '3rd person'; }
     if (!A) idleView();
     // web-shooters on the rooftop (or down in Bangalore): swinging is available
@@ -4031,7 +4065,7 @@ body.photo .povbtn{visibility:hidden}
       }
     };
     ws.onclose = ws.onerror = () => { clearInterval(ping); if (!ws._closed) { ws._closed = true; onClose(ok); } };
-    return { pub: (topic, msg) => send(pkt(0x30, [...str(topic), ...enc.encode(msg)])), close: () => { ws._closed = true; clearInterval(ping); try { ws.close(); } catch (e) {} } };
+    return { pub: (topic, msg, retain) => send(pkt(retain ? 0x31 : 0x30, [...str(topic), ...enc.encode(msg)])), close: () => { ws._closed = true; clearInterval(ping); try { ws.close(); } catch (e) {} } };
   }
   function mpConnect(){
     if (!mpOn || mq || !entered) return;
@@ -4043,25 +4077,28 @@ body.photo .povbtn{visibility:hidden}
   function mpStop(){ if (mq) { mq.pub(`${MP_TOPIC}/p/${mpId}`, 'bye'); const m = mq; mq = null; setTimeout(() => m.close(), 100); } clearGhosts(); mpChip.hidden = true; }
   addEventListener('pagehide', () => { if (mq) mq.pub(`${MP_TOPIC}/p/${mpId}`, 'bye'); });
   const areaKey = () => inWorld ? (zone === 'city' ? 'roof' : zone) : 'room';
-  const areaScene = k => k === 'room' ? scene : ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, lair: lairScene, space: spaceScene })[k];
+  const areaScene = k => k === 'room' ? scene : ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, lair: lairScene, space: spaceScene, event: eventScene })[k];
   const num = (v, m) => { v = +v; return isFinite(v) ? clamp(v, -m, m) : 0; };
   function mpSend(force){
     if (!mq) return;
-    const msg = JSON.stringify({ a: areaKey(), x: +pos.x.toFixed(2), y: +pos.y.toFixed(2), z: +pos.z.toFixed(2), r: +yaw.toFixed(2), w: held || '', f: A && !A.over ? A.def.id : '', l: curLook() });
+    const msg = JSON.stringify({ a: areaKey(), x: +pos.x.toFixed(2), y: +pos.y.toFixed(2), z: +pos.z.toFixed(2), r: +yaw.toFixed(2), w: held || '', f: A && !A.over ? A.def.id : '', l: curLook(), e: EV ? { k: EV.k, t: EV.team, h: EV.hero, hp: Math.round(EV.hp), m: EV.max, d: EV.dead > 0 ? 1 : 0 } : 0 });
     if (!force && msg === mpLast && mpSendT > -4) return; mpLast = msg; mpSendT = 0;
     mq.pub(`${MP_TOPIC}/p/${mpId}`, msg);
   }
   function mpHit(n){ if (mq && A && !A.over) mpHitAcc += n; }
   function mpMsg(topic, text){
     const parts = topic.split('/'), kind = parts[2], id = (parts[3] || '').slice(0, 16);
+    if (kind === 'lb') return id && lbMsg(id, text);
     if (!id || id === mpId) return;
+    if (kind === 'ev') return evMsg(id, text);
     if (kind === 'p') {
       if (text === 'bye') return dropGhost(id);
-      const d = JSON.parse(text); if (typeof d.a !== 'string' || !/^(room|hub|ai|code|chip|sea|roof|lair|space)$/.test(d.a)) return;
+      const d = JSON.parse(text); if (typeof d.a !== 'string' || !/^(room|hub|ai|code|chip|sea|roof|lair|space|event)$/.test(d.a)) return;
       const lk = cleanLook(d.l), lkS = JSON.stringify(lk);
       let gh = ghosts.get(id); if (!gh) { if (ghosts.size >= 24) return; gh = makeGhost(id, lk); ghosts.set(id, gh); }
       else if (gh.lk !== lkS) { const par = gh.g.parent; if (par) par.remove(gh.g); disposeDeep(gh.g); Object.assign(gh, makeGhost(id, lk), { x: gh.x, y: gh.y, z: gh.z, r: gh.r, first: gh.first }); if (par) par.add(gh.g); }
       Object.assign(gh, { a: d.a, tx: num(d.x, 300), ty: num(d.y, 300), tz: num(d.z, 300), tr: num(d.r, 1e4), f: typeof d.f === 'string' ? d.f.slice(0, 16) : '', seen: performance.now() });
+      gh.look = d.l; gh.e = cleanEv(d.e); evRemote(id, gh);
       const w = typeof d.w === 'string' && WEAPONS.some(x => x.id === d.w) ? d.w : '';
       if (w !== gh.w) { gh.w = w; gh.av.hold(w); }
     }
@@ -4073,6 +4110,7 @@ body.photo .povbtn{visibility:hidden}
       A.nums.push({ x: A.boss.x + (Math.random() - .5) * 60, y: A.boss.y - 30, v: Math.round(n), life: .8, ally: '#7CF2FF' });
     }
   }
+  function cleanEv(e){ if (!e || typeof e !== 'object' || !EVENTS[e.k] || !EVENTS[e.k].teams[e.t] || !(PICKS[e.t] || []).includes(e.h)) return null; return { k: e.k, t: e.t, h: e.h, hp: clamp(+e.hp || 0, 0, 5000), m: clamp(+e.m || 100, 1, 5000), d: e.d ? 1 : 0 }; }
   // anything that arrives from the relay gets checked before it's used
   function cleanLook(l){
     const o = Object.assign({}, LOOK0); if (!l || typeof l !== 'object') return o;
@@ -4096,12 +4134,13 @@ body.photo .povbtn{visibility:hidden}
   function mpStep(dt){
     if (!mpOn || !entered) return;
     if (!mq) return mpConnect();
-    if ((mpSendT -= dt) <= -(A ? .15 : .25)) mpSend();
+    if ((mpSendT -= dt) <= -(A || EV ? .15 : .25)) mpSend();
+    lbFlush(dt);
     if ((mpHitT -= dt) <= 0) { mpHitT = .4; if (mpHitAcc > 0 && A) { mq.pub(`${MP_TOPIC}/h/${mpId}`, JSON.stringify({ b: A.def.id, d: Math.round(mpHitAcc) })); } mpHitAcc = 0; }
     const now = performance.now(), me = areaKey(); let here = 0, coop = 0;
     ghosts.forEach((gh, id) => {
       if (now - gh.seen > 12000) return dropGhost(id);
-      const sc = areaScene(gh.a), show = gh.a === me && sc;
+      const sc = areaScene(gh.a), show = gh.a === me && sc && gh.a !== 'event';
       if (show) { here++; if (A && gh.f === A.def.id) coop++; if (gh.g.parent !== sc) sc.add(gh.g); } else if (gh.g.parent) gh.g.parent.remove(gh.g);
       if (gh.first) { gh.x = gh.tx; gh.y = gh.ty; gh.z = gh.tz; gh.r = gh.tr; gh.first = false; }
       const k = Math.min(1, dt * 8), ox = gh.x, oz = gh.z; gh.x += (gh.tx - gh.x) * k; gh.y += (gh.ty - gh.y) * k; gh.z += (gh.tz - gh.z) * k; gh.r += angDiff(gh.r, gh.tr) * k;
@@ -4117,7 +4156,10 @@ body.photo .povbtn{visibility:hidden}
   // ---------- menu additions ----------
   function extrasMenu(){
     const dests = DESTS.filter(d => !d.need || d.need()).map(d => `<button class="btn" type="button" data-pa="go:${d.id}">${esc(d.name)}</button>`).join('');
-    return `<h3>Sling ring</h3><div class="prow"><b>Open a portal<br><small>Travel anywhere you’ve been, Doctor Strange style.</small></b></div><div class="gact ring">${A ? '<p class="gmsg">Not during a fight.</p>' : zone === 'space' && inWorld ? '<p class="gmsg">The sling ring doesn’t reach this far out. Teleport home, or find the stones.</p>' : dests}</div>
+    return `<h3>Sling ring</h3><div class="prow"><b>Open a portal<br><small>Travel anywhere you’ve been, Doctor Strange style.</small></b></div><div class="gact ring">${A ? '<p class="gmsg">Not during a fight.</p>' : EV ? '<p class="gmsg">Leave the event first.</p>' : zone === 'space' && inWorld ? '<p class="gmsg">The sling ring doesn’t reach this far out. Teleport home, or find the stones.</p>' : dests}</div>
+      <h3>Events</h3>
+      ${Object.entries(EVENTS).map(([k, E]) => `<div class="prow"><b>${E.name}<br><small>${E.blurb}${mq ? `<br><em>${lbLine(k)}</em>` : ''}</small></b><button class="btn" type="button" data-pa="ev:${k}" ${A ? 'disabled' : ''}>${EV && EV.k === k ? 'Change hero' : 'Play'}</button></div>`).join('')}
+      ${EV ? '<div class="prow"><b>Leave the event</b><button class="btn" type="button" data-pa="evleave">Leave</button></div>' : ''}
       <h3>Extras</h3>
       <div class="prow"><b>At a glance<br><small>A one-page summary for admissions, with a timeline, the research demo and a PDF.</small></b><button class="btn" type="button" data-pa="brief">Open</button></div>
       <div class="prow"><b>Your character<br><small>Skin, hair, outfit, colours, mask and cape. Other visitors see you like this too.</small></b><button class="btn" type="button" data-pa="look">Change</button></div>
@@ -4128,6 +4170,8 @@ body.photo .povbtn{visibility:hidden}
   pauseBox.addEventListener('click', e => {
     const a = e.target.closest('[data-pa]'); if (!a) return; const v = a.dataset.pa;
     if (v.startsWith('go:')) slingRing(v.slice(3));
+    if (v.startsWith('ev:')) openLobby(v.slice(3));
+    if (v === 'evleave') { closePause(); stopEvent(); }
     if (v === 'photo') setPhoto(true);
     if (v === 'look') openLook();
     if (v === 'pov') { setPov(!tpv); renderPause(); }
@@ -4407,7 +4451,7 @@ body.photo .povbtn{visibility:hidden}
   addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || !entered || e.repeat) return; if (e.key.toLowerCase() === 'v' && !photoOn) setPov(!tpv); });
   // your body, kept in sync with your look, your weapon and whether your arm is burned
   function meStep(dt, now){
-    const want = entered && (tpv || mirror || (EV && EV.big));
+    const want = entered && (tpv || mirror || !!EV);
     if (!want) { if (me && me.g.parent) me.g.parent.remove(me.g); return; }
     const L = curLook(), key = JSON.stringify(L) + armHurt() + (EV ? EV.scale || 1 : 1);
     if (key !== meKey) { if (me) { if (me.g.parent) me.g.parent.remove(me.g); disposeDeep(me.g); } me = avatar(L, { burn: armHurt(), s: EV ? EV.scale || 1 : 1 }); meKey = key; meHeld = undefined; }
@@ -4422,7 +4466,7 @@ body.photo .povbtn{visibility:hidden}
   const camRay = new THREE.Raycaster(), tv1 = V(0, 0, 0), tv2 = V(0, 0, 0), tv3 = V(0, 0, 0);
   // the camera pulls back behind your shoulder (and stops short of walls)
   function camStep(){
-    const third = entered && (tpv || (EV && EV.big)) && !mirror;
+    const third = entered && (tpv || !!EV) && !mirror;
     viewG.visible = !(third || mirror);
     if (!third && !mirror) return;
     const eye = tv1.copy(camera.position), sc = sceneOf(); let target;
@@ -4464,6 +4508,355 @@ body.photo .povbtn{visibility:hidden}
     saveLook(); renderLook(); idleShown = undefined; if (A) fightView(); tone(700, .05, 'sine', .03);
   });
   lookEl.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); closeLook(); } });
+
+  // ======================= events: Avengers vs. X-Men, World War Hulk, Injustice =======================
+  // Real visitors who join the same event fight alongside you (or against you). Bots fill the empty spots.
+  // Only anonymous data goes out: a random id, your hero, team, position, health and hits.
+  OUTFITS.harleyq = { hero: 1, c1: '#C8102E', c2: '#16181D', skin: '#F2F2F2', hair: 'long', hairCol: '#F4E3A1', gloves: 1 };
+  const HEROES = {
+    cap: { name: 'Captain America', outfit: 'cap', hp: 120, kind: 'melee', dmg: 14, range: 2.4, cd: .45, sp: 'Shield throw', spCd: 5, prop: 'shield', speed: 5 },
+    iron: { name: 'Iron Man', outfit: 'iron', hp: 100, kind: 'ranged', dmg: 10, cd: .35, col: 0x8FE8FF, sp: 'Unibeam', spCd: 7, speed: 5.2 },
+    thor: { name: 'Thor', outfit: 'thor', hp: 130, kind: 'melee', dmg: 18, range: 2.6, cd: .6, sp: 'Lightning strike', spCd: 7, prop: 'mjolnir', speed: 4.7 },
+    wolverine: { name: 'Wolverine', outfit: 'wolverine', hp: 120, kind: 'melee', dmg: 12, range: 2.1, cd: .3, sp: 'Berserker rage', spCd: 9, prop: 'claws', regen: 3, speed: 5.3 },
+    cyclops: { name: 'Cyclops', outfit: 'cyclops', hp: 100, kind: 'ranged', dmg: 11, cd: .4, col: 0xFF3030, sp: 'Optic blast', spCd: 6, speed: 5 },
+    storm: { name: 'Storm', outfit: 'storm', hp: 100, kind: 'ranged', dmg: 9, cd: .32, col: 0xE8F6FF, sp: 'Lightning storm', spCd: 8, speed: 5 },
+    hulk: { name: 'Hulk', outfit: 'hulk', hp: 2400, kind: 'melee', dmg: 34, range: 4.4, arc: 1.4, cd: .75, sp: 'Thunderclap', spCd: 6, speed: 5.6, scale: 2.3, r: 1.3 },
+    batman: { name: 'Batman', outfit: 'batman', hp: 120, kind: 'melee', dmg: 14, range: 2.3, cd: .4, sp: 'Batarang volley', spCd: 5, speed: 5.3 },
+    arrow: { name: 'Green Arrow', outfit: 'arrow', hp: 100, kind: 'ranged', dmg: 11, cd: .45, col: 0x9CFF7A, sp: 'Explosive arrow', spCd: 6, speed: 5 },
+    harleyq: { name: 'Harley Quinn', outfit: 'harleyq', hp: 110, kind: 'melee', dmg: 16, range: 2.6, cd: .55, sp: 'Mallet spin', spCd: 6, speed: 5.5 },
+    superman: { name: 'Superman', outfit: 'superman', hp: 2600, kind: 'boss', dmg: 12, range: 2.6, cd: 1, speed: 6.5, r: .7 },
+    trooper: { name: 'Regime trooper', outfit: 'trooper', hp: 60, kind: 'ranged', dmg: 6, cd: .9, col: 0xFF4A3C, speed: 4 }
+  };
+  const EVENTS = {
+    avx: { name: 'Avengers vs. X-Men', teams: { av: 'Avengers', xm: 'X-Men' }, col: { av: '#3C7CFF', xm: '#F2C230' }, time: 240, goal: 20,
+      blurb: 'The two biggest teams clash over the Phoenix Force. Pick a side: every takedown scores for your team on the global leaderboard.' },
+    wwh: { name: 'World War Hulk', teams: { hulk: 'Hulk', heroes: 'Heroes' }, col: { hulk: '#5E9A3A', heroes: '#3C7CFF' }, time: 240,
+      blurb: 'Hulk is back from exile and wants revenge. One player is a boss-sized Hulk; everyone else teams up to take him down before time runs out.' },
+    inj: { name: 'Injustice: Gods Among Us', teams: { ins: 'Insurgency', reg: 'Regime' }, col: { ins: '#9CFF7A', reg: '#C8102E' }, time: 360,
+      blurb: 'Superman rules as a dictator. Join the Insurgency: hold the Kryptonite emitter to weaken him, then bring him down together. Every hit counts toward the global resistance.' }
+  };
+  const PICKS = { av: ['cap', 'iron', 'thor'], xm: ['wolverine', 'cyclops', 'storm'], heroes: ['cap', 'iron', 'thor', 'wolverine', 'cyclops', 'storm'], hulk: ['hulk'], ins: ['batman', 'arrow', 'harleyq'] };
+  const heroLook = h => Object.assign({}, look, { outfit: HEROES[h].outfit, mask: 1, cape: 1 });
+  // ---------- the global leaderboard (kept on the relay; the public relay can reset it now and then) ----------
+  let pid = null; try { pid = localStorage.getItem('ru-pid'); if (!pid) { pid = Math.random().toString(36).slice(2, 12); localStorage.setItem('ru-pid', pid); } } catch (e) { pid = Math.random().toString(36).slice(2, 12); }
+  let myLb = { a: 0, x: 0, h: 0, r: 0, d: 0, w: 0, l: 0 }; try { Object.assign(myLb, JSON.parse(localStorage.getItem('ru-lb') || '{}')); } catch (e) {}
+  const lbAll = new Map(); let lbDirty = false, lbT = 0;
+  function lbAdd(k, n){ myLb[k] = Math.round((myLb[k] || 0) + n); lbDirty = true; try { localStorage.setItem('ru-lb', JSON.stringify(myLb)); } catch (e) {} }
+  function lbTotals(){ const t = Object.assign({}, myLb); lbAll.forEach((v, id) => { if (id !== pid) Object.keys(t).forEach(k => t[k] += v[k] || 0); }); return t; }
+  function lbFlush(dt){ if ((lbT -= dt) > 0 || !lbDirty || !mq) return; lbT = 3; lbDirty = false; mq.pub(`${MP_TOPIC}/lb/${pid}`, JSON.stringify(myLb), true); }
+  function lbMsg(id, text){ try { const d = JSON.parse(text), o = {}; ['a', 'x', 'h', 'r', 'd', 'w', 'l'].forEach(k => o[k] = clamp(Math.round(+d[k] || 0), 0, 1e6)); lbAll.set(id.slice(0, 16), o); } catch (e) {} }
+  const fmtN = n => Math.round(n).toLocaleString();
+  function lbLine(k){ const t = lbTotals(); return k === 'avx' ? `Avengers ${fmtN(t.a)} · X-Men ${fmtN(t.x)}` : k === 'wwh' ? `Hulk wins ${fmtN(t.h)} · Hero wins ${fmtN(t.r)}` : `Damage to the Regime ${fmtN(t.d)} · Superman defeated ${fmtN(t.w)} times`; }
+  // ---------- the arena (one place, dressed differently for each event) ----------
+  const ER = 28, PILLARS = [];
+  for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + Math.PI / 8; PILLARS.push({ x: Math.cos(a) * 12.5, z: Math.sin(a) * 12.5, r: 1 }); }
+  const EMIT = { x: -11, z: 5, r: 3 };
+  const evValid = (x, z) => Math.hypot(x, z) < ER - .6 && !PILLARS.some(p => Math.hypot(x - p.x, z - p.z) < p.r + .4);
+  function buildArena(k){
+    if (eventScene) { disposeDeep(eventScene); }
+    const sc = eventScene = new THREE.Scene();
+    const T = { avx: { sky: 0x0B1224, fog: 0x0B1224, floor: '#1B2233', line: '#3C7CFF', wall: 0x2A3550 }, wwh: { sky: 0x6B3A1E, fog: 0x7A4A2A, floor: '#C9A46A', line: '#8A6B4A', wall: 0x8A6B4A }, inj: { sky: 0x1A1416, fog: 0x2A1E1E, floor: '#3A3A3E', line: '#C8102E', wall: 0x2A2D33 } }[k];
+    sc.background = new THREE.Color(T.sky); sc.fog = new THREE.Fog(T.fog, 30, 90);
+    sc.add(new THREE.HemisphereLight(0xFFFFFF, 0x333344, .75)); const sun = new THREE.DirectionalLight(0xFFF1DC, .8); sun.position.set(10, 20, 8); sc.add(sun);
+    const ft = tex(512, 512, (g, w, h) => { g.fillStyle = T.floor; g.fillRect(0, 0, w, h); g.strokeStyle = T.line; g.globalAlpha = .35; g.lineWidth = 3; for (let i = 0; i <= w; i += 64) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.moveTo(0, i); g.lineTo(w, i); g.stroke(); } if (k !== 'avx') { g.globalAlpha = .12; for (let i = 0; i < 400; i++) { g.fillStyle = '#000'; g.fillRect(Math.random() * w, Math.random() * h, 3, 3); } } });
+    ft.wrapS = ft.wrapT = THREE.RepeatWrapping; ft.repeat.set(8, 8);
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(ER + 2, 64), new THREE.MeshStandardMaterial({ map: ft, roughness: .9 })); floor.rotation.x = -Math.PI / 2; floor.userData.walk = true; sc.add(floor);
+    const wall = new THREE.Mesh(new THREE.CylinderGeometry(ER + 2, ER + 2, k === 'wwh' ? 9 : 5, 64, 1, true), new THREE.MeshStandardMaterial({ color: T.wall, side: THREE.BackSide, roughness: .9, map: k === 'wwh' ? tex(1024, 128, (g, w, h) => { g.fillStyle = '#8A6B4A'; g.fillRect(0, 0, w, h); for (let i = 0; i < 1800; i++) { g.fillStyle = ['#C8102E', '#5E9A3A', '#F2C230', '#3C7CFF', '#EEE'][i % 5]; g.fillRect(Math.random() * w, 30 + Math.random() * 90, 4, 6); } }) : null }));
+    wall.position.y = k === 'wwh' ? 4.5 : 2.5; sc.add(wall);
+    PILLARS.forEach(p => { const m = new THREE.Mesh(new THREE.CylinderGeometry(p.r, p.r * 1.1, k === 'inj' ? 3 + Math.random() * 3 : 4, 10), mat(k === 'avx' ? 0x3A4560 : k === 'wwh' ? 0x9A7B5A : 0x55585F, { roughness: .8, flatShading: true })); m.position.set(p.x, k === 'inj' ? 2 : 2, p.z); if (k === 'inj') m.rotation.z = (Math.random() - .5) * .3; sc.add(m); });
+    // dressing
+    const sign = (txt, col, x, z, ry) => { const s = new THREE.Mesh(new THREE.PlaneGeometry(8, 1.6), new THREE.MeshBasicMaterial({ transparent: true, map: tex(800, 160, (g, w, h) => { g.fillStyle = 'rgba(11,13,20,.85)'; g.fillRect(0, 0, w, h); g.fillStyle = col; g.font = `800 90px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(txt, w / 2, h / 2 + 4); }) })); s.position.set(x, 3.6, z); s.rotation.y = ry; sc.add(s); };
+    const pad = (x, z, col) => { const m = new THREE.Mesh(new THREE.RingGeometry(2.2, 2.6, 40), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .7, side: THREE.DoubleSide })); m.rotation.x = -Math.PI / 2; m.position.set(x, .03, z); sc.add(m); };
+    if (k === 'avx') { sign('AVENGERS', '#3C7CFF', 0, ER + 1.5, Math.PI); sign('X-MEN', '#F2C230', 0, -ER - 1.5, 0); pad(0, 22, 0x3C7CFF); pad(0, -22, 0xF2C230);
+      const ph = new THREE.Mesh(new THREE.SphereGeometry(4, 24, 16), new THREE.MeshBasicMaterial({ color: 0xFF7A1E, transparent: true, opacity: .5, fog: false })); ph.position.set(0, 26, -60); sc.add(ph); }
+    if (k === 'wwh') { sign('SAKAAR', '#5E9A3A', 0, -ER - 1.5, 0); pad(0, 0, 0x5E9A3A); }
+    if (k === 'inj') { sign('ONE EARTH GOVERNMENT', '#C8102E', 0, -ER - 1.5, 0); sign('THE INSURGENCY', '#9CFF7A', 0, ER + 1.5, Math.PI);
+      for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, b = box(4 + Math.random() * 4, 8 + Math.random() * 16, 4, mat(0x2A2D33, { roughness: 1 }), Math.cos(a) * (ER + 8), 6, Math.sin(a) * (ER + 8), sc); b.rotation.set((Math.random() - .5) * .2, a, (Math.random() - .5) * .2); }
+      const em = new THREE.Group(); em.position.set(EMIT.x, 0, EMIT.z); sc.add(em);
+      const ring = new THREE.Mesh(new THREE.RingGeometry(EMIT.r - .3, EMIT.r, 48), new THREE.MeshBasicMaterial({ color: 0x3CE870, transparent: true, opacity: .8, side: THREE.DoubleSide })); ring.rotation.x = -Math.PI / 2; ring.position.y = .04; em.add(ring);
+      cyl(.35, .5, 1.2, mat(0x3A3D44, { metalness: .6 }), 0, .6, 0, em, 12); const cr = new THREE.Mesh(new THREE.OctahedronGeometry(.45, 0), glowM(0x3CE870, { emissiveIntensity: 1.2 })); cr.position.y = 1.7; em.add(cr);
+      sc.userData.emitter = { ring, cr }; }
+    sc.traverse(o => { if (o.isMesh && !o.userData.walk) o.userData.noPick = true; });
+    plats.event = [{ x: 0, z: 0, r: ER }];
+  }
+  // ---------- units: bots, and other players ----------
+  function hpTag(u){
+    const c = document.createElement('canvas'); c.width = 256; c.height = 64; const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false })); sp.scale.set(1.6, .4, 1); sp.userData.c = c; return sp;
+  }
+  function drawTag(u){
+    const c = u.tag.userData.c, g = c.getContext('2d'), f = clamp(u.hp / u.max, 0, 1), col = EVENTS[EV.k].col[u.team];
+    g.clearRect(0, 0, 256, 64); g.font = '700 26px "Instrument Sans", sans-serif'; g.textAlign = 'center'; g.fillStyle = '#FFFFFF'; g.strokeStyle = 'rgba(0,0,0,.7)'; g.lineWidth = 5; const name = (u.remote ? '● ' : '') + HEROES[u.hero].name; g.strokeText(name, 128, 24); g.fillText(name, 128, 24);
+    g.fillStyle = 'rgba(0,0,0,.6)'; g.fillRect(28, 38, 200, 14); g.fillStyle = col; g.fillRect(30, 40, 196 * f, 10); u.tag.material.map.needsUpdate = true; u.tagHp = u.hp;
+  }
+  function addUnit(o){
+    const H = HEROES[o.hero], u = Object.assign({ x: 0, z: 0, yaw: 0, hp: H.hp, max: H.hp, cd: Math.random(), spCd: 2 + Math.random() * 4, stun: 0, dead: 0, kx: 0, kz: 0, swing: 0, mv: 0, rage: 0, y: 0, bot: true }, o);
+    const L = o.remote && o.look ? Object.assign({}, cleanLook(o.look), { outfit: H.outfit, mask: 1, cape: 1 }) : heroLook(o.hero);
+    u.av = avatar(L, { s: H.scale || 1 }); u.av.hold(H.prop || null); eventScene.add(u.av.g);
+    u.tag = hpTag(u); u.tag.position.y = 2.2 * (H.scale || 1) + .2; u.av.g.add(u.tag); u.tag.scale.set(1.6 / (H.scale || 1), .4 / (H.scale || 1), 1); drawTag(u);
+    EV.units.push(u); return u;
+  }
+  function dropUnit(u){ if (u.av.g.parent) u.av.g.parent.remove(u.av.g); disposeDeep(u.av.g); EV.units = EV.units.filter(q => q !== u); }
+  const spawnOf = team => { const K = EV.k; if (K === 'wwh') { if (team === 'hulk') return [0, 0]; const a = Math.random() * Math.PI * 2; return [Math.cos(a) * 21, Math.sin(a) * 21]; } const s = team === 'av' || team === 'ins' ? 1 : -1; return [(Math.random() - .5) * 8, s * (21 + Math.random() * 2)]; };
+  // ---------- starting and leaving ----------
+  const evHud = $('#evHud'), evBox = $('#evBox'), evHurt = $('#evHurt');
+  function remoteHulk(){ let r = null; ghosts.forEach((g, id) => { if (g.e && g.e.k === 'wwh' && g.e.h === 'hulk' && performance.now() - g.seen < 6000) r = id; }); return r; }
+  function openLobby(k){
+    if (A) return say('Finish your fight first.', 2200);
+    closePause(); const E = EVENTS[k]; let team = k === 'avx' ? null : k === 'inj' ? 'ins' : null;
+    const draw = () => {
+      const teams = k === 'avx' ? ['av', 'xm'] : k === 'wwh' ? ['heroes', 'hulk'] : ['ins'], hulkTaken = k === 'wwh' && remoteHulk();
+      evBox.querySelector('.gbox').innerHTML = `<div class="ghead"><h2 class="display">${E.name}</h2><button class="close" type="button" data-ev="close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+        <p>${E.blurb}</p><p class="gmsg">${mq ? lbLine(k) : 'Turn on multiplayer in the menu to see the global leaderboard and play with other visitors.'}</p>
+        ${k === 'inj' ? '' : `<h3>${k === 'wwh' ? 'Your role' : 'Your side'}</h3><div class="lkrow">${teams.map(t => `<button type="button" class="tbtn" data-ev="team" data-v="${t}" aria-pressed="${team === t}" ${t === 'hulk' && hulkTaken ? 'disabled' : ''}>${E.teams[t]}${t === 'hulk' && hulkTaken ? ' (taken by another player)' : ''}</button>`).join('')}</div>`}
+        ${team ? `<h3>Your hero</h3><div class="lkrow">${PICKS[team].map(h => `<button type="button" class="tbtn" data-ev="go" data-v="${h}">${HEROES[h].name}</button>`).join('')}</div><p class="gmsg">${PICKS[team].map(h => `${HEROES[h].name}: ${HEROES[h].sp}`).join(' · ')}</p>` : '<p class="gmsg">Pick a side to choose your hero.</p>'}`;
+    };
+    evBox.onclick = e => { const b = e.target.closest('[data-ev]'); if (!b) return; const a = b.dataset.ev;
+      if (a === 'close') evBox.classList.remove('on');
+      if (a === 'team') { team = b.dataset.v; draw(); }
+      if (a === 'go') { evBox.classList.remove('on'); startEvent(k, team, b.dataset.v); } };
+    draw(); evBox.classList.add('on');
+  }
+  function startEvent(k, team, hero){
+    if (EV) stopEvent(true);
+    fade(() => {
+      buildArena(k);
+      const H = HEROES[hero];
+      EV = { k, team, hero, look: heroLook(hero), hp: H.hp, max: H.hp, t: EVENTS[k].time, score: {}, units: [], shots: [], fx: [], cd: 0, spCd: 1, swing: 0, dead: 0, inv: 1.5, kos: 0, deaths: 0, dmg: 0, rage: 0,
+        big: !!H.scale, scale: H.scale || 1, speed: H.speed, prop: H.prop || null, over: false, charge: 0, weak: 0, remotes: new Map() };
+      Object.keys(EVENTS[k].teams).forEach(t => EV.score[t] = 0);
+      EV.me = { isMe: 1, team, hero, x: 0, z: 0, dead: 0, r: H.r || .5 };
+      // fill the teams with bots
+      const foe = { av: 'xm', xm: 'av', hulk: 'heroes', heroes: 'hulk', ins: 'reg' }[team];
+      if (k === 'avx') { PICKS[team].filter(h => h !== hero).concat(PICKS[team][0]).slice(0, 3).forEach(h => place(addUnit({ hero: h, team }))); PICKS[foe].concat(PICKS[foe][1]).forEach(h => place(addUnit({ hero: h, team: foe }))); }
+      if (k === 'wwh') { if (team === 'hulk') ['cap', 'iron', 'thor', 'wolverine', 'cyclops'].forEach(h => place(addUnit({ hero: h, team: 'heroes' }))); else { ['iron', 'thor', 'wolverine', 'storm'].filter(h => h !== hero).slice(0, 4).forEach(h => place(addUnit({ hero: h, team: 'heroes' }))); if (!remoteHulk()) place(addUnit({ hero: 'hulk', team: 'hulk', hp: 2200, max: 2200 })); } }
+      if (k === 'inj') { PICKS.ins.filter(h => h !== hero).forEach((h, i) => place(addUnit({ hero: h, team: 'ins', role: i === 0 ? 'pad' : '' }))); const sm = place(addUnit({ hero: 'superman', team: 'reg' })); sm.boss = 1; EV.boss = sm; for (let i = 0; i < 5; i++) place(addUnit({ hero: 'trooper', team: 'reg' })); }
+      if (k === 'wwh' && team === 'hulk') EV.boss = null;
+      const [sx, sz] = spawnOf(team);
+      saved = { pos: V(0, 1.6, 2.6), yaw: 0, pitch: -.05 };
+      inWorld = true; zone = 'event'; falling = false; vy = 0; walkTarget = null; pos.set(sx, 1.6, sz); yaw = sz > 0 ? 0 : Math.PI; pitch = -.08; if (k === 'wwh' && team === 'heroes') yaw = Math.atan2(sx, sz);
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Leave the event'; jumpBtn.hidden = fine; uiZone();
+      evHud.hidden = false; $('#evEnd').hidden = true; $('#evSp').textContent = `${H.sp}\n(E)`; document.body.classList.add('inevent');
+      say(k === 'avx' ? `You’re ${H.name}. First team to ${EVENTS.avx.goal} takedowns wins.` : k === 'wwh' ? (team === 'hulk' ? 'You’re the Hulk. Smash the heroes and survive until time runs out. Space to leap, E to thunderclap.' : 'Take the Hulk down before time runs out. Stay spread out: his thunderclap hits everyone nearby.') : 'Superman is invulnerable. Hold the green Kryptonite emitter to weaken him, then hit him with everything.', 5200);
+      if (fine && canvas.requestPointerLock) canvas.requestPointerLock();
+    }, '#0B0D14');
+  }
+  function place(u){ const [x, z] = spawnOf(u.team); u.x = x; u.z = z; u.yaw = z > 0 ? 0 : Math.PI; return u; }
+  function stopEvent(quiet){
+    if (!EV) return; EV.units.slice().forEach(dropUnit); EV.shots.forEach(s => s.m && s.m.parent && s.m.parent.remove(s.m)); EV.fx.forEach(f => f.m.parent && f.m.parent.remove(f.m));
+    EV = null; evHud.hidden = true; evHurt.style.opacity = 0; document.body.classList.remove('inevent'); if (document.pointerLockElement) document.exitPointerLock();
+    if (!quiet) travel('room'); renderHotbar(); meKey = '';
+  }
+  // ---------- fighting ----------
+  const evFwd = () => V(-Math.sin(yaw), 0, -Math.cos(yaw));
+  const teamOf = u => u.isMe ? EV.team : u.team;
+  const alive = u => !(u.isMe ? EV.dead > 0 : u.dead > 0);
+  const bodies = () => [EV.me].concat(EV.units);
+  function evAttack(){
+    if (!EV || EV.over || EV.dead > 0 || EV.cd > 0) return; const H = HEROES[EV.hero];
+    EV.cd = H.cd * (EV.rage > 0 ? .6 : 1); EV.swing = .3;
+    const dm = H.dmg * armFactor() * (EV.rage > 0 ? 1.6 : 1);
+    if (H.kind === 'melee') { const f = evFwd(); let hit = 0;
+      bodies().forEach(u => { if (u.isMe || !alive(u) || teamOf(u) === EV.team) return; const dx = u.x - pos.x, dz = u.z - pos.z, d = Math.hypot(dx, dz) - (HEROES[u.hero].r || .5); if (d < H.range && Math.abs(angDiff(Math.atan2(-dx, -dz), yaw)) < (H.arc || .9)) { hitUnit(u, dm, 'me'); hit++; } });
+      tone(hit ? 240 : 420, .06, hit ? 'square' : 'sine', .04, hit ? 120 : 700); if (EV.hero === 'hulk') { EV.shake = .3; }
+    } else { shoot({ x: pos.x, z: pos.z, yaw, dmg: dm, team: EV.team, col: H.col, from: 'me' }); tone(900, .05, 'sawtooth', .03, 1400); }
+  }
+  function evSpecial(){
+    if (!EV || EV.over || EV.dead > 0 || EV.spCd > 0) return; const H = HEROES[EV.hero]; EV.spCd = H.spCd; EV.swing = .3;
+    special2(EV.me, EV.hero, pos.x, pos.z, yaw, 'me'); tone(300, .4, 'sawtooth', .05, 900);
+  }
+  // the specials (the same for you and for bots)
+  function special2(src, hero, x, z, dir, from){
+    const team = teamOf(src), boost = from === 'me' ? armFactor() : .75, fx = -Math.sin(dir), fz = -Math.cos(dir);
+    const aoe = (cx, cz, r, d, kb, col) => { bodies().forEach(u => { if (!alive(u) || teamOf(u) === team) return; const dd = Math.hypot(u.x - cx, u.z - cz); if (dd < r + (HEROES[u.hero].r || .5)) { hitUnit(u, d * boost, from); if (kb) knock(u, u.x - cx, u.z - cz, kb); } }); ringFx2(cx, cz, r, col); };
+    const beam = (len, w, d, col, kb) => { bodies().forEach(u => { if (!alive(u) || teamOf(u) === team) return; const rx = u.x - x, rz = u.z - z, along = rx * fx + rz * fz, side = Math.abs(rx * fz - rz * fx); if (along > 0 && along < len && side < w + (HEROES[u.hero].r || .5)) { hitUnit(u, d * boost, from); if (kb) knock(u, fx, fz, kb); } }); beamFx(x, z, x + fx * len, z + fz * len, col, w); };
+    const nearest = (n, maxD) => bodies().filter(u => alive(u) && teamOf(u) !== team && Math.hypot(u.x - x, u.z - z) < maxD).sort((a, b) => Math.hypot(a.x - x, a.z - z) - Math.hypot(b.x - x, b.z - z)).slice(0, n);
+    if (hero === 'cap') shoot({ x, z, yaw: dir, dmg: 24 * boost, team, col: 0xC8102E, from, big: 1, bounce: 1 });
+    if (hero === 'iron') beam(18, .7, 30, 0xBFF4FF);
+    if (hero === 'cyclops') beam(16, 1, 26, 0xFF3030, 4);
+    if (hero === 'thor') { const t = nearest(1, 16)[0], cx = t ? t.x : x + fx * 8, cz = t ? t.z : z + fz * 8; boltFx(cx, cz); aoe(cx, cz, 3.5, 28, 3, 0x9FD4FF); }
+    if (hero === 'storm') nearest(3, 18).forEach(t => { boltFx(t.x, t.z); aoe(t.x, t.z, 2.2, 18, 0, 0xE8F6FF); });
+    if (hero === 'wolverine') { if (src.isMe) { EV.rage = 5; say('Berserker rage!', 1400); } else src.rage = 5; }
+    if (hero === 'hulk') { aoe(x, z, 7, 30, 6, 0x9CFF7A); if (src.isMe) EV.shake = .6; }
+    if (hero === 'batman') [-1, 0, 1].forEach(k2 => shoot({ x, z, yaw: dir + k2 * .2, dmg: 10 * boost, team, col: 0x16181D, from, stun: .8 }));
+    if (hero === 'arrow') shoot({ x, z, yaw: dir, dmg: 12 * boost, team, col: 0x9CFF7A, from, aoe: 3, aoeD: 22 });
+    if (hero === 'harleyq') aoe(x, z, 3.2, 22, 3, 0xE0314B);
+  }
+  function knock(u, dx, dz, k){ const d = Math.hypot(dx, dz) || 1; if (u.isMe) { const nx = pos.x + dx / d * k * .4, nz = pos.z + dz / d * k * .4; if (evValid(nx, nz)) { pos.x = nx; pos.z = nz; } } else if (!u.boss && u.hero !== 'hulk') { u.kx += dx / d * k * 2; u.kz += dz / d * k * 2; } }
+  function hitUnit(u, d, from){
+    if (!alive(u) || EV.over) return;
+    if (u.isMe) return hurtMe(d, from);
+    if (u.boss && EV.k === 'inj') { d *= EV.weak > 0 ? 1.6 : .08; if (EV.weak <= 0 && from === 'me' && !EV.toldImmune) { EV.toldImmune = 1; say('He’s invulnerable! Hold the Kryptonite emitter to weaken him.', 3000); } }
+    if (from === 'me') { EV.dmg += d; if (EV.k === 'inj' && u.boss) lbAdd('d', d); }
+    numFx(u, d, from === 'me');
+    if (u.remote) { if (from === 'me' && mq) mq.pub(`${MP_TOPIC}/ev/${mpId}`, JSON.stringify({ to: u.id, d: Math.round(d) })); return; }
+    u.hp -= d; if (u.hp <= 0) killUnit(u, from);
+  }
+  function killUnit(u, from){
+    u.dead = u.boss ? 999 : u.hero === 'hulk' ? 999 : u.hero === 'trooper' ? 8 : 6; u.hp = 0; u.av.g.visible = false;
+    const killerTeam = from === 'me' ? EV.team : from && from.team; if (killerTeam) EV.score[killerTeam] = (EV.score[killerTeam] || 0) + 1;
+    if (from === 'me') { EV.kos++; if (EV.k === 'avx') lbAdd(EV.team === 'av' ? 'a' : 'x', 1); tone(180, .3, 'square', .05, 60); }
+    if ((u.boss || u.hero === 'hulk') && !u.remote) endMatch(u.team !== EV.team);
+    checkGoal();
+  }
+  function hurtMe(d, from){
+    if (EV.dead > 0 || EV.inv > 0 || EV.over) return;
+    EV.hp -= d; EV.hurtT = .4; tone(120, .15, 'sawtooth', .04, 70);
+    if (EV.hp <= 0) { EV.hp = 0; EV.dead = EV.hero === 'hulk' ? 999 : 4; EV.deaths++; const kt = from && from.team; if (kt) EV.score[kt] = (EV.score[kt] || 0) + 1;
+      if (from && from.remote && mq) mq.pub(`${MP_TOPIC}/ev/${mpId}`, JSON.stringify({ ko: from.id }));
+      if (EV.hero === 'hulk') endMatch(false); else say('Down! Back in 4 seconds…', 2400); checkGoal(); }
+  }
+  function checkGoal(){ if (EV.k === 'avx' && !EV.over) { const t = Object.keys(EV.score).find(t => EV.score[t] >= EVENTS.avx.goal); if (t) endMatch(t === EV.team); } }
+  function endMatch(won){
+    if (EV.over) return; EV.over = true; if (document.pointerLockElement) document.exitPointerLock();
+    const E = EVENTS[EV.k], other = Object.keys(E.teams).find(t => t !== EV.team);
+    if (EV.k === 'avx' && won) lbAdd(EV.team === 'av' ? 'a' : 'x', 5);
+    if (EV.k === 'wwh') lbAdd(won === (EV.team === 'hulk') ? 'h' : 'r', 1);
+    if (EV.k === 'inj') lbAdd(won ? 'w' : 'l', 1);
+    const title = EV.k === 'avx' ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds… for now.';
+    $('#evEndT').textContent = title; $('#evEndS').textContent = `Takedowns ${EV.kos} · Times down ${EV.deaths} · Damage ${fmtN(EV.dmg)}. ${mq ? 'Global: ' + lbLine(EV.k) : ''}`;
+    $('#evEnd').hidden = false; [523, 659, 784].forEach((f, i) => setTimeout(() => tone(won ? f : f / 2, .2, 'triangle', .05), i * 110));
+  }
+  $('#evAgain').onclick = () => { const { k, team, hero } = EV; startEvent(k, team, hero); };
+  $('#evSwap').onclick = () => { const k = EV.k; stopEvent(); setTimeout(() => openLobby(k), 700); };
+  $('#evLeave').onclick = () => stopEvent();
+  $('#evSp').addEventListener('click', () => evSpecial());
+  // ---------- shots and effects ----------
+  const shotGeo = new THREE.SphereGeometry(.14, 10, 8), shotMats = {};
+  function shoot(o){ const m = new THREE.Mesh(o.big ? new THREE.CylinderGeometry(.35, .35, .06, 20) : shotGeo, shotMats[o.col + (o.big ? 'b' : '')] || (shotMats[o.col + (o.big ? 'b' : '')] = new THREE.MeshBasicMaterial({ color: o.col }))); if (o.big) m.rotation.x = Math.PI / 2; eventScene.add(m);
+    EV.shots.push(Object.assign({ m, vx: -Math.sin(o.yaw) * 26, vz: -Math.cos(o.yaw) * 26, life: 1, y: 1.3 }, o, { x: o.x - Math.sin(o.yaw) * .6, z: o.z - Math.cos(o.yaw) * .6 })); }
+  function fxAdd(m, life){ eventScene.add(m); EV.fx.push({ m, life, max: life }); }
+  function ringFx2(x, z, r, col){ const m = new THREE.Mesh(new THREE.RingGeometry(Math.max(.1, r - .3), r, 40), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .8, side: THREE.DoubleSide, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.set(x, .08, z); fxAdd(m, .45); }
+  function beamFx(x0, z0, x1, z1, col, w){ const len = Math.hypot(x1 - x0, z1 - z0), m = new THREE.Mesh(new THREE.BoxGeometry(w * .6, w * .6, len), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .85, depthWrite: false })); m.position.set((x0 + x1) / 2, 1.3, (z0 + z1) / 2); m.rotation.y = Math.atan2(x1 - x0, z1 - z0); fxAdd(m, .35); }
+  function boltFx(x, z){ const pts = []; for (let y = 12; y >= 0; y -= 1.5) pts.push(V(x + (Math.random() - .5) * (y ? 1.2 : 0), y, z + (Math.random() - .5) * (y ? 1.2 : 0))); fxAdd(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, .08, 5), new THREE.MeshBasicMaterial({ color: 0xE8F6FF, transparent: true })), .35); tone(1200, .2, 'sawtooth', .04, 200); }
+  function numFx(u, d, mine){ if (!mine || reduce) return; const c = document.createElement('canvas'); c.width = 128; c.height = 64; const g = c.getContext('2d'); g.font = '800 44px "Instrument Sans", sans-serif'; g.textAlign = 'center'; g.lineWidth = 6; g.strokeStyle = '#000'; g.strokeText(Math.round(d), 64, 46); g.fillStyle = '#FFC93C'; g.fillText(Math.round(d), 64, 46);
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false })); sp.scale.set(.9, .45, 1); sp.position.set(u.x + (Math.random() - .5) * .5, 2.4 * (HEROES[u.hero].scale || 1), u.z); sp.userData.rise = 1; fxAdd(sp, .8); }
+  // ---------- bot brains ----------
+  function nearestFoe(u){ let best = null, bd = 1e9; bodies().forEach(o => { if (o === u || !alive(o) || teamOf(o) === u.team) return; const d = Math.hypot(o.x - u.x, o.z - u.z) + (o.isMe ? -2 : 0); if (d < bd) { bd = d; best = o; } }); return best; }
+  function moveUnit(u, dx, dz, sp, dt){ const d = Math.hypot(dx, dz); if (d < .01) return; const nx = u.x + dx / d * sp * dt, nz = u.z + dz / d * sp * dt; if (evValid(nx, nz)) { u.x = nx; u.z = nz; } else if (evValid(nx, u.z)) u.x = nx; else if (evValid(u.x, nz)) u.z = nz; else { u.x += dz / d * sp * dt; u.z -= dx / d * sp * dt; } }
+  function botStep(u, dt, t){
+    const H = HEROES[u.hero];
+    if (u.dead > 0) { u.dead -= dt; if (u.dead <= 0 && !u.boss && u.hero !== 'hulk') { place(u); u.hp = u.max; u.av.g.visible = true; drawTag(u); } return; }
+    u.cd -= dt; u.spCd -= dt; u.stun -= dt; u.rage -= dt; u.swing = Math.max(0, u.swing - dt);
+    if (H.regen || u.rage > 0) u.hp = Math.min(u.max, u.hp + (u.rage > 0 ? 8 : H.regen) * dt);
+    u.x += u.kx * dt; u.z += u.kz * dt; u.kx *= Math.max(0, 1 - dt * 5); u.kz *= Math.max(0, 1 - dt * 5); if (!evValid(u.x, u.z)) { const d = Math.hypot(u.x, u.z); if (d > ER - .7) { u.x *= (ER - .8) / d; u.z *= (ER - .8) / d; } PILLARS.forEach(p => { const dd = Math.hypot(u.x - p.x, u.z - p.z); if (dd < p.r + .45) { u.x = p.x + (u.x - p.x) / dd * (p.r + .46); u.z = p.z + (u.z - p.z) / dd * (p.r + .46); } }); }
+    if (u.stun > 0) return;
+    if (u.boss && EV.k === 'inj') return supermanStep(u, dt, t);
+    if ((u.retarget = (u.retarget || 0) - dt) <= 0 || !u.tgt || !alive(u.tgt)) { u.retarget = 1 + Math.random(); u.tgt = nearestFoe(u); }
+    // insurgents with the pad job go and hold the Kryptonite emitter
+    if (u.role === 'pad' && EV.weak <= 0) { const dx = EMIT.x - u.x, dz = EMIT.z - u.z; if (Math.hypot(dx, dz) > 1.5) { moveUnit(u, dx, dz, H.speed * .9, dt); u.yaw = Math.atan2(-dx, -dz); u.mv = 1; return; } }
+    const T = u.tgt; if (!T) { u.mv = 0; return; }
+    const dx = T.x - u.x, dz = T.z - u.z, d = Math.hypot(dx, dz), want = H.kind === 'melee' ? H.range * .75 + (HEROES[T.hero].r || .5) : 8;
+    u.yaw = Math.atan2(-dx, -dz); let mv = 0;
+    const sp = H.speed * .85 * (u.rage > 0 ? 1.3 : 1);
+    if (d > want) { moveUnit(u, dx, dz, sp, dt); mv = 1; } else if (H.kind !== 'melee' && d < 5) { moveUnit(u, -dx, -dz, sp * .8, dt); mv = 1; }
+    if (H.kind !== 'melee') { const s = Math.sin(t * .8 + u.x) > 0 ? 1 : -1; moveUnit(u, dz * s, -dx * s, sp * .4, dt); mv = 1; }
+    u.mv = mv;
+    // Hulk: leap at far targets, thunderclap crowds
+    if (u.hero === 'hulk') { const near = bodies().filter(o => alive(o) && teamOf(o) !== u.team && Math.hypot(o.x - u.x, o.z - u.z) < 7).length; if (u.spCd <= 0 && near >= 2) { u.spCd = H.spCd; u.swing = .4; special2(u, 'hulk', u.x, u.z, u.yaw, u); } if (d > 10 && (u.leapCd = (u.leapCd || 0) - dt) <= 0) { u.leapCd = 5; u.leap = { t: 0, x0: u.x, z0: u.z, x1: T.x, z1: T.z }; } }
+    if (u.leap) { u.leap.t += dt / .9; const k = Math.min(1, u.leap.t); u.x = u.leap.x0 + (u.leap.x1 - u.leap.x0) * k; u.z = u.leap.z0 + (u.leap.z1 - u.leap.z0) * k; u.y = Math.sin(k * Math.PI) * 6; if (k >= 1) { u.leap = null; u.y = 0; special2(u, 'hulk', u.x, u.z, u.yaw, u); tone(60, .5, 'sawtooth', .07, 30); } return; }
+    if (u.cd <= 0 && (H.kind === 'melee' ? d < H.range + (HEROES[T.hero].r || .5) : d < 16)) {
+      u.cd = H.cd * (1.3 + Math.random() * .6); u.swing = .3;
+      if (H.kind === 'melee') hitUnit(T, H.dmg * .7 * (u.rage > 0 ? 1.4 : 1), u);
+      else shoot({ x: u.x, z: u.z, yaw: u.yaw + (Math.random() - .5) * .12, dmg: H.dmg * .7, team: u.team, col: H.col, from: u });
+    }
+    if (u.spCd <= 0 && H.sp && u.hero !== 'hulk' && d < 12) { u.spCd = H.spCd * (1.5 + Math.random()); u.swing = .3; special2(u, u.hero, u.x, u.z, u.yaw, u); }
+  }
+  // Superman: heat vision, a flying punch, and freeze breath. Only Kryptonite makes him hurt
+  function supermanStep(u, dt, t){
+    u.y = 1 + Math.sin(t * 2) * .2;
+    if (!u.act || (u.act.t -= dt) <= 0 && u.act.done) {
+      if ((u.retarget = (u.retarget || 0) - dt) <= 0 || !u.tgt || !alive(u.tgt)) { u.retarget = 2; u.tgt = nearestFoe(u); }
+      const T = u.tgt; if (!T) return;
+      const r = Math.random(), d = Math.hypot(T.x - u.x, T.z - u.z);
+      u.act = d < 3 ? { k: 'punch', t: .35 } : r < .45 ? { k: 'heat', t: .8 } : r < .75 ? { k: 'dash', t: .6 } : { k: 'freeze', t: .6 };
+      u.act.yaw = Math.atan2(-(T.x - u.x), -(T.z - u.z)); u.act.done = false; u.yaw = u.act.yaw;
+      if (u.act.k !== 'punch') { const L = u.act.k === 'freeze' ? 7 : 20; u.act.tel = new THREE.Mesh(new THREE.PlaneGeometry(u.act.k === 'freeze' ? 4 : 1.2, L), new THREE.MeshBasicMaterial({ color: 0xFF3C3C, transparent: true, opacity: .35, side: THREE.DoubleSide, depthWrite: false })); u.act.tel.rotation.x = -Math.PI / 2; u.act.tel.rotation.z = -u.yaw; const fx = -Math.sin(u.yaw), fz = -Math.cos(u.yaw); u.act.tel.position.set(u.x + fx * L / 2, .05, u.z + fz * L / 2); eventScene.add(u.act.tel); }
+      return;
+    }
+    const a = u.act; u.mv = 0;
+    if (!a.done && a.t <= 0) {
+      a.done = true; if (a.tel) { eventScene.remove(a.tel); a.tel.geometry.dispose(); }
+      const fx = -Math.sin(a.yaw), fz = -Math.cos(a.yaw), wk = EV.weak > 0 ? .5 : 1;
+      const line = (len, w, d) => bodies().forEach(o => { if (!alive(o) || teamOf(o) === u.team) return; const rx = o.x - u.x, rz = o.z - u.z, al = rx * fx + rz * fz, sd = Math.abs(rx * fz - rz * fx); if (al > 0 && al < len && sd < w) hitUnit(o, d * wk, u); });
+      if (a.k === 'heat') { line(20, .8, 22); beamFx(u.x, u.z, u.x + fx * 20, u.z + fz * 20, 0xFF2A2A, .4); tone(700, .3, 'sawtooth', .04, 300); }
+      if (a.k === 'freeze') { line(7, 2, 10); ringFx2(u.x + fx * 4, u.z + fz * 4, 2.5, 0xBFE8FF); bodies().forEach(o => { if (!o.isMe && alive(o) && teamOf(o) !== u.team && Math.hypot(o.x - u.x - fx * 4, o.z - u.z - fz * 4) < 3) o.stun = 1.2; }); if (Math.hypot(pos.x - u.x - fx * 4, pos.z - u.z - fz * 4) < 3) EV.slow = 2; }
+      if (a.k === 'dash') { line(14, 1.2, 26); for (let k = 0; k < 14; k += .5) { const nx = u.x + fx * .5, nz = u.z + fz * .5; if (!evValid(nx, nz)) break; u.x = nx; u.z = nz; } A0shake(); tone(90, .3, 'sawtooth', .06, 40); }
+      if (a.k === 'punch') { const T = u.tgt; if (T && alive(T) && Math.hypot(T.x - u.x, T.z - u.z) < 3.2) { hitUnit(T, 14 * wk, u); knock(T, T.x - u.x, T.z - u.z, 4); } }
+      a.t = a.k === 'punch' ? .5 : 1.4;
+    }
+    if (a.done && a.t > 0 && u.tgt) { const T = u.tgt, dx = T.x - u.x, dz = T.z - u.z; if (Math.hypot(dx, dz) > 2.5) { moveUnit(u, dx, dz, HEROES.superman.speed * (EV.weak > 0 ? .5 : 1), dt); u.mv = 1; } u.yaw = Math.atan2(-dx, -dz); }
+  }
+  const A0shake = () => { EV.shake = .4; };
+  // ---------- other players in the same event ----------
+  function evRemote(id, gh){
+    if (!EV) return; const e = gh.e; let u = EV.remotes.get(id);
+    if (!e || e.k !== EV.k || gh.a !== 'event') { if (u) { dropUnit(u); EV.remotes.delete(id); } return; }
+    if (!u || u.hero !== e.h || u.team !== e.t) { if (u) dropUnit(u); u = addUnit({ id, hero: e.h, team: e.t, remote: true, bot: false, look: gh.look, x: gh.tx, z: gh.tz }); EV.remotes.set(id, u); }
+    u.tx = gh.tx; u.tz = gh.tz; u.tyaw = gh.tr; u.max = e.m || u.max; u.hp = e.hp; u.dead = e.d ? 1 : 0; u.av.g.visible = !e.d; u.seen = performance.now();
+    if (u.tagHp !== u.hp) drawTag(u);
+    if (EV.k === 'wwh' && e.h === 'hulk' && e.d && EV.team !== 'hulk' && !EV.over) endMatch(true);
+    // a real player became the Hulk: our stand-in Hulk steps aside
+    if (EV.k === 'wwh' && e.h === 'hulk' && EV.team !== 'hulk') EV.units.filter(q => q.bot && q.hero === 'hulk').forEach(q => { dropUnit(q); say('A real player is the Hulk now!', 2600); });
+  }
+  function evMsg(id, text){
+    if (!EV) return; let d; try { d = JSON.parse(text); } catch (e) { return; }
+    const u = EV.remotes.get(id); if (!u) return;
+    if (d.to === mpId) { const n = clamp(+d.d || 0, 0, u.hero === 'hulk' ? 80 : 60); if (n) hitUnit(EV.me, n, u); }
+    if (d.ko === mpId) { EV.kos++; EV.score[EV.team] = (EV.score[EV.team] || 0) + 1; if (EV.k === 'avx') lbAdd(EV.team === 'av' ? 'a' : 'x', 1); checkGoal(); }
+  }
+  // ---------- every frame ----------
+  function evStep(dt, now){
+    if (!EV) return; const t = now / 1000, H = HEROES[EV.hero];
+    if (EV.holdAtk) evAttack();
+    EV.me.x = pos.x; EV.me.z = pos.z; EV.me.dead = EV.dead;
+    if (!EV.over && !paused()) {
+      EV.t -= dt; EV.cd -= dt; EV.spCd -= dt; EV.inv -= dt; EV.rage -= dt; EV.swing = Math.max(0, EV.swing - dt); EV.slow = Math.max(0, (EV.slow || 0) - dt);
+      if (H.regen || EV.rage > 0) EV.hp = Math.min(EV.max, EV.hp + (EV.rage > 0 ? 8 : H.regen) * dt);
+      if (EV.dead > 0 && EV.hero !== 'hulk') { EV.dead -= dt; if (EV.dead <= 0) { const [x, z] = spawnOf(EV.team); pos.set(x, 1.6, z); EV.hp = EV.max; EV.inv = 2; } }
+      EV.speed = H.speed * (EV.rage > 0 ? 1.3 : 1) * (EV.slow > 0 ? .5 : 1);
+      EV.units.forEach(u => u.remote ? null : botStep(u, dt, t));
+      // Kryptonite emitter: insurgents standing in it charge it (if no Regime soldier is contesting)
+      if (EV.k === 'inj') {
+        const inPad = o => alive(o) && Math.hypot(o.x - EMIT.x, o.z - EMIT.z) < EMIT.r;
+        const ours = bodies().some(o => teamOf(o) === 'ins' && inPad(o)), theirs = bodies().some(o => teamOf(o) === 'reg' && !o.boss && inPad(o));
+        if (EV.weak > 0) { EV.weak -= dt; if (EV.weak <= 0) say('The Kryptonite wore off. Charge the emitter again!', 2600); }
+        else if (ours && !theirs) { EV.charge += dt / 9; if (EV.charge >= 1) { EV.charge = 0; EV.weak = 12; say('Kryptonite! Superman is weakened. Hit him now!', 3000); tone(300, .8, 'sine', .06, 900); } }
+        const em = eventScene.userData.emitter; if (em) { em.cr.rotation.y += dt * 2; em.cr.scale.setScalar(1 + EV.charge * .6 + (EV.weak > 0 ? .4 : 0)); em.ring.material.opacity = .4 + EV.charge * .6; }
+        if (EV.boss) EV.boss.av.g.traverse(o => { if (o.isMesh && o.material.emissive) o.material.emissive.setHex(EV.weak > 0 ? 0x1F7A45 : 0); });
+      }
+      if (EV.t <= 0) endMatch(EV.k === 'avx' ? EV.score[EV.team] > Math.max(...Object.entries(EV.score).filter(([k]) => k !== EV.team).map(([, v]) => v)) : EV.k === 'wwh' ? EV.team === 'hulk' : false);
+      // Hulk (you): a leap that lands with a smash
+      if (EV.hero === 'hulk' && EV.leapV) { pos.x += EV.leapV.x * dt; pos.z += EV.leapV.z * dt; if (!evValid(pos.x, pos.z)) { pos.x -= EV.leapV.x * dt; pos.z -= EV.leapV.z * dt; } if (grounded && vy === 0 && EV.leapT > .2) { EV.leapV = null; special2(EV.me, 'hulk', pos.x, pos.z, yaw, 'me'); EV.shake = .6; tone(60, .5, 'sawtooth', .07, 30); } EV.leapT += dt; }
+    }
+    // shots
+    EV.shots = EV.shots.filter(s => {
+      s.x += s.vx * dt; s.z += s.vz * dt; s.life -= dt; s.m.position.set(s.x, s.y, s.z); if (s.big) s.m.rotation.z += dt * 20;
+      if (!evValid(s.x, s.z) && Math.hypot(s.x, s.z) > ER - 1) s.life = 0;
+      if (PILLARS.some(p => Math.hypot(s.x - p.x, s.z - p.z) < p.r)) s.life = 0;
+      if (s.life > 0) for (const o of bodies()) { if (!alive(o) || teamOf(o) === s.team || s.hit === o) continue; const rr = (HEROES[o.hero].r || .5) + (s.big ? .4 : .2); if (Math.hypot(o.x - s.x, o.z - s.z) < rr) {
+        hitUnit(o, s.dmg, s.from); if (s.stun && !o.isMe) o.stun = s.stun;
+        if (s.aoe) { bodies().forEach(q => { if (q !== o && alive(q) && teamOf(q) !== s.team && Math.hypot(q.x - s.x, q.z - s.z) < s.aoe) hitUnit(q, s.aoeD * .6, s.from); }); ringFx2(s.x, s.z, s.aoe, s.col); }
+        if (s.bounce) { s.bounce = 0; s.hit = o; const nt = bodies().find(q => q !== o && alive(q) && teamOf(q) !== s.team && Math.hypot(q.x - s.x, q.z - s.z) < 10); if (nt) { const a = Math.atan2(-(nt.x - s.x), -(nt.z - s.z)); s.vx = -Math.sin(a) * 26; s.vz = -Math.cos(a) * 26; s.life = .8; break; } }
+        s.life = 0; break; } }
+      if (s.life <= 0) { eventScene.remove(s.m); if (s.big) s.m.geometry.dispose(); return false; } return true; });
+    EV.fx = EV.fx.filter(f => { f.life -= dt; if (f.m.material) f.m.material.opacity = clamp(f.life / f.max, 0, 1) * (f.m.isSprite ? 1 : .85); if (f.m.userData.rise) f.m.position.y += dt * 1.2; if (f.life <= 0) { eventScene.remove(f.m); if (f.m.geometry && f.m.geometry !== shotGeo) f.m.geometry.dispose(); return false; } return true; });
+    // drawing everyone
+    EV.units.forEach(u => {
+      if (u.remote) { if (performance.now() - (u.seen || 0) > 8000) { dropUnit(u); EV.remotes.delete(u.id); return; } const k = Math.min(1, dt * 8), ox = u.x, oz = u.z; u.x += (u.tx - u.x) * k; u.z += (u.tz - u.z) * k; u.yaw += angDiff(u.yaw, u.tyaw) * k; u.mv = clamp(Math.hypot(u.x - ox, u.z - oz) / dt / 3, 0, 1); }
+      u.av.g.position.set(u.x, u.y || 0, u.z); u.av.g.rotation.y = u.yaw; u.av.anim(t, u.mv, u.swing > 0 ? u.swing / .3 : 0);
+      if (!u.remote && u.tagHp !== u.hp) drawTag(u);
+    });
+    // HUD
+    const E = EVENTS[EV.k], sc = Object.entries(EV.score).map(([k, v]) => `<b style="color:${E.col[k]}">${E.teams[k]} ${v}</b>`).join(' · ');
+    $('#evScore').innerHTML = EV.k === 'avx' ? sc + ` <small>(first to ${E.goal})</small>` : EV.k === 'wwh' ? `Takedowns ${EV.kos}` : `Kryptonite ${Math.round(EV.charge * 100)}%${EV.weak > 0 ? ' · <b style="color:#9CFF7A">WEAKENED</b>' : ''}`;
+    $('#evTitle').textContent = E.name; $('#evTime').textContent = `${Math.floor(Math.max(0, EV.t) / 60)}:${String(Math.floor(Math.max(0, EV.t) % 60)).padStart(2, '0')}`;
+    $('#evHero').textContent = `${H.name}${armHurt() ? ' · burned arm' : ''}`; $('#evHp').style.width = `${clamp(EV.hp / EV.max, 0, 1) * 100}%`;
+    const boss = EV.k === 'inj' ? EV.boss : EV.k === 'wwh' && EV.team !== 'hulk' ? EV.units.find(u => u.hero === 'hulk') : null;
+    $('#evBoss').hidden = !boss; if (boss) { $('#evBossName').textContent = HEROES[boss.hero].name + (boss.remote ? ' (a real player)' : ''); $('#evBossHp').style.width = `${clamp(boss.hp / boss.max, 0, 1) * 100}%`; }
+    $('#evSp').classList.toggle('cool', EV.spCd > 0); evHurt.style.opacity = EV.dead > 0 ? .7 : (EV.hurtT = Math.max(0, (EV.hurtT || 0) - dt)) > 0 ? EV.hurtT * 1.5 : 0;
+    $('#evMsg').textContent = EV.dead > 0 && EV.hero !== 'hulk' ? `Back in ${Math.ceil(EV.dead)}…` : '';
+    if (EV.shake > 0) { EV.shake -= dt; if (!reduce && !lowFx) camera.position.add(V((Math.random() - .5) * EV.shake * .4, (Math.random() - .5) * EV.shake * .4, 0)); }
+  }
 
   // ---------- entering ----------
   let entered = false, entering = false;
@@ -4565,8 +4958,8 @@ body.photo .povbtn{visibility:hidden}
   };
   const platformAt = (x, z) => plats[zone].find(p => onPlat(x, z, p)) || null;
   let codeScene = null, chipScene = null, seaScene = null, falling = false;
-  let spaceScene = null;
-  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene })[zone] : scene;
+  let spaceScene = null, eventScene = null;
+  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene, event: eventScene })[zone] : scene;
   function radTile(parent, ch, x, y, z){
     const m = new THREE.Mesh(new THREE.PlaneGeometry(.55, .55), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: tex(160, 160, (g, w, h) => { g.fillStyle = '#FFC93C'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, h, 24) : g.rect(0, 0, w, h); g.fill(); g.fillStyle = '#16181D'; g.font = `700 110px ${ZH}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, w / 2, h / 2 + 6); }) }));
     m.position.set(x, y, z); m.userData.collect = ch; m.userData.base = y; parent.add(m); worldAnim.tiles.push(m); return m;
@@ -4769,7 +5162,7 @@ body.photo .povbtn{visibility:hidden}
     // if the bookshelf is closed, the vault (and the operating table) is sealed off, so come back into the room instead
     fade(() => { inWorld = false; zone = 'hub'; uiZone(); walkTarget = null; vy = 0; pos.copy(saved.pos); yaw = saved.yaw; pitch = saved.pitch; if (region(pos.x) === 'vault' && !vaultOpen) { pos.set(3.2, 1.6, .3); yaw = Math.PI / 2; pitch = 0; } dock.classList.add('on'); $('#worldBack').hidden = true; jumpBtn.hidden = true; $('#worldBack').textContent = 'Back to the room'; });
   }
-  $('#worldBack').onclick = () => A ? endFight() : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
+  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
   function enterAI(){
     fade(() => {
       if (!aiScene) buildAI();
@@ -4779,7 +5172,7 @@ body.photo .povbtn{visibility:hidden}
       tone(160, 1.2, 'sine', .06, 80);
     }, '#05060C');
   }
-  function jump(){ if (inWorld && zone === 'city') return cityJump(); if (inWorld && grounded) { vy = 6.4; grounded = false; tone(420, .08, 'sine', .04, 620); } }
+  function jump(){ if (inWorld && zone === 'city') return cityJump(); if (EV && EV.hero === 'hulk' && grounded && !EV.over) { vy = 9; EV.leapV = V(-Math.sin(yaw) * 10, 0, -Math.cos(yaw) * 10); EV.leapT = 0; grounded = false; tone(200, .3, 'sawtooth', .05, 80); return; } if (inWorld && grounded) { vy = 6.4; grounded = false; tone(420, .08, 'sine', .04, 620); } }
   jumpBtn.addEventListener('pointerdown', e => { e.preventDefault(); jump(); });
   function splitChar(g){
     const d = g.userData, [ch, py, en, c1, c2, story] = HANZI[d.hanzi];
@@ -5001,7 +5394,7 @@ body.photo .povbtn{visibility:hidden}
     return null;
   }
   let down = null, hovered = null;
-  canvas.addEventListener('pointerdown', e => { if (A && !A.over && e.pointerType === 'mouse' && fine) { if (e.button === 2) { setBlock(true); return; } if (document.pointerLockElement === canvas) { const p = pick(innerWidth / 2, innerHeight / 2); if (usable(p)) { document.exitPointerLock(); act(p); } else { A.hold = true; attack(); } } else canvas.requestPointerLock(); return; } if (tourI >= 0) endTour(true); down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false }; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointerdown', e => { if (EV && !EV.over && e.pointerType === 'mouse' && fine) { if (document.pointerLockElement === canvas) { if (e.button === 2) evSpecial(); else { EV.holdAtk = true; evAttack(); } } else canvas.requestPointerLock(); return; } if (A && !A.over && e.pointerType === 'mouse' && fine) { if (e.button === 2) { setBlock(true); return; } if (document.pointerLockElement === canvas) { const p = pick(innerWidth / 2, innerHeight / 2); if (usable(p)) { document.exitPointerLock(); act(p); } else { A.hold = true; attack(); } } else canvas.requestPointerLock(); return; } if (tourI >= 0) endTour(true); down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false }; canvas.setPointerCapture(e.pointerId); });
   canvas.addEventListener('pointermove', e => {
     if (document.pointerLockElement === canvas) { yaw -= e.movementX * .0022; pitch = clamp(pitch - e.movementY * .0022, -1.2, 1.2); return; }
     if (A && !down) return;
@@ -5027,11 +5420,13 @@ body.photo .povbtn{visibility:hidden}
   });
   canvas.addEventListener('pointerup', e => {
     canvas.classList.remove('grabbing');
+    if (EV) EV.holdAtk = false;
     if (document.pointerLockElement === canvas) { if (A) A.hold = false; return; }
     if (!down) return;
     const wasDrag = down.moved; down = null;
     if (wasDrag) return;
     // mid-fight, a tap on something you can use uses it; anything else is an attack
+    if (EV) { if (!EV.over) evAttack(); return; }
     if (A) { const p = pick(e.clientX, e.clientY); if (usable(p)) act(p); else attack(); return; }
     act(pick(e.clientX, e.clientY));
   });
@@ -5105,6 +5500,7 @@ body.photo .povbtn{visibility:hidden}
   const keys = {};
   addEventListener('keydown', e => {
     if (brief.classList.contains('on')) { if (e.key === 'Escape') showBrief(false); return; }
+    if (evBox.classList.contains('on')) { if (e.key === 'Escape') evBox.classList.remove('on'); return; }
     if (lookEl.classList.contains('on')) { if (e.key === 'Escape') closeLook(); return; }
     if (pauseEl.classList.contains('on')) { if (e.key === 'Escape' && !A) closePause(); return; }
     if (game.classList.contains('on')) { if (e.key === 'Escape') closeGame(); return; }
@@ -5156,7 +5552,7 @@ body.photo .povbtn{visibility:hidden}
         if (camTween) { cancel(camTween); camTween = null; }
         walkTarget = null; exitTelescope();
         yaw += turn * 1.8 * dt;
-        const sp = (A ? (A.blocking ? 2 : 4.2) : inWorld && !grounded && zone !== 'space' ? 1.8 : 2.6) * dt;
+        const sp = (A ? (A.blocking ? 2 : 4.2) : EV ? EV.speed * (EV.dead > 0 ? 0 : 1) : inWorld && !grounded && zone !== 'space' ? 1.8 : 2.6) * dt;
         const nx = pos.x + (-Math.sin(yaw) * f + Math.cos(yaw) * s) * sp;
         const nz = pos.z + (-Math.cos(yaw) * f - Math.sin(yaw) * s) * sp;
         if (valid(nx, nz)) { pos.x = nx; pos.z = nz; } else if (valid(nx, pos.z)) pos.x = nx; else if (valid(pos.x, nz)) pos.z = nz;
@@ -5185,6 +5581,7 @@ body.photo .povbtn{visibility:hidden}
     const showSnap = !!snapState && !A && entered && !(inWorld && zone === 'space'); if (snapBtn.hidden === showSnap) snapBtn.hidden = !showSnap;
     // if anything in a fight ever throws, end the fight instead of freezing the page
     if (A) { try { fightFrame(dt); } catch (err) { console.error(err); try { endFight(true); } catch (e2) { A = null; } say('Something went wrong, so the fight ended.', 3000); } }
+    try { evStep(dt, now); } catch (err) { console.error(err); }
     try { meStep(dt, now); camStep(); } catch (err) { console.error(err); }
     renderer.render(sceneOf(), camera);
     requestAnimationFrame(frame);
