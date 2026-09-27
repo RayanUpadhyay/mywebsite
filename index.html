@@ -3911,7 +3911,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     if (act2 === 'leave') { closePause(); endFight(); }
     if (act2 === 'unsnap') { unsnap(); renderPause(); }
     if (act2 === 'fx') { lowFx = !lowFx; fxChosen = true; try { localStorage.setItem('ru-lowfx', lowFx ? '1' : '0'); } catch (er) {} applyFx(); renderPause(); }
-    if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon', 'ru-arm', 'ru-evsolo', 'ru-evdone', 'ru-incursion', 'ru-instab', 'ru-recap', 'ru-lost', 'ru-saviour'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
+    if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon', 'ru-arm', 'ru-evsolo', 'ru-evdone', 'ru-incursion', 'ru-instab', 'ru-recap', 'ru-lost', 'ru-saviour', 'ru-spark'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
   });
   menuBtn.onclick = () => openPause();
   function applyFx(){
@@ -4793,18 +4793,18 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
   }
   function checkGoal(){ if (EV.k === 'avx' && !EV.over) { const t = Object.keys(EV.score).find(t => EV.score[t] >= EVENTS.avx.goal); if (t) endMatch(t === EV.team); } }
   function endMatch(won){
-    if (EV.over) return; EV.over = true; if (document.pointerLockElement) document.exitPointerLock();
+    if (EV.over) return; EV.over = true; const endFight = EV.k === 'inc' && instab >= 6; if (document.pointerLockElement) document.exitPointerLock();
     const E = EVENTS[EV.k], other = Object.keys(E.teams).find(t => t !== EV.team);
     if (EV.k === 'avx' && won) lbAdd(EV.team === 'av' ? 'a' : 'x', 5);
     if (EV.k === 'wwh') lbAdd(won === (EV.team === 'hulk') ? 'h' : 'r', 1);
     if (EV.k === 'inj') lbAdd(won ? 'w' : 'l', 1);
     if (EV.k === 'inc') { lbAdd(won ? 'i' : 'f', 1);
-      if (!won) { instab = Math.min(6, instab + 1); earthsLost++; try { localStorage.setItem('ru-lost', String(earthsLost)); } catch (e) {} saveInstab(); ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = true); setTimeout(instab >= 6 ? startEnd : startCollision, 3500); }
+      if (!won) { const wasEnd = instab >= 6; instab = Math.min(6, instab + 1); earthsLost++; try { localStorage.setItem('ru-lost', String(earthsLost)); } catch (e) {} saveInstab(); ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = true); setTimeout(wasEnd ? startVoid : instab >= 6 ? startEnd : startCollision, 3500); }
       if (won) { const wasEnd = instab >= 6; instab = 0; recap = []; saveInstab(); buildBreach(); canvas.style.filter = ''; if (wasEnd) { saviour = true; try { localStorage.setItem('ru-saviour', '1'); } catch (e) {} buildTrophy(); setTimeout(() => showCredits(true), 2500); } }
       if (won && (scarOn || altOn)) { if (scarOn) setScar(false); if (altOn) setAlt(false); setTimeout(() => say('You stopped the incursion. Your Earth, and your room, are whole again.', 4200), 2500); } }
     if (!evDone.includes(EV.k)) { evDone.push(EV.k); try { localStorage.setItem('ru-evdone', JSON.stringify(evDone)); } catch (e) {} if (incOpen() && EV.k !== 'inc') setTimeout(() => say('The Final Incursion is unlocked. Find it at the war table in the lair.', 4200), 1500); }
     if (EV.solo) { const r0 = soloRec[EV.k] || (soloRec[EV.k] = { w: 0, l: 0 }); r0[won ? 'w' : 'l']++; try { localStorage.setItem('ru-evsolo', JSON.stringify(soloRec)); } catch (e) {} }
-    const title = EV.k === 'avx' ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : 'The two Earths are about to collide\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
+    const title = EV.k === 'avx' ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : endFight ? 'The Beyonder wins. Everything goes white\u2026' : 'The two Earths are about to collide\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
     $('#evEndT').textContent = title; $('#evEndS').textContent = `Takedowns ${EV.kos} · Times down ${EV.deaths} · Damage ${fmtN(EV.dmg)}. ${EV.solo ? soloLine(EV.k) + '.' : mq ? 'Global: ' + lbLine(EV.k) : ''}`;
     $('#evEnd').hidden = false; [523, 659, 784].forEach((f, i) => setTimeout(() => tone(won ? f : f / 2, .2, 'triangle', .05), i * 110));
   }
@@ -5151,7 +5151,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
   // the banner says how bad things are
   function instabStep(dt, now){
     invadeStep(dt);
-    if (instab && (scarOn || altOn)) { const b = $('#scarBanner'), base = altOn ? 'You live on Earth-838 now.' : 'Reality is unstable.'; const txt = instab >= 6 ? 'The End. The multiverse is gone. One last chance: beat the Beyonder in the Final Incursion (war table, in the lair).' : `${base} Instability ${instab}/5: ${INSTAB_TXT[instab]} Win the Final Incursion in the lair to fix it.`; if (b.textContent !== txt) b.textContent = txt; b.classList.toggle('hot', instab >= 3 && instab < 6); b.classList.toggle('end', instab >= 6); }
+    if (instab && (scarOn || altOn)) { const b = $('#scarBanner'), base = altOn ? 'You live on Earth-838 now.' : 'Reality is unstable.'; const txt = zone === 'void' && inWorld ? (VOID && VOID.bang ? 'A new universe is being born.' : 'Beyond The End: the Void. Seven memories are all that is left.') : instab >= 6 ? 'The End. The multiverse is gone. One last chance: beat the Beyonder in the Final Incursion (war table, in the lair).' : `${base} Instability ${instab}/5: ${INSTAB_TXT[instab]} Win the Final Incursion in the lair to fix it.`; if (b.textContent !== txt) b.textContent = txt; b.classList.toggle('hot', instab >= 3 && instab < 6); b.classList.toggle('end', instab >= 6); }
   }
 
   // ======================= level 6: The End =======================
@@ -5185,12 +5185,14 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
   const credEl = $('#credits');
   function showCredits(won){
     const bossN = BOSSES.filter(d => beaten.has(d.id)).length;
-    const lines = won
+    const lines = won === 'spark'
+      ? ['A NEW BEGINNING', '', 'The Beyonder beat you, and the multiverse was gone.', 'But you carried seven memories through the Void, and they became the first spark of a new universe.', '', ...MEMS.map(m => m.line), '', `Creatures and villains beaten: ${bossN} of ${BOSSES.length}`, `Earths lost along the way: ${earthsLost}`, `Secrets found: ${found.size} of ${TOTAL}`, '', 'THE FIRST SPARK', '', 'A tiny universe is waiting for you in your room.', '', 'Thanks for exploring.', '\u2014 Rayan']
+      : won
       ? ['THE MULTIVERSE IS REBORN', '', 'You beat the Beyonder and brought every Earth back from The End.', '', `Creatures and villains beaten: ${bossN} of ${BOSSES.length}`, `Events played: ${evDone.length} of 4`, `Earths lost along the way: ${earthsLost}`, `Secrets found: ${found.size} of ${TOTAL}`, '', 'SAVIOUR OF THE MULTIVERSE', '', 'A trophy is waiting for you in your room.', '', 'Thanks for exploring.', '\u2014 Rayan']
       : ['THE END', '', 'Every Earth fell into yours, and the multiverse ended.', '', `Creatures and villains beaten: ${bossN} of ${BOSSES.length}`, `Events played: ${evDone.length} of 4`, `Earths lost: ${earthsLost}`, `Secrets found: ${found.size} of ${TOTAL}`, '', 'Every story ends.', 'Some of them get a reboot.', '', 'One last chance: beat the Beyonder in the Final Incursion to bring everything back.', '', 'Thanks for exploring.', '\u2014 Rayan'];
-    credEl.innerHTML = `<div class="credroll ${won ? 'won' : ''}">${lines.map((l, i) => i === 0 ? `<h2 class="display">${esc(l)}</h2>` : l === 'SAVIOUR OF THE MULTIVERSE' ? `<h3 class="display">${esc(l)}</h3>` : `<p>${esc(l) || '&nbsp;'}</p>`).join('')}</div><button class="btn alt" type="button" id="credGo">Continue</button>`;
+    credEl.innerHTML = `<div class="credroll ${won ? 'won' : ''}">${lines.map((l, i) => i === 0 ? `<h2 class="display">${esc(l)}</h2>` : l === 'SAVIOUR OF THE MULTIVERSE' || l === 'THE FIRST SPARK' ? `<h3 class="display">${esc(l)}</h3>` : `<p>${esc(l) || '&nbsp;'}</p>`).join('')}</div><button class="btn alt" type="button" id="credGo">Continue</button>`;
     credEl.classList.add('on'); if (document.pointerLockElement) document.exitPointerLock();
-    $('#credGo').onclick = () => { credEl.classList.remove('on'); say(won ? 'Everything is back. Your trophy is by the door.' : 'The End. Only fragments are left. The war table in the lair still works\u2026 barely.', 5000); };
+    $('#credGo').onclick = () => { credEl.classList.remove('on'); say(won === 'spark' ? 'A new universe, built from seven memories. The First Spark is by the door.' : won ? 'Everything is back. Your trophy is by the door.' : 'The End. Only fragments are left. The war table in the lair still works\u2026 barely.', 5000); };
     [262, 330, 392, 523].forEach((f, i) => setTimeout(() => tone(won ? f * 1.5 : f / 2, 1.2, 'triangle', .05), i * 500));
   }
   // what's left: grey dust, and the words in the sky
@@ -5210,6 +5212,161 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     const star = new THREE.Mesh(new THREE.OctahedronGeometry(.26, 0), glowM(0xFFC93C, { emissiveIntensity: .8, metalness: .7 })); star.position.y = 1.45; g.add(star); g.userData.star = star;
     const ringM = new THREE.Mesh(new THREE.TorusGeometry(.38, .03, 8, 40), gold); ringM.position.y = 1.45; g.add(ringM); g.userData.ring = ringM;
     g.userData.egg = 'trophy'; LABELS.trophy = 'Saviour of the Multiverse';
+  }
+
+  // ======================= beyond The End: the Void =======================
+  // lose to the Beyonder and everything is gone, except seven memories. Carry them out and start a new universe.
+  let voidScene = null, VOID = null, sparkT = null;
+  let firstSpark = false; try { firstSpark = localStorage.getItem('ru-spark') === '1'; } catch (e) {}
+  const VOID_TIME = 100;
+  const MEMS = [
+    { k: 'mandarin', c: 0xE8423C, line: 'Rayan has been learning Mandarin for seven years.' },
+    { k: 'swim', c: 0x3C9CFF, line: 'Rayan has been on the school swim team since Grade 3.' },
+    { k: 'research', c: 0xFFC93C, line: 'Rayan published research on fairness in synthetic credit data, and it earned a Gold CREST Award.' },
+    { k: 'un', c: 0x5AB4FF, line: 'Rayan presented AgriBridge at the United Nations in New York.' },
+    { k: 'bat', c: 0x9AA0AA, line: 'Rayan owns a lot of Batman figures. One of them opens the lair.' },
+    { k: 'lair', c: 0x9B4DFF, line: 'Under the room is a lair full of villains you beat and locked up.' },
+    { k: 'site', c: 0x3CE8A0, line: 'Rayan built this whole site as one HTML file.' }
+  ];
+  const BEYOND_LINES = ['THE BEYONDER: “You lost. There is nothing left. Why are you still here?”', 'THE BEYONDER: “Those are only memories. Memories cannot hold up a universe.”', 'THE BEYONDER: “Every story ends. Let this one.”', 'THE BEYONDER: “Still going? …Fine. Show me.”'];
+  // the thing each memory looks like, sitting on its piece of the room
+  function memProp(k, g){
+    const dark = mat(0x1A1C22);
+    if (k === 'mandarin') { const t = box(.9, .9, .12, new THREE.MeshStandardMaterial({ map: tex(256, 256, (c, w, h) => { c.fillStyle = '#E8423C'; c.fillRect(0, 0, w, h); c.fillStyle = '#FFF4DC'; c.font = '700 190px serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('中', w / 2, h / 2 + 8); }) }), 0, .9, 0, g); t.rotation.x = -.2; }
+    if (k === 'swim') { box(2.2, .1, 1.4, mat(0x3C9CFF, { transparent: true, opacity: .8, roughness: .1 }), 0, .1, 0, g); [-.35, .35].forEach(z => { for (let i = 0; i < 11; i++) cyl(.05, .05, .08, mat(i % 2 ? 0xFFFFFF : 0xE8423C), -1 + i * .2, .18, z, g, 8).rotation.z = Math.PI / 2; }); }
+    if (k === 'research') { for (let i = 0; i < 5; i++) box(.7, .03, .95, mat(0xF4F0E6), (Math.random() - .5) * .06, .05 + i * .035, 0, g); const m = cyl(.2, .2, .04, mat(0xFFC93C, { metalness: .8, roughness: .25 }), .15, .26, 0, g, 24); m.rotation.x = .2; }
+    if (k === 'un') { cyl(.03, .03, 2, mat(0xCCCCCC, { metalness: .6 }), 0, 1, 0, g, 8); box(1.2, .75, .02, new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, map: tex(256, 160, (c, w, h) => { c.fillStyle = '#5AB4FF'; c.fillRect(0, 0, w, h); c.strokeStyle = '#FFFFFF'; c.lineWidth = 8; c.beginPath(); c.arc(w / 2, h / 2, 46, 0, 7); c.stroke(); c.beginPath(); c.moveTo(w / 2 - 46, h / 2); c.lineTo(w / 2 + 46, h / 2); c.moveTo(w / 2, h / 2 - 46); c.lineTo(w / 2, h / 2 + 46); c.stroke(); }) }), .62, 1.6, 0, g); }
+    if (k === 'bat') { box(.3, .5, .2, dark, 0, .45, 0, g); box(.22, .22, .2, dark, 0, .82, 0, g); [-.07, .07].forEach(x => box(.04, .1, .04, dark, x, .97, 0, g)); const cape = box(.5, .55, .04, dark, 0, .45, -.13, g); cape.rotation.x = .12; box(.12, .06, .01, mat(0xFFC93C), 0, .6, .11, g); }
+    if (k === 'lair') { cyl(.5, .5, .1, mat(0x2A2D33, { metalness: .5 }), 0, .05, 0, g, 24); cyl(.45, .45, 1.8, new THREE.MeshStandardMaterial({ color: 0xB07CFF, transparent: true, opacity: .25, roughness: .05 }), 0, 1, 0, g, 24); cyl(.5, .5, .1, mat(0x2A2D33, { metalness: .5 }), 0, 1.95, 0, g, 24); }
+    if (k === 'site') { box(1, .05, .7, mat(0x2A2D33, { metalness: .5 }), 0, .45, 0, g); const s = box(1, .65, .03, new THREE.MeshBasicMaterial({ map: tex(256, 170, (c, w, h) => { c.fillStyle = '#12151C'; c.fillRect(0, 0, w, h); c.fillStyle = '#3CE8A0'; c.font = '600 22px monospace'; ['<!doctype html>', '<title>Rayan</title>', '<scr' + 'ipt>', '  // one file.', '  // everything.', '<\/scr' + 'ipt>'].forEach((l, i) => c.fillText(l, 14, 30 + i * 24)); }) }), 0, .8, -.33, g); s.rotation.x = -.15; box(.8, .3, .7, mat(0x6A4E3A), 0, .2, 0, g); }
+  }
+  function buildVoid(){
+    const sc = voidScene = new THREE.Scene(); sc.background = new THREE.Color(0xF4F2EE); sc.fog = new THREE.Fog(0xF4F2EE, 18, 110);
+    sc.add(new THREE.HemisphereLight(0xFFFFFF, 0xC8C4BC, 1)); const sun = new THREE.DirectionalLight(0xFFF4DC, .6); sun.position.set(6, 20, 8); sc.add(sun);
+    plats.void = [];
+    const floorM = mat(0xB98C5E, { roughness: .9 }), wallM2 = mat(0xE8E0D2), stoneM = mat(0xDAD6CE, { flatShading: true, roughness: 1 }), under = mat(0x8A857C, { flatShading: true });
+    const bits = [];
+    // a chunk of floating ground: the walkable top, and a rough rocky bottom
+    const chunk = (x, z, r, top) => { const g = new THREE.Group(); g.position.set(x, 0, z); sc.add(g); const t = cyl(r, r * .92, .3, top || stoneM, 0, -.15, 0, g, 12); t.userData.walk = true; const b = new THREE.Mesh(new THREE.ConeGeometry(r * .9, r * 1.4, 7), under); b.rotation.x = Math.PI; b.position.y = -.3 - r * .7; g.add(b); const p = { x, z, r }; plats.void.push(p); return { g, p, fall: 0 }; };
+    const start = chunk(0, 0, 2.8); start.seg = 0; bits.push(start);
+    // seven pieces of the room, each with its memory, joined by stepping stones (some drift, some flicker)
+    const frags = [], stones = []; let px = 0, pz = 0, pr = 2.8;
+    for (let i = 0; i <= MEMS.length; i++) {
+      const last = i === MEMS.length, fx = last ? 0 : Math.sin(i * 1.7 + .5) * 7, fz = -10 * (i + 1) - (last ? 4 : 0), fr = last ? 4.2 : 2.3;
+      // stones from the previous piece to this one
+      const dx = fx - px, dz = fz - pz, d = Math.hypot(dx, dz), n = Math.max(1, Math.round((d - pr - fr) / 2.9));
+      for (let j = 1; j <= n; j++) { const k = (pr + (d - pr - fr) * j / (n + 1)) / d, s = chunk(px + dx * k, pz + dz * k, .85); s.seg = i + 1; s.base = s.p.x; const idx = stones.length; s.drift = i >= 2 && idx % 3 === 1; s.blink = i >= 3 && idx % 4 === 2; s.ph = Math.random() * 6; stones.push(s); bits.push(s); }
+      if (last) { const f = chunk(fx, fz, fr, mat(0xFFFFFF, { roughness: .6 })); f.seg = i + 1; f.final = true; bits.push(f); frags.push(f); break; }
+      // the fragment: a square of the room's floor with a bit of wall, torn out
+      const g = new THREE.Group(); g.position.set(fx, 0, fz); g.rotation.y = (Math.random() - .5) * .6; sc.add(g);
+      const fl = box(4.2, .3, 4.2, floorM, 0, -.15, 0, g); fl.userData.walk = true; [[-1.4, 1.1], [0, .6], [1.4, .9]].forEach(([x, h]) => box(1.4, h, .2, wallM2, x, h / 2, -2, g).rotation.z = (Math.random() - .5) * .15);
+      const b = new THREE.Mesh(new THREE.ConeGeometry(2.8, 3.5, 6), under); b.rotation.x = Math.PI; b.position.y = -2.05; g.add(b);
+      const pp = new THREE.Group(); pp.position.set(.8, 0, -.8); g.add(pp); memProp(MEMS[i].k, pp);
+      const p = { x: fx, z: fz, r: 2.35 }; plats.void.push(p);
+      const spark = new THREE.Mesh(new THREE.SphereGeometry(.22, 16, 12), glowM(MEMS[i].c, { emissiveIntensity: 1.6 })); spark.position.set(fx, 1.3, fz); sc.add(spark);
+      const sl = new THREE.PointLight(MEMS[i].c, 1.4, 6, 2); spark.add(sl);
+      const f = { g, p, fall: 0, seg: i + 1, spark, got: false, i }; frags.push(f); bits.push(f);
+      px = fx; pz = fz; pr = 2.3;
+    }
+    // the Beyonder, enormous, watching from below
+    const by = avatar(Object.assign({}, LOOK0, { outfit: 'beyonder' }), { s: 16 }); by.g.position.set(-10, -34, -120); by.g.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = .55; o.castShadow = false; } }); sc.add(by.g);
+    // pale dust in the white
+    const n = lowFx ? 250 : 800, P = new Float32Array(n * 3); for (let i = 0; i < n; i++) P.set([(Math.random() - .5) * 60, (Math.random() - .5) * 30, 10 - Math.random() * 110], i * 3);
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(P, 3));
+    const dust = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0x9A948A, size: .06 })); sc.add(dust);
+    sc.traverse(o => { if (o.isMesh && !o.userData.walk) o.userData.noPick = true; });
+    return { bits, frags, stones, by, dust };
+  }
+  function startVoid(){
+    if (EV) stopEvent(true);
+    fade(() => {
+      const B = buildVoid();
+      VOID = Object.assign(B, { phase: 'walk', t: 0, left: VOID_TIME, got: 0, cp: { x: 0, z: 0 }, line: 0, nextLine: 4, t0: performance.now() });
+      travel('room'); inWorld = true; zone = 'void'; vy = 0; falling = false; walkTarget = null; pos.set(0, 1.6, 1.2); yaw = 0; pitch = -.1; grounded = true;
+      jumpBtn.hidden = fine; runHud.hidden = false; $('#worldBack').hidden = true; dock.classList.remove('on'); uiZone();
+      say('Everything is gone. Only seven memories are left. Grab them before the Void closes, then carry them to the end of the path.', 6000); tone(40, 4, 'sine', .06, 80);
+    }, '#FFFFFF');
+  }
+  function voidStep(dt, now){
+    if (sparkT) { sparkT.userData.gal.rotation.y += dt * .6; }
+    if (!VOID) return;
+    if (zone !== 'void' || !inWorld) { return endVoid(false, true); }
+    const V0 = VOID; V0.t += dt; const t = V0.t;
+    // stones that drift carry you with them; stones that flicker warn you first
+    V0.stones.forEach(s => {
+      if (s.fall) return;
+      if (s.drift) { const nx = s.base + Math.sin(t * .8 + s.ph) * 1.1, ddx = nx - s.p.x; if (grounded && platformAt(pos.x, pos.z) === s.p) pos.x += ddx; s.p.x = nx; s.g.position.x = nx; }
+      if (s.blink) { const c = (t + s.ph) % 5, on = c < 3.6; s.g.visible = on && (c < 2.6 || Math.floor(now / 80) % 2 === 0); const has = plats.void.includes(s.p); if (on && !has) plats.void.push(s.p); if (!on && has) plats.void = plats.void.filter(p => p !== s.p); }
+    });
+    // pieces behind you crumble
+    V0.bits.forEach(b => { if (b.fall) { b.fall += dt; b.g.position.y = -b.fall * b.fall * 6; b.g.rotation.x = b.fall * .4; } });
+    // memories: walk into one to take it; taken ones circle you
+    V0.frags.forEach(f => {
+      if (!f.spark) return;
+      if (!f.got) { f.spark.position.y = 1.3 + Math.sin(t * 2 + f.i) * .15; if (V0.phase === 'walk' && Math.hypot(pos.x - f.p.x, pos.z - f.p.z) < 1.9) {
+        f.got = true; V0.got++; V0.cp = { x: f.p.x, z: f.p.z }; [523, 659, 784].forEach((q, j) => setTimeout(() => tone(q * (1 + V0.got * .06), .25, 'triangle', .05), j * 90));
+        say(`Memory ${V0.got}/${MEMS.length}: ${MEMS[f.i].line}`, 4200);
+        V0.bits.forEach(b => { if (!b.fall && b.seg <= f.seg && b !== f) { b.fall = .001; plats.void = plats.void.filter(p => p !== b.p); } });
+      } }
+      else if (V0.phase === 'walk') { const a = t * 1.4 + f.i * (Math.PI * 2 / MEMS.length); f.spark.position.set(pos.x + Math.cos(a) * 1.1, pos.y - .5 + Math.sin(t * 3 + f.i) * .1, pos.z + Math.sin(a) * 1.1); }
+    });
+    // the Beyonder keeps talking
+    V0.by.g.rotation.y = Math.atan2(pos.x - V0.by.g.position.x, pos.z - V0.by.g.position.z);
+    if (V0.phase === 'walk' && t > V0.nextLine && V0.line < BEYOND_LINES.length - 1) { say(BEYOND_LINES[V0.line++], 3800); V0.nextLine = t + 22; tone(55, 1.5, 'sawtooth', .05, 40); }
+    const fin = V0.frags[V0.frags.length - 1];
+    if (V0.phase === 'walk') {
+      V0.left -= dt; const k = clamp(1 - V0.left / VOID_TIME, 0, 1); voidScene.fog.near = 18 - k * 14; voidScene.fog.far = 110 - k * 88;
+      runHud.innerHTML = `Memories <b>${V0.got}/${MEMS.length}</b> · the Void closes in <b>${Math.max(0, Math.ceil(V0.left))} s</b>${V0.got === MEMS.length ? ' · get to the white platform at the end' : ''}`;
+      if (V0.got === MEMS.length && Math.hypot(pos.x - fin.p.x, pos.z - fin.p.z) < 3.4 && grounded) { V0.phase = 'seed'; V0.st = 0; runHud.hidden = true; say(BEYOND_LINES[BEYOND_LINES.length - 1], 3500); V0.seed = V(fin.p.x, 2.2, fin.p.z - 1.2); }
+      else if (V0.left <= 0) return endVoid(false);
+      else if (pos.y < -12 && !falling) { falling = true; V0.left -= 8; fade(() => { pos.set(V0.cp.x, 1.6, V0.cp.z + .5); vy = 0; falling = false; say('The Void threw you back. That cost you 8 seconds.', 2600); }, '#FFFFFF'); }
+    }
+    // the seven memories fold into one spark, and the spark goes bang
+    if (V0.phase === 'seed') {
+      V0.st += dt; const st = V0.st;
+      V0.frags.forEach(f => { if (f.spark) f.spark.position.lerp(V0.seed, Math.min(1, dt * 2.2)); });
+      if (st > 2.2 && !V0.core) { V0.frags.forEach(f => { if (f.spark) f.spark.visible = false; }); const core = V0.core = new THREE.Mesh(new THREE.SphereGeometry(.3, 20, 14), new THREE.MeshBasicMaterial({ color: 0xFFFFFF })); core.position.copy(V0.seed); voidScene.add(core); const cl = new THREE.PointLight(0xFFE08A, 3, 20, 2); core.add(cl); tone(880, 1.5, 'sine', .06, 1760); }
+      if (V0.core) V0.core.scale.setScalar(1 + Math.sin(now / 60) * .15 + Math.max(0, st - 3) * .6);
+      if (st > 4 && !V0.bang) {
+        const n = lowFx ? 600 : 2400, P = new Float32Array(n * 3), C = new Float32Array(n * 3), vel = [];
+        const cols = MEMS.map(m => new THREE.Color(m.c));
+        for (let i = 0; i < n; i++) { P.set([V0.seed.x, V0.seed.y, V0.seed.z], i * 3); const c = cols[i % cols.length]; C.set([c.r, c.g, c.b], i * 3); const u = Math.random() * 2 - 1, a = Math.random() * Math.PI * 2, s = 6 + Math.random() * 30, q = Math.sqrt(1 - u * u); vel.push(q * Math.cos(a) * s, u * s, q * Math.sin(a) * s); }
+        const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(P, 3)); geo.setAttribute('color', new THREE.BufferAttribute(C, 3));
+        V0.bang = new THREE.Points(geo, new THREE.PointsMaterial({ size: .25, vertexColors: true, fog: false })); V0.bang.userData.vel = vel; voidScene.add(V0.bang); V0.core.visible = false;
+        voidScene.background = new THREE.Color(0x05060F); voidScene.fog.color.set(0x05060F); voidScene.fog.far = 400; V0.by.g.visible = false; V0.dust.visible = false;
+        fadeEl.style.background = '#FFFFFF'; fadeEl.classList.add('on'); setTimeout(() => fadeEl.classList.remove('on'), 250);
+        [131, 196, 262, 392, 523].forEach((f, i) => setTimeout(() => tone(f, 2.5, 'triangle', .06), i * 120)); tone(40, 3, 'sawtooth', .08, 20);
+        say('A new universe.', 4000);
+      }
+      if (V0.bang) { const a = V0.bang.geometry.attributes.position, vel = V0.bang.userData.vel; for (let i = 0; i < a.count; i++) { a.array[i * 3] += vel[i * 3] * dt; a.array[i * 3 + 1] += vel[i * 3 + 1] * dt; a.array[i * 3 + 2] += vel[i * 3 + 2] * dt; } a.needsUpdate = true; }
+      if (st > 9 && V0.phase === 'seed') { V0.phase = 'done'; endVoid(true); }
+    }
+  }
+  function endVoid(ok, quiet){
+    runHud.hidden = true; const V0 = VOID;
+    const clean = () => { VOID = null; if (voidScene) { disposeDeep(voidScene); voidScene = null; } delete plats.void; };
+    if (quiet) { clean(); return; }
+    V0.phase = 'done';
+    fade(() => {
+      clean(); travel('room');
+      if (ok) {
+        instab = 0; recap = []; saveInstab(); buildBreach(); canvas.style.filter = ''; if (altOn) setAlt(false); if (scarOn) setScar(false);
+        firstSpark = true; try { localStorage.setItem('ru-spark', '1'); } catch (e) {} buildSpark(); showCredits('spark');
+      } else say('The Void swallowed the last memories and spat you back into The End. Beat the Beyonder, or lose to him again for one more shot at the Void.', 7000);
+    }, ok ? '#FFFFFF' : '#F4F2EE');
+  }
+  // the First Spark: a tiny universe in a glass, by the door
+  function buildSpark(){
+    if (sparkT || !firstSpark) return; const g = sparkT = new THREE.Group(); g.position.set(2.75, 0, 3.8); scene.add(g);
+    cyl(.24, .3, .85, mat(0xF4F2EE, { roughness: .4 }), 0, .425, 0, g, 20);
+    const glass = new THREE.Mesh(new THREE.SphereGeometry(.28, 24, 16), new THREE.MeshStandardMaterial({ color: 0xDDEEFF, transparent: true, opacity: .22, roughness: .05, metalness: .1, depthWrite: false })); glass.position.y = 1.15; g.add(glass);
+    const n = 260, P = new Float32Array(n * 3), C = new Float32Array(n * 3), cols = MEMS.map(m => new THREE.Color(m.c));
+    for (let i = 0; i < n; i++) { const arm = i % 3, r = Math.random() * .22, a = arm * 2.09 + r * 12 + (Math.random() - .5) * .5; P.set([Math.cos(a) * r, (Math.random() - .5) * .03, Math.sin(a) * r], i * 3); const c = cols[i % cols.length]; C.set([c.r, c.g, c.b], i * 3); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(P, 3)); geo.setAttribute('color', new THREE.BufferAttribute(C, 3));
+    const gal = new THREE.Points(geo, new THREE.PointsMaterial({ size: .025, vertexColors: true })); gal.position.y = 1.15; gal.rotation.x = .4; g.add(gal); g.userData.gal = gal;
+    const core = new THREE.Mesh(new THREE.SphereGeometry(.03, 10, 8), new THREE.MeshBasicMaterial({ color: 0xFFFFFF })); core.position.y = 1.15; g.add(core);
+    const l = new THREE.PointLight(0xFFE08A, .6, 2.5, 2); l.position.y = 1.15; g.add(l);
+    g.userData.egg = 'spark'; LABELS.spark = 'The First Spark';
   }
 
   // ---------- bot brains ----------
@@ -5688,7 +5845,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
   const platformAt = (x, z) => plats[zone].find(p => onPlat(x, z, p)) || null;
   let codeScene = null, chipScene = null, seaScene = null, falling = false;
   let spaceScene = null, eventScene = null; const areaScenes = {};
-  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene, event: eventScene })[zone] || areaScenes[zone] : scene;
+  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene, event: eventScene, void: voidScene })[zone] || areaScenes[zone] : scene;
   function radTile(parent, ch, x, y, z){
     const m = new THREE.Mesh(new THREE.PlaneGeometry(.55, .55), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: tex(160, 160, (g, w, h) => { g.fillStyle = '#FFC93C'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, h, 24) : g.rect(0, 0, w, h); g.fill(); g.fillStyle = '#16181D'; g.font = `700 110px ${ZH}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, w / 2, h / 2 + 6); }) }));
     m.position.set(x, y, z); m.userData.collect = ch; m.userData.base = y; parent.add(m); worldAnim.tiles.push(m); return m;
@@ -6046,7 +6203,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     // gravity
     const plat = platformAt(pos.x, pos.z), feet = pos.y - 1.6;
     if (plat && vy <= 0 && feet <= .02 && feet > -.7) { if (!grounded && vy < -3) tone(140, .06, 'sine', .05); pos.y = 1.6; vy = 0; grounded = true; }
-    else { grounded = false; vy = Math.max(vy - (zone === 'space' ? 8 : 18) * dt, -30); pos.y += vy * dt; }
+    else { grounded = false; vy = Math.max(vy - (zone === 'space' ? 8 : zone === 'void' ? 10 : 18) * dt, -30); pos.y += vy * dt; }
     if (zone === 'space') spaceStep(dt, now);
     if (pos.y < -28 && !falling && NEXT[zone]) { falling = true; enterLevel(NEXT[zone]); }
     if (reduce) return;
@@ -6214,6 +6371,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     if (p.egg === 'photos') return flyTo(views.shelf.pos.clone(), views.shelf.look, () => openPanel('photos'));
     if (p.egg === 'reviews') return REVIEWS.length ? flyTo(views.shelf.pos.clone(), views.shelf.look, () => openPanel('writing')) : say('My album reviews are coming soon.');
     if (p.egg === 'shelfvinyl') return showCap(p.o.userData.vi);
+    if (p.egg === 'spark') { [392, 523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, .25, 'sine', .04), i * 110)); return say('The First Spark: a whole universe, grown from seven memories you carried out of the Void.', 4600); }
     if (p.egg === 'trophy') { [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, .2, 'triangle', .05), i * 90)); return say('Saviour of the Multiverse: you brought every Earth back from The End.', 4200); }
     if (p.egg === 'otherme') { tone(520, .1, 'sine', .05); return say(`Earth-838\u2019s Rayan: ${OTHER_LINES[otherI++ % OTHER_LINES.length]}`, 4600); }
     if (p.egg === 'alexa') { tone(660, .12, 'sine', .08); setTimeout(() => tone(880, .18, 'sine', .08), 120); return say('Alexa: \u201cPlaying your top artist, as usual.\u201d'); }
@@ -6291,7 +6449,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
         if (camTween) { cancel(camTween); camTween = null; }
         walkTarget = null; exitTelescope();
         yaw += turn * 1.8 * dt;
-        const sp = (A ? (A.blocking ? 2 : 4.2) : EV ? EV.speed * (EV.dead > 0 ? 0 : 1) : zone === 'collapse' && inWorld ? (RUN && RUN.slow > 0 ? 3.5 : 7) : inWorld && !grounded && zone !== 'space' ? 1.8 : 2.6) * dt;
+        const sp = (A ? (A.blocking ? 2 : 4.2) : EV ? EV.speed * (EV.dead > 0 ? 0 : 1) : zone === 'collapse' && inWorld ? (RUN && RUN.slow > 0 ? 3.5 : 7) : zone === 'void' && inWorld ? 4 : inWorld && !grounded && zone !== 'space' ? 1.8 : 2.6) * dt;
         const nx = pos.x + (-Math.sin(yaw) * f + Math.cos(yaw) * s) * sp;
         const nz = pos.z + (-Math.cos(yaw) * f - Math.sin(yaw) * s) * sp;
         if (valid(nx, nz)) { pos.x = nx; pos.z = nz; } else if (valid(nx, pos.z)) pos.x = nx; else if (valid(pos.x, nz)) pos.z = nz;
@@ -6320,7 +6478,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     const showSnap = !!snapState && !A && entered && !(inWorld && zone === 'space'); if (snapBtn.hidden === showSnap) snapBtn.hidden = !showSnap;
     // if anything in a fight ever throws, end the fight instead of freezing the page
     if (A) { try { fightFrame(dt); } catch (err) { console.error(err); try { endFight(true); } catch (e2) { A = null; } say('Something went wrong, so the fight ended.', 3000); } }
-    try { evStep(dt, now); scarStep(dt, now); areaStep(dt, now); collideStep(dt); altStep(dt, now); instabStep(dt, now); } catch (err) { console.error(err); }
+    try { evStep(dt, now); scarStep(dt, now); areaStep(dt, now); collideStep(dt); voidStep(dt, now); altStep(dt, now); instabStep(dt, now); } catch (err) { console.error(err); }
     try { meStep(dt, now); camStep(); } catch (err) { console.error(err); }
     renderer.render(sceneOf(), camera);
     requestAnimationFrame(frame);
@@ -6328,7 +6486,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
   setMuted(muted);
   $('#soundBtn').onclick = () => { audio(); setMuted(!muted); if (!muted) tone(660, .1, 'sine', .08); };
   // things saved from last time that change the scenes: only once every scene variable exists
-  try { if (lowFx) applyFx(); if (scarOn) setScar(true); if (altOn) setAlt(true); buildTrophy(); } catch (err) { console.error(err); }
+  try { if (lowFx) applyFx(); if (scarOn) setScar(true); if (altOn) setAlt(true); buildTrophy(); buildSpark(); } catch (err) { console.error(err); }
   requestAnimationFrame(frame);
   $('#load').classList.add('off');
 })();
