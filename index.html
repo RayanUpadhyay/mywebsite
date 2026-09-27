@@ -313,6 +313,21 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
 .mpchip[hidden]{display:none}
 .gact.ring{justify-content:flex-start;margin-bottom:6px}
 .gact.ring .btn{height:34px;font-size:13px;padding:0 14px}
+/* character */
+.povbtn{position:fixed;left:18px;top:calc(130px + env(safe-area-inset-top,0px));z-index:5;height:38px;font-size:14px}
+.povbtn[hidden]{display:none}
+body.fighting .povbtn{top:auto;bottom:calc(150px + env(safe-area-inset-bottom,0px))}
+.lookpanel{position:fixed;top:calc(76px + env(safe-area-inset-top,0px));right:18px;bottom:calc(20px + env(safe-area-inset-bottom,0px));width:min(340px,calc(100% - 36px));background:var(--tile);color:var(--ink);border-radius:22px;padding:18px;overflow-y:auto;z-index:9;display:none;box-shadow:0 30px 60px -20px rgba(0,0,0,.5)}
+.lookpanel.on{display:block}
+.lookpanel h3{font-size:14px;margin:14px 0 6px;color:var(--muted)}
+.lookpanel .ghead h2{font-size:22px}
+.sws{display:flex;gap:6px;flex-wrap:wrap}
+.swc{width:34px;height:34px;border-radius:50%;border:3px solid var(--line);cursor:pointer}
+.swc[aria-pressed="true"]{border-color:var(--ink);transform:scale(1.1)}
+.lkrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.lkrow .tbtn{height:34px;font-size:13px;padding:0 12px}
+@media (max-width:640px){.lookpanel{top:auto;left:10px;right:10px;width:auto;max-height:55vh}}
+body.photo .povbtn{visibility:hidden}
 /* at a glance */
 .brieflink{margin:0 0 16px}
 .brief{z-index:12}
@@ -394,6 +409,8 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
 <div class="fade" id="fade" aria-hidden="true"></div>
 <div class="glitch" id="glitch" aria-hidden="true"></div>
 <button class="btn menubtn" id="menuBtn" type="button" hidden>&#9776; Menu</button>
+<button class="btn povbtn" id="povBtn" type="button" hidden>3rd person</button>
+<div class="lookpanel" id="lookEl" role="dialog" aria-label="Your character"></div>
 <button class="btn snapbtn" id="snapBtn" type="button" hidden>Undo the snap</button>
 <div class="hotbar" id="hotbar" hidden aria-label="Your inventory"></div>
 <div class="poisonfx" id="poisonFx" aria-hidden="true"></div>
@@ -1553,7 +1570,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
   const inDoor = (x, z) => vaultOpen && x > 4.2 && x <= 5.7 && z >= -.25 && z <= .85;
   const inVault = (x, z) => vaultOpen && x > 5.7 && x <= 8.0 && z >= -1.0 && z <= 1.6;
   const inHall = (x, z) => entered && ((Math.abs(x) < .45 && z > 4.2 && z <= 5.5) || (Math.abs(x) < 1.2 && z > 5.5 && z < 10.3));
-  const valid = (x, z) => inWorld ? (zone === 'lair' ? (x > -8.3 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) : zone === 'city' ? cityOK(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
+  const valid = (x, z) => inWorld ? (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) : zone === 'city' ? cityOK(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
   const region = x => x > 4.9 ? 'vault' : 'room';
   function flyTo(target, dir, done){
     if (inWorld) { const a = dir ? lookAngles(target, dir) : null; return moveCam(target, a ? a.yaw : null, a ? a.pitch : null, 1, done); }
@@ -2284,7 +2301,16 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     { id: 'hela', name: 'Hela', mcu: 1, tag: 'The Goddess of Death. Walls of blades, and spikes that burst out of the floor under you.', from: 'My love of the MCU', col: '#3FBF7A', hp: 460,
       win: 'Hela is gone, and the lair is still standing.' },
     { id: 'thanos', name: 'Thanos', mcu: 1, tag: 'The Mad Titan. Every Infinity Stone is an attack. If he raises the gauntlet, stop the snap or everything turns to dust.', from: 'My love of the MCU', col: '#9B6BD6', hp: 560,
-      win: 'Thanos falls. The Infinity Gauntlet is yours: find it on the weapon rack.' }
+      win: 'Thanos falls. The Infinity Gauntlet is yours: find it on the weapon rack.' },
+    // DC villains, in their own wing of the lair
+    { id: 'joker', name: 'The Joker', dc: 1, tag: 'The Clown Prince of Crime. Razor-edged playing cards, laughing gas, and a crowd of fake Jokers.', from: 'My love of DC', col: '#7FBF3F', hp: 430,
+      win: 'Why so serious? The Joker is out of jokes.' },
+    { id: 'harley', name: 'Harley Quinn', dc: 1, tag: 'Cartwheels, a giant mallet, and no chill at all.', from: 'My love of DC', col: '#E0314B', hp: 400,
+      win: 'The mallet hits the floor. Show\u2019s over.' },
+    { id: 'bane', name: 'Bane', dc: 1, tag: 'Venom-fuelled muscle. He charges, he slams, and he was built to break the Bat.', from: 'My love of DC', col: '#8A6B4A', hp: 520,
+      win: 'You broke Bane.' },
+    { id: 'darkseid', name: 'Darkseid', dc: 1, tag: 'The lord of Apokolips. Omega beams from his eyes, and Parademons from the sky.', from: 'My love of DC', col: '#C0271C', hp: 560,
+      win: 'Darkseid is\u2026 defeated.' }
   ];
   // Gorr hides in the deepest level below Mandalink island, and drops the Necrosword
   const GORR = { id: 'gorr', name: 'Gorr the God Butcher', tag: 'He hunts gods from the shadows. Shadow monsters, tendrils from the dark, and the Necrosword in his hand.', from: 'The MCU (Thor: Love and Thunder)', col: '#C9CCD6', hp: 520,
@@ -2334,7 +2360,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
   const POST_CREDITS = 'Post-credits scene: the clock resets to 11:58. The Deadline always comes back. See you next term.';
   const beaten = new Set(); try { JSON.parse(localStorage.getItem('ru-bosses') || '[]').forEach(b => beaten.add(b)); } catch (e) {}
   // fight positions are in grid units (40 = 1 metre) measured from the middle of whichever room the fight is in
-  const BND = { lair: { x0: -330, x1: 290, y0: -325, y1: 270 }, room: { x0: -160, x1: 164, y0: -136, y1: 164 }, roof: { x0: -200, x1: 200, y0: -120, y1: 120 }, hub: { c: 190 }, ai: { c: 420 }, code: { c: 340 }, chip: { c: 460 }, sea: { c: 1150 }, space: { c: 230 }, city: { x0: -1560, x1: 1560, y0: -2560, y1: -320 } };
+  const BND = { lair: { x0: -660, x1: 290, y0: -325, y1: 270 }, room: { x0: -160, x1: 164, y0: -136, y1: 164 }, roof: { x0: -200, x1: 200, y0: -120, y1: 120 }, hub: { c: 190 }, ai: { c: 420 }, code: { c: 340 }, chip: { c: 460 }, sea: { c: 1150 }, space: { c: 230 }, city: { x0: -1560, x1: 1560, y0: -2560, y1: -320 } };
   // round platforms (Mandalink island and the levels below it) have a radius instead of walls
   Object.values(BND).forEach(B => { if (B.c) Object.assign(B, { x0: -B.c * .7, x1: B.c * .7, y0: -B.c * .7, y1: B.c * .7 }); });
   const bnd = () => A.bndO || BND[A.bz] || BND.room;
@@ -2429,6 +2455,10 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     hela: { r: 30, sp: 105, D: 160, lunge: 640, moves: ['blades', 'spikes', 'swipe', 'lunge'], swipeW: 1.3 },
     thanos: { r: 44, sp: 80, D: 150, lunge: 520, moves: ['swipe', 'power', 'space', 'reality'], swipeW: 1.2 },
     gorr: { r: 30, sp: 115, D: 150, lunge: 640, moves: ['shadows', 'swipe', 'lunge', 'tendrils'], swipeW: 1.3 },
+    joker: { r: 28, sp: 120, D: 180, lunge: 600, moves: ['daggers', 'spit', 'clones', 'lunge'], swipeW: 1 },
+    harley: { r: 28, sp: 145, D: 150, lunge: 700, moves: ['lunge', 'slam', 'swipe', 'lunge'], swipeW: 1.3 },
+    bane: { r: 40, sp: 85, D: 150, lunge: 720, lungeT: .8, moves: ['lunge', 'slam', 'swipe', 'lunge'], swipeW: 1.3 },
+    darkseid: { r: 44, sp: 80, D: 200, lunge: 520, moves: ['beam', 'drones', 'slam', 'swipe'], swipeW: 1.2, eyeH: 2.4, beamW: 22 },
     maw: { r: 28, sp: 100, D: 190, lunge: 560, moves: ['volley', 'blades', 'lunge', 'volley'], swipeW: 1 },
     celestial: { r: 130, sp: 45, D: 420, moves: ['stomp', 'eyes', 'meteors', 'swipe'], swipeW: 1.4, eyeH: 23, beamW: 34, big: 1 }
   };
@@ -2543,7 +2573,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
       go(b){ b.glitch = 0; const q = aim(), B = bnd(), me = Math.floor(Math.random() * 4); A.mins = A.mins.filter(m => m.k !== 'clone');
         for (let k = 0; k < 4; k++) { const an = k / 4 * Math.PI * 2 + Math.random() * .5, x = clamp(q.x + Math.cos(an) * 180, B.x0 + 40, B.x1 - 40), y = clamp(q.y + Math.sin(an) * 180, B.y0 + 40, B.y1 - 40);
           A.fx.push({ k: 'ghost', x, y, r: b.r, life: .4, max: .4 }); if (k === me) { b.x = x; b.y = y; b.vx = b.vy = 0; } else A.mins.push({ k: 'clone', x, y, r: b.r, ang: an, cd: 1 + k * .3, life: 9, face: 0 }); }
-        tone(500, .3, 'sine', .04, 1200); say('Which one is the real Loki?', 2000); rest(b, .5); } },
+        tone(500, .3, 'sine', .04, 1200); say(`Which one is the real ${A.def.name}?`, 2000); rest(b, .5); } },
     // Ultron: laser eyes and drones
     beam: { wind: .75, start(b){ lockOn(b); b.eyes = 1; const L = A.C.big ? 1400 : 900; b.tel = { k: 'line', x: b.x + Math.cos(b.sa) * L, y: b.y + Math.sin(b.sa) * L, w: A.C.beamW }; }, go(b){ fireBeam(b); b.eyes = 0; rest(b, .6); } },
     drones: { wind: .5, go(b){ for (let k = 0; k < 4; k++) { const an = b.face + (k - 1.5) * .7; A.mins.push({ k: 'drone', x: b.x + Math.cos(an) * (b.r + 20), y: b.y + Math.sin(an) * (b.r + 20), vx: Math.cos(an) * 120, vy: Math.sin(an) * 120, r: 12, life: 12, face: an }); } tone(700, .25, 'square', .03, 300); rest(b, .5); } },
@@ -3052,6 +3082,39 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
         body.position.y = face.position.y = rim.position.y = handG.position.y = 1.35 + Math.sin(t * 8) * .03 * mv;
       } };
     },
+    // ----- DC villains -----
+    joker(){
+      const suit = mat(0x5B2C83, { roughness: .55 }), vest = mat(0xE08A2E, { roughness: .6 }), white = mat(0xEDEDED, { roughness: .5 }), green = mat(0x5FAF3A, { roughness: .6 });
+      const H = humanoid({ body: suit, leg: suit, skin: white, arm: suit, hand: white, chest: 1 });
+      box(.06, .5, .3, vest, .21, 1.35, 0, H.g); box(.07, .3, .06, green, .23, 1.45, 0, H.g);
+      sph(.18, green, -.03, .08, 0, H.head, 1, .75, 1.05, 12);
+      box(.02, .025, .14, mat(0xC0271C), .15, -.07, 0, H.head);
+      H.arms.forEach(({ hand }, k) => { if (k) { const c = box(.005, .12, .08, white, 0, -.1, 0, hand); c.rotation.z = .3; } });
+      return { g: H.g, anim(b, t, mv){ H.walk(t, mv); H.head.rotation.z = Math.sin(t * 10) * .08; if (b.st === 'wind') H.arms.forEach(({ a }) => a.rotation.z = 1.8); if (b.swing > 0) H.arms[1].a.rotation.z = 1.5; } };
+    },
+    harley(){
+      const red = mat(0xC8102E, { roughness: .55 }), blk = mat(0x16181D, { roughness: .55 }), white = mat(0xF2F2F2, { roughness: .5 });
+      const H = humanoid({ body: red, leg: blk, skin: white, arm: blk, hand: red, chest: .9 });
+      box(.05, .78, .27, blk, .2, 1.35, .13, H.g);
+      [-1, 1].forEach(z => { const p = cyl(.05, .03, .35, z > 0 ? red : blk, 0, -.05, z * .2, H.head, 8); p.rotation.x = z * .9; });
+      const mallet = new THREE.Group(); H.arms[1].hand.add(mallet); cyl(.025, .025, .8, mat(0x6B4A2B), 0, .3, 0, mallet, 8); const hd = cyl(.13, .13, .32, mat(0xB9C1CC, { metalness: .3 }), 0, .72, 0, mallet, 16); hd.rotation.z = Math.PI / 2;
+      return { g: H.g, anim(b, t, mv){ H.walk(t, mv * 1.2); mallet.rotation.z = b.st === 'wind' ? -1.2 : b.swing > 0 ? 1.2 : 0; if (b.st === 'dash') H.g.rotation.x = Math.sin(t * 12) * .3; else H.g.rotation.x = 0; } };
+    },
+    bane(){
+      const skin = mat(0xA87A55, { roughness: .6 }), blk = mat(0x16181D, { roughness: .6 }), tube = mat(0x3CE870, { emissive: 0x1F7A45, emissiveIntensity: .6 });
+      const H = humanoid({ s: 1.25, body: blk, leg: mat(0x2A2D33), skin, arm: skin, hand: blk, chest: 1.35 });
+      sph(.19, blk, 0, 0, 0, H.head, 1, 1.15, 1);
+      [-1, 1].forEach(z => { const t = cyl(.02, .02, .5, tube, -.25, 1.6, z * .15, H.g, 6); t.rotation.x = z * .5; });
+      box(.1, .35, .3, mat(0x3A3D44, { metalness: .5 }), -.3, 1.7, 0, H.g);
+      return { g: H.g, anim(b, t, mv){ H.walk(t, mv * .8); if (b.st === 'wind') H.arms.forEach(({ a }) => a.rotation.z = 2.4); if (b.swing > 0) H.arms.forEach(({ a }) => a.rotation.z = 1.2); } };
+    },
+    darkseid(){
+      const stone = mat(0x6B6E75, { roughness: .9, flatShading: true }), armor = mat(0x2A3550, { roughness: .5, metalness: .4 }), red = glowM(0xFF2A2A, { emissiveIntensity: 1.5 });
+      const H = humanoid({ s: 1.3, body: armor, leg: armor, skin: stone, arm: stone, hand: armor, chest: 1.25 });
+      [-1, 1].forEach(z => box(.03, .03, .05, red, .15, .03, z * .06, H.head));
+      box(.3, .1, .6, armor, 0, 1.95, 0, H.g);
+      return { g: H.g, anim(b, t, mv){ H.walk(t, mv * .6); if (b.eyes) H.head.children.forEach(c => { if (c.material === red) c.scale.setScalar(1.6 + Math.random() * .4); }); if (b.swing > 0) H.arms[1].a.rotation.z = 1.4; } };
+    },
     // ----- MCU villains (people-shaped, built on one body) -----
     maw(){
       const robe = mat(0x1C1B22, { roughness: .8 }), grey = mat(0x9EA3A8, { roughness: .6 }), trim = mat(0x6B5A8A, { roughness: .5 });
@@ -3150,23 +3213,24 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     const c = lairBoard.userData.c, g = c.getContext('2d'), w = c.width, h = c.height;
     g.fillStyle = '#0B0D14'; g.fillRect(0, 0, w, h); g.strokeStyle = '#FFC93C'; g.lineWidth = 8; g.strokeRect(8, 8, w - 16, h - 16);
     g.fillStyle = '#FFC93C'; g.font = `800 64px ${DISPLAY}`; g.textAlign = 'left'; g.textBaseline = 'top'; g.fillText('THE LAIR', 44, 36);
-    g.fillStyle = '#FFFFFF'; g.font = `600 30px "Instrument Sans", sans-serif`; g.fillText(`${beaten.size} / ${BOSSES.length} creatures beaten`, 44, 116);
-    g.font = `600 27px "Instrument Sans", sans-serif`;
-    BOSSES.forEach((b, i) => { g.fillStyle = beaten.has(b.id) ? '#FFC93C' : 'rgba(255,255,255,.55)'; g.fillText(`${beaten.has(b.id) ? '★' : '☆'}  ${b.name}`, i < 5 ? 60 : 480, 172 + (i < 5 ? i : i - 5) * 42); });
+    g.fillStyle = '#FFFFFF'; g.font = `600 30px "Instrument Sans", sans-serif`; g.fillText(`${BOSSES.filter(d => beaten.has(d.id)).length} / ${BOSSES.length} beaten`, 44, 116);
+    g.font = `600 24px "Instrument Sans", sans-serif`;
+    // three columns: my creatures, the MCU wing, the DC wing
+    BOSSES.forEach((b, i) => { const col = i < 5 ? 0 : i < 9 ? 1 : 2, row = i < 5 ? i : i < 9 ? i - 5 : i - 9; g.fillStyle = beaten.has(b.id) ? '#FFC93C' : 'rgba(255,255,255,.55)'; g.fillText(`${beaten.has(b.id) ? '★' : '☆'} ${b.name}`, 44 + col * 285, 172 + row * 42); });
     g.fillStyle = '#C9CFD8'; g.font = `500 24px "Instrument Sans", sans-serif`;
     ['1. Take a weapon from the rack.  2. Open a pod.', '3. Survive. Red on the floor means it’s about to hit.'].forEach((s, k) => g.fillText(s, 44, 408 + k * 34));
     g.fillStyle = '#FFC93C'; g.font = `600 22px "Instrument Sans", sans-serif`;
-    if (beaten.size === BOSSES.length) { g.fillText('Post-credits: the clock resets to 11:58…', 44, 492);  }
+    if (BOSSES.every(d => beaten.has(d.id))) { g.fillText('Post-credits: the clock resets to 11:58…', 44, 492);  }
     else if (hasGauntlet) g.fillText('The Infinity Gauntlet is on the rack.', 44, 492);
     lairBoard.material.map.needsUpdate = true;
   }
   function buildLair(){
     lairScene = new THREE.Scene(); lairScene.background = new THREE.Color(0x06070B); lairScene.fog = new THREE.Fog(0x06070B, 16, 40);
     lairScene.add(new THREE.HemisphereLight(0x8C9BD0, 0x2A2016, .5));
-    const sun = new THREE.DirectionalLight(0xFFF1DC, .75); sun.position.set(5, 14, 8); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -11, right: 11, top: 12, bottom: -12, near: 1, far: 40 }); lairScene.add(sun);
+    const sun = new THREE.DirectionalLight(0xFFF1DC, .75); sun.position.set(5, 14, 8); sun.castShadow = true; sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -20, right: 12, top: 12, bottom: -12, near: 1, far: 40 }); lairScene.add(sun);
     const stone = mat(0x22232A, { roughness: .95 }), rock = mat(0x1A1B21, { roughness: 1, flatShading: true });
-    const ft = lairTex(); ft.wrapS = ft.wrapT = THREE.RepeatWrapping; ft.repeat.set(5, 6);
-    const floor = new THREE.Mesh(new THREE.PlaneGeometry(18, 22), new THREE.MeshStandardMaterial({ map: ft, roughness: .9 })); floor.rotation.x = -Math.PI / 2; floor.receiveShadow = true; floor.userData.walk = true; lairScene.add(floor);
+    const ft = lairTex(); ft.wrapS = ft.wrapT = THREE.RepeatWrapping; ft.repeat.set(7.5, 6);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(27, 22), new THREE.MeshStandardMaterial({ map: ft, roughness: .9 })); floor.rotation.x = -Math.PI / 2; floor.position.x = -4.2; floor.receiveShadow = true; floor.userData.walk = true; lairScene.add(floor);
     // the fight pit, marked out in yellow with a bat in the middle
     const pit = new THREE.Mesh(new THREE.PlaneGeometry(12, 14.6), new THREE.MeshStandardMaterial({ roughness: .8, map: tex(600, 730, (g, w, h) => { g.fillStyle = '#1C1E26'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(255,255,255,.05)'; g.lineWidth = 2; for (let x = 0; x < w; x += 50) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let y = 0; y < h; y += 50) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } g.save(); g.translate(w / 2, h / 2); g.scale(14, 14); g.fillStyle = 'rgba(255,201,60,.08)'; g.beginPath(); BAT_PTS.forEach(([x, y]) => g.lineTo(x, y)); g.closePath(); g.fill(); g.restore(); }) }));
     pit.rotation.x = -Math.PI / 2; pit.position.y = .01; pit.receiveShadow = true; pit.userData.walk = true; lairScene.add(pit);
@@ -3174,20 +3238,20 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     [[0, -7.3, 12.1, .08], [0, 7.3, 12.1, .08]].forEach(([x, z, w, d]) => box(w, .05, d, edge, x, .03, z, lairScene));
     [[-6, 0], [6, 0]].forEach(([x, z]) => box(.08, .05, 14.6, edge, x, .03, z, lairScene));
     // cave walls, with rocks and stalactites
-    box(18, 7, .6, stone, 0, 3.5, -11.3, lairScene); box(.6, 7, 22, stone, -9.3, 3.5, 0, lairScene); box(.6, 7, 22, stone, 9.3, 3.5, 0, lairScene);
+    box(27, 7, .6, stone, -4.2, 3.5, -11.3, lairScene); box(.6, 7, 22, stone, -17.9, 3.5, 0, lairScene); box(.6, 7, 22, stone, 9.3, 3.5, 0, lairScene);
     // the front wall, with a lit doorway at the top of the stairs
-    box(14.8, 7, .6, stone, -1.6, 3.5, 11.5, lairScene); box(1.6, 7, .6, stone, 8.2, 3.5, 11.5, lairScene); box(1.6, 3, .6, stone, 6.6, 1.5, 11.5, lairScene); box(1.6, 1.6, .6, stone, 6.6, 6.2, 11.5, lairScene);
+    box(23.6, 7, .6, stone, -6, 3.5, 11.5, lairScene); box(1.6, 7, .6, stone, 8.2, 3.5, 11.5, lairScene); box(1.6, 3, .6, stone, 6.6, 1.5, 11.5, lairScene); box(1.6, 1.6, .6, stone, 6.6, 6.2, 11.5, lairScene);
     const door = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2.4), new THREE.MeshBasicMaterial({ color: 0xFFE3A8 })); door.position.set(6.6, 4.2, 11.45); door.rotation.y = Math.PI; door.userData.egg = 'lairexit'; lairScene.add(door);
     const doorLight = new THREE.PointLight(0xFFD58A, .8, 7, 2); doorLight.position.set(6.6, 4.4, 10.6); lairScene.add(doorLight);
     for (let k = 0; k < 40; k++) { const side = k % 3, r = .5 + Math.random() * 1.2, m = new THREE.Mesh(new THREE.DodecahedronGeometry(r, 0), rock);
-      let x = side === 0 ? -9 + Math.random() * 18 : (side === 1 ? -1 : 1) * 8.9, y = Math.random() * 7, z = side === 0 ? -10.9 : -11 + Math.random() * 22;
+      let x = side === 0 ? -17.5 + Math.random() * 26.5 : side === 1 ? -17.5 : 8.9, y = Math.random() * 7, z = side === 0 ? -10.9 : -11 + Math.random() * 22;
       // keep them above the pods, the weapon rack and the scoreboard, and off the bat-signal and the MCU sign
       if (side === 0 && Math.abs(x) < 2.3 + r) x = (x < 0 ? -1 : 1) * (2.3 + r + Math.random());
-      const guard = side === 0 ? Math.abs(x) < 7.6 + r : side === 1 ? z > -8.2 - r && z < 6.6 + r : z > -8 - r && z < 4.3 + r;
-      if (guard) y = Math.max(y, (side === 2 && z > -4.4 && z < .8 ? 5.2 : 4.3) + r);
+      const guard = side === 0 ? x < 7.6 + r : side === 1 ? z > -8.2 - r && z < 9.4 + r : z > -8 - r && z < 4.3 + r;
+      if (guard) y = Math.max(y, ((side === 2 || side === 1) && z > -4.4 && z < .8 ? 5.2 : 4.3) + r);
       m.position.set(x, y, z);
       m.rotation.set(Math.random() * 3, Math.random() * 3, 0); lairScene.add(m); }
-    for (let k = 0; k < 26; k++) { const c = new THREE.Mesh(new THREE.ConeGeometry(.2 + Math.random() * .3, 1 + Math.random() * 2, 6), rock); c.rotation.x = Math.PI; const edgeSide = k % 3; c.position.set(edgeSide === 1 ? -8.3 : edgeSide === 2 ? 8.3 : -8 + Math.random() * 16, 6.2, edgeSide === 0 ? -10.4 : -10 + Math.random() * 20); lairScene.add(c); }
+    for (let k = 0; k < 26; k++) { const c = new THREE.Mesh(new THREE.ConeGeometry(.2 + Math.random() * .3, 1 + Math.random() * 2, 6), rock); c.rotation.x = Math.PI; const edgeSide = k % 3; c.position.set(edgeSide === 1 ? -16.9 : edgeSide === 2 ? 8.3 : -16.5 + Math.random() * 24.5, 6.2, edgeSide === 0 ? -10.4 : -10 + Math.random() * 20); lairScene.add(c); }
     // the bat-signal on the back wall
     const sig = new THREE.Mesh(new THREE.CircleGeometry(1.5, 48), new THREE.MeshBasicMaterial({ transparent: true, map: tex(512, 512, (g, w, h) => { const gr = g.createRadialGradient(w / 2, h / 2, 40, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,230,140,1)'); gr.addColorStop(.85, 'rgba(255,201,60,.9)'); gr.addColorStop(1, 'rgba(255,201,60,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.save(); g.translate(w / 2, h / 2); g.scale(13, 13); g.fillStyle = '#0B0D14'; g.beginPath(); BAT_PTS.forEach(([x, y]) => g.lineTo(x, y + 2)); g.closePath(); g.fill(); g.restore(); }) }));
     sig.position.set(0, 5, -10.95); lairScene.add(sig);
@@ -3196,7 +3260,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     // five pods, one creature in each
     BOSSES.forEach((def, i) => {
       // my creatures along the back wall, the MCU villains along the right wall
-      const pg = new THREE.Group(); if (i < 5) pg.position.set(-6 + i * 3, 0, -9.5); else { pg.position.set(8.3, 0, -6.4 + (i - 5) * 3.1); pg.rotation.y = -Math.PI / 2; } pg.userData.egg = 'pod'; pg.userData.bi = i; lairScene.add(pg);
+      const pg = new THREE.Group(); if (i < 5) pg.position.set(-6 + i * 3, 0, -9.5); else if (i < 9) { pg.position.set(8.3, 0, -6.4 + (i - 5) * 3.1); pg.rotation.y = -Math.PI / 2; } else { pg.position.set(-16.9, 0, -6.4 + (i - 9) * 3.1); pg.rotation.y = Math.PI / 2; } pg.userData.egg = 'pod'; pg.userData.bi = i; lairScene.add(pg);
       cyl(1, 1.1, .3, mat(0x3A3D48, { metalness: .6, roughness: .4 }), 0, .15, 0, pg, 32); cyl(1, 1, .25, mat(0x3A3D48, { metalness: .6, roughness: .4 }), 0, 3.05, 0, pg, 32);
       box(2.1, .06, .06, glowM(new THREE.Color(def.col).getHex()), 0, .31, .98, pg);
       const glass = new THREE.Mesh(new THREE.CylinderGeometry(.95, .95, 2.6, 32, 1, true), new THREE.MeshStandardMaterial({ color: new THREE.Color(def.col), emissive: new THREE.Color(def.col), emissiveIntensity: .25, transparent: true, opacity: .22, roughness: .1, side: THREE.DoubleSide, depthWrite: false }));
@@ -3207,8 +3271,11 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     });
     const wing = new THREE.Mesh(new THREE.PlaneGeometry(4, .7), new THREE.MeshBasicMaterial({ transparent: true, map: tex(600, 105, (g, W, H) => { g.fillStyle = 'rgba(11,13,20,.9)'; g.fillRect(0, 0, W, H); g.fillStyle = '#E8303C'; g.font = `800 60px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('THE MCU WING', W / 2, H / 2 + 3); }) }));
     wing.rotation.y = -Math.PI / 2; wing.position.set(8.9, 4.6, -1.8); lairScene.add(wing);
+    const dcw = new THREE.Mesh(new THREE.PlaneGeometry(4, .7), new THREE.MeshBasicMaterial({ transparent: true, map: tex(600, 105, (g, W, H) => { g.fillStyle = 'rgba(11,13,20,.9)'; g.fillRect(0, 0, W, H); g.fillStyle = '#3C7CFF'; g.font = `800 60px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('THE DC WING', W / 2, H / 2 + 3); }) }));
+    dcw.rotation.y = Math.PI / 2; dcw.position.set(-17.55, 4.6, -1.8); lairScene.add(dcw);
+    const dcLight = new THREE.PointLight(0x7C9CFF, .7, 16, 2); dcLight.position.set(-13, 5.5, -2); lairScene.add(dcLight);
     // the weapon rack on the left wall
-    const rb = new THREE.Group(); rb.position.set(-8.85, 0, -3.4); lairScene.add(rb);
+    const rb = new THREE.Group(); rb.position.set(-12.6, 0, -10.85); rb.rotation.y = -Math.PI / 2; lairScene.add(rb);
     box(.12, 2.6, 8.2, mat(0x2B2118, { roughness: .8 }), 0, 1.9, 0, rb);
     box(.3, .08, 8.2, glowM(0xFFC93C, { emissiveIntensity: .6 }), .1, .6, 0, rb);
     WEAPONS.forEach((w, k) => {
@@ -3222,15 +3289,15 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     // the scoreboard on the left wall
     const bc = document.createElement('canvas'); bc.width = 900; bc.height = 600;
     const bt = new THREE.CanvasTexture(bc); bt.encoding = THREE.sRGBEncoding;
-    lairBoard = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 3), new THREE.MeshBasicMaterial({ map: bt })); lairBoard.userData.c = bc; lairBoard.userData.egg = 'lairboard'; lairBoard.rotation.y = Math.PI / 2; lairBoard.position.set(-8.95, 2.6, 4); lairScene.add(lairBoard);
+    lairBoard = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 3), new THREE.MeshBasicMaterial({ map: bt })); lairBoard.userData.c = bc; lairBoard.userData.egg = 'lairboard'; lairBoard.rotation.y = Math.PI / 2; lairBoard.position.set(-17.55, 2.6, 6.9); lairScene.add(lairBoard);
     // the stairs up to the house: walk up them to leave
     const stepM = mat(0x3A3D48, { metalness: .4, roughness: .6 }), railM = mat(0xFFC93C, { metalness: .5, roughness: .4 });
     for (let k = 0; k < 12; k++) { const top = (k + 1) * .25; const st = box(1.5, top, .3, stepM, 6.6, top / 2, 7.15 + k * .3, lairScene); st.userData.walk = true; }
     box(1.5, 3, .9, stepM, 6.6, 1.5, 11, lairScene).userData.walk = true;
     [5.82, 7.38].forEach(x => { const r = box(.05, .05, 4.6, railM, x, 2.3, 8.95, lairScene); r.rotation.x = -Math.atan2(3, 3.6); });
     addMarkerTo(lairScene, V(6.6, 5.9, 11)).userData.egg = 'lairexit';
-    addMarkerTo(lairScene, V(-8.2, 3.5, -3.4)).userData.egg = 'rackinfo';
-    plats.lair = [{ x0: -8.4, x1: 8.4, z0: -8.2, z1: 10.4 }];
+    addMarkerTo(lairScene, V(-12.6, 3.5, -10.3)).userData.egg = 'rackinfo';
+    plats.lair = [{ x0: -16.9, x1: 8.4, z0: -8.2, z1: 10.4 }];
     const flash = new THREE.PointLight(0x9FD4FF, 0, 18, 2); lairScene.add(flash);
     lairAnim = { sig, sigLight, flash };
     refreshLair();
@@ -3270,7 +3337,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
       saved = { pos: V(3.4, 1.6, -.2), yaw: -Math.PI / 2, pitch: 0 };
       inWorld = true; zone = 'lair'; falling = false; vy = 0; walkTarget = null; pos.set(6.6, 4.6, 10.9); yaw = 0; pitch = -.32; uiZone();
       dock.classList.remove('on'); $('#worldBack').hidden = false; $('#worldBack').textContent = A ? 'Leave the fight' : 'Back upstairs';
-      if (A) fightMoved(); else say('You found the lair. Walk down the stairs, grab a weapon from the rack on the left, then open a pod.', 5200);
+      if (A) fightMoved(); else say('You found the lair. Walk down the stairs, grab a weapon from the rack on the back wall, then open a pod. The DC wing is on the far left.', 5200);
     }, '#06070B');
   }
   // up the stairs and out through the bookshelf (a fight comes with you)
@@ -3341,20 +3408,34 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     const hands = id === 'claws' || id === 'fists' || id === 'web' ? [1, -1] : [id === 'shield' ? -.4 : 1];
     const out = hands.map(s => {
       const holder = new THREE.Group(), w = mkWeapon(id); holder.add(w); viewG.add(holder);
+      const burnt = s > 0 && armHurt();
       if (bone) w.traverse(c => { if (c.isMesh && c.material.color && c.material.color.getHex() === 0xDCE3EA) { c.material = mat(0xE3D2A6, { roughness: .9 }); c.scale.set(1.3, .8, 1.3); } });
+      if (id === 'fists') tintFist(w, burnt);
       w.traverse(c => { if (c.isMesh && c.material.color) c.material.userData.c0 = c.material.color.clone(); });
       holder.userData.base = id === 'shield' ? V(-.26, -.34, -.78) : id === 'fists' || id === 'web' ? V(.26 * s, -.3, -.6) : V(.34 * s, -.33, -.7);
       if (id === 'shield') w.scale.setScalar(.45); else { w.scale.setScalar(id === 'batarang' ? .55 : id === 'sword' ? .36 : .42); w.rotation.set(-1.05, 0, s > 0 ? .35 : -.35); if (id === 'mjolnir' || id === 'storm') w.position.y = -.1; }
       if (id === 'fists' || id === 'web') { w.scale.setScalar(id === 'web' ? .65 : 1); w.rotation.set(0, 0, 0); if (id === 'web') holder.userData.base = V(.3 * s, -.34, -.62); }
-      const glove = sph(.04, mat(id === 'claws' ? 0xF2C230 : 0xC68B59), 0, 0, 0, holder, 1, 1, 1, 10); glove.visible = id !== 'claws' && id !== 'shield' && id !== 'fists' && id !== 'web';
+      const glove = sph(.04, burnt ? armMat() : mat(id === 'claws' ? 0xF2C230 : new THREE.Color(handCol(curLook())).getHex(), { roughness: .7 }), 0, 0, 0, holder, 1, 1, 1, 10); glove.visible = id !== 'claws' && id !== 'shield' && id !== 'fists' && id !== 'web';
+      holder.position.copy(holder.userData.base);
+      addArm(holder, s > 0 ? 1 : -1, burnt);
       holder.traverse(c => { if (c.isMesh) { c.castShadow = false; c.userData.noPick = true; } });
-      if (s > 0 && armHurt()) addArm(holder);
       return { holder, w, s };
     });
-    if (armHurt() && !hands.some(s => s > 0)) loneArm();
+    // and your other hand
+    [1, -1].forEach(sd => { if (!hands.some(s => Math.sign(s) === sd)) spareHand(sd); });
     return out;
   }
-  function loneArm(){ const h = new THREE.Group(); h.userData.base = V(.26, -.24, -.5); h.position.copy(h.userData.base); viewG.add(h); addArm(h); }
+  // an empty hand (a loose fist) with its forearm; the right one is burned while the arm heals
+  function spareHand(sd){
+    const h = new THREE.Group(); h.userData.base = V(.29 * sd, -.27, -.56); h.position.copy(h.userData.base); viewG.add(h);
+    const f = mkWeapon('fists'); tintFist(f, sd > 0 && armHurt()); f.scale.setScalar(.9); h.add(f);
+    addArm(h, sd, sd > 0 && armHurt());
+    h.traverse(c => { if (c.isMesh) { c.castShadow = false; c.userData.noPick = true; } });
+  }
+  function tintFist(w, burnt){
+    const hm = burnt ? armMat() : mat(new THREE.Color(handCol(curLook())).getHex(), { roughness: .7 }), sm = burnt ? armMat() : mat(new THREE.Color(sleeveCol(curLook())).getHex(), { roughness: .7 });
+    w.traverse(c => { if (c.isMesh) c.material = c.geometry.type === 'CylinderGeometry' ? sm : hm; });
+  }
   function fightView(){ clearView(); A.view = buildView(A.fists ? 'fists' : A.w.id, A.bone); A.durShown = undefined; }
   const wpnLabel = () => A.w.id === 'fists' ? 'Bare hands' : A.bone ? 'Bone claws \u00B7 Wolverine' : A.fists ? `Fists \u00B7 ${A.w.name} is broken` : `${A.w.name} \u00B7 ${A.w.from}`;
   // switching weapons mid-fight (number keys, mouse wheel, the bar on the right)
@@ -3369,7 +3450,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
   let idleShown;
   function idleView(){
     const sc = sceneOf();
-    if (idleShown !== held || viewG.parent !== sc) { clearView(); if (viewG.parent) viewG.parent.remove(viewG); sc.add(viewG); idleShown = held; if (held) buildView(held, held === 'claws' && condition('claws').broken); else if (armHurt()) loneArm(); }
+    if (idleShown !== held || viewG.parent !== sc) { clearView(); if (viewG.parent) viewG.parent.remove(viewG); sc.add(viewG); idleShown = held; if (held) buildView(held, held === 'claws' && condition('claws').broken); else { spareHand(1); spareHand(-1); } }
     viewG.position.copy(camera.position); viewG.quaternion.copy(camera.quaternion);
     const t = performance.now() / 1000; viewG.children.forEach(h => { const B0 = h.userData.base; h.position.set(B0.x, B0.y + Math.sin(t * 2) * .006, B0.z); });
   }
@@ -3426,8 +3507,8 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     if (won) {
       if (!cel && A.def.id !== 'maw') { beaten.add(A.def.id); try { localStorage.setItem('ru-bosses', JSON.stringify([...beaten])); } catch (e) {} }
       [523, 659, 784, 1046].forEach((f, k) => setTimeout(() => tone(f, .25, 'triangle', .06), k * 110));
-      $('#arenaTitle').textContent = `${A.def.name}: defeated`; $('#arenaText').textContent = `${A.def.win} Finished off with ${A.w.name}${where}.` + (!cel && beaten.size === BOSSES.length ? ' ' + POST_CREDITS : '');
-      if (!cel && beaten.size === BOSSES.length) secret('credits');
+      $('#arenaTitle').textContent = `${A.def.name}: defeated`; $('#arenaText').textContent = `${A.def.win} Finished off with ${A.w.name}${where}.` + (!cel && BOSSES.every(d => beaten.has(d.id)) ? ' ' + POST_CREDITS : '');
+      if (!cel && BOSSES.every(d => beaten.has(d.id))) secret('credits');
       if (cel) secret('celestial');
       const reward = { thanos: 'gauntlet', gorr: 'necro', celestial: 'storm' }[A.def.id];
       if (reward && !isUnlocked(reward)) { unlock(reward); if (reward === 'gauntlet') hasGauntlet = true; if (reward !== 'gauntlet') { inv.push(reward); saveInv(); renderHotbar(); } }
@@ -3699,7 +3780,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
       if (u >= 1) {
         zone = 'city'; pos.copy(A.leap.to); cityAir = false; cityV.set(0, 0, 0); cityLast = null; A.intro = 0; A.riseY = 0; A.shake = .6; tone(60, .5, 'sawtooth', .08, 30); A.leap = null; $('#worldBack').textContent = 'Leave the fight';
         // the creatures you've beaten land next to you
-        const friends = BOSSES.filter(d => !d.mcu && beaten.has(d.id) && !dustedBoss(d.id));
+        const friends = BOSSES.filter(d => !d.mcu && !d.dc && beaten.has(d.id) && !dustedBoss(d.id));
         const fa = lookAngle(); friends.forEach((d, k) => { const side = k % 2 ? 1 : -1, an = fa + side * (Math.PI / 2 + .35), dd = 110 + Math.floor(k / 2) * 70; addAlly(d.id, pos.x * 40 + Math.cos(an) * dd, pos.z * 40 + Math.sin(an) * dd); });
         say(friends.length ? `${friends.map(d => d.name).join(', ')} ${friends.length > 1 ? 'have' : 'has'} your back!` : 'Fight! (Creatures you\u2019ve beaten in the lair would fight on your side.)', 3800);
         $('#fHelp').textContent = fine ? 'WASD to move, mouse to aim, click to attack, right-click or Shift to block, E for your special, Space to jump. With web-shooters, hold Q to swing.' : 'Joystick to move, drag to look, tap to attack, hold Block to block. With web-shooters, hold Swing.';
@@ -3771,7 +3852,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     poisonWarned = lvl;
     poisonFx.style.opacity = poison >= .4 ? Math.min(1, (poison - .4) * 1.6) : 0;
     if (hotEl.hidden !== (!inv.length)) renderHotbar();
-    if (menuBtn.hidden) menuBtn.hidden = false;
+    if (menuBtn.hidden) { menuBtn.hidden = false; povBtn.hidden = false; povBtn.textContent = tpv ? '1st person' : '3rd person'; }
     if (!A) idleView();
     // web-shooters on the rooftop (or down in Bangalore): swinging is available
     const canSwing = held === 'web' && !dustedWeapon('web') && inWorld && (zone === 'roof' || zone === 'city');
@@ -3782,7 +3863,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
   swingBtn.addEventListener('pointerdown', e => { e.preventDefault(); webStart(); }); ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => swingBtn.addEventListener(ev, () => webEnd()));
   const snapBtn = $('#snapBtn'); snapBtn.onclick = () => unsnap();
   // fullscreen games and the laptop pause the fight
-  const paused = () => photoOn || [game, pc, bbEl, aiBox, pauseEl].some(m => m.classList.contains('on'));
+  const paused = () => photoOn || mirror || [game, pc, bbEl, aiBox, pauseEl].some(m => m.classList.contains('on'));
   function fightFrame(dt){
     const sdt = Math.min(dt, .033);
     if (A.intro) introStep(dt);
@@ -3966,7 +4047,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
   const num = (v, m) => { v = +v; return isFinite(v) ? clamp(v, -m, m) : 0; };
   function mpSend(force){
     if (!mq) return;
-    const msg = JSON.stringify({ a: areaKey(), x: +pos.x.toFixed(2), y: +pos.y.toFixed(2), z: +pos.z.toFixed(2), r: +yaw.toFixed(2), w: held || '', f: A && !A.over ? A.def.id : '' });
+    const msg = JSON.stringify({ a: areaKey(), x: +pos.x.toFixed(2), y: +pos.y.toFixed(2), z: +pos.z.toFixed(2), r: +yaw.toFixed(2), w: held || '', f: A && !A.over ? A.def.id : '', l: curLook() });
     if (!force && msg === mpLast && mpSendT > -4) return; mpLast = msg; mpSendT = 0;
     mq.pub(`${MP_TOPIC}/p/${mpId}`, msg);
   }
@@ -3977,10 +4058,12 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     if (kind === 'p') {
       if (text === 'bye') return dropGhost(id);
       const d = JSON.parse(text); if (typeof d.a !== 'string' || !/^(room|hub|ai|code|chip|sea|roof|lair|space)$/.test(d.a)) return;
-      let gh = ghosts.get(id); if (!gh) { if (ghosts.size >= 24) return; gh = makeGhost(id); ghosts.set(id, gh); }
+      const lk = cleanLook(d.l), lkS = JSON.stringify(lk);
+      let gh = ghosts.get(id); if (!gh) { if (ghosts.size >= 24) return; gh = makeGhost(id, lk); ghosts.set(id, gh); }
+      else if (gh.lk !== lkS) { const par = gh.g.parent; if (par) par.remove(gh.g); disposeDeep(gh.g); Object.assign(gh, makeGhost(id, lk), { x: gh.x, y: gh.y, z: gh.z, r: gh.r, first: gh.first }); if (par) par.add(gh.g); }
       Object.assign(gh, { a: d.a, tx: num(d.x, 300), ty: num(d.y, 300), tz: num(d.z, 300), tr: num(d.r, 1e4), f: typeof d.f === 'string' ? d.f.slice(0, 16) : '', seen: performance.now() });
       const w = typeof d.w === 'string' && WEAPONS.some(x => x.id === d.w) ? d.w : '';
-      if (w !== gh.w) { gh.w = w; if (gh.wm) { gh.g.remove(gh.wm); disposeDeep(gh.wm); gh.wm = null; } if (w) { try { gh.wm = mkWeapon(w); gh.wm.scale.setScalar(.8); gh.wm.position.set(.32, .8, -.1); gh.wm.rotation.x = -.6; gh.wm.traverse(o => { o.userData.noPick = true; o.castShadow = false; }); gh.g.add(gh.wm); } catch (e) { gh.wm = null; } } }
+      if (w !== gh.w) { gh.w = w; gh.av.hold(w); }
     }
     if (kind === 'h') {
       const d = JSON.parse(text), gh = ghosts.get(id);
@@ -3990,16 +4073,23 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
       A.nums.push({ x: A.boss.x + (Math.random() - .5) * 60, y: A.boss.y - 30, v: Math.round(n), life: .8, ally: '#7CF2FF' });
     }
   }
-  function makeGhost(id){
+  // anything that arrives from the relay gets checked before it's used
+  function cleanLook(l){
+    const o = Object.assign({}, LOOK0); if (!l || typeof l !== 'object') return o;
+    const int = (v, n) => Number.isInteger(v) && v >= 0 && v < n;
+    if (int(l.skin, SKINS.length)) o.skin = l.skin; if (int(l.hairC, HAIRC.length)) o.hairC = l.hairC; if (int(l.c1, SUITC.length)) o.c1 = l.c1; if (int(l.c2, SUITC.length)) o.c2 = l.c2;
+    if (HAIRS.some(h => h[0] === l.hair)) o.hair = l.hair; if (typeof l.outfit === 'string' && Object.prototype.hasOwnProperty.call(OUTFITS, l.outfit)) o.outfit = l.outfit;
+    o.mask = l.mask ? 1 : 0; o.cape = l.cape ? 1 : 0; return o;
+  }
+  // other visitors look like whatever character they made, standing on a coloured ring
+  function makeGhost(id, lk){
     let h = 0; for (const c of id) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-    const col = new THREE.Color().setHSL((h % 360) / 360, .7, .65), m = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .42, depthWrite: false });
+    const col = new THREE.Color().setHSL((h % 360) / 360, .7, .65);
     const g = new THREE.Group(); g.userData.mp = true;
-    const body = new THREE.Mesh(new THREE.CylinderGeometry(.2, .26, .95, 14), m); body.position.y = .78; g.add(body);
-    const head = new THREE.Mesh(new THREE.SphereGeometry(.18, 16, 12), m); head.position.y = 1.45; g.add(head);
-    const eyes = new THREE.Mesh(new THREE.BoxGeometry(.2, .05, .02), new THREE.MeshBasicMaterial({ color: 0x16181D })); eyes.position.set(0, 1.48, -.17); g.add(eyes);
-    const ring = new THREE.Mesh(new THREE.RingGeometry(.28, .36, 24), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .5, side: THREE.DoubleSide, depthWrite: false })); ring.rotation.x = -Math.PI / 2; ring.position.y = .03; g.add(ring);
+    const av = avatar(lk || LOOK0); g.add(av.g);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(.3, .38, 24), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .6, side: THREE.DoubleSide, depthWrite: false })); ring.rotation.x = -Math.PI / 2; ring.position.y = .03; g.add(ring);
     g.traverse(o => { o.userData.noPick = true; o.userData.mp = true; });
-    return { g, x: 0, y: 0, z: 0, r: 0, first: true, swing: 0, w: '' };
+    return { g, av, lk: JSON.stringify(lk || LOOK0), x: 0, y: 0, z: 0, r: 0, first: true, swing: 0, w: '', mv: 0 };
   }
   function dropGhost(id){ const gh = ghosts.get(id); if (!gh) return; gh.g.parent && gh.g.parent.remove(gh.g); disposeDeep(gh.g); ghosts.delete(id); }
   function clearGhosts(){ [...ghosts.keys()].forEach(dropGhost); }
@@ -4014,9 +4104,10 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
       const sc = areaScene(gh.a), show = gh.a === me && sc;
       if (show) { here++; if (A && gh.f === A.def.id) coop++; if (gh.g.parent !== sc) sc.add(gh.g); } else if (gh.g.parent) gh.g.parent.remove(gh.g);
       if (gh.first) { gh.x = gh.tx; gh.y = gh.ty; gh.z = gh.tz; gh.r = gh.tr; gh.first = false; }
-      const k = Math.min(1, dt * 8); gh.x += (gh.tx - gh.x) * k; gh.y += (gh.ty - gh.y) * k; gh.z += (gh.tz - gh.z) * k; gh.r += angDiff(gh.r, gh.tr) * k;
-      gh.g.position.set(gh.x, gh.y - 1.6 + (reduce ? 0 : Math.sin(now / 400 + gh.x) * .04), gh.z); gh.g.rotation.y = gh.r;
-      gh.swing = Math.max(0, gh.swing - dt); if (gh.wm) gh.wm.rotation.x = -.6 - (gh.swing > 0 ? Math.sin(gh.swing / .3 * Math.PI) * 1.2 : 0);
+      const k = Math.min(1, dt * 8), ox = gh.x, oz = gh.z; gh.x += (gh.tx - gh.x) * k; gh.y += (gh.ty - gh.y) * k; gh.z += (gh.tz - gh.z) * k; gh.r += angDiff(gh.r, gh.tr) * k;
+      gh.mv += (clamp(Math.hypot(gh.x - ox, gh.z - oz) / Math.max(dt, 1e-3) / 2.6, 0, 1) - gh.mv) * Math.min(1, dt * 6);
+      gh.g.position.set(gh.x, gh.y - 1.6, gh.z); gh.g.rotation.y = gh.r;
+      gh.swing = Math.max(0, gh.swing - dt); if (show) gh.av.anim(now / 1000, gh.mv, gh.swing > 0 ? gh.swing / .3 : 0);
     });
     const total = ghosts.size;
     mpChip.hidden = !total || photoOn;
@@ -4029,6 +4120,8 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     return `<h3>Sling ring</h3><div class="prow"><b>Open a portal<br><small>Travel anywhere you’ve been, Doctor Strange style.</small></b></div><div class="gact ring">${A ? '<p class="gmsg">Not during a fight.</p>' : zone === 'space' && inWorld ? '<p class="gmsg">The sling ring doesn’t reach this far out. Teleport home, or find the stones.</p>' : dests}</div>
       <h3>Extras</h3>
       <div class="prow"><b>At a glance<br><small>A one-page summary for admissions, with a timeline, the research demo and a PDF.</small></b><button class="btn" type="button" data-pa="brief">Open</button></div>
+      <div class="prow"><b>Your character<br><small>Skin, hair, outfit, colours, mask and cape. Other visitors see you like this too.</small></b><button class="btn" type="button" data-pa="look">Change</button></div>
+      <div class="prow"><b>Camera<br><small>First person or third person. Shortcut: V.</small></b><button class="btn" type="button" data-pa="pov">${tpv ? 'Third person' : 'First person'}</button></div>
       <div class="prow"><b>Photo mode<br><small>Hide everything, pick a filter, and save a picture. Shortcut: P.</small></b><button class="btn" type="button" data-pa="photo">Open</button></div>
       <div class="prow"><b>Other visitors (multiplayer)<br><small>See other people exploring as ghosts, and your hits help anyone fighting the same creature. Shares only your position, area and fight hits, never your name.</small></b><button class="btn" type="button" data-pa="mp">${mpOn ? 'On' : 'Off'}</button></div>`;
   }
@@ -4036,6 +4129,8 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     const a = e.target.closest('[data-pa]'); if (!a) return; const v = a.dataset.pa;
     if (v.startsWith('go:')) slingRing(v.slice(3));
     if (v === 'photo') setPhoto(true);
+    if (v === 'look') openLook();
+    if (v === 'pov') { setPov(!tpv); renderPause(); }
     if (v === 'brief') { closePause(); briefFrom = menuBtn; showBrief(true); }
     if (v === 'mp') { mpOn = !mpOn; try { localStorage.setItem('ru-mp', mpOn ? '1' : '0'); } catch (er) {} if (!mpOn) mpStop(); renderPause(); }
   });
@@ -4176,13 +4271,199 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
   let armTexC = null;
   function armMat(){ if (!armTexC) armTexC = tex(128, 256, (g, w, h) => { g.fillStyle = '#2A1E1A'; g.fillRect(0, 0, w, h); g.strokeStyle = '#FF6A1E'; g.lineWidth = 3; for (let k = 0; k < 16; k++) { g.beginPath(); let x = Math.random() * w, y = Math.random() * h; g.moveTo(x, y); for (let s = 0; s < 5; s++) { x += (Math.random() - .5) * 30; y += Math.random() * 26; g.lineTo(x, y); } g.stroke(); } });
     return new THREE.MeshStandardMaterial({ color: 0xFFFFFF, map: armTexC, emissive: 0xFFFFFF, emissiveMap: armTexC, emissiveIntensity: .35, roughness: .9 }); }
-  function addArm(holder){
-    const g = new THREE.Group(), m = armMat(), from = V(0, -.04, .02), to = V(.14, -.34, .5), len = from.distanceTo(to);
+  function addArm(holder, sd = 1, burnt = true){
+    const g = new THREE.Group(), m = burnt ? armMat() : mat(new THREE.Color(sleeveCol(curLook())).getHex(), { roughness: .7 }), from = V(0, -.04, .04), to = V(.14 * sd, -.34, .5), len = from.distanceTo(to);
     const fore = new THREE.Mesh(new THREE.CylinderGeometry(.045, .055, len, 10), m); fore.position.copy(from).lerp(to, .5); fore.quaternion.setFromUnitVectors(V(0, 1, 0), to.clone().sub(from).normalize()); g.add(fore);
-    sph(.05, m, 0, -.02, 0, g, 1, .8, 1.1, 10);
+    if (burnt) sph(.05, m, 0, -.02, 0, g, 1, .8, 1.1, 10);
     g.traverse(o => { if (o.isMesh) { o.castShadow = false; o.userData.noPick = true; } });
     holder.add(g); return g;
   }
+
+
+  // ---------- your character: looks, outfits, and the body other people (and you, in third person) see ----------
+  const SKINS = ['#F2D3B8', '#E0B08A', '#C68B59', '#A0673D', '#7A4A2A', '#4E2E1C'];
+  const HAIRC = ['#16181D', '#4A2E1C', '#8A5A2E', '#D9B26A', '#B84A2A', '#E8E8E8', '#3C7CFF'];
+  const SUITC = ['#FFC93C', '#C8102E', '#1C3F94', '#16181D', '#D9A93A', '#1F7A45', '#6B3FA0', '#E8E8E8', '#2B4A7A', '#5A5E68'];
+  const HAIRS = [['short', 'Short'], ['spiky', 'Spiky'], ['long', 'Long'], ['mohawk', 'Mohawk'], ['buzz', 'Buzz cut'], ['bald', 'Bald']];
+  // outfits you can wear (the last few are only for event heroes and villains)
+  const OUTFITS = {
+    casual: { name: 'Hoodie and jeans', gloves: 0 },
+    armor: { name: 'Iron armour', gloves: 1, metal: 1, mask: 'helmet', glow: 1 },
+    spider: { name: 'Spider suit', gloves: 1, mask: 'spider', web: 1 },
+    bat: { name: 'Bat suit', gloves: 1, mask: 'cowl', emblem: 'bat', cape: 1 },
+    panther: { name: 'Panther suit', gloves: 1, mask: 'panther', lines: 1 },
+    asgard: { name: 'Asgardian armour', gloves: 0, metal: 1, cape: 1, discs: 1 },
+    // event heroes
+    cap: { hero: 1, c1: '#1C3F94', c2: '#C8102E', gloves: 1, mask: 'capcowl', emblem: 'star', stripes: 1 },
+    iron: { hero: 1, c1: '#B3121E', c2: '#D9A93A', gloves: 1, metal: 1, mask: 'helmet', glow: 1 },
+    thor: { hero: 1, c1: '#2A2D38', c2: '#B3121E', hair: 'long', hairCol: '#D9B26A', metal: 1, cape: 1, discs: 1 },
+    wolverine: { hero: 1, c1: '#F2C230', c2: '#1F3A8A', gloves: 1, mask: 'wolv' },
+    cyclops: { hero: 1, c1: '#1F3A8A', c2: '#F2C230', gloves: 1, mask: 'visor' },
+    storm: { hero: 1, c1: '#16181D', c2: '#E8E8E8', hair: 'long', hairCol: '#F4F4F4', skin: '#6B4226', cape: 1, gloves: 1 },
+    hulk: { hero: 1, c1: '#6B3FA0', c2: '#6B3FA0', skin: '#5E9A3A', hair: 'short', hairCol: '#16181D', bare: 1 },
+    batman: { hero: 1, c1: '#5A5E68', c2: '#16181D', gloves: 1, mask: 'cowl', emblem: 'bat', cape: 1 },
+    arrow: { hero: 1, c1: '#2E6B2E', c2: '#1B3A1B', gloves: 1, mask: 'hood' },
+    superman: { hero: 1, c1: '#16181D', c2: '#B3121E', hair: 'short', hairCol: '#16181D', emblem: 'S', cape: 1 },
+    trooper: { hero: 1, c1: '#3A3D44', c2: '#16181D', gloves: 1, metal: 1, mask: 'helmet', emblem: 'S' }
+  };
+  // each outfit starts in its usual colours (you can change them after)
+  const OUTFIT_COLS = { casual: [0, 8], armor: [1, 4], spider: [1, 2], bat: [9, 3], panther: [3, 6], asgard: [3, 1] };
+  const LOOK0 = { skin: 2, hair: 'short', hairC: 0, outfit: 'casual', c1: 0, c2: 8, mask: 1, cape: 0 };
+  let look = Object.assign({}, LOOK0); try { Object.assign(look, JSON.parse(localStorage.getItem('ru-look') || '{}')); } catch (e) {}
+  const saveLook = () => { try { localStorage.setItem('ru-look', JSON.stringify(look)); } catch (e) {} };
+  // the colours a look actually uses
+  function lookCols(L){
+    const O = OUTFITS[L.outfit] || OUTFITS.casual;
+    return { O, skin: O.skin || SKINS[L.skin] || SKINS[2], c1: O.c1 || SUITC[L.c1] || SUITC[0], c2: O.c2 || SUITC[L.c2] || SUITC[8], hair: O.hair || L.hair, hairC: O.hairCol || HAIRC[L.hairC] || HAIRC[0],
+      mask: O.hero ? O.mask : (L.mask ? O.mask : null), cape: O.hero ? O.cape : (O.cape && L.cape !== 0) || !!L.cape };
+  }
+  // what your hands look like in first person
+  const handCol = L => { const k = lookCols(L); return k.O.gloves ? (L.outfit === 'bat' || L.outfit === 'batman' ? k.c2 : k.c1) : k.skin; };
+  const sleeveCol = L => { const k = lookCols(L); return k.O.bare ? k.skin : k.c1; };
+  function emblemTex(kind, col){
+    return tex(128, 128, (g, w, h) => { g.clearRect(0, 0, w, h); g.fillStyle = col; g.strokeStyle = col;
+      if (kind === 'bat') { g.save(); g.translate(w / 2, h / 2); g.scale(7, 7); g.beginPath(); BAT_PTS.forEach(([x, y]) => g.lineTo(x, y + 2)); g.closePath(); g.fill(); g.restore(); }
+      else if (kind === 'star') { g.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 22 : 52; g.lineTo(w / 2 + Math.cos(a) * r, h / 2 + Math.sin(a) * r); } g.closePath(); g.fill(); }
+      else if (kind === 'S') { g.beginPath(); g.moveTo(w / 2, 14); g.lineTo(w - 12, 44); g.lineTo(w / 2, h - 12); g.lineTo(12, 44); g.closePath(); g.lineWidth = 8; g.stroke(); g.font = '900 64px Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('S', w / 2, 58); }
+      else if (kind === 'reactor') { const gr = g.createRadialGradient(w / 2, h / 2, 4, w / 2, h / 2, 50); gr.addColorStop(0, '#FFFFFF'); gr.addColorStop(.5, '#8FE8FF'); gr.addColorStop(1, 'rgba(143,232,255,0)'); g.fillStyle = gr; g.beginPath(); g.arc(w / 2, h / 2, 50, 0, 7); g.fill(); }
+      else if (kind === 'spider') { g.lineWidth = 6; g.beginPath(); g.ellipse(w / 2, h / 2, 12, 22, 0, 0, 7); g.fill(); [-1, 1].forEach(s => [[-30, -40], [-40, -8], [-40, 18], [-30, 46]].forEach(([dx, dy]) => { g.beginPath(); g.moveTo(w / 2, h / 2); g.lineTo(w / 2 + s * -dx, h / 2 + dy); g.stroke(); })); } });
+  }
+  // build a body. Feet at y = 0, facing -z (the way yaw 0 looks). burn: the right arm is burned (only ever true for you)
+  function avatar(L, o = {}){
+    const k = lookCols(L), O = k.O, g = new THREE.Group(), s = o.s || 1;
+    const M = (c, x) => new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: O.metal ? .35 : .65, metalness: O.metal ? .55 : 0 }, x || {}));
+    const skinM = M(k.skin, { metalness: 0, roughness: .7 }), c1M = M(k.c1), c2M = M(k.c2), hairM = M(k.hairC, { metalness: 0, roughness: .8 }), dark = M('#16181D', { metalness: 0 });
+    const bulk = O === OUTFITS.hulk ? 1.45 : 1;
+    const part = (geo, m, x, y, z, parent) => { const p = new THREE.Mesh(geo, m); p.position.set(x, y, z); p.castShadow = true; (parent || g).add(p); return p; };
+    // legs
+    const legs = [-1, 1].map(sd => { const l = new THREE.Group(); l.position.set(sd * .1 * bulk, .86, 0); g.add(l);
+      part(new THREE.CylinderGeometry(.085 * bulk, .07 * bulk, .8, 10), O.bare ? c1M : L.outfit === 'casual' ? c2M : O.stripes ? c1M : c1M, 0, -.4, 0, l);
+      part(new THREE.BoxGeometry(.14 * bulk, .1, .26), O.bare ? skinM : L.outfit === 'casual' ? M('#EEF1F5', { metalness: 0 }) : c2M, 0, -.82, -.04, l); return l; });
+    part(new THREE.CylinderGeometry(.2 * bulk, .19 * bulk, .18, 12), O.bare ? c1M : L.outfit === 'casual' ? c2M : c2M, 0, .9, 0);
+    // torso, and whatever is on the chest
+    const torso = part(new THREE.CylinderGeometry(.25 * bulk, .2 * bulk, .62, 12), O.bare ? skinM : c1M, 0, 1.2, 0);
+    if (L.outfit === 'casual') { part(new THREE.TorusGeometry(.14, .05, 8, 16), c1M, 0, 1.5, .1).rotation.x = Math.PI / 2.4; }
+    const emb = O.glow ? 'reactor' : O.web ? 'spider' : O.emblem;
+    if (emb) { const e = new THREE.Mesh(new THREE.PlaneGeometry(.2, .2), new THREE.MeshBasicMaterial({ map: emblemTex(emb, emb === 'reactor' ? '#FFFFFF' : emb === 'spider' ? '#16181D' : emb === 'star' ? '#EEF1F5' : emb === 'S' ? (O === OUTFITS.trooper ? '#16181D' : '#B3121E') : '#16181D'), transparent: true })); e.position.set(0, 1.32, -.235 * bulk); e.rotation.y = Math.PI; g.add(e);
+      if (emb === 'bat' || emb === 'S') { const back = part(new THREE.CircleGeometry(.12, 20), emb === 'S' ? M(O === OUTFITS.trooper ? '#B3121E' : '#F2C230') : M('#F2C230'), 0, 1.32, -.232 * bulk); back.rotation.y = Math.PI; } }
+    if (O.stripes) [0, 1, 2].forEach(i => part(new THREE.CylinderGeometry(.205, .2, .05, 12), [c2M, M('#EEF1F5'), c2M][i], 0, .99 + i * .06, 0));
+    if (O.discs) [-1, 1].forEach(sd => part(new THREE.CylinderGeometry(.06, .06, .02, 16), M('#C9CFD8', { metalness: .8, roughness: .2 }), sd * .1, 1.34, -.24).rotation.x = Math.PI / 2);
+    if (O.lines) [-1, 1].forEach(sd => part(new THREE.BoxGeometry(.012, .5, .02), M('#9B7BD6', { emissive: '#6B3FA0', emissiveIntensity: .5 }), sd * .09, 1.2, -.235));
+    // arms (the right one is x > 0)
+    const arms = [-1, 1].map(sd => { const a = new THREE.Group(); a.position.set(sd * .32 * bulk, 1.47, 0); g.add(a);
+      const burn = sd > 0 && o.burn, am = burn ? armMat() : O.bare ? skinM : L.outfit === 'casual' ? c1M : O.stripes ? c1M : c1M;
+      const up = part(new THREE.CylinderGeometry(.068 * bulk, .058 * bulk, .64, 10), am, 0, -.32, 0, a);
+      const hand = new THREE.Group(); hand.position.y = -.68; a.add(hand);
+      part(new THREE.SphereGeometry(.065 * bulk, 10, 8), burn ? armMat() : O.gloves ? (L.outfit === 'bat' || O === OUTFITS.batman ? c2M : O.stripes ? c2M : c1M) : skinM, 0, 0, 0, hand);
+      return { a, hand, up }; });
+    // head, hair, and masks
+    const head = new THREE.Group(); head.position.y = 1.72 + (bulk - 1) * .1; g.add(head);
+    const skull = part(new THREE.SphereGeometry(.15, 16, 12), skinM, 0, 0, 0, head); skull.scale.set(.95, 1.1, .95);
+    [-1, 1].forEach(sd => part(new THREE.BoxGeometry(.03, .02, .01), dark, sd * .05, .02, -.142, head));
+    const hs = k.hair;
+    if (!k.mask || k.mask === 'visor' || k.mask === 'capcowl' || k.mask === 'hood') {
+      if (hs === 'short') { const c = part(new THREE.SphereGeometry(.158, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2.1), hairM, 0, .02, .01, head); c.scale.set(1, 1.05, 1.02); }
+      if (hs === 'buzz') part(new THREE.SphereGeometry(.153, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2.4), hairM, 0, .02, .005, head);
+      if (hs === 'spiky') { part(new THREE.SphereGeometry(.156, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2.2), hairM, 0, .02, .01, head); for (let i = 0; i < 9; i++) { const c = part(new THREE.ConeGeometry(.035, .12, 6), hairM, Math.cos(i * .7) * .09, .14, Math.sin(i * .7) * .09 + .02, head); c.rotation.set(Math.sin(i * .7) * .5, 0, -Math.cos(i * .7) * .5); } }
+      if (hs === 'long') { part(new THREE.SphereGeometry(.16, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), hairM, 0, .02, .01, head); part(new THREE.BoxGeometry(.3, .38, .08), hairM, 0, -.14, .12, head); }
+      if (hs === 'mohawk') { part(new THREE.SphereGeometry(.152, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2.4), M('#3A2A1E', { metalness: 0 }), 0, .02, .005, head); part(new THREE.BoxGeometry(.04, .12, .3), hairM, 0, .15, .02, head); }
+    }
+    if (k.mask === 'helmet') { const hm = part(new THREE.SphereGeometry(.17, 16, 12), c1M, 0, .01, 0, head); hm.scale.set(.95, 1.12, .98); part(new THREE.BoxGeometry(.2, .16, .03), c2M, 0, -.01, -.155, head); [-1, 1].forEach(sd => part(new THREE.BoxGeometry(.05, .014, .01), new THREE.MeshBasicMaterial({ color: 0xBFF4FF }), sd * .05, .03, -.172, head)); }
+    if (k.mask === 'spider' || k.mask === 'panther' || k.mask === 'cowl' || k.mask === 'wolv' || k.mask === 'capcowl') {
+      const cm = k.mask === 'cowl' ? c2M : k.mask === 'wolv' ? c2M : c1M, hm = part(new THREE.SphereGeometry(.163, 16, 12, 0, Math.PI * 2, 0, k.mask === 'spider' || k.mask === 'panther' ? Math.PI : Math.PI * .62), cm, 0, .01, 0, head); hm.scale.set(.96, 1.1, .97);
+      const eyeM = new THREE.MeshBasicMaterial({ color: 0xF4F4F4 });
+      [-1, 1].forEach(sd => { const e = part(new THREE.CircleGeometry(k.mask === 'spider' ? .04 : .025, 12), eyeM, sd * .055, .03, -.162, head); e.rotation.y = Math.PI; e.scale.set(1, .6, 1); });
+      if (k.mask === 'cowl' || k.mask === 'panther') [-1, 1].forEach(sd => part(new THREE.ConeGeometry(.03, k.mask === 'cowl' ? .12 : .06, 6), cm, sd * .08, .17, 0, head));
+      if (k.mask === 'wolv') [-1, 1].forEach(sd => { const f = part(new THREE.BoxGeometry(.02, .16, .1), c2M, sd * .13, .1, 0, head); f.rotation.z = sd * -.4; });
+      if (k.mask === 'capcowl') { const a = part(new THREE.CircleGeometry(.03, 10), M('#EEF1F5'), 0, .1, -.15, head); a.rotation.y = Math.PI; }
+    }
+    if (k.mask === 'visor') part(new THREE.BoxGeometry(.26, .045, .06), new THREE.MeshBasicMaterial({ color: 0xFF2A2A }), 0, .03, -.13, head);
+    if (k.mask === 'hood') { const hd = part(new THREE.SphereGeometry(.18, 16, 12, 0, Math.PI * 2, 0, Math.PI * .6), c1M, 0, .02, .02, head); hd.scale.set(1, 1.1, 1.05); }
+    // cape
+    let cape = null;
+    if (k.cape) { cape = new THREE.Group(); cape.position.set(0, 1.5, .2); g.add(cape); const cm = new THREE.Mesh(new THREE.PlaneGeometry(.56 * bulk, 1.2), M(O === OUTFITS.asgard || O === OUTFITS.thor || O === OUTFITS.superman ? (O === OUTFITS.asgard ? k.c2 : '#B3121E') : k.c2, { side: THREE.DoubleSide, metalness: 0 })); cm.position.y = -.6; cm.castShadow = true; cape.add(cm); }
+    g.scale.setScalar(s * (bulk > 1 ? 1.15 : 1));
+    g.traverse(q => { if (q.isMesh) q.userData.noPick = true; });
+    let held = null;
+    return { g, arms, legs, head, cape,
+      hold(id){ if (held) { arms[1].hand.remove(held); disposeDeep(held); held = null; } if (!id || id === 'fists') return; try { held = mkWeapon(id); held.scale.setScalar(id === 'shield' ? .7 : .75); held.rotation.x = -.5; held.traverse(q => { if (q.isMesh) { q.userData.noPick = true; } }); arms[1].hand.add(held); } catch (e) { held = null; } },
+      anim(t, mv, atk){
+        legs.forEach((l, i) => l.rotation.x = Math.sin(t * 9 + i * Math.PI) * .6 * mv);
+        arms.forEach((q, i) => { q.a.rotation.x = Math.sin(t * 9 + i * Math.PI + Math.PI) * .45 * mv; q.a.rotation.z = (i ? -1 : 1) * .06; });
+        if (atk > 0) { arms[1].a.rotation.x = -2.2 * Math.sin(atk * Math.PI); }
+        head.position.y = 1.72 + (bulk - 1) * .1 + Math.sin(t * 2) * .006;
+        if (cape) cape.rotation.x = .12 + mv * .35 + Math.sin(t * 3) * .03;
+      } };
+  }
+
+  // ---------- third person, and the character screen ----------
+  let EV = null;   // the event you're playing, if any (it can put you in a hero's suit)
+  const curLook = () => (EV && EV.look) || look;
+  let tpv = false; try { tpv = localStorage.getItem('ru-pov') === '3'; } catch (e) {}
+  let mirror = false, me = null, meKey = '', meHeld, meLast = V(0, 0, 0), meMv = 0;
+  const povBtn = $('#povBtn');
+  function setPov(third){ tpv = third; try { localStorage.setItem('ru-pov', tpv ? '3' : '1'); } catch (e) {} povBtn.textContent = tpv ? '1st person' : '3rd person'; if (A) fightView(); else idleShown = undefined; say(tpv ? 'Third person. Press V to switch back.' : 'First person.', 1600); }
+  povBtn.onclick = () => setPov(!tpv);
+  addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || !entered || e.repeat) return; if (e.key.toLowerCase() === 'v' && !photoOn) setPov(!tpv); });
+  // your body, kept in sync with your look, your weapon and whether your arm is burned
+  function meStep(dt, now){
+    const want = entered && (tpv || mirror || (EV && EV.big));
+    if (!want) { if (me && me.g.parent) me.g.parent.remove(me.g); return; }
+    const L = curLook(), key = JSON.stringify(L) + armHurt() + (EV ? EV.scale || 1 : 1);
+    if (key !== meKey) { if (me) { if (me.g.parent) me.g.parent.remove(me.g); disposeDeep(me.g); } me = avatar(L, { burn: armHurt(), s: EV ? EV.scale || 1 : 1 }); meKey = key; meHeld = undefined; }
+    const sc = sceneOf(); if (sc && me.g.parent !== sc) sc.add(me.g);
+    const h = EV ? EV.prop || null : A ? (A.fists ? null : A.w.id) : held; if (h !== meHeld) { me.hold(h); meHeld = h; }
+    const sp = Math.hypot(pos.x - meLast.x, pos.z - meLast.z) / Math.max(dt, 1e-3); meLast.copy(pos);
+    meMv += (clamp(sp / 2.6, 0, 1) - meMv) * Math.min(1, dt * 8);
+    me.g.position.set(pos.x, pos.y - 1.6 * (EV ? EV.eye || 1 : 1) + (A ? A.jz : 0), pos.z); me.g.rotation.y = yaw;
+    const atk = A && A.p.swing > 0 ? clamp(A.p.swing / .25, 0, 1) : EV && EV.swing > 0 ? clamp(EV.swing / .3, 0, 1) : 0;
+    me.anim(now / 1000, meMv, atk);
+  }
+  const camRay = new THREE.Raycaster(), tv1 = V(0, 0, 0), tv2 = V(0, 0, 0), tv3 = V(0, 0, 0);
+  // the camera pulls back behind your shoulder (and stops short of walls)
+  function camStep(){
+    const third = entered && (tpv || (EV && EV.big)) && !mirror;
+    viewG.visible = !(third || mirror);
+    if (!third && !mirror) return;
+    const eye = tv1.copy(camera.position), sc = sceneOf(); let target;
+    if (mirror) { const f = tv2.set(-Math.sin(yaw), 0, -Math.cos(yaw)); target = tv3.copy(eye).addScaledVector(f, 2.1); target.y -= .2; }
+    else { const f = tv2.set(0, 0, -1).applyQuaternion(camera.quaternion), rt = V(1, 0, 0).applyQuaternion(camera.quaternion), d = EV && EV.big ? 7.5 : inWorld && (zone === 'city' || zone === 'space' || zone === 'event') ? 3.4 : 2.4;
+      target = tv3.copy(eye).addScaledVector(f, -d).addScaledVector(rt, .45); target.y += EV && EV.big ? 1.5 : .25; }
+    const dir = target.clone().sub(eye), len = dir.length(); dir.normalize();
+    camRay.set(eye, dir); camRay.far = len; camRay.camera = camera;
+    const skip = new Set([me && me.g, fightG, viewG]);
+    const hit = sc && camRay.intersectObjects(sc.children.filter(o => !skip.has(o) && o.visible && !o.userData.mp && !(o.isPoints || o.isSprite || o.isLine)), true).find(h => h.object.visible && !h.object.isSprite && !h.object.isPoints && !h.object.isLine && !h.object.userData.noPick);
+    camera.position.copy(eye).addScaledVector(dir, hit ? Math.max(.35, hit.distance - .2) : len);
+    if (mirror) camera.lookAt(pos.x, pos.y - .5, pos.z);
+    camera.updateMatrixWorld();
+  }
+  // the character screen: change how you look (your burned arm stays burned whatever you wear)
+  const lookEl = $('#lookEl');
+  function swatches(list, cur, key){ return `<div class="sws">${list.map((c, i) => `<button type="button" class="swc" data-lk="${key}" data-v="${i}" aria-pressed="${cur === i}" aria-label="${key} ${i + 1}" style="background:${c}"></button>`).join('')}</div>`; }
+  function renderLook(){
+    const O = OUTFITS[look.outfit];
+    lookEl.innerHTML = `<div class="ghead"><h2 class="display">Your character</h2><button class="close" type="button" data-lk="close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+      <h3>Skin</h3>${swatches(SKINS, look.skin, 'skin')}
+      <h3>Hair</h3><div class="lkrow">${HAIRS.map(([k, n]) => `<button type="button" class="tbtn" data-lk="hair" data-v="${k}" aria-pressed="${look.hair === k}">${n}</button>`).join('')}</div>${swatches(HAIRC, look.hairC, 'hairC')}
+      <h3>Outfit</h3><div class="lkrow">${Object.entries(OUTFITS).filter(([, o]) => !o.hero).map(([k, o]) => `<button type="button" class="tbtn" data-lk="outfit" data-v="${k}" aria-pressed="${look.outfit === k}">${o.name}</button>`).join('')}</div>
+      <h3>Main colour</h3>${swatches(SUITC, look.c1, 'c1')}<h3>Second colour</h3>${swatches(SUITC, look.c2, 'c2')}
+      <div class="lkrow">${O.mask ? `<button type="button" class="tbtn" data-lk="mask" aria-pressed="${!!look.mask}">Mask</button>` : ''}<button type="button" class="tbtn" data-lk="cape" aria-pressed="${!!lookCols(look).cape}">Cape</button><button type="button" class="tbtn" data-lk="reset">Reset</button></div>
+      ${armHurt() ? '<p class="gmsg">Your right arm is still burned from the Infinity Stones. That stays until it heals, whatever you wear.</p>' : ''}
+      <div class="gact"><button class="btn alt" type="button" data-lk="close">Done</button></div>`;
+  }
+  function openLook(){ closePause(); if (document.pointerLockElement) document.exitPointerLock(); mirror = true; renderLook(); lookEl.classList.add('on'); lookEl.querySelector('.close').focus(); }
+  function closeLook(){ mirror = false; lookEl.classList.remove('on'); }
+  lookEl.addEventListener('click', e => {
+    const b = e.target.closest('[data-lk]'); if (!b) return; const k = b.dataset.lk, v = b.dataset.v;
+    if (k === 'close') return closeLook();
+    if (k === 'reset') look = Object.assign({}, LOOK0);
+    else if (k === 'mask') look.mask = look.mask ? 0 : 1;
+    else if (k === 'cape') look.cape = lookCols(look).cape ? 0 : 1;
+    else if (k === 'hair' || k === 'outfit') { look[k] = v; if (k === 'outfit') { look.cape = OUTFITS[v].cape ? 1 : 0; const d = OUTFIT_COLS[v]; if (d) { look.c1 = d[0]; look.c2 = d[1]; } } }
+    else look[k] = +v;
+    saveLook(); renderLook(); idleShown = undefined; if (A) fightView(); tone(700, .05, 'sine', .03);
+  });
+  lookEl.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); closeLook(); } });
 
   // ---------- entering ----------
   let entered = false, entering = false;
@@ -4778,7 +5059,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
       if (p.collect) return collect(p.collect);
       if (p.shrine) return combine();
       if (p.terminal) return openAIBox();
-      if (p.walk) { closePanel(); walkTarget = zone === 'roof' ? { x: clamp(p.walk.x, -5.4, 5.4), z: clamp(p.walk.z, -3.4, 3.4) } : zone === 'lair' ? (valid(p.walk.x, p.walk.z) ? { x: p.walk.x, z: p.walk.z } : { x: clamp(p.walk.x, -8.2, 8.2), z: clamp(p.walk.z, -8, 10.2) }) : { x: p.walk.x, z: p.walk.z }; }
+      if (p.walk) { closePanel(); walkTarget = zone === 'roof' ? { x: clamp(p.walk.x, -5.4, 5.4), z: clamp(p.walk.z, -3.4, 3.4) } : zone === 'lair' ? (valid(p.walk.x, p.walk.z) ? { x: p.walk.x, z: p.walk.z } : { x: clamp(p.walk.x, -16.7, 8.2), z: clamp(p.walk.z, -8, 10.2) }) : { x: p.walk.x, z: p.walk.z }; }
       return;
     }
     if (p.page) return collectPage(p.page);
@@ -4824,6 +5105,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
   const keys = {};
   addEventListener('keydown', e => {
     if (brief.classList.contains('on')) { if (e.key === 'Escape') showBrief(false); return; }
+    if (lookEl.classList.contains('on')) { if (e.key === 'Escape') closeLook(); return; }
     if (pauseEl.classList.contains('on')) { if (e.key === 'Escape' && !A) closePause(); return; }
     if (game.classList.contains('on')) { if (e.key === 'Escape') closeGame(); return; }
     if (pc.classList.contains('on')) { if (e.key === 'Escape') closePC(); return; }
@@ -4903,6 +5185,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     const showSnap = !!snapState && !A && entered && !(inWorld && zone === 'space'); if (snapBtn.hidden === showSnap) snapBtn.hidden = !showSnap;
     // if anything in a fight ever throws, end the fight instead of freezing the page
     if (A) { try { fightFrame(dt); } catch (err) { console.error(err); try { endFight(true); } catch (e2) { A = null; } say('Something went wrong, so the fight ended.', 3000); } }
+    try { meStep(dt, now); camStep(); } catch (err) { console.error(err); }
     renderer.render(sceneOf(), camera);
     requestAnimationFrame(frame);
   }
