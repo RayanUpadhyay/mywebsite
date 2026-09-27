@@ -3450,7 +3450,7 @@ body.photo .scarbanner{visibility:hidden}
   const fightScene = () => sceneFor(fightZone());
   function startBoss(i){
     if (!lairScene) return;
-    if (escaped(BOSSES[i].id)) return say(`${BOSSES[i].name} broke out of containment and is loose in the lair. Find it and beat it to lock it back up.`, 3800);
+    if (escaped(BOSSES[i].id)) return say(`${BOSSES[i].name} broke out of containment and is loose in the lair, fighting the others. Click the marker above it to step in and lock it back up.`, 4200);
     if (dustedBoss(BOSSES[i].id)) return say(`Thanos turned ${BOSSES[i].name} to dust. Undo the snap (or fight Thanos again) to bring them back.`, 3800);
     const at = pods[i].g.localToWorld(V(0, 0, 1.8));
     startFight(BOSSES[i], i, at.x * 40, at.z * 40, 'lair');
@@ -5141,7 +5141,7 @@ body.photo .scarbanner{visibility:hidden}
   // ---------- the containment breach in the lair ----------
   let breach = null;
   function buildBreach(){
-    if (!lairScene) return; if (breach) { lairScene.remove(breach.g); disposeDeep(breach.g); breach.loose.forEach(l => { lairScene.remove(l.M.g); disposeDeep(l.M.g); }); breach = null; }
+    if (!lairScene) return; if (breach) { lairScene.remove(breach.g); disposeDeep(breach.g); breach.loose.forEach(l => { lairScene.remove(l.M.g); disposeDeep(l.M.g); const k = pageMeshes.indexOf(l.mk); if (k >= 0) pageMeshes.splice(k, 1); }); breach = null; }
     if (instab < 4) return;
     const g = new THREE.Group(); lairScene.add(g); const loose = [];
     // spinning red alarms
@@ -5154,30 +5154,86 @@ body.photo .scarbanner{visibility:hidden}
       if (CREATURES[pd.def.id].seg) return;
       const M = CREATURE3D[pd.def.id](false); M.g.scale.setScalar(M.s0 || 1.2); lairScene.add(M.g);
       const x = -12 + Math.random() * 16, z = -6 + Math.random() * 12; M.g.position.set(x, 0, z);
-      loose.push({ M, i, def: pd.def, x, z, tx: x, tz: z, a: 0, t: Math.random() * 3 });
+      const mk = addMarkerTo(g, V(x, 2.6, z)); mk.userData.egg = 'loose'; mk.userData.li = loose.length;
+      loose.push({ M, i, def: pd.def, x, z, tx: x, tz: z, a: 0, t: Math.random() * 3, hp: 100, foe: null, cd: 1 + Math.random(), swing: 0, down: 0, kx: 0, kz: 0, mk, sz: M.s0 || 1.2 });
     });
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(5, .8), new THREE.MeshBasicMaterial({ transparent: true, map: tex(700, 110, (c, w, h) => { c.fillStyle = 'rgba(40,0,0,.9)'; c.fillRect(0, 0, w, h); c.fillStyle = '#FF3C3C'; c.font = `900 70px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('CONTAINMENT BREACH', w / 2, h / 2 + 3); }) })); sign.position.set(0, 6.6, -10.9); g.add(sign);
     g.traverse(o => o.userData.noPick = true);
-    breach = { g, alarms, loose, siren: 0, lvl: instab };
+    // lab junk for them to smash (kept clear of the pods, the rack, the board, the war table and the gate)
+    const wreckables = [[-3, -5, 'console'], [3.5, -4, 'crates'], [-10, -4, 'barrels'], [-12, 7.6, 'crates'], [3.8, 5.2, 'console'], [-3.6, 5.8, 'barrels'], [-13.6, -.8, 'console'], [5, -1, 'barrels']].map(([x, z, k]) => {
+      const w = new THREE.Group(); w.position.set(x, 0, z); w.rotation.y = Math.random() * 6; g.add(w); const steel = mat(0x4A4E58, { metalness: .6, roughness: .4 });
+      if (k === 'console') { box(1.4, .9, .7, steel, 0, .45, 0, w); const sc2 = box(1.2, .6, .05, glowM(0x3CE8E8, { emissiveIntensity: .7 }), 0, 1.25, -.2, w); sc2.rotation.x = -.3; }
+      if (k === 'crates') { box(.8, .8, .8, mat(0x7A5A3A), -.3, .4, 0, w); box(.7, .7, .7, mat(0x6A4A2E), .45, .35, .2, w); box(.6, .6, .6, mat(0x8A6A48), 0, 1.1, 0, w).rotation.y = .5; }
+      if (k === 'barrels') { [[-.35, 0], [.35, .1], [0, -.5]].forEach(([bx, bz]) => cyl(.3, .3, .9, mat(0x2E6B8A, { metalness: .5 }), bx, .45, bz, w, 14)); }
+      return { g: w, x, z, k, hp: 3, broken: false };
+    });
+    breach = { g, alarms, loose, siren: 0, lvl: instab, wreckables, cracks: [], debris: [], sparks: [], shake: 0 };
   }
   function breachStep(dt, now){
     if (!breach || breach.lvl !== instab) buildBreach(); if (!breach) return;
     const t = now / 1000;
     breach.alarms.forEach((a, k) => a.rotation.y = t * 3 + k);
     if ((breach.siren -= dt) <= 0 && !A) { breach.siren = 4; tone(620, .5, 'sine', .03, 880); setTimeout(() => tone(880, .5, 'sine', .03, 620), 500); }
-    breach.loose.forEach(l => {
-      const beat = recap.includes(l.def.id); l.M.g.visible = !beat && !(A && A.def.id === l.def.id);
-      if (!l.M.g.visible) return;
-      // wander around, and go for you if you get close
-      const d = Math.hypot(pos.x - l.x, pos.z - l.z);
-      if (d < 7) { l.tx = pos.x; l.tz = pos.z; } else if (Math.hypot(l.tx - l.x, l.tz - l.z) < .5 || (l.t -= dt) <= 0) { l.t = 3 + Math.random() * 3; l.tx = -14 + Math.random() * 20; l.tz = -6 + Math.random() * 13; }
-      const dx = l.tx - l.x, dz = l.tz - l.z, dd = Math.hypot(dx, dz) || 1, sp = d < 7 ? 1.8 : 1;
-      if (dd > .3) { l.x += dx / dd * sp * dt; l.z += dz / dd * sp * dt; l.a = Math.atan2(dz, dx); }
-      l.M.g.position.set(l.x, 0, l.z); l.M.g.rotation.y = -l.a;
-      l.M.anim({ st: 'roam', mv: '', a: t * 2, hp: 1, max: 1, swing: 0, mouth: 0, ring: 0, w: 1, vx: dx, vy: dz }, t, .6);
-      if (d < 2.6 && !A && !EV && !RUN) { startFight(l.def, l.i, l.x * 40, l.z * 40, 'lair'); if (A) say(`${l.def.name} escaped containment! Beat it to lock it back up.`, 3200); }
+    const L = breach.loose.filter(l => { const on = !recap.includes(l.def.id) && !(A && A.def.id === l.def.id); l.M.g.visible = on; l.mk.visible = on; return on; });
+    L.forEach(l => {
+      l.cd -= dt; l.swing = Math.max(0, l.swing - dt * 2.5); l.x += l.kx * dt; l.z += l.kz * dt; l.kx *= Math.max(0, 1 - dt * 4); l.kz *= Math.max(0, 1 - dt * 4);
+      // knocked into a wall: the wall takes it
+      const X0 = -16.2, X1 = 6.6, Z0 = -7.6, Z1 = 9.6;
+      if (l.x < X0 || l.x > X1 || l.z < Z0 || l.z > Z1) { const hard = Math.hypot(l.kx, l.kz) > 2.5; l.x = clamp(l.x, X0, X1); l.z = clamp(l.z, Z0, Z1); if (hard) { wallCrater(l.x, l.z); l.kx = l.kz = 0; } }
+      // knocked out for a bit, then back up and angrier
+      if (l.down > 0) { l.down -= dt; l.M.g.rotation.z = Math.min(1.4, l.M.g.rotation.z + dt * 4); if (l.down <= 0) { l.hp = 100; l.M.g.rotation.z = 0; roar(l); } l.M.g.position.set(l.x, 0, l.z); l.mk.position.set(l.x, 2.6, l.z); return; }
+      // pick a fight with the nearest other villain (never with you)
+      if ((l.re = (l.re || 0) - dt) <= 0 || !l.foe || !L.includes(l.foe) || l.foe.down > 0) { l.re = 2; let best = null, bd = 1e9; L.forEach(o => { if (o === l || o.down > 0) return; const d = Math.hypot(o.x - l.x, o.z - l.z); if (d < bd) { bd = d; best = o; } }); l.foe = best; }
+      let dx, dz, sp, target = null;
+      if (l.foe) {
+        const F = l.foe, d = Math.hypot(F.x - l.x, F.z - l.z) || 1, reach = (l.sz + F.sz) * .75;
+        dx = F.x - l.x; dz = F.z - l.z; l.a = Math.atan2(dz, dx);
+        if (d > reach) sp = 1.6; else { sp = 0; const s2 = Math.sin(now / 900 + l.i) > 0 ? 1 : -1; l.x += -dz / d * s2 * .6 * dt; l.z += dx / d * s2 * .6 * dt; }
+        if (d < reach + .4 && l.cd <= 0) { l.cd = .9 + Math.random() * .9; l.swing = 1; clash(l, F, dx / d, dz / d); }
+      } else {
+        // nobody to fight: go and smash the lab instead
+        const W = breach.wreckables.filter(w => !w.broken); if (!l.wk || l.wk.broken) l.wk = W[Math.floor(Math.random() * W.length)] || null; target = l.wk;
+        if (target) { dx = target.x - l.x; dz = target.z - l.z; const d = Math.hypot(dx, dz); l.a = Math.atan2(dz, dx); sp = d > 1.4 ? 1.2 : 0; if (d < 1.6 && l.cd <= 0) { l.cd = 1.2; l.swing = 1; smash(target, l); } }
+        else { if (Math.hypot(l.tx - l.x, l.tz - l.z) < .5 || (l.t -= dt) <= 0) { l.t = 3 + Math.random() * 3; l.tx = -14 + Math.random() * 20; l.tz = -6 + Math.random() * 13; } dx = l.tx - l.x; dz = l.tz - l.z; sp = 1; l.a = Math.atan2(dz, dx); }
+      }
+      const dd = Math.hypot(dx, dz) || 1; if (sp) { l.x += dx / dd * sp * dt; l.z += dz / dd * sp * dt; }
+      // brawls spill over: they smash whatever junk they stumble into
+      breach.wreckables.forEach(w => { if (!w.broken && Math.hypot(w.x - l.x, w.z - l.z) < 1 && Math.hypot(l.kx, l.kz) > 1.5) smash(w, l, true); });
+      l.M.g.position.set(l.x, 0, l.z); l.M.g.rotation.y = -l.a; l.mk.position.set(l.x, 2.2 + l.sz * .4, l.z);
+      l.M.anim({ st: l.swing > 0 ? 'attack' : 'roam', mv: '', a: now / 500, hp: l.hp, max: 100, swing: l.swing, mouth: l.swing, ring: 0, w: 1, vx: dx, vy: dz }, now / 1000, .6);
     });
+    // flying bits and sparks
+    breach.debris.forEach(d => { if (d.v) { d.v.y -= 14 * dt; d.m.position.addScaledVector(d.v, dt); d.m.rotation.x += dt * 5; if (d.m.position.y < .1) { d.m.position.y = .1; d.v = null; } } });
+    breach.sparks = breach.sparks.filter(q => { q.t -= dt; q.v.y -= 9 * dt; q.m.position.addScaledVector(q.v, dt); q.m.material.opacity = Math.max(0, q.t * 2); if (q.t > 0) return true; breach.g.remove(q.m); q.m.geometry.dispose(); q.m.material.dispose(); return false; });
+    breach.wreckables.forEach(w => { if (w.fire) w.fire.intensity = .8 + Math.random() * .8; });
+    if (breach.shake > 0) { breach.shake -= dt; if (!reduce && !lowFx) camera.position.add(V((Math.random() - .5) * .12, (Math.random() - .5) * .12, 0)); }
   }
+  // the fighting: a hit, a shockwave, bits of lair everywhere
+  const crackTex = () => breachCrack || (breachCrack = tex(256, 256, (c, w, h) => { c.clearRect(0, 0, w, h); c.strokeStyle = 'rgba(10,10,14,.85)'; c.lineCap = 'round'; for (let k = 0; k < 7; k++) { let x = w / 2, y = h / 2, a = k * .9 + Math.random() * .5; c.lineWidth = 5; c.beginPath(); c.moveTo(x, y); for (let j = 0; j < 6; j++) { a += (Math.random() - .5) * .8; x += Math.cos(a) * 18; y += Math.sin(a) * 18; c.lineTo(x, y); c.lineWidth = Math.max(1, 5 - j); } c.stroke(); } const gr = c.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, 50); gr.addColorStop(0, 'rgba(20,16,14,.8)'); gr.addColorStop(1, 'rgba(20,16,14,0)'); c.fillStyle = gr; c.fillRect(0, 0, w, h); }));
+  let breachCrack = null;
+  function crackAt(x, z, s0){ if (!breach) return; const m = new THREE.Mesh(new THREE.PlaneGeometry(s0, s0), new THREE.MeshBasicMaterial({ map: crackTex(), transparent: true, depthWrite: false })); m.rotation.set(-Math.PI / 2, 0, Math.random() * 6); m.position.set(x, .03 + breach.cracks.length * .0005, z); breach.g.add(m); breach.cracks.push(m); if (breach.cracks.length > 40) { const o = breach.cracks.shift(); breach.g.remove(o); o.geometry.dispose(); o.material.dispose(); } }
+  function burst(x, y, z, col, n){ if (!breach) return; for (let k = 0; k < (lowFx ? n / 2 : n); k++) { const m = new THREE.Mesh(new THREE.BoxGeometry(.06, .06, .06), new THREE.MeshBasicMaterial({ color: col, transparent: true })); m.position.set(x, y, z); breach.g.add(m); breach.sparks.push({ m, t: .5 + Math.random() * .4, v: V((Math.random() - .5) * 8, 2 + Math.random() * 5, (Math.random() - .5) * 8) }); } }
+  function chunks(x, y, z, col, n){ if (!breach) return; const M2 = mat(col, { flatShading: true }); for (let k = 0; k < n; k++) { const m = new THREE.Mesh(new THREE.DodecahedronGeometry(.08 + Math.random() * .14, 0), M2); m.position.set(x, y, z); breach.g.add(m); breach.debris.push({ m, v: V((Math.random() - .5) * 6, 2 + Math.random() * 4, (Math.random() - .5) * 6) }); } while (breach.debris.length > 80) { const o = breach.debris.shift(); breach.g.remove(o.m); o.m.geometry.dispose(); } }
+  function near(x, z){ return zone === 'lair' && inWorld && Math.hypot(pos.x - x, pos.z - z) < 9; }
+  function clash(a, b, ux, uz){
+    const hit = 10 + Math.random() * 14, mx = (a.x + b.x) / 2, mz = (a.z + b.z) / 2;
+    b.hp -= hit; b.kx += ux * (2 + hit * .12); b.kz += uz * (2 + hit * .12); b.swing = .3;
+    burst(mx, 1.2, mz, new THREE.Color(a.def.col), 10); if (Math.random() < .6) crackAt(mx, mz, 1 + Math.random() * 1.4); if (Math.random() < .5) chunks(mx, .2, mz, 0x3A3D48, 3);
+    if (near(mx, mz)) { tone(80 + Math.random() * 60, .25, 'square', .05, 40); if (hit > 18) breach.shake = .3; }
+    if (b.hp <= 0) { b.down = 5; b.kx *= 2.2; b.kz *= 2.2; crackAt(b.x, b.z, 2.6); chunks(b.x, .3, b.z, 0x3A3D48, 8); if (near(b.x, b.z)) { breach.shake = .6; tone(50, .6, 'sawtooth', .07, 25); say(`${a.def.name} just slammed ${b.def.name} through the lair floor.`, 2600); } }
+  }
+  function smash(w, l, bump){
+    w.hp -= bump ? 3 : 1; w.g.rotation.z = (Math.random() - .5) * .3; burst(w.x, .9, w.z, w.k === 'console' ? 0x8FE8FF : 0xFFB45A, 8);
+    if (near(w.x, w.z)) tone(w.k === 'console' ? 300 : 140, .15, 'square', .04, 90);
+    if (w.hp > 0) return; w.broken = true;
+    // it comes apart: the pieces scatter across the floor
+    w.g.children.forEach(c => { c.position.x += (Math.random() - .5) * 1.6; c.position.z += (Math.random() - .5) * 1.6; c.position.y = Math.min(c.position.y, .25); c.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3); if (c.material && c.material.emissive) { c.material = c.material.clone(); c.material.emissiveIntensity = 0; c.material.color.set(0x16181D); } });
+    crackAt(w.x, w.z, 2); chunks(w.x, .6, w.z, w.k === 'crates' ? 0x7A5A3A : 0x4A4E58, 6);
+    if (w.k === 'console') { const f = new THREE.PointLight(0xFF6A2E, 1.2, 5, 2); f.position.set(w.x, .6, w.z); breach.g.add(f); w.fire = f; }
+    if (near(w.x, w.z)) { breach.shake = .4; say(`${l.def.name} wrecked the ${w.k === 'console' ? 'computer console' : w.k === 'crates' ? 'supply crates' : 'barrels'}.`, 2200); }
+  }
+  function wallCrater(x, z){ if (!breach) return; const m = new THREE.Mesh(new THREE.CircleGeometry(.9 + Math.random() * .5, 16), new THREE.MeshBasicMaterial({ map: crackTex(), transparent: true, depthWrite: false })); const wx = x <= -16.2 ? -17.85 : x >= 6.6 ? 7.3 : x, wz = z <= -7.6 ? -10.9 : z >= 9.6 ? 10.4 : z; m.position.set(wx, 1 + Math.random() * 1.5, wz); m.lookAt(x, m.position.y, z); breach.g.add(m); breach.cracks.push(m); chunks(wx, 1.5, wz, 0x2A2D33, 5); if (near(x, z)) { breach.shake = .5; tone(60, .5, 'sawtooth', .06, 30); } }
+  function roar(l){ if (near(l.x, l.z)) tone(90, .6, 'sawtooth', .05, 160); burst(l.x, 1.4, l.z, new THREE.Color(l.def.col), 6); }
   // the banner says how bad things are
   function instabStep(dt, now){
     invadeStep(dt);
@@ -6305,6 +6361,7 @@ body.photo .scarbanner{visibility:hidden}
     if (p.egg === 'window') return `The sky outside, right now (${istClock()} for Rayan)`;
     if (p.egg === 'evpanel') { const k = p.o.userData.ev; return k === 'inc' && !incOpen() ? 'The Final Incursion (locked)' : `Play: ${EVENTS[k].name}`; }
     if (p.egg === 'wartable') return 'The war table: events';
+    if (p.egg === 'loose') { const l = breach && breach.loose[p.o.userData.li]; return l ? `Fight ${l.def.name} to lock it back up` : null; }
     if (p.egg === 'pod') { const d = BOSSES[p.o.userData.bi]; return escaped(d.id) ? `Broken pod: ${d.name} escaped` : `Open the pod: ${d.name}${beaten.has(d.id) ? ' (beaten)' : ''}`; }
     if (p.egg === 'rack') { const w = WEAPONS.find(x => x.id === p.o.userData.wid); const c = condition(w.id), pc = Math.round(c.d * 100) + '%' + (c.broken ? ', broken' : ''); return dustedWeapon(w.id) ? `${w.name}: dust` : inv.includes(w.id) ? `Hang ${w.name} back up` : `Take ${w.name} (${w.from}), ${pc}`; }
     if (p.egg) return LABELS[p.egg] || null;
@@ -6364,6 +6421,7 @@ body.photo .scarbanner{visibility:hidden}
       if (p.egg === 'gate') return openGate();
       if (AREAS[zone] && p.egg) return areaEgg(p);
       if (p.egg === 'evpanel') return openLobby(p.o.userData.ev);
+      if (p.egg === 'loose') { const l = breach && breach.loose[p.o.userData.li]; if (l && !A && !EV && !RUN) { startFight(l.def, l.i, l.x * 40, l.z * 40, 'lair'); if (A) say(`You stepped in. Beat ${l.def.name} to lock it back up.`, 3200); } return; }
       if (p.egg === 'wartable') return say('Pick an event on one of the screens around the war table.', 2600);
       if (p.egg === 'pod') return startBoss(p.o.userData.bi);
       if (p.egg === 'rack') return equip(p.o.userData.wid);
