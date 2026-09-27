@@ -356,6 +356,10 @@ body.incursion .mark b{animation:glitch 3.2s infinite steps(1)}
 .scarbanner{position:fixed;left:50%;top:calc(128px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:5;margin:0;padding:6px 14px;border-radius:999px;background:rgba(42,15,58,.85);color:#E6D0FF;font-size:13px;font-weight:600;pointer-events:none;text-align:center;max-width:calc(100% - 32px)}
 .scarbanner[hidden]{display:none}
 body.photo .scarbanner{visibility:hidden}
+.runhud{position:fixed;left:50%;top:calc(76px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:7;margin:0;padding:10px 20px;border-radius:999px;background:rgba(90,10,20,.85);color:#FFFFFF;font-size:16px;text-align:center;pointer-events:none;max-width:calc(100% - 24px)}
+.runhud[hidden]{display:none}
+.runhud b{color:#FFC93C}
+body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
 /* the multiverse gate */
 .mvbox{width:min(640px,100%)}
 .mvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
@@ -465,6 +469,8 @@ body.photo .scarbanner{visibility:hidden}
 <div class="photobar" id="photoBar" hidden role="toolbar" aria-label="Photo mode"><button class="btn" id="phFilter" type="button">Filter: None</button><button class="btn alt" id="phShot" type="button">Take photo</button><button class="btn" id="phExit" type="button">Done</button></div>
 <div class="mpchip" id="mpChip" hidden aria-live="polite"></div>
 <div class="scarfx" id="scarFx" aria-hidden="true"></div>
+<p class="runhud" id="runHud" hidden aria-live="off"></p>
+<div class="game" id="collBox" role="dialog" aria-label="The Earths are colliding"><div class="gbox"><h2 class="display">The Earths are colliding</h2><p>Your Earth won’t survive this. A rift to the other Earth has torn open at the end of the street below.</p><p class="gmsg">Run for it and live on the other Earth, or stay and go down with yours.</p><div class="gact"><button class="btn alt" id="collRun" type="button">Run for the rift</button><button class="btn" id="collStay" type="button">Stay on my Earth</button></div></div></div>
 <p class="scarbanner" id="scarBanner" hidden>Reality is unstable. Win the Final Incursion in the lair to fix it.</p>
 <div class="evhurt" id="evHurt" aria-hidden="true"></div>
 <div class="evhud" id="evHud" hidden>
@@ -1620,7 +1626,7 @@ body.photo .scarbanner{visibility:hidden}
   const inDoor = (x, z) => vaultOpen && x > 4.2 && x <= 5.7 && z >= -.25 && z <= .85;
   const inVault = (x, z) => vaultOpen && x > 5.7 && x <= 8.0 && z >= -1.0 && z <= 1.6;
   const inHall = (x, z) => entered && ((Math.abs(x) < .45 && z > 4.2 && z <= 5.5) || (Math.abs(x) < 1.2 && z > 5.5 && z < 10.3));
-  const valid = (x, z) => inWorld ? zone === 'event' ? evValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) : zone === 'city' ? cityOK(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
+  const valid = (x, z) => inWorld ? zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) : zone === 'city' ? cityOK(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
   const region = x => x > 4.9 ? 'vault' : 'room';
   function flyTo(target, dir, done){
     if (inWorld) { const a = dir ? lookAngles(target, dir) : null; return moveCam(target, a ? a.yaw : null, a ? a.pitch : null, 1, done); }
@@ -4691,7 +4697,7 @@ body.photo .scarbanner{visibility:hidden}
       saved = { pos: V(0, 1.6, 2.6), yaw: 0, pitch: -.05 };
       inWorld = true; zone = 'event'; falling = false; vy = 0; walkTarget = null; pos.set(sx, 1.6, sz); yaw = sz > 0 ? 0 : Math.PI; pitch = -.08; if (k === 'wwh' && team === 'heroes') yaw = Math.atan2(sx, sz);
       closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Leave the event'; jumpBtn.hidden = fine; uiZone();
-      evHud.hidden = false; $('#evEnd').hidden = true; $('#evSp').textContent = `${H.sp}\n(E)`; document.body.classList.add('inevent');
+      evHud.hidden = false; $('#evEnd').hidden = true; ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = false); $('#evSp').textContent = `${H.sp}\n(E)`; document.body.classList.add('inevent');
       say(k === 'avx' ? `You’re ${H.name}. First team to ${EVENTS.avx.goal} takedowns wins.` : k === 'wwh' ? (team === 'hulk' ? 'You’re the Hulk. Smash the heroes and survive until time runs out. Space to leap, E to thunderclap.' : 'Take the Hulk down before time runs out. Stay spread out: his thunderclap hits everyone nearby.') : k === 'inc' ? 'The other Earth is coming. Hold the three golden anchors against the variants pouring out of the rifts, then take down Doom.' : 'Superman is invulnerable. Hold the green Kryptonite emitter to weaken him, then hit him with everything.', 5200);
       if (fine && canvas.requestPointerLock) canvas.requestPointerLock();
     }, '#0B0D14');
@@ -4773,10 +4779,12 @@ body.photo .scarbanner{visibility:hidden}
     if (EV.k === 'avx' && won) lbAdd(EV.team === 'av' ? 'a' : 'x', 5);
     if (EV.k === 'wwh') lbAdd(won === (EV.team === 'hulk') ? 'h' : 'r', 1);
     if (EV.k === 'inj') lbAdd(won ? 'w' : 'l', 1);
-    if (EV.k === 'inc') { lbAdd(won ? 'i' : 'f', 1); if (!won && !scarOn) { setScar(true); setTimeout(() => say('The incursion tore through your room. It stays like that until you stop an incursion.', 5200), 2500); } else if (won && scarOn) { setScar(false); setTimeout(() => say('You stopped the incursion, and your room is whole again.', 4200), 2500); } }
+    if (EV.k === 'inc') { lbAdd(won ? 'i' : 'f', 1);
+      if (!won) { ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = true); setTimeout(startCollision, 3500); }
+      else if (scarOn || altOn) { if (scarOn) setScar(false); if (altOn) setAlt(false); setTimeout(() => say('You stopped the incursion. Your Earth, and your room, are whole again.', 4200), 2500); } }
     if (!evDone.includes(EV.k)) { evDone.push(EV.k); try { localStorage.setItem('ru-evdone', JSON.stringify(evDone)); } catch (e) {} if (incOpen() && EV.k !== 'inc') setTimeout(() => say('The Final Incursion is unlocked. Find it at the war table in the lair.', 4200), 1500); }
     if (EV.solo) { const r0 = soloRec[EV.k] || (soloRec[EV.k] = { w: 0, l: 0 }); r0[won ? 'w' : 'l']++; try { localStorage.setItem('ru-evsolo', JSON.stringify(soloRec)); } catch (e) {} }
-    const title = EV.k === 'avx' ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : 'The two Earths collided\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
+    const title = EV.k === 'avx' ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : 'The two Earths are about to collide\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
     $('#evEndT').textContent = title; $('#evEndS').textContent = `Takedowns ${EV.kos} · Times down ${EV.deaths} · Damage ${fmtN(EV.dmg)}. ${EV.solo ? soloLine(EV.k) + '.' : mq ? 'Global: ' + lbLine(EV.k) : ''}`;
     $('#evEnd').hidden = false; [523, 659, 784].forEach((f, i) => setTimeout(() => tone(won ? f : f / 2, .2, 'triangle', .05), i * 110));
   }
@@ -4887,7 +4895,7 @@ body.photo .scarbanner{visibility:hidden}
     if (entered && !reduce && !lowFx && !photoOn && (flickT -= dt) <= 0) { flickT = 10 + Math.random() * 10; canvas.style.filter = 'invert(1) hue-rotate(180deg)'; setTimeout(() => { canvas.style.filter = ''; setTimeout(() => { canvas.style.filter = 'hue-rotate(120deg) saturate(2)'; setTimeout(() => { if (!photoOn) canvas.style.filter = ''; }, 90); }, 70); }, 110); tone(900, .08, 'square', .03, 200); }
     if (entered && !reduce && (scrT -= dt) <= 0) { scrT = 7 + Math.random() * 6; const bs = [...document.querySelectorAll('#dock button, .hotbar .hn')].filter(b => b.offsetParent); const b = bs[Math.floor(Math.random() * bs.length)];
       if (b && !b.dataset.real) { b.dataset.real = b.textContent; b.textContent = b.textContent.split('').map(ch => ch === ' ' ? ' ' : '\u2588\u2593\u2592\u2591#%&?\u00A7'[Math.floor(Math.random() * 9)]).join(''); setTimeout(() => { b.textContent = b.dataset.real; delete b.dataset.real; }, 650); } }
-    $('#scarBanner').hidden = !entered || !!EV || photoOn;
+    $('#scarBanner').hidden = !entered || !!EV || photoOn || !!RUN;
     if (!inWorld && entered && !muted) droneOn(); else droneOff();
     if (!scarG || inWorld) return;
     const u = scarG.userData;
@@ -4929,6 +4937,124 @@ body.photo .scarbanner{visibility:hidden}
       g.fillStyle = '#7CF2FF'; g.font = '700 26px "Instrument Sans", sans-serif'; if (!locked) g.fillText(soloRec[k] ? `Solo: ${soloRec[k].w}W ${soloRec[k].l}L \u00B7 click to play` : 'Click to play', c.width / 2, 230);
       m.material.map.needsUpdate = true; });
   }
+  // ======================= losing the Incursion: the Earths collide =======================
+  // You watch from the rooftop, then choose: stay and die with your Earth, or run for the rift to the other one.
+  let RUN = null;
+  const collBox = $('#collBox'), runHud = $('#runHud');
+  function startCollision(){
+    if (EV) stopEvent(true);
+    fade(() => {
+      travel('roof'); pos.set(3, 1.6, -3); yaw = .15; pitch = .28;
+      const e = otherEarth(45); e.position.set(40, 80, -170); roofScene.add(e);
+      const moved = []; cityBoxes.forEach((b, i) => { if (b.i !== undefined && i % 2 === 0) b.meshes.forEach(m => moved.push({ m, p: m.position.clone(), r: m.rotation.clone(), d: .4 + Math.random() * 1.6, s: Math.random() * 6 })); });
+      RUN = { phase: 'watch', t: 0, earth: e, moved, rocks: [], fog0: roofScene.fog.color.clone(), sky0: roofSky.material.color.clone() };
+      $('#worldBack').hidden = true; dock.classList.remove('on');
+      say('The other Earth is coming.', 3000); tone(40, 4, 'sawtooth', .07, 25);
+    }, '#FFFFFF');
+  }
+  function watchStep(dt){
+    const R = RUN, t = R.t, k = clamp(t / 11, 0, 1), e = R.earth;
+    // the other Earth rushes in and fills the sky
+    e.position.set(40 - k * 38, 80 - k * 30, -170 + k * 95); e.scale.setScalar(1 + k * k * 2.2); e.rotation.y += dt * .1; e.children[0].lookAt(camera.position);
+    roofSky.material.color.copy(R.sky0).lerp(new THREE.Color(0xFF6A3C), k * .8); roofScene.fog.color.copy(R.fog0).lerp(new THREE.Color(0x5A1A2A), k);
+    // Bangalore starts to come apart
+    R.moved.forEach(o => { const q = clamp((t - o.s) / 6, 0, 1); o.m.position.y = o.p.y - q * o.d * 12; o.m.rotation.z = o.r.z + q * (o.d - 1) * .5; });
+    if (Math.random() < dt * (2 + k * 8)) { const r = new THREE.Mesh(new THREE.DodecahedronGeometry(.6 + Math.random() * 1.6, 0), new THREE.MeshBasicMaterial({ color: 0xFF8A2E })); r.position.set((Math.random() - .5) * 140, 60, -30 - Math.random() * 90); r.userData.v = V((Math.random() - .5) * 8, -40 - Math.random() * 20, 10); roofScene.add(r); R.rocks.push(r); }
+    R.rocks = R.rocks.filter(r => { r.position.addScaledVector(r.userData.v, dt); if (r.position.y < G) { roofScene.remove(r); r.geometry.dispose(); return false; } return true; });
+    if (!reduce && !lowFx) camera.position.add(V((Math.random() - .5) * k * .12, (Math.random() - .5) * k * .12, 0));
+    if (Math.random() < dt * 1.5) tone(40 + Math.random() * 20, 1.2, 'sawtooth', .05, 25);
+    if (t > 8 && !R.asked) { R.asked = true; if (document.pointerLockElement) document.exitPointerLock(); collBox.classList.add('on'); $('#collRun').focus(); }
+  }
+  function endWatch(){
+    const R = RUN; R.moved.forEach(o => { o.m.position.copy(o.p); o.m.rotation.copy(o.r); }); R.rocks.forEach(r => { roofScene.remove(r); r.geometry.dispose(); });
+    roofScene.remove(R.earth); disposeDeep(R.earth); roofSky.material.color.copy(R.sky0); roofScene.fog.color.copy(R.fog0); setRoofSky(UNIVERSES[uni].key);
+  }
+  $('#collStay').onclick = () => { collBox.classList.remove('on'); endWatch(); RUN.phase = 'end'; finishCollision(false, 'You stayed with your Earth until the very end.'); };
+  $('#collRun').onclick = () => { collBox.classList.remove('on'); endWatch(); fade(() => buildRun(), '#FFFFFF'); };
+  // ---------- the run: a doomed street, the ground falling away behind you, the rift at the end ----------
+  const RUN_LEN = 130, TILE = 4;
+  function buildRun(){
+    const sc = new THREE.Scene(); sc.fog = new THREE.Fog(0x3A0F1A, 20, 110); sc.background = new THREE.Color(0x2A0A12);
+    sc.add(new THREE.HemisphereLight(0xFFB08A, 0x2A0F1A, .8)); const sun = new THREE.DirectionalLight(0xFF8A5A, .9); sun.position.set(10, 30, -20); sc.add(sun);
+    areaScenes.collapse = sc; plats.collapse = [];
+    const road = mat(0x3A3A3E, { roughness: 1 }), line = mat(0xFFC93C), tiles = [];
+    for (let z = 6; z > -RUN_LEN - 8; z -= TILE) { const gap = z < -20 && z > -RUN_LEN + 10 && Math.round(-z / TILE) % 7 === 3 ? 1.8 : 0; const L = TILE - .05 - gap, t = box(8, 2, L, road, 0, -1, z - gap - L / 2, sc); t.userData.walk = true; box(.2, .02, 1.4, line, 0, .01, z - gap - L / 2, t.parent).userData.t = t; const p = { x0: -4, x1: 4, z0: z - TILE, z1: z - gap }; plats.collapse.push(p); tiles.push({ t, p, z0: z - TILE, z1: z, fall: 0 }); }
+    // buildings on both sides, some already falling
+    const blds = [0x5A4A4A, 0x6A5A55, 0x4A4550, 0x7A6A60].map(c => mat(c, { roughness: .9 }));
+    for (let z = 4; z > -RUN_LEN - 20; z -= 9) [-1, 1].forEach(s => { const h = 10 + Math.random() * 30, b = box(7, h, 8, blds[Math.floor(Math.random() * 4)], s * 8.6, h / 2 - 2, z, sc); b.rotation.z = s * (Math.random() < .3 ? .15 + Math.random() * .2 : 0); b.userData.noPick = true; if (Math.random() < .4) { const fire = new THREE.PointLight(0xFF6A2E, 1.2, 14, 2); fire.position.set(s * 5, 2, z); sc.add(fire); } });
+    // debris, cars and junk in the road
+    const obs = [];
+    for (let z = -12; z > -RUN_LEN + 14; z -= 7 + Math.random() * 6) { const x = (Math.random() < .5 ? -1 : 1) * (1 + Math.random() * 2), w = 2 + Math.random() * 1.6; const car = Math.random() < .5; const o = box(car ? 1.8 : w, car ? 1.2 : 1 + Math.random(), car ? 3.6 : 1.6, car ? mat([0xC8102E, 0xE8E8E8, 0x3C7CFF, 0xFFC93C][Math.floor(Math.random() * 4)], { metalness: .4 }) : mat(0x5A5E68, { flatShading: true }), x, .6, z, sc); o.rotation.y = (Math.random() - .5) * .8; obs.push({ x, z, hw: (car ? 1.8 : w) / 2 + .35, hd: (car ? 3.6 : 1.6) / 2 + .35 }); }
+    // the rift at the end, and the other Earth above everything
+    const rift = new THREE.Group(); rift.position.set(0, 0, -RUN_LEN); sc.add(rift);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(3.8, .25, 10, 48), glowM(0xB07CFF, { emissiveIntensity: 1.4 })); ring.position.y = 3.6; rift.add(ring);
+    const sw = new THREE.Mesh(new THREE.CircleGeometry(3.7, 40), new THREE.MeshBasicMaterial({ color: 0x9B4DFF, transparent: true, opacity: .8, side: THREE.DoubleSide })); sw.position.y = 3.6; rift.add(sw);
+    const rl = new THREE.PointLight(0xB07CFF, 2, 30, 2); rl.position.y = 3; rift.add(rl);
+    const e = otherEarth(70); e.position.set(0, 60, -RUN_LEN - 40); sc.add(e);
+    sc.traverse(o => { if (o.isMesh && !o.userData.walk) o.userData.noPick = true; });
+    RUN = { phase: 'run', t: 0, front: 10, tiles, obs, rocks: [], rift, ring, sw, earth: e, slow: 0, sc };
+    inWorld = true; zone = 'collapse'; vy = 0; falling = false; walkTarget = null; pos.set(0, 1.6, 4); yaw = 0; pitch = 0; grounded = true;
+    jumpBtn.hidden = fine; runHud.hidden = false; $('#worldBack').hidden = true; dock.classList.remove('on'); uiZone();
+    say('RUN! Get to the rift before the ground gives way. Jump the cracks.', 3600); tone(60, 1, 'sawtooth', .07, 30);
+  }
+  const runValid = (x, z) => Math.abs(x) < 3.7 && !(RUN && RUN.obs && RUN.obs.some(o => Math.abs(x - o.x) < o.hw && Math.abs(z - o.z) < o.hd));
+  function runStep(dt){
+    const R = RUN; R.t += dt; const t = R.t;
+    // the ground falls away behind you, faster and faster
+    if (t > 2) R.front -= dt * (5.2 + Math.min(2.4, (t - 2) * .15));
+    R.tiles.forEach(ti => { if (!ti.fall && ti.z0 > R.front) { ti.fall = .001; plats.collapse = plats.collapse.filter(p => p !== ti.p); tone(70, .3, 'sawtooth', .03, 40); } if (ti.fall) { ti.fall += dt; ti.t.position.y = -1 - ti.fall * ti.fall * 9; ti.t.rotation.x = ti.fall * .6; } });
+    // falling rocks (the red circle shows where)
+    if (Math.random() < dt * 1.3) { const z = pos.z - 6 - Math.random() * 14, x = (Math.random() - .5) * 6, mark = new THREE.Mesh(new THREE.RingGeometry(1, 1.25, 24), new THREE.MeshBasicMaterial({ color: 0xFF3C3C, transparent: true, opacity: .7, side: THREE.DoubleSide })); mark.rotation.x = -Math.PI / 2; mark.position.set(x, .05, z); R.sc.add(mark);
+      const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(.7, 0), new THREE.MeshStandardMaterial({ color: 0x5A3A2A, emissive: 0xFF6A2E, emissiveIntensity: .6, flatShading: true })); rock.position.set(x, 25, z); R.sc.add(rock); R.rocks.push({ rock, mark, x, z }); }
+    R.rocks = R.rocks.filter(q => { q.rock.position.y -= dt * 22; if (q.rock.position.y > .5) return true; if (Math.hypot(pos.x - q.x, pos.z - q.z) < 1.4 && pos.y < 2.5) { R.slow = 1.2; pos.z += 1.2; tone(90, .3, 'square', .05, 40); say('Hit! Keep running!', 1200); } R.sc.remove(q.rock); R.sc.remove(q.mark); q.rock.geometry.dispose(); q.mark.geometry.dispose(); return false; });
+    R.slow = Math.max(0, R.slow - dt);
+    R.sw.rotation.z += dt * 2; R.ring.rotation.z -= dt; R.earth.position.z += dt * 1.5; R.earth.scale.setScalar(1 + t * .01);
+    if (!reduce && !lowFx) camera.position.add(V((Math.random() - .5) * .08, (Math.random() - .5) * .08, 0));
+    const left = Math.max(0, pos.z + RUN_LEN);
+    runHud.innerHTML = `RUN! <b>${Math.round(left)} m</b> to the rift \u00B7 the ground is falling <b>${Math.max(0, Math.round(R.front - pos.z))} m</b> behind you`;
+    if (pos.z < -RUN_LEN + 1.2) { R.phase = 'end'; return finishCollision(true); }
+    if (pos.y < -8 || t > 60) { R.phase = 'end'; return finishCollision(false, 'The ground gave way beneath you.'); }
+  }
+  function finishCollision(escaped, why){
+    runHud.hidden = true; tone(escaped ? 400 : 50, 2, escaped ? 'sine' : 'sawtooth', .07, escaped ? 1400 : 20);
+    fade(() => {
+      if (areaScenes.collapse) { disposeDeep(areaScenes.collapse); delete areaScenes.collapse; }
+      RUN = null; travel('room');
+      if (escaped) { if (scarOn) setScar(false); setAlt(true); say('You made it through the rift to Earth-838. This is the other Rayan’s room. Win the Final Incursion to find your way home.', 6500); }
+      else { if (altOn) setAlt(false); setScar(true); say(`${why} Your Earth survives only as wreckage. Win the Final Incursion to put it back together.`, 6500); }
+    }, escaped ? '#FFFFFF' : '#000000');
+  }
+  function collideStep(dt){ if (!RUN) return; if (RUN.phase === 'watch' && zone === 'roof') { RUN.t += dt; watchStep(dt); } else if (RUN.phase === 'run' && zone === 'collapse') runStep(dt); }
+  // ---------- Earth-838: the other Rayan's room ----------
+  let altOn = false, altG = null; try { altOn = localStorage.getItem('ru-incursion') === 'alt'; } catch (e) {}
+  const accent0 = accentWall.color.clone(), wall0 = wallM.color.clone(), floor0 = floor.material.color.clone();
+  const OTHER_LINES = ['“So you’re the Rayan from the Earth that didn’t make it. Make yourself at home.”', '“Same room, mostly. I went with a green wall. Don’t touch my records.”', '“I learned Cantonese instead of Mandarin. Kidding. Or am I?”', '“Win an Incursion and maybe you can go home. Until then, you’re my roommate.”'];
+  let otherI = 0;
+  function setAlt(on){
+    altOn = on; try { if (on) localStorage.setItem('ru-incursion', 'alt'); else if (localStorage.getItem('ru-incursion') === 'alt') localStorage.removeItem('ru-incursion'); } catch (e) {}
+    if (altG) { scene.remove(altG); disposeDeep(altG); altG = null; }
+    [world, roofScene].forEach(sc => { if (sc && sc.userData.altX) { sc.remove(sc.userData.altX); disposeDeep(sc.userData.altX); sc.userData.altX = null; } });
+    accentWall.color.copy(on ? new THREE.Color(0x1F7A45) : accent0); wallM.color.copy(on ? new THREE.Color(0xE2D8EE) : wall0); floor.material.color.copy(on ? new THREE.Color(0xD8C8F0) : floor0);
+    hemi.color.copy(on ? new THREE.Color(0xBFF4E0) : hemi0);
+    document.body.classList.toggle('earth838', on); $('#scarBanner').textContent = on ? 'You live on Earth-838 now. Win the Final Incursion in the lair to find your way home.' : 'Reality is unstable. Win the Final Incursion in the lair to fix it.';
+    if (!on) return;
+    const g = altG = new THREE.Group(); scene.add(g);
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(2.4, .5), new THREE.MeshBasicMaterial({ transparent: true, map: tex(600, 125, (c, w, h) => { c.fillStyle = 'rgba(11,13,20,.85)'; c.fillRect(0, 0, w, h); c.fillStyle = '#7CF2C0'; c.font = `800 46px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('WELCOME TO EARTH-838', w / 2, h / 2 + 3); }) })); sign.position.set(0, 2.85, -4.92); g.add(sign);
+    const other = avatar(Object.assign({}, look, { c1: (look.c1 + 3) % SUITC.length, c2: (look.c2 + 5) % SUITC.length, hair: look.hair === 'spiky' ? 'short' : 'spiky' })); other.g.position.set(-3.2, 0, 2.6); other.g.rotation.y = -Math.PI * .75; g.add(other.g); other.g.traverse(o => o.userData.noPick = false);
+    const hit = new THREE.Mesh(new THREE.CylinderGeometry(.45, .45, 1.9, 8), new THREE.MeshBasicMaterial({ visible: false })); hit.position.y = .95; other.g.add(hit); other.g.userData.egg = 'otherme'; LABELS.otherme = 'Talk to Earth-838’s Rayan';
+    g.userData.other = other;
+  }
+  // your old Earth, in pieces, hanging in this Earth's sky
+  function shatteredEarth(r){ const g = new THREE.Group(); for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, rr = r * (.6 + Math.random() * .5); const s = new THREE.Mesh(new THREE.DodecahedronGeometry(r * (.18 + Math.random() * .2), 0), new THREE.MeshBasicMaterial({ fog: false, color: [0x2B4A9A, 0x4C8A4A, 0x8A7A4A][i % 3] })); s.position.set(Math.cos(a) * rr, Math.sin(a * 2) * r * .3, Math.sin(a) * rr * .5); s.rotation.set(Math.random() * 3, Math.random() * 3, 0); g.add(s); } const core = new THREE.Mesh(new THREE.SphereGeometry(r * .3, 16, 12), new THREE.MeshBasicMaterial({ color: 0xFF6A2E, fog: false })); g.add(core); g.userData.noPick = true; return g; }
+  function altStep(dt, now){
+    if (!altOn) return;
+    [[world, V(-18, 50, -80), 26], [roofScene, V(40, 80, -170), 38]].forEach(([sc, p, r]) => { if (sc && !sc.userData.altX) { const s = shatteredEarth(r); s.position.copy(p); sc.add(s); sc.userData.altX = s; } });
+    [world, roofScene].forEach(sc => { if (sc && sc.userData.altX) sc.userData.altX.rotation.y += dt * .02; });
+    $('#scarBanner').hidden = !entered || !!EV || photoOn || !!RUN;
+    if (altG && !inWorld) { const o = altG.userData.other; o.anim(now / 1000, 0, 0); o.g.rotation.y = Math.atan2(-3.2 - pos.x, 2.6 - pos.z); }
+  }
+  if (altOn) setAlt(true);
+
   // ---------- bot brains ----------
   function nearestFoe(u){ let best = null, bd = 1e9; bodies().forEach(o => { if (o === u || !alive(o) || teamOf(o) === u.team) return; const d = Math.hypot(o.x - u.x, o.z - u.z) + (o.isMe ? -2 : 0) + (o.hero === 'anchor' ? -5 : 0); if (d < bd) { bd = d; best = o; } }); return best; }
   function moveUnit(u, dx, dz, sp, dt){ const d = Math.hypot(dx, dz); if (d < .01) return; const nx = u.x + dx / d * sp * dt, nz = u.z + dz / d * sp * dt; if (evValid(nx, nz)) { u.x = nx; u.z = nz; } else if (evValid(nx, u.z)) u.x = nx; else if (evValid(u.x, nz)) u.z = nz; else { u.x += dz / d * sp * dt; u.z -= dx / d * sp * dt; } }
@@ -5931,6 +6057,7 @@ body.photo .scarbanner{visibility:hidden}
     if (p.egg === 'photos') return flyTo(views.shelf.pos.clone(), views.shelf.look, () => openPanel('photos'));
     if (p.egg === 'reviews') return REVIEWS.length ? flyTo(views.shelf.pos.clone(), views.shelf.look, () => openPanel('writing')) : say('My album reviews are coming soon.');
     if (p.egg === 'shelfvinyl') return showCap(p.o.userData.vi);
+    if (p.egg === 'otherme') { tone(520, .1, 'sine', .05); return say(`Earth-838\u2019s Rayan: ${OTHER_LINES[otherI++ % OTHER_LINES.length]}`, 4600); }
     if (p.egg === 'alexa') { tone(660, .12, 'sine', .08); setTimeout(() => tone(880, .18, 'sine', .08), 120); return say('Alexa: \u201cPlaying your top artist, as usual.\u201d'); }
     if (p.section) return goTo(p.section);
     if (p.walk) {
@@ -5951,6 +6078,7 @@ body.photo .scarbanner{visibility:hidden}
 
   const keys = {};
   addEventListener('keydown', e => {
+    if (collBox.classList.contains('on')) return;
     if (brief.classList.contains('on')) { if (e.key === 'Escape') showBrief(false); return; }
     if (mvBox.classList.contains('on')) { if (e.key === 'Escape') mvBox.classList.remove('on'); return; }
     if (evBox.classList.contains('on')) { if (e.key === 'Escape') evBox.classList.remove('on'); return; }
@@ -5996,7 +6124,7 @@ body.photo .scarbanner{visibility:hidden}
       t.update(t.linear ? p : ease(p));
       if (p >= 1) { tweens.splice(i, 1); t.done && t.done(); }
     }
-    if (entered && !(A && A.intro) && !(zone === 'city' && web.p)) {
+    if (entered && !(A && A.intro) && !(zone === 'city' && web.p) && !(RUN && RUN.phase === 'watch')) {
       let f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0);
       let s = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
       if (Math.hypot(joy.x, joy.y) > .15) { f -= joy.y; s += joy.x; }
@@ -6005,7 +6133,7 @@ body.photo .scarbanner{visibility:hidden}
         if (camTween) { cancel(camTween); camTween = null; }
         walkTarget = null; exitTelescope();
         yaw += turn * 1.8 * dt;
-        const sp = (A ? (A.blocking ? 2 : 4.2) : EV ? EV.speed * (EV.dead > 0 ? 0 : 1) : inWorld && !grounded && zone !== 'space' ? 1.8 : 2.6) * dt;
+        const sp = (A ? (A.blocking ? 2 : 4.2) : EV ? EV.speed * (EV.dead > 0 ? 0 : 1) : zone === 'collapse' && inWorld ? (RUN && RUN.slow > 0 ? 3.5 : 7) : inWorld && !grounded && zone !== 'space' ? 1.8 : 2.6) * dt;
         const nx = pos.x + (-Math.sin(yaw) * f + Math.cos(yaw) * s) * sp;
         const nz = pos.z + (-Math.cos(yaw) * f - Math.sin(yaw) * s) * sp;
         if (valid(nx, nz)) { pos.x = nx; pos.z = nz; } else if (valid(nx, pos.z)) pos.x = nx; else if (valid(pos.x, nz)) pos.z = nz;
@@ -6034,7 +6162,7 @@ body.photo .scarbanner{visibility:hidden}
     const showSnap = !!snapState && !A && entered && !(inWorld && zone === 'space'); if (snapBtn.hidden === showSnap) snapBtn.hidden = !showSnap;
     // if anything in a fight ever throws, end the fight instead of freezing the page
     if (A) { try { fightFrame(dt); } catch (err) { console.error(err); try { endFight(true); } catch (e2) { A = null; } say('Something went wrong, so the fight ended.', 3000); } }
-    try { evStep(dt, now); scarStep(dt, now); areaStep(dt, now); } catch (err) { console.error(err); }
+    try { evStep(dt, now); scarStep(dt, now); areaStep(dt, now); collideStep(dt); altStep(dt, now); } catch (err) { console.error(err); }
     try { meStep(dt, now); camStep(); } catch (err) { console.error(err); }
     renderer.render(sceneOf(), camera);
     requestAnimationFrame(frame);
