@@ -360,6 +360,7 @@ body.photo .scarbanner{visibility:hidden}
 .runhud[hidden]{display:none}
 .runhud b{color:#FFC93C}
 body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
+.scarbanner.hot{background:rgba(90,10,20,.9);color:#FFD6D6}
 /* the multiverse gate */
 .mvbox{width:min(640px,100%)}
 .mvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
@@ -3384,7 +3385,8 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
   }
   function lairIdle(dt, now){
     const t = now / 1000;
-    pods.forEach((p, i) => { if (!A || A.i !== i) p.C.anim({ st: 'roam', mv: '', a: t * 2, hp: 1, max: 1, swing: 0, mouth: 0, ring: 0, w: 1 }, t + i, .35); p.C.g.rotation.y = -Math.PI / 2 + Math.sin(t * .6 + i) * .5; p.open += ((A && A.i === i ? 1 : 0) - p.open) * Math.min(1, dt * 3); p.glass.position.y = 1.6 + p.open * 2.4; p.glass.material.opacity = .22 * (1 - p.open * .6); p.C.g.visible = p.open < .5 && !dustedBoss(p.def.id); });
+    pods.forEach((p, i) => { if (!A || A.i !== i) p.C.anim({ st: 'roam', mv: '', a: t * 2, hp: 1, max: 1, swing: 0, mouth: 0, ring: 0, w: 1 }, t + i, .35); p.C.g.rotation.y = -Math.PI / 2 + Math.sin(t * .6 + i) * .5; p.open += ((A && A.i === i ? 1 : 0) - p.open) * Math.min(1, dt * 3); p.glass.position.y = 1.6 + p.open * 2.4; p.glass.material.opacity = .22 * (1 - p.open * .6); p.C.g.visible = p.open < .5 && !dustedBoss(p.def.id) && !escaped(p.def.id); p.glass.visible = !escaped(p.def.id); });
+    breachStep(dt, now);
     WEAPONS.forEach(w => { const r = rack[w.id]; r.wm.visible = isUnlocked(w.id) && !inv.includes(w.id) && !dustedWeapon(w.id); });
     lairAnim.sigLight.intensity = .8 + Math.sin(t * 1.3) * .15;
     if (gateAnim) { gateAnim.swirl.rotation.z -= dt * 1.2; gateAnim.ring.rotation.z += dt * .3; }
@@ -3438,6 +3440,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
   const fightScene = () => sceneFor(fightZone());
   function startBoss(i){
     if (!lairScene) return;
+    if (escaped(BOSSES[i].id)) return say(`${BOSSES[i].name} broke out of containment and is loose in the lair. Find it and beat it to lock it back up.`, 3800);
     if (dustedBoss(BOSSES[i].id)) return say(`Thanos turned ${BOSSES[i].name} to dust. Undo the snap (or fight Thanos again) to bring them back.`, 3800);
     const at = pods[i].g.localToWorld(V(0, 0, 1.8));
     startFight(BOSSES[i], i, at.x * 40, at.z * 40, 'lair');
@@ -3538,7 +3541,9 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     const where = { room: 'crashed into the room', lair: 'is back in the lair', roof: 'climbed onto the rooftop', hub: 'followed you to Mandalink island' }[z] || 'dropped down after you';
     if (z === A.pz) { tone(70, .6, 'sawtooth', .07, 40); A.shake = .4; say(`${A.def.name} ${where}!`, 3000); }
   }
-  $('#arenaRetry').onclick = () => { if (!A) return; const i = A.i, id = A.def.id; endFight(true); if (id === 'maw') return startMaw(); if (id === 'celestial') return startCelestial(); if (id === 'gorr') return zone === 'sea' ? startFight(GORR, -2, 0, -420, 'sea') : say('Gorr is waiting in the deepest level below Mandalink island.', 3000); if (fightZone() !== 'lair') return enterLair(); startBoss(i); };
+  $('#arenaRetry').onclick = () => { if (!A) return; const i = A.i, id = A.def.id;
+    if (A.invader || escaped(id)) { const d = A.def, inv = A.invader, z0 = fightZone(); endFight(true); startFight(d, i, pos.x * 40, (pos.z - 3) * 40, z0); if (A) A.invader = inv; return; }
+    endFight(true); if (id === 'maw') return startMaw(); if (id === 'celestial') return startCelestial(); if (id === 'gorr') return zone === 'sea' ? startFight(GORR, -2, 0, -420, 'sea') : say('Gorr is waiting in the deepest level below Mandalink island.', 3000); if (fightZone() !== 'lair') return enterLair(); startBoss(i); };
   $('#arenaBack').onclick = () => { if (A && A.def.id === 'maw' && A.won) { endFight(true); return snapBack(); } endFight(); };
   hud.sp.onclick = () => special();
   $('#fQuit').onclick = () => endFight();
@@ -3568,6 +3573,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     const m = $('#arenaMsg'), cel = A.def.id === 'celestial'; m.hidden = false;
     const where = { room: ', upstairs in my room', roof: ', up on the rooftop', hub: ', on Mandalink island', city: ', in the middle of Bangalore', space: ', in deep space' }[A.bz] || '';
     if (won) {
+      if (escaped(A.def.id)) { recap.push(A.def.id); saveInstab(); setTimeout(() => say(`${A ? A.def.name : 'It'} is back in containment.`, 2600), 1200); }
       if (!cel && A.def.id !== 'maw') { beaten.add(A.def.id); try { localStorage.setItem('ru-bosses', JSON.stringify([...beaten])); } catch (e) {} }
       [523, 659, 784, 1046].forEach((f, k) => setTimeout(() => tone(f, .25, 'triangle', .06), k * 110));
       $('#arenaTitle').textContent = `${A.def.name}: defeated`; $('#arenaText').textContent = `${A.def.win} Finished off with ${A.w.name}${where}.` + (!cel && BOSSES.every(d => beaten.has(d.id)) ? ' ' + POST_CREDITS : '');
@@ -3894,7 +3900,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     if (act2 === 'leave') { closePause(); endFight(); }
     if (act2 === 'unsnap') { unsnap(); renderPause(); }
     if (act2 === 'fx') { lowFx = !lowFx; fxChosen = true; try { localStorage.setItem('ru-lowfx', lowFx ? '1' : '0'); } catch (er) {} applyFx(); renderPause(); }
-    if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon', 'ru-arm', 'ru-evsolo', 'ru-evdone', 'ru-incursion'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
+    if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon', 'ru-arm', 'ru-evsolo', 'ru-evdone', 'ru-incursion', 'ru-instab', 'ru-recap'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
   });
   menuBtn.onclick = () => openPause();
   function applyFx(){
@@ -4779,8 +4785,9 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     if (EV.k === 'wwh') lbAdd(won === (EV.team === 'hulk') ? 'h' : 'r', 1);
     if (EV.k === 'inj') lbAdd(won ? 'w' : 'l', 1);
     if (EV.k === 'inc') { lbAdd(won ? 'i' : 'f', 1);
-      if (!won) { ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = true); setTimeout(startCollision, 3500); }
-      else if (scarOn || altOn) { if (scarOn) setScar(false); if (altOn) setAlt(false); setTimeout(() => say('You stopped the incursion. Your Earth, and your room, are whole again.', 4200), 2500); } }
+      if (!won) { instab = Math.min(5, instab + 1); saveInstab(); ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = true); setTimeout(startCollision, 3500); }
+      if (won) { instab = 0; recap = []; saveInstab(); buildBreach(); }
+      if (won && (scarOn || altOn)) { if (scarOn) setScar(false); if (altOn) setAlt(false); setTimeout(() => say('You stopped the incursion. Your Earth, and your room, are whole again.', 4200), 2500); } }
     if (!evDone.includes(EV.k)) { evDone.push(EV.k); try { localStorage.setItem('ru-evdone', JSON.stringify(evDone)); } catch (e) {} if (incOpen() && EV.k !== 'inc') setTimeout(() => say('The Final Incursion is unlocked. Find it at the war table in the lair.', 4200), 1500); }
     if (EV.solo) { const r0 = soloRec[EV.k] || (soloRec[EV.k] = { w: 0, l: 0 }); r0[won ? 'w' : 'l']++; try { localStorage.setItem('ru-evsolo', JSON.stringify(soloRec)); } catch (e) {} }
     const title = EV.k === 'avx' ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : 'The two Earths are about to collide\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
@@ -4829,7 +4836,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     [[-1, -1.6, .6], [1.4, 1.2, -.5], [-1.8, 1.8, .9]].forEach(([x, z, a]) => { const b = box(1 + Math.random(), .12, .8, slabM, x, H - .5, z, g); b.rotation.set(a, Math.random(), a * .6); });
     const edge = new THREE.Mesh(new THREE.RingGeometry(1.9, 2.3, 9), purple(0xB07CFF)); edge.rotation.x = Math.PI / 2; edge.position.set(0, H - .08, 0); edge.scale.set(1.3, 1, 1); g.add(edge);
     const dome = new THREE.Mesh(new THREE.SphereGeometry(95, 32, 16), new THREE.MeshBasicMaterial({ side: THREE.BackSide, map: tex(16, 256, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#05010C'); gr.addColorStop(.5, '#2A0F3A'); gr.addColorStop(1, '#12051F'); c.fillStyle = gr; c.fillRect(0, 0, w, h); }) })); g.add(dome);
-    const earth = otherEarth(26); earth.position.set(4, 48, -10); g.add(earth); g.userData.earth = earth;
+    const earth = otherEarth(20 + instab * 5); earth.position.set(4, 48, -10); g.add(earth); g.userData.earth = earth;
     // a huge tear across the blue wall
     const tear = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 2.7), new THREE.MeshBasicMaterial({ transparent: true, map: tearTex() })); tear.position.set(-2.1, 1.75, -4.93); g.add(tear);
     const glow = new THREE.PointLight(0x9B4DFF, 1.4, 9, 2); glow.position.set(-2.2, 2, -4); g.add(glow); g.userData.glow = glow;
@@ -4854,7 +4861,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     scene.traverse(o => { if (!o.isMesh || o.userData.walk || !o.geometry || o === ceil) return; for (let q = o; q; q = q.parent) if (q === g || q === fightG || q === viewG || mk.has(q) || q.userData.mp || (me && q === me.g)) return;
       if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere(); o.getWorldScale(sc3); o.getWorldPosition(wp);
       if (o.geometry.boundingSphere.radius * Math.max(sc3.x, sc3.y, sc3.z) < .45 && Math.abs(wp.x) < 4.7 && Math.abs(wp.z) < 4.7 && wp.y > .15 && wp.y < 2.4) cands.push(o); });
-    cands.filter((o, i) => i % 3 === 0).slice(0, 24).forEach((o, i) => scarFloat.push({ o, p: o.position.clone(), r: o.rotation.clone(), ph: i * 1.7, lift: .15 + (i % 5) * .08 }));
+    cands.filter((o, i) => i % (instab >= 3 ? 2 : 3) === 0).slice(0, 16 + instab * 6).forEach((o, i) => scarFloat.push({ o, p: o.position.clone(), r: o.rotation.clone(), ph: i * 1.7, lift: .15 + (i % 5) * .08 }));
     g.traverse(o => o.userData.noPick = true);
   }
   let scarFloat = [], boltT = 3, boltM = null, boltLife = 0, scarShake = 0, flickT = 8, scrT = 6, drone = null, scarCity = null, phased = [];
@@ -4891,8 +4898,8 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
       g.traverse(o => o.userData.noPick = true); }
     if (city && city !== scarCity) phaseCity(city);
     // reality flickers, and the labels scramble now and then
-    if (entered && !reduce && !lowFx && !photoOn && (flickT -= dt) <= 0) { flickT = 10 + Math.random() * 10; canvas.style.filter = 'invert(1) hue-rotate(180deg)'; setTimeout(() => { canvas.style.filter = ''; setTimeout(() => { canvas.style.filter = 'hue-rotate(120deg) saturate(2)'; setTimeout(() => { if (!photoOn) canvas.style.filter = ''; }, 90); }, 70); }, 110); tone(900, .08, 'square', .03, 200); }
-    if (entered && !reduce && (scrT -= dt) <= 0) { scrT = 7 + Math.random() * 6; const bs = [...document.querySelectorAll('#dock button, .hotbar .hn')].filter(b => b.offsetParent); const b = bs[Math.floor(Math.random() * bs.length)];
+    if (entered && !reduce && !lowFx && !photoOn && (flickT -= dt) <= 0) { flickT = (10 + Math.random() * 10) / (1 + (instab - 1) * .4); canvas.style.filter = 'invert(1) hue-rotate(180deg)'; setTimeout(() => { canvas.style.filter = ''; setTimeout(() => { canvas.style.filter = 'hue-rotate(120deg) saturate(2)'; setTimeout(() => { if (!photoOn) canvas.style.filter = ''; }, 90); }, 70); }, 110); tone(900, .08, 'square', .03, 200); }
+    if (entered && !reduce && (scrT -= dt) <= 0) { scrT = (7 + Math.random() * 6) / (1 + (instab - 1) * .4); const bs = [...document.querySelectorAll('#dock button, .hotbar .hn')].filter(b => b.offsetParent); const b = bs[Math.floor(Math.random() * bs.length)];
       if (b && !b.dataset.real) { b.dataset.real = b.textContent; b.textContent = b.textContent.split('').map(ch => ch === ' ' ? ' ' : '\u2588\u2593\u2592\u2591#%&?\u00A7'[Math.floor(Math.random() * 9)]).join(''); setTimeout(() => { b.textContent = b.dataset.real; delete b.dataset.real; }, 650); } }
     $('#scarBanner').hidden = !entered || !!EV || photoOn || !!RUN;
     if (!inWorld && entered && !muted) droneOn(); else droneOff();
@@ -4905,7 +4912,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     u.twin.anim(t, 0, 0); u.twin.g.rotation.y = Math.atan2(3.6 - pos.x, -3.8 - pos.z);
     // purple lightning, with thunder
     if (boltM) { boltLife -= dt; if (boltLife <= 0) { scarG.remove(boltM); boltM.geometry.dispose(); boltM = null; u.glow.distance = 9; } }
-    if (!reduce && (boltT -= dt) <= 0) { boltT = 3 + Math.random() * 5; const a = V((Math.random() - .5) * 8, H - .1, (Math.random() - .5) * 8), b = V((Math.random() - .5) * 8, Math.random() * 1.5, (Math.random() - .5) * 8), pts = [];
+    if (!reduce && (boltT -= dt) <= 0) { boltT = (3 + Math.random() * 5) / (1 + (instab - 1) * .45); const a = V((Math.random() - .5) * 8, H - .1, (Math.random() - .5) * 8), b = V((Math.random() - .5) * 8, Math.random() * 1.5, (Math.random() - .5) * 8), pts = [];
       for (let i = 0; i <= 10; i++) { const p = a.clone().lerp(b, i / 10); if (i && i < 10) p.add(V((Math.random() - .5) * .6, (Math.random() - .5) * .4, (Math.random() - .5) * .6)); pts.push(p); }
       boltM = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, .03, 5), new THREE.MeshBasicMaterial({ color: 0xE6D0FF })); scarG.add(boltM); boltLife = .18; u.glow.distance = 20; scarShake = lowFx ? 0 : .35;
       setTimeout(() => tone(45, 1.4, 'sawtooth', .05, 25), 150); }
@@ -5050,6 +5057,84 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     [world, roofScene].forEach(sc => { if (sc && sc.userData.altX) sc.userData.altX.rotation.y += dt * .02; });
     $('#scarBanner').hidden = !entered || !!EV || photoOn || !!RUN;
     if (altG && !inWorld) { const o = altG.userData.other; o.anim(now / 1000, 0, 0); o.g.rotation.y = Math.atan2(-3.2 - pos.x, 2.6 - pos.z); }
+  }
+
+  // ======================= instability: every lost Incursion makes the multiverse worse =======================
+  let instab = 0; try { instab = +localStorage.getItem('ru-instab') || 0; } catch (e) {}
+  if (!instab && (scarOn || altOn)) instab = 1;
+  let recap = []; try { recap = JSON.parse(localStorage.getItem('ru-recap') || '[]'); } catch (e) {}
+  const saveInstab = () => { try { localStorage.setItem('ru-instab', String(instab)); localStorage.setItem('ru-recap', JSON.stringify(recap)); } catch (e) {} };
+  const INSTAB_TXT = ['', 'Reality is cracking.', 'Reality is coming apart.', 'Villains are breaking through from other universes.', 'The lair’s containment has failed.', 'Total collapse: the multiverse is pouring in.'];
+  // which villains broke out of the lair (level 4: the MCU and DC wings, level 5: everyone)
+  const escaped = id => { if (instab < 4 || recap.includes(id)) return false; const i = BOSSES.findIndex(d => d.id === id); return i >= 0 && (instab >= 5 || i >= 5); };
+  // ---------- villains pouring in through rifts ----------
+  let invT = 25, invRift = null;
+  function invadeZoneOK(){ const z = fightZone(); return z === 'room' || z === 'hub' || z === 'roof' || z === 'lair'; }
+  function openInvasion(){
+    const pool = BOSSES.filter(d => !dustedBoss(d.id)); if (!pool.length) return;
+    const def = pool[Math.floor(Math.random() * pool.length)], f = V(-Math.sin(yaw), 0, -Math.cos(yaw)), p = pos.clone().addScaledVector(f, 2.6); p.y = inWorld && zone === 'roof' ? 0 : 0;
+    if (!inWorld) { p.x = clamp(p.x, -3.8, 3.8); p.z = clamp(p.z, -3.2, 3.9); }
+    const sc = sceneOf(), g = new THREE.Group(); g.position.set(p.x, 0, p.z); g.lookAt(pos.x, 0, pos.z); sc.add(g);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(1.1, .08, 8, 40), glowM(0xB07CFF, { emissiveIntensity: 1.5 })); ring.position.y = 1.2; g.add(ring);
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(1.05, 32), new THREE.MeshBasicMaterial({ color: 0x2A0F3A, transparent: true, opacity: .85, side: THREE.DoubleSide })); disc.position.y = 1.2; g.add(disc);
+    g.traverse(o => o.userData.noPick = true); g.scale.setScalar(.01);
+    invRift = { g, t: 0, def, sc, x: p.x, z: p.z };
+    say(`A rift is tearing open… something is coming through!`, 2400); tone(90, 2, 'sawtooth', .06, 400);
+  }
+  function invadeStep(dt){
+    if (invRift) {
+      const R = invRift, nw = performance.now(); R.t0 = R.t0 || nw; R.t = (nw - R.t0) / 1000; R.g.scale.setScalar(Math.min(1, R.t / .8)); R.g.children[0].rotation.z += dt * 3;
+      if (R.t > 2.6) { R.sc.remove(R.g); disposeDeep(R.g); invRift = null;
+        if (!A && !EV && !RUN) { const i = BOSSES.indexOf(R.def); startFight(R.def, i, R.x * 40, R.z * 40, fightZone()); if (A) { A.invader = true; say(`${R.def.name} poured in from another universe!`, 3200); } } }
+      return;
+    }
+    if (instab < 3 || !entered || A || EV || RUN || paused() || !invadeZoneOK() || mirror || photoOn) return;
+    if ((invT -= dt) <= 0) { invT = instab >= 5 ? 55 + Math.random() * 20 : instab >= 4 ? 90 + Math.random() * 30 : 140 + Math.random() * 40; openInvasion(); }
+  }
+  // ---------- the containment breach in the lair ----------
+  let breach = null;
+  function buildBreach(){
+    if (!lairScene) return; if (breach) { lairScene.remove(breach.g); disposeDeep(breach.g); breach.loose.forEach(l => { lairScene.remove(l.M.g); disposeDeep(l.M.g); }); breach = null; }
+    if (instab < 4) return;
+    const g = new THREE.Group(); lairScene.add(g); const loose = [];
+    // spinning red alarms
+    const alarms = [[-4, 6.4, -2], [4, 6.4, 4], [-13, 6.4, 2]].map(([x, y, z]) => { const a = new THREE.Group(); a.position.set(x, y, z); g.add(a); const l = new THREE.SpotLight(0xFF2020, 3, 26, .5, .5, 1.5); l.position.set(0, 0, 0); l.target.position.set(6, -6, 0); a.add(l); a.add(l.target); sph(.25, glowM(0xFF2020, { emissiveIntensity: 1.5 }), 0, 0, 0, a); return a; });
+    pods.forEach((pd, i) => { if (!escaped(pd.def.id)) return;
+      // shattered glass around the pod
+      const wp = pd.g.getWorldPosition(V(0, 0, 0));
+      for (let k = 0; k < 7; k++) { const sh = new THREE.Mesh(new THREE.PlaneGeometry(.3 + Math.random() * .3, .2 + Math.random() * .3), new THREE.MeshBasicMaterial({ color: new THREE.Color(pd.def.col), transparent: true, opacity: .45, side: THREE.DoubleSide, depthWrite: false })); sh.position.set(wp.x + (Math.random() - .5) * 3, .02, wp.z + (Math.random() - .5) * 3); sh.rotation.set(-Math.PI / 2, 0, Math.random() * 6); g.add(sh); }
+      // the villain, loose on the lair floor
+      if (CREATURES[pd.def.id].seg) return;
+      const M = CREATURE3D[pd.def.id](false); M.g.scale.setScalar(M.s0 || 1.2); lairScene.add(M.g);
+      const x = -12 + Math.random() * 16, z = -6 + Math.random() * 12; M.g.position.set(x, 0, z);
+      loose.push({ M, i, def: pd.def, x, z, tx: x, tz: z, a: 0, t: Math.random() * 3 });
+    });
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(5, .8), new THREE.MeshBasicMaterial({ transparent: true, map: tex(700, 110, (c, w, h) => { c.fillStyle = 'rgba(40,0,0,.9)'; c.fillRect(0, 0, w, h); c.fillStyle = '#FF3C3C'; c.font = `900 70px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('CONTAINMENT BREACH', w / 2, h / 2 + 3); }) })); sign.position.set(0, 6.6, -10.9); g.add(sign);
+    g.traverse(o => o.userData.noPick = true);
+    breach = { g, alarms, loose, siren: 0, lvl: instab };
+  }
+  function breachStep(dt, now){
+    if (!breach || breach.lvl !== instab) buildBreach(); if (!breach) return;
+    const t = now / 1000;
+    breach.alarms.forEach((a, k) => a.rotation.y = t * 3 + k);
+    if ((breach.siren -= dt) <= 0 && !A) { breach.siren = 4; tone(620, .5, 'sine', .03, 880); setTimeout(() => tone(880, .5, 'sine', .03, 620), 500); }
+    breach.loose.forEach(l => {
+      const beat = recap.includes(l.def.id); l.M.g.visible = !beat && !(A && A.def.id === l.def.id);
+      if (!l.M.g.visible) return;
+      // wander around, and go for you if you get close
+      const d = Math.hypot(pos.x - l.x, pos.z - l.z);
+      if (d < 7) { l.tx = pos.x; l.tz = pos.z; } else if (Math.hypot(l.tx - l.x, l.tz - l.z) < .5 || (l.t -= dt) <= 0) { l.t = 3 + Math.random() * 3; l.tx = -14 + Math.random() * 20; l.tz = -6 + Math.random() * 13; }
+      const dx = l.tx - l.x, dz = l.tz - l.z, dd = Math.hypot(dx, dz) || 1, sp = d < 7 ? 1.8 : 1;
+      if (dd > .3) { l.x += dx / dd * sp * dt; l.z += dz / dd * sp * dt; l.a = Math.atan2(dz, dx); }
+      l.M.g.position.set(l.x, 0, l.z); l.M.g.rotation.y = -l.a;
+      l.M.anim({ st: 'roam', mv: '', a: t * 2, hp: 1, max: 1, swing: 0, mouth: 0, ring: 0, w: 1, vx: dx, vy: dz }, t, .6);
+      if (d < 2.6 && !A && !EV && !RUN) { startFight(l.def, l.i, l.x * 40, l.z * 40, 'lair'); if (A) say(`${l.def.name} escaped containment! Beat it to lock it back up.`, 3200); }
+    });
+  }
+  // the banner says how bad things are
+  function instabStep(dt, now){
+    invadeStep(dt);
+    if (instab && (scarOn || altOn)) { const b = $('#scarBanner'), base = altOn ? 'You live on Earth-838 now.' : 'Reality is unstable.'; const txt = `${base} Instability ${instab}/5: ${INSTAB_TXT[instab]} Win the Final Incursion in the lair to fix it.`; if (b.textContent !== txt) b.textContent = txt; b.classList.toggle('hot', instab >= 3); }
   }
 
   // ---------- bot brains ----------
@@ -5958,7 +6043,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     if (p.egg === 'window') return `The sky outside, right now (${istClock()} for Rayan)`;
     if (p.egg === 'evpanel') { const k = p.o.userData.ev; return k === 'inc' && !incOpen() ? 'The Final Incursion (locked)' : `Play: ${EVENTS[k].name}`; }
     if (p.egg === 'wartable') return 'The war table: events';
-    if (p.egg === 'pod') { const d = BOSSES[p.o.userData.bi]; return `Open the pod: ${d.name}${beaten.has(d.id) ? ' (beaten)' : ''}`; }
+    if (p.egg === 'pod') { const d = BOSSES[p.o.userData.bi]; return escaped(d.id) ? `Broken pod: ${d.name} escaped` : `Open the pod: ${d.name}${beaten.has(d.id) ? ' (beaten)' : ''}`; }
     if (p.egg === 'rack') { const w = WEAPONS.find(x => x.id === p.o.userData.wid); const c = condition(w.id), pc = Math.round(c.d * 100) + '%' + (c.broken ? ', broken' : ''); return dustedWeapon(w.id) ? `${w.name}: dust` : inv.includes(w.id) ? `Hang ${w.name} back up` : `Take ${w.name} (${w.from}), ${pc}`; }
     if (p.egg) return LABELS[p.egg] || null;
     if (p.section) return NAMES[p.section];
@@ -6159,7 +6244,7 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     const showSnap = !!snapState && !A && entered && !(inWorld && zone === 'space'); if (snapBtn.hidden === showSnap) snapBtn.hidden = !showSnap;
     // if anything in a fight ever throws, end the fight instead of freezing the page
     if (A) { try { fightFrame(dt); } catch (err) { console.error(err); try { endFight(true); } catch (e2) { A = null; } say('Something went wrong, so the fight ended.', 3000); } }
-    try { evStep(dt, now); scarStep(dt, now); areaStep(dt, now); collideStep(dt); altStep(dt, now); } catch (err) { console.error(err); }
+    try { evStep(dt, now); scarStep(dt, now); areaStep(dt, now); collideStep(dt); altStep(dt, now); instabStep(dt, now); } catch (err) { console.error(err); }
     try { meStep(dt, now); camStep(); } catch (err) { console.error(err); }
     renderer.render(sceneOf(), camera);
     requestAnimationFrame(frame);
