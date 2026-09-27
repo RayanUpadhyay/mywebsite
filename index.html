@@ -4917,7 +4917,7 @@ body.photo .scarbanner{visibility:hidden}
       if (b && !b.dataset.real) { b.dataset.real = b.textContent; b.textContent = b.textContent.split('').map(ch => ch === ' ' ? ' ' : '\u2588\u2593\u2592\u2591#%&?\u00A7'[Math.floor(Math.random() * 9)]).join(''); setTimeout(() => { b.textContent = b.dataset.real; delete b.dataset.real; }, 650); } }
     $('#scarBanner').hidden = !entered || !!EV || photoOn || !!RUN;
     if (!inWorld && entered && !muted) droneOn(); else droneOff();
-    if (!photoOn && canvas.style.filter === '' && endOn()) canvas.style.filter = baseFilter();
+    if (!photoOn && endOn() && (canvas.style.filter === '' || canvas.style.filter.startsWith('grayscale')) && canvas.style.filter !== baseFilter()) canvas.style.filter = baseFilter();
     if (!scarG || inWorld) return;
     const u = scarG.userData;
     if (u.dust) { const a = u.dust.geometry.attributes.position.array; for (let i = 1; i < a.length; i += 3) { a[i] += dt * .15; if (a[i] > 6) a[i] = 0; } u.dust.geometry.attributes.position.needsUpdate = true; }
@@ -5244,7 +5244,7 @@ body.photo .scarbanner{visibility:hidden}
   let saviour = false; try { saviour = localStorage.getItem('ru-saviour') === '1'; } catch (e) {}
   let earthsLost = 0; try { earthsLost = +localStorage.getItem('ru-lost') || 0; } catch (e) {}
   const endOn = () => instab >= 6;
-  const baseFilter = () => endOn() && !photoOn ? 'grayscale(.85) contrast(1.1)' : '';
+  const baseFilter = () => endOn() && !photoOn && !(zone === 'void' && inWorld) ? 'grayscale(.85) contrast(1.1)' : '';
   // every Earth there is falls into yours at once
   function startEnd(){
     if (EV) stopEvent(true);
@@ -5330,22 +5330,22 @@ body.photo .scarbanner{visibility:hidden}
     const sc = voidScene = new THREE.Scene(); sc.background = new THREE.Color(0xF4F2EE); sc.fog = new THREE.Fog(0xF4F2EE, 18, 110);
     sc.add(new THREE.HemisphereLight(0xFFFFFF, 0xC8C4BC, 1)); const sun = new THREE.DirectionalLight(0xFFF4DC, .6); sun.position.set(6, 20, 8); sc.add(sun);
     plats.void = [];
-    const floorM = mat(0xB98C5E, { roughness: .9 }), wallM2 = mat(0xE8E0D2), stoneM = mat(0xDAD6CE, { flatShading: true, roughness: 1 }), under = mat(0x8A857C, { flatShading: true });
+    const floorM = mat(0xB98C5E, { roughness: .9 }), wallM2 = mat(0xE8E0D2), stoneM = mat(0x2E3140, { flatShading: true, roughness: .8 }), under = mat(0x4A4652, { flatShading: true });
     const bits = [];
     // a chunk of floating ground: the walkable top, and a rough rocky bottom
-    const chunk = (x, z, r, top) => { const g = new THREE.Group(); g.position.set(x, 0, z); sc.add(g); const t = cyl(r, r * .92, .3, top || stoneM, 0, -.15, 0, g, 12); t.userData.walk = true; const b = new THREE.Mesh(new THREE.ConeGeometry(r * .9, r * 1.4, 7), under); b.rotation.x = Math.PI; b.position.y = -.3 - r * .7; g.add(b); const p = { x, z, r }; plats.void.push(p); return { g, p, fall: 0 }; };
-    const start = chunk(0, 0, 2.8); start.seg = 0; bits.push(start);
+    const chunk = (x, z, r, top, rimCol) => { const g = new THREE.Group(); g.position.set(x, 0, z); sc.add(g); const t = cyl(r, r * .92, .3, top || stoneM, 0, -.15, 0, g, 12); t.userData.walk = true; const b = new THREE.Mesh(new THREE.ConeGeometry(r * .9, r * 1.4, 7), under); b.rotation.x = Math.PI; b.position.y = -.3 - r * .7; g.add(b); const rim = new THREE.Mesh(new THREE.TorusGeometry(r, .06, 6, 28), glowM(rimCol || 0x7C8CFF, { emissiveIntensity: 1.1 })); rim.rotation.x = Math.PI / 2; rim.position.y = .01; g.add(rim); const p = { x, z, r }; plats.void.push(p); return { g, p, fall: 0 }; };
+    const start = chunk(0, 0, 2.8, null, MEMS[0].c); start.seg = 0; bits.push(start);
     // seven pieces of the room, each with its memory, joined by stepping stones (some drift, some flicker)
     const frags = [], stones = []; let px = 0, pz = 0, pr = 2.8;
     for (let i = 0; i <= MEMS.length; i++) {
       const last = i === MEMS.length, fx = last ? 0 : Math.sin(i * 1.7 + .5) * 7, fz = -10 * (i + 1) - (last ? 4 : 0), fr = last ? 4.2 : 2.3;
       // stones from the previous piece to this one
       const dx = fx - px, dz = fz - pz, d = Math.hypot(dx, dz), n = Math.max(1, Math.round((d - pr - fr) / 2.9));
-      for (let j = 1; j <= n; j++) { const k = (pr + (d - pr - fr) * j / (n + 1)) / d, s = chunk(px + dx * k, pz + dz * k, .85); s.seg = i + 1; s.base = s.p.x; const idx = stones.length; s.drift = i >= 2 && idx % 3 === 1; s.blink = i >= 3 && idx % 4 === 2; s.ph = Math.random() * 6; stones.push(s); bits.push(s); }
-      if (last) { const f = chunk(fx, fz, fr, mat(0xFFFFFF, { roughness: .6 })); f.seg = i + 1; f.final = true; bits.push(f); frags.push(f); break; }
+      for (let j = 1; j <= n; j++) { const k = (pr + (d - pr - fr) * j / (n + 1)) / d, idx = stones.length, drift = i >= 2 && idx % 3 === 1, blink = i >= 3 && idx % 4 === 2, s = chunk(px + dx * k, pz + dz * k, .85, null, blink ? 0xFF8A2E : drift ? 0x3CE8E8 : (MEMS[i] || { c: 0xFFC93C }).c); s.seg = i + 1; s.base = s.p.x; s.drift = drift; s.blink = blink; s.ph = Math.random() * 6; stones.push(s); bits.push(s); }
+      if (last) { const f = chunk(fx, fz, fr, mat(0xFFC93C, { roughness: .4, metalness: .3 }), 0xFFFFFF); f.seg = i + 1; f.final = true; bits.push(f); frags.push(f); break; }
       // the fragment: a square of the room's floor with a bit of wall, torn out
       const g = new THREE.Group(); g.position.set(fx, 0, fz); g.rotation.y = (Math.random() - .5) * .6; sc.add(g);
-      const fl = box(4.2, .3, 4.2, floorM, 0, -.15, 0, g); fl.userData.walk = true; [[-1.4, 1.1], [0, .6], [1.4, .9]].forEach(([x, h]) => box(1.4, h, .2, wallM2, x, h / 2, -2, g).rotation.z = (Math.random() - .5) * .15);
+      const fl = box(4.2, .3, 4.2, floorM, 0, -.15, 0, g); fl.userData.walk = true; [[-1.4, 1.1], [0, .6], [1.4, .9]].forEach(([x, h]) => box(1.4, h, .2, mat(new THREE.Color(MEMS[i].c).lerp(new THREE.Color(0xFFFFFF), .35)), x, h / 2, -2, g).rotation.z = (Math.random() - .5) * .15);
       const b = new THREE.Mesh(new THREE.ConeGeometry(2.8, 3.5, 6), under); b.rotation.x = Math.PI; b.position.y = -2.05; g.add(b);
       const pp = new THREE.Group(); pp.position.set(.8, 0, -.8); g.add(pp); memProp(MEMS[i].k, pp);
       const p = { x: fx, z: fz, r: 2.35 }; plats.void.push(p);
@@ -5402,7 +5402,7 @@ body.photo .scarbanner{visibility:hidden}
     const fin = V0.frags[V0.frags.length - 1];
     if (V0.phase === 'walk') {
       V0.left -= dt; const k = clamp(1 - V0.left / VOID_TIME, 0, 1); voidScene.fog.near = 18 - k * 14; voidScene.fog.far = 110 - k * 88;
-      runHud.innerHTML = `Memories <b>${V0.got}/${MEMS.length}</b> · the Void closes in <b>${Math.max(0, Math.ceil(V0.left))} s</b>${V0.got === MEMS.length ? ' · get to the white platform at the end' : ''}`;
+      runHud.innerHTML = `Memories <b>${V0.got}/${MEMS.length}</b> · the Void closes in <b>${Math.max(0, Math.ceil(V0.left))} s</b>${V0.got === MEMS.length ? ' · get to the gold platform at the end' : ''}`;
       if (V0.got === MEMS.length && Math.hypot(pos.x - fin.p.x, pos.z - fin.p.z) < 3.4 && grounded) { V0.phase = 'seed'; V0.st = 0; runHud.hidden = true; say(BEYOND_LINES[BEYOND_LINES.length - 1], 3500); V0.seed = V(fin.p.x, 2.2, fin.p.z - 1.2); }
       else if (V0.left <= 0) return endVoid(false);
       else if (pos.y < -12 && !falling) { falling = true; V0.left -= 8; fade(() => { pos.set(V0.cp.x, 1.6, V0.cp.z + .5); vy = 0; falling = false; say('The Void threw you back. That cost you 8 seconds.', 2600); }, '#FFFFFF'); }
