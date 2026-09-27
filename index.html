@@ -347,6 +347,12 @@ body.photo .povbtn{visibility:hidden}
 .evhurt{position:fixed;inset:0;z-index:4;pointer-events:none;opacity:0;background:radial-gradient(circle,rgba(200,16,46,0) 45%,rgba(200,16,46,.55) 100%);transition:opacity .15s}
 body.inevent .hotbar,body.inevent .povbtn,body.inevent .snapbtn,body.inevent .dock{display:none!important}
 body.photo .evhud{visibility:hidden}
+/* an incursion scarred the site */
+.scarfx{position:fixed;inset:0;z-index:3;pointer-events:none;display:none;background:radial-gradient(circle at 50% 45%,rgba(155,77,255,0) 55%,rgba(90,20,140,.35) 100%)}
+body.incursion .scarfx{display:block}
+body.incursion .mark b{animation:glitch 3.2s infinite steps(1)}
+@keyframes glitch{0%,86%,100%{text-shadow:0 1px 8px rgba(0,0,0,.5);transform:none}88%{text-shadow:-3px 0 #9B4DFF,3px 0 #3CE870;transform:translateX(2px)}92%{text-shadow:3px 0 #9B4DFF,-3px 0 #7CF2FF;transform:translateX(-2px) skewX(8deg)}95%{text-shadow:none;transform:none;opacity:.6}}
+@media (prefers-reduced-motion: reduce){body.incursion .mark b{animation:none}}
 /* the multiverse gate */
 .mvbox{width:min(640px,100%)}
 .mvgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
@@ -455,6 +461,7 @@ body.photo .evhud{visibility:hidden}
 <canvas class="ringfx" id="ringFx" hidden aria-hidden="true"></canvas>
 <div class="photobar" id="photoBar" hidden role="toolbar" aria-label="Photo mode"><button class="btn" id="phFilter" type="button">Filter: None</button><button class="btn alt" id="phShot" type="button">Take photo</button><button class="btn" id="phExit" type="button">Done</button></div>
 <div class="mpchip" id="mpChip" hidden aria-live="polite"></div>
+<div class="scarfx" id="scarFx" aria-hidden="true"></div>
 <div class="evhurt" id="evHurt" aria-hidden="true"></div>
 <div class="evhud" id="evHud" hidden>
   <div class="evtop"><b id="evTitle"></b><span id="evScore"></span><span class="evtime" id="evTime"></span></div>
@@ -4796,27 +4803,75 @@ body.photo .evhud{visibility:hidden}
   function setScar(on){
     scarOn = on; try { on ? localStorage.setItem('ru-incursion', '1') : localStorage.removeItem('ru-incursion'); } catch (e) {}
     if (scarG) { scene.remove(scarG); disposeDeep(scarG); scarG = null; }
+    scarFloat.forEach(f => { f.o.position.copy(f.p); f.o.rotation.copy(f.r); }); scarFloat = [];
+    [world, roofScene].forEach(sc => { if (sc && sc.userData.scarE) { sc.remove(sc.userData.scarE); disposeDeep(sc.userData.scarE); sc.userData.scarE = null; } });
     hemi.color.copy(on ? new THREE.Color(0xC9A8FF) : hemi0); amb.color.copy(on ? new THREE.Color(0xB07CFF) : amb0);
+    ceil.visible = !on; document.body.classList.toggle('incursion', on);
     if (!on) return;
-    const g = scarG = new THREE.Group(); g.userData.noPick = true; scene.add(g);
-    // a tear in the blue wall, with the other Earth on the far side
-    const tear = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.5), new THREE.MeshBasicMaterial({ transparent: true, map: tex(520, 300, (c, w, h) => {
-      const pts = []; for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, rr = .75 + Math.random() * .25; pts.push([w / 2 + Math.cos(a) * w * .46 * rr, h / 2 + Math.sin(a) * h * .44 * rr]); }
-      c.save(); c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.clip();
-      c.fillStyle = '#12051F'; c.fillRect(0, 0, w, h); for (let i = 0; i < 90; i++) { c.fillStyle = `rgba(255,255,255,${Math.random()})`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
-      c.fillStyle = '#2B4A9A'; c.beginPath(); c.arc(w * .62, h * .55, 70, 0, 7); c.fill(); c.fillStyle = '#4C8A4A'; c.beginPath(); c.ellipse(w * .6, h * .5, 30, 18, .6, 0, 7); c.fill(); c.fillStyle = 'rgba(155,77,255,.35)'; c.beginPath(); c.arc(w * .62, h * .55, 70, 0, 7); c.fill();
-      c.restore(); c.strokeStyle = '#D9B8FF'; c.lineWidth = 8; c.shadowColor = '#9B4DFF'; c.shadowBlur = 24; c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.stroke(); }) }));
-    tear.position.set(-2.4, 2.25, -4.93); g.add(tear);
-    const glow = new THREE.PointLight(0x9B4DFF, .9, 7, 2); glow.position.set(-2.4, 2.2, -4.3); g.add(glow);
-    // glowing cracks across the floor
-    const crack = () => tex(256, 256, (c, w, h) => { c.strokeStyle = '#C99BFF'; c.lineWidth = 3; c.shadowColor = '#9B4DFF'; c.shadowBlur = 10; for (let k = 0; k < 3; k++) { c.beginPath(); let x = w / 2, y = h / 2; c.moveTo(x, y); const a = Math.random() * 7; for (let s2 = 0; s2 < 7; s2++) { x += Math.cos(a + (Math.random() - .5)) * 22; y += Math.sin(a + (Math.random() - .5)) * 22; c.lineTo(x, y); } c.stroke(); } });
-    [[-1.2, 1.4], [1.8, -1.2], [-3, -2.2], [2.6, 2.6], [0, -.2]].forEach(([x, z]) => { const d = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1.6), new THREE.MeshBasicMaterial({ map: crack(), transparent: true, depthWrite: false })); d.rotation.x = -Math.PI / 2; d.rotation.z = Math.random() * 6; d.position.set(x, .013, z); g.add(d); });
+    const g = scarG = new THREE.Group(); scene.add(g);
+    const purple = c => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: .9, side: THREE.DoubleSide });
+    // the ceiling is torn open: broken slabs around a hole, and the other Earth right above
+    const slabM = mat(0xE2E6EC, { roughness: .9, flatShading: true });
+    [[-3.6, -3.4, 2.8, 3.2, .05], [2.9, -3.3, 4.2, 3.4, -.08], [-3.4, 3.2, 3.2, 3.6, .12], [3.4, 3.4, 3.2, 3.2, -.05], [0, -4.2, 10, 1.6, 0], [-4.4, 0, 1.2, 10, 0], [4.4, 0, 1.2, 10, 0], [0, 4.4, 10, 1.2, 0]].forEach(([x, z, w, d, tilt]) => { const b = box(w, .12, d, slabM, x, H - .06, z, g); b.rotation.x = tilt; b.rotation.z = -tilt * .8; });
+    [[-1, -1.6, .6], [1.4, 1.2, -.5], [-1.8, 1.8, .9]].forEach(([x, z, a]) => { const b = box(1 + Math.random(), .12, .8, slabM, x, H - .5, z, g); b.rotation.set(a, Math.random(), a * .6); });
+    const edge = new THREE.Mesh(new THREE.RingGeometry(1.9, 2.3, 9), purple(0xB07CFF)); edge.rotation.x = Math.PI / 2; edge.position.set(0, H - .08, 0); edge.scale.set(1.3, 1, 1); g.add(edge);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(95, 32, 16), new THREE.MeshBasicMaterial({ side: THREE.BackSide, map: tex(16, 256, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#05010C'); gr.addColorStop(.5, '#2A0F3A'); gr.addColorStop(1, '#12051F'); c.fillStyle = gr; c.fillRect(0, 0, w, h); }) })); g.add(dome);
+    const earth = otherEarth(26); earth.position.set(4, 48, -10); g.add(earth); g.userData.earth = earth;
+    // a huge tear across the blue wall
+    const tear = new THREE.Mesh(new THREE.PlaneGeometry(5.2, 2.7), new THREE.MeshBasicMaterial({ transparent: true, map: tearTex() })); tear.position.set(-2.1, 1.75, -4.93); g.add(tear);
+    const glow = new THREE.PointLight(0x9B4DFF, 1.4, 9, 2); glow.position.set(-2.2, 2, -4); g.add(glow); g.userData.glow = glow;
+    // a glowing chasm across the floor, and cracks everywhere
+    const chasm = new THREE.Mesh(new THREE.PlaneGeometry(9.5, 1.3), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, map: tex(1024, 140, (c, w, h) => { const pts = []; for (let x = 0; x <= w; x += 40) pts.push([x, h / 2 + (Math.random() - .5) * 50]); c.fillStyle = '#12051F'; c.shadowColor = '#9B4DFF'; c.shadowBlur = 30; c.beginPath(); pts.forEach(([x, y], i) => { const hw = 10 + Math.sin(i * .7) * 8 + 14; i ? c.lineTo(x, y - hw) : c.moveTo(x, y - hw); }); pts.slice().reverse().forEach(([x, y], i) => { const hw = 10 + Math.sin((pts.length - 1 - i) * .7) * 8 + 14; c.lineTo(x, y + hw); }); c.closePath(); c.fill(); c.strokeStyle = '#D9B8FF'; c.lineWidth = 4; c.stroke(); }) }));
+    chasm.rotation.x = -Math.PI / 2; chasm.rotation.z = .55; chasm.position.set(0, .015, .3); g.add(chasm);
+    const under = new THREE.PointLight(0x9B4DFF, 1, 5, 2); under.position.set(0, -.3, .3); g.add(under);
+    const crack = () => tex(256, 256, (c, w, h) => { c.strokeStyle = '#C99BFF'; c.lineWidth = 3; c.shadowColor = '#9B4DFF'; c.shadowBlur = 10; for (let k = 0; k < 4; k++) { c.beginPath(); let x = w / 2, y = h / 2; c.moveTo(x, y); const a = Math.random() * 7; for (let s2 = 0; s2 < 8; s2++) { x += Math.cos(a + (Math.random() - .5)) * 20; y += Math.sin(a + (Math.random() - .5)) * 20; c.lineTo(x, y); } c.stroke(); } });
+    [[-1.2, 2.4], [2.4, -1.8], [-3.2, -2.4], [2.8, 3.2], [-2.6, 3.6], [3.6, .6], [-3.8, .2], [1, -3.4]].forEach(([x, z]) => { const d = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), new THREE.MeshBasicMaterial({ map: crack(), transparent: true, depthWrite: false })); d.rotation.x = -Math.PI / 2; d.rotation.z = Math.random() * 6; d.position.set(x, .014, z); g.add(d); });
+    [[-4.93, 1.4, 2, Math.PI / 2], [4.93, 1.8, -2.6, -Math.PI / 2]].forEach(([x, y, z, ry]) => { const d = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 2.2), new THREE.MeshBasicMaterial({ map: crack(), transparent: true, depthWrite: false })); d.position.set(x, y, z); d.rotation.y = ry; g.add(d); });
+    // the other Earth's version of this room, overlapping yours at an angle
+    const other = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(W, H, D)), new THREE.LineBasicMaterial({ color: 0xB07CFF, transparent: true, opacity: .55 })); other.position.set(.9, H / 2 + .2, -.6); other.rotation.set(.08, .35, .12); g.add(other); g.userData.other = other;
+    const ghostFloor = new THREE.Mesh(new THREE.PlaneGeometry(W, D, 10, 10), new THREE.MeshBasicMaterial({ color: 0x9B4DFF, wireframe: true, transparent: true, opacity: .25 })); ghostFloor.rotation.x = -Math.PI / 2; ghostFloor.position.y = -H / 2; other.add(ghostFloor);
+    // and the other you, standing in the corner
+    const twin = avatar(Object.assign({}, curLook()), { burn: armHurt() }); twin.g.traverse(o => { if (o.isMesh) o.material = new THREE.MeshBasicMaterial({ color: 0x9B4DFF, transparent: true, opacity: .45, depthWrite: false }); }); twin.g.position.set(3.6, 0, -3.8); twin.g.rotation.y = -.7 + Math.PI; g.add(twin.g); g.userData.twin = twin;
     // bits of the other universe drifting through
     g.userData.bits = [];
-    for (let i = 0; i < 7; i++) { const b = new THREE.Mesh(new THREE.DodecahedronGeometry(.08 + Math.random() * .1, 0), new THREE.MeshStandardMaterial({ color: 0x5A3A7A, emissive: 0x9B4DFF, emissiveIntensity: .5, flatShading: true })); b.userData.p = [(Math.random() - .5) * 7, 1.6 + Math.random() * 1.2, (Math.random() - .5) * 7, Math.random() * 6]; g.add(b); g.userData.bits.push(b); }
+    for (let i = 0; i < 14; i++) { const b = new THREE.Mesh(new THREE.DodecahedronGeometry(.08 + Math.random() * .16, 0), new THREE.MeshStandardMaterial({ color: 0x5A3A7A, emissive: 0x9B4DFF, emissiveIntensity: .6, flatShading: true })); b.userData.p = [(Math.random() - .5) * 8, 1 + Math.random() * 2, (Math.random() - .5) * 8, Math.random() * 6]; g.add(b); g.userData.bits.push(b); }
+    // gravity is broken: small things float
+    const mk = new Set(markers.concat(pageMeshes)), sc3 = V(0, 0, 0), wp = V(0, 0, 0), cands = [];
+    scene.updateMatrixWorld(true);
+    scene.traverse(o => { if (!o.isMesh || o.userData.walk || !o.geometry || o === ceil) return; for (let q = o; q; q = q.parent) if (q === g || q === fightG || q === viewG || mk.has(q) || q.userData.mp || (me && q === me.g)) return;
+      if (!o.geometry.boundingSphere) o.geometry.computeBoundingSphere(); o.getWorldScale(sc3); o.getWorldPosition(wp);
+      if (o.geometry.boundingSphere.radius * Math.max(sc3.x, sc3.y, sc3.z) < .45 && Math.abs(wp.x) < 4.7 && Math.abs(wp.z) < 4.7 && wp.y > .15 && wp.y < 2.4) cands.push(o); });
+    cands.filter((o, i) => i % 3 === 0).slice(0, 24).forEach((o, i) => scarFloat.push({ o, p: o.position.clone(), r: o.rotation.clone(), ph: i * 1.7, lift: .15 + (i % 5) * .08 }));
     g.traverse(o => o.userData.noPick = true);
   }
-  function scarStep(dt, now){ if (!scarG || inWorld) return; const t = now / 1000; scarG.userData.bits.forEach(b => { const [x, y, z, ph] = b.userData.p; b.position.set(x + Math.sin(t * .3 + ph) * .4, y + Math.sin(t * .8 + ph) * .15, z + Math.cos(t * .25 + ph) * .4); b.rotation.x += dt * .4; b.rotation.y += dt * .3; }); }
+  let scarFloat = [], boltT = 3, boltM = null, boltLife = 0, scarShake = 0;
+  function otherEarth(r){ const e = new THREE.Mesh(new THREE.SphereGeometry(r, 40, 28), new THREE.MeshBasicMaterial({ fog: false, map: tex(512, 256, (c, w, h) => { c.fillStyle = '#2B4A9A'; c.fillRect(0, 0, w, h); for (let i = 0; i < 26; i++) { c.fillStyle = i % 3 ? '#4C8A4A' : '#8A7A4A'; c.beginPath(); c.ellipse(Math.random() * w, Math.random() * h, 20 + Math.random() * 50, 10 + Math.random() * 30, Math.random() * 3, 0, 7); c.fill(); } c.fillStyle = 'rgba(155,77,255,.35)'; c.fillRect(0, 0, w, h); }) }));
+    const halo = new THREE.Mesh(new THREE.RingGeometry(r * 1.05, r * 1.3, 64), new THREE.MeshBasicMaterial({ color: 0x9B4DFF, transparent: true, opacity: .35, fog: false, side: THREE.DoubleSide })); halo.userData.halo = true; e.add(halo); e.userData.noPick = true; return e; }
+  function tearTex(){ return tex(700, 360, (c, w, h) => {
+    const pts = []; for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2, rr = .7 + Math.random() * .3; pts.push([w / 2 + Math.cos(a) * w * .47 * rr, h / 2 + Math.sin(a) * h * .45 * rr]); }
+    c.save(); c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.clip();
+    c.fillStyle = '#12051F'; c.fillRect(0, 0, w, h); for (let i = 0; i < 160; i++) { c.fillStyle = `rgba(255,255,255,${Math.random()})`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+    c.fillStyle = '#2B4A9A'; c.beginPath(); c.arc(w * .6, h * .62, 120, 0, 7); c.fill(); c.fillStyle = '#4C8A4A'; c.beginPath(); c.ellipse(w * .58, h * .55, 50, 26, .6, 0, 7); c.fill(); c.fillStyle = 'rgba(155,77,255,.35)'; c.beginPath(); c.arc(w * .6, h * .62, 120, 0, 7); c.fill();
+    c.restore(); c.strokeStyle = '#E6D0FF'; c.lineWidth = 10; c.shadowColor = '#9B4DFF'; c.shadowBlur = 30; c.beginPath(); pts.forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.stroke(); }); }
+  function scarStep(dt, now){
+    if (!scarOn) return; const t = now / 1000;
+    // the other Earth hangs over Mandalink island and Bangalore too
+    [[world, V(-18, 50, -80), 34], [roofScene, V(40, 80, -170), 45]].forEach(([sc, p, r]) => { if (sc && !sc.userData.scarE) { const e = otherEarth(r); e.position.copy(p); e.children[0].lookAt(0, 0, 0); sc.add(e); sc.userData.scarE = e; } });
+    if (!scarG || inWorld) return;
+    const u = scarG.userData;
+    u.bits.forEach(b => { const [x, y, z, ph] = b.userData.p; b.position.set(x + Math.sin(t * .3 + ph) * .5, y + Math.sin(t * .8 + ph) * .2, z + Math.cos(t * .25 + ph) * .5); b.rotation.x += dt * .4; b.rotation.y += dt * .3; });
+    if (!reduce) scarFloat.forEach(f => { f.o.position.y = f.p.y + f.lift + Math.sin(t * .9 + f.ph) * .05; f.o.rotation.x = f.r.x + Math.sin(t * .5 + f.ph) * .15; f.o.rotation.z = f.r.z + Math.cos(t * .4 + f.ph) * .15; });
+    u.earth.rotation.y += dt * .03; u.earth.children[0].lookAt(camera.position);
+    u.other.rotation.y = .35 + Math.sin(t * .2) * .04; u.glow.intensity = 1.2 + Math.sin(t * 3) * .3;
+    u.twin.anim(t, 0, 0); u.twin.g.rotation.y = Math.atan2(3.6 - pos.x, -3.8 - pos.z);
+    // purple lightning, with thunder
+    if (boltM) { boltLife -= dt; if (boltLife <= 0) { scarG.remove(boltM); boltM.geometry.dispose(); boltM = null; u.glow.distance = 9; } }
+    if (!reduce && (boltT -= dt) <= 0) { boltT = 3 + Math.random() * 5; const a = V((Math.random() - .5) * 8, H - .1, (Math.random() - .5) * 8), b = V((Math.random() - .5) * 8, Math.random() * 1.5, (Math.random() - .5) * 8), pts = [];
+      for (let i = 0; i <= 10; i++) { const p = a.clone().lerp(b, i / 10); if (i && i < 10) p.add(V((Math.random() - .5) * .6, (Math.random() - .5) * .4, (Math.random() - .5) * .6)); pts.push(p); }
+      boltM = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, .03, 5), new THREE.MeshBasicMaterial({ color: 0xE6D0FF })); scarG.add(boltM); boltLife = .18; u.glow.distance = 20; scarShake = lowFx ? 0 : .35;
+      setTimeout(() => tone(45, 1.4, 'sawtooth', .05, 25), 150); }
+    if (scarShake > 0 && entered) { scarShake -= dt; camera.position.add(V((Math.random() - .5) * scarShake * .15, (Math.random() - .5) * scarShake * .15, 0)); }
+  }
   if (scarOn) setScar(true);
   // ---------- the war table in the lair: pick an event on one of its screens ----------
   let warT = null;
