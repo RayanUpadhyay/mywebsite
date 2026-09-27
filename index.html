@@ -294,7 +294,15 @@ h1,h2,h3,p{margin:0}
 .load{position:fixed;inset:0;display:grid;place-items:center;color:#C9CFD8;z-index:9;background:#0E1016;transition:opacity .6s}
 .load.off{opacity:0;pointer-events:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-/* sling ring, photo mode, multiplayer */
+/* sling ring, photo mode, multiplayer, space */
+.spacehud{position:fixed;left:50%;top:calc(76px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:6;display:flex;gap:14px;align-items:center;padding:8px 16px;border-radius:999px;background:rgba(14,16,22,.8);color:#EEF1F5;font-size:13px;font-weight:600;pointer-events:none}
+.spacehud[hidden]{display:none}
+.spacehud .o2{display:flex;gap:8px;align-items:center}
+.spacehud .pbar{width:110px}
+.spacehud .gems{display:flex;gap:5px}
+.spacehud .gems i{width:14px;height:14px;border-radius:3px;transform:rotate(45deg);border:2px solid;display:block}
+body.fighting .spacehud{top:calc(210px + env(safe-area-inset-top,0px))}
+body.photo .spacehud{visibility:hidden}
 .ringfx{position:fixed;inset:0;width:100%;height:100%;z-index:9;pointer-events:none}
 .ringfx[hidden]{display:none}
 .photobar{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;gap:8px;z-index:9;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 24px)}
@@ -403,6 +411,8 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
 <canvas class="ringfx" id="ringFx" hidden aria-hidden="true"></canvas>
 <div class="photobar" id="photoBar" hidden role="toolbar" aria-label="Photo mode"><button class="btn" id="phFilter" type="button">Filter: None</button><button class="btn alt" id="phShot" type="button">Take photo</button><button class="btn" id="phExit" type="button">Done</button></div>
 <div class="mpchip" id="mpChip" hidden aria-live="polite"></div>
+<div class="spacehud" id="spaceHud" hidden aria-live="polite"></div>
+<div class="game" id="spaceBox" role="dialog" aria-label="Stranded in space"><div class="gbox"><h2 class="display">Stranded in space</h2><p>Thanos’s snap threw you across the galaxy. You’re floating in the wreckage near Titan.</p><p class="gmsg">Teleport home and the snap stays. Or find all six Infinity Stones and snap everyone back yourself.</p><div class="gact"><button class="btn" id="spHome" type="button">Teleport home</button><button class="btn alt" id="spQuest" type="button">Quest to get home</button></div></div></div>
 <button class="jump swingbtn" id="swingBtn" type="button" hidden>Swing</button>
 <div class="tray" id="tray" hidden>
   <span class="tl">Radicals</span>
@@ -2324,7 +2334,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
   const POST_CREDITS = 'Post-credits scene: the clock resets to 11:58. The Deadline always comes back. See you next term.';
   const beaten = new Set(); try { JSON.parse(localStorage.getItem('ru-bosses') || '[]').forEach(b => beaten.add(b)); } catch (e) {}
   // fight positions are in grid units (40 = 1 metre) measured from the middle of whichever room the fight is in
-  const BND = { lair: { x0: -330, x1: 290, y0: -325, y1: 270 }, room: { x0: -160, x1: 164, y0: -136, y1: 164 }, roof: { x0: -200, x1: 200, y0: -120, y1: 120 }, hub: { c: 190 }, ai: { c: 420 }, code: { c: 340 }, chip: { c: 460 }, sea: { c: 1150 }, city: { x0: -1560, x1: 1560, y0: -2560, y1: -320 } };
+  const BND = { lair: { x0: -330, x1: 290, y0: -325, y1: 270 }, room: { x0: -160, x1: 164, y0: -136, y1: 164 }, roof: { x0: -200, x1: 200, y0: -120, y1: 120 }, hub: { c: 190 }, ai: { c: 420 }, code: { c: 340 }, chip: { c: 460 }, sea: { c: 1150 }, space: { c: 230 }, city: { x0: -1560, x1: 1560, y0: -2560, y1: -320 } };
   // round platforms (Mandalink island and the levels below it) have a radius instead of walls
   Object.values(BND).forEach(B => { if (B.c) Object.assign(B, { x0: -B.c * .7, x1: B.c * .7, y0: -B.c * .7, y1: B.c * .7 }); });
   const bnd = () => A.bndO || BND[A.bz] || BND.room;
@@ -2419,6 +2429,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     hela: { r: 30, sp: 105, D: 160, lunge: 640, moves: ['blades', 'spikes', 'swipe', 'lunge'], swipeW: 1.3 },
     thanos: { r: 44, sp: 80, D: 150, lunge: 520, moves: ['swipe', 'power', 'space', 'reality'], swipeW: 1.2 },
     gorr: { r: 30, sp: 115, D: 150, lunge: 640, moves: ['shadows', 'swipe', 'lunge', 'tendrils'], swipeW: 1.3 },
+    maw: { r: 28, sp: 100, D: 190, lunge: 560, moves: ['volley', 'blades', 'lunge', 'volley'], swipeW: 1 },
     celestial: { r: 130, sp: 45, D: 420, moves: ['stomp', 'eyes', 'meteors', 'swipe'], swipeW: 1.4, eyeH: 23, beamW: 34, big: 1 }
   };
   const GLYPHS = ['氵', '木', '女', '口', '亻', '心', '日', '月', '火', '子'];
@@ -2437,7 +2448,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     // hitting an illusion or a drone pops it instead
     if (x !== undefined && A.mins.length) { const np = nearPart(x, y); if (np.min && np.e < 24) return popMin(np.min); }
     if (A.w.id === 'necro' && !A.fists && GODS.has(A.def.id)) n *= 3;
-    n *= 2 * weaponEff(); wear(.015);
+    n *= 2 * weaponEff() * armFactor(); wear(.015);
     if (b.mv === 'snap' && b.st === 'wind') { b.snapHp += n; if (b.snapHp >= 50) { b.st = 'rest'; b.t = .6; b.stun = 2.5; b.tel = null; A.snapping = false; tone(200, .4, 'triangle', .06, 900); say('You stopped the snap!', 2600); } }
     b.hp -= n; b.flash = .08; mpHit(n);
     A.nums.push({ x: (x ?? b.x) + (Math.random() - .5) * 20, y: (y ?? b.y) - 20, v: Math.round(n), life: .8 });
@@ -2567,7 +2578,8 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     A.mins.slice().forEach(popMin);
     addSnap(gone, gw);
     const names = gone.map(id => BOSSES.find(d => d.id === id).name).concat(gw.map(id => WEAPONS.find(w => w.id === id).name));
-    say(`Thanos snapped. ${names.length ? names.join(', ') + ' turned to dust, and the' : 'The'} blast wrecked your room and Mandalink island. Keep fighting!`, 5600);
+    say(`Thanos snapped. ${names.length ? names.join(', ') + ' turned to dust, and the' : 'The'} blast wrecked your room and Mandalink island… and it’s pulling you away.`, 4000);
+    setTimeout(toSpace, 2200);
   }
   let snapState = null; try { snapState = JSON.parse(localStorage.getItem('ru-snap') || 'null'); if (snapState && (!snapState.bosses || !snapState.weapons)) snapState = null; } catch (e) {}
   let dust = null, snapHidden = [], snapBent = [], snapMats = [], snapDecals = [], dmgDone = {};
@@ -3057,6 +3069,19 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
       } };
     },
     // ----- MCU villains (people-shaped, built on one body) -----
+    maw(){
+      const robe = mat(0x1C1B22, { roughness: .8 }), grey = mat(0x9EA3A8, { roughness: .6 }), trim = mat(0x6B5A8A, { roughness: .5 });
+      const H = humanoid({ s: 1.05, body: robe, leg: robe, skin: grey, arm: robe, hand: grey, chest: .9 });
+      const skirt = new THREE.Mesh(new THREE.ConeGeometry(.42, 1.1, 12, 1, true), robe); skirt.position.y = .55; skirt.castShadow = true; H.g.add(skirt);
+      box(.06, .9, .3, trim, .2, 1.35, 0, H.g);
+      H.head.children.forEach(c => c.scale.y *= 1.25);
+      box(.04, .02, .16, mat(0x16181D), .15, .03, 0, H.head);
+      // bits of Thanos's ship, held up by his mind
+      const bits = [0, 1, 2, 3, 4].map(k => { const d = new THREE.Mesh(new THREE.DodecahedronGeometry(.1 + k * .02, 0), mat(0x5B5E66, { metalness: .5, roughness: .5, flatShading: true })); d.castShadow = true; H.g.add(d); return d; });
+      return { g: H.g, anim(b, t, mv){ H.walk(t, mv * .4); const up = b.st === 'wind' || b.st === 'volley' || b.st === 'fan';
+        H.arms.forEach(({ a }, k) => { if (up) a.rotation.z = 2 + Math.sin(t * 6 + k) * .2; });
+        bits.forEach((d, k) => { const an = t * (up ? 3 : 1.2) + k * 1.26, R = up ? .55 : .8; d.position.set(Math.cos(an) * R, 1.6 + Math.sin(t * 2 + k) * .25 + (up ? .5 : 0), Math.sin(an) * R); d.rotation.x += .03; d.rotation.y += .02; }); } };
+    },
     loki(){
       const green = mat(0x1F5E3B, { roughness: .6 }), gold = mat(0xD9A93A, { metalness: .7, roughness: .3 }), blk = mat(0x16181D, { roughness: .6 });
       const H = humanoid({ body: green, leg: blk, skin: mat(0xE8C8A8), arm: green, hand: blk, chest: 1.05 });
@@ -3314,7 +3339,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     const cond = condition(w.id); A.dur = cond.d; A.bone = w.id === 'claws' && cond.broken; A.fists = w.id === 'fists' || (w.id !== 'claws' && cond.broken);
     // the creature steps out of its pod (or out of the ground)
     const M = CREATURE3D[def.id](false); fightG.add(M.g); if (M.segs) M.segs.forEach(s => fightG.add(s)); A.model = M;
-    fightView();
+    fightView(); $('#arenaRetry').hidden = false; $('#arenaBack').textContent = 'Back to the lair';
     document.body.classList.add('fighting'); hud.el.hidden = false; $('#arenaMsg').hidden = true; hud.name.textContent = def.name; hud.hp.style.background = def.col; hud.wpn.textContent = wpnLabel();
     $('#fHelp').textContent = fine ? 'WASD to move, mouse to aim, click (or hold) to attack, right-click or Shift to block, E for your special, Space to jump shockwaves.' : 'Joystick to move, drag to look, tap to attack, hold Block to block. Jump over shockwaves with the Jump button.';
     $('#worldBack').hidden = false; $('#worldBack').textContent = 'Leave the fight'; dock.classList.remove('on');
@@ -3325,7 +3350,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
   // the weapon you hold, drawn in front of the camera
   function buildView(id, bone){
     const hands = id === 'claws' || id === 'fists' || id === 'web' ? [1, -1] : [id === 'shield' ? -.4 : 1];
-    return hands.map(s => {
+    const out = hands.map(s => {
       const holder = new THREE.Group(), w = mkWeapon(id); holder.add(w); viewG.add(holder);
       if (bone) w.traverse(c => { if (c.isMesh && c.material.color && c.material.color.getHex() === 0xDCE3EA) { c.material = mat(0xE3D2A6, { roughness: .9 }); c.scale.set(1.3, .8, 1.3); } });
       w.traverse(c => { if (c.isMesh && c.material.color) c.material.userData.c0 = c.material.color.clone(); });
@@ -3334,9 +3359,13 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
       if (id === 'fists' || id === 'web') { w.scale.setScalar(id === 'web' ? .65 : 1); w.rotation.set(0, 0, 0); if (id === 'web') holder.userData.base = V(.3 * s, -.34, -.62); }
       const glove = sph(.04, mat(id === 'claws' ? 0xF2C230 : 0xC68B59), 0, 0, 0, holder, 1, 1, 1, 10); glove.visible = id !== 'claws' && id !== 'shield' && id !== 'fists' && id !== 'web';
       holder.traverse(c => { if (c.isMesh) { c.castShadow = false; c.userData.noPick = true; } });
+      if (s > 0 && armHurt()) addArm(holder);
       return { holder, w, s };
     });
+    if (armHurt() && !hands.some(s => s > 0)) loneArm();
+    return out;
   }
+  function loneArm(){ const h = new THREE.Group(); h.userData.base = V(.26, -.24, -.5); h.position.copy(h.userData.base); viewG.add(h); addArm(h); }
   function fightView(){ clearView(); A.view = buildView(A.fists ? 'fists' : A.w.id, A.bone); A.durShown = undefined; }
   const wpnLabel = () => A.w.id === 'fists' ? 'Bare hands' : A.bone ? 'Bone claws \u00B7 Wolverine' : A.fists ? `Fists \u00B7 ${A.w.name} is broken` : `${A.w.name} \u00B7 ${A.w.from}`;
   // switching weapons mid-fight (number keys, mouse wheel, the bar on the right)
@@ -3351,7 +3380,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
   let idleShown;
   function idleView(){
     const sc = sceneOf();
-    if (idleShown !== held || viewG.parent !== sc) { clearView(); if (viewG.parent) viewG.parent.remove(viewG); sc.add(viewG); idleShown = held; if (held) buildView(held, held === 'claws' && condition('claws').broken); }
+    if (idleShown !== held || viewG.parent !== sc) { clearView(); if (viewG.parent) viewG.parent.remove(viewG); sc.add(viewG); idleShown = held; if (held) buildView(held, held === 'claws' && condition('claws').broken); else if (armHurt()) loneArm(); }
     viewG.position.copy(camera.position); viewG.quaternion.copy(camera.quaternion);
     const t = performance.now() / 1000; viewG.children.forEach(h => { const B0 = h.userData.base; h.position.set(B0.x, B0.y + Math.sin(t * 2) * .006, B0.z); });
   }
@@ -3363,7 +3392,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
       clearFight(); A = null; idleShown = undefined; uiZone(); hud.el.hidden = true; document.body.classList.remove('fighting'); $('#arenaMsg').hidden = true; $('#jumpBtn').hidden = true;
       if (document.pointerLockElement) document.exitPointerLock();
       if (zone === 'city' && inWorld) { thinCity(false); toRoofTop(true); }
-      if (inWorld) { $('#worldBack').textContent = { lair: 'Back upstairs', roof: 'Back downstairs' }[zone] || 'Back to the room'; } else { $('#worldBack').hidden = true; $('#worldBack').textContent = 'Back to the room'; dock.classList.add('on'); }
+      if (inWorld) { $('#worldBack').textContent = { lair: 'Back upstairs', roof: 'Back downstairs', space: 'Teleport home' }[zone] || 'Back to the room'; } else { $('#worldBack').hidden = true; $('#worldBack').textContent = 'Back to the room'; dock.classList.add('on'); }
       refreshLair();
     };
     if (instant) done(); else fade(done, inWorld ? '#06070B' : '#FFF8EC');
@@ -3378,8 +3407,8 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     const where = { room: 'crashed into the room', lair: 'is back in the lair', roof: 'climbed onto the rooftop', hub: 'followed you to Mandalink island' }[z] || 'dropped down after you';
     if (z === A.pz) { tone(70, .6, 'sawtooth', .07, 40); A.shake = .4; say(`${A.def.name} ${where}!`, 3000); }
   }
-  $('#arenaRetry').onclick = () => { if (!A) return; const i = A.i, id = A.def.id; endFight(true); if (id === 'celestial') return startCelestial(); if (id === 'gorr') return zone === 'sea' ? startFight(GORR, -2, 0, -420, 'sea') : say('Gorr is waiting in the deepest level below Mandalink island.', 3000); if (fightZone() !== 'lair') return enterLair(); startBoss(i); };
-  $('#arenaBack').onclick = () => endFight();
+  $('#arenaRetry').onclick = () => { if (!A) return; const i = A.i, id = A.def.id; endFight(true); if (id === 'maw') return startMaw(); if (id === 'celestial') return startCelestial(); if (id === 'gorr') return zone === 'sea' ? startFight(GORR, -2, 0, -420, 'sea') : say('Gorr is waiting in the deepest level below Mandalink island.', 3000); if (fightZone() !== 'lair') return enterLair(); startBoss(i); };
+  $('#arenaBack').onclick = () => { if (A && A.def.id === 'maw' && A.won) { endFight(true); return snapBack(); } endFight(); };
   hud.sp.onclick = () => special();
   $('#fQuit').onclick = () => endFight();
   function attack(){ if (A && !A.over) A.atk = true; }
@@ -3404,9 +3433,9 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     A.over = true; A.won = won; A.hold = false;
     if (document.pointerLockElement) document.exitPointerLock();
     const m = $('#arenaMsg'), cel = A.def.id === 'celestial'; m.hidden = false;
-    const where = { room: ', upstairs in my room', roof: ', up on the rooftop', hub: ', on Mandalink island', city: ', in the middle of Bangalore' }[A.bz] || '';
+    const where = { room: ', upstairs in my room', roof: ', up on the rooftop', hub: ', on Mandalink island', city: ', in the middle of Bangalore', space: ', in deep space' }[A.bz] || '';
     if (won) {
-      if (!cel) { beaten.add(A.def.id); try { localStorage.setItem('ru-bosses', JSON.stringify([...beaten])); } catch (e) {} }
+      if (!cel && A.def.id !== 'maw') { beaten.add(A.def.id); try { localStorage.setItem('ru-bosses', JSON.stringify([...beaten])); } catch (e) {} }
       [523, 659, 784, 1046].forEach((f, k) => setTimeout(() => tone(f, .25, 'triangle', .06), k * 110));
       $('#arenaTitle').textContent = `${A.def.name}: defeated`; $('#arenaText').textContent = `${A.def.win} Finished off with ${A.w.name}${where}.` + (!cel && beaten.size === BOSSES.length ? ' ' + POST_CREDITS : '');
       if (!cel && beaten.size === BOSSES.length) secret('credits');
@@ -3419,6 +3448,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
       m.hidden = true; setTimeout(() => { if (A && A.over) m.hidden = false; }, 3200);
     } else { tone(160, .5, 'sawtooth', .05, 60); $('#arenaTitle').textContent = 'Plot armour ran out'; $('#arenaText').textContent = 'Every hero loses the first fight. Try again, or grab a different weapon from the rack.'; }
     $('#arenaBack').textContent = { lair: 'Back to the lair', city: 'Back to the rooftop', roof: 'Back to the rooftop', hub: 'Back to the island' }[fightZone()] || 'Back to the room';
+    if (A.def.id === 'maw') { $('#arenaRetry').hidden = won; $('#arenaBack').textContent = won ? 'Snap everyone back' : 'Back to the rocks'; }
   }
   function dropFx(f){ if (f.m) { f.m.parent && f.m.parent.remove(f.m); disposeDeep(f.m); f.m = null; } if (f.k === 'bolt' && lairAnim) lairAnim.flash.intensity = 0; }
   function simStep(dt){
@@ -3712,6 +3742,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
       <h3>Inventory</h3>${inv.length ? rows : '<p class="gmsg">Nothing yet. Open the basement door in the hallway to find the lair, then take weapons from the rack.</p>'}
       <h3>Status</h3>
       <div class="prow"><b>Adamantium poisoning<br><small>${poison >= .8 ? 'Severe: you\u2019re losing hearts in fights. Put the claws away.' : poison >= .5 ? 'Your healing factor has stopped working.' : 'Builds up while you hold Wolverine\u2019s claws, fades when you don\u2019t.'}</small></b>${bar(poison, '#3CE870')}<small>${Math.round(poison * 100)}%</small></div>
+      ${armHurt() ? `<div class="prow"><b>Burned arm<br><small>The Infinity Stones burned your right arm when you snapped everyone back, like Hulk’s. Your hits do ${Math.round((1 - armFactor()) * 100)}% less damage. Heals in ${Math.floor(armLeft() / 864e5)}d ${Math.floor(armLeft() % 864e5 / 36e5)}h.</small></b>${bar(1 - armLeft() / ARM_TIME, '#FF8A2E')}<small>${Math.round((1 - armLeft() / ARM_TIME) * 100)}%</small></div>` : ''}
       ${isUnlocked('necro') ? '<div class="prow"><b>Necrosword<br><small>Drains a heart every 15 seconds in a fight while you hold it.</small></b></div>' : ''}
       ${extrasMenu()}
       <h3>Settings</h3>
@@ -3730,13 +3761,13 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     if (act2 === 'leave') { closePause(); endFight(); }
     if (act2 === 'unsnap') { unsnap(); renderPause(); }
     if (act2 === 'fx') { lowFx = !lowFx; fxChosen = true; try { localStorage.setItem('ru-lowfx', lowFx ? '1' : '0'); } catch (er) {} applyFx(); renderPause(); }
-    if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
+    if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon', 'ru-arm'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
   });
   menuBtn.onclick = () => openPause();
   function applyFx(){
     renderer.setPixelRatio(lowFx ? 1 : Math.min(devicePixelRatio, 2)); resize();
     renderer.shadowMap.enabled = fine && !lowFx;
-    [scene, lairScene, world, roofScene].forEach(sc => sc && sc.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.needsUpdate = true); }));
+    [scene, lairScene, world, roofScene, spaceScene].forEach(sc => sc && sc.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.needsUpdate = true); }));
   }
   if (lowFx) setTimeout(applyFx, 0);
   // runs every frame: poisoning, the bar on the right, the menu button and the weapon in your hand
@@ -3942,7 +3973,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
   function mpStop(){ if (mq) { mq.pub(`${MP_TOPIC}/p/${mpId}`, 'bye'); const m = mq; mq = null; setTimeout(() => m.close(), 100); } clearGhosts(); mpChip.hidden = true; }
   addEventListener('pagehide', () => { if (mq) mq.pub(`${MP_TOPIC}/p/${mpId}`, 'bye'); });
   const areaKey = () => inWorld ? (zone === 'city' ? 'roof' : zone) : 'room';
-  const areaScene = k => k === 'room' ? scene : ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, lair: lairScene })[k];
+  const areaScene = k => k === 'room' ? scene : ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, lair: lairScene, space: spaceScene })[k];
   const num = (v, m) => { v = +v; return isFinite(v) ? clamp(v, -m, m) : 0; };
   function mpSend(force){
     if (!mq) return;
@@ -3956,7 +3987,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     if (!id || id === mpId) return;
     if (kind === 'p') {
       if (text === 'bye') return dropGhost(id);
-      const d = JSON.parse(text); if (typeof d.a !== 'string' || !/^(room|hub|ai|code|chip|sea|roof|lair)$/.test(d.a)) return;
+      const d = JSON.parse(text); if (typeof d.a !== 'string' || !/^(room|hub|ai|code|chip|sea|roof|lair|space)$/.test(d.a)) return;
       let gh = ghosts.get(id); if (!gh) { if (ghosts.size >= 24) return; gh = makeGhost(id); ghosts.set(id, gh); }
       Object.assign(gh, { a: d.a, tx: num(d.x, 300), ty: num(d.y, 300), tz: num(d.z, 300), tr: num(d.r, 1e4), f: typeof d.f === 'string' ? d.f.slice(0, 16) : '', seen: performance.now() });
       const w = typeof d.w === 'string' && WEAPONS.some(x => x.id === d.w) ? d.w : '';
@@ -4006,7 +4037,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
   // ---------- menu additions ----------
   function extrasMenu(){
     const dests = DESTS.filter(d => !d.need || d.need()).map(d => `<button class="btn" type="button" data-pa="go:${d.id}">${esc(d.name)}</button>`).join('');
-    return `<h3>Sling ring</h3><div class="prow"><b>Open a portal<br><small>Travel anywhere you’ve been, Doctor Strange style.</small></b></div><div class="gact ring">${A ? '<p class="gmsg">Not during a fight.</p>' : dests}</div>
+    return `<h3>Sling ring</h3><div class="prow"><b>Open a portal<br><small>Travel anywhere you’ve been, Doctor Strange style.</small></b></div><div class="gact ring">${A ? '<p class="gmsg">Not during a fight.</p>' : zone === 'space' && inWorld ? '<p class="gmsg">The sling ring doesn’t reach this far out. Teleport home, or find the stones.</p>' : dests}</div>
       <h3>Extras</h3>
       <div class="prow"><b>At a glance<br><small>A one-page summary for admissions, with a timeline, the research demo and a PDF.</small></b><button class="btn" type="button" data-pa="brief">Open</button></div>
       <div class="prow"><b>Photo mode<br><small>Hide everything, pick a filter, and save a picture. Shortcut: P.</small></b><button class="btn" type="button" data-pa="photo">Open</button></div>
@@ -4023,6 +4054,145 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
   // runs every frame
   function extrasFrame(dt){
     ringStep(dt); weatherStep(dt); mpStep(dt);
+  }
+
+  // ---------- stranded in space: Thanos's snap throws you across the galaxy ----------
+  // Every snap sends you here. Teleport home (the snap stays), or collect the six Infinity Stones and snap everyone back.
+  const GEMS = [
+    { id: 'space', name: 'Space Stone', col: 0x3C7CFF },
+    { id: 'reality', name: 'Reality Stone', col: 0xE8303C },
+    { id: 'power', name: 'Power Stone', col: 0x9B4DFF },
+    { id: 'mind', name: 'Mind Stone', col: 0xFFD23C },
+    { id: 'soul', name: 'Soul Stone', col: 0xFF8A2E },
+    { id: 'time', name: 'Time Stone', col: 0x3CE870 }
+  ];
+  const Q = { on: false, got: new Set(), o2: 1, mawCd: 0, pulse: 0, warned: 0 };
+  const spaceHud = $('#spaceHud'), spaceBox = $('#spaceBox');
+  function rockMesh(r, parent, x, z){
+    const g = new THREE.Group(); g.position.set(x, 0, z); parent.add(g);
+    const rm = mat(0x6E6259, { roughness: 1, flatShading: true }), dk = mat(0x4A413B, { roughness: 1, flatShading: true });
+    const top = new THREE.Mesh(new THREE.CylinderGeometry(r, r * .75, .5, 10), rm); top.position.y = -.25; top.userData.walk = true; top.receiveShadow = true; g.add(top);
+    const under = new THREE.Mesh(new THREE.DodecahedronGeometry(r * .8, 0), dk); under.scale.set(1, .8, 1); under.position.y = -.5 - r * .45; under.rotation.y = x + z; g.add(under);
+    return g;
+  }
+  function buildSpace(){
+    spaceScene = new THREE.Scene(); spaceScene.background = new THREE.Color(0x03030A);
+    spaceScene.add(new THREE.HemisphereLight(0xB8C4FF, 0x2A1A10, .55));
+    const sun = new THREE.DirectionalLight(0xFFC08A, 1.1); sun.position.set(-30, 25, -20); spaceScene.add(sun);
+    // stars, Titan, and a purple nebula
+    const n = lowFx ? 900 : 2600, P = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { const v = V(Math.random() - .5, Math.random() - .5, Math.random() - .5).normalize().multiplyScalar(260 + Math.random() * 30); P.set([v.x, v.y, v.z], i * 3); }
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(P, 3));
+    spaceScene.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xFFFFFF, size: 1.1, sizeAttenuation: true, fog: false })));
+    const titan = new THREE.Mesh(new THREE.SphereGeometry(55, 48, 32), new THREE.MeshStandardMaterial({ roughness: 1, map: tex(512, 256, (g, w, h) => { g.fillStyle = '#C8642A'; g.fillRect(0, 0, w, h); for (let k = 0; k < 60; k++) { g.fillStyle = `rgba(${120 + Math.random() * 100},${50 + Math.random() * 50},20,.35)`; g.fillRect(0, Math.random() * h, w, 2 + Math.random() * 10); } for (let k = 0; k < 40; k++) { g.fillStyle = 'rgba(60,25,10,.35)'; g.beginPath(); g.arc(Math.random() * w, Math.random() * h, 3 + Math.random() * 12, 0, 7); g.fill(); } }) }));
+    titan.position.set(-110, 20, -190); titan.rotation.z = .3; titan.userData.noPick = true; spaceScene.add(titan);
+    const neb = new THREE.Mesh(new THREE.PlaneGeometry(320, 180), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, fog: false, map: tex(512, 288, (g, w, h) => { [['155,77,255', .5], ['60,124,255', .35], ['255,90,140', .25]].forEach(([c, a], k) => { const gr = g.createRadialGradient(w * (.3 + k * .2), h * (.4 + k * .1), 0, w * (.3 + k * .2), h * (.4 + k * .1), w * .35); gr.addColorStop(0, `rgba(${c},${a})`); gr.addColorStop(1, `rgba(${c},0)`); g.fillStyle = gr; g.fillRect(0, 0, w, h); }); }) }));
+    neb.position.set(120, 40, -230); neb.lookAt(0, 0, 0); neb.userData.noPick = true; spaceScene.add(neb);
+    // the rock you land on (Thanos's ship wreckage is scattered across it), and the paths out to the stones
+    plats.space = [{ x: 0, z: 0, r: 6 }];
+    const anim = { movers: [], stones: [], pulse: null, debris: [] };
+    rockMesh(6, spaceScene, 0, 0);
+    const hull = mat(0x5B5E66, { metalness: .6, roughness: .5 }), gold = mat(0xD9A93A, { metalness: .7, roughness: .3 });
+    [[-2.6, -2, .7], [3, 1.2, -.5], [1.2, -3.4, 1.1]].forEach(([x, z, rot]) => { const b = box(1.6, .5, .9, hull, x, .2, z, spaceScene); b.rotation.set(.3, rot, .2); box(.8, .08, .4, gold, x, .48, z, spaceScene).rotation.y = rot; });
+    const OUT = [[.3, 19, 'space'], [1.55, 20, 'reality'], [2.8, 18.5, 'power'], [4.05, 21, 'mind'], [5.3, 19.5, 'soul']];
+    OUT.forEach(([an, R, sid], k) => {
+      const ca = Math.cos(an), sa = Math.sin(an), x = ca * R, z = sa * R;
+      plats.space.push({ x, z, r: 2.3 }); rockMesh(2.3, spaceScene, x, z);
+      // three stepping stones; on two of the paths the middle one drifts from side to side
+      const s0 = 6, s1 = R - 2.3, gap = (s1 - s0 - 3 * 1.7) / 4;
+      for (let i = 0; i < 3; i++) {
+        const d = s0 + gap * (i + 1) + .85 + i * 1.7, p = { x: ca * d, z: sa * d, r: .85 }; plats.space.push(p);
+        const m = rockMesh(.85, spaceScene, p.x, p.z);
+        if (i === 1 && k % 2 === 1) anim.movers.push({ p, m, bx: p.x, bz: p.z, nx: -sa, nz: ca, ph: k });
+      }
+      const def = GEMS.find(s => s.id === sid), st = new THREE.Group(); st.position.set(x, 0, z); spaceScene.add(st);
+      cyl(.25, .32, .7, mat(0x2A2D33, { metalness: .4 }), 0, .35, 0, st, 12);
+      const gem = new THREE.Mesh(new THREE.OctahedronGeometry(.17, 0), glowM(def.col, { emissiveIntensity: 1.6 })); gem.position.y = 1.05; st.add(gem);
+      const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex(), color: def.col, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending })); halo.scale.setScalar(1.2); halo.position.y = 1.05; st.add(halo);
+      st.traverse(o => o.userData.noPick = true);
+      anim.stones.push({ id: sid, g: st, gem, x, z });
+      if (sid === 'power') { const ring = new THREE.Mesh(new THREE.TorusGeometry(1, .06, 6, 48), glowM(0x9B4DFF, { emissiveIntensity: 1.4, transparent: true, opacity: .9 })); ring.rotation.x = Math.PI / 2; ring.position.set(x, .25, z); ring.visible = false; ring.userData.noPick = true; spaceScene.add(ring); anim.pulse = { ring, x, z, t: 0 }; }
+    });
+    // drifting junk
+    for (let k = 0; k < 24; k++) { const d = new THREE.Mesh(new THREE.DodecahedronGeometry(.3 + Math.random() * 1.2, 0), mat(0x5A4F48, { roughness: 1, flatShading: true })); const an = Math.random() * 6.28, R = 30 + Math.random() * 40; d.position.set(Math.cos(an) * R, -8 + Math.random() * 20, Math.sin(an) * R); d.userData.noPick = true; d.userData.sp = (Math.random() - .5) * .4; spaceScene.add(d); anim.debris.push(d); }
+    worldAnim.space = anim;
+  }
+  let glowT = null;
+  function glowTex(){ return glowT || (glowT = tex(64, 64, (g, w, h) => { const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); })); }
+  // the snap goes off, and a moment later you're gone
+  function toSpace(){
+    if (!A || A.def.id !== 'thanos' || A.over) return;
+    fade(() => {
+      endFight(true);
+      if (!spaceScene) buildSpace();
+      Q.on = false; Q.got.clear(); Q.o2 = 1; Q.mawCd = 0; Q.warned = 0;
+      worldAnim.space.stones.forEach(s => s.g.visible = true);
+      saved = { pos: V(0, 1.6, 2.6), yaw: 0, pitch: -.05 };
+      inWorld = true; zone = 'space'; falling = false; vy = 0; walkTarget = null; pos.set(0, 1.6, 2); yaw = 0; pitch = -.05;
+      dock.classList.remove('on'); $('#worldBack').hidden = false; $('#worldBack').textContent = 'Teleport home'; jumpBtn.hidden = fine; uiZone();
+      spaceBox.classList.add('on'); $('#spQuest').focus();
+    }, '#FFFFFF');
+  }
+  function spaceHome(){ spaceBox.classList.remove('on'); Q.on = false; spaceHud.hidden = true; fade(() => travel('room'), '#FFFFFF'); }
+  $('#spHome').onclick = spaceHome;
+  $('#spQuest').onclick = () => { spaceBox.classList.remove('on'); Q.on = true; spaceHud.hidden = false; renderSpaceHud(); say('Find the five Infinity Stones on the rocks around you. Low gravity: jump between the rocks. Watch your oxygen.', 5200); };
+  function renderSpaceHud(){
+    spaceHud.innerHTML = `<div class="o2"><span>Oxygen</span><span class="pbar"><i style="width:${Math.round(Q.o2 * 100)}%;background:${Q.o2 > .5 ? '#7CF2FF' : Q.o2 > .2 ? '#FFC93C' : '#FF5A6E'}"></i></span></div><div class="gems">${GEMS.map(s => `<i title="${s.name}" style="background:${Q.got.has(s.id) ? '#' + s.col.toString(16).padStart(6, '0') : 'transparent'};border-color:#${s.col.toString(16).padStart(6, '0')}"></i>`).join('')}</div>`;
+  }
+  const MAW = { id: 'maw', name: 'Ebony Maw', tag: 'Thanos’s herald. He throws the wreckage at you with his mind, and he has the Time Stone.', from: 'The MCU (Avengers: Infinity War)', col: '#8FA3B8', hp: 380,
+    win: 'Ebony Maw is gone, and he dropped the Time Stone.' };
+  function startMaw(){ Q.mawCd = 8; say('Ebony Maw: “Hear me and rejoice…” He has the Time Stone.', 3400); startFight(MAW, -3, 0, -150, 'space'); }
+  function spaceFall(){ pos.set(0, 1.6, 2); vy = 0; falling = false; walkTarget = null; if (Q.on) Q.o2 = Math.max(0, Q.o2 - .1); say('You drifted off into the void. The wreckage pulled you back, but it cost you oxygen.', 3200); tone(120, .5, 'sine', .05, 60); }
+  function spaceStep(dt, now){
+    const S = worldAnim.space; if (!S) return;
+    const t = now / 1000;
+    // drifting stepping stones carry you with them
+    S.movers.forEach(m => { const o = Math.sin(t * .9 + m.ph) * 1.8, nx = m.bx + m.nx * o, nz = m.bz + m.nz * o; if (grounded && platformAt(pos.x, pos.z) === m.p) { pos.x += nx - m.p.x; pos.z += nz - m.p.z; } m.p.x = nx; m.p.z = nz; m.m.position.x = nx; m.m.position.z = nz; });
+    S.stones.forEach(s => { if (!reduce) { s.gem.rotation.y += dt * 1.5; s.gem.position.y = 1.05 + Math.sin(t * 2 + s.x) * .06; } });
+    S.debris.forEach(d => { d.rotation.x += d.userData.sp * dt; d.rotation.y += d.userData.sp * dt; });
+    if (pos.y < -14) return spaceFall();
+    if (!Q.on || spaceBox.classList.contains('on')) return;
+    // the Power Stone sends out a shockwave: jump over it
+    const pu = S.pulse; if (pu && !Q.got.has('power')) { pu.t += dt; const ph = pu.t % 3.2, r = ph / .7 * 2.6; pu.ring.visible = ph < .7; pu.ring.scale.set(Math.max(.01, r), Math.max(.01, r), 1);
+      const d = Math.hypot(pos.x - pu.x, pos.z - pu.z); if (ph < .7 && Math.abs(d - r) < .25 && pos.y - 1.6 < .35 && !Q.hitT) { Q.hitT = .8; Q.o2 = Math.max(0, Q.o2 - .06); const k = 1.6 / (d || 1); pos.x += (pos.x - pu.x) * k * .6; pos.z += (pos.z - pu.z) * k * .6; tone(200, .3, 'square', .05, 90); say('The Power Stone knocked you back. Jump over the wave!', 2400); } }
+    Q.hitT = Math.max(0, (Q.hitT || 0) - dt);
+    // picking up stones
+    S.stones.forEach(s => { if (Q.got.has(s.id) || Math.hypot(pos.x - s.x, pos.z - s.z) > 1.1 || pos.y > 3) return; Q.got.add(s.id); s.g.visible = false; Q.o2 = Math.min(1, Q.o2 + .15); [660, 880, 1100].forEach((f, i) => setTimeout(() => tone(f, .15, 'triangle', .05), i * 70));
+      const left = 5 - [...Q.got].filter(id => id !== 'time').length; say(left ? `${GEMS.find(x => x.id === s.id).name}! ${left} to go.` : 'Five stones. Ebony Maw has the last one. Get back to the big rock.', 3200); });
+    // oxygen runs out slowly (slower during a fight)
+    Q.o2 = Math.max(0, Q.o2 - dt / (A ? 600 : 300));
+    if (Q.o2 < .25 && !Q.warned) { Q.warned = 1; say('Oxygen is getting low!', 2400); tone(880, .1, 'square', .04); }
+    if (Q.o2 <= 0 && !A) { Q.on = false; spaceHud.hidden = true; say('You ran out of oxygen and blacked out…', 2600); return fade(() => { travel('room'); say('You woke up back home. The snap is still in effect.', 4000); }, '#000'); }
+    // with five stones, Ebony Maw comes for them on the big rock
+    Q.mawCd = Math.max(0, Q.mawCd - dt);
+    if (!A && !Q.got.has('time') && Q.got.size >= 5 && Q.mawCd <= 0 && Math.hypot(pos.x, pos.z) < 5.5 && pos.y < 2) startMaw();
+    if ((Q.hudT = (Q.hudT || 0) - dt) <= 0) { Q.hudT = .25; renderSpaceHud(); }
+  }
+  // all six: snap everyone back, and the stones burn your arm (like Hulk's in Endgame)
+  const ARM_TIME = 3 * 24 * 3600 * 1000;
+  let arm = null; try { arm = JSON.parse(localStorage.getItem('ru-arm') || 'null'); } catch (e) {}
+  const armLeft = () => arm ? Math.max(0, arm.until - Date.now()) : 0;
+  const armHurt = () => armLeft() > 0;
+  const armFactor = () => armHurt() ? 1 - .4 * armLeft() / ARM_TIME : 1;
+  function snapBack(){
+    Q.got.add('time'); Q.on = false; spaceHud.hidden = true;
+    tone(1400, .08, 'square', .05); setTimeout(() => tone(60, 2.5, 'sawtooth', .07, 400), 150);
+    fade(() => {
+      unsnap(true); arm = { t0: Date.now(), until: Date.now() + ARM_TIME }; try { localStorage.setItem('ru-arm', JSON.stringify(arm)); } catch (e) {}
+      travel('room'); idleShown = undefined;
+      say('You snapped everyone back. Every creature and every weapon is back… but the stones burned your right arm. It’ll take about three days to heal.', 7000);
+    }, '#FFFFFF');
+  }
+  // the burned arm, drawn in first person
+  let armTexC = null;
+  function armMat(){ if (!armTexC) armTexC = tex(128, 256, (g, w, h) => { g.fillStyle = '#2A1E1A'; g.fillRect(0, 0, w, h); g.strokeStyle = '#FF6A1E'; g.lineWidth = 3; for (let k = 0; k < 16; k++) { g.beginPath(); let x = Math.random() * w, y = Math.random() * h; g.moveTo(x, y); for (let s = 0; s < 5; s++) { x += (Math.random() - .5) * 30; y += Math.random() * 26; g.lineTo(x, y); } g.stroke(); } });
+    return new THREE.MeshStandardMaterial({ color: 0xFFFFFF, map: armTexC, emissive: 0xFFFFFF, emissiveMap: armTexC, emissiveIntensity: .35, roughness: .9 }); }
+  function addArm(holder){
+    const g = new THREE.Group(), m = armMat(), from = V(0, -.04, .02), to = V(.14, -.34, .5), len = from.distanceTo(to);
+    const fore = new THREE.Mesh(new THREE.CylinderGeometry(.045, .055, len, 10), m); fore.position.copy(from).lerp(to, .5); fore.quaternion.setFromUnitVectors(V(0, 1, 0), to.clone().sub(from).normalize()); g.add(fore);
+    sph(.05, m, 0, -.02, 0, g, 1, .8, 1.1, 10);
+    g.traverse(o => { if (o.isMesh) { o.castShadow = false; o.userData.noPick = true; } });
+    holder.add(g); return g;
   }
 
   // ---------- entering ----------
@@ -4125,7 +4295,8 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
   };
   const platformAt = (x, z) => plats[zone].find(p => onPlat(x, z, p)) || null;
   let codeScene = null, chipScene = null, seaScene = null, falling = false;
-  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene })[zone] : scene;
+  let spaceScene = null;
+  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene })[zone] : scene;
   function radTile(parent, ch, x, y, z){
     const m = new THREE.Mesh(new THREE.PlaneGeometry(.55, .55), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: tex(160, 160, (g, w, h) => { g.fillStyle = '#FFC93C'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, h, 24) : g.rect(0, 0, w, h); g.fill(); g.fillStyle = '#16181D'; g.font = `700 110px ${ZH}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, w / 2, h / 2 + 6); }) }));
     m.position.set(x, y, z); m.userData.collect = ch; m.userData.base = y; parent.add(m); worldAnim.tiles.push(m); return m;
@@ -4328,7 +4499,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     // if the bookshelf is closed, the vault (and the operating table) is sealed off, so come back into the room instead
     fade(() => { inWorld = false; zone = 'hub'; uiZone(); walkTarget = null; vy = 0; pos.copy(saved.pos); yaw = saved.yaw; pitch = saved.pitch; if (region(pos.x) === 'vault' && !vaultOpen) { pos.set(3.2, 1.6, .3); yaw = Math.PI / 2; pitch = 0; } dock.classList.add('on'); $('#worldBack').hidden = true; jumpBtn.hidden = true; $('#worldBack').textContent = 'Back to the room'; });
   }
-  $('#worldBack').onclick = () => A ? endFight() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
+  $('#worldBack').onclick = () => A ? endFight() : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
   function enterAI(){
     fade(() => {
       if (!aiScene) buildAI();
@@ -4483,7 +4654,8 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     // gravity
     const plat = platformAt(pos.x, pos.z), feet = pos.y - 1.6;
     if (plat && vy <= 0 && feet <= .02 && feet > -.7) { if (!grounded && vy < -3) tone(140, .06, 'sine', .05); pos.y = 1.6; vy = 0; grounded = true; }
-    else { grounded = false; vy = Math.max(vy - 18 * dt, -30); pos.y += vy * dt; }
+    else { grounded = false; vy = Math.max(vy - (zone === 'space' ? 8 : 18) * dt, -30); pos.y += vy * dt; }
+    if (zone === 'space') spaceStep(dt, now);
     if (pos.y < -28 && !falling && NEXT[zone]) { falling = true; enterLevel(NEXT[zone]); }
     if (reduce) return;
     if (zone === 'hub') {
@@ -4713,7 +4885,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
         if (camTween) { cancel(camTween); camTween = null; }
         walkTarget = null; exitTelescope();
         yaw += turn * 1.8 * dt;
-        const sp = (A ? (A.blocking ? 2 : 4.2) : inWorld && !grounded ? 1.8 : 2.6) * dt;
+        const sp = (A ? (A.blocking ? 2 : 4.2) : inWorld && !grounded && zone !== 'space' ? 1.8 : 2.6) * dt;
         const nx = pos.x + (-Math.sin(yaw) * f + Math.cos(yaw) * s) * sp;
         const nz = pos.z + (-Math.cos(yaw) * f - Math.sin(yaw) * s) * sp;
         if (valid(nx, nz)) { pos.x = nx; pos.z = nz; } else if (valid(nx, pos.z)) pos.x = nx; else if (valid(pos.x, nz)) pos.z = nz;
@@ -4739,7 +4911,7 @@ body.photo .top,body.photo .dock,body.photo .fhud,body.photo .hotbar,body.photo 
     });
     camera.position.copy(pos); camera.rotation.set(pitch, yaw, 0);
     dustStep(dt); snapCheck(); gorrCheck(); inventoryFrame(dt); extrasFrame(dt); fpsCheck(Math.min((now - (frame.prev || now)) / 1000, 1)); frame.prev = now;
-    const showSnap = !!snapState && !A && entered; if (snapBtn.hidden === showSnap) snapBtn.hidden = !showSnap;
+    const showSnap = !!snapState && !A && entered && !(inWorld && zone === 'space'); if (snapBtn.hidden === showSnap) snapBtn.hidden = !showSnap;
     // if anything in a fight ever throws, end the fight instead of freezing the page
     if (A) { try { fightFrame(dt); } catch (err) { console.error(err); try { endFight(true); } catch (e2) { A = null; } say('Something went wrong, so the fight ended.', 3000); } }
     renderer.render(sceneOf(), camera);
