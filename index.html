@@ -3902,7 +3902,6 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     renderer.shadowMap.enabled = fine && !lowFx;
     [scene, lairScene, world, roofScene, spaceScene].forEach(sc => sc && sc.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.needsUpdate = true); }));
   }
-  if (lowFx) setTimeout(applyFx, 0);
   // runs every frame: poisoning, the bar on the right, the menu button and the weapon in your hand
   let poisonSaveT = 0, poisonWarned = 0;
   function inventoryFrame(dt){
@@ -4912,7 +4911,6 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
       setTimeout(() => tone(45, 1.4, 'sawtooth', .05, 25), 150); }
     if (scarShake > 0 && entered) { scarShake -= dt; camera.position.add(V((Math.random() - .5) * scarShake * .15, (Math.random() - .5) * scarShake * .15, 0)); }
   }
-  if (scarOn) setScar(true);
   // ---------- the war table in the lair: pick an event on one of its screens ----------
   let warT = null;
   function buildWarTable(){
@@ -5053,7 +5051,6 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
     $('#scarBanner').hidden = !entered || !!EV || photoOn || !!RUN;
     if (altG && !inWorld) { const o = altG.userData.other; o.anim(now / 1000, 0, 0); o.g.rotation.y = Math.atan2(-3.2 - pos.x, 2.6 - pos.z); }
   }
-  if (altOn) setAlt(true);
 
   // ---------- bot brains ----------
   function nearestFoe(u){ let best = null, bd = 1e9; bodies().forEach(o => { if (o === u || !alive(o) || teamOf(o) === u.team) return; const d = Math.hypot(o.x - u.x, o.z - u.z) + (o.isMe ? -2 : 0) + (o.hero === 'anchor' ? -5 : 0); if (d < bd) { bd = d; best = o; } }); return best; }
@@ -6169,6 +6166,8 @@ body.earth838 .scarbanner{background:rgba(15,58,42,.85);color:#BFF4E0}
   }
   setMuted(muted);
   $('#soundBtn').onclick = () => { audio(); setMuted(!muted); if (!muted) tone(660, .1, 'sine', .08); };
+  // things saved from last time that change the scenes: only once every scene variable exists
+  try { if (lowFx) applyFx(); if (scarOn) setScar(true); if (altOn) setAlt(true); } catch (err) { console.error(err); }
   requestAnimationFrame(frame);
   $('#load').classList.add('off');
 })();
