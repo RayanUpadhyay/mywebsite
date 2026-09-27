@@ -4592,10 +4592,10 @@ body.photo .scarbanner{visibility:hidden}
   const godlike = h => h === 'doom' || h === 'beyonder';
   HEROES.anchor = { name: 'Universe anchor', hp: 600, kind: 'static', r: 1.1 };
   const RIFTS = [45, 135, 225, 315].map(a => [Math.cos(a * Math.PI / 180) * 24, Math.sin(a * Math.PI / 180) * 24]);
-  // solo records, and which events you've played (the Incursion unlocks after the other three)
+  // solo records, and which events you've played (the Final Incursion is open from the start)
   let soloRec = {}; try { soloRec = JSON.parse(localStorage.getItem('ru-evsolo') || '{}'); } catch (e) {}
   let evDone = []; try { evDone = JSON.parse(localStorage.getItem('ru-evdone') || '[]'); } catch (e) {}
-  const incOpen = () => ['avx', 'wwh', 'inj'].every(k => evDone.includes(k));
+  const incOpen = () => true;
   const heroLook = h => Object.assign({}, look, { outfit: HEROES[h].outfit, mask: 1, cape: 1 });
   // ---------- the global leaderboard (kept on the relay; the public relay can reset it now and then) ----------
   let pid = null; try { pid = localStorage.getItem('ru-pid'); if (!pid) { pid = Math.random().toString(36).slice(2, 12); localStorage.setItem('ru-pid', pid); } } catch (e) { pid = Math.random().toString(36).slice(2, 12); }
@@ -4683,7 +4683,6 @@ body.photo .scarbanner{visibility:hidden}
   const soloLine = k => { const r0 = soloRec[k] || { w: 0, l: 0 }; return `Your solo record: ${r0.w} win${r0.w === 1 ? '' : 's'}, ${r0.l} loss${r0.l === 1 ? '' : 'es'}`; };
   function openLobby(k){
     if (A) return say('Finish your fight first.', 2200);
-    if (k === 'inc' && !incOpen()) return say(`The Final Incursion unlocks after you\u2019ve played Avengers vs. X-Men, World War Hulk and Injustice (${['avx', 'wwh', 'inj'].filter(q => evDone.includes(q)).length} of 3 so far).`, 4200);
     closePause(); const E = EVENTS[k]; let team = k === 'inj' ? 'ins' : k === 'inc' ? 'def' : null;
     const draw = () => {
       if (!mq) evMode = 'solo';
@@ -4814,7 +4813,7 @@ body.photo .scarbanner{visibility:hidden}
       if (!won) { const wasEnd = instab >= 6; instab = Math.min(6, instab + 1); earthsLost++; try { localStorage.setItem('ru-lost', String(earthsLost)); } catch (e) {} saveInstab(); ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = true); setTimeout(wasEnd ? startVoid : instab >= 6 ? startEnd : startCollision, 3500); }
       if (won) { const wasEnd = instab >= 6; instab = 0; recap = []; saveInstab(); buildBreach(); canvas.style.filter = ''; if (wasEnd) { saviour = true; try { localStorage.setItem('ru-saviour', '1'); } catch (e) {} buildTrophy(); setTimeout(() => showCredits(true), 2500); } }
       if (won && (scarOn || altOn)) { if (scarOn) setScar(false); if (altOn) setAlt(false); setTimeout(() => say('You stopped the incursion. Your Earth, and your room, are whole again.', 4200), 2500); } }
-    if (!evDone.includes(EV.k)) { evDone.push(EV.k); try { localStorage.setItem('ru-evdone', JSON.stringify(evDone)); } catch (e) {} if (incOpen() && EV.k !== 'inc') setTimeout(() => say('The Final Incursion is unlocked. Find it at the war table in the lair.', 4200), 1500); }
+    if (!evDone.includes(EV.k)) { evDone.push(EV.k); try { localStorage.setItem('ru-evdone', JSON.stringify(evDone)); } catch (e) {} }
     if (EV.solo) { const r0 = soloRec[EV.k] || (soloRec[EV.k] = { w: 0, l: 0 }); r0[won ? 'w' : 'l']++; try { localStorage.setItem('ru-evsolo', JSON.stringify(soloRec)); } catch (e) {} }
     const title = EV.k === 'avx' ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : endFight ? 'The Beyonder wins. Everything goes white\u2026' : 'The two Earths are about to collide\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
     $('#evEndT').textContent = title; $('#evEndS').textContent = `Takedowns ${EV.kos} · Times down ${EV.deaths} · Damage ${fmtN(EV.dmg)}. ${EV.solo ? soloLine(EV.k) + '.' : mq ? 'Global: ' + lbLine(EV.k) : ''}`;
