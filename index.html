@@ -3915,7 +3915,7 @@ body.photo .scarbanner{visibility:hidden}
     if (act2 === 'leave') { closePause(); endFight(); }
     if (act2 === 'unsnap') { unsnap(); renderPause(); }
     if (act2 === 'fx') { lowFx = !lowFx; fxChosen = true; try { localStorage.setItem('ru-lowfx', lowFx ? '1' : '0'); } catch (er) {} applyFx(); renderPause(); }
-    if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon', 'ru-arm', 'ru-evsolo', 'ru-evdone', 'ru-incursion', 'ru-instab', 'ru-recap', 'ru-lost', 'ru-saviour', 'ru-spark', 'ru-alt', 'ru-altseen', 'ru-metdoom', 'ru-inchero', 'ru-ach', 'ru-pet'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
+    if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon', 'ru-arm', 'ru-evsolo', 'ru-evdone', 'ru-incursion', 'ru-instab', 'ru-recap', 'ru-lost', 'ru-saviour', 'ru-spark', 'ru-alt', 'ru-altseen', 'ru-metdoom', 'ru-inchero', 'ru-ach', 'ru-pet', 'ru-shop'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
   });
   menuBtn.onclick = () => openPause();
   function applyFx(){
@@ -4538,7 +4538,7 @@ body.photo .scarbanner{visibility:hidden}
     lookEl.innerHTML = `<div class="ghead"><h2 class="display">Your character</h2><button class="close" type="button" data-lk="close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
       <h3>Skin</h3>${swatches(SKINS, look.skin, 'skin')}
       <h3>Hair</h3><div class="lkrow">${HAIRS.map(([k, n]) => `<button type="button" class="tbtn" data-lk="hair" data-v="${k}" aria-pressed="${look.hair === k}">${n}</button>`).join('')}</div>${swatches(HAIRC, look.hairC, 'hairC')}
-      <h3>Outfit</h3><div class="lkrow">${Object.entries(OUTFITS).filter(([, o]) => !o.hero).map(([k, o]) => `<button type="button" class="tbtn" data-lk="outfit" data-v="${k}" aria-pressed="${look.outfit === k}">${o.name}</button>`).join('')}</div>
+      <h3>Outfit</h3><div class="lkrow">${Object.entries(OUTFITS).filter(([k2, o]) => !o.hero && (!o.shop || shopGot.includes(k2))).map(([k, o]) => `<button type="button" class="tbtn" data-lk="outfit" data-v="${k}" aria-pressed="${look.outfit === k}">${o.name}</button>`).join('')}</div>
       <h3>Main colour</h3>${swatches(SUITC, look.c1, 'c1')}<h3>Second colour</h3>${swatches(SUITC, look.c2, 'c2')}
       <div class="lkrow">${O.mask ? `<button type="button" class="tbtn" data-lk="mask" aria-pressed="${!!look.mask}">Mask</button>` : ''}<button type="button" class="tbtn" data-lk="cape" aria-pressed="${!!lookCols(look).cape}">Cape</button><button type="button" class="tbtn" data-lk="reset">Reset</button></div>
       ${petMenu()}
@@ -5543,6 +5543,9 @@ body.photo .scarbanner{visibility:hidden}
     box(.16, .02, .3, mat(0x16181D, { roughness: .3, metalness: .3 }), 0, .01, 0, g); const scr = box(.14, .005, .26, glowM(0x3C7CFF, { emissiveIntensity: .3 }), 0, .023, 0, g); g.userData.scr = scr;
     const led = sph(.012, glowM(0xFF3C3C, { emissiveIntensity: 1.5 }), .05, .03, -.12, g); g.userData.led = led;
     g.userData.egg = 'voicemail'; LABELS.voicemail = 'Check your voicemail';
+    // a portal the size of a coin, into the Quantum Realm
+    const qp = new THREE.Group(); qp.position.set(-3.75, .82, -4.05); scene.add(qp); const qr = new THREE.Mesh(new THREE.TorusGeometry(.06, .012, 8, 24), glowM(0xFF6AD5, { emissiveIntensity: 1.6 })); qr.position.y = .07; qp.add(qr); const qf = new THREE.Mesh(new THREE.CircleGeometry(.055, 20), new THREE.MeshBasicMaterial({ color: 0x2A0A3A, side: THREE.DoubleSide })); qr.add(qf);
+    qp.userData.egg = 'qportal'; LABELS.qportal = 'A tiny portal: shrink into the Quantum Realm'; g.userData.qr = qr;
   }
   function playVoicemail(){
     const left = BOSSES.filter(d => !beaten.has(d.id) && TAUNTS[d.id]);
@@ -5633,6 +5636,7 @@ body.photo .scarbanner{visibility:hidden}
   let nightChecked = false;
   function littleStep(dt, now){
     petStep(dt, now);
+    if (phoneG) phoneG.userData.qr.rotation.y += dt * 2;
     if (phoneG) phoneG.userData.led.visible = BOSSES.some(d => !beaten.has(d.id) && TAUNTS[d.id]) && Math.floor(now / 600) % 2 === 0;
     if (lairScene && !bugleG) buildBugle();
     if (diwaliG && !reduce) diwaliG.children.forEach(o => { if (o.userData.ph !== undefined) o.material.emissiveIntensity = 1 + Math.sin(now / 300 + o.userData.ph) * .6; });
@@ -5982,6 +5986,7 @@ body.photo .scarbanner{visibility:hidden}
   let hlI = 0, truthI = 0;
   function areaEgg(p){
     const e = p.egg, an = areaAnim[zone];
+    if (NEW_EGGS[e]) return NEW_EGGS[e](p);
     if (e === 'batsignal') { an.beam.visible = an.sym.visible = !an.beam.visible; tone(an.beam.visible ? 300 : 150, .4, 'sawtooth', .04, an.beam.visible ? 600 : 80); return say(an.beam.visible ? 'The signal is lit. He’ll come.' : 'The signal is off.', 2200); }
     if (e === 'jokercard') { [700, 900, 700, 1100].forEach((f, i) => setTimeout(() => tone(f, .09, 'square', .04, f * .8), i * 110)); return say('“Why so serious?” The card is a Joker, of course.', 3000); }
     if (e === 'planet') return say(`DAILY PLANET: ${HEADLINES[hlI++ % HEADLINES.length]}`, 3600);
@@ -5993,6 +5998,143 @@ body.photo .scarbanner{visibility:hidden}
     if (e === 'herb') { tone(520, .6, 'sine', .05, 1040); return say('The heart-shaped herb. For a moment, you feel like the Black Panther.', 3200); }
     if (e === 'bifrost') { const others = Object.keys(AREAS).filter(q => q !== 'asgard'); tone(200, 1, 'sawtooth', .05, 1600); say('Bifrost!', 1400); return setTimeout(() => enterArea(others[Math.floor(Math.random() * others.length)]), 500); }
   }
+
+  // ======================= four more worlds: the Quantum Realm, Knowhere, Arkham Asylum and the TVA =======================
+  Object.assign(AREAS, {
+    quantum: { name: 'The Quantum Realm', uni: 'Marvel', blurb: 'Shrink down through the portal on the desk. Your room, but everything is enormous.', col: '#FF6AD5' },
+    knowhere: { name: 'Knowhere', uni: 'Marvel', blurb: 'A mining town inside a dead Celestial’s head. The Collector will trade with you.', col: '#FFB45A' },
+    arkham: { name: 'Arkham Asylum', uni: 'DC', blurb: 'Gotham’s home for the criminally insane. The inmates are restless.', col: '#9CFF7A' },
+    tva: { name: 'The TVA', uni: 'Marvel', blurb: 'The Time Variance Authority has noticed your incursions. You’re due in court.', col: '#E8923C' }
+  });
+  ['quantum', 'knowhere', 'arkham', 'tva'].forEach(id => DESTS.push({ id, name: AREAS[id].name, need: () => visitedAreas.includes(id) }));
+  // outfits you can buy from the Collector (one for every three villains you've beaten)
+  OUTFITS.starlord = { name: 'Star-Lord jacket', gloves: 0, mask: 'helmet', glow: 1, shop: 1 };
+  OUTFITS.nova = { name: 'Nova Corps', gloves: 1, metal: 1, mask: 'helmet', emblem: 'star', shop: 1 };
+  OUTFITS.ravager = { name: 'Ravager coat', gloves: 1, cape: 1, shop: 1 };
+  OUTFIT_COLS.starlord = [1, 3]; OUTFIT_COLS.nova = [2, 0]; OUTFIT_COLS.ravager = [1, 9];
+  let shopGot = []; try { shopGot = JSON.parse(localStorage.getItem('ru-shop') || '[]'); } catch (e) {}
+  const SHOP = ['starlord', 'nova', 'ravager'];
+  BUILD.quantum = function(k){
+    const sc = areaBase(k, { fog: 0x2A0A3A, near: 30, far: 140, top: '#12002A', bot: '#FF6AD5', hemi: 0xFFD6F4, ground: 0x3A0A4A, hi: .9, sun: 0xFFB0F0, si: .7 });
+    // quantum particles drifting everywhere
+    const n = lowFx ? 400 : 1400, P = new Float32Array(n * 3), C = new Float32Array(n * 3); for (let i = 0; i < n; i++) { P.set([(Math.random() - .5) * 160, Math.random() * 60 - 10, (Math.random() - .5) * 160], i * 3); const c = new THREE.Color().setHSL(.8 + Math.random() * .3, .9, .65); C.set([c.r, c.g, c.b], i * 3); }
+    const pg = new THREE.BufferGeometry(); pg.setAttribute('position', new THREE.BufferAttribute(P, 3)); pg.setAttribute('color', new THREE.BufferAttribute(C, 3)); const parts = new THREE.Points(pg, new THREE.PointsMaterial({ size: .35, vertexColors: true, transparent: true, opacity: .85 })); sc.add(parts);
+    // the laptop keyboard, giant: every key is a platform
+    const keyM = mat(0x2B2E34, { roughness: .5 }), capM = mat(0x3A3D44, { roughness: .4 }), glowK = glowM(0xFF6AD5, { emissiveIntensity: .5 });
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 6; c++) { const x = -9 + c * 3.6 + (r % 2) * 1.2, z = -r * 3.6; slab(sc, k, x - 1.5, x + 1.5, z - 1.5, z + 1.5, capM, 1.4); box(2.6, .02, .2, glowK, x, .01, z + 1.3, sc).userData.noPick = true; }
+    box(26, 1, 16, keyM, -1, -2.2, -5.4, sc).userData.noPick = true;
+    const letters = 'QWERTYASDFGHZXCVBN'; for (let i = 0; i < 18; i++) { const r = Math.floor(i / 6), c = i % 6, x = -9 + c * 3.6 + (r % 2) * 1.2, z = -r * 3.6; const l = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4), new THREE.MeshBasicMaterial({ transparent: true, map: tex(128, 128, (g, w, h) => { g.fillStyle = 'rgba(232,232,240,.9)'; g.font = `800 96px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(letters[i], w / 2, h / 2 + 6); }) })); l.rotation.x = -Math.PI / 2; l.position.set(x, .02, z); l.userData.noPick = true; sc.add(l); }
+    // a giant vinyl record to cross, then the plant's leaves
+    const rec = disc(sc, k, 4, -18, 6, new THREE.MeshStandardMaterial({ color: 0x16181D, roughness: .25, metalness: .2, map: tex(256, 256, (g, w, h) => { g.fillStyle = '#16181D'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(255,255,255,.08)'; for (let r2 = 20; r2 < 128; r2 += 4) { g.beginPath(); g.arc(w / 2, h / 2, r2, 0, 7); g.stroke(); } g.fillStyle = '#C8102E'; g.beginPath(); g.arc(w / 2, h / 2, 34, 0, 7); g.fill(); }) }), .4);
+    slab(sc, k, 2.8, 5.2, -12.4, -10, capM, 1);
+    const leafM = mat(0x5E9A6A, { roughness: .7 }); [[4, -27.5, 3], [1, -32.5, 2.6], [3.5, -37.2, 2.6], [.5, -42, 3.2]].forEach(([x, z, r2]) => { const d = disc(sc, k, x, z, r2, leafM, .25); d.scale.z = 1.5; plats[k][plats[k].length - 1].r = r2 * .95; });
+    // things from the desk, towering over you
+    const pen = cyl(1.2, 1.2, 40, mat(0xFFC93C), -14, 14, -26, sc, 6); pen.rotation.z = .5; pen.userData.noPick = true;
+    const coin = cyl(9, 9, 1.2, mat(0xD9A93A, { metalness: .8, roughness: .3 }), 16, 6, -34, sc, 40); coin.rotation.x = Math.PI / 2 - .2; coin.userData.noPick = true;
+    const scr2 = box(40, 24, 1, glowM(0x3CE8E8, { emissiveIntensity: .35 }), -2, 14, -64, sc); scr2.userData.noPick = true;
+    // the way home: a tiny portal of your own
+    const home = new THREE.Group(); home.position.set(-1, 0, -44); sc.add(home); const ring = new THREE.Mesh(new THREE.TorusGeometry(1.1, .1, 10, 40), glowM(0xFF6AD5, { emissiveIntensity: 1.4 })); ring.position.y = 1.4; home.add(ring); egg(home, 'qhome', 'Grow back to normal size');
+    areaAnim[k] = { spawn: [-9, 0], hello: 'The Quantum Realm. You’re the size of an atom on your own laptop keyboard. Cross the keys, the record and the plant, then grow back at the portal.', step(dt, t){ rec.rotation.y += dt * .6; ring.rotation.z += dt; parts.rotation.y += dt * .01; } };
+  };
+  BUILD.knowhere = function(k){
+    const sc = areaBase(k, { fog: 0x1A0F1F, near: 50, far: 260, top: '#05030A', bot: '#3A1A3A', hemi: 0xFFD6A0, ground: 0x2A1A1A, hi: .75, sun: 0xFFB45A, si: .8 });
+    const stars = new Float32Array(1200 * 3); for (let i = 0; i < 1200; i++) { const v = V(Math.random() - .5, Math.random() - .3, Math.random() - .5).normalize().multiplyScalar(240); stars.set([v.x, v.y, v.z], i * 3); } const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(stars, 3)); sc.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xFFFFFF, size: 1, fog: false })));
+    // the Celestial's head, enormous, with the town in its eye socket
+    const bone = mat(0x8A7A6A, { roughness: 1, flatShading: true }), head = new THREE.Group(); head.position.set(0, -30, -40); sc.add(head);
+    const skull = new THREE.Mesh(new THREE.SphereGeometry(40, 20, 14), bone); skull.scale.set(1, 1.1, .9); head.add(skull); box(50, 16, 40, bone, 0, -38, 10, head); [-14, 14].forEach(x => { const eye = new THREE.Mesh(new THREE.SphereGeometry(10, 16, 12), mat(0x1A0F10)); eye.position.set(x, 12, 32); head.add(eye); });
+    head.traverse(o => o.userData.noPick = true);
+    const ground = mat(0x5A4A3A, { roughness: 1 }), metal = mat(0x4A4E58, { metalness: .6, roughness: .5 });
+    disc(sc, k, 0, 0, 12, ground, 2); slab(sc, k, -2, 2, -24, -11, metal, .5); disc(sc, k, 0, -30, 8, ground, 2);
+    // the market: stalls with awnings and lanterns
+    const cols = [0xC8102E, 0xFFB45A, 0x3C7CFF, 0x5E9A3A]; for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + .3, x = Math.cos(a) * 8.5, z = Math.sin(a) * 8.5; const st = new THREE.Group(); st.position.set(x, 0, z); st.rotation.y = -a + Math.PI / 2; sc.add(st); box(2.2, 1, 1, metal, 0, .5, 0, st); const aw = box(2.6, .08, 1.6, mat(cols[i % 4]), 0, 2.2, .3, st); aw.rotation.x = .25; [-1.1, 1.1].forEach(px => cyl(.05, .05, 2.2, metal, px, 1.1, .8, st, 6)); const ln = sph(.14, glowM(0xFFB45A, { emissiveIntensity: 1.3 }), 0, 1.8, .9, st); st.traverse(o => o.userData.noPick = true); }
+    // the Collector's museum at the far end
+    const mus = new THREE.Group(); mus.position.set(0, 0, -30); sc.add(mus); box(8, 5, .4, metal, 0, 2.5, -5, mus); [[-2.5, 0xC8102E], [0, 0x3CE8E8], [2.5, 0x9CFF7A]].forEach(([x, c]) => { const cage = cyl(.7, .7, 2, new THREE.MeshStandardMaterial({ color: c, transparent: true, opacity: .3, emissive: c, emissiveIntensity: .3 }), x, 1, -3.8, mus, 16); cage.userData.noPick = true; sph(.25, glowM(c, { emissiveIntensity: 1.2 }), x, 1, -3.8, mus); });
+    const col = avatar(Object.assign({}, LOOK0, { outfit: 'casual', c1: 7, c2: 3, hair: 'long', hairC: 5 })); col.g.position.set(0, 0, -1.5); col.g.rotation.y = 0; mus.add(col.g); col.g.traverse(o => o.userData.noPick = true);
+    const hit = new THREE.Mesh(new THREE.CylinderGeometry(.6, .6, 2, 8), new THREE.MeshBasicMaterial({ visible: false })); hit.position.set(0, 1, -1.5); mus.add(hit); egg(hit, 'collector', 'Trade with the Collector');
+    areaAnim[k] = { spawn: [0, 5], hello: 'Knowhere, a mining town built inside the head of a dead Celestial. The Collector’s museum is across the bridge, and he trades.', step(dt, t){ col.anim(t, 0, 0); head.rotation.y = Math.sin(t * .05) * .05; } };
+  };
+  BUILD.arkham = function(k){
+    const sc = areaBase(k, { fog: 0x0B0F0B, near: 20, far: 110, top: '#030503', bot: '#1A2A1A', hemi: 0xA8D8A8, ground: 0x111511, hi: .45, sun: 0x9CFF7A, si: .3 });
+    const stone = mat(0x3A3D3A, { roughness: 1 }), bars = mat(0x5A5E68, { metalness: .7, roughness: .4 }), yard = mat(0x2A2D2A, { roughness: 1 });
+    slab(sc, k, -14, 14, -20, 8, yard, 2);
+    // the asylum: walls, towers, the gate
+    box(30, 10, 1, stone, 0, 5, -20.5, sc); [-14.5, 14.5].forEach(x => box(1, 10, 29, stone, x, 5, -6, sc)); [[-14, -20], [14, -20]].forEach(([x, z]) => { cyl(2, 2.2, 16, stone, x, 8, z, sc, 10); cone(2.6, 5, mat(0x2A2D33), x, 18.5, z, sc); });
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.4), new THREE.MeshBasicMaterial({ transparent: true, map: tex(900, 126, (g, w, h) => { g.fillStyle = 'rgba(10,14,10,.9)'; g.fillRect(0, 0, w, h); g.fillStyle = '#9CFF7A'; g.font = `900 80px Georgia, serif`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('ARKHAM ASYLUM', w / 2, h / 2 + 4); }) })); sign.position.set(0, 8.5, -19.9); sc.add(sign);
+    // a row of cells with bars along the back wall
+    for (let i = 0; i < 6; i++) { const x = -11 + i * 4.4; box(.3, 4, 3, stone, x - 2, 2, -18.5, sc); for (let b = 0; b < 8; b++) cyl(.05, .05, 3.6, bars, x - 1.6 + b * .45, 1.8, -17, sc, 6); const plate = new THREE.Mesh(new THREE.PlaneGeometry(1.4, .35), new THREE.MeshBasicMaterial({ transparent: true, map: tex(256, 64, (g, w, h) => { g.fillStyle = '#16181D'; g.fillRect(0, 0, w, h); g.fillStyle = '#E8E8E8'; g.font = '700 30px monospace'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(['JOKER', 'QUINN', 'BANE', 'CROC', 'NYGMA', 'CRANE'][i], w / 2, h / 2 + 2); }) })); plate.position.set(x, 3.8, -16.95); sc.add(plate); }
+    const card = new THREE.Mesh(new THREE.PlaneGeometry(.6, .9), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: tex(128, 192, (g, w, h) => { g.fillStyle = '#F4F2EE'; g.fillRect(0, 0, w, h); g.fillStyle = '#6B3FA0'; g.font = '900 90px Georgia, serif'; g.textAlign = 'center'; g.fillText('J', w / 2, 120); g.fillStyle = '#1F7A45'; g.font = '700 20px Georgia'; g.fillText('HA HA HA', w / 2, 170); }) })); card.position.set(-11, 1.4, -16.9); egg(card, 'arkcard', 'A card left in the Joker’s cell'); sc.add(card);
+    // searchlights sweeping the yard
+    const lights = [[-13, -19], [13, -19]].map(([x, z]) => { const s2 = new THREE.SpotLight(0xE8FFE0, 2.2, 60, .22, .5, 1.2); s2.position.set(x, 16, z); sc.add(s2); sc.add(s2.target); return s2; });
+    // the warden's desk by the gate
+    const desk2 = new THREE.Group(); desk2.position.set(6, 0, 5); sc.add(desk2); box(2, .9, .9, mat(0x4A3A2A), 0, .45, 0, desk2); egg(desk2, 'warden', 'The warden’s log');
+    // inmates: the DC villains who have broken out of your lair riot in the yard
+    const riot = [];
+    BOSSES.filter(d => d.dc && escaped(d.id) && !recap.includes(d.id) && !CREATURES[d.id].seg).forEach((d, i) => { const M2 = CREATURE3D[d.id](false); M2.g.scale.setScalar((M2.s0 || 1.2) * .9); M2.g.position.set(-6 + i * 4, 0, -6); sc.add(M2.g); M2.g.traverse(o => o.userData.noPick = true); riot.push({ M: M2, x: -6 + i * 4, z: -6, a: Math.random() * 6, d }); });
+    areaAnim[k] = { spawn: [0, 5], riot, hello: riot.length ? `Arkham Asylum. ${riot.length} of your escaped villains are rioting in the yard. They’re too strong for the guards; lock them back up in your lair.` : 'Arkham Asylum. Quiet, for once. The cells along the back wall have their names on them.', step(dt, t){
+      lights.forEach((s2, i) => s2.target.position.set(Math.sin(t * .5 + i * 2) * 10, 0, -6 + Math.cos(t * .4 + i) * 8));
+      riot.forEach(q => { q.a += dt * (.6 + Math.sin(t + q.x) * .3); q.x = clamp(q.x + Math.cos(q.a) * dt * 1.2, -12, 12); q.z = clamp(q.z + Math.sin(q.a) * dt * 1.2, -15, 6); q.M.g.position.set(q.x, 0, q.z); q.M.g.rotation.y = -q.a; q.M.anim({ st: 'roam', mv: '', a: t * 2, hp: 1, max: 1, swing: Math.sin(t * 4) > .8 ? 1 : 0, mouth: 0, ring: 0, w: 1, vx: Math.cos(q.a), vy: Math.sin(q.a) }, t, .6); });
+    } };
+  };
+  BUILD.tva = function(k){
+    const sc = areaBase(k, { fog: 0x3A2A1A, near: 30, far: 120, top: '#2A1A0A', bot: '#C8823C', hemi: 0xFFE0B0, ground: 0x4A3520, hi: .9, sun: 0xFFC080, si: .6 });
+    const floorM2 = mat(0x6A4A2E, { roughness: .6 }), wallT = mat(0xC8823C, { roughness: .8 }), deskM = mat(0x8A5A2E, { roughness: .5 }), brass = mat(0xD9A93A, { metalness: .7, roughness: .3 });
+    slab(sc, k, -12, 12, -30, 6, floorM2, 1);
+    [-12.5, 12.5].forEach(x => box(1, 8, 36, wallT, x, 4, -12, sc)); box(26, 8, 1, wallT, 0, 4, -30.5, sc);
+    // rows of desks with old monitors
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) { if (c === 1 || c === 2) { if (r === 2) continue; } const x = -9 + c * 6, z = -4 - r * 6; box(2.2, .8, 1, deskM, x, .4, z, sc); box(.7, .55, .5, mat(0x3A3020), x, 1.1, z, sc); box(.55, .4, .02, glowM(0xFFB45A, { emissiveIntensity: .6 }), x, 1.12, z + .26, sc); }
+    // the big clock and the judge's bench
+    const clock = new THREE.Group(); clock.position.set(0, 5.5, -29.8); sc.add(clock); cyl(2.2, 2.2, .2, brass, 0, 0, 0, clock, 40).rotation.x = Math.PI / 2; const face = new THREE.Mesh(new THREE.CircleGeometry(2, 40), new THREE.MeshBasicMaterial({ color: 0xFFF1D6 })); face.position.z = .12; clock.add(face); const hand = box(.08, 1.6, .02, mat(0x16181D), 0, .7, .14, clock); const hand2 = box(.1, 1.1, .02, mat(0x16181D), 0, .45, .15, clock);
+    const bench = new THREE.Group(); bench.position.set(0, 0, -25); sc.add(bench); box(6, 2, 1.4, deskM, 0, 1, 0, bench); box(6.4, .15, 1.6, brass, 0, 2.05, 0, bench);
+    const judge = avatar(Object.assign({}, LOOK0, { outfit: 'casual', c1: 9, c2: 3, hair: 'long', hairC: 3, skin: 4 })); judge.g.position.set(0, .9, -26); bench.parent.add(judge.g); judge.g.traverse(o => o.userData.noPick = true);
+    const hit = new THREE.Mesh(new THREE.BoxGeometry(6, 3, 1.6), new THREE.MeshBasicMaterial({ visible: false })); hit.position.set(0, 1.5, -25); sc.add(hit); egg(hit, 'trial', 'Stand trial');
+    // time doors along the walls
+    const doors = [[-11.9, -8], [11.9, -14], [-11.9, -20]].map(([x, z], i) => { const d = new THREE.Group(); d.position.set(x, 0, z); d.rotation.y = x < 0 ? Math.PI / 2 : -Math.PI / 2; sc.add(d); box(2, 3.2, .2, brass, 0, 1.6, 0, d); const glow = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 2.8), new THREE.MeshBasicMaterial({ color: 0xFF8A2E, transparent: true, opacity: .75 })); glow.position.set(0, 1.5, .12); d.add(glow); egg(d, 'timedoor', 'Run through a time door'); return glow; });
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(8, 1), new THREE.MeshBasicMaterial({ transparent: true, map: tex(800, 100, (g, w, h) => { g.fillStyle = 'rgba(40,24,10,.9)'; g.fillRect(0, 0, w, h); g.fillStyle = '#FFB45A'; g.font = `800 60px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('TIME VARIANCE AUTHORITY', w / 2, h / 2 + 3); }) })); sign.position.set(0, 7.3, -29.9); sc.add(sign);
+    areaAnim[k] = { spawn: [0, 3], hello: 'The TVA. For all time, always. The judge at the far end would like a word about all those incursions.', step(dt, t){ hand.rotation.z = -t * .5; hand2.rotation.z = -t * .04; judge.anim(t, 0, 0); doors.forEach((g, i) => g.material.opacity = .55 + Math.sin(t * 3 + i) * .2); } };
+  };
+  // what the new things do
+  const tvaBox = document.createElement('div'); tvaBox.className = 'game'; tvaBox.setAttribute('role', 'dialog'); tvaBox.setAttribute('aria-label', 'Your trial'); tvaBox.innerHTML = '<div class="gbox"></div>'; document.body.appendChild(tvaBox);
+  function charges(){
+    const c = [];
+    if (earthsLost) c.push(`Letting ${earthsLost} Earth${earthsLost > 1 ? 's' : ''} fall in incursions`);
+    if (altSeen.length) c.push(`Living on ${altSeen.length} Earth${altSeen.length > 1 ? 's' : ''} that aren’t yours`);
+    if (snapState || armHurt()) c.push('Unauthorised use of the Infinity Stones');
+    if (breach && breach.loose.length) c.push('Keeping supervillains in a basement, badly');
+    if (instab) c.push(`Leaving reality ${instab >= 6 ? 'completely destroyed' : 'unstable'}`);
+    if (!c.length) c.push('Being a variant (everyone is guilty of this one)');
+    return c;
+  }
+  function openTrial(){
+    if (document.pointerLockElement) document.exitPointerLock(); const C = charges();
+    tvaBox.querySelector('.gbox').innerHTML = `<div class="ghead"><h2 class="display">The TVA vs. Rayan</h2></div><p>The judge reads the charges:</p><ul>${C.map(c => `<li>${esc(c)}</li>`).join('')}</ul><p class="gmsg">How do you plead?</p><div class="gact"><button class="btn alt" type="button" data-tr="argue">Not guilty: I was saving the multiverse</button><button class="btn" type="button" data-tr="guilty">Guilty</button><button class="btn" type="button" data-tr="run">Run for a time door</button></div>`;
+    tvaBox.classList.add('on');
+  }
+  tvaBox.addEventListener('click', e => { const b = e.target.closest('[data-tr]'); if (!b) return; const a = b.dataset.tr; tvaBox.classList.remove('on');
+    if (a === 'run') return timeDoor();
+    // good deeds count in your favour
+    const good = achGot.length + (saviour ? 6 : 0) + (firstSpark ? 6 : 0) + beaten.size, bad = charges().length * 3 + earthsLost;
+    if (a === 'argue' && good >= bad) { tone(660, .4, 'triangle', .05, 990); if (instab) { instab = Math.max(0, instab - 1); saveInstab(); if (!instab) { if (scarOn) setScar(false); if (altOn) setAlt(false); buildBreach(); canvas.style.filter = ''; } }
+      return say(instab ? `Not guilty! The judge is impressed, and fixes a little of the timeline. Instability is down to ${instab}.` : 'Not guilty! The judge resets your timeline. Reality is stable again.', 5200); }
+    tone(90, 1, 'sawtooth', .07, 40); say(a === 'guilty' ? 'Guilty. You’re pruned… and wake up in your room. Clerical error.' : 'Guilty. The judge didn’t buy it. You’re pruned… and wake up in your room. Clerical error.', 5000);
+    fade(() => travel('room'), '#E8923C'); });
+  tvaBox.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); tvaBox.classList.remove('on'); } });
+  function timeDoor(){ const others = Object.keys(AREAS).filter(q => q !== 'tva'); tone(300, .8, 'sine', .05, 900); say('Through the time door!', 1600); setTimeout(() => enterArea(others[Math.floor(Math.random() * others.length)]), 400); }
+  function collectorTrade(){
+    const earned = Math.min(SHOP.length, Math.floor(beaten.size / 3)), next = SHOP.find(s2 => !shopGot.includes(s2));
+    if (!next) return say('The Collector: “You have everything I’m willing to part with. Come back when you’ve found something rarer.”', 4200);
+    if (shopGot.length >= earned) return say(`The Collector: “Every villain you beat is worth something to me. Beat ${3 * (shopGot.length + 1) - beaten.size} more and I’ll trade you the ${OUTFITS[next].name}.”`, 5200);
+    shopGot.push(next); try { localStorage.setItem('ru-shop', JSON.stringify(shopGot)); } catch (e) {} [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, .15, 'triangle', .05), i * 90));
+    return say(`The Collector: “A fair trade.” You got the ${OUTFITS[next].name}! Wear it from the menu under Your character.`, 5200);
+  }
+  const NEW_EGGS = {
+    qhome: () => fade(() => travel('room'), '#FF6AD5'),
+    collector: collectorTrade,
+    arkcard: () => say('The card says HA HA HA on the back. The Joker’s cell is empty, of course.', 3200),
+    warden: () => { const riot = areaAnim.arkham && areaAnim.arkham.riot.length; return say(riot ? `The warden’s log: “${riot} inmate${riot > 1 ? 's' : ''} arrived through a rift from some kid’s basement. Send help.”` : 'The warden’s log: “All quiet. Nobody has escaped from anywhere this week.”', 4200); },
+    trial: openTrial,
+    timedoor: timeDoor
+  };
+
   // the Multiverse Gate in the lair
   const mvBox = $('#mvBox');
   function openGate(){
@@ -6636,6 +6778,7 @@ body.photo .scarbanner{visibility:hidden}
     if (p.egg === 'builder') return flyTo(views.builder.pos.clone(), views.builder.look, openBuilder);
     if (p.egg === 'switch') return flipLights();
     if (p.egg === 'voicemail') return playVoicemail();
+    if (p.egg === 'qportal') return enterArea('quantum');
     if (p.egg === 'bugle') return readBugle();
     if (p.egg === 'radicals') return flyTo(views.scroll.pos.clone(), views.scroll.look, openGame);
     if (p.egg === 'crate') return digCrate();
