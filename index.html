@@ -447,6 +447,27 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
 .fightcall[hidden]{display:none}
 .fightcall.go{animation:fcall 1.2s ease-out forwards}
 @keyframes fcall{0%{opacity:0;transform:translate(-50%,-50%) scale(1.8)}15%{opacity:1;transform:translate(-50%,-50%) scale(1)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(.9)}}
+.navarrow{position:fixed;left:50%;top:128px;transform:translateX(-50%);z-index:45;display:flex;flex-direction:column;align-items:center;gap:2px;color:#FFC93C;font:800 13px system-ui,sans-serif;text-shadow:0 1px 4px rgba(0,0,0,.8);pointer-events:none}
+.navarrow[hidden]{display:none}
+.navarrow i{font-style:normal;font-size:26px;line-height:1;display:block}
+body.inevent .navarrow{top:168px}
+.kitui{position:fixed;right:20px;bottom:calc(140px + env(safe-area-inset-bottom,0px));z-index:46;display:flex;flex-direction:column;align-items:flex-end;gap:8px;pointer-events:none}
+.kitui[hidden]{display:none}
+.kitui .stam{width:120px;height:6px;border-radius:3px;background:rgba(0,0,0,.45);overflow:hidden;transition:opacity .3s}
+.kitui .stam i{display:block;height:100%;width:100%}
+.kitui button{display:none;pointer-events:auto;border:0;border-radius:18px;padding:8px 14px;background:rgba(22,24,29,.8);color:#fff;font:700 13px system-ui,sans-serif;cursor:pointer}
+.kitui.touch button{display:block}
+.kitui button.on{background:#FFC93C;color:#16181D}
+.painfx{position:fixed;inset:0;pointer-events:none;z-index:53;opacity:0;background:radial-gradient(ellipse at center,rgba(0,0,0,0) 40%,rgba(150,0,0,.65) 100%)}
+body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
+.painfx.flash,body.pain .painfx.flash{animation:painflash .7s ease-out}
+@keyframes painpulse{0%,100%{opacity:.55}50%{opacity:.95}}
+@keyframes painflash{0%{opacity:1;background-color:rgba(200,0,0,.5)}100%{opacity:.7;background-color:rgba(200,0,0,0)}}
+.goalhud .goalsub{color:rgba(255,255,255,.62);font-size:12px;text-transform:none;letter-spacing:0;font-weight:500}
+.evwpn{display:block;font-size:12px;font-weight:600;opacity:.85;margin-bottom:2px}
+.fblock.on{background:#FFC93C}
+.fswap{pointer-events:auto;position:absolute;right:136px;bottom:calc(116px + env(safe-area-inset-bottom,0px));padding:8px 14px;border-radius:18px;border:0;background:rgba(22,24,29,.85);color:#fff;font:700 13px system-ui,sans-serif;cursor:pointer}
+.fswap[hidden],.fblock[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -513,10 +534,11 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
 <div class="evhud" id="evHud" hidden>
   <div class="evtop"><b id="evTitle"></b><span id="evScore"></span><span class="evtime" id="evTime"></span></div>
   <div class="evboss" id="evBoss" hidden><span id="evBossName"></span><span class="evbar"><i id="evBossHp"></i></span></div>
-  <div class="evme"><span id="evHero"></span><span class="evbar"><i id="evHp"></i></span></div>
+  <div class="evme"><span id="evHero"></span><small class="evwpn" id="evWpn"></small><span class="evbar"><i id="evHp"></i></span></div>
   <div class="evcross" aria-hidden="true"></div>
   <p class="evmsg" id="evMsg" aria-live="polite"></p>
   <button class="fsp" id="evSp" type="button">Special</button>
+  <button class="fblock" id="evBlockBtn" type="button">Block</button><button class="fswap" id="evSwBtn" type="button" hidden>Switch</button>
   <div class="arenamsg" id="evEnd" hidden><h3 class="display" id="evEndT"></h3><p id="evEndS"></p><div class="gact"><button class="btn" id="evAgain" type="button">Play again</button><button class="btn" id="evSwap" type="button">Change hero</button><button class="btn alt" id="evLeave" type="button">Leave</button></div></div>
 </div>
 <div class="game" id="evBox" role="dialog" aria-label="Choose your side"><div class="gbox"></div></div>
@@ -1663,7 +1685,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   const inDoor = (x, z) => vaultOpen && x > 4.2 && x <= 5.7 && z >= -.25 && z <= .85;
   const inVault = (x, z) => vaultOpen && x > 5.7 && x <= 8.0 && z >= -1.0 && z <= 1.6;
   const inHall = (x, z) => entered && ((Math.abs(x) < .45 && z > 4.2 && z <= 5.5) || (Math.abs(x) < 1.2 && z > 5.5 && z < 10.3));
-  const valid = (x, z) => inWorld ? zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) : zone === 'city' ? cityOK(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
+  const valid = (x, z) => inWorld ? zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? blrValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
   const region = x => x > 4.9 ? 'vault' : 'room';
   function flyTo(target, dir, done){
     if (inWorld) { const a = dir ? lookAngles(target, dir) : null; return moveCam(target, a ? a.yaw : null, a ? a.pitch : null, 1, done); }
@@ -2707,7 +2729,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   let snapState = null; try { snapState = JSON.parse(localStorage.getItem('ru-snap') || 'null'); if (snapState && (!snapState.bosses || !snapState.weapons)) snapState = null; } catch (e) {}
   let dust = null, snapHidden = [], snapBent = [], snapMats = [], snapDecals = [], dmgDone = {};
   const dustedBoss = id => !!(snapState && snapState.bosses.includes(id));
-  const dustedWeapon = id => !!(snapState && snapState.weapons.includes(id));
+  const dustedWeapon = id => !!(snapState && snapState.weapons.includes(id)) || lostWeapon(id);
   const saveSnap = () => { try { snapState ? localStorage.setItem('ru-snap', JSON.stringify(snapState)) : localStorage.removeItem('ru-snap'); } catch (e) {} };
   const markerSet = () => new Set(markers.concat(pageMeshes));
   // things turning to dust (creatures in their pods, the weapon in your hand)
@@ -3406,6 +3428,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   function equip(id){
     storyFlag('weapon');
     const w = WEAPONS.find(x => x.id === id);
+    if (lostWeapon(id)) return say(`${w.name} crumbled to dust with the Overfit. Only Wolverine’s claws are left.`, 3200);
     if (dustedWeapon(id)) return say(`${w.name} is dust. Undo the snap (or fight Thanos again) to get it back.`, 3200);
     if (inv.includes(id)) { inv = inv.filter(x => x !== id); if (held === id) hold(null, true); saveInv(); refreshLair(); renderHotbar(); tone(330, .1, 'triangle', .05, 220); return say(`You hung ${w.name} back on the rack.`, 2200); }
     inv.push(id); saveInv(); hold(id, true); refreshLair(); tone(660, .08, 'triangle', .05, 990);
@@ -3557,7 +3580,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
     if (idleShown !== hk || viewG.parent !== sc) { clearView(); if (viewG.parent) viewG.parent.remove(viewG); sc.add(viewG); idleShown = hk; if (EV) buildView(EV.prop || 'fists', false); else if (held) buildView(held, held === 'claws' && condition('claws').broken); else { spareHand(1); spareHand(-1); } }
     viewG.position.copy(camera.position); viewG.quaternion.copy(camera.quaternion);
     const t = performance.now() / 1000, sw = EV && EV.swing > 0 ? Math.sin(clamp(1 - EV.swing / .3, 0, 1) * Math.PI) : 0, side = EV && EV.punchSide || 1, one = viewG.children.length === 1;
-    viewG.children.forEach(h => { const B0 = h.userData.base, p = sw && (one || Math.sign(B0.x) === side) ? sw : 0; h.position.set(B0.x * (1 - p * .55), B0.y + Math.sin(t * 2) * .006 + p * .1, B0.z - p * .36); h.rotation.x = -p * .5; });
+    viewG.children.forEach(h => { const B0 = h.userData.base, p = sw && (one || Math.sign(B0.x) === side) ? sw : 0; h.position.set(B0.x * (1 - p * .55), B0.y + Math.sin(t * 2) * .006 + p * .1, B0.z - p * .36); h.rotation.x = -p * .5; if (EV && EV.blocking) { h.position.set(B0.x * .4, B0.y + .17, B0.z + .1); h.rotation.x = .9; } });
   }
   function clearView(){ while (viewG.children.length) { const c = viewG.children[0]; viewG.remove(c); disposeDeep(c); } }
   function endFight(instant){
@@ -3605,7 +3628,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   const setBlock = on => { if (A && !A.over) A.blocking = on; else if (A) A.blocking = false; };
   addEventListener('keydown', e => { if (A && e.key === 'Shift') setBlock(true); });
   addEventListener('keyup', e => { if (e.key === 'Shift') setBlock(false); });
-  addEventListener('mouseup', e => { if (e.button === 2) setBlock(false); });
+  addEventListener('mouseup', e => { if (e.button === 2) { setBlock(false); if (typeof setEvBlock === 'function') setEvBlock(false); } });
   const blockBtn = $('#fBlock');
   blockBtn.addEventListener('pointerdown', e => { e.preventDefault(); setBlock(true); }); ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => blockBtn.addEventListener(ev, () => setBlock(false)));
   function arenaEnd(won){
@@ -4605,7 +4628,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
     batman: { name: 'Batman', outfit: 'batman', hp: 120, kind: 'melee', dmg: 14, range: 2.3, cd: .4, sp: 'Batarang volley', spCd: 5, speed: 5.3 },
     arrow: { name: 'Green Arrow', outfit: 'arrow', hp: 100, kind: 'ranged', dmg: 11, cd: .45, col: 0x9CFF7A, sp: 'Explosive arrow', spCd: 6, speed: 5 },
     harleyq: { name: 'Harley Quinn', outfit: 'harleyq', hp: 110, kind: 'melee', dmg: 16, range: 2.6, cd: .55, sp: 'Mallet spin', spCd: 6, speed: 5.5 },
-    superman: { name: 'Superman', outfit: 'superman', hp: 2600, kind: 'boss', dmg: 12, range: 2.6, cd: 1, speed: 6.5, r: .7 },
+    superman: { name: 'Superman', outfit: 'superman', hp: 2200, kind: 'boss', bk: .85, dmg: 11, range: 2.6, cd: 1, speed: 6.5, r: .7 },
     trooper: { name: 'Regime trooper', outfit: 'trooper', hp: 60, kind: 'ranged', dmg: 6, cd: .9, col: 0xFF4A3C, speed: 4 }
   };
   const EVENTS = {
@@ -4623,9 +4646,9 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   // evil variants from the other Earth, a universe anchor to protect, and Doom
   ['iron', 'cap', 'wolverine', 'cyclops', 'thor', 'batman'].forEach(h => { OUTFITS['v_' + h] = Object.assign({}, OUTFITS[HEROES[h].outfit], { c1: '#2A1A3A', c2: '#9B4DFF' }); HEROES['v_' + h] = Object.assign({}, HEROES[h], { name: 'Evil ' + HEROES[h].name, outfit: 'v_' + h, hp: Math.round(HEROES[h].hp * .8), base: h }); });
   OUTFITS.doom = { hero: 1, c1: '#3E5A2E', c2: '#9AA3AD', metal: 1, mask: 'helmet', cape: 1, gloves: 1 };
-  HEROES.doom = { name: 'God Emperor Doom', outfit: 'doom', hp: 3400, kind: 'boss', dmg: 11, range: 2.6, cd: 1, speed: 5.5, r: .7 };
+  HEROES.doom = { name: 'God Emperor Doom', outfit: 'doom', hp: 2800, kind: 'boss', bk: .85, dmg: 10, range: 2.6, cd: 1, speed: 5.5, r: .7 };
   OUTFITS.beyonder = { hero: 1, c1: '#F4F4F4', c2: '#FFC93C', skin: '#FFFFFF', hair: 'bald', metal: 1, cape: 1, gloves: 1 };
-  HEROES.beyonder = { name: 'The Beyonder', outfit: 'beyonder', hp: 5000, kind: 'boss', dmg: 13, range: 2.8, cd: .9, speed: 6.2, r: .8, scale: 1.4 };
+  HEROES.beyonder = { name: 'The Beyonder', outfit: 'beyonder', hp: 4000, kind: 'boss', bk: .85, dmg: 12, range: 2.8, cd: .9, speed: 6.2, r: .8, scale: 1.4 };
   const godlike = h => h === 'doom' || h === 'beyonder';
 
   // ---------- four more events: Civil War, Secret Wars, Flashpoint, Darkseid Invades ----------
@@ -4638,7 +4661,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   HEROES.rflash = { name: 'Reverse-Flash', outfit: 'rflash', hp: 260, kind: 'melee', dmg: 8, range: 2.2, cd: .35, speed: 8 };
   HEROES.wonder = { name: 'Wonder Woman', outfit: 'wonder', hp: 130, kind: 'melee', dmg: 15, range: 2.5, cd: .45, sp: 'Lasso of Truth', spCd: 6, speed: 5.2 };
   HEROES.parademon = { name: 'Parademon', outfit: 'parademon', hp: 55, kind: 'ranged', dmg: 6, cd: .8, col: 0x9CFF7A, speed: 4.6 };
-  HEROES.darkseid = { name: 'Darkseid', outfit: 'darkseid', hp: 2800, kind: 'boss', dmg: 12, range: 2.8, cd: 1, speed: 5.2, r: .8, scale: 1.35 };
+  HEROES.darkseid = { name: 'Darkseid', outfit: 'darkseid', hp: 2300, kind: 'boss', bk: .85, dmg: 11, range: 2.8, cd: 1, speed: 5.2, r: .8, scale: 1.35 };
   EVENTS.cw = { name: 'Civil War', teams: { tc: 'Team Cap', ti: 'Team Iron Man' }, col: { tc: '#3C7CFF', ti: '#C8102E' }, time: 240, goal: 20, pick: ['tc', 'ti'],
     blurb: 'The heroes split over the Sokovia Accords. Pick a side: every takedown counts toward this month’s global leaderboard, which starts fresh on the 1st.' };
   EVENTS.sw = { name: 'Secret Wars', teams: { rb: 'Rebels', dm: 'Doom’s Legion' }, col: { rb: '#3CE8A0', dm: '#9B4DFF' }, time: 240, goal: 120, fixed: 'rb',
@@ -4687,14 +4710,14 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   let cvWon = false, galBeaten = false; try { cvWon = localStorage.getItem('ru-cvwon') === '1'; galBeaten = localStorage.getItem('ru-galactus') === '1'; } catch (e) {}
   // ---------- story-only events: the Overfit, and the Broker ----------
   HEROES.rayan = { name: 'Rayan', self: 1, outfit: 'casual', hp: 130, kind: 'melee', dmg: 13, range: 2.3, cd: .38, sp: 'Improvise', spCd: 4.5, speed: 5.3 };
-  HEROES.overfitx = { name: 'The Overfit (buffed)', hp: 3000, kind: 'boss', dmg: 12, range: 2.8, cd: .9, speed: 5.4, r: 1, scale: 1.3 };
+  HEROES.overfitx = { name: 'The Overfit (buffed)', hp: 2200, kind: 'boss', bk: .8, dmg: 10, range: 2.8, cd: .9, speed: 5.4, r: 1, scale: 1.3 };
   HEROES.echo = { name: 'Echo of you', self: 1, outfit: 'casual', hp: 80, kind: 'melee', dmg: 8, range: 2.2, cd: .55, speed: 5 };
   OUTFITS.kguard = { hero: 1, c1: '#2A2D33', c2: '#FF8A2E', gloves: 1, mask: 'helmet' };
   OUTFITS.kguard2 = { hero: 1, c1: '#3A3D44', c2: '#FFC93C', gloves: 1, mask: 'helmet' };
   OUTFITS.broker = { hero: 1, c1: '#5A5E68', c2: '#FF8A2E', metal: 1, gloves: 1, mask: 'helmet', glow: 1 };
   HEROES.kguard = { name: 'Guard (knock-off repulsor)', outfit: 'kguard', hp: 70, kind: 'ranged', dmg: 6, cd: .6, col: 0xFF8A2E, speed: 4.4 };
   HEROES.kthor = { name: 'Guard (fake hammer)', outfit: 'kguard2', hp: 90, kind: 'melee', dmg: 9, range: 2.3, cd: .7, speed: 4.2, prop: 'mjolnir' };
-  HEROES.broker = { name: 'The Broker (exo-suit)', outfit: 'broker', hp: 1700, kind: 'boss', dmg: 10, range: 2.6, cd: 1, speed: 5, r: .8, scale: 1.3 };
+  HEROES.broker = { name: 'The Broker (exo-suit)', outfit: 'broker', hp: 1150, kind: 'boss', bk: .6, dmg: 8, range: 2.6, cd: 1, speed: 5, r: .8, scale: 1.3 };
   EVENTS.of = { name: 'The Overfit', hidden: 1, teams: { me: 'Rayan', ofx: 'The Overfit' }, col: { me: '#FFC93C', ofx: '#9B4DFF' }, time: 600, fixed: 'me', blurb: '' };
   EVENTS.br = { name: 'The Broker', hidden: 1, teams: { me: 'Rayan', bk: 'Broker Dynamics' }, col: { me: '#FFC93C', bk: '#FF8A2E' }, time: 600, fixed: 'me', blurb: '' };
   PICKS.me = ['rayan'];
@@ -4712,12 +4735,12 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   HEROES.ustation = { name: 'Power substation', hp: 260, kind: 'static', r: 1.3 };
   HEROES.userver = { name: 'Broker server rack', hp: 220, kind: 'static', r: 1 };
   HEROES.ucable = { name: 'Power cable', hp: 200, kind: 'static', r: .9 };
-  HEROES.ultronx = { name: 'Ultron (scrap body)', hp: 2000, kind: 'boss', dmg: 11, range: 3, cd: 1, speed: 4.6, r: 1.1 };
+  HEROES.ultronx = { name: 'Ultron (scrap body)', hp: 1300, kind: 'boss', bk: .6, dmg: 8, range: 3, cd: 1, speed: 4.6, r: 1.1 };
   HEROES.pgwen = Object.assign({}, HEROES.gwen, { name: 'Spider-Gwen (possessed)', hp: 160 });
   HEROES.pcarter = Object.assign({}, HEROES.carter, { name: 'Captain Carter (possessed)', hp: 180 });
   HEROES.pjay = Object.assign({}, HEROES.jay, { name: 'Jay Garrick (possessed)', hp: 150 });
-  HEROES.puppeteer = { name: 'The Puppeteer', outfit: 'puppeteer', hp: 1300, kind: 'boss', dmg: 9, range: 2.4, cd: 1, speed: 5, r: .6 };
-  HEROES.copycat = { name: 'The Copycat', outfit: 'copycat', hp: 900, kind: 'boss', dmg: 9, range: 2.4, cd: .9, speed: 5.4, r: .6 };
+  HEROES.puppeteer = { name: 'The Puppeteer', outfit: 'puppeteer', hp: 900, kind: 'boss', bk: .55, dmg: 7, range: 2.4, cd: 1, speed: 5, r: .6 };
+  HEROES.copycat = { name: 'The Copycat', outfit: 'copycat', hp: 700, kind: 'boss', bk: .55, dmg: 8, range: 2.4, cd: .9, speed: 5.4, r: .6 };
   HEROES.copyrun = Object.assign({}, HEROES.copycat, { kind: 'melee', hp: 9999 });
   EVENTS.st = { name: 'Bangalore', hidden: 1, teams: { me: 'Rayan', en: 'Enemies' }, col: { me: '#FFC93C', en: '#FF3C3C' }, time: 600, fixed: 'me', blurb: '' };
   // how hurt you still are: a bit better each chapter, and not all the way back until the very end
@@ -4746,7 +4769,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + Math.PI / 8; PILLARS.push({ x: Math.cos(a) * 12.5, z: Math.sin(a) * 12.5, r: 1 }); }
   const PILL0 = PILLARS.slice();
   const EMIT = { x: -11, z: 5, r: 3 };
-  const evValid = (x, z) => Math.hypot(x, z) < ER - .6 && !PILLARS.some(p => Math.hypot(x - p.x, z - p.z) < p.r + .4);
+  const evValid = (x, z) => (EV && EV.inMap ? blrValid(x, z) : Math.hypot(x, z) < ER - .6) && !PILLARS.some(p => Math.hypot(x - p.x, z - p.z) < p.r + .4);
   function buildArena(k, home){
     if (eventScene) { if (eventScene.userData.homeG) eventScene.remove(eventScene.userData.homeG); disposeDeep(eventScene); }
     const sc = eventScene = new THREE.Scene();
@@ -4847,14 +4870,16 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   }
   function startEvent(k, team, hero, opts = {}){
     evOptsNow = opts;
+    const inMap = !!opts.site && !!(BL && BL.sc) && inWorld && (zone === 'blr' || zone === 'event' && !!EV && !!EV.inMap), retry = inMap && !!EV && EV.over;
     if (EV) stopEvent(true);
-    fade(() => {
-      const home = k === 'inc' && metDoom; buildArena(k, home); tip.classList.remove('on'); if (k === 'inc') { incHero = hero; try { localStorage.setItem('ru-inchero', hero); } catch (e) {} }
+    (inMap ? f => f() : f => fade(f, '#0B0D14'))(() => {
+      const home = k === 'inc' && metDoom; if (inMap) blrArena(k, opts); else buildArena(k, home); tip.classList.remove('on'); if (k === 'inc') { incHero = hero; try { localStorage.setItem('ru-inchero', hero); } catch (e) {} }
       const H = HEROES[hero], hp0 = k === 'inc' && hero === 'hulk' ? 700 : H.hp, D = { easy: [.6, .8], normal: [1, 1], hard: [1.4, 1.25] }[opts.diff] || [1, 1];
-      EV = { k, team, hero, opts, solo: !!opts.solo, diffIn: D[0], foeHp: D[1], look: heroLook(hero), hp: hp0, max: hp0, t: EVENTS[k].time, score: {}, units: [], shots: [], fx: [], cd: 0, spCd: 1, swing: 0, dead: 0, inv: 1.5, kos: 0, deaths: 0, dmg: 0, rage: 0,
+      EV = { inMap, k, team, hero, opts, solo: !!opts.solo, diffIn: D[0], foeHp: D[1], look: heroLook(hero), hp: hp0, max: hp0, t: EVENTS[k].time, score: {}, units: [], shots: [], fx: [], cd: 0, spCd: 1, swing: 0, dead: 0, inv: 1.5, kos: 0, deaths: 0, dmg: 0, rage: 0,
         big: !!H.scale, scale: H.scale || 1, speed: H.speed, prop: H.prop || null, over: false, charge: 0, weak: 0, remotes: new Map(), home };
       Object.keys(EVENTS[k].teams).forEach(t => EV.score[t] = 0);
       EV.me = { isMe: 1, team, hero, x: 0, z: 0, dead: 0, r: H.r || .5 };
+      EV.wpn = 'fists'; if (canClaws()) { EV.wpn = 'claws'; EV.prop = 'claws'; }
       // fill the teams with bots
       const foe = FOE[team];
       if (k === 'sw') { PICKS.rb.filter(h => h !== hero).slice(0, 4).forEach(h => place(addUnit({ hero: h, team: 'rb' }))); ['v_iron', 'v_cap', 'v_thor', 'v_batman'].forEach(h => place(addUnit({ hero: h, team: 'dm' }))); for (let i = 0; i < 2; i++) place(addUnit({ hero: 'trooper', team: 'dm' })); EV.flags = FLAGS.map(([x, z, nm]) => ({ x, z, nm, own: 0, cap: 0 })); }
@@ -4864,7 +4889,9 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
       if (k === 'of') { const b = addUnit({ hero: 'overfitx', team: 'ofx' }); b.x = 0; b.z = -16; b.boss = 1; b.overfit = 1; ofModel(b); EV.boss = b; EV.of = { si: 0, pt: 0, cur: '', count: {}, told: {}, hits: 0, final: false }; }
       if (k === 'br') { const part = opts.part || 1; EV.part = part; EV.br = { part, prog: 0, far: 0, ang: 0, bits: [], broke: [], floor: 0 }; EV.frailHit = .55 + .1 * (part - 1); EV.max = EV.hp = Math.round(EV.max * [.6, .7, .8, .9][part - 1]);
         if (part === 1) { const T = makeTruck(); eventScene.add(T); EV.br.truck = T; }
-        if (part === 2) { for (let i = 0; i < 5; i++) place(addUnit({ hero: 'kguard', team: 'bk' })); for (let i = 0; i < 3; i++) place(addUnit({ hero: 'kthor', team: 'bk' })); }
+        if (part === 2) { for (let i = 0; i < 5; i++) place(addUnit({ hero: 'kguard', team: 'bk' })); for (let i = 0; i < 3; i++) place(addUnit({ hero: 'kthor', team: 'bk' }));
+          // in the city they're under the warehouse roof, not spread across the whole yard
+          if (inMap) EV.units.forEach(u => { const a = Math.random() * 6.28, r = 3 + Math.random() * 8; u.x = Math.cos(a) * r; u.z = Math.sin(a) * r - 3; }); }
         if (part === 4) { HEROES.broker.speed = 5; const b = addUnit({ hero: 'broker', team: 'bk' }); b.x = 0; b.z = -12; b.boss = 1; EV.boss = b; for (let i = 0; i < 2; i++) place(addUnit({ hero: 'kguard', team: 'bk' })); } }
       if (k === 'cv') { PICKS.cv.filter(h => h !== hero).slice(0, 5).forEach((h, i) => place(addUnit({ hero: h, team: 'cv', role: i < 2 ? 'flag' : '' })));
         EV.anchors = [90, 210, 330].map(a => { const u = addUnit({ hero: 'anchor', team: 'cv' }); u.x = Math.cos(a * Math.PI / 180) * 8; u.z = Math.sin(a * Math.PI / 180) * 8; return u; });
@@ -4880,22 +4907,23 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
       EV.units.filter(u => u.team !== team && u.hero !== 'anchor').forEach(u => { u.hp = u.max = Math.round(u.max * EV.foeHp); });
       let [sx, sz] = spawnOf(team); if (home) { sx = 3.5; sz = 10.5; }
       saved = { pos: V(0, 1.6, 2.6), yaw: 0, pitch: -.05 };
-      inWorld = true; zone = 'event'; falling = false; vy = 0; walkTarget = null; pos.set(sx, 1.6, sz); yaw = home ? Math.PI : sz > 0 ? 0 : Math.PI; pitch = -.08; if (k === 'wwh' && team === 'heroes') yaw = Math.atan2(sx, sz);
-      closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Leave the event'; jumpBtn.hidden = fine; uiZone();
-      evHud.hidden = false; $('#evEnd').hidden = true; ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = false); $('#evSp').textContent = `${H.sp}\n(E)`; document.body.classList.add('inevent');
+      inWorld = true; zone = 'event'; falling = false; vy = 0; walkTarget = null; if (!inMap) { pos.set(sx, 1.6, sz); yaw = home ? Math.PI : sz > 0 ? 0 : Math.PI; pitch = -.08; } else if (retry && k === 'br' && (opts.part || 1) === 1) { const [lx, lz] = toLocal(8, 10); pos.set(lx, 1.6, lz); } if (k === 'wwh' && team === 'heroes') yaw = Math.atan2(sx, sz);
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = inMap ? 'Leave the fight' : 'Leave the event'; jumpBtn.hidden = fine; uiZone();
+      evHud.hidden = false; $('#evEnd').hidden = true; ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = false); if (inMap) $('#evSwap').hidden = true; $('#evSp').textContent = `${H.sp}\n(E)`; document.body.classList.add('inevent');
       say(k === 'st' ? ({ u1: 'Ultron\u2019s drones, in the rain. You\u2019re still hurt, so pick your fights.', u2: 'Five connections keep him alive: three substations and two server racks. Break them all.', u3: 'Three cables feed his body. While they\u2019re plugged in, he heals and shrugs off your hits. Cut them first.', p1: 'Knock each possessed villain out to snap her string. They don\u2019t want to hurt you. She does.', p2: 'Your friends, on her strings. Knock them out to set them free. Watch out: she can get into your head too.', p3: 'She hides behind her puppets. Break every string, then hit her while she\u2019s exposed.', c1: 'Put out the fires (stand in them) and free the people trapped under the stalls (stand next to them).', c2: 'He\u2019s fast and he won\u2019t fight fair. Land 5 hits to wear him down.', c3: 'The Copycat, in a cape he bought online. Beat him.' })[opts.part || 'u1'] : k === 'of' ? 'The last world left is your own room. The Overfit is here, wearing everything he stole. Mix up your attacks: he learns anything you repeat. E improvises something random.' : k === 'br' ? ['Tail the truck. Stay between 6 and 13 metres: any closer and they\u2019ll spot you.', 'Clear out his guards quietly. Their gear is cheap knock-offs, but you\u2019re hurt: one wrong move and you\u2019re done.', 'Floor by floor to the top. You won\u2019t get back up if you go down.', 'The Broker, in a suit built from the wreckage of every battle. Break it apart piece by piece.'][(opts.part || 1) - 1] : k === 'cv' ? `Convergence. Every universe is about to collide. Guard the three anchors and survive until Doom shows up.` : isPvp(k) ? `You’re ${H.name}. First team to ${EVENTS[k].goal} takedowns wins.` : k === 'sw' ? 'Capture the three domain flags: stand in a ring with no enemies inside. First side to 120 points wins.' : k === 'fp' ? 'You’re the Flash. Grab ten glowing timeline shards before Reverse-Flash does. E dashes through anyone in your way.' : k === 'dks' ? 'Darkseid is here. Stay out of the fire pits, beat the Parademons and take him down. Watch out for his Omega Beams.' : k === 'wwh' ? (team === 'hulk' ? 'You’re the Hulk. Smash the heroes and survive until time runs out. Space to leap, E to thunderclap.' : 'Take the Hulk down before time runs out. Stay spread out: his thunderclap hits everyone nearby.') : k === 'inc' ? 'The other Earth is coming. Hold the three golden anchors against the variants pouring out of the rifts, then take down Doom.' : 'Superman is invulnerable. Hold the green Kryptonite emitter to weaken him, then hit him with everything.', 5200);
       if (k === 'cv') { $('#worldBack').hidden = true; if (opts.forced) say('The portal misfires! Every universe is colliding at once, and you\u2019ve been pulled into the middle of it. There\u2019s no way out but through.', 6000); }
       narrStart();
       if (home) { const bh = instab >= 6 ? 'The Beyonder' : 'Doom'; say(opts.hunted ? `${bh} is waiting in the street outside your house. Go and beat him, and hold the anchors.` : `${bh} is waiting in the street outside your house. Beat him there and hold the anchors.`, 5200); EV.shake = .8; tone(50, 1.5, 'sawtooth', .08, 25); }
       if (fine && canvas.requestPointerLock) canvas.requestPointerLock();
-    }, '#0B0D14');
+    });
   }
   function place(u){ const [x, z] = spawnOf(u.team); u.x = x; u.z = z; u.yaw = z > 0 ? 0 : Math.PI; return u; }
   function stopEvent(quiet){
-    if (EV && EV.camT > 0) tpv = EV.camSaved; document.body.classList.remove('possessed'); dlgClear();
+    if (EV && EV.camT > 0) tpv = EV.camSaved; document.body.classList.remove('possessed'); document.body.classList.remove('pain'); dlgClear();
     if (!EV) return; EV.units.slice().forEach(dropUnit); EV.shots.forEach(s => s.m && s.m.parent && s.m.parent.remove(s.m)); EV.fx.forEach(f => f.m.parent && f.m.parent.remove(f.m));
-    const wasHome = EV.home; EV = null; evHud.hidden = true; evHurt.style.opacity = 0; document.body.classList.remove('inevent'); if (document.pointerLockElement) document.exitPointerLock();
-    if (!quiet && wasHome) travel('room');
+    const wasHome = EV.home, wasMap = EV.inMap; EV = null; evHud.hidden = true; evHurt.style.opacity = 0; document.body.classList.remove('inevent'); if (document.pointerLockElement) document.exitPointerLock();
+    if (wasMap) blrBack();
+    else if (!quiet && wasHome) travel('room');
     else if (!quiet) { travel('lair'); pos.set(-4.4, 1.6, 6.2); yaw = Math.atan2(-(-7 + 4.4), -(3 - 6.2)); pitch = -.1; } renderHotbar(); meKey = ''; drawWarTable();
   }
   // ---------- fighting ----------
@@ -4904,16 +4932,16 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   const alive = u => !(u.isMe ? EV.dead > 0 : u.dead > 0);
   const bodies = () => [EV.me].concat(EV.units);
   function evAttack(){
-    if (!EV || EV.over || EV.dead > 0 || EV.cd > 0 || EV.lockT > 0 || EV.intro) return; const H = HEROES[EV.hero];
-    EV.cd = H.cd * (EV.rage > 0 ? .6 : 1); EV.swing = .3; EV.punchSide = -(EV.punchSide || -1);
-    const dm = H.dmg * armFactor() * (EV.rage > 0 ? 1.6 : 1);
+    if (!EV || EV.over || EV.dead > 0 || EV.cd > 0 || EV.lockT > 0 || EV.intro || EV.blocking || EV.flinch > 0) return; const H = HEROES[EV.hero];
+    EV.cd = H.cd * (EV.rage > 0 ? .6 : 1) * (EV.wpn === 'claws' ? .85 : 1); EV.swing = .3; EV.punchSide = -(EV.punchSide || -1);
+    const dm = H.dmg * armFactor() * (EV.rage > 0 ? 1.6 : 1) * (EV.wpn === 'claws' ? 1.4 : 1) * (EV.pain ? .8 : 1);
     if (H.kind === 'melee') { const f = evFwd(); let hit = 0;
       bodies().forEach(u => { if (u.isMe || !alive(u) || teamOf(u) === EV.team) return; const dx = u.x - pos.x, dz = u.z - pos.z, d = Math.hypot(dx, dz) - (HEROES[u.hero].r || .5); if (d < H.range && Math.abs(angDiff(Math.atan2(-dx, -dz), yaw)) < (H.arc || .9)) { hitUnit(u, dm, 'me'); hit++; } });
       tone(hit ? 240 : 420, .06, hit ? 'square' : 'sine', .04, hit ? 120 : 700); if (EV.hero === 'hulk') { EV.shake = .3; }
     } else { shoot({ x: pos.x, z: pos.z, yaw, dmg: dm, team: EV.team, col: H.col, from: 'me' }); tone(900, .05, 'sawtooth', .03, 1400); }
   }
   function evSpecial(){
-    if (!EV || EV.over || EV.dead > 0 || EV.spCd > 0 || EV.lockT > 0 || EV.intro) return; const H = HEROES[EV.hero]; EV.spCd = H.spCd; EV.swing = .3;
+    if (!EV || EV.over || EV.dead > 0 || EV.spCd > 0 || EV.lockT > 0 || EV.intro || EV.blocking || EV.flinch > 0) return; const H = HEROES[EV.hero]; EV.spCd = H.spCd; EV.swing = .3;
     special2(EV.me, EV.hero, pos.x, pos.z, yaw, 'me'); tone(300, .4, 'sawtooth', .05, 900);
   }
   // the specials (the same for you and for bots)
@@ -4944,6 +4972,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
     if (u.shield > 0) { d = 0; if (from === 'me' && !EV.toldShield) { EV.toldShield = 1; say('Shielded! Survive the shockwaves and fight the variants until it drops.', 3200); } }
     if (u.boss && EV.k === 'cv') d *= EV.weak > 0 ? 1.6 : 1;
     if ((EV.k === 'br' || EV.k === 'st') && from === 'me') d *= EV.frailHit || 1;
+    if (EV.k === 'br' && EV.part === 2 && from === 'me' && !u.alert) { d *= KIT.crouchK > .5 ? 4 : 2; brAlert(u, 6, true); if (!EV.br.toldTake) { EV.br.toldTake = 1; say('Takedown! Hitting them before they see you hurts a lot more, especially from a crouch.', 3000); } }
     if (u.hero === 'copyrun') { if (from === 'me' || from === EV.me) copyTag(u); return; }
     if (EV.k === 'st' && u.hero === 'puppeteer' && !(EV.st.exposed > 0)) { d = 0; if (from === 'me' && !EV.st.toldHide) { EV.st.toldHide = 1; say('Your hits slide off her. She\u2019s shielded by her puppets. Break their strings first.', 3000); } }
     if (EV.k === 'st' && u.hero === 'ultronx' && EV.st.cables.some(c => c.dead <= 0)) d *= .4;
@@ -4972,7 +5001,9 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   function hurtMe(d, from){
     if (EV.dead > 0 || EV.inv > 0 || EV.over) return;
     if (!(from && from.remote)) d *= EV.diffIn;
-    if (EV.k === 'br') d *= 1.25;
+    if (EV.k === 'br') d *= 1.1;
+    if (from && from.hero === 'copycat' && EV.ccClaws) d *= 1.25;
+    if (EV.blocking) { d *= .25; KIT.stam = Math.max(0, KIT.stam - .14); tone(1200, .05, 'square', .03, 800); if (KIT.stam <= 0) { EV.blocking = false; EV.guardT = 1.2; say('Guard broken!', 1200); } }
     if (EV.k === 'st') d *= EV.frailTake || 1;
     EV.hp -= d; EV.hurtT = .4; tone(120, .15, 'sawtooth', .04, 70);
     const oneLife = EV.k === 'wwh' && EV.hero === 'hulk' || EV.k === 'br' || EV.k === 'st';
@@ -5001,7 +5032,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
     if (EV.solo) { const r0 = soloRec[EV.k] || (soloRec[EV.k] = { w: 0, l: 0 }); r0[won ? 'w' : 'l']++; try { localStorage.setItem('ru-evsolo', JSON.stringify(soloRec)); } catch (e) {} }
     const title = EV.k === 'st' ? (won ? ({ u1: 'The drones are down, but every screen is still watching.', u2: 'His connections are cut. The screens go dark.', u3: 'You pulled the plug. Ultron is offline.', p1: 'The pod villains are free of her strings.', p2: 'Your friends snap out of it.', p3: 'Her hold breaks. Everyone is free.', c1: 'The market is safe. He ran for the rooftops.', c2: 'You caught up with him.' })[EV.st.part] || 'Done.' : 'You\u2019re too hurt to keep going. Rest, then try again.') : EV.k === 'of' ? (won ? 'The Overfit failed to generalise. Every world is coming back.' : 'The Overfit learned everything.') : EV.k === 'br' ? (won ? ['You followed the trucks to a warehouse by the lake.', 'The Broker is auctioning multiverse weapons tonight.', 'You made it to the roof.', 'The Broker is finished.'][EV.part - 1] : 'You\u2019re too hurt to keep going. Rest, then try again.') : EV.k === 'cv' ? (won ? 'You beat Galactus!' : EV.cx && EV.cx.gal ? 'Galactus ate the multiverse.' : 'Everything collided, and nothing was left standing.') : isPvp(EV.k) ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'sw' ? (won ? 'Battleworld is free! The Rebels hold the domains.' : 'Doom\u2019s Legion holds Battleworld.') : EV.k === 'fp' ? (won ? 'Timeline restored!' : 'Reverse-Flash wins. The timeline stays broken.') : EV.k === 'dks' ? (won ? 'Darkseid falls! Apokolips retreats.' : 'Darkseid is. And Darkseid wins.') : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : endFight ? 'The Beyonder wins. Everything goes white\u2026' : 'The two Earths are about to collide\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
     $('#evEndT').textContent = title; $('#evEndS').textContent = `Takedowns ${EV.kos} · Times down ${EV.deaths} · Damage ${fmtN(EV.dmg)}. ${EV.solo ? soloLine(EV.k) + '.' : mq ? 'Global: ' + lbLine(EV.k) : ''}`;
-    const outroT = narrOutro(won), E0 = EV; setTimeout(() => { if (!EV || EV !== E0) return; $('#evEnd').hidden = false; [523, 659, 784].forEach((f, i) => setTimeout(() => tone(won ? f : f / 2, .2, 'triangle', .05), i * 110)); }, outroT);
+    const outroT = narrOutro(won), E0 = EV; setTimeout(() => { if (!EV || EV !== E0) return; if (E0.inMap && won) { BL.lastWon = true; return stopEvent(); } $('#evEnd').hidden = false; [523, 659, 784].forEach((f, i) => setTimeout(() => tone(won ? f : f / 2, .2, 'triangle', .05), i * 110)); }, outroT);
   }
   $('#evAgain').onclick = () => { const { k, team, hero, opts } = EV; startEvent(k, team, hero, opts); };
   $('#evSwap').onclick = () => { const k = EV.k; stopEvent(); setTimeout(() => openLobby(k), 700); };
@@ -6240,32 +6271,32 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
       { t: 'Worlds are disappearing. Check the multiverse map on the lair wall.', enter: () => { eraseWorld(); eraseWorld(); say('Two worlds just vanished from the multiverse.', 3200); }, check: () => F().lairmap, where: () => ['lair', V(-6.2, 4.6, 10.6)] },
       { t: 'The Overfit survived, and he stole everything: the Gauntlet, Mjölnir, the Necrosword. He’s waiting in the last world left. Stop him.', go: () => startEvent('of', 'me', 'rayan', { solo: true, diff: evDiff }), check: () => F()['evwin:of'] }
     ] },
-    { title: 'The Broker', tag: 'No gods this time. Just you, and you’re hurt.', start: () => say('After everything you’ve been through, your body is done. Less health, barely any healing, and your arm is burning again. Take it slow.', 6000), steps: [
+    { title: 'The Broker', tag: 'No gods this time. Just you, and you’re hurt.', start: () => say('After everything you’ve been through, your body is done: less health, barely any healing, and your arm is burning again. And everything the Overfit stole crumbled to dust with him. The rack in the lair is empty now, except for Wolverine’s claws.', 8000), steps: [
       { t: 'Something is watching your house. Go up to the roof.', check: () => inZ('roof'), where: () => ['room', V(0, 2.6, 9.6)] },
       { t: 'Drones! Shoot down all three (click them).', check: () => F().drones },
-      { t: 'Follow the Broker’s truck through Bangalore at night. Stay close, but not too close.', go: () => startEvent('br', 'me', 'rayan', { solo: true, diff: evDiff, part: 1 }), check: () => F().br1 },
-      { t: 'Sneak into his warehouse and find out what he’s planning.', go: () => startEvent('br', 'me', 'rayan', { solo: true, diff: evDiff, part: 2 }), check: () => F().br2 },
-      { t: 'The auction is tonight. Fight your way up his tower.', go: () => startEvent('br', 'me', 'rayan', { solo: true, diff: evDiff, part: 3 }), check: () => F().br3 },
-      { t: 'Take down the Broker on the roof of his tower.', go: () => startEvent('br', 'me', 'rayan', { solo: true, diff: evDiff, part: 4 }), check: () => F().br4 }
+      { t: 'The Broker’s truck is parked in your street. Take the fire escape down and follow it on foot. Stay close, but not too close.', site: { k: 'br', part: 1, at: 'home', p: [-6, 6], r: 11 }, where: siteWhere, check: () => F().br1 },
+      { t: 'The truck stopped at a warehouse by the lake. Sneak in and find out what he’s planning. Crouch so the guards don’t see you coming.', site: { k: 'br', part: 2, at: 'lake', r: 26 }, where: siteWhere, check: () => F().br2 },
+      { t: 'The auction is tonight, at the top of Broker Tower on the other side of the city. Get there and fight your way up, floor by floor.', site: { k: 'br', part: 3, at: 'tower', r: 24 }, where: siteWhere, check: () => F().br3 },
+      { t: 'Take the lift up to the roof of his tower and take down the Broker.', site: { k: 'br', part: 4, at: 'tower', roof: 1, r: 26 }, where: siteWhere, check: () => F().br4 }
     ] },
     { title: 'Ultron', tag: 'He never really left.', start: () => say('You’re still hurting, but a little stronger than before.', 3600), steps: [
       { t: 'Your phone, your TV, every screen in Bangalore: the same face. Ultron is back. Go up to the roof and look at the city.', check: () => inZ('roof'), where: () => ['room', V(0, 2.6, 9.6)] },
-      { t: 'His drones are hunting you through the streets. Fight them off.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'u1' }), check: () => F().u1 },
-      { t: 'Cut his connections: the power substations, and the Broker’s seized servers.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'u2' }), check: () => F().u2 },
-      { t: 'He’s built himself a body out of scrap cars and drones at a data centre. Unplug him.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'u3' }), check: () => F().u3, done: () => { try { localStorage.setItem('ru-ultronred', '1'); } catch (e) {} if (!recap.includes('ultron')) { recap.push('ultron'); saveInstab(); } } },
+      { t: 'His drones are hunting you through the streets. Take the fire escape down and fight them off.', site: { k: 'st', part: 'u1', at: 'home', r: 30 }, where: siteWhere, check: () => F().u1 },
+      { t: 'Cut his connections: three power substations around the city, and the two servers he took from outside Broker Tower.', site: { k: 'st', part: 'u2', at: 'home', r: 90 }, where: siteWhere, check: () => F().u2 },
+      { t: 'He’s built himself a body out of scrap cars and drones at the data centre. Get there and unplug him.', site: { k: 'st', part: 'u3', at: 'data', r: 24 }, where: siteWhere, check: () => F().u3, done: () => { try { localStorage.setItem('ru-ultronred', '1'); } catch (e) {} if (!recap.includes('ultron')) { recap.push('ultron'); saveInstab(); } } },
       { t: 'Go down to the lair and check Ultron’s pod.', check: () => inZ('lair'), where: () => ['lair', podPos('ultron')], done: () => say('Ultron’s pod glows red again. He’s locked back inside, where he belongs.', 4200) }
     ] },
     { title: 'The Puppeteer', tag: 'Nobody moves unless she says so.', start: () => say('Stronger again. Not all the way back yet.', 3000), steps: [
       { t: 'Something is wrong in the lair. Go and look at the pods.', check: () => inZ('lair'), where: () => ['lair', podPos('joker')], done: () => say('Every pod is glowing purple, and the villains inside are awake.', 3600) },
-      { t: 'The villains in the pods are awake, and they’re all speaking in the same voice. Break her strings.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'p1' }), check: () => F().p1 },
-      { t: 'She’s taken the heroes too. Spider-Gwen, Captain Carter and Jay Garrick are coming for you.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'p2' }), check: () => F().p2 },
-      { t: 'Find the Puppeteer in the old theatre and break her hold.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'p3' }), check: () => F().p3, done: () => say('Her hold breaks. Everyone snaps out of it at once, blinking, like they just woke up.', 4600) }
+      { t: 'The villains broke out of their pods, walked up the stairs and out of your front door, all speaking in the same voice. They’re in your street. Break her strings.', site: { k: 'st', part: 'p1', at: 'home', r: 30 }, where: siteWhere, check: () => F().p1 },
+      { t: 'She’s taken the heroes too. Spider-Gwen, Captain Carter and Jay Garrick are waiting for you at the market.', site: { k: 'st', part: 'p2', at: 'market', r: 24 }, where: siteWhere, check: () => F().p2 },
+      { t: 'Find the Puppeteer in the old theatre and break her hold.', site: { k: 'st', part: 'p3', at: 'theatre', r: 24 }, where: siteWhere, check: () => F().p3, done: () => say('Her hold breaks. Everyone snaps out of it at once, blinking, like they just woke up.', 4600) }
     ] },
     { title: 'Copycat', tag: 'Every hero gets one eventually.', start: () => say('Almost yourself again.', 2600), steps: [
       { t: 'Clips of your fights are all over Bangalore. Read the Daily Bugle in the lair.', check: () => F().bugle, where: () => ['lair', V(-9, 2.2, 9.3)] },
-      { t: 'Someone is copying you, badly. Follow his trail through the market and clean up his mess.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'c1' }), check: () => F().c1 },
-      { t: 'He’s running across the rooftops. Catch him.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'c2' }), check: () => F().c2 },
-      { t: 'Fight the Copycat on the roof, in the rain.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'c3' }), check: () => F().lastpage },
+      { t: 'Someone is copying you, badly. Go to the market, follow his trail and clean up his mess.', site: { k: 'st', part: 'c1', at: 'market', r: 24 }, where: siteWhere, check: () => F().c1 },
+      { t: 'He’s running off through the market lanes. Catch him.', site: { k: 'st', part: 'c2', at: 'market', r: 80 }, where: siteWhere, check: () => F().c2 },
+      { t: 'He’s waiting on the roof of Broker Tower. Take the lift up and fight him, in the rain.', site: { k: 'st', part: 'c3', at: 'tower', roof: 1, r: 26 }, where: siteWhere, check: () => F().lastpage },
       { t: 'The comic is open on your desk, at its last page. Close it.', keep: () => { if (!normalView && !inWorld) enterNormal(); }, check: () => F().closed, where: () => ['room', V(-2.5, 1.9, -4.2)], done: finaleCredits }
     ] }
   ];
@@ -6285,8 +6316,8 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   function renderGoal(){
     const s = curStep(), show = SG.active && !SG.hide && !!s && entered && !mirror && !photoOn;
     goalEl.hidden = !show; if (!show) return;
-    const key = SG.ch + ':' + SG.step + ':' + stepText(s) + (EV ? 'ev' : '') + (A ? 'a' : ''); if (key === goalKey) return; goalKey = key;
-    goalEl.innerHTML = `<small>Chapter ${SG.ch + 1} · ${esc(SAGA[SG.ch].title)}</small><span>${esc(stepText(s))}</span>${s.go && !EV && !A ? '<button class="btn alt" type="button" data-goal="go">Go</button>' : ''}${!EV && !A ? '<button class="goalskip" type="button" data-goal="skip">Skip chapter</button>' : ''}`;
+    const key = SG.ch + ':' + SG.step + ':' + stepText(s) + (EV ? 'ev' : '') + (A ? 'a' : '') + (inBlr() ? 'm' : zone); if (key === goalKey) return; goalKey = key;
+    goalEl.innerHTML = `<small>Chapter ${SG.ch + 1} · ${esc(SAGA[SG.ch].title)}</small><span>${esc(stepText(s))}</span>${s.site && !inBlr() ? `<small class="goalsub">${inZ('roof') ? 'Climb down the fire escape at the corner of the roof.' : 'Go up to the roof and take the fire escape down to the street.'}</small>` : ''}${s.go && !EV && !A ? '<button class="btn alt" type="button" data-goal="go">Go</button>' : ''}${!EV && !A ? '<button class="goalskip" type="button" data-goal="skip">Skip chapter</button>' : ''}`;
   }
   // skipping asks twice, so a stray click doesn't throw a chapter away
   function armSkip(b){ if (b.dataset.armed) return true; b.dataset.armed = '1'; const t0 = b.textContent; b.textContent = 'Sure? Click again to skip'; setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = t0; } }, 5000); return false; }
@@ -6310,8 +6341,8 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
     if (s && s.keep) s.keep();
     if (s && SG.entered !== SG.ch + ':' + SG.step) { SG.entered = SG.ch + ':' + SG.step; saveSG(); if (s.enter) s.enter(); }
     // the beam of light over where you need to go
-    const w = s && s.where && !SG.hide ? s.where() : null, sc = w ? (w[0] === 'room' ? scene : w[0] === 'lair' ? lairScene : w[0] === 'roof' ? roofScene : null) : null;
-    if (w && sc && inZ(w[0])) { if (!beacon) beacon = makeBeacon(); if (beacon.parent !== sc) { if (beacon.parent) beacon.parent.remove(beacon); sc.add(beacon); } beacon.position.copy(w[1]).add(V(0, -1.2, 0)); beacon.visible = true; } else if (beacon) beacon.visible = false;
+    const w = s && s.where && !SG.hide ? s.where() : null, sc = w ? (w[0] === 'room' ? scene : w[0] === 'lair' ? lairScene : w[0] === 'roof' ? roofScene : w[0] === 'blr' ? BL.sc : null) : null;
+    if (w && sc && inZ(w[0])) { if (!beacon) beacon = makeBeacon(); if (beacon.parent !== sc) { if (beacon.parent) beacon.parent.remove(beacon); sc.add(beacon); } beacon.position.copy(w[1]).add(V(0, -1.2, 0)); beacon.scale.set(1, w[0] === 'blr' ? 6 : 1, 1); beacon.visible = true; } else if (beacon) beacon.visible = false;
     if (!s || A || RUN || VOID || EV && EV.over) return;
     if (s.skip && s.skip()) return nextStep();
     if (s.check()) nextStep();
@@ -6412,14 +6443,14 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   // ======================= Chapter 9: the Broker =======================
   function brArena(sc, part){
     const win = [0, 1, 2].map(i => new THREE.MeshStandardMaterial({ color: 0x1B1D24, map: winTex(true, ['#FFD27A', '#FFC93C', '#C9CFD8']), emissive: 0xFFFFFF, emissiveMap: winTex(true, ['#FFD27A', '#FFC93C', '#C9CFD8']), emissiveIntensity: .5 }));
-    if (part !== 2) for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2, R = ER + 8 + Math.random() * 12, h = (part === 3 || part === 4 ? 30 : 10) + Math.random() * 30, w = 6 + Math.random() * 6, bld = box(w, h, w, win[i % 3], Math.cos(a) * R, part >= 3 ? h / 2 - 40 : h / 2, Math.sin(a) * R, sc); bld.userData.noPick = true; }
-    if (part === 1) { for (let z = -24; z < 24; z += 4) box(.3, .02, 2, mat(0xFFC93C), 0, .02, z, sc); const lamp = [[-12, -12], [12, 12], [-12, 12], [12, -12]]; lamp.forEach(([x, z]) => { cyl(.08, .1, 5, mat(0x3A3D44), x, 2.5, z, sc, 8); const l = new THREE.PointLight(0xFFC080, 1.2, 14, 2); l.position.set(x, 5, z); sc.add(l); }); }
+    if (part !== 2 && !IN_MAP) for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2, R = ER + 8 + Math.random() * 12, h = (part === 3 || part === 4 ? 30 : 10) + Math.random() * 30, w = 6 + Math.random() * 6, bld = box(w, h, w, win[i % 3], Math.cos(a) * R, part >= 3 ? h / 2 - 40 : h / 2, Math.sin(a) * R, sc); bld.userData.noPick = true; }
+    if (part === 1 && !IN_MAP) { for (let z = -24; z < 24; z += 4) box(.3, .02, 2, mat(0xFFC93C), 0, .02, z, sc); const lamp = [[-12, -12], [12, 12], [-12, 12], [12, -12]]; lamp.forEach(([x, z]) => { cyl(.08, .1, 5, mat(0x3A3D44), x, 2.5, z, sc, 8); const l = new THREE.PointLight(0xFFC080, 1.2, 14, 2); l.position.set(x, 5, z); sc.add(l); }); }
     if (part === 2) { const crate = mat(0x6A4A2E, { roughness: .9 }); [[-8, -6], [8, -8], [-10, 8], [9, 6], [0, -12], [-15, -2], [15, 0]].forEach(([x, z]) => { box(2.4, 2.2, 2.4, crate, x, 1.1, z, sc); box(1.8, 1.6, 1.8, crate, x + .2, 3, z, sc); PILLARS.push({ x, z, r: 1.6 }); }); [[-6, 0], [6, 0], [0, 8]].forEach(([x, z]) => { const l = new THREE.PointLight(0xFFB070, 1.1, 16, 2); l.position.set(x, 6, z); sc.add(l); }); sc.fog.far = 60; }
-    if (part === 3) { const glass = new THREE.MeshStandardMaterial({ color: 0x9FD8FF, transparent: true, opacity: .18, roughness: .05, metalness: .3, side: THREE.DoubleSide }); const wall = new THREE.Mesh(new THREE.CylinderGeometry(ER + 1, ER + 1, 6, 48, 1, true), glass); wall.position.y = 3; sc.add(wall); }
+    if (part === 3 && !IN_MAP) { const glass = new THREE.MeshStandardMaterial({ color: 0x9FD8FF, transparent: true, opacity: .18, roughness: .05, metalness: .3, side: THREE.DoubleSide }); const wall = new THREE.Mesh(new THREE.CylinderGeometry(ER + 1, ER + 1, 6, 48, 1, true), glass); wall.position.y = 3; sc.add(wall); }
     if (part === 4) { const pad = new THREE.Mesh(new THREE.RingGeometry(5, 5.6, 40), new THREE.MeshBasicMaterial({ color: 0xFFC93C, side: THREE.DoubleSide })); pad.rotation.x = -Math.PI / 2; pad.position.y = .03; sc.add(pad); }
-    // rain for the whole chapter
-    const n = lowFx ? 500 : 1800, P = new Float32Array(n * 6); for (let i = 0; i < n; i++) { const x = (Math.random() - .5) * 70, y = Math.random() * 30, z = (Math.random() - .5) * 70; P.set([x, y, z, x, y - .6, z], i * 6); }
-    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(P, 3)); const rain = new THREE.LineSegments(rg, new THREE.LineBasicMaterial({ color: 0x9FB4D8, transparent: true, opacity: .45 })); sc.add(rain); sc.userData.rain = rain;
+    // rain for the whole chapter (out in the city, the city has its own)
+    if (!IN_MAP) { const n = lowFx ? 500 : 1800, P = new Float32Array(n * 6); for (let i = 0; i < n; i++) { const x = (Math.random() - .5) * 70, y = Math.random() * 30, z = (Math.random() - .5) * 70; P.set([x, y, z, x, y - .6, z], i * 6); }
+    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(P, 3)); const rain = new THREE.LineSegments(rg, new THREE.LineBasicMaterial({ color: 0x9FB4D8, transparent: true, opacity: .45 })); sc.add(rain); sc.userData.rain = rain; }
     const sign = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, map: tex(640, 110, (c, w, h) => { c.fillStyle = 'rgba(11,13,20,.85)'; c.fillRect(0, 0, w, h); c.fillStyle = '#FF8A2E'; c.font = `900 70px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('BROKER DYNAMICS', w / 2, h / 2 + 3); }) })); sign.scale.set(12, 2, 1); sign.position.set(0, part >= 3 ? 12 : 9, -ER - 2); sc.add(sign); sc.userData.sign = sign;
   }
   function makeTruck(){ const g = new THREE.Group(); box(2.2, 2.2, 4.4, mat(0xE8E8E8), 0, 1.5, .4, g); box(2.2, 1.6, 1.6, mat(0x2A2D33), 0, 1.2, -2.6, g); [[-1.1, -2.4], [1.1, -2.4], [-1.1, 1.8], [1.1, 1.8]].forEach(([x, z]) => cyl(.4, .4, .3, mat(0x16181D), x, .4, z, g, 12).rotation.z = Math.PI / 2); const logo = new THREE.Mesh(new THREE.PlaneGeometry(3.6, .6), new THREE.MeshBasicMaterial({ map: tex(512, 90, (c, w, h) => { c.fillStyle = '#E8E8E8'; c.fillRect(0, 0, w, h); c.fillStyle = '#FF8A2E'; c.font = `900 56px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('BROKER', w / 2, h / 2 + 2); }) })); logo.rotation.y = Math.PI / 2; logo.position.set(1.12, 1.7, .4); g.add(logo); const tl = new THREE.PointLight(0xFF3030, .8, 5, 2); tl.position.set(0, 1, 2.7); g.add(tl); g.traverse(o => o.userData.noPick = true); return g; }
@@ -6430,7 +6461,8 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
     // knock-off gear: repulsors overheat, fake hammers spark and stun whoever's holding them
     EV.units.forEach(u => { if (u.dead > 0) return; if (u.hero === 'kguard' && (u.heat = (u.heat || 3 + Math.random() * 2) - dt) <= 0) { u.heat = 4 + Math.random() * 2; u.stun = 1.6; if (!B.toldHeat) { B.toldHeat = 1; say('Their knock-off repulsors overheat! Hit them while they cool down.', 2600); } }
       if (u.hero === 'kthor' && (u.spark = (u.spark || 5 + Math.random() * 3) - dt) <= 0) { u.spark = 6 + Math.random() * 3; u.stun = 1.4; boltFx(u.x, u.z); if (!B.toldSpark) { B.toldSpark = 1; say('The fake hammer sparks and shocks its owner. Cheap tech.', 2600); } } });
-    if (B.part === 1) {
+    if (B.part === 1 && EV.inMap) brTail(dt);
+    else if (B.part === 1) {
       const T = B.truck; B.ang += dt * .17; T.position.set(Math.cos(B.ang) * 15, 0, Math.sin(B.ang) * 15); T.rotation.y = -B.ang;
       const d = Math.hypot(pos.x - T.position.x, pos.z - T.position.z);
       if (d < 5.5 && EV.dead <= 0) { if (!B.spot) { B.spot = 2; B.prog = Math.max(0, B.prog - 10); B.ang += .9; say('They spotted you! The truck speeds off. Keep your distance.', 2400); tone(200, .4, 'sawtooth', .06); } }
@@ -6447,6 +6479,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
     if (B.part === 3 && !B.floor && !B.between) brWave(1);
     if (B.part === 3 && !B.between && EV.units.filter(u => u.team === 'bk' && u.dead <= 0).length === 0) {
       if (B.floor >= 3) { if (!EV.over) endMatch(true); }
+      else if (EV.inMap) { if (!B.needLift) { B.needLift = true; say('Floor clear. Take the lift on the east side up to the next floor.', 3200); } }
       else { B.between = true; fadeEl.style.background = '#0A0E18'; fadeEl.classList.add('on'); setTimeout(() => { if (!EV) return; fadeEl.classList.remove('on'); EV.units.filter(u => u.team === 'bk').forEach(dropUnit); pos.set(0, 1.6, 12); brWave(B.floor + 1); B.between = false; }, 700); }
     }
     if (B.part === 4) {
@@ -6539,20 +6572,20 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   function stArena(sc, part){
     const street = part === 'u1' || part === 'u2' || part === 'p2' || part === 'c2' || part === 'c3';
     const win = [0, 1, 2].map(() => new THREE.MeshStandardMaterial({ color: 0x1B1D24, map: winTex(true, ['#FFD27A', '#FFC93C', '#C9CFD8']), emissive: 0xFFFFFF, emissiveMap: winTex(true, ['#FFD27A', '#FFC93C', '#C9CFD8']), emissiveIntensity: .5 }));
-    if (street || part === 'c1') for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2, R = ER + 8 + Math.random() * 12, h = 10 + Math.random() * 30, w = 6 + Math.random() * 6, rooftop = part === 'c2' || part === 'c3' || part === 'p2'; const bld = box(w, h, w, win[i % 3], Math.cos(a) * R, rooftop ? h / 2 - 34 : h / 2, Math.sin(a) * R, sc); bld.userData.noPick = true; }
-    if (part === 'u1' || part === 'u2') { for (let z = -24; z < 24; z += 4) box(.3, .02, 2, mat(0xFFC93C), 0, .02, z, sc); [[-14, -20], [16, -18], [-20, 10], [20, 12]].forEach(([x, z], i) => { const scr = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), new THREE.MeshBasicMaterial({ map: ultronFaceTex() })); scr.position.set(x * 1.35, 12, z * 1.35); scr.lookAt(0, 12, 0); sc.add(scr); }); }
+    if ((street || part === 'c1') && !IN_MAP) for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2, R = ER + 8 + Math.random() * 12, h = 10 + Math.random() * 30, w = 6 + Math.random() * 6, rooftop = part === 'c2' || part === 'c3' || part === 'p2'; const bld = box(w, h, w, win[i % 3], Math.cos(a) * R, rooftop ? h / 2 - 34 : h / 2, Math.sin(a) * R, sc); bld.userData.noPick = true; }
+    if (part === 'u1' || part === 'u2') { if (!IN_MAP) for (let z = -24; z < 24; z += 4) box(.3, .02, 2, mat(0xFFC93C), 0, .02, z, sc); [[-14, -20], [16, -18], [-20, 10], [20, 12]].forEach(([x, z], i) => { const scr = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), new THREE.MeshBasicMaterial({ map: ultronFaceTex() })); scr.position.set(x * 1.35, 12, z * 1.35); scr.lookAt(0, 12, 0); sc.add(scr); }); }
     if (part === 'u3') { const rack = mat(0x16181D, { metalness: .4 }), led = glowM(0x3CE8E8, { emissiveIntensity: 1.2 }); [-12, -6, 6, 12].forEach(x => [-10, 0, 10].forEach(z => { box(1.4, 3, 5, rack, x, 1.5, z, sc); box(1.42, .06, 4.6, led, x, 2.4, z, sc); PILLARS.push({ x, z: z - 1.6, r: 1 }, { x, z: z + 1.6, r: 1 }); })); const l = new THREE.PointLight(0x3CE8E8, 1.2, 40, 2); l.position.set(0, 8, 0); sc.add(l); sc.fog.far = 70; }
-    if (part === 'p1' || part === 'p3') { const stone = mat(0x2A2D33, { roughness: 1 }); for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, x = Math.cos(a) * (ER - 2), z = Math.sin(a) * (ER - 2); cyl(1, 1.1, .3, stone, x, .15, z, sc, 20); cyl(.95, .95, 2.6, new THREE.MeshStandardMaterial({ color: 0xB07CFF, transparent: true, opacity: .15, emissive: 0xB07CFF, emissiveIntensity: .3 }), x, 1.6, z, sc, 20); } }
+    if ((part === 'p1' && !IN_MAP) || part === 'p3') { const stone = mat(0x2A2D33, { roughness: 1 }); for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, x = Math.cos(a) * (ER - 2), z = Math.sin(a) * (ER - 2); cyl(1, 1.1, .3, stone, x, .15, z, sc, 20); cyl(.95, .95, 2.6, new THREE.MeshStandardMaterial({ color: 0xB07CFF, transparent: true, opacity: .15, emissive: 0xB07CFF, emissiveIntensity: .3 }), x, 1.6, z, sc, 20); } }
     if (part === 'p3') { const curtain = mat(0x7A0A1A, { roughness: .9 }); for (let i = 0; i < 8; i++) box(3.6, 9, .3, curtain, -12.6 + i * 3.6, 4.5, -ER + 1, sc); [-8, 0, 8].forEach(x => { const s2 = new THREE.SpotLight(0xFFE8C0, 2, 40, .35, .5, 1); s2.position.set(x, 14, 6); s2.target.position.set(x * .5, 0, -6); sc.add(s2); sc.add(s2.target); }); }
     if (part === 'c1') { const aw = [0xC8102E, 0xFFC93C, 0x3C7CFF, 0x5E9A3A, 0xE8428C]; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2 + .2, R = 10 + (i % 2) * 7, x = Math.cos(a) * R, z = Math.sin(a) * R; const st = new THREE.Group(); st.position.set(x, 0, z); st.rotation.y = -a; sc.add(st); box(2.4, 1, 1.2, mat(0x6A4E3A), 0, .5, 0, st); box(2.8, .08, 1.8, mat(aw[i % 5]), 0, 2.3, .2, st); PILLARS.push({ x, z, r: 1.3 }); } [[-8, 4], [8, -4], [0, 12]].forEach(([x, z]) => { const l = new THREE.PointLight(0xFFC080, 1, 16, 2); l.position.set(x, 5, z); sc.add(l); }); }
     if (part === 'c2' || part === 'c3' || part === 'p2') { const unit = mat(0x8A8F99, { metalness: .4 }); [[-10, -8], [11, 6], [-6, 12], [14, -12], [-16, 4]].forEach(([x, z], i) => { if (i % 2) { cyl(1.4, 1.4, 3, mat(0x5A5E68), x, 1.5, z, sc, 16); } else box(2.4, 1.6, 1.6, unit, x, .8, z, sc); PILLARS.push({ x, z, r: 1.5 }); }); }
-    if (part !== 'u3' && part !== 'p1' && part !== 'p3') { const n = lowFx ? 500 : 1600, P = new Float32Array(n * 6); for (let i = 0; i < n; i++) { const x = (Math.random() - .5) * 70, y = Math.random() * 30, z = (Math.random() - .5) * 70; P.set([x, y, z, x, y - .6, z], i * 6); } const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(P, 3)); const rain = new THREE.LineSegments(rg, new THREE.LineBasicMaterial({ color: 0x9FB4D8, transparent: true, opacity: part === 'c2' ? .15 : .45 })); sc.add(rain); sc.userData.rain = rain; }
+    if (part !== 'u3' && part !== 'p1' && part !== 'p3' && !IN_MAP) { const n = lowFx ? 500 : 1600, P = new Float32Array(n * 6); for (let i = 0; i < n; i++) { const x = (Math.random() - .5) * 70, y = Math.random() * 30, z = (Math.random() - .5) * 70; P.set([x, y, z, x, y - .6, z], i * 6); } const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(P, 3)); const rain = new THREE.LineSegments(rg, new THREE.LineBasicMaterial({ color: 0x9FB4D8, transparent: true, opacity: part === 'c2' ? .15 : .45 })); sc.add(rain); sc.userData.rain = rain; }
   }
   function stSetup(part){
     const S = EV.st = { part, trick: 0, possT: 12, wave: 0, fires: [], people: [], tags: 0, ready: false }, add = (h, x, z) => { const u = addUnit({ hero: h, team: 'en' }); u.x = x; u.z = z; if (S.ready) { u.hp = u.max = Math.round(u.max * EV.foeHp); drawTag(u); } if (h === 'udrone') droneAv(u); return u; }, ring = (n, R) => Array.from({ length: n }, (_, i) => [Math.cos(i / n * Math.PI * 2) * R, Math.sin(i / n * Math.PI * 2) * R - 4]);
     S.add = add; S.ring = ring;
     if (part === 'u1') S.wave = 0;
-    if (part === 'u2') { S.targets = [[-16, -12, 'ustation'], [16, -12, 'ustation'], [0, -20, 'ustation'], [-12, 10, 'userver'], [12, 10, 'userver']].map(([x, z, h]) => { const u = add(h, x, z); staticAv(u, h); return u; }); S.droneT = 2; }
+    if (part === 'u2') { S.targets = (EV.inMap ? U2_TARGETS.map(([x, z, h]) => [...toLocal(x, z), h]) : [[-16, -12, 'ustation'], [16, -12, 'ustation'], [0, -20, 'ustation'], [-12, 10, 'userver'], [12, 10, 'userver']]).map(([x, z, h]) => { const u = add(h, x, z); staticAv(u, h); return u; }); S.droneT = 2; }
     if (part === 'u3') { const b = add('ultronx', 0, -14); ultronAv(b); b.boss = 1; EV.boss = b; S.cables = [[-12, -18], [12, -18], [0, -24]].map(([x, z]) => { const u = add('ucable', x, z); staticAv(u, 'ucable'); return u; }); S.cableLine = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xFF3030 })); eventScene.add(S.cableLine); for (let i = 0; i < 3; i++) add('udrone', (i - 1) * 6, -8); }
     if (part === 'p1') { const ids = BOSSES.filter(d => !CREATURES[d.id].seg && !['thanos', 'ultron', 'darkseid', 'celestial', 'gorr'].includes(d.id) && CREATURE3D[d.id]).map(d => d.id).sort(() => Math.random() - .5).slice(0, 4); ids.forEach((id, i) => { const [x, z] = ring(4, 14)[i]; addPuppet('pod:' + id, x, z); }); S.lineT = 3; }
     if (part === 'p2') { [['pgwen', -10, -12], ['pcarter', 10, -12], ['pjay', 0, -18]].forEach(([h, x, z]) => addPuppet(h, x, z)); S.lineT = 3; }
@@ -6576,7 +6609,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
     const alive2 = f => EV.units.filter(u => u.team === 'en' && u.dead <= 0 && f(u));
     if (P === 'u1') { if (!alive2(() => true).length && !EV.over) { if (S.wave >= 3) endMatch(true); else { S.wave++; const n = 2 + S.wave * 2; S.ring(n, 16).forEach(([x, z], i) => S.add(i % 3 === 2 ? 'uscrap' : 'udrone', x, z)); say(S.wave === 1 ? 'His drones drop out of the rain.' : S.wave === 2 ? 'More of them, and scrap bots on the ground.' : 'The last wave. Every camera on the street is watching you.', 2600); } } }
     if (P === 'u2') { const left = S.targets.filter(u => u.dead <= 0).length; if (!left && !EV.over) { say('The last connection sparks and dies. The screens across the city flicker off.', 3200); endMatch(true); }
-      if ((S.droneT -= dt) <= 0) { S.droneT = 12; if (alive2(u => u.hero === 'udrone').length < 6) S.ring(2, 18).forEach(([x, z]) => S.add('udrone', x + (Math.random() - .5) * 6, z)); } }
+      if ((S.droneT -= dt) <= 0) { S.droneT = 12; if (alive2(u => u.hero === 'udrone').length < 6) (EV.inMap ? [0, 1].map(() => { const a = Math.random() * 6.28; return [pos.x + Math.cos(a) * 16, pos.z + Math.sin(a) * 16]; }) : S.ring(2, 18)).forEach(([x, z]) => S.add('udrone', x + (Math.random() - .5) * 6, z)); } }
     if (P === 'u3') { const b = EV.boss, on = S.cables.filter(u => u.dead <= 0);
       const pts = []; on.forEach(u => pts.push(V(u.x, 3, u.z), V(b.x, 3.5, b.z))); S.cableLine.geometry.dispose(); S.cableLine.geometry = new THREE.BufferGeometry().setFromPoints(pts.length ? pts : [V(0, -5, 0), V(0, -5, 0)]);
       if (b.dead <= 0 && on.length) b.hp = Math.min(b.max, b.hp + b.max * .008 * dt);
@@ -6599,6 +6632,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
       if (S.goal) { const dx = S.goal[0] - u.x, dz = S.goal[1] - u.z, dd = Math.hypot(dx, dz); if (dd > .5) { moveUnit(u, dx, dz, 4.6, dt); u.yaw = Math.atan2(-dx, -dz); u.mv = 1; } else u.mv = 0; }
       if ((S.throwT -= dt) <= 0 && d < 16) { S.throwT = 3.5; shoot({ x: u.x, z: u.z, yaw: Math.atan2(-(pos.x - u.x), -(pos.z - u.z)), dmg: 6, team: 'en', col: 0xFFC93C, from: u }); }
       if (S.tags >= 5 && !EV.over) { say('“Fine! You want a real fight? Meet me on the tower roof.”', 3000); endMatch(true); } }
+    if (P === 'c3' && !S.ripped && EV.boss && EV.boss.dead <= 0 && EV.boss.hp < EV.boss.max * .55 && !EV.over && !EV.intro && !(EV.lockT > 0)) clawRip();
   }
   // the Copycat can't be hurt while he's running; each hit that lands just counts
   function copyTag(u){ const S = EV.st; if (S.tagCd > performance.now()) return; S.tagCd = performance.now() + 900; S.tags++; S.goal = null; u.kx = (u.x - pos.x) * 2; u.kz = (u.z - pos.z) * 2; say(`Got him! (${S.tags}/5)`, 1200); tone(500, .15, 'square', .05, 300); }
@@ -6681,6 +6715,264 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
     const m = new THREE.Mesh(new THREE.CircleGeometry(.14, 20, 0, Math.PI), mat(0xC8102E, { side: THREE.DoubleSide })); g.add(m); [-.05, .05].forEach(x => { const e = new THREE.Mesh(new THREE.CircleGeometry(.025, 12), new THREE.MeshBasicMaterial({ color: 0x16181D, side: THREE.DoubleSide })); e.position.set(x, .05, .002); g.add(e); });
     g.userData.egg = 'cmask'; LABELS.cmask = 'A cheap red mask';
     if (fresh) setTimeout(() => say('Something’s on the floor by your feet. A cheap red mask. It was just a story… wasn’t it?', 5200), 1500);
+  }
+
+  // ======================= Bangalore: one city you walk across (chapters 9 to 12) =======================
+  // From chapter 9 on the fights happen out in the city. You climb down the fire escape into your street and walk (or
+  // sprint) from place to place, and each fight starts where you find it. Whichever spot you're fighting in is moved to
+  // the origin (the whole map shifts under you), so the fight code keeps working in its own little coordinates.
+  const DIST = { home: { x: 0, z: 0, name: 'your street' }, lake: { x: -110, z: -110, name: 'the warehouse by the lake' }, tower: { x: 110, z: -110, name: 'Broker Tower' }, data: { x: 110, z: 110, name: 'the data centre' }, theatre: { x: -110, z: 110, name: 'the old theatre' }, market: { x: 0, z: 110, name: 'the market' } };
+  const TW = { x: 110, z: -110, r: 28, floor: 6, roof: 18 }, TDOOR = [TW.x - TW.r - 3, TW.z], LIFT = [TW.x + 20, TW.z];
+  const HOUSE = { x0: -27, x1: -13, z0: -27, z1: -13, door: [-20, -11.6] }, FIRE_DOWN = [-10, -8], FIRE_ESC = [5, -3];
+  const TRUCK_ROUTE = [[-6, 6], [-55, 0], [-55, -55], [-110, -55], [-110, -84]];
+  const U2_TARGETS = [[-55, -30, 'ustation'], [55, 30, 'ustation'], [-30, 55, 'ustation'], [74, -106, 'userver'], [74, -114, 'userver']];
+  var BL = { sc: null, mapG: null, off: V(0, 0, 0), boxes: [], grid: new Map(), rain: null, ride: null, liftArm: true, hold: 0, needOut: false, keep: null, partG: null, trucks: {} };
+  let IN_MAP = false;
+  const toLocal = (mx, mz) => [mx - BL.off.x, mz - BL.off.z], toMap = (x, z) => [x + BL.off.x, z + BL.off.z];
+  const inBlr = () => inWorld && (zone === 'blr' || zone === 'event' && !!EV && !!EV.inMap);
+  function blrBox(x0, x1, z0, z1){ const b = { x0, x1, z0, z1 }; BL.boxes.push(b); for (let gx = Math.floor((x0 - 1) / 16); gx <= Math.floor((x1 + 1) / 16); gx++) for (let gz = Math.floor((z0 - 1) / 16); gz <= Math.floor((z1 + 1) / 16); gz++) { const k = gx + ',' + gz; if (!BL.grid.has(k)) BL.grid.set(k, []); BL.grid.get(k).push(b); } return b; }
+  function blrValid(x, z){
+    const mx = x + BL.off.x, mz = z + BL.off.z, tx = mx - TW.x, tz = mz - TW.z, td = Math.hypot(tx, tz), inLift = mx > TW.x + 21.6 && mx < TW.x + 26.4 && Math.abs(mz - TW.z) < 2.9;
+    if (BL.off.y > .01) return td < TW.r - .6 && !inLift;
+    if (Math.abs(mx) > 152 || Math.abs(mz) > 152 || inLift) return false;
+    // the tower's glass wall, with its door on the west side
+    if (td > TW.r - .7 && td < TW.r + .7 && Math.abs(tz) > 2.6) return false;
+    const cell = BL.grid.get(Math.floor(mx / 16) + ',' + Math.floor(mz / 16));
+    return !(cell && cell.some(b => mx > b.x0 - .45 && mx < b.x1 + .45 && mz > b.z0 - .45 && mz < b.z1 + .45));
+  }
+  function buildBlr(){
+    const sc = BL.sc = new THREE.Scene(); sc.background = new THREE.Color(0x0B1224); sc.fog = new THREE.Fog(0x0B1224, 35, 170);
+    sc.add(new THREE.HemisphereLight(0x8FA0C8, 0x1A1C22, .6)); const moon = new THREE.DirectionalLight(0xC8D4FF, .45); moon.position.set(-30, 60, 20); sc.add(moon);
+    const g = BL.mapG = new THREE.Group(); sc.add(g); BL.boxes.length = 0; BL.grid.clear();
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(360, 360), mat(0x24272D, { roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.userData.walk = true; g.add(ground);
+    // roads on a grid, with dashed centre lines
+    const L = [-165, -110, -55, 0, 55, 110, 165], rt = tex(64, 512, (c, w, h) => { c.fillStyle = '#34373F'; c.fillRect(0, 0, w, h); c.fillStyle = '#E8C04A'; for (let y = 0; y < h; y += 64) c.fillRect(w / 2 - 2, y, 4, 34); c.fillStyle = '#6A6E78'; c.fillRect(0, 0, 3, h); c.fillRect(w - 3, 0, 3, h); });
+    rt.wrapT = THREE.RepeatWrapping; rt.repeat.set(1, 20); const roadM = new THREE.MeshStandardMaterial({ map: rt, roughness: .95 });
+    L.forEach(l => { [0, 1].forEach(dir => { const r = new THREE.Mesh(new THREE.PlaneGeometry(10, 330), roadM); r.rotation.x = -Math.PI / 2; if (dir) r.rotation.z = Math.PI / 2; r.position.set(dir ? 0 : l, .01 + dir * .005, dir ? l : 0); r.userData.walk = true; g.add(r); }); });
+    // buildings in the blocks between the roads (none in the open squares where things happen)
+    const clear = (x0, x1, z0, z1) => Object.values(DIST).every(d => { const cx = clamp(d.x, x0, x1), cz = clamp(d.z, z0, z1); return Math.hypot(cx - d.x, cz - d.z) > 31; }) && !(x1 > HOUSE.x0 - 3 && x0 < HOUSE.x1 + 3 && z1 > HOUSE.z0 - 3 && z0 < HOUSE.z1 + 3) && !(x0 < -124 && z1 > -170 && z0 < -62) && !(x1 > -130 && x0 < -90 && z1 > 70 && z0 < 82);
+    const winM = [0, 1, 2].map(i => new THREE.MeshStandardMaterial({ color: 0x1B1D24, map: winTex(true, ['#FFD27A', '#FFC93C', '#C9CFD8']), emissive: 0xFFFFFF, emissiveMap: winTex(true, [['#FFD27A', '#C9CFD8'], ['#FFC93C', '#9FD8FF'], ['#FFB070', '#FFD27A']][i]), emissiveIntensity: .45 }));
+    const lots = []; for (let i = 0; i < L.length - 1; i++) for (let j = 0; j < L.length - 1; j++) { const bx = L[i] + 5, bz = L[j] + 5; [[0, 20.5], [24.5, 45]].forEach(([a0, a1]) => [[0, 20.5], [24.5, 45]].forEach(([c0, c1]) => { const s = () => Math.random() * 2.5; const x0 = bx + a0 + s(), x1 = bx + a1 - s(), z0 = bz + c0 + s(), z1 = bz + c1 - s(); if (clear(x0, x1, z0, z1)) lots.push([x0, x1, z0, z1, 8 + Math.random() * (Math.abs(x0) < 60 && Math.abs(z0) < 60 ? 18 : 34)]); })); }
+    const unit = new THREE.BoxGeometry(1, 1, 1); [0, 1, 2].forEach(k => { const mine = lots.filter((l, i) => i % 3 === k), im = new THREE.InstancedMesh(unit, winM[k], mine.length), m4 = new THREE.Matrix4();
+      mine.forEach(([x0, x1, z0, z1, h], i) => { m4.compose(V((x0 + x1) / 2, h / 2, (z0 + z1) / 2), new THREE.Quaternion(), V(x1 - x0, h, z1 - z0)); im.setMatrixAt(i, m4); blrBox(x0, x1, z0, z1); }); g.add(im); });
+    // street lamps along the roads
+    const lampPts = []; L.slice(1, -1).forEach(l => { for (let t = -150; t <= 150; t += 30) { lampPts.push([l + 5.6, t], [t, l + 5.6]); } });
+    const poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(.08, .1, 5, 6), mat(0x3A3D44), lampPts.length), heads = new THREE.InstancedMesh(new THREE.SphereGeometry(.28, 8, 6), glowM(0xFFC98A, { emissiveIntensity: 1.6 }), lampPts.length), m4 = new THREE.Matrix4();
+    lampPts.forEach(([x, z], i) => { m4.makeTranslation(x, 2.5, z); poles.setMatrixAt(i, m4); m4.makeTranslation(x, 5.1, z); heads.setMatrixAt(i, m4); }); g.add(poles, heads);
+    const signAt = (txt, col, x, y, z, w = 14) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, map: tex(768, 128, (c, W, H) => { c.fillStyle = 'rgba(11,13,20,.85)'; c.fillRect(0, 0, W, H); c.fillStyle = col; c.font = `900 72px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, W / 2, H / 2 + 4); }) })); s.scale.set(w, w * 128 / 768, 1); s.position.set(x, y, z); g.add(s); return s; };
+    const lamp = (x, z, col = 0xFFC080, i = 1.1, d = 30) => { const l = new THREE.PointLight(col, i, d, 2); l.position.set(x, 7, z); g.add(l); };
+    // home: your house, its front door and a light over the porch
+    box(HOUSE.x1 - HOUSE.x0, 9, HOUSE.z1 - HOUSE.z0, mat(0xCFC6B6, { roughness: 1 }), (HOUSE.x0 + HOUSE.x1) / 2, 4.5, (HOUSE.z0 + HOUSE.z1) / 2, g); blrBox(HOUSE.x0, HOUSE.x1, HOUSE.z0, HOUSE.z1);
+    box(1.6, 2.4, .12, glowM(0xFFC98A, { emissiveIntensity: .7 }), HOUSE.door[0], 1.2, HOUSE.z1 + .06, g); box(4, .2, 2, mat(0x8A8F99), HOUSE.door[0], 2.8, HOUSE.z1 + 1, g); lamp(HOUSE.door[0], HOUSE.z1 + 3, 0xFFD6A0, 1.2, 16);
+    for (let i = 0; i < 9; i++) box(.9, .08, .5, mat(0x5A5E68, { metalness: .6 }), HOUSE.x1 + .5, 1 + i * .95, -16 - (i % 2) * .6, g);
+    signAt('HOME', '#FFC93C', HOUSE.door[0], 4, HOUSE.z1 + .3, 5);
+    // the lake, and the Broker's warehouse beside it
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(46, 104), new THREE.MeshStandardMaterial({ color: 0x14304A, emissive: 0x0A1E30, roughness: .2, metalness: .4 })); water.rotation.x = -Math.PI / 2; water.position.set(-151, .03, -114); g.add(water); blrBox(-175, -128, -166, -62);
+    [[-124, -124], [-96, -124], [-124, -96], [-96, -96]].forEach(([x, z]) => { box(.8, 8, .8, mat(0x5A5E68), x, 4, z, g); blrBox(x - .4, x + .4, z - .4, z + .4); }); box(30, .4, 30, mat(0x3A3D44, { metalness: .5 }), -110, 8.2, -110, g);
+    signAt('BROKER DYNAMICS · WAREHOUSE', '#FF8A2E', -110, 10.2, -95, 18); lamp(-110, -110, 0xFFB070, 1.2, 34);
+    // Broker Tower: glass, four floors and the roof, a lift up the east side, the door on the west
+    const glass = new THREE.MeshStandardMaterial({ color: 0x9FD8FF, transparent: true, opacity: .2, roughness: .05, metalness: .3, side: THREE.DoubleSide, depthWrite: false });
+    const wall = new THREE.Mesh(new THREE.CylinderGeometry(TW.r + .2, TW.r + .2, TW.roof, 48, 1, true, 3 * Math.PI / 2 + .1, 2 * Math.PI - .2), glass); wall.position.set(TW.x, TW.roof / 2, TW.z); g.add(wall);
+    const slab = mat(0x5A5E68, { roughness: .8 }); const lobby = cyl(TW.r + .1, TW.r + .1, .04, mat(0x3A3D44, { roughness: .6, metalness: .2 }), TW.x, .02, TW.z, g, 48); lobby.userData.walk = true; [TW.floor, TW.floor * 2, TW.roof].forEach(y => { const f = cyl(TW.r + .2, TW.r + .2, .3, slab, TW.x, y - .15, TW.z, g, 48); f.userData.walk = true; });
+    const par = cyl(TW.r + .25, TW.r + .25, 1.1, mat(0x8A8F99), TW.x, TW.roof + .55, TW.z, g, 48); par.material.side = THREE.DoubleSide; par.geometry = new THREE.CylinderGeometry(TW.r + .25, TW.r + .25, 1.1, 48, 1, true);
+    box(4.8, TW.roof + 3, 5.8, mat(0x2A2D33, { metalness: .5 }), TW.x + 24, (TW.roof + 3) / 2, TW.z, g);
+    [0, TW.floor, TW.floor * 2, TW.roof].forEach(y => box(.1, 2.4, 3, glowM(0xFFC93C, { emissiveIntensity: .8 }), TW.x + 21.55, y + 1.2, TW.z, g));
+    signAt('BROKER TOWER', '#FFC93C', TW.x, TW.roof + 4, TW.z - TW.r, 18); lamp(TW.x, TW.z, 0xFFE8C0, 1, 40); lamp(TDOOR[0], TDOOR[1], 0xFFC080, 1, 20);
+    // the data centre, the old theatre and the market
+    box(40, 14, 8, mat(0x2A2D33, { metalness: .4 }), 110, 7, 146, g); blrBox(90, 130, 142, 150); signAt('DATA CENTRE', '#3CE8E8', 110, 12, 141.5, 14); lamp(110, 110, 0x3CE8E8, 1, 40);
+    box(32, 12, 6, mat(0x5A2A2A, { roughness: .9 }), -110, 6, 76, g); blrBox(-126, -94, 73, 79); signAt('ROYAL THEATRE', '#FFE08A', -110, 9, 79.5, 14); lamp(-110, 110, 0xFFE0A0, 1.1, 40);
+    [[-12, 110], [12, 110]].forEach(([x, z]) => { box(.6, 6, .6, mat(0x6A4E3A), x, 3, z - 20, g); blrBox(x - .3, x + .3, z - 20.3, z - 19.7); }); box(25, .6, .6, mat(0xC8102E), 0, 6, 90, g); signAt('MARKET', '#FFC93C', 0, 7.6, 90, 8); lamp(0, 110, 0xFFB070, 1.2, 40);
+    lamp(0, 0, 0xFFC080, 1, 36);
+    // the Broker's truck, parked in your street (and later at the lake)
+    BL.trucks.home = makeTruck(); BL.trucks.home.position.set(TRUCK_ROUTE[0][0], 0, TRUCK_ROUTE[0][1]); BL.trucks.home.rotation.y = Math.atan2(55 - 6, 6); g.add(BL.trucks.home);
+    BL.trucks.lake = makeTruck(); BL.trucks.lake.position.set(-110, 0, -84); g.add(BL.trucks.lake);
+    // rain around you
+    const n = lowFx ? 500 : 1500, P = new Float32Array(n * 6); for (let i = 0; i < n; i++) { const x = (Math.random() - .5) * 70, y = Math.random() * 30, z = (Math.random() - .5) * 70; P.set([x, y, z, x, y - .6, z], i * 6); }
+    const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(P, 3)); BL.rain = new THREE.LineSegments(rg, new THREE.LineBasicMaterial({ color: 0x9FB4D8, transparent: true, opacity: .4 })); sc.add(BL.rain); sc.userData.rain = BL.rain;
+    g.traverse(o => { if (o.isMesh && !o.userData.walk) o.userData.noPick = true; });
+    plats.blr = [{ x0: -1e4, x1: 1e4, z0: -1e4, z1: 1e4 }];
+  }
+  // move the map so the map point (x, z) sits at the origin (and y is the floor you're standing on)
+  function blrRebase(x, z, y){ const dx = x - BL.off.x, dz = z - BL.off.z; BL.off.set(x, y, z); BL.mapG.position.set(-x, -y, -z); pos.x -= dx; pos.z -= dz; }
+  function enterBlr(){
+    if (A || EV) return;
+    if (!BL.sc) buildBlr();
+    fade(() => {
+      web.p = null; drawWeb(); walkTarget = null; exitTelescope(); inWorld = true; zone = 'blr'; vy = 0; falling = false; grounded = true;
+      blrRebase(0, 0, 0); pos.set(FIRE_DOWN[0], 1.6, FIRE_DOWN[1]); yaw = Math.atan2(FIRE_DOWN[0], FIRE_DOWN[1]); pitch = -.05; BL.sc.fog.far = 170; BL.liftArm = true;
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Go home'; jumpBtn.hidden = fine; uiZone();
+      say(`You climb down the fire escape into your street. ${fine ? 'Shift to sprint, C to crouch.' : 'Use the Sprint and Crouch buttons.'}`, 4200);
+    }, '#06070B');
+  }
+  function leaveBlr(){ if (EV) return; fade(() => { travel('room'); say('Home.', 1400); }, '#06070B'); }
+  // the fire escape on your roof (it only shows up once the story gets to the city)
+  let fireG = null;
+  function fireEscape(){
+    if (fireG || !roofScene) return; const g = fireG = new THREE.Group(); g.position.set(FIRE_ESC[0] + .9, 0, FIRE_ESC[1]); roofScene.add(g);
+    const rail = mat(0x2A2D33, { metalness: .7 }); [-.4, .4].forEach(z => box(.08, 12, .08, rail, .2, -5, z, g)); for (let i = 0; i < 18; i++) box(.06, .06, .8, rail, .2, .9 - i * .65, 0, g);
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, map: tex(512, 128, (c, w, h) => { c.fillStyle = 'rgba(11,13,20,.85)'; c.fillRect(0, 0, w, h); c.fillStyle = '#FFC93C'; c.font = `800 46px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('FIRE ESCAPE ↓ STREET', w / 2, h / 2 + 3); }) })); s.scale.set(2.4, .6, 1); s.position.set(-.3, 2, 0); g.add(s);
+    g.traverse(o => { if (o.isMesh) o.userData.noPick = true; });
+  }
+  // a fight, in the middle of the city
+  function blrArena(k, opts){
+    const D = DIST[opts.site]; blrRebase(D.x, D.z, BL.off.y);
+    eventScene = BL.sc; PILLARS.length = 0; plats.event = [{ x0: -1e4, x1: 1e4, z0: -1e4, z1: 1e4 }]; BL.sc.fog.far = 170;
+    BL.keep = new Set(BL.sc.children); const g = BL.partG = new THREE.Group(); g.fog = { far: 0 }; BL.sc.add(g);
+    IN_MAP = true; try { if (k === 'br') brArena(g, opts.part || 1); if (k === 'st') stArena(g, opts.part || 'u1'); } finally { IN_MAP = false; }
+    g.traverse(o => { if (o.isMesh) o.userData.noPick = true; });
+    Object.values(BL.trucks).forEach(t => t.visible = false);
+  }
+  // back to walking around after a fight in the city
+  function blrBack(){
+    if (!BL.sc) return;
+    if (BL.keep) BL.sc.children.slice().forEach(o => { if (!BL.keep.has(o)) { BL.sc.remove(o); if (o !== viewG && !(me && o === me.g) && o !== beacon) disposeDeep(o); } });
+    BL.keep = null; BL.partG = null; PILLARS.length = 0; BL.sc.fog.far = 170;
+    // after losing or walking away, the fight doesn't restart the moment you step back in (unless you wait a bit)
+    BL.hold = performance.now() + (BL.lastWon ? 2000 : 15000); BL.needOut = true; BL.lastWon = false;
+    if (inWorld && zone === 'event') { zone = 'blr'; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Go home'; hotEl.hidden = false; }
+  }
+  // where to go next, in map coordinates
+  const siteXZ = S => S.p || [DIST[S.at].x, DIST[S.at].z];
+  function navTarget(){
+    if (!BL.sc) return null;
+    const [mx, mz] = toMap(pos.x, pos.z), inTower = Math.hypot(mx - TW.x, mz - TW.z) < TW.r;
+    if (EV && EV.inMap) {
+      if (EV.k === 'st' && EV.st.part === 'u2') { const t = EV.st.targets.filter(u => u.dead <= 0).sort((a, b) => Math.hypot(a.x - pos.x, a.z - pos.z) - Math.hypot(b.x - pos.x, b.z - pos.z))[0]; return t ? toMap(t.x, t.z) : null; }
+      if (EV.k === 'br' && EV.part === 1 && EV.br.truck) return toMap(EV.br.truck.position.x, EV.br.truck.position.z);
+      if (EV.k === 'br' && EV.part === 3 && EV.br.needLift) return LIFT;
+      return null;
+    }
+    const s = SG.active && curStep(); if (!s || !s.site) return null; const S = s.site, p = siteXZ(S);
+    if (S.roof) return BL.off.y === TW.roof ? p : inTower ? LIFT : TDOOR;
+    if (BL.off.y > 0) return LIFT;
+    if (S.at === 'tower' && !inTower) return TDOOR;
+    return p;
+  }
+  function siteWhere(){
+    if (inZ('room')) return ['room', V(0, 2.6, 9.6)];
+    if (inZ('roof')) return ['roof', V(FIRE_ESC[0], 1.2, FIRE_ESC[1])];
+    if (zone === 'blr' && inWorld) { const t = navTarget(); return t ? ['blr', V(t[0] - BL.off.x, 1.2, t[1] - BL.off.z)] : null; }
+    return null;
+  }
+  const navEl = document.createElement('div'); navEl.className = 'navarrow'; navEl.hidden = true; navEl.innerHTML = '<i>▲</i><span></span>'; document.body.appendChild(navEl);
+  function blrStep(dt, now){
+    // the fire escape on the roof takes you down into the street
+    if (kitReached() && roofScene && !fireG) fireEscape(); if (fireG) fireG.visible = kitReached();
+    if (fireG && fireG.visible && inWorld && zone === 'roof' && !A && !EV && Math.hypot(pos.x - FIRE_ESC[0], pos.z - FIRE_ESC[1]) < 1 && !BL.busy) { BL.busy = true; setTimeout(() => BL.busy = false, 2500); enterBlr(); }
+    const here = BL.sc && inBlr(); if (!here) { navEl.hidden = true; return; }
+    hint.classList.remove('on');
+    const R = BL.rain; if (R) { R.position.set(pos.x, 0, pos.z); if (!EV) { const a = R.geometry.attributes.position.array; for (let i = 0; i < a.length; i += 6) { a[i + 1] -= 22 * dt; a[i + 4] -= 22 * dt; if (a[i + 1] < 0) { a[i + 1] += 30; a[i + 4] += 30; } } R.geometry.attributes.position.needsUpdate = true; } }
+    // riding the lift
+    if (BL.ride) { const r = BL.ride, k = clamp((now - r.t0) / r.dur, 0, 1), e = k * k * (3 - 2 * k); BL.off.y = r.from + (r.to - r.from) * e; BL.mapG.position.y = -BL.off.y;
+      if (k >= 1) { BL.ride = null; BL.off.y = r.to; say(r.to === TW.roof ? 'The roof. Rain and wind, and the whole city below.' : r.to === 0 ? 'The lobby.' : `Floor ${r.to / TW.floor + 1}.`, 2000); tone(880, .15, 'sine', .04); if (EV && EV.inMap && EV.k === 'br' && EV.part === 3) brLiftDone(); } }
+    const [mx, mz] = toMap(pos.x, pos.z);
+    // the lift
+    if (Math.hypot(mx - LIFT[0], mz - LIFT[1]) < 1.9) { if (BL.liftArm && !BL.ride) { let to = null;
+        if (EV && EV.inMap) { if (EV.k === 'br' && EV.part === 3 && EV.br.needLift) to = BL.off.y + TW.floor; } else to = BL.off.y < TW.roof - .01 ? TW.roof : 0;
+        if (to !== null) { BL.liftArm = false; BL.ride = { from: BL.off.y, to, t0: now, dur: 1200 + Math.abs(to - BL.off.y) * 110 }; say(to > BL.off.y ? (to === TW.roof ? 'The lift hums up to the roof…' : 'Up to the next floor…') : 'Down to the lobby…', 1800); tone(330, .5, 'sine', .03, to > BL.off.y ? 660 : 200); } } }
+    else BL.liftArm = true;
+    // the arrow at the top of the screen
+    const t = navTarget(); if (t && !(EV && EV.intro)) { const [tx, tz] = toLocal(t[0], t[1]), d = Math.hypot(tx - pos.x, tz - pos.z), rel = angDiff(yaw, Math.atan2(-(tx - pos.x), -(tz - pos.z)));
+      navEl.hidden = d < 3; navEl.firstChild.style.transform = `rotate(${-rel}rad)`; navEl.lastChild.textContent = `${Math.round(d)} m`; } else navEl.hidden = true;
+    if (zone !== 'blr') return;
+    // back inside through your front door
+    if (BL.off.y === 0 && Math.hypot(mx - HOUSE.door[0], mz - HOUSE.door[1]) < 1.3 && !BL.busy) { BL.busy = true; setTimeout(() => BL.busy = false, 2500); return leaveBlr(); }
+    // the Broker's truck waits in your street until you follow it, then waits at the lake
+    const st = SG.active && SG.ch === 8 ? SG.step : -1; BL.trucks.home.visible = st === 2; BL.trucks.lake.visible = st >= 3;
+    // walking into the next fight starts it
+    const s = SG.active && curStep(); if (!s || !s.site || BL.ride || EV || s.check()) return;
+    const S = s.site, p = siteXZ(S), lvl = S.roof ? TW.roof : 0, inside = Math.abs(BL.off.y - lvl) < .01 && Math.hypot(mx - p[0], mz - p[1]) < S.r;
+    if (!inside) { BL.needOut = false; return; }
+    if (BL.needOut && now < BL.hold) return;
+    BL.needOut = false; startEvent(S.k, 'me', 'rayan', { solo: true, diff: evDiff, part: S.part, site: S.at });
+  }
+  // ---------- sprint, crouch, block, weapons and pain (chapter 9 on) ----------
+  var KIT = { stam: 1, sprint: false, crouch: false, crouchK: 0, restT: 0, winded: false, sprinting: false };
+  const kitReached = () => { try { return SG.ch >= 8 || SG.gold; } catch (e) { return false; } };
+  const kitOn = () => kitReached() && inWorld && !A && ['blr', 'roof', 'lair', 'event'].includes(zone);
+  // from chapter 9 until the end of the story, the only weapon left is Wolverine's claws
+  function lostWeapon(id){ try { return SG.ch >= 8 && !SG.gold && id !== 'claws'; } catch (e) { return false; } }
+  const canClaws = () => !!EV && EV.hero === 'rayan' && (EV.k === 'br' || EV.k === 'st') && kitReached() && !EV.clawsTorn;
+  function kitSpeed(){ let m = 1; if (kitOn()) { if (KIT.crouchK > .5) m *= .5; else if (KIT.sprinting) m *= 1.6; } if (EV && EV.blocking) m *= .5; if (EV && EV.pain) m *= EV.flinch > 0 ? .15 : .72; return m; }
+  const kitEl = document.createElement('div'); kitEl.className = 'kitui'; kitEl.hidden = true; kitEl.innerHTML = '<span class="stam"><i></i></span><button type="button" data-kit="sprint">Sprint</button><button type="button" data-kit="crouch">Crouch</button>'; document.body.appendChild(kitEl);
+  kitEl.addEventListener('click', e => { const b = e.target.closest('[data-kit]'); if (!b) return; if (b.dataset.kit === 'sprint') KIT.sprint = !KIT.sprint; else KIT.crouch = !KIT.crouch; });
+  addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || !entered) return; const k = e.key.toLowerCase();
+    if (e.key === 'Shift' && !A) KIT.sprint = true;
+    if (k === 'c' && !e.repeat && kitOn()) { KIT.crouch = !KIT.crouch; }
+    if (EV && !EV.over && (k === 'q' || k === 'x')) setEvBlock(true);
+    if (canClaws() && !EV.over && (k === '1' || k === '2')) evSetWpn(k === '2' ? 'claws' : 'fists'); });
+  addEventListener('keyup', e => { const k = e.key.toLowerCase(); if (e.key === 'Shift') KIT.sprint = false; if (k === 'q' || k === 'x') setEvBlock(false); });
+  function setEvBlock(on){ if (!EV) return; if (on && (EV.over || EV.intro || EV.dead > 0 || EV.guardT > 0 || EV.lockT > 0)) on = false; EV.blocking = on; }
+  function evSetWpn(id){ if (!EV || (id === 'claws' && !canClaws()) || EV.wpn === id) return; EV.wpn = id; EV.prop = id === 'claws' ? 'claws' : HEROES[EV.hero].prop || null; tone(id === 'claws' ? 900 : 400, .08, 'triangle', .04, id === 'claws' ? 1300 : 300); say(id === 'claws' ? 'Claws out.' : 'Fists.', 1000); }
+  function kitStep(dt){
+    const on = kitOn(), moving = keys.w || keys.a || keys.s || keys.d || keys.arrowup || keys.arrowdown || Math.hypot(joy.x, joy.y) > .15;
+    if (!on) KIT.crouch = false;
+    KIT.sprinting = on && KIT.sprint && !KIT.winded && KIT.crouchK < .5 && !!moving && !(EV && (EV.pain || EV.blocking));
+    if (KIT.sprinting) { KIT.stam = Math.max(0, KIT.stam - dt * .2); KIT.restT = .9; if (KIT.stam <= 0) { KIT.winded = true; say('Out of breath.', 1200); } }
+    else if ((KIT.restT -= dt) <= 0) KIT.stam = Math.min(1, KIT.stam + dt * .22);
+    if (KIT.winded && KIT.stam > .35) KIT.winded = false;
+    KIT.crouchK += ((KIT.crouch && on ? 1 : 0) - KIT.crouchK) * Math.min(1, dt * 10);
+    if (EV) { EV.guardT = Math.max(0, (EV.guardT || 0) - dt); if (EV.blocking && (EV.over || EV.dead > 0 || EV.lockT > 0)) EV.blocking = false; }
+    if (held && lostWeapon(held)) hold(null, true);
+    kitEl.hidden = !on && !(EV && EV.blocking); kitEl.classList.toggle('touch', !fine);
+    kitEl.querySelector('.stam').style.opacity = KIT.stam < .99 ? 1 : 0; kitEl.querySelector('.stam i').style.width = (KIT.stam * 100) + '%'; kitEl.querySelector('.stam i').style.background = KIT.winded ? '#FF6A4E' : '#FFC93C';
+    kitEl.querySelector('[data-kit="sprint"]').classList.toggle('on', KIT.sprint); kitEl.querySelector('[data-kit="crouch"]').classList.toggle('on', KIT.crouch);
+    evKitHud();
+    // crippling pain after the Copycat tears the claws off
+    if (EV && EV.pain) { EV.painT = (EV.painT || 5) - dt; EV.flinch = Math.max(0, (EV.flinch || 0) - dt); if (EV.painT <= 0 && !EV.over) { EV.painT = 4.5 + Math.random() * 2.5; EV.flinch = .6; EV.shake = Math.max(EV.shake || 0, .35); painFlash(); tone(90, .5, 'sawtooth', .05, 50); } }
+  }
+  const painEl = document.createElement('div'); painEl.className = 'painfx'; document.body.appendChild(painEl);
+  function painFlash(){ painEl.classList.remove('flash'); void painEl.offsetWidth; painEl.classList.add('flash'); }
+  // the last fight: he gets hold of your claws and tears them off
+  function clawRip(){
+    const S = EV.st, b = EV.boss; S.ripped = true; EV.lockT = 3.4; b.stun = 3.4; EV.blocking = false;
+    b.x = pos.x - Math.sin(yaw) * 1.6; b.z = pos.z - Math.cos(yaw) * 1.6; b.yaw = yaw + Math.PI;
+    DLG = null; dlgPlay([['Copycat', 'Nice claws. I think I’ll take those.'], ['ME', 'Don’t… AAAGH!']]);
+    setTimeout(() => { if (!EV || EV.over || !EV.st || EV.st.part !== 'c3') return;
+      EV.clawsTorn = true; EV.wpn = 'fists'; EV.prop = null; EV.pain = true; EV.painT = 4; EV.shake = 1.4; EV.hp = Math.max(1, EV.hp - EV.max * .2);
+      document.body.classList.add('pain'); painFlash(); canvas.style.filter = 'blur(3px) saturate(1.6)'; setTimeout(() => { if (canvas.style.filter.startsWith('blur')) canvas.style.filter = ''; }, 1600);
+      [180, 120, 80].forEach((f, i) => setTimeout(() => tone(f, .5, 'sawtooth', .07, f / 3), i * 160));
+      if (b.av && b.av.hold) b.av.hold('claws'); EV.ccClaws = true;
+      say('He tears the claws off your hands. The pain is blinding.', 3600);
+      setTimeout(() => { if (EV && !EV.over) { DLG = null; dlgPlay([['Copycat', 'Look at me. I’m you now.'], ['ME', 'I never needed them.']]); } }, 2200);
+    }, 1300);
+  }
+  // tailing the truck across the city: it drives the real roads to the lake, and if you lose it, you lose
+  function brTail(dt){
+    const B = EV.br, T = B.truck;
+    if (!B.route) { B.route = TRUCK_ROUTE.map(([x, z]) => toLocal(x, z)); B.seg = 0; B.u = 0; B.wait = 3; B.far = 0; T.position.set(B.route[0][0], 0, B.route[0][1]); T.rotation.y = Math.atan2(-(B.route[1][0] - B.route[0][0]), -(B.route[1][1] - B.route[0][1])); }
+    const d = Math.hypot(pos.x - T.position.x, pos.z - T.position.z), spotR = KIT.crouchK > .5 ? 3.5 : 5.5;
+    if (d < spotR && EV.dead <= 0 && !(B.spot > 0)) { B.spot = 3; say(`They spotted you! The truck speeds off.${fine ? ' Sprint (Shift) to keep up.' : ' Sprint to keep up.'}`, 2600); tone(200, .4, 'sawtooth', .06); }
+    B.spot = Math.max(0, (B.spot || 0) - dt);
+    if (B.wait > 0) B.wait -= dt;
+    else if (B.seg < B.route.length - 1) {
+      const a = B.route[B.seg], b = B.route[B.seg + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      B.u += (B.spot > 0 ? 7 : 4.2) * dt / L; if (B.u >= 1) { B.u = 0; B.seg++; }
+      const i = Math.min(B.seg, B.route.length - 2), a2 = B.route[i], b2 = B.route[i + 1], k = B.seg >= B.route.length - 1 ? 1 : B.u;
+      T.position.set(a2[0] + (b2[0] - a2[0]) * k, 0, a2[1] + (b2[1] - a2[1]) * k); T.rotation.y = Math.atan2(-(b2[0] - a2[0]), -(b2[1] - a2[1]));
+    } else if (!EV.over) { say('The truck pulls into a warehouse by the lake. You stayed on it the whole way.', 3000); endMatch(true); }
+    if (d > 24) { B.far += dt; if (B.far > 2 && !B.lost) { B.lost = 1; say('You’re falling behind. Catch up!', 1800); } if (B.far > 9 && !EV.over) { say('You lost the truck.', 2400); endMatch(false); } } else { B.far = 0; B.lost = 0; }
+  }
+  // the warehouse: guards don't know you're there until they see you (crouching helps), and a hit from the dark hurts more
+  function brAlert(u, r, quiet){ EV.units.forEach(q => { if (q.team === u.team && !q.alert && Math.hypot(q.x - u.x, q.z - u.z) < r) q.alert = 1; }); u.alert = 1; if (!quiet && !EV.br.toldSeen) { EV.br.toldSeen = 1; say('A guard spotted you! They’re coming.', 2400); tone(600, .2, 'square', .05, 900); } }
+  function brSneak(u, dt){
+    const d = Math.hypot(pos.x - u.x, pos.z - u.z), see = KIT.crouchK > .5 ? 4.5 : 11;
+    if (d < see && EV.dead <= 0) { brAlert(u, 14); return false; }
+    if (!u.home) u.home = [u.x, u.z];
+    if (!u.pt || Math.hypot(u.pt[0] - u.x, u.pt[1] - u.z) < .5) u.pt = [u.home[0] + (Math.random() - .5) * 8, u.home[1] + (Math.random() - .5) * 8];
+    const dx = u.pt[0] - u.x, dz = u.pt[1] - u.z; moveUnit(u, dx, dz, 1.4, dt); u.yaw = Math.atan2(-dx, -dz); u.mv = 1; return true;
+  }
+  // up the tower one floor at a time
+  function brLiftDone(){ const B = EV.br; EV.units.filter(u => u.team === 'bk').forEach(dropUnit); B.needLift = false; brWave(B.floor + 1); }
+  // block and switch buttons for touch screens, and what's in your hands
+  const evBlockBtn = $('#evBlockBtn'), evSwBtn = $('#evSwBtn'), evWpnEl = $('#evWpn');
+  evBlockBtn.addEventListener('pointerdown', e => { e.preventDefault(); setEvBlock(true); }); ['pointerup', 'pointercancel', 'pointerleave'].forEach(k => evBlockBtn.addEventListener(k, () => setEvBlock(false)));
+  evSwBtn.addEventListener('click', () => { if (EV) evSetWpn(EV.wpn === 'claws' ? 'fists' : 'claws'); });
+  let wheelT = 0; canvas.addEventListener('wheel', e => { if (!canClaws() || EV.over || performance.now() < wheelT) return; wheelT = performance.now() + 350; evSetWpn(EV.wpn === 'claws' ? 'fists' : 'claws'); }, { passive: true });
+  function evKitHud(){
+    if (!EV) return; const rayan = EV.hero === 'rayan';
+    evWpnEl.textContent = rayan ? `${EV.clawsTorn ? 'No claws. Just your fists.' : EV.wpn === 'claws' ? 'Adamantium claws' : 'Fists'}${canClaws() && fine ? ' · 1 / 2 to switch' : ''}${fine ? ' · Q or right-click to block' : ''}${EV.pain ? ' · CRIPPLING PAIN' : ''}` : (fine ? 'Q or right-click to block' : '');
+    evSwBtn.hidden = fine || !canClaws(); evBlockBtn.hidden = fine; evBlockBtn.classList.toggle('on', !!EV.blocking);
   }
 
   // ======================= fight scenes: who says what before, during and after each battle =======================
@@ -7003,7 +7295,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   // every couple of seconds: achievements, the real night, and the phone light
   let nightChecked = false;
   function littleStep(dt, now){
-    sagaStep(dt, now); droneStep(dt, now);
+    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); kitStep(dt);
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (SG.active && SG.ch === 8 && SG.step === 1 && roofScene && !droneG) spawnDrones();
     if (EV && EV.k === 'cv' && EV.cx && EV.cx.gal && EV.cx.gal.phase === 'fall') galFall(dt, now);
@@ -7033,8 +7325,9 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
     if (u.dead > 0) { u.dead -= dt; if (u.dead <= 0 && !u.boss && u.hero !== 'hulk') { place(u); u.hp = u.max; u.av.g.visible = true; drawTag(u); } return; }
     u.cd -= dt; u.spCd -= dt; u.stun -= dt; u.rage -= dt; u.swing = Math.max(0, u.swing - dt);
     if (H.regen || u.rage > 0) u.hp = Math.min(u.max, u.hp + (u.rage > 0 ? 8 : H.regen) * dt);
-    u.x += u.kx * dt; u.z += u.kz * dt; u.kx *= Math.max(0, 1 - dt * 5); u.kz *= Math.max(0, 1 - dt * 5); if (!evValid(u.x, u.z)) { const d = Math.hypot(u.x, u.z); if (d > ER - .7) { u.x *= (ER - .8) / d; u.z *= (ER - .8) / d; } PILLARS.forEach(p => { const dd = Math.hypot(u.x - p.x, u.z - p.z); if (dd < p.r + .45) { u.x = p.x + (u.x - p.x) / dd * (p.r + .46); u.z = p.z + (u.z - p.z) / dd * (p.r + .46); } }); }
+    u.x += u.kx * dt; u.z += u.kz * dt; u.kx *= Math.max(0, 1 - dt * 5); u.kz *= Math.max(0, 1 - dt * 5); if (!evValid(u.x, u.z) && EV.inMap) { u.x -= u.kx * dt; u.z -= u.kz * dt; } else if (!evValid(u.x, u.z)) { const d = Math.hypot(u.x, u.z); if (d > ER - .7) { u.x *= (ER - .8) / d; u.z *= (ER - .8) / d; } PILLARS.forEach(p => { const dd = Math.hypot(u.x - p.x, u.z - p.z); if (dd < p.r + .45) { u.x = p.x + (u.x - p.x) / dd * (p.r + .46); u.z = p.z + (u.z - p.z) / dd * (p.r + .46); } }); }
     if (u.stun > 0) return;
+    if (EV.k === 'br' && EV.part === 2 && !u.alert && brSneak(u, dt)) return;
     if (u.boss) return supermanStep(u, dt, t);
     if ((EV.k === 'sw' || EV.k === 'cv' && u.role === 'flag') && swBot(u, dt)) return;
     if (EV.k === 'fp' && u.hero === 'rflash' && fpBot(u, dt)) return;
@@ -7075,7 +7368,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
     const a = u.act; u.mv = 0;
     if (!a.done && a.t <= 0) {
       a.done = true; if (a.tel) { eventScene.remove(a.tel); a.tel.geometry.dispose(); }
-      const fx = -Math.sin(a.yaw), fz = -Math.cos(a.yaw), wk = (EV.weak > 0 ? .5 : 1) * (godlike(u.hero) ? (u.enraged ? 1.6 : 1.3) : 1) * (u.hero === 'beyonder' ? 1.05 : 1);
+      const fx = -Math.sin(a.yaw), fz = -Math.cos(a.yaw), wk = (EV.weak > 0 ? .5 : 1) * (godlike(u.hero) ? (u.enraged ? 1.6 : 1.3) : 1) * (u.hero === 'beyonder' ? 1.05 : 1) * (HEROES[u.hero].bk || 1);
       const line = (len, w, d) => bodies().forEach(o => { if (!alive(o) || teamOf(o) === u.team) return; const rx = o.x - u.x, rz = o.z - u.z, al = rx * fx + rz * fz, sd = Math.abs(rx * fz - rz * fx); if (al > 0 && al < len && sd < w) hitUnit(o, d * wk, u); });
       if (a.k === 'heat') { line(20, .8, 22); beamFx(u.x, u.z, u.x + fx * 20, u.z + fz * 20, u.hero === 'beyonder' ? 0xFFE08A : u.hero === 'doom' ? 0x3CE870 : 0xFF2A2A, .4); tone(700, .3, 'sawtooth', .04, 300);
         // an enraged Doom fires three bolts at once
@@ -7175,7 +7468,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
     });
     // HUD
     const E = EVENTS[EV.k], sc = Object.entries(EV.score).map(([k, v]) => `<b style="color:${E.col[k]}">${E.teams[k]} ${Math.floor(v)}</b>`).join(' · ');
-    $('#evScore').innerHTML = EV.k === 'st' ? stHud() : EV.k === 'of' ? `Stones used ${EV.of.si}/6 \u00B7 Worlds left ${Object.keys(AREAS).length - (SG.flags.erased || []).length}/${Object.keys(AREAS).length}${EV.mindT > 0 ? ' \u00B7 <b style="color:#FFC93C">CONTROLS REVERSED</b>' : ''}${EV.of.final ? ' \u00B7 <b style="color:#FFC93C">PRESS E</b>' : ''}` : EV.k === 'br' ? (EV.br.part === 1 ? `Tailing ${Math.floor(EV.br.prog)}/40 s \u00B7 ${Math.round(Math.hypot(pos.x - EV.br.truck.position.x, pos.z - EV.br.truck.position.z))} m away \u00B7 <small>weakened</small>` : EV.br.part === 2 ? (EV.br.laptop ? `Reading his plans ${Math.floor(EV.br.hack)}/3 s` : `Guards left ${EV.units.filter(u => u.team === 'bk' && u.dead <= 0).length} \u00B7 <small>weakened</small>`) : EV.br.part === 3 ? `Floor ${EV.br.floor}/3 \u00B7 guards left ${EV.units.filter(u => u.team === 'bk' && u.dead <= 0).length} \u00B7 <small>weakened</small>` : 'Break the suit apart \u00B7 <small>weakened</small>') : EV.k === 'cv' ? `${EV.cx.gal ? (EV.cx.gal.phase === 'kneel' ? '<b style="color:#BFE8FF">GALACTUS IS KNEELING: HIT THE CORE</b>' : `<b style="color:#BFE8FF">GALACTUS</b> \u00B7 Siphons ${EV.cx.gal.siphons.filter(u => u.dead <= 0).length}/4`) : `Collisions ${Math.max(0, EV.cx.stage + 1)}/${CV_STAGES.length}${EV.cx.stage >= 0 && CV_STAGES[EV.cx.stage] ? ' \u00B7 ' + CV_STAGES[EV.cx.stage][0] : ''}`} \u00B7 Anchors ${EV.anchors.filter(a => a.dead <= 0).length}/3 \u00B7 Flags ${EV.flags.filter(f => f.own === 1).length}/3${EV.weak > 0 ? ' \u00B7 <b style="color:#9CFF7A">KRYPTONITE</b>' : ''}` : scored(EV.k) ? sc + ` <small>(first to ${E.goal})</small>` : EV.k === 'dks' ? `Parademons ${EV.units.filter(u => u.hero === 'parademon' && u.dead <= 0).length} \u00B7 stay out of the fire` : EV.k === 'wwh' ? `Takedowns ${EV.kos}` : EV.k === 'inc' ? `Wave ${Math.min(EV.wave, 5)}/5 \u00B7 Anchors ${EV.anchors.filter(a => a.dead <= 0).length}/3` : `Kryptonite ${Math.round(EV.charge * 100)}%${EV.weak > 0 ? ' · <b style="color:#9CFF7A">WEAKENED</b>' : ''}`;
+    $('#evScore').innerHTML = EV.k === 'st' ? stHud() : EV.k === 'of' ? `Stones used ${EV.of.si}/6 \u00B7 Worlds left ${Object.keys(AREAS).length - (SG.flags.erased || []).length}/${Object.keys(AREAS).length}${EV.mindT > 0 ? ' \u00B7 <b style="color:#FFC93C">CONTROLS REVERSED</b>' : ''}${EV.of.final ? ' \u00B7 <b style="color:#FFC93C">PRESS E</b>' : ''}` : EV.k === 'br' ? (EV.br.part === 1 ? `${EV.inMap ? 'Tail the truck' : `Tailing ${Math.floor(EV.br.prog)}/40 s`} \u00B7 ${Math.round(Math.hypot(pos.x - EV.br.truck.position.x, pos.z - EV.br.truck.position.z))} m away \u00B7 <small>weakened</small>` : EV.br.part === 2 ? (EV.br.laptop ? `Reading his plans ${Math.floor(EV.br.hack)}/3 s` : `Guards left ${EV.units.filter(u => u.team === 'bk' && u.dead <= 0).length} \u00B7 <small>weakened</small>`) : EV.br.part === 3 ? `Floor ${EV.br.floor}/3 \u00B7 guards left ${EV.units.filter(u => u.team === 'bk' && u.dead <= 0).length} \u00B7 <small>weakened</small>` : 'Break the suit apart \u00B7 <small>weakened</small>') : EV.k === 'cv' ? `${EV.cx.gal ? (EV.cx.gal.phase === 'kneel' ? '<b style="color:#BFE8FF">GALACTUS IS KNEELING: HIT THE CORE</b>' : `<b style="color:#BFE8FF">GALACTUS</b> \u00B7 Siphons ${EV.cx.gal.siphons.filter(u => u.dead <= 0).length}/4`) : `Collisions ${Math.max(0, EV.cx.stage + 1)}/${CV_STAGES.length}${EV.cx.stage >= 0 && CV_STAGES[EV.cx.stage] ? ' \u00B7 ' + CV_STAGES[EV.cx.stage][0] : ''}`} \u00B7 Anchors ${EV.anchors.filter(a => a.dead <= 0).length}/3 \u00B7 Flags ${EV.flags.filter(f => f.own === 1).length}/3${EV.weak > 0 ? ' \u00B7 <b style="color:#9CFF7A">KRYPTONITE</b>' : ''}` : scored(EV.k) ? sc + ` <small>(first to ${E.goal})</small>` : EV.k === 'dks' ? `Parademons ${EV.units.filter(u => u.hero === 'parademon' && u.dead <= 0).length} \u00B7 stay out of the fire` : EV.k === 'wwh' ? `Takedowns ${EV.kos}` : EV.k === 'inc' ? `Wave ${Math.min(EV.wave, 5)}/5 \u00B7 Anchors ${EV.anchors.filter(a => a.dead <= 0).length}/3` : `Kryptonite ${Math.round(EV.charge * 100)}%${EV.weak > 0 ? ' · <b style="color:#9CFF7A">WEAKENED</b>' : ''}`;
     $('#evTitle').textContent = E.name; $('#evTime').textContent = `${Math.floor(Math.max(0, EV.t) / 60)}:${String(Math.floor(Math.max(0, EV.t) % 60)).padStart(2, '0')}`;
     $('#evHero').textContent = `${H.name}${armHurt() ? ' · burned arm' : ''}`; $('#evHp').style.width = `${clamp(EV.hp / EV.max, 0, 1) * 100}%`;
     const boss = EV.k === 'of' || EV.k === 'br' || EV.k === 'st' ? (EV.boss && EV.boss.dead <= 0 ? EV.boss : null) : EV.k === 'cv' ? (EV.units.find(u => u.final && u.dead <= 0) || EV.units.find(u => u.boss && u.dead <= 0) || null) : EV.k === 'inj' || EV.k === 'inc' || EV.k === 'dks' ? (EV.boss && EV.boss.dead <= 0 ? EV.boss : null) : EV.k === 'wwh' && EV.team !== 'hulk' ? EV.units.find(u => u.hero === 'hulk') : null;
@@ -7646,7 +7939,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
   const platformAt = (x, z) => plats[zone].find(p => onPlat(x, z, p)) || null;
   let codeScene = null, chipScene = null, seaScene = null, falling = false;
   let spaceScene = null, eventScene = null; const areaScenes = {};
-  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene, event: eventScene, void: voidScene })[zone] || areaScenes[zone] : scene;
+  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene, event: eventScene, void: voidScene, blr: BL && BL.sc })[zone] || areaScenes[zone] : scene;
   function radTile(parent, ch, x, y, z){
     const m = new THREE.Mesh(new THREE.PlaneGeometry(.55, .55), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: tex(160, 160, (g, w, h) => { g.fillStyle = '#FFC93C'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, h, 24) : g.rect(0, 0, w, h); g.fill(); g.fillStyle = '#16181D'; g.font = `700 110px ${ZH}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, w / 2, h / 2 + 6); }) }));
     m.position.set(x, y, z); m.userData.collect = ch; m.userData.base = y; parent.add(m); worldAnim.tiles.push(m); return m;
@@ -7849,7 +8142,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
     // if the bookshelf is closed, the vault (and the operating table) is sealed off, so come back into the room instead
     fade(() => { inWorld = false; zone = 'hub'; uiZone(); walkTarget = null; vy = 0; pos.copy(saved.pos); yaw = saved.yaw; pitch = saved.pitch; if (region(pos.x) === 'vault' && !vaultOpen) { pos.set(3.2, 1.6, .3); yaw = Math.PI / 2; pitch = 0; } dock.classList.add('on'); $('#worldBack').hidden = true; jumpBtn.hidden = true; $('#worldBack').textContent = 'Back to the room'; });
   }
-  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
+  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : inWorld && zone === 'blr' ? leaveBlr() : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
   function enterAI(){
     fade(() => {
       if (!aiScene) buildAI();
@@ -8085,7 +8378,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
     return null;
   }
   let down = null, hovered = null;
-  canvas.addEventListener('pointerdown', e => { if (EV && EV.intro) { dlgNext(); return; } if (EV && !EV.over && e.pointerType === 'mouse' && fine) { if (document.pointerLockElement === canvas) { if (e.button === 2) evSpecial(); else { EV.holdAtk = true; evAttack(); } } else canvas.requestPointerLock(); return; } if (A && !A.over && e.pointerType === 'mouse' && fine) { if (e.button === 2) { setBlock(true); return; } if (document.pointerLockElement === canvas) { const p = pick(innerWidth / 2, innerHeight / 2); if (usable(p)) { document.exitPointerLock(); act(p); } else { A.hold = true; attack(); } } else canvas.requestPointerLock(); return; } if (tourI >= 0) endTour(true); down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false }; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointerdown', e => { if (EV && EV.intro) { dlgNext(); return; } if (EV && !EV.over && e.pointerType === 'mouse' && fine) { if (document.pointerLockElement === canvas) { if (e.button === 2) setEvBlock(true); else { EV.holdAtk = true; evAttack(); } } else canvas.requestPointerLock(); return; } if (A && !A.over && e.pointerType === 'mouse' && fine) { if (e.button === 2) { setBlock(true); return; } if (document.pointerLockElement === canvas) { const p = pick(innerWidth / 2, innerHeight / 2); if (usable(p)) { document.exitPointerLock(); act(p); } else { A.hold = true; attack(); } } else canvas.requestPointerLock(); return; } if (tourI >= 0) endTour(true); down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false }; canvas.setPointerCapture(e.pointerId); });
   canvas.addEventListener('pointermove', e => {
     if (document.pointerLockElement === canvas) { yaw -= e.movementX * .0022; pitch = clamp(pitch - e.movementY * .0022, -1.2, 1.2); return; }
     if (A && !down) return;
@@ -8265,7 +8558,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
         if (camTween) { cancel(camTween); camTween = null; }
         walkTarget = null; exitTelescope();
         yaw += turn * 1.8 * dt;
-        const sp = (A ? (A.blocking ? 2 : 4.2) : EV ? EV.speed * (EV.dead > 0 || EV.lockT > 0 || EV.intro ? 0 : 1) : zone === 'collapse' && inWorld ? (RUN && RUN.slow > 0 ? 3.5 : 7) : zone === 'void' && inWorld ? 4 : inWorld && !grounded && zone !== 'space' ? 1.8 : 2.6) * dt;
+        const sp = (A ? (A.blocking ? 2 : 4.2) : EV ? EV.speed * (EV.dead > 0 || EV.lockT > 0 || EV.intro ? 0 : 1) : zone === 'collapse' && inWorld ? (RUN && RUN.slow > 0 ? 3.5 : 7) : zone === 'void' && inWorld ? 4 : inWorld && zone === 'blr' ? 4.4 : inWorld && !grounded && zone !== 'space' ? 1.8 : 2.6) * (BL && BL.ride ? 0 : kitSpeed()) * dt;
         const inv2 = EV && EV.mindT > 0 ? -1 : 1;
         const nx = pos.x + (-Math.sin(yaw) * f + Math.cos(yaw) * s) * sp * inv2;
         const nz = pos.z + (-Math.cos(yaw) * f - Math.sin(yaw) * s) * sp * inv2;
@@ -8290,7 +8583,7 @@ body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
       m.scale.setScalar(hovered && hovered === m.userData.section ? 1.5 : 1);
       m.visible = (entered || entering) && (!m.userData.vaultOnly || vaultOpen) && !(m.userData.hideWhenVault && vaultOpen);
     });
-    camera.position.copy(pos); camera.rotation.set(pitch, yaw, 0);
+    camera.position.copy(pos); if (KIT) camera.position.y -= KIT.crouchK * .7; camera.rotation.set(pitch, yaw, 0);
     dustStep(dt); snapCheck(); gorrCheck(); inventoryFrame(dt); extrasFrame(dt); fpsCheck(Math.min((now - (frame.prev || now)) / 1000, 1)); frame.prev = now;
     const showSnap = !!snapState && !A && entered && !(inWorld && zone === 'space'); if (snapBtn.hidden === showSnap) snapBtn.hidden = !showSnap;
     // if anything in a fight ever throws, end the fight instead of freezing the page
