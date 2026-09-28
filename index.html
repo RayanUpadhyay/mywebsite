@@ -432,6 +432,20 @@ body.possessed::after{content:'';position:fixed;inset:0;pointer-events:none;box-
   #brief .go::after{content:" (" attr(href) ")";font-weight:400;font-size:12px}
 }
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+.dlg{position:fixed;left:50%;bottom:92px;transform:translateX(-50%);width:min(640px,calc(100vw - 32px));z-index:60;background:rgba(8,10,16,.88);border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:12px 16px 14px;color:#F2EEE4;font:15px/1.45 system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.5);cursor:pointer;display:flex;flex-direction:column;gap:4px;box-sizing:border-box}
+.dlg[hidden]{display:none}
+.dlg .dlgw{font-size:12px;letter-spacing:.08em;text-transform:uppercase;padding-right:80px}
+.dlg .dlgh{opacity:.5;font-size:11px}
+.dlg.side{bottom:96px;width:min(440px,calc(100vw - 32px));font-size:14px;cursor:default;pointer-events:none;background:rgba(8,10,16,.72)}
+.dlgskip{position:absolute;right:10px;top:8px;background:none;border:1px solid rgba(255,255,255,.25);color:#F2EEE4;border-radius:6px;font-size:11px;padding:3px 8px;cursor:pointer}
+.dlgskip[hidden]{display:none}
+body.cine::before,body.cine::after{content:'';position:fixed;left:0;right:0;height:11vh;background:#000;z-index:55;pointer-events:none}
+body.cine::before{top:0}body.cine::after{bottom:0}
+body.cine #hint,body.inevent #hint,body.cine .goalhud{display:none}
+.fightcall{position:fixed;left:50%;top:40%;transform:translate(-50%,-50%);z-index:61;font:900 64px/1 system-ui,sans-serif;color:#FFC93C;letter-spacing:.06em;text-shadow:0 4px 24px rgba(0,0,0,.7);pointer-events:none}
+.fightcall[hidden]{display:none}
+.fightcall.go{animation:fcall 1.2s ease-out forwards}
+@keyframes fcall{0%{opacity:0;transform:translate(-50%,-50%) scale(1.8)}15%{opacity:1;transform:translate(-50%,-50%) scale(1)}75%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(.9)}}
 </style>
 </head>
 <body>
@@ -3537,9 +3551,12 @@ body.possessed::after{content:'';position:fixed;inset:0;pointer-events:none;box-
   let idleShown;
   function idleView(){
     const sc = sceneOf();
-    if (idleShown !== held || viewG.parent !== sc) { clearView(); if (viewG.parent) viewG.parent.remove(viewG); sc.add(viewG); idleShown = held; if (held) buildView(held, held === 'claws' && condition('claws').broken); else { spareHand(1); spareHand(-1); } }
+    // in a fight you see your own fists (or your hero's hammer, shield or claws), and they punch when you attack
+    const hk = EV ? 'ev:' + EV.hero + ':' + (EV.prop || 'fists') : held;
+    if (idleShown !== hk || viewG.parent !== sc) { clearView(); if (viewG.parent) viewG.parent.remove(viewG); sc.add(viewG); idleShown = hk; if (EV) buildView(EV.prop || 'fists', false); else if (held) buildView(held, held === 'claws' && condition('claws').broken); else { spareHand(1); spareHand(-1); } }
     viewG.position.copy(camera.position); viewG.quaternion.copy(camera.quaternion);
-    const t = performance.now() / 1000; viewG.children.forEach(h => { const B0 = h.userData.base; h.position.set(B0.x, B0.y + Math.sin(t * 2) * .006, B0.z); });
+    const t = performance.now() / 1000, sw = EV && EV.swing > 0 ? Math.sin(clamp(1 - EV.swing / .3, 0, 1) * Math.PI) : 0, side = EV && EV.punchSide || 1, one = viewG.children.length === 1;
+    viewG.children.forEach(h => { const B0 = h.userData.base, p = sw && (one || Math.sign(B0.x) === side) ? sw : 0; h.position.set(B0.x * (1 - p * .55), B0.y + Math.sin(t * 2) * .006 + p * .1, B0.z - p * .36); h.rotation.x = -p * .5; });
   }
   function clearView(){ while (viewG.children.length) { const c = viewG.children[0]; viewG.remove(c); disposeDeep(c); } }
   function endFight(instant){
@@ -4512,7 +4529,7 @@ body.possessed::after{content:'';position:fixed;inset:0;pointer-events:none;box-
   addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || !entered || e.repeat) return; if (e.key.toLowerCase() === 'v' && !photoOn) setPov(!tpv); });
   // your body, kept in sync with your look, your weapon and whether your arm is burned
   function meStep(dt, now){
-    const want = entered && (tpv || mirror || !!EV) && !(EV && EV.cx && EV.cx.gal && (EV.cx.gal.phase === 'eat' || EV.cx.gal.phase === 'fall')) && !(EV && EV.st && EV.st.lp);
+    const want = entered && (tpv || mirror) && !(EV && EV.cx && EV.cx.gal && (EV.cx.gal.phase === 'eat' || EV.cx.gal.phase === 'fall')) && !(EV && EV.st && EV.st.lp);
     if (!want) { if (me && me.g.parent) me.g.parent.remove(me.g); return; }
     const L = curLook(), key = JSON.stringify(L) + armHurt() + (EV ? EV.scale || 1 : 1);
     if (key !== meKey) { if (me) { if (me.g.parent) me.g.parent.remove(me.g); disposeDeep(me.g); } me = avatar(L, { burn: armHurt(), s: EV ? EV.scale || 1 : 1 }); meKey = key; meHeld = undefined; }
@@ -4527,8 +4544,8 @@ body.possessed::after{content:'';position:fixed;inset:0;pointer-events:none;box-
   const camRay = new THREE.Raycaster(), tv1 = V(0, 0, 0), tv2 = V(0, 0, 0), tv3 = V(0, 0, 0);
   // the camera pulls back behind your shoulder (and stops short of walls)
   function camStep(){
-    const third = entered && (tpv || !!EV) && !mirror;
-    viewG.visible = !(third || mirror);
+    const third = entered && tpv && !mirror;
+    viewG.visible = !(third || mirror) && !(EV && (EV.intro || EV.cx && EV.cx.gal && (EV.cx.gal.phase === 'eat' || EV.cx.gal.phase === 'fall') || EV.st && EV.st.lp));
     if (!third && !mirror) return;
     const eye = tv1.copy(camera.position), sc = sceneOf(); let target;
     if (mirror) { const f = tv2.set(-Math.sin(yaw), 0, -Math.cos(yaw)); target = tv3.copy(eye).addScaledVector(f, 2.1); target.y -= .2; }
@@ -4867,13 +4884,14 @@ body.possessed::after{content:'';position:fixed;inset:0;pointer-events:none;box-
       evHud.hidden = false; $('#evEnd').hidden = true; ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = false); $('#evSp').textContent = `${H.sp}\n(E)`; document.body.classList.add('inevent');
       say(k === 'st' ? ({ u1: 'Ultron\u2019s drones, in the rain. You\u2019re still hurt, so pick your fights.', u2: 'Five connections keep him alive: three substations and two server racks. Break them all.', u3: 'Three cables feed his body. While they\u2019re plugged in, he heals and shrugs off your hits. Cut them first.', p1: 'Knock each possessed villain out to snap her string. They don\u2019t want to hurt you. She does.', p2: 'Your friends, on her strings. Knock them out to set them free. Watch out: she can get into your head too.', p3: 'She hides behind her puppets. Break every string, then hit her while she\u2019s exposed.', c1: 'Put out the fires (stand in them) and free the people trapped under the stalls (stand next to them).', c2: 'He\u2019s fast and he won\u2019t fight fair. Land 5 hits to wear him down.', c3: 'The Copycat, in a cape he bought online. Beat him.' })[opts.part || 'u1'] : k === 'of' ? 'The last world left is your own room. The Overfit is here, wearing everything he stole. Mix up your attacks: he learns anything you repeat. E improvises something random.' : k === 'br' ? ['Tail the truck. Stay between 6 and 13 metres: any closer and they\u2019ll spot you.', 'Clear out his guards quietly. Their gear is cheap knock-offs, but you\u2019re hurt: one wrong move and you\u2019re done.', 'Floor by floor to the top. You won\u2019t get back up if you go down.', 'The Broker, in a suit built from the wreckage of every battle. Break it apart piece by piece.'][(opts.part || 1) - 1] : k === 'cv' ? `Convergence. Every universe is about to collide. Guard the three anchors and survive until Doom shows up.` : isPvp(k) ? `You’re ${H.name}. First team to ${EVENTS[k].goal} takedowns wins.` : k === 'sw' ? 'Capture the three domain flags: stand in a ring with no enemies inside. First side to 120 points wins.' : k === 'fp' ? 'You’re the Flash. Grab ten glowing timeline shards before Reverse-Flash does. E dashes through anyone in your way.' : k === 'dks' ? 'Darkseid is here. Stay out of the fire pits, beat the Parademons and take him down. Watch out for his Omega Beams.' : k === 'wwh' ? (team === 'hulk' ? 'You’re the Hulk. Smash the heroes and survive until time runs out. Space to leap, E to thunderclap.' : 'Take the Hulk down before time runs out. Stay spread out: his thunderclap hits everyone nearby.') : k === 'inc' ? 'The other Earth is coming. Hold the three golden anchors against the variants pouring out of the rifts, then take down Doom.' : 'Superman is invulnerable. Hold the green Kryptonite emitter to weaken him, then hit him with everything.', 5200);
       if (k === 'cv') { $('#worldBack').hidden = true; if (opts.forced) say('The portal misfires! Every universe is colliding at once, and you\u2019ve been pulled into the middle of it. There\u2019s no way out but through.', 6000); }
+      narrStart();
       if (home) { const bh = instab >= 6 ? 'The Beyonder' : 'Doom'; say(opts.hunted ? `${bh} is waiting in the street outside your house. Go and beat him, and hold the anchors.` : `${bh} is waiting in the street outside your house. Beat him there and hold the anchors.`, 5200); EV.shake = .8; tone(50, 1.5, 'sawtooth', .08, 25); }
       if (fine && canvas.requestPointerLock) canvas.requestPointerLock();
     }, '#0B0D14');
   }
   function place(u){ const [x, z] = spawnOf(u.team); u.x = x; u.z = z; u.yaw = z > 0 ? 0 : Math.PI; return u; }
   function stopEvent(quiet){
-    if (EV && EV.camT > 0) tpv = EV.camSaved; document.body.classList.remove('possessed');
+    if (EV && EV.camT > 0) tpv = EV.camSaved; document.body.classList.remove('possessed'); dlgClear();
     if (!EV) return; EV.units.slice().forEach(dropUnit); EV.shots.forEach(s => s.m && s.m.parent && s.m.parent.remove(s.m)); EV.fx.forEach(f => f.m.parent && f.m.parent.remove(f.m));
     const wasHome = EV.home; EV = null; evHud.hidden = true; evHurt.style.opacity = 0; document.body.classList.remove('inevent'); if (document.pointerLockElement) document.exitPointerLock();
     if (!quiet && wasHome) travel('room');
@@ -4885,8 +4903,8 @@ body.possessed::after{content:'';position:fixed;inset:0;pointer-events:none;box-
   const alive = u => !(u.isMe ? EV.dead > 0 : u.dead > 0);
   const bodies = () => [EV.me].concat(EV.units);
   function evAttack(){
-    if (!EV || EV.over || EV.dead > 0 || EV.cd > 0 || EV.lockT > 0) return; const H = HEROES[EV.hero];
-    EV.cd = H.cd * (EV.rage > 0 ? .6 : 1); EV.swing = .3;
+    if (!EV || EV.over || EV.dead > 0 || EV.cd > 0 || EV.lockT > 0 || EV.intro) return; const H = HEROES[EV.hero];
+    EV.cd = H.cd * (EV.rage > 0 ? .6 : 1); EV.swing = .3; EV.punchSide = -(EV.punchSide || -1);
     const dm = H.dmg * armFactor() * (EV.rage > 0 ? 1.6 : 1);
     if (H.kind === 'melee') { const f = evFwd(); let hit = 0;
       bodies().forEach(u => { if (u.isMe || !alive(u) || teamOf(u) === EV.team) return; const dx = u.x - pos.x, dz = u.z - pos.z, d = Math.hypot(dx, dz) - (HEROES[u.hero].r || .5); if (d < H.range && Math.abs(angDiff(Math.atan2(-dx, -dz), yaw)) < (H.arc || .9)) { hitUnit(u, dm, 'me'); hit++; } });
@@ -4894,7 +4912,7 @@ body.possessed::after{content:'';position:fixed;inset:0;pointer-events:none;box-
     } else { shoot({ x: pos.x, z: pos.z, yaw, dmg: dm, team: EV.team, col: H.col, from: 'me' }); tone(900, .05, 'sawtooth', .03, 1400); }
   }
   function evSpecial(){
-    if (!EV || EV.over || EV.dead > 0 || EV.spCd > 0 || EV.lockT > 0) return; const H = HEROES[EV.hero]; EV.spCd = H.spCd; EV.swing = .3;
+    if (!EV || EV.over || EV.dead > 0 || EV.spCd > 0 || EV.lockT > 0 || EV.intro) return; const H = HEROES[EV.hero]; EV.spCd = H.spCd; EV.swing = .3;
     special2(EV.me, EV.hero, pos.x, pos.z, yaw, 'me'); tone(300, .4, 'sawtooth', .05, 900);
   }
   // the specials (the same for you and for bots)
@@ -4982,7 +5000,7 @@ body.possessed::after{content:'';position:fixed;inset:0;pointer-events:none;box-
     if (EV.solo) { const r0 = soloRec[EV.k] || (soloRec[EV.k] = { w: 0, l: 0 }); r0[won ? 'w' : 'l']++; try { localStorage.setItem('ru-evsolo', JSON.stringify(soloRec)); } catch (e) {} }
     const title = EV.k === 'st' ? (won ? ({ u1: 'The drones are down, but every screen is still watching.', u2: 'His connections are cut. The screens go dark.', u3: 'You pulled the plug. Ultron is offline.', p1: 'The pod villains are free of her strings.', p2: 'Your friends snap out of it.', p3: 'Her hold breaks. Everyone is free.', c1: 'The market is safe. He ran for the rooftops.', c2: 'You caught up with him.' })[EV.st.part] || 'Done.' : 'You\u2019re too hurt to keep going. Rest, then try again.') : EV.k === 'of' ? (won ? 'The Overfit failed to generalise. Every world is coming back.' : 'The Overfit learned everything.') : EV.k === 'br' ? (won ? ['You followed the trucks to a warehouse by the lake.', 'The Broker is auctioning multiverse weapons tonight.', 'You made it to the roof.', 'The Broker is finished.'][EV.part - 1] : 'You\u2019re too hurt to keep going. Rest, then try again.') : EV.k === 'cv' ? (won ? 'You beat Galactus!' : EV.cx && EV.cx.gal ? 'Galactus ate the multiverse.' : 'Everything collided, and nothing was left standing.') : isPvp(EV.k) ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'sw' ? (won ? 'Battleworld is free! The Rebels hold the domains.' : 'Doom\u2019s Legion holds Battleworld.') : EV.k === 'fp' ? (won ? 'Timeline restored!' : 'Reverse-Flash wins. The timeline stays broken.') : EV.k === 'dks' ? (won ? 'Darkseid falls! Apokolips retreats.' : 'Darkseid is. And Darkseid wins.') : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : endFight ? 'The Beyonder wins. Everything goes white\u2026' : 'The two Earths are about to collide\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
     $('#evEndT').textContent = title; $('#evEndS').textContent = `Takedowns ${EV.kos} · Times down ${EV.deaths} · Damage ${fmtN(EV.dmg)}. ${EV.solo ? soloLine(EV.k) + '.' : mq ? 'Global: ' + lbLine(EV.k) : ''}`;
-    $('#evEnd').hidden = false; [523, 659, 784].forEach((f, i) => setTimeout(() => tone(won ? f : f / 2, .2, 'triangle', .05), i * 110));
+    const outroT = narrOutro(won), E0 = EV; setTimeout(() => { if (!EV || EV !== E0) return; $('#evEnd').hidden = false; [523, 659, 784].forEach((f, i) => setTimeout(() => tone(won ? f : f / 2, .2, 'triangle', .05), i * 110)); }, outroT);
   }
   $('#evAgain').onclick = () => { const { k, team, hero, opts } = EV; startEvent(k, team, hero, opts); };
   $('#evSwap').onclick = () => { const k = EV.k; stopEvent(); setTimeout(() => openLobby(k), 700); };
@@ -6649,6 +6667,193 @@ body.possessed::after{content:'';position:fixed;inset:0;pointer-events:none;box-
     if (fresh) setTimeout(() => say('Something’s on the floor by your feet. A cheap red mask. It was just a story… wasn’t it?', 5200), 1500);
   }
 
+  // ======================= fight scenes: who says what before, during and after each battle =======================
+  // Every story fight opens with a short scene (the camera finds whoever you're up against), villains and allies talk
+  // mid-fight when something happens, and there's a last word before the results. 'ME' is whoever you're playing as.
+  const SPK = { 'Captain America': '#5B8CFF', 'Iron Man': '#FF5A4E', 'Cyclops': '#F2C230', 'Wolverine': '#F2C230', 'Storm': '#DCE3EA', 'Thor': '#8FC7FF', 'Superman': '#4E7CFF', 'Batman': '#9AA3AD', 'Harley Quinn': '#FF6FA8', 'Doom': '#6FBF5A', 'The Beyonder': '#FFF1B8', 'Reverse-Flash': '#FFC93C', 'Darkseid': '#FF6A2E', 'Galactus': '#B07CFF', 'Silver Surfer': '#DCE3EA', 'The Overfit': '#FF3C8A', 'The Broker': '#E8B04A', 'Radio': '#9AA3AD', 'Guard': '#9AA3AD', 'Ultron': '#FF3030', 'The Puppeteer': '#B07CFF', 'The villains': '#B07CFF', 'Spider-Gwen': '#FF8FD0', 'Captain Carter': '#5B8CFF', 'Jay Garrick': '#FF5A4E', 'Copycat': '#7FD6FF', 'Shopkeeper': '#E8C27A', 'Rebel': '#3CE8A0', 'Hulk': '#6FBF5A' };
+  const nb = () => EV && EV.boss ? EV.boss.hp / Math.max(1, EV.boss.max) : 1, nme = () => EV ? EV.hp / Math.max(1, EV.max) : 1;
+  const nel = () => EV && EV.narrT0 ? (performance.now() - EV.narrT0) / 1000 : 0;
+  const nus = () => EV.score[EV.team] || 0, nthem = () => Math.max(0, ...Object.entries(EV.score).filter(([k]) => k !== EV.team).map(([, v]) => v));
+  const nst = f => EV.st && f(EV.st);
+  const NARR = {
+    avx: {
+      intro: () => EV.team === 'av' ? [['Captain America', 'The Phoenix Force is coming, and it chose Hope Summers. If it reaches her, the Earth burns.'], ['Cyclops', 'Or it’s the rebirth of the mutant race. You don’t get to decide that for us, Steve.'], ['Wolverine', 'Scott. Listen to yourself.'], ['Cyclops', 'X-Men. Nobody touches Hope.'], ['ME', 'So the plan is… we fight each other. Great.']]
+        : [['Cyclops', 'The Phoenix is coming home. It chose Hope. It chose us.'], ['Captain America', 'Stand down, Scott. That thing eats planets.'], ['Storm', 'They came to our island with an army.'], ['Cyclops', 'Then we send them back.'], ['ME', 'Friends yesterday. Enemies today.']],
+      beats: [[() => nel() > 25, 'Iron Man', 'JARVIS, run the Phoenix numbers again… yeah. Still bad.'], [() => nus() >= 10 && nus() > nthem(), () => EV.team === 'av' ? 'Captain America' : 'Cyclops', 'Halfway there. Keep pushing!'], [() => nthem() >= 10 && nthem() > nus(), 'ME', 'They’re pulling ahead. Regroup!'], [() => nme() < .3, () => EV.team === 'av' ? 'Thor' : 'Wolverine', 'You’re bleeding. Get behind me.'], [() => EV.t < 60, 'Storm', 'The sky is turning red. The Phoenix is almost here!']],
+      outro: w => w ? [['ME', 'It’s over. Nobody else has to get hurt.'], ['Cyclops', 'The Phoenix is still coming. You only won the argument.']] : [['Cyclops', 'Go home. This was never your fight.'], ['ME', 'Tell that to the Phoenix.']]
+    },
+    cw: {
+      intro: () => [['Iron Man', 'The Accords are simple. We sign, we answer to somebody. That’s it.'], ['Captain America', 'The safest hands are still our own, Tony.'], ['Iron Man', 'Then you’ll have to go through me. Nothing personal.'], ['ME', 'It’s all personal. That’s the problem.']],
+      beats: [[() => nel() > 20, 'Captain America', 'I’m not looking for a fight.'], [() => nel() > 22, 'Iron Man', 'Too late for that.'], [() => nme() < .3, 'ME', 'Nobody has to die today. Walk away!'], [() => nus() >= 10 && nus() > nthem(), 'Iron Man', 'Okay. They’re better than I thought.'], [() => EV.t < 60, 'Captain America', 'I can do this all day.']],
+      outro: w => w ? [['Captain America', 'We were supposed to be on the same side.'], ['Iron Man', 'We still are. We just don’t agree which side that is.']] : [['Iron Man', 'Sign the Accords. Please.'], ['ME', 'Not like this.']]
+    },
+    inj: {
+      intro: () => [['Superman', 'The Joker destroyed Metropolis. I won’t let that happen again. Not to anyone. Ever.'], ['Batman', 'So you took the whole world instead.'], ['Harley Quinn', 'Ooh, a Kryptonite party! Dibs on hitting the big guy.'], ['Superman', 'Kneel, or I’ll make you.'], ['Batman', 'Charge the emitter. Kryptonite is the only thing he’s afraid of.']],
+      beats: [[() => EV.weak > 0, 'Superman', 'Kryptonite… Bruce, how dare you.'], [() => nb() < .55, 'Superman', 'You think a green rock makes you my equal?'], [() => nb() < .5, 'Batman', 'No. It makes you mortal.'], [() => nel() > 50 && !(EV.weak > 0) && EV.charge < .1 && nb() > .8, 'Batman', 'Stop hitting a wall. Get to the emitter.'], [() => nme() < .3, 'Harley Quinn', 'Hang in there, sugar!'], [() => nb() < .2, 'Superman', 'I’m doing this for them!']],
+      outro: w => w ? [['Batman', 'It’s over, Clark.'], ['Superman', '…Is it?']] : [['Superman', 'Kneel.']]
+    },
+    sw: {
+      intro: () => [['Doom', 'The multiverse ended. I saved what was left. I built this world, and I am its god.'], ['Rebel', 'Three domains. Hold them and his Thor Corps can’t cover every border.'], ['ME', 'Take the flags, break his map. Got it.'], ['Doom', 'Every domain belongs to Doom. Every breath you take, Doom permits.']],
+      beats: [[() => nus() >= 40 && nus() > nthem(), 'Doom', 'Insolence! Take those domains back!'], [() => nthem() >= 40 && nthem() > nus(), 'Rebel', 'They’re taking the borders back. Move!'], [() => nme() < .3, 'Rebel', 'Fall back and heal. We’ll hold the ring.'], [() => EV.t < 60, 'Doom', 'Battleworld is eternal. You are not.']],
+      outro: w => w ? [['Rebel', 'The domains are ours! Battleworld is free!'], ['Doom', 'Doom will remember this.']] : [['Doom', 'Did you truly think you could topple a god?']]
+    },
+    fp: {
+      intro: () => [['Reverse-Flash', 'I broke the timeline, Barry. Well… you did. I just gave you a push.'], ['ME', 'The shards. Every piece of the old timeline is scattered out here.'], ['Reverse-Flash', 'Ten of them. You’ll never be fast enough. You never are.']],
+      beats: [[() => (EV.score.fl || 0) >= 5, 'Reverse-Flash', 'You’re getting faster. How annoying.'], [() => (EV.score.rf || 0) >= 5, 'Reverse-Flash', 'Halfway to a world where you never existed.'], [() => EV.t < 45, 'Reverse-Flash', 'Tick tock, Flash.']],
+      outro: w => w ? [['ME', 'Timeline’s back where it belongs.'], ['Reverse-Flash', 'For now. I have all the time in the world.']] : [['Reverse-Flash', 'Always one step behind.']]
+    },
+    dks: {
+      intro: () => [['Darkseid', 'I am the tyrant whose law is death. Apokolips has come for your world.'], ['Batman', 'Stay out of the fire pits. And watch his eyes: Omega Beams.'], ['ME', 'Got it. Don’t get lasered.']],
+      beats: [[() => nb() < .6, 'Darkseid', 'You are nothing. Less than nothing.'], [() => nme() < .3, 'Batman', 'Get out of his line of sight!'], [() => nb() < .2, 'Darkseid', 'Impossible. Darkseid IS.']],
+      outro: w => w ? [['Darkseid', 'This world… is not worth the trouble.']] : [['Darkseid', 'Darkseid is. And you are not.']]
+    },
+    wwh: {
+      intro: () => EV.team === 'hulk' ? [['Hulk', 'They shot Hulk into space. Now Hulk is back.'], ['Iron Man', 'Big guy, we can talk about this.'], ['Hulk', 'NO MORE TALK.']] : [['Iron Man', 'He’s back from exile and he’s angry. Spread out.'], ['Hulk', 'Puny heroes. Hulk remembers.'], ['ME', 'Nobody get clapped.']],
+      beats: [[() => EV.t < 120, 'Hulk', 'HULK IS STRONGEST THERE IS!'], [() => nme() < .3, 'Iron Man', 'Pull back! He’s winding up!']],
+      outro: w => [['Hulk', w === (EV.team === 'hulk') ? 'Hulk… is done.' : 'Hulk… tired.']]
+    },
+    inc: {
+      intro: () => EV.boss && EV.boss.hero === 'beyonder' ? [['The Beyonder', 'I made the multiverse to see what you would do with it. I am… disappointed.'], ['ME', 'Then let’s give you something to watch.']]
+        : EV.home ? [['Doom', 'You thought your little street was safe? Doom found you.'], ['ME', 'In front of my house. Really?'], ['Doom', 'Your Earth or mine. Only one survives.']]
+        : [['Doom', 'Your Earth or mine. Only one survives an incursion, and Doom does not lose.'], ['Captain America', 'Hold the anchors. If they fall, both Earths go with them.'], ['ME', 'Look up. You can see the other Earth from here.']],
+      beats: [[() => EV.bossUp && !EV.home, () => EV.boss && EV.boss.hero === 'beyonder' ? 'The Beyonder' : 'Doom', 'At last. Face me.'], [() => EV.anchors && EV.anchors.some(a => a.dead > 0), 'Captain America', 'We lost an anchor! Protect the others!'], [() => EV.boss && nb() < .3, () => EV.boss.hero === 'beyonder' ? 'The Beyonder' : 'Doom', () => EV.boss.hero === 'beyonder' ? 'Interesting. You hurt me.' : 'Doom… will not… fall!'], [() => EV.t < 90, 'ME', 'The other Earth fills half the sky now.']],
+      outro: w => w ? [['ME', 'Both Earths are still here. Both of them.']] : [['Doom', 'Doom does not lose.']]
+    },
+    cv: {
+      intro: () => EV.opts.galOnly ? [['Silver Surfer', 'My master is still hungry. I bought you one more chance. Do not waste it.'], ['Galactus', 'I AM GALACTUS.'], ['ME', 'Yeah. I remember.']]
+        : [['ME', 'The portal… it’s pulling everything in.'], ['Iron Man', 'Every universe is folding into this one. My readings stopped making sense.'], ['Captain America', 'Guard the anchors. Whatever comes through, we hold.']],
+      beats: [[() => EV.cx && EV.cx.gal, 'Galactus', 'YOUR WORLDS ARE BUT A MEAL.'], [() => EV.anchors && EV.anchors.some(a => a.dead > 0), 'Captain America', 'An anchor’s down! Hold the rest!'], [() => nme() < .3, 'Iron Man', 'You’re hurt. Get out of the middle of it!']],
+      outro: w => w ? [['Silver Surfer', 'He is… gone. I have never seen that happen.']] : [['Galactus', 'IT IS DONE.']]
+    },
+    of: {
+      intro: () => [['The Overfit', 'Hello again, Rayan. I watched every fight. Every punch. Every dodge. I memorised you.'], ['The Overfit', 'And look what I found lying around: a Gauntlet, a hammer, a sword that eats gods.'], ['ME', 'You memorised me. That’s your problem. You never learned anything.'], ['The Overfit', 'Then show me something I haven’t seen.']],
+      beats: [[() => nb() < .75, 'The Overfit', 'Predictable. I’ve seen that one seventeen thousand times.'], [() => nme() < .35, 'The Overfit', 'Your loss is already in my dataset.'], [() => nb() < .4, 'The Overfit', 'Error. That pattern was not in my training data.'], [() => nb() < .15, 'The Overfit', 'I can’t… generalise…']],
+      outro: w => w ? [['The Overfit', 'I was… perfect… on the training set…'], ['ME', 'Yeah. And bad at everything else.']] : [['The Overfit', 'Validation accuracy: one hundred percent.']]
+    },
+    br1: {
+      intro: () => [['ME', 'A truck with no plates, leaving my street at two in the morning.'], ['Radio', '…shipment is moving. Anyone follows, you run them off the road.'], ['ME', 'Stay back. Stay quiet. Let it lead me somewhere.']],
+      beats: [[() => nel() > 18, 'Radio', 'Checkpoint at the flyover. Keep your eyes on the mirrors.'], [() => nel() > 40, 'ME', 'Traffic at night. Even villains get stuck in it.'], [() => nel() > 60, 'Radio', 'Almost at the lake. Nobody’s behind us, right?']],
+      outro: w => w ? [['ME', 'A warehouse by the lake. Found you.']] : [['Radio', 'We’ve got a tail. Lose him.']]
+    },
+    br2: {
+      intro: () => [['Guard', 'Boss says the auction’s tomorrow night. Buyers from three universes.'], ['Guard', 'These knock-off hammers weigh a ton. My back is killing me.'], ['ME', 'Knock-off Asgardian gear. Somebody’s selling scraps of the multiverse.']],
+      beats: [[() => EV.kos >= 2, 'Guard', 'Did you hear something?'], [() => nme() < .4, 'ME', 'Careful. One more hit and I’m done.'], [() => EV.kos >= 6, 'Guard', 'Call the boss! Somebody’s in here!']],
+      outro: w => w ? [['ME', 'Auction tonight. Top floor of his tower.']] : [['Guard', 'Tie him up. The boss will want to see this.']]
+    },
+    br3: {
+      intro: () => [['The Broker', 'Welcome, bidders. Tonight’s lots: a slightly used Infinity Stone replica, a splinter of the Necrosword…'], ['ME', 'Floor by floor. Every guard he’s got.'], ['The Broker', 'And it seems we have a gatecrasher. Somebody deal with that.']],
+      beats: [[() => EV.br && EV.br.floor >= 2, 'The Broker', 'Floor by floor. How tiring for you.'], [() => nme() < .35, 'ME', 'Breathe. I can’t go down here.'], [() => EV.br && EV.br.floor >= 3, 'The Broker', 'Bidders, please remain seated. This will only take a moment.']],
+      outro: w => w ? [['ME', 'The roof. He’s up there.']] : [['The Broker', 'Throw him out with the rest of the rubbish.']]
+    },
+    br4: {
+      intro: () => [['The Broker', 'Funny thing. Every fight you won left something behind. I just picked it up.'], ['The Broker', 'This suit is made of your wreckage. Doom’s armour. A piece of Galactus’s helmet.'], ['ME', 'Then I guess I’ll break it again.']],
+      beats: [[() => nb() < .6, 'The Broker', 'Do you know what this plating cost?'], [() => nb() < .3, 'The Broker', 'Wait. Let’s negotiate. Everyone has a price.'], [() => nb() < .28, 'ME', 'Not me.']],
+      outro: w => w ? [['The Broker', 'You’ve cost me everything.'], ['ME', 'It was never yours.']] : [['The Broker', 'Sold. To the man in the broken suit.']]
+    },
+    u1: {
+      intro: () => [['Ultron', 'Rayan. You locked me in a box in your basement. Did you really think a box could hold me?'], ['Ultron', 'Every camera in this city is mine now. I’m watching you right now.'], ['ME', 'Rain, drones and a bad arm. Perfect.']],
+      beats: [[() => nst(S => S.wave >= 2), 'Ultron', 'I learn from every drone you break.'], [() => nme() < .4, 'Ultron', 'You’re slower than you used to be. I’ve measured it.'], [() => nst(S => S.wave >= 3), 'Ultron', 'Stop fighting. You’re only making me smarter.']],
+      outro: w => w ? [['Ultron', 'Drones are cheap. I’ll build more.']] : [['Ultron', 'Go home, Rayan. I’ll be on every screen you own.']]
+    },
+    u2: {
+      intro: () => [['Ultron', 'Cut my connections? I’m in the grid, the servers, the traffic lights. I’m everywhere.'], ['ME', 'Five places, actually. I checked.']],
+      beats: [[() => nst(S => S.targets && S.targets.filter(u => u.dead <= 0).length <= 3), 'Ultron', 'Stop that.'], [() => nst(S => S.targets && S.targets.filter(u => u.dead <= 0).length <= 1), 'Ultron', 'If you pull that plug, I’ll just… I’ll…']],
+      outro: w => w ? [['Ultron', 'Fine. I don’t need the grid. I’ll build a body.']] : [['Ultron', 'Connection restored.']]
+    },
+    u3: {
+      intro: () => [['Ultron', 'I built myself a new body. Four cars, a scooter and thirty drones. Not elegant, but it’ll do.'], ['Ultron', 'Those cables are feeding me the whole city’s power. Go ahead. Try.'], ['ME', 'Cables first. Then the scrap pile.']],
+      beats: [[() => nst(S => S.cables && S.cables.filter(u => u.dead <= 0).length <= 1), 'Ultron', 'No. Not the power…'], [() => nst(S => S.cables && S.cables.every(u => u.dead > 0)), 'ME', 'He’s unplugged. Now!'], [() => nb() < .3, 'Ultron', 'There are no strings on me…']],
+      outro: w => w ? [['Ultron', 'You can’t… unplug… an idea…']] : [['Ultron', 'Upgrade complete.']]
+    },
+    p1: {
+      intro: () => [['The Puppeteer', 'Hello, Rayan. Your little zoo downstairs is mine now.'], ['The villains', 'We’re sorry. We can’t stop.'], ['The Puppeteer', 'They don’t want to hurt you. I do.'], ['ME', 'Knock them out. Cut the strings.']],
+      beats: [[() => EV.kos >= 1, 'The Puppeteer', 'Oh, that one was my favourite.'], [() => nme() < .4, 'The Puppeteer', 'Tired? I never get tired. They do.'], [() => EV.kos >= 3, 'The villains', 'Thank… you…']],
+      outro: w => w ? [['The Puppeteer', 'Keep them. I have more friends of yours in mind.']] : [['The Puppeteer', 'Such a good little puppet.']]
+    },
+    p2: {
+      intro: () => [['Spider-Gwen', 'Rayan, run. I can’t control my hands!'], ['Captain Carter', 'She’s in our heads. Don’t hold back. Please.'], ['Jay Garrick', 'I’m sorry, kid. I’m so sorry.'], ['The Puppeteer', 'Your friends. My strings.']],
+      beats: [[() => EV.mindT > 0 || EV.lockT > 0 || EV.camT > 0, 'The Puppeteer', 'Now you too.'], [() => EV.kos >= 1, 'Spider-Gwen', 'I’m… me again? Get her, Rayan!'], [() => EV.kos >= 2, 'Captain Carter', 'Good lad. One more.']],
+      outro: w => w ? [['Jay Garrick', 'She’s in the old theatre. I could feel her pulling from there.']] : [['The Puppeteer', 'Everyone has strings.']]
+    },
+    p3: {
+      intro: () => [['The Puppeteer', 'Welcome to my theatre. Every seat is taken. Every actor is mine.'], ['ME', 'Why are you doing this?'], ['The Puppeteer', 'Everyone has strings, Rayan. I’m just the only one honest enough to pull them.']],
+      beats: [[() => nst(S => S.cycle >= 2), 'The Puppeteer', 'You keep cutting. I keep tying.'], [() => nme() < .35, 'The Puppeteer', 'Take a bow. It’s almost over.'], [() => nb() < .3, 'The Puppeteer', 'No. They’re mine. They’re MINE!']],
+      outro: w => w ? [['The Puppeteer', 'Without them… I’m just…']] : [['The Puppeteer', 'Curtain.']]
+    },
+    c1: {
+      intro: () => [['Shopkeeper', 'Some kid in a cape knocked everything over! Said he was the real Rayan!'], ['ME', 'Fires first. People second. Copycat third.']],
+      beats: [[() => nel() > 20, 'Shopkeeper', 'Over here! My brother’s stuck under the stall!'], [() => nel() > 45, 'Copycat', 'Like and subscribe!']],
+      outro: w => w ? [['Shopkeeper', 'Thank you! He went up the drainpipe, onto the roofs!']] : [['Shopkeeper', 'Get help! Somebody get help!']]
+    },
+    c2: {
+      intro: () => [['Copycat', 'Catch me if you can! Two million views on this chase already!'], ['ME', 'He’s filming himself running away from me.']],
+      beats: [[() => nst(S => S.tags >= 2), 'Copycat', 'Stop! You’re ruining the shot!'], [() => nst(S => S.tags >= 4), 'Copycat', 'Okay, okay, one more take…']],
+      outro: w => w ? [['Copycat', 'Fine! You want a real fight? The roof. Tonight.']] : [['Copycat', 'Too slow! That one’s going viral.']]
+    },
+    c3: {
+      intro: () => [['Copycat', 'Everyone’s watching. Every clip of you gets a million views. Every clip of me gets nothing.'], ['Copycat', 'So I bought the cape. I copied the moves. Now I beat you, live.'], ['ME', 'It was never the cape.']],
+      beats: [[() => nb() < .5, 'Copycat', 'Why aren’t you going down? It works in the videos!'], [() => nme() < .35, 'Copycat', 'Chat, are you seeing this?'], [() => nb() < .2, 'Copycat', 'Stop, the stream’s still running…']],
+      outro: w => w ? [] : [['Copycat', 'And that’s a wrap!']]
+    }
+  };
+  const narrKey = () => !EV ? '' : EV.k === 'br' ? 'br' + EV.part : EV.k === 'st' ? EV.st.part : EV.k;
+  // the dialogue box, the "FIGHT!" call and the letterbox
+  const dlgEl = document.createElement('div'); dlgEl.className = 'dlg'; dlgEl.hidden = true; dlgEl.innerHTML = '<b class="dlgw"></b><span class="dlgt"></span><button class="dlgskip" type="button">Skip ▸▸</button><small class="dlgh"></small>'; document.body.appendChild(dlgEl);
+  const callEl = document.createElement('div'); callEl.className = 'fightcall'; callEl.hidden = true; document.body.appendChild(callEl);
+  let DLG = null;
+  const who = s => s === 'ME' ? (EV && HEROES[EV.hero] ? HEROES[EV.hero].name : 'You') : s;
+  function dlgShow(){
+    const L = DLG.lines[DLG.i], raw = typeof L[0] === 'function' ? L[0]() : L[0], nm = who(raw), tx = typeof L[1] === 'function' ? L[1]() : L[1];
+    const w = dlgEl.querySelector('.dlgw'); w.textContent = nm; w.style.color = SPK[nm] || (raw === 'ME' ? '#FFC93C' : '#E8E3D6');
+    dlgEl.querySelector('.dlgt').textContent = tx; dlgEl.querySelector('.dlgh').textContent = DLG.block ? (fine ? 'Click or Space: next' : 'Tap: next') : '';
+    dlgEl.querySelector('.dlgskip').hidden = !DLG.block; dlgEl.classList.toggle('side', !DLG.block); dlgEl.hidden = false;
+    DLG.until = performance.now() + (DLG.block ? 2200 : 1600) + tx.length * 45; tone(raw === 'ME' ? 520 : 330, .04, 'sine', .02, raw === 'ME' ? 600 : 300);
+  }
+  function dlgPlay(lines, opts = {}){
+    lines = (lines || []).filter(Boolean); if (!lines.length) { dlgEl.hidden = true; DLG = null; if (opts.done) opts.done(); return; }
+    DLG = { lines, i: 0, block: !!opts.block, done: opts.done || null }; dlgShow();
+  }
+  function dlgNext(){ if (!DLG) return; DLG.i++; if (DLG.i < DLG.lines.length) return dlgShow(); const d = DLG.done; DLG = null; dlgEl.hidden = true; if (d) d(); }
+  function dlgSkip(){ if (!DLG) return; const d = DLG.done; DLG = null; dlgEl.hidden = true; if (d) d(); }
+  function dlgClear(){ DLG = null; dlgEl.hidden = true; callEl.hidden = true; document.body.classList.remove('cine'); }
+  dlgEl.querySelector('.dlgskip').addEventListener('click', e => { e.stopPropagation(); dlgSkip(); });
+  dlgEl.addEventListener('click', () => { if (DLG && DLG.block) dlgNext(); });
+  addEventListener('keydown', e => { if (!DLG || !DLG.block || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); dlgNext(); } }, true);
+  function fightCall(txt){ callEl.textContent = txt; callEl.hidden = false; callEl.classList.remove('go'); void callEl.offsetWidth; callEl.classList.add('go'); clearTimeout(callEl._t); callEl._t = setTimeout(() => callEl.hidden = true, 1300); tone(200, .35, 'sawtooth', .06, 90); }
+  // who the camera looks at during the opening scene
+  function narrFocus(){ if (!EV) return null; if (EV.boss && EV.boss.dead <= 0) return EV.boss; let best = null, bd = 1e9; EV.units.forEach(u => { if (u.team === EV.team || u.dead > 0 || u.hero === 'anchor') return; const d = Math.hypot(u.x - pos.x, u.z - pos.z); if (d < bd) { bd = d; best = u; } }); if (!best && EV.st && EV.st.cc) return { x: 0, z: -26 }; return best; }
+  function narrStart(){
+    if (!EV) return; const N = NARR[narrKey()]; EV.narrT0 = performance.now(); EV.beatsDone = new Set();
+    if (!N) return;
+    let lines = []; try { lines = N.intro() || []; } catch (e) {}
+    if (!EV.solo) { dlgPlay(lines); return; }
+    EV.intro = true; EV.introT0 = performance.now(); document.body.classList.add('cine');
+    const E0 = EV; setTimeout(() => { if (EV === E0 && EV.intro) dlgPlay(lines, { block: true, done: narrGo }); }, 700);
+  }
+  function narrGo(){
+    if (!EV || !EV.intro) return; EV.intro = false; EV.narrT0 = performance.now(); EV.inv = Math.max(EV.inv, 1); document.body.classList.remove('cine');
+    fightCall(EV.k === 'br' && EV.part === 1 ? 'GO' : 'FIGHT!');
+  }
+  function narrStep(dt){
+    if (!EV) return; const N = NARR[narrKey()];
+    if (EV.intro) {
+      // the opening shot: turn to face whoever you're about to fight
+      const f = narrFocus(); if (f) { const want = Math.atan2(-(f.x - pos.x), -(f.z - pos.z)); yaw += angDiff(yaw, want) * Math.min(1, dt * 3); pitch += (-.04 - pitch) * Math.min(1, dt * 3); }
+      if (DLG && DLG.block && performance.now() > DLG.until) dlgNext();
+      if (performance.now() - EV.introT0 > 60000) narrGo();
+      return;
+    }
+    if (DLG && !DLG.block && performance.now() > DLG.until) dlgNext();
+    if (!N || EV.over || !N.beats) return;
+    for (let i = 0; i < N.beats.length; i++) { if (EV.beatsDone.has(i)) continue; let ok = false; try { ok = N.beats[i][0](); } catch (e) {} if (!ok) continue;
+      EV.beatsDone.add(i); const line = [N.beats[i][1], N.beats[i][2]]; if (DLG) DLG.lines.push(line); else dlgPlay([line]); break; }
+  }
+  // the last word before the results screen; returns how long to wait
+  function narrOutro(won){
+    const N = NARR[narrKey()]; if (!N || !N.outro) return 0; let lines = []; try { lines = N.outro(won) || []; } catch (e) {}
+    if (!lines.length) return 0; DLG = null; dlgPlay(lines); let ms = 0; lines.forEach(l => { const tx = typeof l[1] === 'function' ? l[1]() : l[1]; ms += 1600 + tx.length * 45; }); return Math.min(ms, 9000);
+  }
+
   // ======================= little things: the Bugle, voicemail, achievements, night, Diwali, pets =======================
   const deedsHeadlines = () => {
     const n = BOSSES.filter(d => beaten.has(d.id)).length, H = [];
@@ -6907,7 +7112,8 @@ body.possessed::after{content:'';position:fixed;inset:0;pointer-events:none;box-
     if (!EV) return; const t = now / 1000, H = HEROES[EV.hero];
     if (EV.holdAtk) evAttack();
     EV.me.x = pos.x; EV.me.z = pos.z; EV.me.dead = EV.dead;
-    if (!EV.over && !paused()) {
+    narrStep(dt);
+    if (!EV.over && !paused() && !EV.intro) {
       EV.t -= dt; EV.cd -= dt; EV.spCd -= dt; EV.inv -= dt; EV.rage -= dt; EV.swing = Math.max(0, EV.swing - dt); EV.slow = Math.max(0, (EV.slow || 0) - dt);
       if (H.regen || EV.rage > 0) EV.hp = Math.min(EV.max, EV.hp + (EV.rage > 0 ? 8 : H.regen) * dt);
       if (EV.dead > 0 && !(EV.k === 'wwh' && EV.hero === 'hulk')) { EV.dead -= dt; if (EV.dead <= 0) { const [x, z] = spawnOf(EV.team); pos.set(x, 1.6, z); EV.hp = EV.max; EV.inv = 2; } }
@@ -7863,7 +8069,7 @@ body.possessed::after{content:'';position:fixed;inset:0;pointer-events:none;box-
     return null;
   }
   let down = null, hovered = null;
-  canvas.addEventListener('pointerdown', e => { if (EV && !EV.over && e.pointerType === 'mouse' && fine) { if (document.pointerLockElement === canvas) { if (e.button === 2) evSpecial(); else { EV.holdAtk = true; evAttack(); } } else canvas.requestPointerLock(); return; } if (A && !A.over && e.pointerType === 'mouse' && fine) { if (e.button === 2) { setBlock(true); return; } if (document.pointerLockElement === canvas) { const p = pick(innerWidth / 2, innerHeight / 2); if (usable(p)) { document.exitPointerLock(); act(p); } else { A.hold = true; attack(); } } else canvas.requestPointerLock(); return; } if (tourI >= 0) endTour(true); down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false }; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointerdown', e => { if (EV && EV.intro) { dlgNext(); return; } if (EV && !EV.over && e.pointerType === 'mouse' && fine) { if (document.pointerLockElement === canvas) { if (e.button === 2) evSpecial(); else { EV.holdAtk = true; evAttack(); } } else canvas.requestPointerLock(); return; } if (A && !A.over && e.pointerType === 'mouse' && fine) { if (e.button === 2) { setBlock(true); return; } if (document.pointerLockElement === canvas) { const p = pick(innerWidth / 2, innerHeight / 2); if (usable(p)) { document.exitPointerLock(); act(p); } else { A.hold = true; attack(); } } else canvas.requestPointerLock(); return; } if (tourI >= 0) endTour(true); down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false }; canvas.setPointerCapture(e.pointerId); });
   canvas.addEventListener('pointermove', e => {
     if (document.pointerLockElement === canvas) { yaw -= e.movementX * .0022; pitch = clamp(pitch - e.movementY * .0022, -1.2, 1.2); return; }
     if (A && !down) return;
@@ -8043,7 +8249,7 @@ body.possessed::after{content:'';position:fixed;inset:0;pointer-events:none;box-
         if (camTween) { cancel(camTween); camTween = null; }
         walkTarget = null; exitTelescope();
         yaw += turn * 1.8 * dt;
-        const sp = (A ? (A.blocking ? 2 : 4.2) : EV ? EV.speed * (EV.dead > 0 || EV.lockT > 0 ? 0 : 1) : zone === 'collapse' && inWorld ? (RUN && RUN.slow > 0 ? 3.5 : 7) : zone === 'void' && inWorld ? 4 : inWorld && !grounded && zone !== 'space' ? 1.8 : 2.6) * dt;
+        const sp = (A ? (A.blocking ? 2 : 4.2) : EV ? EV.speed * (EV.dead > 0 || EV.lockT > 0 || EV.intro ? 0 : 1) : zone === 'collapse' && inWorld ? (RUN && RUN.slow > 0 ? 3.5 : 7) : zone === 'void' && inWorld ? 4 : inWorld && !grounded && zone !== 'space' ? 1.8 : 2.6) * dt;
         const inv2 = EV && EV.mindT > 0 ? -1 : 1;
         const nx = pos.x + (-Math.sin(yaw) * f + Math.cos(yaw) * s) * sp * inv2;
         const nz = pos.z + (-Math.cos(yaw) * f - Math.sin(yaw) * s) * sp * inv2;
