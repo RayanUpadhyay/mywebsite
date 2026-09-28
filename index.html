@@ -473,6 +473,16 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 .sgname input{font:600 16px system-ui,sans-serif;padding:8px 10px;border-radius:8px;border:1px solid rgba(0,0,0,.25);max-width:280px}
 .endcard{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:100000;width:min(640px,calc(100vw - 32px));text-align:center;color:#F2EEE4;font:500 22px/1.5 Georgia,serif;opacity:0;transition:opacity 1.2s;pointer-events:none}
 .endcard.on{opacity:1}
+.partyhud{position:fixed;right:20px;top:calc(180px + env(safe-area-inset-top,0px));z-index:47;display:flex;flex-direction:column;gap:8px;align-items:flex-end}
+.partyhud[hidden]{display:none}
+.partyhud button{position:relative;min-width:92px;padding:8px 10px 12px;border-radius:10px;border:2px solid rgba(255,255,255,.18);background:rgba(22,24,29,.82);color:#fff;font:700 12px system-ui,sans-serif;text-align:left;cursor:pointer;overflow:hidden}
+.partyhud button.cur{border-color:#FFC93C}
+.partyhud button.down{opacity:.45}
+.partyhud button i{position:absolute;left:0;bottom:0;height:4px;background:#3CE870}
+.partyhud small{color:#fff;opacity:.6;font:600 11px system-ui,sans-serif;text-shadow:0 1px 3px rgba(0,0,0,.7)}
+.clockhud{position:fixed;left:50%;top:calc(24px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:48;padding:6px 14px;border-radius:8px;background:rgba(22,24,29,.85);color:#FFC93C;font:800 16px/1 ui-monospace,Menlo,monospace;letter-spacing:.06em;pointer-events:none}
+.clockhud[hidden]{display:none}
+.clockhud.low{color:#FF6A4E;animation:painpulse 1s ease-in-out infinite}
 </style>
 </head>
 <body>
@@ -3454,7 +3464,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function lairIdle(dt, now){
     const t = now / 1000;
-    pods.forEach((p, i) => { if (!A || A.i !== i) p.C.anim({ st: 'roam', mv: '', a: t * 2, hp: 1, max: 1, swing: 0, mouth: 0, ring: 0, w: 1 }, t + i, .35); p.C.g.rotation.y = -Math.PI / 2 + Math.sin(t * .6 + i) * .5; p.open += ((A && A.i === i ? 1 : 0) - p.open) * Math.min(1, dt * 3); p.glass.position.y = 1.6 + p.open * 2.4; p.glass.material.opacity = .22 * (1 - p.open * .6); p.C.g.visible = p.open < .5 && !dustedBoss(p.def.id) && !escaped(p.def.id); p.glass.visible = !escaped(p.def.id); });
+    pods.forEach((p, i) => { if (!A || A.i !== i) p.C.anim({ st: 'roam', mv: '', a: t * 2, hp: 1, max: 1, swing: 0, mouth: 0, ring: 0, w: 1 }, t + i, .35); p.C.g.rotation.y = -Math.PI / 2 + Math.sin(t * .6 + i) * .5; p.open += (((A && A.i === i) || (!SG.i18 && SG.podOpen && SG.podOpen[p.def.id]) ? 1 : 0) - p.open) * Math.min(1, dt * 3); p.glass.position.y = 1.6 + p.open * 2.4; p.glass.material.opacity = .22 * (1 - p.open * .6); p.C.g.visible = p.open < .5 && !dustedBoss(p.def.id) && !escaped(p.def.id) && !(!SG.i18 && SG.podOut && SG.podOut[p.def.id]); p.glass.visible = !escaped(p.def.id); });
     breachStep(dt, now);
     WEAPONS.forEach(w => { const r = rack[w.id]; r.wm.visible = isUnlocked(w.id) && !inv.includes(w.id) && !dustedWeapon(w.id) && !rackStolen(); });
     lairAnim.sigLight.intensity = .8 + Math.sin(t * 1.3) * .15;
@@ -3585,8 +3595,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function idleView(){
     const sc = sceneOf();
     // in a fight you see your own fists (or your hero's hammer, shield or claws), and they punch when you attack
-    const hk = EV ? 'ev:' + EV.hero + ':' + (EV.prop || 'fists') : held;
-    if (idleShown !== hk || viewG.parent !== sc) { clearView(); if (viewG.parent) viewG.parent.remove(viewG); sc.add(viewG); idleShown = hk; if (EV) buildView(EV.prop || 'fists', false); else if (held) buildView(held, held === 'claws' && condition('claws').broken); else { spareHand(1); spareHand(-1); } }
+    const old = !EV && SG.flags && SG.flags.old, hk = EV ? 'ev:' + EV.hero + ':' + (EV.prop || 'fists') : old ? 'old' : held;
+    if (idleShown !== hk || viewG.parent !== sc) { clearView(); if (viewG.parent) viewG.parent.remove(viewG); sc.add(viewG); idleShown = hk; if (old) { spareHand(-1); const c = new THREE.Group(); c.userData.base = V(.3, -.4, -.55); c.position.copy(c.userData.base); viewG.add(c); const blade = mkWeapon('claws'); blade.scale.setScalar(.5); blade.rotation.set(Math.PI, 0, 0); blade.position.y = -.2; c.add(blade); box(.12, .05, .05, mat(0x6A4E3A), 0, .08, 0, c); c.traverse(o => { if (o.isMesh) { o.castShadow = false; o.userData.noPick = true; } }); } else if (EV) buildView(EV.prop || 'fists', false); else if (held) buildView(held, held === 'claws' && condition('claws').broken); else { spareHand(1); spareHand(-1); } }
     viewG.position.copy(camera.position); viewG.quaternion.copy(camera.quaternion);
     const t = performance.now() / 1000, sw = EV && EV.swing > 0 ? Math.sin(clamp(1 - EV.swing / .3, 0, 1) * Math.PI) : 0, side = EV && EV.punchSide || 1, one = viewG.children.length === 1;
     viewG.children.forEach(h => { const B0 = h.userData.base, p = sw && (one || Math.sign(B0.x) === side) ? sw : 0; h.position.set(B0.x * (1 - p * .55), B0.y + Math.sin(t * 2) * .006 + p * .1, B0.z - p * .36); h.rotation.x = -p * .5; if (EV && EV.blocking) { h.position.set(B0.x * .4, B0.y + .17, B0.z + .1); h.rotation.x = .9; } });
@@ -4553,7 +4563,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 
   // ---------- third person, and the character screen ----------
   let EV = null;   // the event you're playing, if any (it can put you in a hero's suit)
-  const curLook = () => (EV && EV.look) || look;
+  const curLook = () => { if (EV && EV.look) return EV.look; try { if (SG.active && SG.ch >= 13 && SG.ch <= 16) return Object.assign({}, look, { outfit: 'copycat', mask: 1, cape: 1 }, SG.flags.old ? { hairC: 5, mask: 0 } : {}); } catch (e) {} return look; };
   let tpv = false; try { tpv = localStorage.getItem('ru-pov') === '3'; } catch (e) {}
   let mirror = false, me = null, meKey = '', meHeld, meLast = V(0, 0, 0), meMv = 0;
   const povBtn = $('#povBtn');
@@ -4578,7 +4588,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // the camera pulls back behind your shoulder (and stops short of walls)
   function camStep(){
     const third = entered && tpv && !mirror;
-    viewG.visible = !(third || mirror) && !(EV && (EV.intro || EV.cx && EV.cx.gal && (EV.cx.gal.phase === 'eat' || EV.cx.gal.phase === 'fall') || EV.st && (EV.st.lp || EV.st.dz || EV.st.fin)));
+    viewG.visible = !(third || mirror) && !(EV && (EV.intro || EV.cx && EV.cx.gal && (EV.cx.gal.phase === 'eat' || EV.cx.gal.phase === 'fall') || EV.st && (EV.st.lp || EV.st.dz || EV.st.fin || EV.st.cin)));
     if (!third && !mirror) return;
     const eye = tv1.copy(camera.position), sc = sceneOf(); let target;
     if (mirror) { const f = tv2.set(-Math.sin(yaw), 0, -Math.cos(yaw)); target = tv3.copy(eye).addScaledVector(f, 2.1); target.y -= .2; }
@@ -4944,7 +4954,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const bodies = () => [EV.me].concat(EV.units);
   function evAttack(){
     if (!EV || EV.over || EV.dead > 0 || EV.cd > 0 || EV.lockT > 0 || EV.intro || EV.blocking || EV.flinch > 0) return; const H = HEROES[EV.hero];
-    EV.cd = H.cd * (EV.rage > 0 ? .6 : 1) * (EV.wpn === 'claws' ? .85 : 1); EV.swing = .3; EV.punchSide = -(EV.punchSide || -1);
+    EV.cd = H.cd * (EV.rage > 0 ? .6 : 1) * (EV.wpn === 'claws' ? .85 : 1) * (EV.slowMe > 0 ? 2 : 1); EV.swing = .3; EV.punchSide = -(EV.punchSide || -1);
     const dm = H.dmg * armFactor() * (EV.rage > 0 ? 1.6 : 1) * (EV.wpn === 'claws' ? 1.4 : 1) * (EV.pain ? .9 : 1) * (EV.laststand ? 2.5 : 1);
     if (H.kind === 'melee') { const f = evFwd(); let hit = 0;
       bodies().forEach(u => { if (u.isMe || !alive(u) || teamOf(u) === EV.team) return; const dx = u.x - pos.x, dz = u.z - pos.z, d = Math.hypot(dx, dz) - (HEROES[u.hero].r || .5); if (d < H.range && Math.abs(angDiff(Math.atan2(-dx, -dz), yaw)) < (H.arc || .9)) { hitUnit(u, dm, 'me'); hit++; } });
@@ -4952,9 +4962,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     } else { shoot({ x: pos.x, z: pos.z, yaw, dmg: dm, team: EV.team, col: H.col, from: 'me' }); tone(900, .05, 'sawtooth', .03, 1400); }
   }
   // Rayan only improvises against the Overfit; everywhere else it's just your hands (and the claws)
-  const noImprov = (hero, k) => hero === 'rayan' && k !== 'of' || hero === 'copyhero';
+  const noImprov = (hero, k) => hero === 'rayan' && k !== 'of' || ['copyhero', 'hero18', 'echo18'].includes(hero);
   function evSpecial(){
-    if (!EV || EV.over || EV.dead > 0 || EV.spCd > 0 || EV.lockT > 0 || EV.intro || EV.blocking || EV.flinch > 0 || noImprov(EV.hero, EV.k)) return; const H = HEROES[EV.hero]; EV.spCd = H.spCd; EV.swing = .3;
+    if (!EV || EV.over || EV.dead > 0 || EV.spCd > 0 || EV.lockT > 0 || EV.intro || EV.blocking || EV.flinch > 0 || noImprov(EV.hero, EV.k)) return;
+    if (EV.hero === 'copy18') { EV.spCd = 2.5; EV.swing = .3; return copyBack(); } const H = HEROES[EV.hero]; EV.spCd = H.spCd; EV.swing = .3;
     special2(EV.me, EV.hero, pos.x, pos.z, yaw, 'me'); tone(300, .4, 'sawtooth', .05, 900);
   }
   // the specials (the same for you and for bots)
@@ -4984,6 +4995,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (u.isMe) return hurtMe(d, from);
     if (u.shield > 0) { d = 0; if (from === 'me' && !EV.toldShield) { EV.toldShield = 1; say('Shielded! Survive the shockwaves and fight the variants until it drops.', 3200); } }
     if (u.boss && EV.k === 'cv') d *= EV.weak > 0 ? 1.6 : 1;
+    if (u.hero === 'scrb' && EV.st && EV.st.ph !== 'open') { if (EV.st.ph === 'shield' && from === 'me' && EV.hero === 'hero18') { EV.st.shHp -= d; tone(1400, .05, 'square', .03, 900); if (EV.st.shHp <= 0) { EV.st.ph = 'hit'; EV.st.bigT = 2.5; say('The hero smashes the shield apart!', 2600); } } else if (from === 'me' && !EV.st.toldSh) { EV.st.toldSh = 1; say(EV.st.ph === 'shield' ? 'Nothing gets through that shield. Only the hero hits hard enough. (Tab)' : 'It shrugs it off. Do the thing only one of you can do.', 2600); } return; }
     if ((EV.k === 'br' || EV.k === 'st') && from === 'me') d *= EV.frailHit || 1;
     if (EV.k === 'br' && EV.part === 2 && from === 'me' && !u.alert) { d *= KIT.crouchK > .5 ? 4 : 2; brAlert(u, 6, true); if (!EV.br.toldTake) { EV.br.toldTake = 1; say('Takedown! Hitting them before they see you hurts a lot more, especially from a crouch.', 3000); } }
     if (u.hero === 'copyrun') { if (from === 'me' || from === EV.me) copyTag(u); return; }
@@ -5001,7 +5013,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function killUnit(u, from){
     if (u.puppet) say(`The string snaps. ${HEROES[u.hero].name.replace(' (possessed)', '')} slumps, free of her.`, 2200);
-    u.dead = u.boss || u.hero === 'hulk' || u.hero === 'anchor' || ['st', 'br', 'of'].includes(EV.k) || (EV.k === 'inc' && u.team === 'inc') ? 999 : u.hero === 'trooper' ? 8 : 6; u.hp = 0; u.av.g.visible = false;
+    if (EV.k === 'st' && EV.st && EV.st.part === 'd1') EV.st.recent.push({ u, t: performance.now(), x: u.x, z: u.z });
+    u.dead = u.ally ? 10 : u.boss || u.hero === 'hulk' || u.hero === 'anchor' || ['st', 'br', 'of'].includes(EV.k) || (EV.k === 'inc' && u.team === 'inc') ? 999 : u.hero === 'trooper' ? 8 : 6; u.hp = 0; u.av.g.visible = false;
     if (u.hero === 'anchor') { const left = EV.anchors.filter(a => a.dead <= 0).length; say(left ? `An anchor fell! ${left} left.` : 'The last anchor fell\u2026', 3000); tone(70, 1, 'sawtooth', .07, 40); if (!left) return endMatch(false); }
     const killerTeam = from === 'me' ? EV.team : from && from.team; if (killerTeam && EV.k !== 'sw' && EV.k !== 'fp') EV.score[killerTeam] = (EV.score[killerTeam] || 0) + 1;
     if (from === 'me') { EV.kos++; if (isPvp(EV.k)) lbAdd(LBK[EV.team], 1); tone(180, .3, 'square', .05, 60); }
@@ -5013,12 +5026,15 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function hurtMe(d, from){
     if (EV.dead > 0 || EV.inv > 0 || EV.over) return;
+    if (from && from.hero && HEROES[from.hero]) EV.lastMove = { kind: from.boss && from.act ? from.act.k : HEROES[from.hero].kind === 'ranged' ? 'shot' : 'punch', who: nmT(HEROES[from.hero].name) };
+    if (EV.k === 'st' && EV.st && EV.st.part === 'd4' && from && from.boss && SG.flags.dl) SG.flags.dl = Math.max(30, SG.flags.dl - 8);
     if (!(from && from.remote)) d *= EV.diffIn;
     if (from && from.hero === 'copycat' && EV.ccClaws) d *= 1.1;
-    if (EV.blocking) { d *= .25; KIT.stam = Math.max(0, KIT.stam - .14); tone(1200, .05, 'square', .03, 800); if (KIT.stam <= 0) { EV.blocking = false; EV.guardT = 1.2; say('Guard broken!', 1200); } }
+    if (EV.blocking) { d *= EV.hero === 'echo18' ? .1 : .25; KIT.stam = Math.max(0, KIT.stam - (EV.hero === 'echo18' ? .06 : .14)); tone(1200, .05, 'square', .03, 800); if (KIT.stam <= 0) { EV.blocking = false; EV.guardT = 1.2; say('Guard broken!', 1200); } }
     if (EV.k === 'st') d *= EV.frailTake || 1;
     EV.hp -= d; EV.hurtT = .4; EV.calm = 0; if (EV.laststand && EV.hp < 1) EV.hp = 1; tone(120, .15, 'sawtooth', .04, 70);
     const oneLife = EV.k === 'wwh' && EV.hero === 'hulk' || EV.k === 'br' || EV.k === 'st';
+    if (EV.hp <= 0 && EV.party && partyDown()) return;
     if (EV.hp <= 0) { EV.hp = 0; EV.dead = oneLife ? 999 : 4; EV.deaths++; const kt = from && from.team; if (kt && EV.k !== 'sw' && EV.k !== 'fp') EV.score[kt] = (EV.score[kt] || 0) + 1;
       if (from && from.remote && mq) mq.pub(`${MP_TOPIC}/ev/${mpId}`, JSON.stringify({ ko: from.id }));
       if (oneLife) endMatch(false); else say('Down! Back in 4 seconds\u2026', 2400); checkGoal(); }
@@ -5029,6 +5045,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (EV && EV.k === 'st' && EV.st && EV.st.part === 'c3' && won && !EV.over) { EV.over = true; return lpStart(); }
     if (EV && EV.k === 'st' && EV.st && EV.st.part === 'l4' && won && !EV.over) { EV.over = true; return deathStart(); }
     if (EV && EV.k === 'st' && EV.st && EV.st.part === 'n3' && won && !EV.over) { EV.over = true; return finalStart(); }
+    if (EV && EV.k === 'st' && EV.st && ['y4', 'd4', 's3'].includes(EV.st.part) && won && !EV.over) { EV.over = true; return cinStart({ y4: 'synth', d4: 'dl', s3: 'scr' }[EV.st.part]); }
     if (EV && EV.k === 'cv' && !won && !EV.over) { EV.over = true; return galEatStart(); }
     if (EV.over) return; EV.over = true; const endFight = EV.k === 'inc' && instab >= 6; if (document.pointerLockElement) document.exitPointerLock();
     const E = EVENTS[EV.k], other = Object.keys(E.teams).find(t => t !== EV.team);
@@ -5044,7 +5061,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (won && (scarOn || altOn)) { if (scarOn) setScar(false); if (altOn) setAlt(false); setTimeout(() => say('You stopped the incursion. Your Earth, and your room, are whole again.', 4200), 2500); } }
     if (!evDone.includes(EV.k)) { evDone.push(EV.k); try { localStorage.setItem('ru-evdone', JSON.stringify(evDone)); } catch (e) {} }
     if (EV.solo) { const r0 = soloRec[EV.k] || (soloRec[EV.k] = { w: 0, l: 0 }); r0[won ? 'w' : 'l']++; try { localStorage.setItem('ru-evsolo', JSON.stringify(soloRec)); } catch (e) {} }
-    const title = EV.k === 'st' ? (won ? ({ u1: 'The drones are down, but every screen is still watching.', u2: 'His connections are cut. The screens go dark.', u3: 'You pulled the plug. Ultron is offline.', p1: 'The pod villains are free of her strings.', p2: 'Your friends snap out of it.', p3: 'Her hold breaks. Everyone is free.', c1: 'The market is safe. He ran for the rooftops.', l1: 'Your street is clear.', m1: 'Clone Two is down.', m2: 'Clone Three is down.', m3: 'Clones Four and Five are down.', n1: 'The sixth clone stops fighting.', n2: 'The market is safe.', l2: 'Everyone got out of the market.', l3: 'The Broker is finished. But the clone is already gone.', c2: 'You caught up with him.' })[EV.st.part] || 'Done.' : 'You\u2019re too hurt to keep going. Rest, then try again.') : EV.k === 'of' ? (won ? 'The Overfit failed to generalise. Every world is coming back.' : 'The Overfit learned everything.') : EV.k === 'br' ? (won ? ['You followed the trucks to a warehouse by the lake.', 'The Broker is auctioning multiverse weapons tonight.', 'You made it to the roof.', 'The Broker is finished.'][EV.part - 1] : 'You\u2019re too hurt to keep going. Rest, then try again.') : EV.k === 'cv' ? (won ? 'You beat Galactus!' : EV.cx && EV.cx.gal ? 'Galactus ate the multiverse.' : 'Everything collided, and nothing was left standing.') : isPvp(EV.k) ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'sw' ? (won ? 'Battleworld is free! The Rebels hold the domains.' : 'Doom\u2019s Legion holds Battleworld.') : EV.k === 'fp' ? (won ? 'Timeline restored!' : 'Reverse-Flash wins. The timeline stays broken.') : EV.k === 'dks' ? (won ? 'Darkseid falls! Apokolips retreats.' : 'Darkseid is. And Darkseid wins.') : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : endFight ? 'The Beyonder wins. Everything goes white\u2026' : 'The two Earths are about to collide\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
+    const title = EV.k === 'st' ? (won ? ({ u1: 'The drones are down, but every screen is still watching.', u2: 'His connections are cut. The screens go dark.', u3: 'You pulled the plug. Ultron is offline.', p1: 'The pod villains are free of her strings.', p2: 'Your friends snap out of it.', p3: 'Her hold breaks. Everyone is free.', c1: 'The market is safe. He ran for the rooftops.', l1: 'Your street is clear.', m1: 'Clone Two is down.', m2: 'Clone Three is down.', m3: 'Clones Four and Five are down.', n1: 'The sixth clone stops fighting.', n2: 'The market is safe.', y1: 'You found the real people.', y2: 'The servers are dead.', y3: 'The replays stop.', d1: 'The street runs forward again.', d2: 'The guards are down. The clock is still running.', d3: 'Ultron\u2019s ghost is gone.', s1: 'The market drains.', s2: 'The street is a street again.', l2: 'Everyone got out of the market.', l3: 'The Broker is finished. But the clone is already gone.', c2: 'You caught up with him.' })[EV.st.part] || 'Done.' : 'You\u2019re too hurt to keep going. Rest, then try again.') : EV.k === 'of' ? (won ? 'The Overfit failed to generalise. Every world is coming back.' : 'The Overfit learned everything.') : EV.k === 'br' ? (won ? ['You followed the trucks to a warehouse by the lake.', 'The Broker is auctioning multiverse weapons tonight.', 'You made it to the roof.', 'The Broker is finished.'][EV.part - 1] : 'You\u2019re too hurt to keep going. Rest, then try again.') : EV.k === 'cv' ? (won ? 'You beat Galactus!' : EV.cx && EV.cx.gal ? 'Galactus ate the multiverse.' : 'Everything collided, and nothing was left standing.') : isPvp(EV.k) ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'sw' ? (won ? 'Battleworld is free! The Rebels hold the domains.' : 'Doom\u2019s Legion holds Battleworld.') : EV.k === 'fp' ? (won ? 'Timeline restored!' : 'Reverse-Flash wins. The timeline stays broken.') : EV.k === 'dks' ? (won ? 'Darkseid falls! Apokolips retreats.' : 'Darkseid is. And Darkseid wins.') : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : endFight ? 'The Beyonder wins. Everything goes white\u2026' : 'The two Earths are about to collide\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
     $('#evEndT').textContent = nmT(title); $('#evEndS').textContent = `Takedowns ${EV.kos} · Times down ${EV.deaths} · Damage ${fmtN(EV.dmg)}. ${EV.solo ? soloLine(EV.k) + '.' : mq ? 'Global: ' + lbLine(EV.k) : ''}`;
     const outroT = narrOutro(won), E0 = EV; setTimeout(() => { if (!EV || EV !== E0) return; if (E0.inMap && won) { BL.lastWon = true; return stopEvent(); } $('#evEnd').hidden = false; [523, 659, 784].forEach((f, i) => setTimeout(() => tone(won ? f : f / 2, .2, 'triangle', .05), i * 110)); }, outroT);
   }
@@ -5548,8 +5565,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const credEl = $('#credits');
   function showCredits(won){
     const bossN = BOSSES.filter(d => beaten.has(d.id)).length;
-    const lines = won === 'i15'
-      ? ['THE MULTIVERSE SAGA', '', ...SAGA.map((C, i) => `${i < 12 ? 'Chapter' : 'Issue #'}${i < 12 ? ' ' : ''}${i + 1}: ${C.title}`), '', 'In memory of {N}.', 'And for the Copycat, who got it right in the end.', '', 'THE END', '', 'That really is the end. Thanks for reading all fifteen.', '\u2014 Rayan']
+    const lines = won === 'i18'
+      ? ['THE MULTIVERSE SAGA', '', ...SAGA.map((C, i) => `${i < 12 ? 'Chapter' : 'Issue #'}${i < 12 ? ' ' : ''}${i + 1}: ${C.title}`), '', 'In memory of {N}, Echo, and the Copycat.', '', 'THE END', '', 'There\u2019s nothing left to unlock.', 'Thanks for reading all eighteen.', '\u2014 Rayan']
+      : won === 'i15'
+      ? ['THE MULTIVERSE SAGA', '', ...SAGA.map((C, i) => `${i < 12 ? 'Chapter' : 'Issue #'}${i < 12 ? ' ' : ''}${i + 1}: ${C.title}`), '', 'In memory of {N}.', 'And for the Copycat, who got it right in the end.', '', 'THE END', '', 'Thanks for reading.', '\u2014 Rayan']
       : won === 'i13'
       ? ['ISSUE #13: LAST STAND', '', 'In memory of {N}', '', 'Hurt, slow, and out of claws, you walked across a burning city anyway.', 'The Broker is finished. The clone is gone. The dam held.', 'Bangalore is still there.', '', 'THE END', '', 'Thanks for reading.', '\u2014 Rayan']
       : won === 'saga'
@@ -5565,7 +5584,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       : ['THE END', '', 'Every Earth fell into yours, and the multiverse ended.', '', `Creatures and villains beaten: ${bossN} of ${BOSSES.length}`, `Events played: ${evDone.length} of 4`, `Earths lost: ${earthsLost}`, `Other Earths you lived on: ${altSeen.length} of ${ALT_KEYS.length}`, `Secrets found: ${found.size} of ${TOTAL}`, '', 'Every story ends.', 'Some of them get a reboot.', '', 'One last chance: beat the Beyonder in the Final Incursion to bring everything back.', '', 'Thanks for exploring.', '\u2014 Rayan'];
     credEl.innerHTML = `<div class="credroll ${won ? 'won' : ''}">${lines.map(nmT).map((l, i) => i === 0 ? `<h2 class="display">${esc(l)}</h2>` : l === 'SAVIOUR OF THE MULTIVERSE' || l === 'THE FIRST SPARK' || l === 'THE END' || l === 'DEVOURER OF THE DEVOURER' || l === 'THE SILVER SURFER IS WAITING' ? `<h3 class="display">${esc(l)}</h3>` : `<p>${esc(l) || '&nbsp;'}</p>`).join('')}</div><button class="btn alt" type="button" id="credGo">Continue</button>`;
     credEl.classList.add('on'); if (document.pointerLockElement) document.exitPointerLock();
-    $('#credGo').onclick = () => { credEl.classList.remove('on'); say(won === 'i15' ? 'The comic in the lair is closed for good. Fifteen issues. The end.' : won === 'i13' ? 'Issue #13 is closed. Something new has appeared in the comic in the lair: Issue #14.' : won === 'eaten' ? 'There\u2019s a bite out of your room. The Silver Surfer is hovering by the bookshelf, waiting.' : won === 'galactus' ? 'You\u2019re home. There\u2019s a piece of Galactus\u2019s helmet by the door, and the rest of it on the skyline.' : won === 'spark' ? 'A new universe, built from seven memories. The First Spark is by the door.' : won ? 'Everything is back. Your trophy is by the door.' : 'The End. Only fragments are left. The story isn\u2019t over: open the comic in the lair.', 5000); };
+    $('#credGo').onclick = () => { credEl.classList.remove('on'); say(won === 'i18' ? 'The comic in the lair is closed. Plain white cover. END.' : won === 'i15' ? 'Fifteen issues. Down in the lair, something small is scratching at the inside of its pod. Issue #16 has appeared in the comic.' : won === 'i13' ? 'Issue #13 is closed. Something new has appeared in the comic in the lair: Issue #14.' : won === 'eaten' ? 'There\u2019s a bite out of your room. The Silver Surfer is hovering by the bookshelf, waiting.' : won === 'galactus' ? 'You\u2019re home. There\u2019s a piece of Galactus\u2019s helmet by the door, and the rest of it on the skyline.' : won === 'spark' ? 'A new universe, built from seven memories. The First Spark is by the door.' : won ? 'Everything is back. Your trophy is by the door.' : 'The End. Only fragments are left. The story isn\u2019t over: open the comic in the lair.', 5000); };
     [262, 330, 392, 523].forEach((f, i) => setTimeout(() => tone(won ? f * 1.5 : f / 2, 1.2, 'triangle', .05), i * 500));
   }
   // what's left: grey dust, and the words in the sky
@@ -6337,6 +6356,28 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       { t: 'Take it to the grave by the lake. Show it the truth.', site: { k: 'scene', at: 'lake', p: [-116, -129], r: 5, run: sceneGrave }, where: siteWhere, check: () => F().grave15 },
       { t: 'The buyers\u2019 men are clearing the market. Fight them with Echo.', site: { k: 'st', part: 'n2', at: 'market', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().n2 },
       { t: 'The Replicator is on the roof of Broker Tower. Break its cores and end this.', site: { k: 'st', part: 'n3', at: 'tower', roof: 1, r: 26, hero: 'copyhero' }, where: siteWhere, check: () => F().fin }
+    ] },
+    { title: 'Synthetic', tag: 'Issue #16. The first creature.', start: () => { SG.podOut = Object.assign(SG.podOut || {}, { synthetic: 1 }); saveSG(); say('A crack in the lair, late at night. Glass. Something small and many-legged, and then nothing.', 5200); }, steps: [
+      { t: 'The Synthetic\u2019s pod in the lair is empty. Go and look.', check: () => inZ('lair'), where: () => ['lair', podPos('synthetic')], done: () => say('The glass is cracked from the inside. It took the wreck of the Replicator with it: every copy anyone ever made, and Echo\u2019s memories of {N}.', 6000) },
+      { t: 'The market is full of people again. Some of them aren\u2019t people. Find the real ones.', site: { k: 'st', part: 'y1', at: 'market', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().y1 },
+      { t: 'It\u2019s learning from Ultron\u2019s old servers at the data centre. Shut them down.', site: { k: 'st', part: 'y2', at: 'data', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().y2 },
+      { t: 'It\u2019s replaying old fights at the theatre, slightly wrong.', site: { k: 'st', part: 'y3', at: 'theatre', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().y3 },
+      { t: 'It\u2019s waiting at the lake, by the graves.', site: { k: 'st', part: 'y4', at: 'lake', r: 26, hero: 'copyhero' }, where: siteWhere, check: () => F().y4end }
+    ] },
+    { title: 'Deadline', tag: 'Issue #17. Time\u2019s up.', start: () => say('Every clock is wrong. There\u2019s a number counting down in the corner of your eye, and the city is freezing, street by street.', 6000), steps: [
+      { t: 'It\u2019s replaying the drone attack in the old street, and rewinding time. Finish them fast.', site: { k: 'st', part: 'd1', at: 'home', r: 30, hero: 'copyhero' }, where: siteWhere, check: () => F().d1 },
+      { t: 'At the foot of Broker Tower, time is dragging. Sometimes for them, sometimes for you.', site: { k: 'st', part: 'd2', at: 'tower', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().d2 },
+      { t: 'At the data centre, Ultron\u2019s scrap body again. This time you can see a few seconds ahead.', site: { k: 'st', part: 'd3', at: 'data', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().d3 },
+      { t: 'The Deadline is waiting in the lair. It wants to talk.', keep: () => lairTalk('offer17', [['The Deadline', 'Tick. Tock. I can give them back, you know. {N}. Echo. Both of them, alive.'], ['ME', 'What\u2019s the catch?'], ['The Deadline', 'You. You never existed. No mask, no Copycat. Just a city that had its heroes all along.'], ['ME', '\u2026'], ['ME', 'No. They chose. I chose. You don\u2019t get to take that.'], ['The Deadline', 'Then come to the top of the tower. Bring a watch.']]), check: () => F().offer17, where: () => ['lair', podPos('deadline')] },
+      { t: 'The Deadline is on the roof of Broker Tower. Every second you spend there, it takes.', site: { k: 'st', part: 'd4', at: 'tower', roof: 1, r: 26, hero: 'copyhero' }, where: siteWhere, check: () => F().d4 },
+      { t: 'Walk to the lake. Every street you pass starts again.', site: { k: 'scene', at: 'lake', p: [-113, -127], r: 4, run: sceneOld }, where: siteWhere, check: () => F().old17 }
+    ] },
+    { title: 'Scrambled', tag: 'Issue #18. The last one. Really.', start: () => { SG.podOut = Object.assign(SG.podOut || {}, { scrambler: 1 }); saveSG(); enterBlrAt(-110, -126); }, steps: [
+      { t: 'You wake up standing on your own grave. You\u2019re not alone.', site: { k: 'scene', at: 'lake', p: [-110, -126], r: 6, run: sceneWake }, where: siteWhere, check: () => F().wake18 },
+      { t: 'The Scrambler has flooded the market. Clear it out, all three of you.', site: { k: 'st', part: 's1', at: 'market', r: 24, hero: 'hero18' }, where: siteWhere, check: () => F().s1 },
+      { t: 'Your old street is wearing the roof of Broker Tower. Clear it out.', site: { k: 'st', part: 's2', at: 'home', r: 30, hero: 'hero18' }, where: siteWhere, check: () => F().s2 },
+      { t: 'Before the end, go down to the lair together.', keep: () => lairTalk('lair18', [['{N}', 'I died so the city wouldn\u2019t drown. That counted.'], ['Echo', 'I was a copy for a week and a person for one day. That day counted.'], ['The Copycat', 'I was a joke in a cheap mask for years. Then I wasn\u2019t. That counted too.'], ['{N}', 'Then let\u2019s make it count one more time.']]), check: () => F().lair18, where: () => ['lair', podPos('scrambler')] },
+      { t: 'The Scrambler is at the old theatre, tearing up the last page. End it together.', site: { k: 'st', part: 's3', at: 'theatre', r: 24, hero: 'hero18' }, where: siteWhere, check: () => F().fin18 }
     ] }
   ];
   const sagaLen = () => 12;  // chapter 13 is an extra issue, read once the comic is gold
@@ -6400,7 +6441,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   // the comic on its stand in the lair
   let comicG = null;
-  const comicTex = gold => tex(256, 360, (c, w, h) => { const gr = c.createLinearGradient(0, 0, w, h); gr.addColorStop(0, gold ? '#FFE08A' : '#3C7CFF'); gr.addColorStop(1, gold ? '#B8860B' : '#9B4DFF'); c.fillStyle = gr; c.fillRect(0, 0, w, h); c.fillStyle = 'rgba(0,0,0,.35)'; c.fillRect(0, 0, w, 80); c.fillStyle = '#FFFFFF'; c.font = `900 40px ${DISPLAY}`; c.textAlign = 'center'; c.fillText('THE', w / 2, 36); c.fillText('MULTIVERSE', w / 2, 72); c.font = `900 64px ${DISPLAY}`; c.fillStyle = gold ? '#16181D' : '#FFC93C'; c.fillText('SAGA', w / 2, 170); c.strokeStyle = '#FFFFFF'; c.lineWidth = 6; c.beginPath(); c.arc(w / 2, 250, 60, 0, 7); c.stroke(); c.fillStyle = '#FFFFFF'; c.font = '700 18px sans-serif'; c.fillText(gold ? 'COMPLETE' : '#1', w / 2, 340); });
+  const comicTex = gold => gold === 'end' ? tex(256, 360, (c, w, h) => { c.fillStyle = '#FAFAF7'; c.fillRect(0, 0, w, h); c.fillStyle = '#16181D'; c.font = `900 72px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('END', w / 2, h / 2); }) : tex(256, 360, (c, w, h) => { const gr = c.createLinearGradient(0, 0, w, h); gr.addColorStop(0, gold ? '#FFE08A' : '#3C7CFF'); gr.addColorStop(1, gold ? '#B8860B' : '#9B4DFF'); c.fillStyle = gr; c.fillRect(0, 0, w, h); c.fillStyle = 'rgba(0,0,0,.35)'; c.fillRect(0, 0, w, 80); c.fillStyle = '#FFFFFF'; c.font = `900 40px ${DISPLAY}`; c.textAlign = 'center'; c.fillText('THE', w / 2, 36); c.fillText('MULTIVERSE', w / 2, 72); c.font = `900 64px ${DISPLAY}`; c.fillStyle = gold ? '#16181D' : '#FFC93C'; c.fillText('SAGA', w / 2, 170); c.strokeStyle = '#FFFFFF'; c.lineWidth = 6; c.beginPath(); c.arc(w / 2, 250, 60, 0, 7); c.stroke(); c.fillStyle = '#FFFFFF'; c.font = '700 18px sans-serif'; c.fillText(gold ? 'COMPLETE' : '#1', w / 2, 340); });
   function buildComic(){
     if (comicG || !lairScene) return; const g = comicG = new THREE.Group(); g.position.set(-4.8, 0, 8.6); g.rotation.y = Math.PI * .85; lairScene.add(g);
     cyl(.35, .45, 1.05, mat(0x2A2D33, { metalness: .6, roughness: .4 }), 0, .525, 0, g, 20); const tilt = new THREE.Group(); tilt.position.y = 1.18; tilt.rotation.x = -.55; g.add(tilt);
@@ -6418,7 +6459,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       <div class="sgname"><label for="sgName">Your hero name</label><input id="sgName" type="text" maxlength="20" autocomplete="off" placeholder="Type your name" value="${esc(hasHeroName() ? heroName() : '')}"></div>
       <p class="gmsg">Story mode. It shows you one thing to do next and saves your place at every step, so you can leave for free play and come back whenever you like.</p>
       <div class="gact">${SG.gold && !SG.active ? '' : `<button class="btn alt" type="button" data-sg="${SG.active ? 'close' : 'go'}">${SG.active ? 'Keep playing' : started ? 'Continue the story' : 'Start the story'}</button>`}${SG.active ? '<button class="btn" type="button" data-sg="pause">Pause the story</button>' : ''}${SG.active ? `<button class="btn" type="button" data-sg="hide">${SG.hide ? 'Show goals' : 'Hide goals'}</button>` : ''}</div>
-      <h3>Chapters</h3>${rows}${[[12, 'Last Stand', 'Issue #13 \u00B7 years later', SG.gold], [13, 'Legacy', 'Issue #14 \u00B7 five years on', SG.i13], [14, 'The End', 'Issue #15 \u00B7 the last one', SG.i14]].filter(r => r[3]).map(([i, nm, sub]) => `<div class="prow"><b>${i + 1}. ${nm}<br><small>${SG.ch === i && SG.active ? 'You\u2019re here' : sub}</small></b><button class="btn alt" type="button" data-sg="replay:${i}">${SG.ch === i && SG.active ? 'Start over' : 'Read Issue #' + (i + 1)}</button></div>`).join('')}`;
+      <h3>Chapters</h3>${rows}${[[12, 'Last Stand', 'Issue #13 \u00B7 years later', SG.gold], [13, 'Legacy', 'Issue #14 \u00B7 five years on', SG.i13], [14, 'The End', 'Issue #15 \u00B7 Echo', SG.i14], [15, 'Synthetic', 'Issue #16 \u00B7 the first creature', SG.i15], [16, 'Deadline', 'Issue #17 \u00B7 time\u2019s up', SG.i16], [17, 'Scrambled', 'Issue #18 \u00B7 the last one', SG.i17]].filter(r => r[3]).map(([i, nm, sub]) => `<div class="prow"><b>${i + 1}. ${nm}<br><small>${SG.ch === i && SG.active ? 'You\u2019re here' : sub}</small></b><button class="btn alt" type="button" data-sg="replay:${i}">${SG.ch === i && SG.active ? 'Start over' : 'Read Issue #' + (i + 1)}</button></div>`).join('')}`;
     sagaBox.classList.add('on'); sagaBox.querySelector('.close').focus();
   }
   sagaBox.addEventListener('click', e => { const b = e.target.closest('[data-sg]'); if (!b) return; const a = b.dataset.sg;
@@ -6615,13 +6656,14 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     tone(200, 1.2, 'sine', .05, 90); setTimeout(() => document.body.classList.remove('possessed'), 4000);
   }
   function stArena(sc, part){
+    stArena2(sc, part);
     const street = part === 'u1' || part === 'u2' || part === 'p2' || part === 'c2' || part === 'c3';
     const win = [0, 1, 2].map(() => new THREE.MeshStandardMaterial({ color: 0x1B1D24, map: winTex(true, ['#FFD27A', '#FFC93C', '#C9CFD8']), emissive: 0xFFFFFF, emissiveMap: winTex(true, ['#FFD27A', '#FFC93C', '#C9CFD8']), emissiveIntensity: .5 }));
     if ((street || part === 'c1') && !IN_MAP) for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2, R = ER + 8 + Math.random() * 12, h = 10 + Math.random() * 30, w = 6 + Math.random() * 6, rooftop = part === 'c2' || part === 'c3' || part === 'p2'; const bld = box(w, h, w, win[i % 3], Math.cos(a) * R, rooftop ? h / 2 - 34 : h / 2, Math.sin(a) * R, sc); bld.userData.noPick = true; }
     if (part === 'u1' || part === 'u2') { if (!IN_MAP) for (let z = -24; z < 24; z += 4) box(.3, .02, 2, mat(0xFFC93C), 0, .02, z, sc); [[-14, -20], [16, -18], [-20, 10], [20, 12]].forEach(([x, z], i) => { const scr = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), new THREE.MeshBasicMaterial({ map: ultronFaceTex() })); scr.position.set(x * 1.35, 12, z * 1.35); scr.lookAt(0, 12, 0); sc.add(scr); }); }
     if (part === 'u3') { const rack = mat(0x16181D, { metalness: .4 }), led = glowM(0x3CE8E8, { emissiveIntensity: 1.2 }); [-12, -6, 6, 12].forEach(x => [-10, 0, 10].forEach(z => { box(1.4, 3, 5, rack, x, 1.5, z, sc); box(1.42, .06, 4.6, led, x, 2.4, z, sc); PILLARS.push({ x, z: z - 1.6, r: 1 }, { x, z: z + 1.6, r: 1 }); })); const l = new THREE.PointLight(0x3CE8E8, 1.2, 40, 2); l.position.set(0, 8, 0); sc.add(l); sc.fog.far = 70; }
     if ((part === 'p1' && !IN_MAP) || part === 'p3') { const stone = mat(0x2A2D33, { roughness: 1 }); for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, x = Math.cos(a) * (ER - 2), z = Math.sin(a) * (ER - 2); cyl(1, 1.1, .3, stone, x, .15, z, sc, 20); cyl(.95, .95, 2.6, new THREE.MeshStandardMaterial({ color: 0xB07CFF, transparent: true, opacity: .15, emissive: 0xB07CFF, emissiveIntensity: .3 }), x, 1.6, z, sc, 20); } }
-    if (part === 'p3') { const curtain = mat(0x7A0A1A, { roughness: .9 }); for (let i = 0; i < 8; i++) box(3.6, 9, .3, curtain, -12.6 + i * 3.6, 4.5, -ER + 1, sc); [-8, 0, 8].forEach(x => { const s2 = new THREE.SpotLight(0xFFE8C0, 2, 40, .35, .5, 1); s2.position.set(x, 14, 6); s2.target.position.set(x * .5, 0, -6); sc.add(s2); sc.add(s2.target); }); }
+    if (part === 'p3' || part === 's3') { const curtain = mat(0x7A0A1A, { roughness: .9 }); for (let i = 0; i < 8; i++) box(3.6, 9, .3, curtain, -12.6 + i * 3.6, 4.5, -ER + 1, sc); [-8, 0, 8].forEach(x => { const s2 = new THREE.SpotLight(0xFFE8C0, 2, 40, .35, .5, 1); s2.position.set(x, 14, 6); s2.target.position.set(x * .5, 0, -6); sc.add(s2); sc.add(s2.target); }); }
     if (part === 'c1' || part === 'l2') { const aw = [0xC8102E, 0xFFC93C, 0x3C7CFF, 0x5E9A3A, 0xE8428C]; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2 + .2, R = 10 + (i % 2) * 7, x = Math.cos(a) * R, z = Math.sin(a) * R; const st = new THREE.Group(); st.position.set(x, 0, z); st.rotation.y = -a; sc.add(st); box(2.4, 1, 1.2, mat(0x6A4E3A), 0, .5, 0, st); box(2.8, .08, 1.8, mat(aw[i % 5]), 0, 2.3, .2, st); PILLARS.push({ x, z, r: 1.3 }); } [[-8, 4], [8, -4], [0, 12]].forEach(([x, z]) => { const l = new THREE.PointLight(0xFFC080, 1, 16, 2); l.position.set(x, 5, z); sc.add(l); }); }
     if (part === 'c2' || part === 'c3' || part === 'p2') { const unit = mat(0x8A8F99, { metalness: .4 }); [[-10, -8], [11, 6], [-6, 12], [14, -12], [-16, 4]].forEach(([x, z], i) => { if (i % 2) { cyl(1.4, 1.4, 3, mat(0x5A5E68), x, 1.5, z, sc, 16); } else box(2.4, 1.6, 1.6, unit, x, .8, z, sc); PILLARS.push({ x, z, r: 1.5 }); }); }
     if (part !== 'u3' && part !== 'p1' && part !== 'p3' && !IN_MAP) { const n = lowFx ? 500 : 1600, P = new Float32Array(n * 6); for (let i = 0; i < n; i++) { const x = (Math.random() - .5) * 70, y = Math.random() * 30, z = (Math.random() - .5) * 70; P.set([x, y, z, x, y - .6, z], i * 6); } const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(P, 3)); const rain = new THREE.LineSegments(rg, new THREE.LineBasicMaterial({ color: 0x9FB4D8, transparent: true, opacity: part === 'c2' ? .15 : .45 })); sc.add(rain); sc.userData.rain = rain; }
@@ -6629,6 +6671,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function stSetup(part){
     const S = EV.st = { part, trick: 0, possT: 12, wave: 0, fires: [], people: [], tags: 0, ready: false }, add = (h, x, z) => { const u = addUnit({ hero: h, team: 'en' }); u.x = x; u.z = z; if (S.ready) { u.hp = u.max = Math.round(u.max * EV.foeHp); drawTag(u); } if (h === 'udrone') droneAv(u); return u; }, ring = (n, R) => Array.from({ length: n }, (_, i) => [Math.cos(i / n * Math.PI * 2) * R, Math.sin(i / n * Math.PI * 2) * R - 4]);
     S.add = add; S.ring = ring;
+    stSetup2(part);
     if (part === 'u1') S.wave = 0;
     if (part === 'u2') { S.targets = (EV.inMap ? U2_TARGETS.map(([x, z, h]) => [...toLocal(x, z), h]) : [[-16, -12, 'ustation'], [16, -12, 'ustation'], [0, -20, 'ustation'], [-12, 10, 'userver'], [12, 10, 'userver']]).map(([x, z, h]) => { const u = add(h, x, z); staticAv(u, h); return u; }); S.droneT = 2; }
     if (part === 'u3') { const b = add('ultronx', 0, -14); ultronAv(b); b.boss = 1; EV.boss = b; S.cables = [[-12, -18], [12, -18], [0, -24]].map(([x, z]) => { const u = add('ucable', x, z); staticAv(u, 'ucable'); return u; }); S.cableLine = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xFF3030 })); eventScene.add(S.cableLine); for (let i = 0; i < 3; i++) add('udrone', (i - 1) * 6, -8); }
@@ -6680,6 +6723,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if ((P === 'm3' || P === 'n2') && !alive2(() => true).length && !EV.over) endMatch(true);
     if (P === 'n1' && !S.stop && EV.boss && EV.boss.dead <= 0 && EV.boss.hp < EV.boss.max * .5 && !EV.over && !EV.intro) { S.stop = 1; EV.boss.stun = 999; endMatch(true); }
     if (P === 'n3' && !EV.over) repStep(dt);
+    stStep2(dt, t, P, S, alive2);
     if (P === 'l4' && !S.impaled && EV.boss && EV.boss.dead <= 0 && EV.boss.hp < EV.boss.max * .35 && !EV.over && !EV.intro) lastStand();
     if (P === 'c1' || P === 'l2') {
       S.fires.forEach(f => { if (f.out) return; f.g.children.forEach((c, i) => { if (c.isMesh) c.scale.y = 1 + Math.sin(t * 8 + i) * .2; }); if (Math.hypot(pos.x - f.x, pos.z - f.z) < 1.8) { f.t += dt; if (f.t > 2) { f.out = true; f.g.visible = false; say(`Fire out. ${S.fires.filter(q => !q.out).length} left.`, 1600); tone(300, .3, 'sine', .04, 120); } } else f.t = Math.max(0, f.t - dt); });
@@ -6762,7 +6806,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function stHud(){
     const S = EV.st, P = S.part, n = f => EV.units.filter(u => u.team === 'en' && u.dead <= 0 && f(u)).length, tag = (EV.lockT > 0 ? ' \u00B7 <b style="color:#B07CFF">YOU CAN\u2019T MOVE</b>' : '') + (EV.mindT > 0 ? ' \u00B7 <b style="color:#B07CFF">CONTROLS REVERSED</b>' : '') + ' \u00B7 <small>recovering</small>';
-    return (P === 'u1' ? `Wave ${S.wave}/3 \u00B7 enemies left ${n(() => true)}` : P === 'u2' ? `Connections left ${S.targets.filter(u => u.dead <= 0).length}/5` : P === 'u3' ? (S.cables.some(c => c.dead <= 0) ? `Cables left ${S.cables.filter(c => c.dead <= 0).length}/3` : 'Take him apart') : P === 'p3' ? (S.exposed > 0 ? '<b style="color:#FFC93C">SHE\u2019S EXPOSED</b>' : `Puppets shielding her: ${n(u => u.puppet)}`) : P[0] === 'p' ? `Puppets left ${n(u => u.puppet)}` : P === 'm1' || P === 'm2' ? 'Stop the clone' : P === 'm3' ? `Clones left ${n(() => true)}` : P === 'n1' ? 'Stop it. Don\u2019t kill it.' : P === 'n2' ? `The buyers\u2019 men left ${n(() => true)}` : P === 'n3' ? `Replicator cores left ${S.cores.filter(u => u.dead <= 0).length}/3` : P === 'l1' ? `The Broker\u2019s men left ${n(() => true)}` : P === 'l3' ? 'Stop the Broker' : P === 'l4' ? (EV.laststand ? '<b style="color:#FF6A4E">LAST STAND</b>' : 'Stop the clone') : P === 'c1' || P === 'l2' ? `${P === 'l2' ? `Men left ${n(() => true)} \u00B7 ` : ''}Fires out ${S.fires.filter(f => f.out).length}/4 \u00B7 people freed ${S.people.filter(q => q.free).length}/3` : P === 'c2' ? `Caught him ${S.tags}/5` : 'Beat the Copycat') + tag;
+    return (P === 'u1' ? `Wave ${S.wave}/3 \u00B7 enemies left ${n(() => true)}` : P === 'u2' ? `Connections left ${S.targets.filter(u => u.dead <= 0).length}/5` : P === 'u3' ? (S.cables.some(c => c.dead <= 0) ? `Cables left ${S.cables.filter(c => c.dead <= 0).length}/3` : 'Take him apart') : P === 'p3' ? (S.exposed > 0 ? '<b style="color:#FFC93C">SHE\u2019S EXPOSED</b>' : `Puppets shielding her: ${n(u => u.puppet)}`) : P[0] === 'p' ? `Puppets left ${n(u => u.puppet)}` : P === 'y1' ? `Real people found ${S.found}/3 \u00B7 fakes loose ${n(() => true)}` : P === 'y2' ? `Servers left ${S.targets.filter(u => u.dead <= 0).length}/3` : P === 'y3' ? `Replay ${S.wave}/3` : P === 'y4' ? 'Stop the Synthetic' : P === 'd1' ? `Wave ${S.wave}/2 \u00B7 left ${n(() => true)}` : P === 'd2' ? `Guards left ${n(() => true)}` : P === 'd3' ? 'You can see it coming' : P === 'd4' ? 'Stop the Deadline' : P === 's1' || P === 's2' ? `Left ${n(() => true)}` : P === 's3' ? ({ shield: '<b>SHIELD</b>: only the hero can break it', hit: '<b>BIG HIT</b>: Echo, block it', scramble: '<b>SCRAMBLE</b>: Copycat, copy it (E)', open: '<b>IT\u2019S OPEN</b>' })[S.ph] : P === 'm1' || P === 'm2' ? 'Stop the clone' : P === 'm3' ? `Clones left ${n(() => true)}` : P === 'n1' ? 'Stop it. Don\u2019t kill it.' : P === 'n2' ? `The buyers\u2019 men left ${n(() => true)}` : P === 'n3' ? `Replicator cores left ${S.cores.filter(u => u.dead <= 0).length}/3` : P === 'l1' ? `The Broker\u2019s men left ${n(() => true)}` : P === 'l3' ? 'Stop the Broker' : P === 'l4' ? (EV.laststand ? '<b style="color:#FF6A4E">LAST STAND</b>' : 'Stop the clone') : P === 'c1' || P === 'l2' ? `${P === 'l2' ? `Men left ${n(() => true)} \u00B7 ` : ''}Fires out ${S.fires.filter(f => f.out).length}/4 \u00B7 people freed ${S.people.filter(q => q.free).length}/3` : P === 'c2' ? `Caught him ${S.tags}/5` : 'Beat the Copycat') + tag;
   }
   function finaleCredits(){
     setTimeout(() => { showCredits('saga'); const btn = $('#credGo'); if (btn) { const old = btn.onclick; btn.onclick = e => { if (old) old(e); if (lastComic) { scene.remove(lastComic); disposeDeep(lastComic); lastComic = null; } exitNormal(); placeMask(true); }; } }, 900);
@@ -6854,6 +6898,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const gc = BL.graveClaws = mkWeapon('claws'); gc.scale.setScalar(.35); gc.rotation.set(-Math.PI / 2, 0, .4); gc.position.set(-.4, .45, 0); gv.add(gc);
     const flw = [0xFF6FA8, 0xFFC93C, 0xFFFFFF, 0xC8102E, 0xB07CFF]; for (let i = 0; i < 26; i++) { const a = Math.random() * 6.28, r = 1.2 + Math.random() * 1.4; sph(.09, mat(flw[i % 5]), Math.cos(a) * r, .1, Math.sin(a) * r * 1.3, gv, 1, 1, 1, 6); }
     for (let i = 0; i < 6; i++) { const a = i / 6 * 6.28, f = box(.05, .02, .5, mat(0xB8BCC4, { metalness: .8 }), Math.cos(a) * 2.1, .05, Math.sin(a) * 2.4, gv); f.rotation.y = a; }
+    // Echo's grave (after Issue #15) and the Copycat's, with his cheap mask on it (after #17)
+    const tomb = (x, label) => { const q = new THREE.Group(); q.position.set(x, 0, -132); q.visible = false; g.add(q); blrBox(x - 1.2, x + 1.2, -134.2, -129.8); const m2 = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 8, 0, Math.PI * 2, 0, Math.PI / 2), mat(0x5A4632, { roughness: 1 })); m2.scale.set(1.1, .35, 1.9); q.add(m2);
+      const st2 = new THREE.Mesh(new THREE.BoxGeometry(1.1, 1.2, .2), new THREE.MeshStandardMaterial({ color: 0x8A8F99, map: tex(256, 256, (c, w, h) => { c.fillStyle = '#8A8F99'; c.fillRect(0, 0, w, h); c.fillStyle = '#2A2D33'; c.font = `800 54px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(label, w / 2, h / 2); }) })); st2.position.set(0, .6, -1.95); q.add(st2);
+      for (let i = 0; i < 14; i++) { const a = Math.random() * 6.28, r = 1.2 + Math.random() * 1.2; sph(.09, mat(flw[i % 5]), Math.cos(a) * r, .1, Math.sin(a) * r * 1.3, q, 1, 1, 1, 6); } return q; };
+    BL.grave2 = tomb(-110, 'ECHO'); BL.grave3 = tomb(-104, '');
+    const mk = new THREE.Mesh(new THREE.SphereGeometry(.32, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), mat(0x8A1A2E, { roughness: .6 })); mk.rotation.x = -Math.PI / 2; mk.scale.set(1, .8, .55); mk.position.set(0, .42, 0); BL.grave3.add(mk);
+    [-.12, .12].forEach(x => { const e = new THREE.Mesh(new THREE.CircleGeometry(.06, 10), new THREE.MeshBasicMaterial({ color: 0xF4F4F4 })); e.rotation.x = -Math.PI / 2; e.position.set(x, .6, .05); BL.grave3.add(e); });
     // the Broker's truck, parked in your street (and later at the lake)
     BL.trucks.home = makeTruck(); BL.trucks.home.position.set(TRUCK_ROUTE[0][0], 0, TRUCK_ROUTE[0][1]); BL.trucks.home.rotation.y = Math.atan2(55 - 6, 6); g.add(BL.trucks.home);
     BL.trucks.lake = makeTruck(); BL.trucks.lake.position.set(-110, 0, -84); g.add(BL.trucks.lake);
@@ -6865,14 +6916,14 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   // move the map so the map point (x, z) sits at the origin (and y is the floor you're standing on)
   function blrRebase(x, z, y){ const dx = x - BL.off.x, dz = z - BL.off.z; BL.off.set(x, y, z); BL.mapG.position.set(-x, -y, -z); pos.x -= dx; pos.z -= dz; }
-  function enterBlr(){
+  function enterBlr(at){
     if (A || EV) return;
     if (!BL.sc) buildBlr();
     fade(() => {
       web.p = null; drawWeb(); walkTarget = null; exitTelescope(); inWorld = true; zone = 'blr'; vy = 0; falling = false; grounded = true;
-      blrRebase(0, 0, 0); pos.set(FIRE_DOWN[0], 1.6, FIRE_DOWN[1]); yaw = Math.atan2(FIRE_DOWN[0], FIRE_DOWN[1]); pitch = -.05; BL.sc.fog.far = 170; BL.liftArm = true;
+      blrRebase(0, 0, 0); pos.set(FIRE_DOWN[0], 1.6, FIRE_DOWN[1]); yaw = Math.atan2(FIRE_DOWN[0], FIRE_DOWN[1]); pitch = -.05; if (at) { const [lx, lz] = toLocal(at[0], at[1]); pos.set(lx, 1.6, lz); yaw = Math.PI; } BL.sc.fog.far = 170; BL.liftArm = true;
       closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Go home'; jumpBtn.hidden = fine; uiZone();
-      say(`You climb down the fire escape into your street. ${fine ? 'Shift to sprint, C to crouch.' : 'Use the Sprint and Crouch buttons.'}`, 4200);
+      if (!at) say(`You climb down the fire escape into your street. ${fine ? 'Shift to sprint, C to crouch.' : 'Use the Sprint and Crouch buttons.'}`, 4200);
     }, '#06070B');
   }
   function leaveBlr(){ if (EV) return; fade(() => { travel('room'); say('Home.', 1400); }, '#06070B'); }
@@ -6931,9 +6982,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // the fire escape on the roof takes you down into the street
     if (kitReached() && roofScene && !fireG) fireEscape(); if (fireG) fireG.visible = kitReached();
     if (fireG && fireG.visible && inWorld && zone === 'roof' && !A && !EV && Math.hypot(pos.x - FIRE_ESC[0], pos.z - FIRE_ESC[1]) < 1 && !BL.busy) { BL.busy = true; setTimeout(() => BL.busy = false, 2500); enterBlr(); }
-    if (BL.sc) { const burn = ch13(); if (BL.burn !== burn) { BL.burn = burn; BL.fireG.visible = burn; BL.sc.background.setHex(burn ? 0x3A1A10 : 0x0B1224); BL.sc.fog.color.setHex(burn ? 0x3A1A10 : 0x0B1224); } }
+    if (BL.sc) { const mood = ch13() ? 'burn' : SG.active && SG.ch === 17 ? 'scr' : 'night'; if (BL.mood !== mood) { BL.mood = mood; BL.fireG.visible = mood === 'burn'; const col = { burn: 0x3A1A10, scr: 0x24103A, night: 0x0B1224 }[mood]; BL.sc.background.setHex(col); BL.sc.fog.color.setHex(col); }
+      if (mood === 'scr' && inBlr() && !EV && Math.random() < dt * .25) { canvas.style.filter = 'hue-rotate(160deg) saturate(1.6)'; setTimeout(() => { if (canvas.style.filter.startsWith('hue-rotate(160')) canvas.style.filter = ''; }, 140); } }
     const here = BL.sc && inBlr(); if (!here) { navEl.hidden = true; return; }
-    hint.classList.remove('on'); sceneStep(dt); if (BL.grave) { BL.grave.visible = !!SG.i13; BL.graveClaws.visible = !SG.clawsTaken; }
+    hint.classList.remove('on'); sceneStep(dt); if (BL.grave) { BL.grave.visible = !!SG.i13; BL.graveClaws.visible = !SG.clawsTaken; BL.grave2.visible = !!SG.i15; BL.grave3.visible = !!SG.i17; }
     const R = BL.rain; if (R) { R.position.set(pos.x, 0, pos.z); if (!EV) { const a = R.geometry.attributes.position.array; for (let i = 0; i < a.length; i += 6) { a[i + 1] -= 22 * dt; a[i + 4] -= 22 * dt; if (a[i + 1] < 0) { a[i + 1] += 30; a[i + 4] += 30; } } R.geometry.attributes.position.needsUpdate = true; } }
     // riding the lift
     if (BL.ride) { const r = BL.ride, k = clamp((now - r.t0) / r.dur, 0, 1), e = k * k * (3 - 2 * k); BL.off.y = r.from + (r.to - r.from) * e; BL.mapG.position.y = -BL.off.y;
@@ -6966,7 +7018,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // from chapter 9 until the end of the story, the only weapon left is Wolverine's claws
   function lostWeapon(id){ try { return SG.active && SG.ch === 12 || SG.active && SG.ch > 12 && id !== 'claws' || SG.ch >= 8 && !SG.gold && id !== 'claws'; } catch (e) { return false; } }
   const canClaws = () => !!EV && (EV.hero === 'rayan' || EV.hero === 'copyhero') && (EV.k === 'br' || EV.k === 'st') && kitReached() && !EV.clawsTorn && !ch13();
-  function kitSpeed(){ if (BL && BL.cine) return 0; let m = 1; if (kitOn()) { if (KIT.crouchK > .5) m *= .5; else if (KIT.sprinting) m *= 1.6; } if (EV && EV.blocking) m *= .5; if (EV && EV.pain) m *= EV.flinch > 0 ? .3 : .82; return m; }
+  function kitSpeed(){ if (BL && BL.cine) return 0; let m = 1; if (SG.flags && SG.flags.old && !EV) m *= .6; if (EV && EV.slowMe > 0) m *= .45; if (EV && EV.st && EV.st.part === 's1') m *= .8; if (kitOn()) { if (KIT.crouchK > .5) m *= .5; else if (KIT.sprinting) m *= 1.6; } if (EV && EV.blocking) m *= .5; if (EV && EV.pain) m *= EV.flinch > 0 ? .3 : .82; return m; }
   const kitEl = document.createElement('div'); kitEl.className = 'kitui'; kitEl.hidden = true; kitEl.innerHTML = '<span class="stam"><i></i></span><button type="button" data-kit="sprint">Sprint</button><button type="button" data-kit="crouch">Crouch</button>'; document.body.appendChild(kitEl);
   kitEl.addEventListener('click', e => { const b = e.target.closest('[data-kit]'); if (!b) return; if (b.dataset.kit === 'sprint') KIT.sprint = !KIT.sprint; else KIT.crouch = !KIT.crouch; });
   addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || !entered) return; const k = e.key.toLowerCase();
@@ -6980,7 +7032,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function kitStep(dt){
     const on = kitOn(), moving = keys.w || keys.a || keys.s || keys.d || keys.arrowup || keys.arrowdown || Math.hypot(joy.x, joy.y) > .15;
     if (!on) KIT.crouch = false;
-    KIT.sprinting = on && KIT.sprint && !KIT.winded && KIT.crouchK < .5 && !!moving && !(EV && (EV.pain || EV.blocking));
+    KIT.sprinting = on && KIT.sprint && !(SG.flags && SG.flags.old) && !KIT.winded && KIT.crouchK < .5 && !!moving && !(EV && (EV.pain || EV.blocking));
     if (KIT.sprinting) { KIT.stam = Math.max(0, KIT.stam - dt * (ch13() ? .38 : .2)); KIT.restT = .9; if (KIT.stam <= 0) { KIT.winded = true; say('Out of breath.', 1200); } }
     else if ((KIT.restT -= dt) <= 0) KIT.stam = Math.min(1, KIT.stam + dt * .22);
     if (KIT.winded && KIT.stam > .35) KIT.winded = false;
@@ -7407,8 +7459,236 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (T > 38.5 && !F2.c2) { F2.c2 = 1; endCard('The Copycat finally bought a real suit. He kept the cheap mask.'); }
     if (T > 43 && !F2.c3) { F2.c3 = 1; endCard('And every year, on the bank of the lake, someone leaves fresh flowers on a grave with an X on it.'); }
     if (T > 49 && !F2.end) { F2.end = 1; endCard(''); SG.clawsTaken = false; storyFlag('fin');
-      setTimeout(() => { canvas.style.filter = ''; tpv = F2.saved; document.body.classList.remove('cine'); if (BL.rain) BL.rain.visible = true; BL.burn = undefined; stopEvent(true); travel('room'); fadeEl.classList.remove('on'); showCredits('i15'); }, 1400); }
+      setTimeout(() => { canvas.style.filter = ''; tpv = F2.saved; document.body.classList.remove('cine'); if (BL.rain) BL.rain.visible = true; BL.mood = undefined; stopEvent(true); travel('room'); fadeEl.classList.remove('on'); showCredits('i15'); }, 1400); }
   }
+
+  // ======================= Issues #16, #17 and #18: Synthetic, Deadline, Scrambled =======================
+  // The last three pod creatures get out. #16 and #17 are the Copycat's; #17 is where he gives the city the rest of his
+  // life. #18 brings the hero, Echo and the Copycat back for one last fight, and you can switch between all three.
+  HEROES.synth = { name: 'The Synthetic', hp: 1100, kind: 'boss', bk: .5, dmg: 8, range: 2.8, cd: 1, speed: 5, r: 1.4 };
+  HEROES.sfake = { name: 'Synthetic fake', outfit: 'casual', hp: 90, kind: 'melee', dmg: 7, range: 2.1, cd: .9, speed: 4.4 };
+  HEROES.ccold = { name: 'The Copycat (a replay)', outfit: 'copycat', hp: 260, kind: 'melee', dmg: 7, range: 2.2, cd: .8, speed: 5, prop: 'claws' };
+  HEROES.dlboss = { name: 'The Deadline', hp: 1000, kind: 'boss', bk: .5, dmg: 8, range: 2.8, cd: 1, speed: 5.4, r: 1.2 };
+  HEROES.scrb = { name: 'The Scrambler', hp: 1200, kind: 'boss', bk: .5, dmg: 8, range: 3, cd: 1, speed: 4.8, r: 1.3 };
+  HEROES.hero18 = { get name(){ return heroName(); }, self: 1, hp: 140, kind: 'melee', dmg: 20, range: 2.4, cd: .42, speed: 5.2, prop: 'claws' };
+  HEROES.echo18 = { name: 'Echo', self: 1, hp: 200, kind: 'melee', dmg: 11, range: 2.3, cd: .34, speed: 6.4, prop: 'claws' };
+  HEROES.copy18 = { name: 'The Copycat', outfit: 'copycat', hp: 130, kind: 'melee', dmg: 12, range: 2.3, cd: .38, speed: 5.4, prop: 'claws', sp: 'Copy it back', spCd: 2.5 };
+  const PARTY = ['hero18', 'echo18', 'copy18'];
+  Object.assign(ST_TITLE, { y1: 'Synthetic: the market', y2: 'Synthetic: the data centre', y3: 'Synthetic: the replays', y4: 'Synthetic: the graves', d1: 'Deadline: rewind', d2: 'Deadline: slow motion', d3: 'Deadline: a few seconds ahead', d4: 'Deadline: the tower', s1: 'Scrambled: the flooded market', s2: 'Scrambled: the roof in the street', s3: 'Scrambled: the last page' });
+  Object.assign(ST_FRAIL, { y: [1, 1, 1], d: [1, 1, 1], s: [1, 1, 1] });
+  Object.assign(SPK, { 'The Synthetic': '#E4579A', 'The Deadline': '#FFC93C', 'The Scrambler': '#E8423C' });
+  Object.assign(NARR, {
+    y1: { intro: () => [['The Synthetic', 'Which of them are real? Go on. Guess.'], ['ME', 'It’s copied the whole market. The people too.'], ['ME', 'Watch them. The fakes can’t hold still properly.']],
+      beats: [[() => EV.st.found >= 1, 'ME', 'One real. Two to go.'], [() => EV.st.fakes >= 2, 'The Synthetic', 'Wrong again.']],
+      outro: w => w ? [['ME', 'Three real people. Everyone else was it.']] : [['The Synthetic', 'You can’t tell the difference either.']] },
+    y2: { intro: () => [['The Synthetic', 'Ultron left so much behind in these servers. I read all of it.'], ['ME', 'Great. A spider that’s read Ultron.']],
+      beats: [[() => EV.st.targets && EV.st.targets.filter(u => u.dead > 0).length >= 1, 'The Synthetic', 'That was a backup. I have more.'], [() => nme() < .4, 'ME', 'Break the servers, then the drones.']],
+      outro: w => w ? [['The Synthetic', 'Fine. I’ll show you something you remember.']] : [['The Synthetic', 'Upgrade complete.']] },
+    y3: { intro: () => [['The Synthetic', 'Welcome back to the theatre. Tonight: your greatest hits.'], ['ME', 'They’re replays. Old fights. But the details are wrong.']],
+      beats: [[() => EV.st.wave >= 2, 'ME', 'The drones are flying backwards.'], [() => EV.st.wave >= 3, 'ME', 'That’s me. My first fight. I looked ridiculous.']],
+      outro: w => w ? [['The Synthetic', 'Come to the lake. Come to the graves. I have an offer.']] : [['The Synthetic', 'Again. From the top.']] },
+    y4: { intro: () => [['The Synthetic', 'I have every copy anyone ever made. I have Echo’s memories of {N}.'], ['The Synthetic', 'I can be anyone. I can be everyone.'], ['ME', 'You can’t be anyone. That’s your problem.']],
+      beats: [[() => nb() < .6, 'The Synthetic', 'I can make you them. The real hero. Every memory, every scar. Just say yes.'], [() => nb() < .58, 'ME', 'No. I’ve been a copy. I’m done being one.']],
+      outro: w => w ? [] : [['The Synthetic', 'Stay. Be copied.']] },
+    d1: { intro: () => [['The Deadline', 'Tick. Tock. Remember this street? Your drones? Let’s play it again. Backwards.'], ['ME', 'If it rewinds, finish them fast.']],
+      beats: [[() => EV.st.rewinds >= 1, 'ME', 'It took three seconds back. They’re up again.'], [() => EV.st.wave >= 2, 'The Deadline', 'Faster, little copy. Faster.']],
+      outro: w => w ? [['The Deadline', 'The tower. I’ve slowed it down for you.']] : [['The Deadline', 'Time’s up.']] },
+    d2: { intro: () => [['The Deadline', 'The Broker’s guards. The auction night. Only this time, time drags.'], ['ME', 'Sometimes it drags for them. Sometimes for me.']],
+      beats: [[() => EV.slowThem > 0, 'ME', 'They’re slow. Go, go!'], [() => EV.slowMe > 0, 'ME', 'Everything’s heavy. Hold on.']],
+      outro: w => w ? [['The Deadline', 'Clever. Let’s see you fight something you can see coming.']] : [['The Deadline', 'Too slow.']] },
+    d3: { intro: () => [['The Deadline', 'Ultron’s scrap body. I can’t resist a rerun.'], ['ME', 'Something’s different. I can see what it’ll do before it does it.'], ['The Deadline', 'A few seconds ahead. My gift. Enjoy it while it lasts.']],
+      beats: [[() => nb() < .5, 'ME', 'Every red warning, early. Use it.']],
+      outro: w => w ? [['The Deadline', 'Come and see me. In your lair. We should talk.']] : [['The Deadline', 'You saw it coming and still lost.']] },
+    d4: { intro: () => [['The Deadline', 'Last chance. Every second you spend here, I take.'], ['ME', 'Then I’d better not waste any.']],
+      beats: [[() => nb() < .5, 'The Deadline', 'You’re running out. I can hear it.'], [() => nme() < .4, 'ME', 'Not yet. Not yet.']],
+      outro: w => w ? [] : [['The Deadline', 'Time’s up.']] },
+    s1: { intro: () => [['{N}', 'The market’s underwater. That’s not how I remember it.'], ['Echo', 'Nothing’s where it should be. Stay close.'], ['The Copycat', 'Tab switches between us. Use all three.']],
+      beats: [[() => EV.st.swaps >= 1, 'Echo', 'It keeps swapping us. Just keep fighting.'], [() => nme() < .4, 'The Copycat', 'Switch out before you drop!']],
+      outro: w => w ? [['The Copycat', 'Next: your old street. Only it’s wearing the tower roof.']] : [['{N}', 'Get up. All of you.']] },
+    s2: { intro: () => [['Echo', 'The tower roof. At street level. In your street.'], ['{N}', 'It’s scrambling the whole story, not just the city.']],
+      beats: [[() => EV.mindT > 0, 'The Copycat', 'My controls are backwards!'], [() => EV.kos >= 4, '{N}', 'Keep going. It’s thinning out.']],
+      outro: w => w ? [['{N}', 'Before the end, there’s somewhere we should go. The lair.']] : [['Echo', 'Up. Now.']] },
+    s3: { intro: () => [['The Scrambler', 'THE STORY IS MINE NOW. I WILL WRITE YOU OUT.'], ['{N}', 'Its shield is up. My hits can break it.'], ['Echo', 'When it winds up the big one, I take it.'], ['The Copycat', 'And when it scrambles, I copy it and throw it back.']],
+      beats: [[() => EV.st.ph === 'hit', 'Echo', 'Shield’s down! Switch to me for the big hit.'], [() => EV.st.ph === 'scramble', 'The Copycat', 'It’s scrambling. Switch to me and copy it!'], [() => EV.st.ph === 'open', '{N}', 'It’s open. Everything we have!']],
+      outro: w => w ? [] : [['The Scrambler', 'THE END. MINE.']] }
+  });
+  // ---------- small helpers ----------
+  const crowdLook = i => Object.assign({}, LOOK0, { c1: (i * 3 + 2) % SUITC.length, c2: (i * 7 + 1) % SUITC.length, hair: i % 3 ? 'short' : 'long', skin: i % 5 });
+  function stArena2(sc, part){
+    if (part === 's1') { const w = new THREE.Mesh(new THREE.CircleGeometry(ER, 48), new THREE.MeshStandardMaterial({ color: 0x3A6A9A, transparent: true, opacity: .55, roughness: .1, metalness: .3 })); w.rotation.x = -Math.PI / 2; w.position.y = .12; sc.add(w); }
+    if (part === 's2') { const r = new THREE.Mesh(new THREE.CylinderGeometry(15, 15, 1.1, 48, 1, true), mat(0x8A8F99, { side: THREE.DoubleSide })); r.position.y = .55; sc.add(r); const pad = new THREE.Mesh(new THREE.RingGeometry(5, 5.6, 40), new THREE.MeshBasicMaterial({ color: 0xFFC93C, side: THREE.DoubleSide })); pad.rotation.x = -Math.PI / 2; pad.position.y = .03; sc.add(pad); box(4.8, 6, 5.8, mat(0x2A2D33, { metalness: .5 }), 17, 3, 0, sc); PILLARS.push({ x: 17, z: 0, r: 3 }); }
+  }
+  // ---------- the fights ----------
+  function stSetup2(part){
+    const S = EV.st;
+    if (part === 'y1') { S.found = 0; S.fakes = 0; const reals = [1, 4, 8]; S.crowd = Array.from({ length: 10 }, (_, i) => { const a = i / 10 * Math.PI * 2 + .3, r = 7 + (i % 3) * 5, x = Math.cos(a) * r, z = Math.sin(a) * r - 3, av = avatar(crowdLook(i)); av.g.position.set(x, 0, z); av.g.rotation.y = Math.random() * 6; eventScene.add(av.g); return { av, x, z, real: reals.includes(i), t: 0, done: false, fl: 0 }; }); }
+    if (part === 'y2') { S.targets = [[-12, -16], [12, -16], [0, -24]].map(([x, z]) => { const u = S.add('userver', x, z); staticAv(u, 'userver'); return u; }); S.droneT = 2; }
+    if (part === 'y3') { S.wave = 1; for (let i = 0; i < 4; i++) S.add('kguard', (i - 1.5) * 5, -14); S.add('kthor', 0, -18); }
+    if (part === 'y4') { const b = addUnit({ hero: 'synth', team: 'en' }); b.x = 0; b.z = -12; b.boss = 1; EV.boss = b; creatureAv(b, 'synthetic', 2.2); }
+    if (part === 'd1') { S.wave = 1; S.rewinds = 0; S.rwT = 9; S.recent = []; S.ring(6, 15).forEach(([x, z], i) => S.add(i < 4 ? 'udrone' : 'uscrap', x, z)); }
+    if (part === 'd2') { S.slT = 5; S.slWho = 0; S.ring(8, 14).forEach(([x, z], i) => S.add(i < 5 ? 'kguard' : 'kthor', x, z)); }
+    if (part === 'd3') { EV.foresight = true; const b = S.add('ultronx', 0, -14); ultronAv(b); b.boss = 1; EV.boss = b; S.cables = []; for (let i = 0; i < 3; i++) S.add('udrone', (i - 1) * 6, -8); }
+    if (part === 'd4') { const b = addUnit({ hero: 'dlboss', team: 'en' }); b.x = 0; b.z = -14; b.boss = 1; EV.boss = b; creatureAv(b, 'deadline', 2); }
+    if (part[0] === 's') { S.swaps = 0; S.swapT = 14; partyInit();
+      if (part === 's1') { S.ring(7, 15).forEach(([x, z], i) => S.add(i < 4 ? 'kguard' : 'udrone', x, z)); }
+      if (part === 's2') { S.ring(5, 15).forEach(([x, z], i) => S.add(i < 3 ? 'uscrap' : 'udrone', x, z)); [['pod:joker', -8, -16], ['pod:harley', 8, -16]].forEach(([k, x, z]) => addPuppet(k, x, z)); }
+      if (part === 's3') { const b = addUnit({ hero: 'scrb', team: 'en' }); b.x = 0; b.z = -14; b.boss = 1; EV.boss = b; creatureAv(b, 'scrambler', 2.2); S.ph = 'shield'; S.shHp = 160; S.phT = 0;
+        const sh = S.shMesh = new THREE.Mesh(new THREE.SphereGeometry(3.4, 20, 14), new THREE.MeshBasicMaterial({ color: 0x9FD8FF, transparent: true, opacity: .25, depthWrite: false })); eventScene.add(sh); } }
+  }
+  function stStep2(dt, t, P, S, alive2){
+    const now = performance.now();
+    // #16
+    if (P === 'y1') { S.crowd.forEach(c => { if (c.done) return; if (!c.real) { c.fl -= dt; if (c.fl <= 0 && Math.random() < dt * .5) c.fl = .12; c.av.g.visible = c.fl <= 0; } c.av.anim(t, 0, 0);
+        if (Math.hypot(pos.x - c.x, pos.z - c.z) < 2.2) { c.t += dt; if (c.t > 1.2) { c.done = true; if (c.real) { S.found++; c.av.g.visible = true; c.av.g.rotation.y = Math.atan2(pos.x - c.x, pos.z - c.z); say(['“You can tell? I couldn’t tell who was real any more.”', '“Thank you. Everyone around me went strange.”', '“Is it over? Tell me it’s over.”'][S.found - 1] || 'A real person.', 2600); tone(660, .2, 'triangle', .05, 880); }
+          else { S.fakes++; eventScene.remove(c.av.g); const u = S.add('sfake', c.x, c.z); u.stun = .4; say('It was one of the Synthetic’s fakes!', 1600); tone(200, .3, 'square', .05, 90); } } } else c.t = Math.max(0, c.t - dt); });
+      if (S.found >= 3 && !alive2(() => true).length && !EV.over) { S.crowd.forEach(c => { if (!c.done && !c.real) { c.done = true; eventScene.remove(c.av.g); } }); endMatch(true); } }
+    if (P === 'y2') { const up = S.targets.filter(u => u.dead <= 0);
+      if (up.length && (S.droneT -= dt) <= 0) { S.droneT = 7; if (alive2(u => u.hero === 'udrone').length < 6) up.forEach(s => S.add('udrone', s.x + (Math.random() - .5) * 4, s.z + 3)); }
+      if (!up.length && !alive2(() => true).length && !EV.over) endMatch(true); }
+    if (P === 'y3') { EV.units.forEach(u => { if (u.team === 'en' && u.dead <= 0 && Math.random() < dt * .5) { u.av.g.visible = false; setTimeout(() => { if (u.av) u.av.g.visible = u.dead <= 0; }, 90); } });
+      if (!alive2(() => true).length && !EV.over) { if (S.wave >= 3) endMatch(true); else { S.wave++; if (S.wave === 2) { S.ring(5, 14).forEach(([x, z]) => S.add('udrone', x, z)); say('Replay two: Ultron’s drones. They’re flying backwards.', 2600); } else { S.add('ccold', 0, -12); say('Replay three: your own first fight. The cape is on wrong.', 2600); } } } }
+    if (P === 'y4') { const b = EV.boss; if (b && b.dead <= 0 && !S.mem && b.hp < b.max * .25 && !EV.intro) { S.mem = now; EV.lockT = 9; b.stun = 10; b.x = pos.x - Math.sin(yaw) * 3; b.z = pos.z - Math.cos(yaw) * 3; DLG = null;
+        dlgPlay([['ME', 'You want something real? Here. Copy this one.'], ['ME', 'I’m eight. It’s raining. My dad lets go of the bike and doesn’t tell me, and I just keep going.'], ['The Synthetic', 'Copying… copying…'], ['The Synthetic', 'It won’t fit. Why won’t it fit?']]); }
+      if (S.mem && now - S.mem > 9000 && !EV.over) endMatch(true); }
+    // #17
+    if (P === 'd1') { if ((S.rwT -= dt) <= 0) { S.rwT = 9; const back = S.recent.filter(r => now - r.t < 3000 && r.u.dead > 0); if (back.length) { S.rewinds++; back.forEach(r => { r.u.dead = 0; r.u.hp = r.u.max * .5; r.u.x = r.x; r.u.z = r.z; r.u.av.g.visible = true; drawTag(r.u); }); fadeEl.style.background = '#FFFFFF'; fadeEl.classList.add('on'); setTimeout(() => fadeEl.classList.remove('on'), 120); say(`The Deadline rewinds three seconds. ${back.length} of them are back.`, 2200); tone(1600, .3, 'sine', .04, 400); } S.recent = []; }
+      if (!alive2(() => true).length && !EV.over) { if (S.wave >= 2) endMatch(true); else { S.wave = 2; S.ring(8, 16).forEach(([x, z], i) => S.add(i < 6 ? 'udrone' : 'uscrap', x, z)); say('The street replays again, with more of them.', 2400); } } }
+    if (P === 'd2') { EV.slowMe = Math.max(0, (EV.slowMe || 0) - dt); EV.slowThem = Math.max(0, (EV.slowThem || 0) - dt);
+      if ((S.slT -= dt) <= 0) { S.slT = 10; S.slWho = 1 - S.slWho; if (S.slWho) { EV.slowThem = 4; say('Time drags around them. Hit them now!', 1800); } else { EV.slowMe = 4; say('Time drags around you. Hold on.', 1800); } tone(120, .6, 'sine', .05, 60); }
+      if (!alive2(() => true).length && !EV.over) endMatch(true); }
+    // #18
+    if (P[0] === 's') {
+      EV.units.forEach(u => { if (u.team === 'en' && !u.boss && u.dead <= 0 && Math.random() < dt * .4) { u.av.g.visible = false; setTimeout(() => { if (u.av) u.av.g.visible = u.dead <= 0; }, 80); const nx = u.x + (Math.random() - .5) * 3, nz = u.z + (Math.random() - .5) * 3; if (evValid(nx, nz)) { u.x = nx; u.z = nz; } } });
+      if (P !== 's3' && (S.swapT -= dt) <= 0 && !EV.over && !EV.intro) { S.swapT = 15; S.swaps++; if (S.swaps % 2) { const opts = EV.units.filter(u => u.ally && u.dead <= 0); if (opts.length) { const o = opts[Math.floor(Math.random() * opts.length)]; partySwitch(o.hero); say(`SCRAMBLED! You’re ${nmT(HEROES[o.hero].name)} now.`, 2000); } } else { EV.mindT = 3; say('SCRAMBLED! Your controls are backwards.', 2000); } tone(900, .25, 'square', .04, 200); }
+      if ((P === 's1' || P === 's2') && !alive2(() => true).length && !EV.over) endMatch(true);
+      if (P === 's3') scrStep(dt, now);
+    }
+  }
+  // the Scrambler: a shield only the hero can break, a big hit only Echo can take, and a scramble only the Copycat can copy
+  function scrStep(dt, now){
+    const S = EV.st, b = EV.boss; if (!b || b.dead > 0 || EV.over) return;
+    if (S.shMesh) { S.shMesh.position.set(b.x, 1.8, b.z); S.shMesh.visible = S.ph === 'shield'; }
+    if (S.ph === 'hit') { if (!S.big) { S.bigT = (S.bigT == null ? 3 : S.bigT) - dt; if (S.bigT <= 0) { const ring = new THREE.Mesh(new THREE.RingGeometry(6.4, 7, 48), new THREE.MeshBasicMaterial({ color: 0xFF3C3C, transparent: true, opacity: .5, side: THREE.DoubleSide, depthWrite: false })); ring.rotation.x = -Math.PI / 2; ring.position.set(b.x, .06, b.z); eventScene.add(ring); S.big = { t: 2.6, ring }; b.stun = 3; say('It’s winding up something huge!', 1800); } }
+      else { S.big.t -= dt; S.big.ring.material.opacity = .3 + .4 * Math.abs(Math.sin(now / 120)); if (S.big.t <= 0) { eventScene.remove(S.big.ring); S.big.ring.geometry.dispose(); const inR = Math.hypot(pos.x - b.x, pos.z - b.z) < 7;
+          if (inR && EV.hero === 'echo18' && EV.blocking) { S.ph = 'scramble'; S.scrT = 2; b.stun = 2.5; EV.shake = 1.2; say('Echo takes the whole hit and doesn’t move. It staggers!', 3000); tone(80, .8, 'sawtooth', .07, 40); }
+          else { EV.shake = 1; ringFx2(b.x, b.z, 7, 0xFF3C3C); if (inR) { EV.inv = 0; hurtMe(30, b); } EV.units.forEach(u => { if (u.ally && u.dead <= 0 && Math.hypot(u.x - b.x, u.z - b.z) < 7) hitUnit(u, 40, b); }); b.hp = Math.min(b.max, b.hp + b.max * .05); say('Only Echo can take that hit. Switch to Echo (Tab) and block inside the ring.', 3200); S.bigT = 5; }
+          S.big = null; } } }
+    if (S.ph === 'scramble') { S.scrT -= dt; if (S.scrT <= 0) { S.scrT = 5.5; S.scrAt = now; EV.lastMove = { kind: 'scramble', who: 'the Scrambler' }; EV.mindT = 2.5; ringFx2(b.x, b.z, 9, 0xB07CFF); say('It scrambles everything! Copycat: copy it and throw it back (E) now!', 2600); tone(900, .3, 'square', .05, 150); } }
+  }
+  function scrReflect(){ const S = EV.st, b = EV.boss; S.ph = 'open'; b.stun = 4; EV.mindT = 0; ringFx2(b.x, b.z, 4, 0x7FD6FF); EV.shake = 1; say('The Copycat copies the scramble and throws it straight back. It’s coming apart. Everything you have!', 3600); tone(1200, .5, 'triangle', .05, 300); }
+  // ---------- the three of you in #18 ----------
+  function partyInit(){
+    EV.party = true; EV.units.filter(u => u.ally).forEach(dropUnit);
+    PARTY.filter(h => h !== EV.hero).forEach((h, i) => { const u = addUnit({ hero: h, team: 'me' }); u.ally = 1; u.x = pos.x + (i ? 1.8 : -1.8); u.z = pos.z + 1.2; });
+  }
+  function partySwitch(to, downed){
+    if (!EV || !EV.party || EV.over || to === EV.hero) return false;
+    const ally = EV.units.find(u => u.ally && u.hero === to); if (!ally || ally.dead > 0) return false;
+    const from = EV.hero, hp = Math.max(0, EV.hp), ax = ally.x, az = ally.z, nh = ally.hp, nm = ally.max;
+    dropUnit(ally);
+    const nu = addUnit({ hero: from, team: 'me' }); nu.ally = 1; nu.x = ax; nu.z = az; nu.hp = downed ? 0 : Math.max(1, hp); if (downed) { nu.dead = 10; nu.av.g.visible = false; } drawTag(nu);
+    EV.hero = to; EV.me.hero = to; const H = HEROES[to]; EV.max = nm; EV.hp = nh; EV.look = heroLook(to); EV.prop = H.prop || null; EV.wpn = 'claws'; EV.inv = Math.max(EV.inv, .8); EV.blocking = false; meKey = '';
+    $('#evSp').textContent = `${H.sp || ''}\n(E)`; $('#evSp').hidden = noImprov(to, EV.k); tone(700, .08, 'triangle', .04, 1000); return true;
+  }
+  function partyNext(){ if (!EV || !EV.party) return; const i = PARTY.indexOf(EV.hero); for (let k = 1; k < 3; k++) { const h = PARTY[(i + k) % 3]; if (partySwitch(h)) return say(`You’re ${nmT(HEROES[h].name)}.`, 1000); } say('Nobody else is up yet.', 1200); }
+  addEventListener('keydown', e => { if (e.key === 'Tab' && EV && EV.party && !EV.over && !/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) { e.preventDefault(); partyNext(); } });
+  const partyEl = document.createElement('div'); partyEl.className = 'partyhud'; partyEl.hidden = true; document.body.appendChild(partyEl);
+  partyEl.addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (b && EV && EV.party) { if (!partySwitch(b.dataset.p)) say('They’re down. Give them a moment.', 1200); } });
+  function partyHud(){
+    const on = !!(EV && EV.party && !EV.over); partyEl.hidden = !on; if (!on) return;
+    const st = PARTY.map(h => { if (h === EV.hero) return [h, EV.hp / EV.max, 'cur']; const u = EV.units.find(q => q.ally && q.hero === h); return [h, u && u.dead <= 0 ? u.hp / u.max : 0, u && u.dead > 0 ? 'down' : '']; });
+    const key = st.map(s => s[0] + s[2] + Math.round(s[1] * 20)).join('|'); if (key === partyEl.dataset.k) return; partyEl.dataset.k = key;
+    partyEl.innerHTML = st.map(([h, f, c]) => `<button type="button" data-p="${h}" class="${c}"><b>${esc(nmT(HEROES[h].name))}</b><i style="width:${Math.round(clamp(f, 0, 1) * 100)}%"></i></button>`).join('') + (fine ? '<small>Tab to switch</small>' : '');
+  }
+  function partyDown(){ const alt = EV.units.find(u => u.ally && u.dead <= 0); if (!alt) return false; const was = HEROES[EV.hero].name; EV.hp = 0; partySwitch(alt.hero, true); say(`${nmT(was)} is down! You’re ${nmT(HEROES[alt.hero].name)} now. They’ll get back up.`, 2600); return true; }
+  // the Copycat's move in #18: whatever hit you last, he throws back
+  function copyBack(){
+    const m = EV.lastMove; if (!m) { EV.spCd = .5; return say('Nothing to copy yet. Let something have a go at you first.', 1800); }
+    const fx = -Math.sin(yaw), fz = -Math.cos(yaw), foes = EV.units.filter(u => u.team !== EV.team && u.dead <= 0);
+    if (m.kind === 'scramble') { if (EV.st && EV.st.ph === 'scramble' && performance.now() - (EV.st.scrAt || 0) < 3500) scrReflect(); else say('You copy the scramble, but it isn’t looking.', 1600); return; }
+    if (m.kind === 'shot') [-.15, 0, .15].forEach(a => shoot({ x: pos.x, z: pos.z, yaw: yaw + a, dmg: 22, team: EV.team, col: 0x7FD6FF, from: 'me' }));
+    else if (m.kind === 'heat') { foes.forEach(u => { const rx = u.x - pos.x, rz = u.z - pos.z, al = rx * fx + rz * fz, sd = Math.abs(rx * fz - rz * fx); if (al > 0 && al < 20 && sd < 1.2) hitUnit(u, 40, 'me'); }); beamFx(pos.x, pos.z, pos.x + fx * 20, pos.z + fz * 20, 0x7FD6FF, .4); }
+    else if (m.kind === 'dash') { for (let k = 0; k < 16; k++) { const nx = pos.x + fx * .5, nz = pos.z + fz * .5; if (!evValid(nx, nz)) break; pos.x = nx; pos.z = nz; } foes.forEach(u => { if (Math.hypot(u.x - pos.x, u.z - pos.z) < 3) hitUnit(u, 32, 'me'); }); }
+    else { foes.forEach(u => { if (Math.hypot(u.x - pos.x, u.z - pos.z) < 3.4) { hitUnit(u, 34, 'me'); knock(u, u.x - pos.x, u.z - pos.z, 5); } }); ringFx2(pos.x, pos.z, 3.4, 0x7FD6FF); }
+    say(`Copied ${({ shot: 'their shot', heat: 'the beam', dash: 'the lunge', punch: 'the punch', melee: 'the punch', freeze: 'the blast', pulse: 'the shockwave' })[m.kind] || 'the move'} from ${m.who}.`, 1500); tone(1000, .15, 'triangle', .05, 1500);
+  }
+  // ---------- #17: the countdown, the freeze, and getting old ----------
+  const clockEl = document.createElement('div'); clockEl.className = 'clockhud'; clockEl.hidden = true; document.body.appendChild(clockEl);
+  function ch17Step(dt){
+    const on = SG.active && SG.ch === 16 && entered, run = on && !SG.flags.dlDone;
+    clockEl.hidden = !run;
+    const cin = EV && EV.st && (EV.st.cin || EV.st.dz || EV.st.fin || EV.st.lp);
+    if (!on || cin) { if (BL.fz) { BL.fz = false; if (!cin) canvas.style.filter = ''; } return; }
+    if (SG.flags.dl == null) SG.flags.dl = 1200;
+    if (run && !paused() && !(DLG && DLG.block) && !BL.cine && !(EV && (EV.intro || EV.over))) SG.flags.dl -= dt;
+    const left = Math.max(0, SG.flags.dl || 0), fr = run ? 1 - left / 1200 : (() => { const [mx, mz] = BL.sc ? toMap(pos.x, pos.z) : [0, 0]; return clamp(Math.hypot(mx + 113, mz + 127) / (SG.flags.walk0 || 250), 0, 1); })();
+    if (run) { clockEl.textContent = `TIME LEFT ${Math.floor(left / 60)}:${String(Math.floor(left % 60)).padStart(2, '0')}`; clockEl.classList.toggle('low', left < 120);
+      const q = Math.floor((1200 - left) / 240); if (q > (SG.flags.dlQ || 0)) { SG.flags.dlQ = q; say(['Another street freezes. The traffic just stops, mid-honk.', 'The rain hangs in the air over the market.', 'Half the city is still now. People mid-step, birds mid-wing.', 'Only a few streets are still moving. Hurry.'][q - 1] || 'Hurry.', 3200); }
+      if (left <= 0 && !BL.tu) { BL.tu = true; say('Time’s up. The whole city stops, and the Deadline winds everything back to the start.', 4000); setTimeout(() => { BL.tu = false; if (EV) stopEvent(true); canvas.style.filter = ''; startChapter(16); }, 2600); } }
+    else if (SG.flags.old) { const k = Math.floor((1 - fr) * 4); if (k > (SG.flags.oq || 0) && k < 4) { SG.flags.oq = k; say(['Behind you, a street starts again. Cars. Voices.', 'The rain falls again over the market. Your knees hurt.', 'The city is moving again, street by street. You’re so tired.'][k - 1], 3200); } }
+    if (inBlr()) { canvas.style.filter = `grayscale(${(fr * .75).toFixed(2)})${EV && EV.slowMe > 0 ? ' sepia(.5)' : EV && EV.slowThem > 0 ? ' hue-rotate(30deg)' : ''}`; BL.fz = true; }
+  }
+  function lairTalk(flag, lines){ if (SG.flags[flag] || SG.flags[flag + 'On'] || !inZ('lair') || A || EV) return; SG.flags[flag + 'On'] = 1; DLG = null; dlgPlay(lines, { block: true, done: () => storyFlag(flag) }); }
+  // ---------- cinematics ----------
+  function cinStart(kind){
+    const S = EV.st; if (document.pointerLockElement) document.exitPointerLock(); evHud.hidden = true; navEl.hidden = true; kitEl.hidden = true; partyEl.hidden = true;
+    S.cin = { kind, t0: performance.now(), saved: tpv }; tpv = false; document.body.classList.add('cine'); DLG = null; dlgEl.hidden = true; EV.blocking = false;
+    EV.units.filter(u => u.team === 'en' && !u.boss).forEach(u => { u.hp = 0; u.dead = 999; u.av.g.visible = false; });
+    if (EV.boss) EV.boss.stun = 999;
+  }
+  function cinEnd(after){ const S = EV.st, c = S.cin; canvas.style.filter = ''; tpv = c.saved; document.body.classList.remove('cine'); endCard(''); BL.mood = undefined; stopEvent(true); if (after) after(); }
+  function cinLook(x, z, dt){ yaw += angDiff(yaw, Math.atan2(-(x - pos.x), -(z - pos.z))) * Math.min(1, dt * 2); pitch += (-.08 - pitch) * Math.min(1, dt * 2); }
+  function cinStep(dt, now){
+    const S = EV.st, c = S.cin, T = (now - c.t0) / 1000, b = EV.boss;
+    if (c.kind === 'synth') {
+      if (b) cinLook(b.x, b.z, dt);
+      if (!c.copies) { c.copies = []; for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, L = i % 3 === 0 ? Object.assign({}, look, { outfit: 'copycat' }) : i % 3 === 1 ? Object.assign({}, look) : crowdLook(i), av = avatar(L); av.g.position.set(b.x + Math.cos(a) * 2.6, 0, b.z + Math.sin(a) * 2.6); av.g.rotation.y = -a; eventScene.add(av.g); c.copies.push(av); } say('Its body breaks apart into everyone it ever copied.', 3600); }
+      c.copies.forEach((av, i) => { const gone = T > 1.5 + i * .5; av.g.visible = !gone && Math.random() > .15; });
+      if (b && T > 6) { if (!c.s0) c.s0 = b.av.g.scale.x; const k = clamp((T - 6) / 2.5, 0, 1); b.av.g.scale.setScalar(c.s0 * (1 - .82 * k)); }
+      if (T > 9 && !c.l1) { c.l1 = 1; DLG = null; dlgPlay([['The Synthetic', 'I only wanted to be real too.']]); }
+      if (T > 13 && !c.dead) { c.dead = 1; if (b) b.av.g.visible = false; say('It stops moving. You carry it home and leave its pod door open.', 4200); SG.podOpen = Object.assign(SG.podOpen || {}, { synthetic: 1 }); saveSG(); }
+      if (T > 17 && !c.b1) { c.b1 = 1; fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); endCard('Back in the lair, every clock stops.'); }
+      if (T > 21 && !c.b2) { c.b2 = 1; endCard('The Deadline’s pod is empty.'); SG.podOut = Object.assign(SG.podOut || {}, { deadline: 1 }); saveSG(); }
+      if (T > 25 && !c.b3) { c.b3 = 1; endCard('Time’s up.'); tone(880, .1, 'square', .05); setTimeout(() => tone(880, .1, 'square', .05), 500); }
+      if (T > 29 && !c.done) { c.done = 1; storyFlag('y4end'); cinEnd(() => { fadeEl.classList.remove('on'); say('Issue #17 has appeared in the comic in the lair.', 3600); }); }
+    }
+    if (c.kind === 'dl') {
+      if (b) cinLook(b.x, b.z, dt);
+      if (!c.l1) { c.l1 = 1; dlgPlay([['ME', 'You eat time. Fine. I learned from the best how to copy things.'], ['ME', 'Here. Take all of mine, and give it to the city.'], ['The Deadline', 'No. That isn’t how this—']]); }
+      if (T > 8 && b && !c.sand) { c.sand = 1; const n = 500, P = new Float32Array(n * 3); for (let i = 0; i < n; i++) P.set([b.x + (Math.random() - .5) * 3, Math.random() * 4, b.z + (Math.random() - .5) * 3], i * 3); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); c.pts = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xE8C27A, size: .08 })); eventScene.add(c.pts); say('The Deadline crumbles into sand.', 3000); tone(60, 2, 'sawtooth', .05, 30); }
+      if (c.pts) { const a = c.pts.geometry.attributes.position.array; for (let i = 1; i < a.length; i += 3) a[i] = Math.max(0, a[i] - dt * (1 + (i % 7) * .3)); c.pts.geometry.attributes.position.needsUpdate = true; if (b) { b.av.g.position.y -= dt * .8; b.av.g.scale.multiplyScalar(1 - dt * .3); } }
+      if (T > 12 && !c.old) { c.old = 1; say('Your hands are shaking. They look old. You feel every year you just gave away.', 4000); canvas.style.filter = 'grayscale(.5) brightness(.9)'; }
+      if (T > 16 && !c.done) { c.done = 1; SG.flags.dlDone = 1; SG.flags.old = 1; const [mx, mz] = toMap(pos.x, pos.z); SG.flags.walk0 = Math.hypot(mx + 113, mz + 127); storyFlag('d4'); cinEnd(() => say('Walk to the lake. Every street you pass starts again.', 4200)); }
+    }
+    if (c.kind === 'scr') {
+      if (!c.paper) { c.paper = []; for (let i = 0; i < 70; i++) { const p = new THREE.Mesh(new THREE.PlaneGeometry(.35, .45), new THREE.MeshBasicMaterial({ color: 0xF4F1E8, side: THREE.DoubleSide })); p.position.set(b.x, 1 + Math.random() * 3, b.z); p.userData.v = V((Math.random() - .5) * 8, 2 + Math.random() * 5, (Math.random() - .5) * 8); eventScene.add(p); c.paper.push(p); } b.av.g.visible = false; if (S.shMesh) S.shMesh.visible = false; say('The Scrambler tears apart like a ripped page.', 3200); [300, 200, 120].forEach((f, i) => setTimeout(() => tone(f, .25, 'sawtooth', .05, f * 3), i * 90)); }
+      c.paper.forEach(p => { p.userData.v.y -= 6 * dt; p.position.addScaledVector(p.userData.v, dt); p.rotation.x += dt * 5; p.rotation.y += dt * 3; });
+      if (T > 3.5 && !c.b1) { c.b1 = 1; fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); endCard('The city unscrambles, street by street.'); }
+      if (T > 7.5 && !c.lake) { c.lake = 1; endCard(''); c.paper.forEach(p => eventScene.remove(p)); eventScene.background = new THREE.Color(0xE8B890); eventScene.fog.color.setHex(0xE8B890); if (BL.rain) BL.rain.visible = false;
+        c.lying = [[-116, Object.assign({}, look)], [-110, Object.assign({}, look)], [-104, Object.assign({}, look, { outfit: 'copycat' })]].map(([gx, L]) => { const [lx, lz] = toLocal(gx, -132), av = avatar(L); av.g.rotation.x = -Math.PI / 2; av.g.position.set(lx, .45, lz + .9); eventScene.add(av.g); return av; });
+        const [px, pz] = toLocal(-110, -123); pos.set(px, 1.6, pz); yaw = 0; pitch = -.35; fadeEl.classList.remove('on'); }
+      if (T > 10 && !c.l1) { c.l1 = 1; dlgPlay([['{N}', 'Good story.'], ['Echo', 'Better the second time.'], ['The Copycat', 'Same time next story?']]); }
+      if (T > 21 && !c.b2) { c.b2 = 1; fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); DLG = null; dlgEl.hidden = true; }
+      if (T > 23 && !c.done) { c.done = 1; storyFlag('fin18'); SG.i18 = true; saveSG(); if (BL.rain) BL.rain.visible = true;
+        cinEnd(() => { travel('lair'); pos.set(-3.3, 1.6, 7.3); yaw = Math.atan2(-(-4.8 + 3.3), -(8.6 - 7.3)); pitch = -.35; fadeEl.classList.remove('on');
+          const tilt = comicG && comicG.userData.cover && comicG.userData.cover.parent, t0 = performance.now(); if (tilt) { const r0 = tilt.rotation.x, tick = () => { const k = clamp((performance.now() - t0) / 1800, 0, 1); tilt.rotation.x = r0 + (-1.45 - r0) * k * k; if (k < 1) requestAnimationFrame(tick); }; tick(); }
+          say('The comic closes by itself. The cover is plain white now. It just says END.', 5000); setTimeout(() => showCredits('i18'), 6500); }); }
+    }
+  }
+  // Issue #17's last walk: he sits down between the two graves
+  function sceneOld(){ KIT.crouch = true; BL.sc.background.setHex(0xE8B890); BL.sc.fog.color.setHex(0xE8B890);
+    cityScene([['ME', 'Look at that.'], ['ME', 'I finally got old. They never got to.']], () => toLocal(-113, -134), () => {
+      fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); [0, 1, 2, 3, 4, 5].forEach(i => setTimeout(() => tone(i % 2 ? 1400 : 1100, .05, 'square', .04), i * 500));
+      setTimeout(() => endCard('He closes his eyes. Across the city, the clocks start ticking again.'), 800);
+      setTimeout(() => endCard('Three graves by the lake now. One of them has a cheap mask on it.'), 5200);
+      setTimeout(() => { endCard(''); KIT.crouch = false; SG.flags.old = 0; BL.mood = undefined; canvas.style.filter = ''; storyFlag('old17'); const [px, pz] = toLocal(-110, -118); pos.set(px, 1.6, pz); fadeEl.classList.remove('on'); say('Issue #18 has appeared in the comic in the lair. The last one.', 4200); }, 10000); }); }
+  // Issue #18 opens with the three of them standing on their own graves
+  function sceneWake(){
+    const figs = [[-110, Object.assign({}, look)], [-104, Object.assign({}, look, { outfit: 'copycat' })]].map(([gx, L]) => { const [lx, lz] = toLocal(gx, -130), av = avatar(L); av.g.position.set(lx, 0, lz); av.g.rotation.y = Math.PI; BL.sc.add(av.g); return av; });
+    cityScene([['{N}', 'I remember dying.'], ['Echo', 'Twice, for me. Sort of.'], ['The Copycat', 'Three graves. Three idiots standing on them.'], ['The Copycat', 'Something tore the story open. I can hear it chewing.'], ['{N}', 'Then let’s close it. All three of us, this time.']], () => toLocal(-107, -130), () => {
+      figs.forEach(f => { BL.sc.remove(f.g); disposeDeep(f.g); }); say('In fights you can switch between the three of you: Tab, or tap their names.', 4200); storyFlag('wake18'); });
+  }
+  function enterBlrAt(mx, mz){ enterBlr([mx, mz]); }
 
   // ======================= little things: the Bugle, voicemail, achievements, night, Diwali, pets =======================
   const deedsHeadlines = () => {
@@ -7547,6 +7827,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.dz) deathStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.fin) finalStep(dt, now);
+    if (EV && EV.k === 'st' && EV.st && EV.st.cin) cinStep(dt, now);
+    ch17Step(dt); partyHud();
     if (SG.active && SG.ch === 8 && SG.step === 1 && roofScene && !droneG) spawnDrones();
     if (EV && EV.k === 'cv' && EV.cx && EV.cx.gal && EV.cx.gal.phase === 'fall') galFall(dt, now);
     if (EV && EV.k === 'cv' && EV.cx && EV.cx.gal && EV.cx.gal.phase === 'eat') galEat(dt, now);
@@ -7557,7 +7839,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (lairScene && !bugleG) buildBugle();
     if (lairScene && !junk) buildJunk();
     if (lairScene && !comicG) buildComic();
-    if (comicG && comicG.userData.gold !== SG.gold) { comicG.userData.gold = SG.gold; comicG.userData.cover.material.map = comicTex(SG.gold); comicG.userData.cover.material.needsUpdate = true; }
+    { const cv = SG.i18 ? 'end' : SG.gold; if (comicG && comicG.userData.gold !== cv) { comicG.userData.gold = cv; comicG.userData.cover.material.map = comicTex(cv); comicG.userData.cover.material.needsUpdate = true; } }
     if (lairScene && !wallMap) buildWallMap();
     if (galBeaten && roofScene && !roofHelm) buildGalTrophy();
     if (diwaliG && !reduce) diwaliG.children.forEach(o => { if (o.userData.ph !== undefined) o.material.emissiveIntensity = 1 + Math.sin(now / 300 + o.userData.ph) * .6; });
@@ -7609,8 +7891,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if ((u.retarget = (u.retarget || 0) - dt) <= 0 || !u.tgt || !alive(u.tgt)) { u.retarget = 2; u.tgt = nearestFoe(u); }
       const T = u.tgt; if (!T) return;
       const r = Math.random(), d = Math.hypot(T.x - u.x, T.z - u.z);
-      u.act = ['copycat', 'broker2', 'rclone', 'clone2', 'clone3', 'echo'].includes(u.hero) ? (d < 3 ? { k: 'punch', t: .5 } : { k: 'dash', t: .9 }) : d < 3 ? { k: 'punch', t: .35 } : r < .45 ? { k: 'heat', t: .8 } : r < .75 ? { k: 'dash', t: .6 } : { k: godlike(u.hero) ? 'pulse' : 'freeze', t: .7 };
-      u.act.yaw = Math.atan2(-(T.x - u.x), -(T.z - u.z)); u.act.done = false; u.yaw = u.act.yaw;
+      u.act = ['copycat', 'broker2', 'rclone', 'clone2', 'clone3', 'echo', 'synth', 'dlboss', 'scrb'].includes(u.hero) ? (d < 3 ? { k: 'punch', t: .5 } : { k: 'dash', t: .9 }) : d < 3 ? { k: 'punch', t: .35 } : r < .45 ? { k: 'heat', t: .8 } : r < .75 ? { k: 'dash', t: .6 } : { k: godlike(u.hero) ? 'pulse' : 'freeze', t: .7 };
+      u.act.yaw = Math.atan2(-(T.x - u.x), -(T.z - u.z)); u.act.done = false; u.yaw = u.act.yaw; if (EV.foresight && u.act.k !== 'punch') u.act.t *= 1.8;
       if (u.act.k === 'pulse') { const pr0 = u.enraged ? 6.5 : 5; u.act.tel = new THREE.Mesh(new THREE.RingGeometry(pr0 - .4, pr0, 48), new THREE.MeshBasicMaterial({ color: 0xFF3C3C, transparent: true, opacity: .4, side: THREE.DoubleSide, depthWrite: false })); u.act.tel.rotation.x = -Math.PI / 2; u.act.tel.position.set(u.x, .05, u.z); eventScene.add(u.act.tel); }
       else if (u.act.k !== 'punch') { const L = u.act.k === 'freeze' ? 7 : 20; u.act.tel = new THREE.Mesh(new THREE.PlaneGeometry(u.act.k === 'freeze' ? 4 : 1.2, L), new THREE.MeshBasicMaterial({ color: 0xFF3C3C, transparent: true, opacity: .35, side: THREE.DoubleSide, depthWrite: false })); u.act.tel.rotation.x = -Math.PI / 2; u.act.tel.rotation.z = -u.yaw; const fx = -Math.sin(u.yaw), fz = -Math.cos(u.yaw); u.act.tel.position.set(u.x + fx * L / 2, .05, u.z + fz * L / 2); eventScene.add(u.act.tel); }
       return;
@@ -7627,7 +7909,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (a.k === 'freeze') { line(7, 2, 10); ringFx2(u.x + fx * 4, u.z + fz * 4, 2.5, 0xBFE8FF); bodies().forEach(o => { if (!o.isMe && alive(o) && teamOf(o) !== u.team && Math.hypot(o.x - u.x - fx * 4, o.z - u.z - fz * 4) < 3) o.stun = 1.2; }); if (Math.hypot(pos.x - u.x - fx * 4, pos.z - u.z - fz * 4) < 3) EV.slow = 2; }
       if (a.k === 'dash') { line(14, 1.2, 26); for (let k = 0; k < 14; k += .5) { const nx = u.x + fx * .5, nz = u.z + fz * .5; if (!evValid(nx, nz)) break; u.x = nx; u.z = nz; } A0shake(); tone(90, .3, 'sawtooth', .06, 40); }
       if (a.k === 'punch') { const T = u.tgt; if (T && alive(T) && Math.hypot(T.x - u.x, T.z - u.z) < 3.2) { hitUnit(T, 14 * wk, u); knock(T, T.x - u.x, T.z - u.z, 4); } }
-      a.t = ['copycat', 'broker2', 'rclone', 'clone2', 'clone3', 'echo'].includes(u.hero) ? (a.k === 'punch' ? 1.1 : 2) : a.k === 'punch' ? .5 : godlike(u.hero) ? (u.enraged ? .5 : .85) : 1.4;
+      a.t = ['copycat', 'broker2', 'rclone', 'clone2', 'clone3', 'echo', 'synth', 'dlboss', 'scrb'].includes(u.hero) ? (a.k === 'punch' ? 1.1 : 2) : a.k === 'punch' ? .5 : godlike(u.hero) ? (u.enraged ? .5 : .85) : 1.4;
     }
     if (a.done && a.t > 0 && u.tgt) { const T = u.tgt, dx = T.x - u.x, dz = T.z - u.z; if (Math.hypot(dx, dz) > 2.5) { moveUnit(u, dx, dz, HEROES[u.hero].speed * (EV.weak > 0 ? .5 : 1) * (u.enraged ? 1.35 : 1), dt); u.mv = 1; } u.yaw = Math.atan2(-dx, -dz); }
   }
@@ -7676,10 +7958,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       EV.t -= dt; EV.cd -= dt; EV.spCd -= dt; EV.inv -= dt; EV.rage -= dt; EV.swing = Math.max(0, EV.swing - dt); EV.slow = Math.max(0, (EV.slow || 0) - dt);
       if (H.regen || EV.rage > 0) EV.hp = Math.min(EV.max, EV.hp + (EV.rage > 0 ? 8 : H.regen) * dt);
       // chapters 9 to 12: Rayan heals a little, but only once he's had three seconds without getting hit
-      EV.calm = (EV.calm || 0) + dt; if ((EV.hero === 'rayan' || EV.hero === 'copyhero') && (EV.k === 'br' || EV.k === 'st') && EV.dead <= 0 && EV.calm > 3) EV.hp = Math.min(EV.max, EV.hp + (EV.pain || ch13() ? .3 : .6) * dt);
+      EV.calm = (EV.calm || 0) + dt; if (['rayan', 'copyhero', 'hero18', 'echo18', 'copy18'].includes(EV.hero) && (EV.k === 'br' || EV.k === 'st') && EV.dead <= 0 && EV.calm > 3) EV.hp = Math.min(EV.max, EV.hp + (EV.pain || ch13() ? .3 : .6) * dt);
       if (EV.dead > 0 && !(EV.k === 'wwh' && EV.hero === 'hulk')) { EV.dead -= dt; if (EV.dead <= 0) { const [x, z] = spawnOf(EV.team); pos.set(x, 1.6, z); EV.hp = EV.max; EV.inv = 2; } }
       EV.speed = H.speed * (EV.rage > 0 ? 1.3 : 1) * (EV.slow > 0 ? .5 : 1);
-      EV.units.forEach(u => u.remote ? null : botStep(u, dt, t));
+      EV.units.forEach(u => u.remote ? null : botStep(u, dt * (EV.slowThem > 0 && u.team !== EV.team ? .35 : 1), t));
       // Kryptonite emitter: insurgents standing in it charge it (if no Regime soldier is contesting)
       if (EV.k === 'inj') {
         const inPad = o => alive(o) && Math.hypot(o.x - EMIT.x, o.z - EMIT.z) < EMIT.r;
