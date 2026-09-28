@@ -3404,7 +3404,7 @@ body.photo .scarbanner{visibility:hidden}
     WEAPONS.forEach(w => { const r = rack[w.id]; r.wm.visible = isUnlocked(w.id) && !inv.includes(w.id) && !dustedWeapon(w.id); });
     lairAnim.sigLight.intensity = .8 + Math.sin(t * 1.3) * .15;
     if (gateAnim) { gateAnim.swirl.rotation.z -= dt * 1.2; gateAnim.ring.rotation.z += dt * .3; }
-    if (warT) { warT.globe.rotation.y += dt * .6; warT.panels.forEach((m, i) => m.position.y = 1.85 + Math.sin(t * 1.5 + i) * .04); }
+    if (warT) { warT.globe.rotation.y += dt * .6; warT.panels.forEach((m, i) => m.position.y = (i >= 4 ? 2.85 : 1.85) + Math.sin(t * 1.5 + i) * .04); }
   }
   function enterLair(){
     endTour(true); tip.classList.remove('on'); secret('lair');
@@ -3588,7 +3588,7 @@ body.photo .scarbanner{visibility:hidden}
     const where = { room: ', upstairs in my room', roof: ', up on the rooftop', hub: ', on Mandalink island', city: ', in the middle of Bangalore', space: ', in deep space' }[A.bz] || '';
     if (won) {
       if (escaped(A.def.id)) { recap.push(A.def.id); saveInstab(); setTimeout(() => say(`${A ? A.def.name : 'It'} is back in containment.`, 2600), 1200); }
-      if (!cel && A.def.id !== 'maw') { beaten.add(A.def.id); try { localStorage.setItem('ru-bosses', JSON.stringify([...beaten])); } catch (e) {} }
+      if (!cel && A.def.id !== 'maw') { addParts(2); beaten.add(A.def.id); try { localStorage.setItem('ru-bosses', JSON.stringify([...beaten])); } catch (e) {} }
       [523, 659, 784, 1046].forEach((f, k) => setTimeout(() => tone(f, .25, 'triangle', .06), k * 110));
       $('#arenaTitle').textContent = `${A.def.name}: defeated`; $('#arenaText').textContent = `${A.def.win} Finished off with ${A.w.name}${where}.` + (!cel && BOSSES.every(d => beaten.has(d.id)) ? ' ' + POST_CREDITS : '');
       if (!cel && BOSSES.every(d => beaten.has(d.id))) secret('credits');
@@ -3915,7 +3915,7 @@ body.photo .scarbanner{visibility:hidden}
     if (act2 === 'leave') { closePause(); endFight(); }
     if (act2 === 'unsnap') { unsnap(); renderPause(); }
     if (act2 === 'fx') { lowFx = !lowFx; fxChosen = true; try { localStorage.setItem('ru-lowfx', lowFx ? '1' : '0'); } catch (er) {} applyFx(); renderPause(); }
-    if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon', 'ru-arm', 'ru-evsolo', 'ru-evdone', 'ru-incursion', 'ru-instab', 'ru-recap', 'ru-lost', 'ru-saviour', 'ru-spark', 'ru-alt', 'ru-altseen', 'ru-metdoom', 'ru-inchero', 'ru-ach', 'ru-pet', 'ru-shop'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
+    if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon', 'ru-arm', 'ru-evsolo', 'ru-evdone', 'ru-incursion', 'ru-instab', 'ru-recap', 'ru-lost', 'ru-saviour', 'ru-spark', 'ru-alt', 'ru-altseen', 'ru-metdoom', 'ru-inchero', 'ru-ach', 'ru-pet', 'ru-shop', 'ru-parts', 'ru-wreck'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
   });
   menuBtn.onclick = () => openPause();
   function applyFx(){
@@ -4419,6 +4419,7 @@ body.photo .scarbanner{visibility:hidden}
       else if (kind === 'star') { g.beginPath(); for (let k = 0; k < 10; k++) { const a = -Math.PI / 2 + k * Math.PI / 5, r = k % 2 ? 22 : 52; g.lineTo(w / 2 + Math.cos(a) * r, h / 2 + Math.sin(a) * r); } g.closePath(); g.fill(); }
       else if (kind === 'S') { g.beginPath(); g.moveTo(w / 2, 14); g.lineTo(w - 12, 44); g.lineTo(w / 2, h - 12); g.lineTo(12, 44); g.closePath(); g.lineWidth = 8; g.stroke(); g.font = '900 64px Georgia, serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('S', w / 2, 58); }
       else if (kind === 'reactor') { const gr = g.createRadialGradient(w / 2, h / 2, 4, w / 2, h / 2, 50); gr.addColorStop(0, '#FFFFFF'); gr.addColorStop(.5, '#8FE8FF'); gr.addColorStop(1, 'rgba(143,232,255,0)'); g.fillStyle = gr; g.beginPath(); g.arc(w / 2, h / 2, 50, 0, 7); g.fill(); }
+      else if (kind === 'bolt') { g.beginPath(); [[74, 8], [36, 66], [60, 66], [48, 120], [92, 52], [66, 52], [82, 8]].forEach(([px, py], i) => i ? g.lineTo(px, py) : g.moveTo(px, py)); g.closePath(); g.fill(); }
       else if (kind === 'spider') { g.lineWidth = 6; g.beginPath(); g.ellipse(w / 2, h / 2, 12, 22, 0, 0, 7); g.fill(); [-1, 1].forEach(s => [[-30, -40], [-40, -8], [-40, 18], [-30, 46]].forEach(([dx, dy]) => { g.beginPath(); g.moveTo(w / 2, h / 2); g.lineTo(w / 2 + s * -dx, h / 2 + dy); g.stroke(); })); } });
   }
   // build a body. Feet at y = 0, facing -z (the way yaw 0 looks). burn: the right arm is burned (only ever true for you)
@@ -4597,6 +4598,35 @@ body.photo .scarbanner{visibility:hidden}
   OUTFITS.beyonder = { hero: 1, c1: '#F4F4F4', c2: '#FFC93C', skin: '#FFFFFF', hair: 'bald', metal: 1, cape: 1, gloves: 1 };
   HEROES.beyonder = { name: 'The Beyonder', outfit: 'beyonder', hp: 5000, kind: 'boss', dmg: 13, range: 2.8, cd: .9, speed: 6.2, r: .8, scale: 1.4 };
   const godlike = h => h === 'doom' || h === 'beyonder';
+
+  // ---------- four more events: Civil War, Secret Wars, Flashpoint, Darkseid Invades ----------
+  OUTFITS.flash = { hero: 1, c1: '#C8102E', c2: '#FFC93C', gloves: 1, mask: 'capcowl', emblem: 'bolt' };
+  OUTFITS.rflash = { hero: 1, c1: '#FFC93C', c2: '#C8102E', gloves: 1, mask: 'capcowl', emblem: 'bolt' };
+  OUTFITS.wonder = { hero: 1, c1: '#C8102E', c2: '#1C3F94', hair: 'long', hairCol: '#16181D', emblem: 'star', gloves: 1 };
+  OUTFITS.parademon = { hero: 1, c1: '#5A4A3A', c2: '#9CFF7A', gloves: 1, metal: 1, mask: 'helmet' };
+  OUTFITS.darkseid = { hero: 1, c1: '#16181D', c2: '#3A3D44', skin: '#6A6E78', hair: 'bald', gloves: 1, metal: 1 };
+  HEROES.flash = { name: 'The Flash', outfit: 'flash', hp: 100, kind: 'melee', dmg: 9, range: 2.2, cd: .2, sp: 'Speed Force dash', spCd: 4, speed: 9 };
+  HEROES.rflash = { name: 'Reverse-Flash', outfit: 'rflash', hp: 260, kind: 'melee', dmg: 8, range: 2.2, cd: .35, speed: 8 };
+  HEROES.wonder = { name: 'Wonder Woman', outfit: 'wonder', hp: 130, kind: 'melee', dmg: 15, range: 2.5, cd: .45, sp: 'Lasso of Truth', spCd: 6, speed: 5.2 };
+  HEROES.parademon = { name: 'Parademon', outfit: 'parademon', hp: 55, kind: 'ranged', dmg: 6, cd: .8, col: 0x9CFF7A, speed: 4.6 };
+  HEROES.darkseid = { name: 'Darkseid', outfit: 'darkseid', hp: 2800, kind: 'boss', dmg: 12, range: 2.8, cd: 1, speed: 5.2, r: .8, scale: 1.35 };
+  EVENTS.cw = { name: 'Civil War', teams: { tc: 'Team Cap', ti: 'Team Iron Man' }, col: { tc: '#3C7CFF', ti: '#C8102E' }, time: 240, goal: 20, pick: ['tc', 'ti'],
+    blurb: 'The heroes split over the Sokovia Accords. Pick a side: every takedown counts toward this month’s global leaderboard, which starts fresh on the 1st.' };
+  EVENTS.sw = { name: 'Secret Wars', teams: { rb: 'Rebels', dm: 'Doom’s Legion' }, col: { rb: '#3CE8A0', dm: '#9B4DFF' }, time: 240, goal: 120, fixed: 'rb',
+    blurb: 'Battleworld is carved into domains. Capture the three domain flags and hold them against Doom’s evil variants: every second you hold a flag scores a point.' };
+  EVENTS.fp = { name: 'Flashpoint', teams: { fl: 'The Flash', rf: 'Reverse-Flash' }, col: { fl: '#C8102E', rf: '#FFC93C' }, time: 180, goal: 10, fixed: 'fl',
+    blurb: 'The timeline has shattered. Race Reverse-Flash to collect ten timeline shards. Every shard you grab changes the world a little.' };
+  EVENTS.dks = { name: 'Darkseid Invades', teams: { jl: 'Justice League', apk: 'Apokolips' }, col: { jl: '#3C7CFF', apk: '#FF6A2E' }, time: 360, fixed: 'jl',
+    blurb: 'Boom tubes open, fire pits burn through the ground and Parademons pour out. Stay out of the pits and take Darkseid down.' };
+  EVENTS.avx.pick = ['av', 'xm']; EVENTS.wwh.pick = ['heroes', 'hulk']; EVENTS.inj.fixed = 'ins'; EVENTS.inc.fixed = 'def';
+  Object.assign(PICKS, { tc: ['cap', 'wolverine', 'storm'], ti: ['iron', 'thor', 'cyclops'], rb: ['cap', 'iron', 'thor', 'storm', 'batman', 'wonder', 'flash'], fl: ['flash'], jl: ['batman', 'wonder', 'flash', 'arrow', 'harleyq'] });
+  const isPvp = k => k === 'avx' || k === 'cw';
+  const scored = k => isPvp(k) || k === 'sw' || k === 'fp';
+  const FOE = { av: 'xm', xm: 'av', hulk: 'heroes', heroes: 'hulk', ins: 'reg', tc: 'ti', ti: 'tc', rb: 'dm', fl: 'rf', jl: 'apk', def: 'inc' };
+  const LBK = { av: 'a', xm: 'x', tc: 'c', ti: 'm' };
+  const FLAGS = [[0, -14, 'Castle Doom'], [-12, 7, 'Killiseum'], [12, 7, 'Greenland']];
+  const PITS = [[-7, -7, 2.4], [8, -4, 2.2], [-4, 9, 2.2], [10, 10, 2]];
+  const monthNow = () => new Date().toISOString().slice(0, 7);
   HEROES.anchor = { name: 'Universe anchor', hp: 600, kind: 'static', r: 1.1 };
   const RIFTS = [45, 135, 225, 315].map(a => [Math.cos(a * Math.PI / 180) * 24, Math.sin(a * Math.PI / 180) * 24]);
   // solo records, and which events you've played (the Final Incursion is open from the start)
@@ -4606,14 +4636,14 @@ body.photo .scarbanner{visibility:hidden}
   const heroLook = h => Object.assign({}, look, { outfit: HEROES[h].outfit, mask: 1, cape: 1 });
   // ---------- the global leaderboard (kept on the relay; the public relay can reset it now and then) ----------
   let pid = null; try { pid = localStorage.getItem('ru-pid'); if (!pid) { pid = Math.random().toString(36).slice(2, 12); localStorage.setItem('ru-pid', pid); } } catch (e) { pid = Math.random().toString(36).slice(2, 12); }
-  let myLb = { a: 0, x: 0, h: 0, r: 0, d: 0, w: 0, l: 0, i: 0, f: 0 }; try { Object.assign(myLb, JSON.parse(localStorage.getItem('ru-lb') || '{}')); } catch (e) {}
+  let myLb = { a: 0, x: 0, h: 0, r: 0, d: 0, w: 0, l: 0, i: 0, f: 0, c: 0, m: 0, g: 0, y: 0, z: 0, k: 0, mo: '' }; try { Object.assign(myLb, JSON.parse(localStorage.getItem('ru-lb') || '{}')); } catch (e) {}
   const lbAll = new Map(); let lbDirty = false, lbT = 0;
-  function lbAdd(k, n){ if (EV && EV.solo) return; myLb[k] = Math.round((myLb[k] || 0) + n); lbDirty = true; try { localStorage.setItem('ru-lb', JSON.stringify(myLb)); } catch (e) {} }
-  function lbTotals(){ const t = Object.assign({}, myLb); lbAll.forEach((v, id) => { if (id !== pid) Object.keys(t).forEach(k => t[k] += v[k] || 0); }); return t; }
+  function lbAdd(k, n){ if (EV && EV.solo) return; if ((k === 'c' || k === 'm') && myLb.mo !== monthNow()) { myLb.mo = monthNow(); myLb.c = myLb.m = 0; } myLb[k] = Math.round((myLb[k] || 0) + n); lbDirty = true; try { localStorage.setItem('ru-lb', JSON.stringify(myLb)); } catch (e) {} }
+  function lbTotals(){ const t = Object.assign({}, myLb), mo = monthNow(); if (myLb.mo !== mo) t.c = t.m = 0; lbAll.forEach((v, id) => { if (id !== pid) Object.keys(t).forEach(k => { if (k === 'mo' || (k === 'c' || k === 'm') && v.mo !== mo) return; t[k] += v[k] || 0; }); }); return t; }
   function lbFlush(dt){ if ((lbT -= dt) > 0 || !lbDirty || !mq) return; lbT = 3; lbDirty = false; mq.pub(`${MP_TOPIC}/lb/${pid}`, JSON.stringify(myLb), true); }
-  function lbMsg(id, text){ try { const d = JSON.parse(text), o = {}; ['a', 'x', 'h', 'r', 'd', 'w', 'l', 'i', 'f'].forEach(k => o[k] = clamp(Math.round(+d[k] || 0), 0, 1e6)); lbAll.set(id.slice(0, 16), o); } catch (e) {} }
+  function lbMsg(id, text){ try { const d = JSON.parse(text), o = {}; ['a', 'x', 'h', 'r', 'd', 'w', 'l', 'i', 'f', 'c', 'm', 'g', 'y', 'z', 'k'].forEach(k => o[k] = clamp(Math.round(+d[k] || 0), 0, 1e6)); o.mo = /^\d{4}-\d{2}$/.test(d.mo) ? d.mo : ''; lbAll.set(id.slice(0, 16), o); } catch (e) {} }
   const fmtN = n => Math.round(n).toLocaleString();
-  function lbLine(k){ const t = lbTotals(); return k === 'avx' ? `Avengers ${fmtN(t.a)} · X-Men ${fmtN(t.x)}` : k === 'wwh' ? `Hulk wins ${fmtN(t.h)} · Hero wins ${fmtN(t.r)}` : k === 'inc' ? `Incursions stopped ${fmtN(t.i)} \u00B7 Worlds lost ${fmtN(t.f)}` : `Damage to the Regime ${fmtN(t.d)} \u00B7 Superman defeated ${fmtN(t.w)} times`; }
+  function lbLine(k){ const t = lbTotals(); return k === 'avx' ? `Avengers ${fmtN(t.a)} · X-Men ${fmtN(t.x)}` : k === 'wwh' ? `Hulk wins ${fmtN(t.h)} · Hero wins ${fmtN(t.r)}` : k === 'inc' ? `Incursions stopped ${fmtN(t.i)} \u00B7 Worlds lost ${fmtN(t.f)}` : k === 'cw' ? `This month: Team Cap ${fmtN(t.c)} \u00B7 Team Iron Man ${fmtN(t.m)}` : k === 'sw' ? `Battleworld freed ${fmtN(t.g)} times` : k === 'fp' ? `Timelines fixed ${fmtN(t.y)} \u00B7 Reverse-Flash wins ${fmtN(t.z)}` : k === 'dks' ? `Darkseid defeated ${fmtN(t.k)} times` : `Damage to the Regime ${fmtN(t.d)} \u00B7 Superman defeated ${fmtN(t.w)} times`; }
   // ---------- the arena (one place, dressed differently for each event) ----------
   const ER = 28, PILLARS = [];
   for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + Math.PI / 8; PILLARS.push({ x: Math.cos(a) * 12.5, z: Math.sin(a) * 12.5, r: 1 }); }
@@ -4624,7 +4654,7 @@ body.photo .scarbanner{visibility:hidden}
     if (eventScene) { if (eventScene.userData.homeG) eventScene.remove(eventScene.userData.homeG); disposeDeep(eventScene); }
     const sc = eventScene = new THREE.Scene();
     PILLARS.length = 0; if (!home) PILL0.forEach(p => PILLARS.push(p));
-    const T = { avx: { sky: 0x0B1224, fog: 0x0B1224, floor: '#1B2233', line: '#3C7CFF', wall: 0x2A3550 }, wwh: { sky: 0x6B3A1E, fog: 0x7A4A2A, floor: '#C9A46A', line: '#8A6B4A', wall: 0x8A6B4A }, inj: { sky: 0x1A1416, fog: 0x2A1E1E, floor: '#3A3A3E', line: '#C8102E', wall: 0x2A2D33 }, inc: { sky: 0x12051F, fog: 0x2A0F3A, floor: home ? '#3A3430' : '#241A30', line: '#9B4DFF', wall: 0x2A1A3A } }[k];
+    const T = { avx: { sky: 0x0B1224, fog: 0x0B1224, floor: '#1B2233', line: '#3C7CFF', wall: 0x2A3550 }, wwh: { sky: 0x6B3A1E, fog: 0x7A4A2A, floor: '#C9A46A', line: '#8A6B4A', wall: 0x8A6B4A }, inj: { sky: 0x1A1416, fog: 0x2A1E1E, floor: '#3A3A3E', line: '#C8102E', wall: 0x2A2D33 }, inc: { sky: 0x12051F, fog: 0x2A0F3A, floor: home ? '#3A3430' : '#241A30', line: '#9B4DFF', wall: 0x2A1A3A }, cw: { sky: 0x101826, fog: 0x1A2233, floor: '#2A2D38', line: '#C8102E', wall: 0x2A3040 }, sw: { sky: 0x1A1030, fog: 0x2A1A3A, floor: '#2A3A2A', line: '#3CE8A0', wall: 0x3A2A4A }, fp: { sky: 0x240808, fog: 0x3A1010, floor: '#3A1A1A', line: '#FFC93C', wall: 0x4A1A1A }, dks: { sky: 0x2A0A05, fog: 0x3A1205, floor: '#2A1A12', line: '#FF6A2E', wall: 0x3A1A0A } }[k];
     sc.background = new THREE.Color(T.sky); sc.fog = new THREE.Fog(T.fog, 30, 90);
     sc.add(new THREE.HemisphereLight(0xFFFFFF, 0x333344, .75)); const sun = new THREE.DirectionalLight(0xFFF1DC, .8); sun.position.set(10, 20, 8); sc.add(sun);
     const ft = tex(512, 512, (g, w, h) => { g.fillStyle = T.floor; g.fillRect(0, 0, w, h); g.strokeStyle = T.line; g.globalAlpha = .35; g.lineWidth = 3; for (let i = 0; i <= w; i += 64) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.moveTo(0, i); g.lineTo(w, i); g.stroke(); } if (k !== 'avx') { g.globalAlpha = .12; for (let i = 0; i < 400; i++) { g.fillStyle = '#000'; g.fillRect(Math.random() * w, Math.random() * h, 3, 3); } } });
@@ -4639,6 +4669,11 @@ body.photo .scarbanner{visibility:hidden}
     if (k === 'avx') { sign('AVENGERS', '#3C7CFF', 0, ER + 1.5, Math.PI); sign('X-MEN', '#F2C230', 0, -ER - 1.5, 0); pad(0, 22, 0x3C7CFF); pad(0, -22, 0xF2C230);
       const ph = new THREE.Mesh(new THREE.SphereGeometry(4, 24, 16), new THREE.MeshBasicMaterial({ color: 0xFF7A1E, transparent: true, opacity: .5, fog: false })); ph.position.set(0, 26, -60); sc.add(ph); }
     if (k === 'wwh') { sign('SAKAAR', '#5E9A3A', 0, -ER - 1.5, 0); pad(0, 0, 0x5E9A3A); }
+    if (k === 'cw') { sign('TEAM CAP', '#3C7CFF', 0, ER + 1.5, Math.PI); sign('TEAM IRON MAN', '#C8102E', 0, -ER - 1.5, 0); pad(0, 22, 0x3C7CFF); pad(0, -22, 0xC8102E); }
+    if (k === 'sw') { sign('BATTLEWORLD', '#3CE8A0', 0, -ER - 1.5, 0); sc.userData.flags = FLAGS.map(([x, z, nm]) => { const ring = new THREE.Mesh(new THREE.RingGeometry(2.9, 3.2, 48), new THREE.MeshBasicMaterial({ color: 0xDDDDDD, transparent: true, opacity: .8, side: THREE.DoubleSide })); ring.rotation.x = -Math.PI / 2; ring.position.set(x, .04, z); sc.add(ring); cyl(.06, .06, 4, mat(0xAAAAAA, { metalness: .6 }), x, 2, z, sc, 8); const flag = new THREE.Mesh(new THREE.PlaneGeometry(1.4, .9), new THREE.MeshBasicMaterial({ color: 0xDDDDDD, side: THREE.DoubleSide })); flag.position.set(x + .72, 3.5, z); sc.add(flag); const lb = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, map: tex(512, 96, (g, w, h) => { g.fillStyle = 'rgba(11,13,20,.8)'; g.fillRect(0, 0, w, h); g.fillStyle = '#FFFFFF'; g.font = `800 58px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(nm.toUpperCase(), w / 2, h / 2 + 3); }) })); lb.scale.set(3.2, .6, 1); lb.position.set(x, 4.8, z); sc.add(lb); return { ring, flag }; }); }
+    if (k === 'fp') sign('FLASHPOINT', '#FFC93C', 0, -ER - 1.5, 0);
+    if (k === 'dks') { sign('APOKOLIPS', '#FF6A2E', 0, -ER - 1.5, 0); PITS.forEach(([x, z, rr]) => { const pit = new THREE.Mesh(new THREE.CircleGeometry(rr, 32), new THREE.MeshBasicMaterial({ color: 0xFF6A2E })); pit.rotation.x = -Math.PI / 2; pit.position.set(x, .05, z); sc.add(pit); const rim = new THREE.Mesh(new THREE.RingGeometry(rr, rr + .35, 32), new THREE.MeshBasicMaterial({ color: 0x2A1208, side: THREE.DoubleSide })); rim.rotation.x = -Math.PI / 2; rim.position.set(x, .06, z); sc.add(rim); const l = new THREE.PointLight(0xFF6A2E, 1.6, 9, 2); l.position.set(x, 1, z); sc.add(l); });
+      [[-18, -14], [18, -14]].forEach(([x, z]) => { const bt = new THREE.Mesh(new THREE.TorusGeometry(2, .15, 8, 40), glowM(0xFFE0A0, { emissiveIntensity: 1.4 })); bt.position.set(x, 3, z); bt.lookAt(0, 3, 0); sc.add(bt); }); }
     if (k === 'inj') { sign('ONE EARTH GOVERNMENT', '#C8102E', 0, -ER - 1.5, 0); sign('THE INSURGENCY', '#9CFF7A', 0, ER + 1.5, Math.PI);
       for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, b = box(4 + Math.random() * 4, 8 + Math.random() * 16, 4, mat(0x2A2D33, { roughness: 1 }), Math.cos(a) * (ER + 8), 6, Math.sin(a) * (ER + 8), sc); b.rotation.set((Math.random() - .5) * .2, a, (Math.random() - .5) * .2); }
       const em = new THREE.Group(); em.position.set(EMIT.x, 0, EMIT.z); sc.add(em);
@@ -4682,7 +4717,7 @@ body.photo .scarbanner{visibility:hidden}
     EV.units.push(u); return u;
   }
   function dropUnit(u){ if (u.av.g.parent) u.av.g.parent.remove(u.av.g); disposeDeep(u.av.g); EV.units = EV.units.filter(q => q !== u); }
-  const spawnOf = team => { const K = EV.k; if (K === 'inc') { if (team === 'inc') { const [x, z] = RIFTS[Math.floor(Math.random() * RIFTS.length)]; return [x + (Math.random() - .5) * 3, z + (Math.random() - .5) * 3]; } return [(Math.random() - .5) * 5, (Math.random() - .5) * 5]; } if (K === 'wwh') { if (team === 'hulk') return [0, 0]; const a = Math.random() * Math.PI * 2; return [Math.cos(a) * 21, Math.sin(a) * 21]; } const s = team === 'av' || team === 'ins' ? 1 : -1; return [(Math.random() - .5) * 8, s * (21 + Math.random() * 2)]; };
+  const spawnOf = team => { const K = EV.k; if (K === 'inc') { if (team === 'inc') { const [x, z] = RIFTS[Math.floor(Math.random() * RIFTS.length)]; return [x + (Math.random() - .5) * 3, z + (Math.random() - .5) * 3]; } return [(Math.random() - .5) * 5, (Math.random() - .5) * 5]; } if (K === 'wwh') { if (team === 'hulk') return [0, 0]; const a = Math.random() * Math.PI * 2; return [Math.cos(a) * 21, Math.sin(a) * 21]; } const s = ['av', 'ins', 'tc', 'rb', 'fl', 'jl'].includes(team) ? 1 : -1; return [(Math.random() - .5) * 8, s * (21 + Math.random() * 2)]; };
   // ---------- starting and leaving ----------
   const evHud = $('#evHud'), evBox = $('#evBox'), evHurt = $('#evHurt');
   function remoteHulk(){ let r = null; ghosts.forEach((g, id) => { if (g.e && g.e.k === 'wwh' && g.e.h === 'hulk' && performance.now() - g.seen < 6000) r = id; }); return r; }
@@ -4690,16 +4725,16 @@ body.photo .scarbanner{visibility:hidden}
   const soloLine = k => { const r0 = soloRec[k] || { w: 0, l: 0 }; return `Your solo record: ${r0.w} win${r0.w === 1 ? '' : 's'}, ${r0.l} loss${r0.l === 1 ? '' : 'es'}`; };
   function openLobby(k){
     if (A) return say('Finish your fight first.', 2200);
-    closePause(); const E = EVENTS[k]; let team = k === 'inj' ? 'ins' : k === 'inc' ? 'def' : null;
+    closePause(); const E = EVENTS[k]; let team = E.fixed || null;
     const draw = () => {
       if (!mq) evMode = 'solo';
-      const solo = evMode === 'solo', teams = k === 'avx' ? ['av', 'xm'] : k === 'wwh' ? ['heroes', 'hulk'] : [team], hulkTaken = k === 'wwh' && !solo && remoteHulk();
+      const solo = evMode === 'solo', teams = E.pick || [team], hulkTaken = k === 'wwh' && !solo && remoteHulk();
       evBox.querySelector('.gbox').innerHTML = `<div class="ghead"><h2 class="display">${E.name}</h2><button class="close" type="button" data-ev="close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
         <p>${E.blurb}</p>
         <h3>How to play</h3><div class="lkrow"><button type="button" class="tbtn" data-ev="mode" data-v="solo" aria-pressed="${solo}">Solo (NPCs fill every spot)</button><button type="button" class="tbtn" data-ev="mode" data-v="online" aria-pressed="${!solo}" ${mq ? '' : 'disabled'}>Online with other visitors</button></div>
         <div class="lkrow">${['easy', 'normal', 'hard'].map(d => `<button type="button" class="tbtn" data-ev="diff" data-v="${d}" aria-pressed="${evDiff === d}">${d[0].toUpperCase() + d.slice(1)}</button>`).join('')}</div>
         <p class="gmsg">${solo ? soloLine(k) + '. Solo games stay on this device and don\u2019t count on the global leaderboard.' : mq ? 'Global: ' + lbLine(k) : ''}${mq ? '' : ' Turn on multiplayer in the menu to play online.'}</p>
-        ${k === 'inj' || k === 'inc' ? '' : `<h3>${k === 'wwh' ? 'Your role' : 'Your side'}</h3><div class="lkrow">${teams.map(t => `<button type="button" class="tbtn" data-ev="team" data-v="${t}" aria-pressed="${team === t}" ${t === 'hulk' && hulkTaken ? 'disabled' : ''}>${E.teams[t]}${t === 'hulk' && hulkTaken ? ' (taken by another player)' : ''}</button>`).join('')}</div>`}
+        ${E.fixed ? '' : `<h3>${k === 'wwh' ? 'Your role' : 'Your side'}</h3><div class="lkrow">${teams.map(t => `<button type="button" class="tbtn" data-ev="team" data-v="${t}" aria-pressed="${team === t}" ${t === 'hulk' && hulkTaken ? 'disabled' : ''}>${E.teams[t]}${t === 'hulk' && hulkTaken ? ' (taken by another player)' : ''}</button>`).join('')}</div>`}
         ${team ? `<h3>Your hero</h3><div class="lkrow">${PICKS[team].map(h => `<button type="button" class="tbtn" data-ev="go" data-v="${h}">${HEROES[h].name}</button>`).join('')}</div><p class="gmsg">${PICKS[team].map(h => `${HEROES[h].name}: ${HEROES[h].sp}`).join(' · ')}</p>` : '<p class="gmsg">Pick a side to choose your hero.</p>'}`;
     };
     evBox.onclick = e => { const b = e.target.closest('[data-ev]'); if (!b) return; const a = b.dataset.ev;
@@ -4719,8 +4754,11 @@ body.photo .scarbanner{visibility:hidden}
       Object.keys(EVENTS[k].teams).forEach(t => EV.score[t] = 0);
       EV.me = { isMe: 1, team, hero, x: 0, z: 0, dead: 0, r: H.r || .5 };
       // fill the teams with bots
-      const foe = { av: 'xm', xm: 'av', hulk: 'heroes', heroes: 'hulk', ins: 'reg' }[team];
-      if (k === 'avx') { PICKS[team].filter(h => h !== hero).concat(PICKS[team][0]).slice(0, 3).forEach(h => place(addUnit({ hero: h, team }))); PICKS[foe].concat(PICKS[foe][1]).forEach(h => place(addUnit({ hero: h, team: foe }))); }
+      const foe = FOE[team];
+      if (k === 'sw') { PICKS.rb.filter(h => h !== hero).slice(0, 4).forEach(h => place(addUnit({ hero: h, team: 'rb' }))); ['v_iron', 'v_cap', 'v_thor', 'v_batman'].forEach(h => place(addUnit({ hero: h, team: 'dm' }))); for (let i = 0; i < 2; i++) place(addUnit({ hero: 'trooper', team: 'dm' })); EV.flags = FLAGS.map(([x, z, nm]) => ({ x, z, nm, own: 0, cap: 0 })); }
+      if (k === 'fp') { place(addUnit({ hero: 'rflash', team: 'rf' })); EV.shards = []; }
+      if (k === 'dks') { PICKS.jl.filter(h => h !== hero).slice(0, 3).forEach(h => place(addUnit({ hero: h, team: 'jl' }))); const dk = addUnit({ hero: 'darkseid', team: 'apk' }); dk.x = 0; dk.z = -16; dk.boss = 1; EV.boss = dk; for (let i = 0; i < 5; i++) place(addUnit({ hero: 'parademon', team: 'apk' })); EV.tubeT = 20; }
+      if (isPvp(k)) { PICKS[team].filter(h => h !== hero).concat(PICKS[team][0]).slice(0, 3).forEach(h => place(addUnit({ hero: h, team }))); PICKS[foe].concat(PICKS[foe][1]).forEach(h => place(addUnit({ hero: h, team: foe }))); }
       if (k === 'wwh') { if (team === 'hulk') ['cap', 'iron', 'thor', 'wolverine', 'cyclops'].forEach(h => place(addUnit({ hero: h, team: 'heroes' }))); else { ['iron', 'thor', 'wolverine', 'storm'].filter(h => h !== hero).slice(0, 4).forEach(h => place(addUnit({ hero: h, team: 'heroes' }))); if (opts.solo || !remoteHulk()) place(addUnit({ hero: 'hulk', team: 'hulk', hp: 2200, max: 2200 })); } }
       if (k === 'inj') { PICKS.ins.filter(h => h !== hero).forEach((h, i) => place(addUnit({ hero: h, team: 'ins', role: i === 0 ? 'pad' : '' }))); const sm = place(addUnit({ hero: 'superman', team: 'reg' })); sm.boss = 1; EV.boss = sm; for (let i = 0; i < 5; i++) place(addUnit({ hero: 'trooper', team: 'reg' })); }
       if (k === 'wwh' && team === 'hulk') EV.boss = null;
@@ -4733,7 +4771,7 @@ body.photo .scarbanner{visibility:hidden}
       inWorld = true; zone = 'event'; falling = false; vy = 0; walkTarget = null; pos.set(sx, 1.6, sz); yaw = home ? Math.PI : sz > 0 ? 0 : Math.PI; pitch = -.08; if (k === 'wwh' && team === 'heroes') yaw = Math.atan2(sx, sz);
       closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Leave the event'; jumpBtn.hidden = fine; uiZone();
       evHud.hidden = false; $('#evEnd').hidden = true; ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = false); $('#evSp').textContent = `${H.sp}\n(E)`; document.body.classList.add('inevent');
-      say(k === 'avx' ? `You’re ${H.name}. First team to ${EVENTS.avx.goal} takedowns wins.` : k === 'wwh' ? (team === 'hulk' ? 'You’re the Hulk. Smash the heroes and survive until time runs out. Space to leap, E to thunderclap.' : 'Take the Hulk down before time runs out. Stay spread out: his thunderclap hits everyone nearby.') : k === 'inc' ? 'The other Earth is coming. Hold the three golden anchors against the variants pouring out of the rifts, then take down Doom.' : 'Superman is invulnerable. Hold the green Kryptonite emitter to weaken him, then hit him with everything.', 5200);
+      say(isPvp(k) ? `You’re ${H.name}. First team to ${EVENTS[k].goal} takedowns wins.` : k === 'sw' ? 'Capture the three domain flags: stand in a ring with no enemies inside. First side to 120 points wins.' : k === 'fp' ? 'You’re the Flash. Grab ten glowing timeline shards before Reverse-Flash does. E dashes through anyone in your way.' : k === 'dks' ? 'Darkseid is here. Stay out of the fire pits, beat the Parademons and take him down. Watch out for his Omega Beams.' : k === 'wwh' ? (team === 'hulk' ? 'You’re the Hulk. Smash the heroes and survive until time runs out. Space to leap, E to thunderclap.' : 'Take the Hulk down before time runs out. Stay spread out: his thunderclap hits everyone nearby.') : k === 'inc' ? 'The other Earth is coming. Hold the three golden anchors against the variants pouring out of the rifts, then take down Doom.' : 'Superman is invulnerable. Hold the green Kryptonite emitter to weaken him, then hit him with everything.', 5200);
       if (home) { const bh = instab >= 6 ? 'The Beyonder' : 'Doom'; say(opts.hunted ? `${bh} is waiting in the street outside your house. Go and beat him, and hold the anchors.` : `${bh} doesn\u2019t wait at the war table any more. He\u2019s outside your house. Beat him there and hold the anchors.`, 5200); EV.shake = .8; tone(50, 1.5, 'sawtooth', .08, 25); }
       if (fine && canvas.requestPointerLock) canvas.requestPointerLock();
     }, '#0B0D14');
@@ -4778,6 +4816,8 @@ body.photo .scarbanner{visibility:hidden}
     if (hero === 'wolverine') { if (src.isMe) { EV.rage = 5; say('Berserker rage!', 1400); } else src.rage = 5; }
     if (hero === 'hulk') { aoe(x, z, 7, 30, 6, 0x9CFF7A); if (src.isMe) EV.shake = .6; }
     if (hero === 'batman') [-1, 0, 1].forEach(k2 => shoot({ x, z, yaw: dir + k2 * .2, dmg: 10 * boost, team, col: 0x16181D, from, stun: .8 }));
+    if (hero === 'flash') { beam(7, 1.1, 18, 0xFFC93C, 2); if (src.isMe) { const nx = pos.x + fx * 6, nz = pos.z + fz * 6; if (evValid(nx, nz)) { pos.x = nx; pos.z = nz; } } else { const nx = src.x + fx * 6, nz = src.z + fz * 6; if (evValid(nx, nz)) { src.x = nx; src.z = nz; } } }
+    if (hero === 'wonder') { bodies().forEach(u => { if (!alive(u) || teamOf(u) === team || Math.hypot(u.x - x, u.z - z) > 4.5) return; hitUnit(u, 16 * boost, from); if (!u.isMe && !u.boss) u.stun = 1.6; }); ringFx2(x, z, 4.5, 0xFFC93C); if (src.isMe) say('Lasso of Truth!', 1200); }
     if (hero === 'arrow') shoot({ x, z, yaw: dir, dmg: 12 * boost, team, col: 0x9CFF7A, from, aoe: 3, aoeD: 22 });
     if (hero === 'harleyq') aoe(x, z, 3.2, 22, 3, 0xE0314B);
   }
@@ -4795,8 +4835,8 @@ body.photo .scarbanner{visibility:hidden}
   function killUnit(u, from){
     u.dead = u.boss || u.hero === 'hulk' || u.hero === 'anchor' || (EV.k === 'inc' && u.team === 'inc') ? 999 : u.hero === 'trooper' ? 8 : 6; u.hp = 0; u.av.g.visible = false;
     if (u.hero === 'anchor') { const left = EV.anchors.filter(a => a.dead <= 0).length; say(left ? `An anchor fell! ${left} left.` : 'The last anchor fell\u2026', 3000); tone(70, 1, 'sawtooth', .07, 40); if (!left) return endMatch(false); }
-    const killerTeam = from === 'me' ? EV.team : from && from.team; if (killerTeam) EV.score[killerTeam] = (EV.score[killerTeam] || 0) + 1;
-    if (from === 'me') { EV.kos++; if (EV.k === 'avx') lbAdd(EV.team === 'av' ? 'a' : 'x', 1); tone(180, .3, 'square', .05, 60); }
+    const killerTeam = from === 'me' ? EV.team : from && from.team; if (killerTeam && EV.k !== 'sw' && EV.k !== 'fp') EV.score[killerTeam] = (EV.score[killerTeam] || 0) + 1;
+    if (from === 'me') { EV.kos++; if (isPvp(EV.k)) lbAdd(LBK[EV.team], 1); tone(180, .3, 'square', .05, 60); }
     if ((u.boss || u.hero === 'hulk') && !u.remote) endMatch(u.team !== EV.team);
     checkGoal();
   }
@@ -4805,15 +4845,17 @@ body.photo .scarbanner{visibility:hidden}
     if (!(from && from.remote)) d *= EV.diffIn;
     EV.hp -= d; EV.hurtT = .4; tone(120, .15, 'sawtooth', .04, 70);
     const oneLife = EV.k === 'wwh' && EV.hero === 'hulk';
-    if (EV.hp <= 0) { EV.hp = 0; EV.dead = oneLife ? 999 : 4; EV.deaths++; const kt = from && from.team; if (kt) EV.score[kt] = (EV.score[kt] || 0) + 1;
+    if (EV.hp <= 0) { EV.hp = 0; EV.dead = oneLife ? 999 : 4; EV.deaths++; const kt = from && from.team; if (kt && EV.k !== 'sw' && EV.k !== 'fp') EV.score[kt] = (EV.score[kt] || 0) + 1;
       if (from && from.remote && mq) mq.pub(`${MP_TOPIC}/ev/${mpId}`, JSON.stringify({ ko: from.id }));
       if (oneLife) endMatch(false); else say('Down! Back in 4 seconds\u2026', 2400); checkGoal(); }
   }
-  function checkGoal(){ if (EV.k === 'avx' && !EV.over) { const t = Object.keys(EV.score).find(t => EV.score[t] >= EVENTS.avx.goal); if (t) endMatch(t === EV.team); } }
+  function checkGoal(){ if (scored(EV.k) && !EV.over) { const t = Object.keys(EV.score).find(t => EV.score[t] >= EVENTS[EV.k].goal); if (t) endMatch(t === EV.team); } }
   function endMatch(won){
     if (EV.over) return; EV.over = true; const endFight = EV.k === 'inc' && instab >= 6; if (document.pointerLockElement) document.exitPointerLock();
     const E = EVENTS[EV.k], other = Object.keys(E.teams).find(t => t !== EV.team);
-    if (EV.k === 'avx' && won) lbAdd(EV.team === 'av' ? 'a' : 'x', 5);
+    if (isPvp(EV.k) && won) lbAdd(LBK[EV.team], 5);
+    if (EV.k === 'sw' && won) lbAdd('g', 1); if (EV.k === 'fp') lbAdd(won ? 'y' : 'z', 1); if (EV.k === 'dks' && won) lbAdd('k', 1);
+    if (won) addParts(1);
     if (EV.k === 'wwh') lbAdd(won === (EV.team === 'hulk') ? 'h' : 'r', 1);
     if (EV.k === 'inj') lbAdd(won ? 'w' : 'l', 1);
     if (EV.k === 'inc') { lbAdd(won ? 'i' : 'f', 1);
@@ -4822,7 +4864,7 @@ body.photo .scarbanner{visibility:hidden}
       if (won && (scarOn || altOn)) { if (scarOn) setScar(false); if (altOn) setAlt(false); setTimeout(() => say('You stopped the incursion. Your Earth, and your room, are whole again.', 4200), 2500); } }
     if (!evDone.includes(EV.k)) { evDone.push(EV.k); try { localStorage.setItem('ru-evdone', JSON.stringify(evDone)); } catch (e) {} }
     if (EV.solo) { const r0 = soloRec[EV.k] || (soloRec[EV.k] = { w: 0, l: 0 }); r0[won ? 'w' : 'l']++; try { localStorage.setItem('ru-evsolo', JSON.stringify(soloRec)); } catch (e) {} }
-    const title = EV.k === 'avx' ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : endFight ? 'The Beyonder wins. Everything goes white\u2026' : 'The two Earths are about to collide\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
+    const title = isPvp(EV.k) ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'sw' ? (won ? 'Battleworld is free! The Rebels hold the domains.' : 'Doom\u2019s Legion holds Battleworld.') : EV.k === 'fp' ? (won ? 'Timeline restored!' : 'Reverse-Flash wins. The timeline stays broken.') : EV.k === 'dks' ? (won ? 'Darkseid falls! Apokolips retreats.' : 'Darkseid is. And Darkseid wins.') : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : endFight ? 'The Beyonder wins. Everything goes white\u2026' : 'The two Earths are about to collide\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
     $('#evEndT').textContent = title; $('#evEndS').textContent = `Takedowns ${EV.kos} · Times down ${EV.deaths} · Damage ${fmtN(EV.dmg)}. ${EV.solo ? soloLine(EV.k) + '.' : mq ? 'Global: ' + lbLine(EV.k) : ''}`;
     $('#evEnd').hidden = false; [523, 659, 784].forEach((f, i) => setTimeout(() => tone(won ? f : f / 2, .2, 'triangle', .05), i * 110));
   }
@@ -4960,9 +5002,9 @@ body.photo .scarbanner{visibility:hidden}
     cyl(1.3, 1.1, .85, mat(0x2A2D33, { metalness: .6, roughness: .4 }), 0, .43, 0, g, 32);
     const top = new THREE.Mesh(new THREE.RingGeometry(1.05, 1.28, 48), new THREE.MeshBasicMaterial({ color: 0x7CF2FF, transparent: true, opacity: .7, side: THREE.DoubleSide })); top.rotation.x = -Math.PI / 2; top.position.y = .87; g.add(top);
     const globe = new THREE.Mesh(new THREE.IcosahedronGeometry(.45, 1), new THREE.MeshBasicMaterial({ color: 0x7CF2FF, wireframe: true, transparent: true, opacity: .8 })); globe.position.y = 1.5; g.add(globe);
-    const panels = Object.keys(EVENTS).map((k, i) => { const a = i / 4 * Math.PI * 2 + Math.PI / 4, c = document.createElement('canvas'); c.width = 420; c.height = 270;
+    const panels = Object.keys(EVENTS).map((k, i) => { const a = (i % 4) / 4 * Math.PI * 2 + Math.PI / 4 + (i >= 4 ? Math.PI / 4 : 0), c = document.createElement('canvas'); c.width = 420; c.height = 270;
       const m = new THREE.Mesh(new THREE.PlaneGeometry(1.4, .9), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(c), transparent: true, side: THREE.DoubleSide, depthWrite: false }));
-      m.position.set(Math.sin(a) * 1.5, 1.85, Math.cos(a) * 1.5); m.rotation.y = a; m.userData.egg = 'evpanel'; m.userData.ev = k; m.userData.c = c; g.add(m); return m; });
+      m.position.set(Math.sin(a) * (i >= 4 ? 1.75 : 1.5), i >= 4 ? 2.85 : 1.85, Math.cos(a) * (i >= 4 ? 1.75 : 1.5)); m.rotation.y = a; m.userData.egg = 'evpanel'; m.userData.ev = k; m.userData.c = c; g.add(m); return m; });
     const light = new THREE.PointLight(0x7CF2FF, .8, 7, 2); light.position.y = 2.2; g.add(light);
     const mk = addMarkerTo(lairScene, V(-7, 3.1, 3)); mk.userData.egg = 'wartable';
     warT = { g, globe, panels }; drawWarTable();
@@ -5178,15 +5220,8 @@ body.photo .scarbanner{visibility:hidden}
     });
     const sign = new THREE.Mesh(new THREE.PlaneGeometry(5, .8), new THREE.MeshBasicMaterial({ transparent: true, map: tex(700, 110, (c, w, h) => { c.fillStyle = 'rgba(40,0,0,.9)'; c.fillRect(0, 0, w, h); c.fillStyle = '#FF3C3C'; c.font = `900 70px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('CONTAINMENT BREACH', w / 2, h / 2 + 3); }) })); sign.position.set(0, 6.6, -10.9); g.add(sign);
     g.traverse(o => o.userData.noPick = true);
-    // lab junk for them to smash (kept clear of the pods, the rack, the board, the war table and the gate)
-    const wreckables = [[-3, -5, 'console'], [3.5, -4, 'crates'], [-10, -4, 'barrels'], [-12, 7.6, 'crates'], [3.8, 5.2, 'console'], [-3.6, 5.8, 'barrels'], [-13.6, -.8, 'console'], [5, -1, 'barrels']].map(([x, z, k]) => {
-      const w = new THREE.Group(); w.position.set(x, 0, z); w.rotation.y = Math.random() * 6; g.add(w); const steel = mat(0x4A4E58, { metalness: .6, roughness: .4 });
-      if (k === 'console') { box(1.4, .9, .7, steel, 0, .45, 0, w); const sc2 = box(1.2, .6, .05, glowM(0x3CE8E8, { emissiveIntensity: .7 }), 0, 1.25, -.2, w); sc2.rotation.x = -.3; }
-      if (k === 'crates') { box(.8, .8, .8, mat(0x7A5A3A), -.3, .4, 0, w); box(.7, .7, .7, mat(0x6A4A2E), .45, .35, .2, w); box(.6, .6, .6, mat(0x8A6A48), 0, 1.1, 0, w).rotation.y = .5; }
-      if (k === 'barrels') { [[-.35, 0], [.35, .1], [0, -.5]].forEach(([bx, bz]) => cyl(.3, .3, .9, mat(0x2E6B8A, { metalness: .5 }), bx, .45, bz, w, 14)); }
-      return { g: w, x, z, k, hp: 3, broken: false };
-    });
-    breach = { g, alarms, loose, siren: 0, lvl: instab, wreckables, cracks: [], debris: [], sparks: [], shake: 0 };
+    buildJunk();
+    breach = { g, alarms, loose, siren: 0, lvl: instab, wreckables: junk, cracks: [], debris: [], sparks: [], shake: 0 };
   }
   function breachStep(dt, now){
     if (!breach || breach.lvl !== instab) buildBreach(); if (!breach) return;
@@ -5244,11 +5279,8 @@ body.photo .scarbanner{visibility:hidden}
   function smash(w, l, bump){
     w.hp -= bump ? 3 : 1; w.g.rotation.z = (Math.random() - .5) * .3; burst(w.x, .9, w.z, w.k === 'console' ? 0x8FE8FF : 0xFFB45A, 8);
     if (near(w.x, w.z)) tone(w.k === 'console' ? 300 : 140, .15, 'square', .04, 90);
-    if (w.hp > 0) return; w.broken = true;
-    // it comes apart: the pieces scatter across the floor
-    w.g.children.forEach(c => { c.position.x += (Math.random() - .5) * 1.6; c.position.z += (Math.random() - .5) * 1.6; c.position.y = Math.min(c.position.y, .25); c.rotation.set(Math.random() * 3, Math.random() * 3, Math.random() * 3); if (c.material && c.material.emissive) { c.material = c.material.clone(); c.material.emissiveIntensity = 0; c.material.color.set(0x16181D); } });
+    if (w.hp > 0) return; breakJunk(w);
     crackAt(w.x, w.z, 2); chunks(w.x, .6, w.z, w.k === 'crates' ? 0x7A5A3A : 0x4A4E58, 6);
-    if (w.k === 'console') { const f = new THREE.PointLight(0xFF6A2E, 1.2, 5, 2); f.position.set(w.x, .6, w.z); breach.g.add(f); w.fire = f; }
     if (near(w.x, w.z)) { breach.shake = .4; say(`${l.def.name} wrecked the ${w.k === 'console' ? 'computer console' : w.k === 'crates' ? 'supply crates' : 'barrels'}.`, 2200); }
   }
   function wallCrater(x, z){ if (!breach) return; const m = new THREE.Mesh(new THREE.CircleGeometry(.9 + Math.random() * .5, 16), new THREE.MeshBasicMaterial({ map: crackTex(), transparent: true, depthWrite: false })); const wx = x <= -16.2 ? -17.85 : x >= 6.6 ? 7.3 : x, wz = z <= -7.6 ? -10.9 : z >= 9.6 ? 10.4 : z; m.position.set(wx, 1 + Math.random() * 1.5, wz); m.lookAt(x, m.position.y, z); breach.g.add(m); breach.cracks.push(m); chunks(wx, 1.5, wz, 0x2A2D33, 5); if (near(x, z)) { breach.shake = .5; tone(60, .5, 'sawtooth', .06, 30); } }
@@ -5504,6 +5536,93 @@ body.photo .scarbanner{visibility:hidden}
     setTimeout(() => { hunting = false; if (!EV && !A && !RUN && !inWorld) startEvent('inc', 'def', incHero, { solo: true, diff: evDiff, hunted: true }); }, 2600);
   }
 
+  // ---------- the lab junk: smashed things stay smashed until you fix them with parts from fights ----------
+  let junk = null, junkG = null, benchG = null;
+  let parts = 0; try { parts = +localStorage.getItem('ru-parts') || 0; } catch (e) {}
+  let wrecked = []; try { wrecked = JSON.parse(localStorage.getItem('ru-wreck') || '[]'); } catch (e) {}
+  const JUNK_AT = [[-3, -5, 'console'], [3.5, -4, 'crates'], [-10, -4, 'barrels'], [-12, 7.6, 'crates'], [3.8, 5.2, 'console'], [-3.6, 5.8, 'barrels'], [-13.6, -.8, 'console'], [5, -1, 'barrels']];
+  const junkName = k => k === 'console' ? 'computer console' : k === 'crates' ? 'supply crates' : 'barrels';
+  function addParts(n){ parts += n; try { localStorage.setItem('ru-parts', String(parts)); } catch (e) {} }
+  function saveWreck(){ wrecked = junk.map((w, i) => w.broken ? i : -1).filter(i => i >= 0); try { localStorage.setItem('ru-wreck', JSON.stringify(wrecked)); } catch (e) {} }
+  function buildJunk(){
+    if (junk || !lairScene) return; junkG = new THREE.Group(); lairScene.add(junkG);
+    junk = JUNK_AT.map(([x, z, k], i) => {
+      const w = new THREE.Group(); w.position.set(x, 0, z); w.rotation.y = (i * 2.3) % 6; junkG.add(w); const steel = mat(0x4A4E58, { metalness: .6, roughness: .4 });
+      if (k === 'console') { box(1.4, .9, .7, steel, 0, .45, 0, w); const sc2 = box(1.2, .6, .05, glowM(0x3CE8E8, { emissiveIntensity: .7 }), 0, 1.25, -.2, w); sc2.rotation.x = -.3; }
+      if (k === 'crates') { box(.8, .8, .8, mat(0x7A5A3A), -.3, .4, 0, w); box(.7, .7, .7, mat(0x6A4A2E), .45, .35, .2, w); box(.6, .6, .6, mat(0x8A6A48), 0, 1.1, 0, w).rotation.y = .5; }
+      if (k === 'barrels') { [[-.35, 0], [.35, .1], [0, -.5]].forEach(([bx, bz]) => cyl(.3, .3, .9, mat(0x2E6B8A, { metalness: .5 }), bx, .45, bz, w, 14)); }
+      w.traverse(o => o.userData.noPick = true);
+      const orig = w.children.map(c => ({ c, p: c.position.clone(), r: c.rotation.clone(), m: c.material }));
+      return { g: w, x, z, k, hp: 3, broken: false, orig };
+    });
+    wrecked.forEach(i => junk[i] && breakJunk(junk[i], true));
+    // the repair bench, by the stairs
+    const g = benchG = new THREE.Group(); g.position.set(-13, 0, 9.2); g.rotation.y = Math.PI; lairScene.add(g);
+    box(2, .9, .9, mat(0x5A4A3A), 0, .45, 0, g); box(2.1, .08, 1, mat(0x3A3D44, { metalness: .6 }), 0, .92, 0, g); cyl(.08, .08, .3, mat(0xC8102E), -.6, 1.1, 0, g, 8); box(.5, .15, .3, mat(0xFFC93C, { metalness: .5 }), .4, 1.03, .1, g);
+    g.userData.egg = 'repair'; const mk = addMarkerTo(lairScene, V(-13, 1.6, 9.2)); mk.userData.egg = 'repair';
+  }
+  function breakJunk(w, quiet){
+    w.broken = true; w.hp = 0;
+    w.g.children.forEach((c, i) => { c.position.x += (((i * 7) % 5) / 5 - .5) * 1.6; c.position.z += (((i * 3) % 5) / 5 - .5) * 1.6; c.position.y = Math.min(c.position.y, .25); c.rotation.set(i * 1.3, i * .7, i * 2.1); if (c.material && c.material.emissive) { c.material = c.material.clone(); c.material.emissiveIntensity = 0; c.material.color.set(0x16181D); } });
+    if (w.k === 'console') { const f = new THREE.PointLight(0xFF6A2E, 1.2, 5, 2); f.position.set(w.x, .6, w.z); junkG.add(f); w.fire = f; }
+    if (!quiet) saveWreck();
+  }
+  function repairJunk(){
+    const w = junk && junk.find(q => q.broken);
+    if (!w) return say(`Nothing in the lair is broken right now. You have ${parts} spare part${parts === 1 ? '' : 's'}.`, 3200);
+    if (parts < 2) return say(`Fixing the ${junkName(w.k)} takes 2 parts, and you have ${parts}. Win fights and events to earn more.`, 4200);
+    addParts(-2); w.orig.forEach(o => { o.c.position.copy(o.p); o.c.rotation.copy(o.r); o.c.material = o.m; }); w.g.rotation.z = 0; w.broken = false; w.hp = 3; if (w.fire) { junkG.remove(w.fire); w.fire = null; } saveWreck();
+    [392, 523, 659].forEach((f, i) => setTimeout(() => tone(f, .12, 'square', .04), i * 120)); return say(`Repaired the ${junkName(w.k)}. ${junk.filter(q => q.broken).length} broken thing${junk.filter(q => q.broken).length === 1 ? '' : 's'} left, ${parts} part${parts === 1 ? '' : 's'} to spare.`, 4000);
+  }
+
+  // ---------- Secret Wars: capture and hold the domain flags ----------
+  function swStep(dt){
+    const fl = eventScene.userData.flags;
+    EV.flags.forEach((f, i) => {
+      const near2 = tm => bodies().filter(o => alive(o) && teamOf(o) === tm && Math.hypot(o.x - f.x, o.z - f.z) < 3.2).length, a = near2('rb'), b = near2('dm');
+      if (a && !b) f.cap = Math.min(1, f.cap + dt / 3); else if (b && !a) f.cap = Math.max(-1, f.cap - dt / 3);
+      const was = f.own; if (f.cap >= 1) f.own = 1; else if (f.cap <= -1) f.own = -1; else if (f.own === 1 && f.cap <= 0 || f.own === -1 && f.cap >= 0) f.own = 0;
+      if (was !== f.own && f.own) { say(f.own === 1 ? `The Rebels took ${f.nm}!` : `Doom’s Legion took ${f.nm}!`, 2200); tone(f.own === 1 ? 660 : 180, .3, 'triangle', .05); }
+      if (f.own === 1) EV.score.rb += dt; if (f.own === -1) EV.score.dm += dt;
+      const m = fl[i], col = f.own === 1 ? 0x3CE8A0 : f.own === -1 ? 0x9B4DFF : 0xDDDDDD; m.ring.material.color.setHex(col); m.flag.material.color.setHex(col); m.ring.scale.setScalar(1 + Math.abs(f.cap) * .06);
+    });
+    checkGoal();
+  }
+  function swBot(u, dt){
+    if (bodies().some(o => alive(o) && teamOf(o) !== u.team && Math.hypot(o.x - u.x, o.z - u.z) < 6)) return false;
+    const mine = u.team === 'rb' ? 1 : -1;
+    if (!u.flag || (u.flagT = (u.flagT || 0) - dt) <= 0) { u.flagT = 4; const cand = EV.flags.filter(f => f.own !== mine), list = (cand.length ? cand : EV.flags).slice().sort((a, b) => Math.hypot(a.x - u.x, a.z - u.z) - Math.hypot(b.x - u.x, b.z - u.z)); u.flag = list[Math.random() < .3 ? Math.min(1, list.length - 1) : 0]; }
+    const dx = u.flag.x - u.x, dz = u.flag.z - u.z; if (Math.hypot(dx, dz) > 1.5) { moveUnit(u, dx, dz, HEROES[u.hero].speed * .85, dt); u.yaw = Math.atan2(-dx, -dz); u.mv = 1; } else u.mv = 0;
+    return true;
+  }
+  // ---------- Flashpoint: race Reverse-Flash for the timeline shards ----------
+  function addShard(){
+    let x, z, n = 0; do { const a = Math.random() * Math.PI * 2, d = 4 + Math.random() * 19; x = Math.cos(a) * d; z = Math.sin(a) * d; } while (!evValid(x, z) && ++n < 20);
+    const m = new THREE.Mesh(new THREE.OctahedronGeometry(.4, 0), glowM(0xFFC93C, { emissiveIntensity: 1.5 })); m.position.set(x, 1, z); eventScene.add(m); EV.shards.push({ m, x, z });
+  }
+  function dropShard(s2){ eventScene.remove(s2.m); s2.m.geometry.dispose(); EV.shards = EV.shards.filter(q => q !== s2); }
+  const TIMELINES = [[0x240808, 'A world where the Flash never got his powers…'], [0x08241A, 'A world where Atlantis sank Europe…'], [0x1A0824, 'A world where Batman is Thomas Wayne…'], [0x241A08, 'A world where Superman grew up in a lab…'], [0x081A24, 'A world where the Amazons invaded Britain…']];
+  function shiftTimeline(){ const T = TIMELINES[(EV.score.fl || 0) % TIMELINES.length]; eventScene.background = new THREE.Color(T[0]); eventScene.fog.color.setHex(T[0]); say(`Shard ${EV.score.fl}/10. The timeline shifts. ${T[1]}`, 2600); }
+  function fpStep(dt, t){
+    while (EV.shards.length < 6) addShard();
+    EV.shards.slice().forEach(s2 => { s2.m.rotation.y += dt * 2; s2.m.position.y = 1 + Math.sin(t * 3 + s2.x) * .15;
+      if (EV.dead <= 0 && Math.hypot(pos.x - s2.x, pos.z - s2.z) < 1.4) { dropShard(s2); EV.score.fl++; [880, 1175].forEach((f, i) => setTimeout(() => tone(f, .1, 'triangle', .05), i * 70)); shiftTimeline(); } });
+    checkGoal();
+  }
+  function fpBot(u, dt){
+    if (EV.dead <= 0 && Math.hypot(pos.x - u.x, pos.z - u.z) < 3.5) return false;
+    const s2 = EV.shards.slice().sort((a, b) => Math.hypot(a.x - u.x, a.z - u.z) - Math.hypot(b.x - u.x, b.z - u.z))[0]; if (!s2) return false;
+    const dx = s2.x - u.x, dz = s2.z - u.z; if (Math.hypot(dx, dz) < 1.2) { dropShard(s2); EV.score.rf++; say(`Reverse-Flash grabbed a shard! (${EV.score.rf}/10)`, 1600); tone(200, .2, 'sawtooth', .04); checkGoal(); return true; }
+    moveUnit(u, dx, dz, HEROES.rflash.speed * .7, dt); u.yaw = Math.atan2(-dx, -dz); u.mv = 1; return true;
+  }
+  // ---------- Darkseid Invades: fire pits and boom tubes ----------
+  function dksStep(dt){
+    const pit = (x, z) => PITS.some(([px, pz, rr]) => Math.hypot(x - px, z - pz) < rr);
+    if (EV.dead <= 0 && pit(pos.x, pos.z) && (EV.pitT = (EV.pitT || 0) - dt) <= 0) { EV.pitT = .5; hurtMe(7, null); say('The fire pit burns! Get out!', 900); }
+    EV.units.forEach(u => { if (u.dead <= 0 && !u.boss && u.team === 'jl' && pit(u.x, u.z)) { u.hp -= 10 * dt; if (u.hp <= 0) killUnit(u, null); } });
+    if ((EV.tubeT -= dt) <= 0) { EV.tubeT = 22; if (EV.units.filter(u => u.hero === 'parademon' && u.dead <= 0).length < 8) { for (let i = 0; i < 2; i++) { const u = addUnit({ hero: 'parademon', team: 'apk' }); u.x = (i ? 18 : -18); u.z = -14; u.hp = u.max = Math.round(u.max * EV.foeHp); } say('A boom tube opens: more Parademons!', 2000); tone(90, .8, 'sawtooth', .05, 300); } }
+  }
+
   // ======================= little things: the Bugle, voicemail, achievements, night, Diwali, pets =======================
   const deedsHeadlines = () => {
     const n = BOSSES.filter(d => beaten.has(d.id)).length, H = [];
@@ -5639,6 +5758,7 @@ body.photo .scarbanner{visibility:hidden}
     if (phoneG) phoneG.userData.qr.rotation.y += dt * 2;
     if (phoneG) phoneG.userData.led.visible = BOSSES.some(d => !beaten.has(d.id) && TAUNTS[d.id]) && Math.floor(now / 600) % 2 === 0;
     if (lairScene && !bugleG) buildBugle();
+    if (lairScene && !junk) buildJunk();
     if (diwaliG && !reduce) diwaliG.children.forEach(o => { if (o.userData.ph !== undefined) o.material.emissiveIntensity = 1 + Math.sin(now / 300 + o.userData.ph) * .6; });
     if (now < achT) return; achT = now + 2000;
     ACH.forEach(a => { if (!achGot.includes(a[0]) && a[3]()) ach(a[0]); }); achFirst = false;
@@ -5657,6 +5777,8 @@ body.photo .scarbanner{visibility:hidden}
     u.x += u.kx * dt; u.z += u.kz * dt; u.kx *= Math.max(0, 1 - dt * 5); u.kz *= Math.max(0, 1 - dt * 5); if (!evValid(u.x, u.z)) { const d = Math.hypot(u.x, u.z); if (d > ER - .7) { u.x *= (ER - .8) / d; u.z *= (ER - .8) / d; } PILLARS.forEach(p => { const dd = Math.hypot(u.x - p.x, u.z - p.z); if (dd < p.r + .45) { u.x = p.x + (u.x - p.x) / dd * (p.r + .46); u.z = p.z + (u.z - p.z) / dd * (p.r + .46); } }); }
     if (u.stun > 0) return;
     if (u.boss) return supermanStep(u, dt, t);
+    if (EV.k === 'sw' && swBot(u, dt)) return;
+    if (EV.k === 'fp' && u.hero === 'rflash' && fpBot(u, dt)) return;
     if ((u.retarget = (u.retarget || 0) - dt) <= 0 || !u.tgt || !alive(u.tgt)) { u.retarget = 1 + Math.random(); u.tgt = nearestFoe(u); }
     // insurgents with the pad job go and hold the Kryptonite emitter
     if (u.role === 'pad' && EV.weak <= 0) { const dx = EMIT.x - u.x, dz = EMIT.z - u.z; if (Math.hypot(dx, dz) > 1.5) { moveUnit(u, dx, dz, H.speed * .9, dt); u.yaw = Math.atan2(-dx, -dz); u.mv = 1; return; } }
@@ -5740,7 +5862,7 @@ body.photo .scarbanner{visibility:hidden}
     if (!EV || EV.solo) return; let d; try { d = JSON.parse(text); } catch (e) { return; }
     const u = EV.remotes.get(id); if (!u) return;
     if (d.to === mpId) { const n = clamp(+d.d || 0, 0, u.hero === 'hulk' ? 80 : 60); if (n) hitUnit(EV.me, n, u); }
-    if (d.ko === mpId) { EV.kos++; EV.score[EV.team] = (EV.score[EV.team] || 0) + 1; if (EV.k === 'avx') lbAdd(EV.team === 'av' ? 'a' : 'x', 1); checkGoal(); }
+    if (d.ko === mpId) { EV.kos++; EV.score[EV.team] = (EV.score[EV.team] || 0) + 1; if (isPvp(EV.k)) lbAdd(LBK[EV.team], 1); checkGoal(); }
   }
   // ---------- every frame ----------
   function evStep(dt, now){
@@ -5767,7 +5889,8 @@ body.photo .scarbanner{visibility:hidden}
         if ((!EV.bossUp || EV.home) && (EV.home ? EV.waveT <= 0 || !foes.some(u => !u.boss) && EV.waveT < 10 : !foes.length || EV.waveT <= 0)) spawnWave();
         const e2 = eventScene.userData.earth; if (e2) { const p = 1 - EV.t / EVENTS.inc.time; e2.scale.setScalar(1 + p * 3); e2.position.y = 60 - p * 25; e2.rotation.y += dt * .05; }
       }
-      if (EV.t <= 0) endMatch(EV.k === 'inc' ? false : EV.k === 'avx' ? EV.score[EV.team] > Math.max(...Object.entries(EV.score).filter(([k]) => k !== EV.team).map(([, v]) => v)) : EV.k === 'wwh' ? EV.team === 'hulk' : false);
+      if (EV.k === 'sw') swStep(dt); if (EV.k === 'fp') fpStep(dt, t); if (EV.k === 'dks') dksStep(dt);
+      if (EV.t <= 0) endMatch(EV.k === 'inc' ? false : scored(EV.k) ? EV.score[EV.team] > Math.max(...Object.entries(EV.score).filter(([k]) => k !== EV.team).map(([, v]) => v)) : EV.k === 'wwh' ? EV.team === 'hulk' : false);
       // Hulk (you): a leap that lands with a smash
       if (EV.hero === 'hulk' && EV.leapV) { pos.x += EV.leapV.x * dt; pos.z += EV.leapV.z * dt; if (!evValid(pos.x, pos.z)) { pos.x -= EV.leapV.x * dt; pos.z -= EV.leapV.z * dt; } if (grounded && vy === 0 && EV.leapT > .2) { EV.leapV = null; special2(EV.me, 'hulk', pos.x, pos.z, yaw, 'me'); EV.shake = .6; tone(60, .5, 'sawtooth', .07, 30); } EV.leapT += dt; }
     }
@@ -5790,11 +5913,11 @@ body.photo .scarbanner{visibility:hidden}
       if (!u.remote && u.tagHp !== u.hp) drawTag(u);
     });
     // HUD
-    const E = EVENTS[EV.k], sc = Object.entries(EV.score).map(([k, v]) => `<b style="color:${E.col[k]}">${E.teams[k]} ${v}</b>`).join(' · ');
-    $('#evScore').innerHTML = EV.k === 'avx' ? sc + ` <small>(first to ${E.goal})</small>` : EV.k === 'wwh' ? `Takedowns ${EV.kos}` : EV.k === 'inc' ? `Wave ${Math.min(EV.wave, 5)}/5 \u00B7 Anchors ${EV.anchors.filter(a => a.dead <= 0).length}/3` : `Kryptonite ${Math.round(EV.charge * 100)}%${EV.weak > 0 ? ' · <b style="color:#9CFF7A">WEAKENED</b>' : ''}`;
+    const E = EVENTS[EV.k], sc = Object.entries(EV.score).map(([k, v]) => `<b style="color:${E.col[k]}">${E.teams[k]} ${Math.floor(v)}</b>`).join(' · ');
+    $('#evScore').innerHTML = scored(EV.k) ? sc + ` <small>(first to ${E.goal})</small>` : EV.k === 'dks' ? `Parademons ${EV.units.filter(u => u.hero === 'parademon' && u.dead <= 0).length} \u00B7 stay out of the fire` : EV.k === 'wwh' ? `Takedowns ${EV.kos}` : EV.k === 'inc' ? `Wave ${Math.min(EV.wave, 5)}/5 \u00B7 Anchors ${EV.anchors.filter(a => a.dead <= 0).length}/3` : `Kryptonite ${Math.round(EV.charge * 100)}%${EV.weak > 0 ? ' · <b style="color:#9CFF7A">WEAKENED</b>' : ''}`;
     $('#evTitle').textContent = E.name; $('#evTime').textContent = `${Math.floor(Math.max(0, EV.t) / 60)}:${String(Math.floor(Math.max(0, EV.t) % 60)).padStart(2, '0')}`;
     $('#evHero').textContent = `${H.name}${armHurt() ? ' · burned arm' : ''}`; $('#evHp').style.width = `${clamp(EV.hp / EV.max, 0, 1) * 100}%`;
-    const boss = EV.k === 'inj' || EV.k === 'inc' ? (EV.boss && EV.boss.dead <= 0 ? EV.boss : null) : EV.k === 'wwh' && EV.team !== 'hulk' ? EV.units.find(u => u.hero === 'hulk') : null;
+    const boss = EV.k === 'inj' || EV.k === 'inc' || EV.k === 'dks' ? (EV.boss && EV.boss.dead <= 0 ? EV.boss : null) : EV.k === 'wwh' && EV.team !== 'hulk' ? EV.units.find(u => u.hero === 'hulk') : null;
     $('#evBoss').hidden = !boss; if (boss) { $('#evBossName').textContent = HEROES[boss.hero].name + (boss.remote ? ' (a real player)' : ''); $('#evBossHp').style.width = `${clamp(boss.hp / boss.max, 0, 1) * 100}%`; }
     $('#evSp').classList.toggle('cool', EV.spCd > 0); evHurt.style.opacity = EV.dead > 0 ? .7 : (EV.hurtT = Math.max(0, (EV.hurtT || 0) - dt)) > 0 ? EV.hurtT * 1.5 : 0;
     $('#evMsg').textContent = EV.dead > 0 && !(EV.k === 'wwh' && EV.hero === 'hulk') ? `Back in ${Math.ceil(EV.dead)}…` : '';
@@ -6689,6 +6812,7 @@ body.photo .scarbanner{visibility:hidden}
     if (p.egg === 'window') return `The sky outside, right now (${istClock()} for Rayan)`;
     if (p.egg === 'evpanel') { const k = p.o.userData.ev; return k === 'inc' && !incOpen() ? 'The Final Incursion (locked)' : `Play: ${EVENTS[k].name}`; }
     if (p.egg === 'wartable') return 'The war table: events';
+    if (p.egg === 'repair') return `Repair bench (${parts} part${parts === 1 ? '' : 's'}, ${junk ? junk.filter(q => q.broken).length : 0} broken)`;
     if (p.egg === 'loose') { const l = breach && breach.loose[p.o.userData.li]; return l ? `Fight ${l.def.name} to lock it back up` : null; }
     if (p.egg === 'pod') { const d = BOSSES[p.o.userData.bi]; return escaped(d.id) ? `Broken pod: ${d.name} escaped` : `Open the pod: ${d.name}${beaten.has(d.id) ? ' (beaten)' : ''}`; }
     if (p.egg === 'rack') { const w = WEAPONS.find(x => x.id === p.o.userData.wid); const c = condition(w.id), pc = Math.round(c.d * 100) + '%' + (c.broken ? ', broken' : ''); return dustedWeapon(w.id) ? `${w.name}: dust` : inv.includes(w.id) ? `Hang ${w.name} back up` : `Take ${w.name} (${w.from}), ${pc}`; }
@@ -6780,6 +6904,7 @@ body.photo .scarbanner{visibility:hidden}
     if (p.egg === 'voicemail') return playVoicemail();
     if (p.egg === 'qportal') return enterArea('quantum');
     if (p.egg === 'bugle') return readBugle();
+    if (p.egg === 'repair') return repairJunk();
     if (p.egg === 'radicals') return flyTo(views.scroll.pos.clone(), views.scroll.look, openGame);
     if (p.egg === 'crate') return digCrate();
     if (p.egg === 'screen') return flyTo(views.screen.pos.clone(), views.screen.look, openPC);
