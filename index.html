@@ -364,10 +364,12 @@ body.photo .scarbanner{visibility:hidden}
 .credits{position:fixed;inset:0;z-index:20;background:#000;color:#EEF1F5;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;overflow:hidden;padding:24px}
 .credits.on{display:flex}
 .goalhud{position:fixed;left:18px;top:180px;z-index:40;max-width:min(320px,calc(100vw - 36px));background:rgba(22,24,29,.86);color:#fff;border-left:4px solid #FFC93C;border-radius:10px;padding:8px 12px;display:flex;flex-direction:column;gap:4px;font-size:14px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.goalhud[hidden]{display:none}
 .goalhud small{color:#FFC93C;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.06em}.goalhud .btn{align-self:flex-start;padding:4px 14px;font-size:13px;margin-top:2px}
 body.inevent .goalhud{top:130px;opacity:.9}
 .chcard{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%) scale(.96);z-index:61;text-align:center;color:#fff;opacity:0;pointer-events:none;transition:opacity .6s,transform .6s;text-shadow:0 4px 18px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:6px}
 .chcard.on{opacity:1;transform:translate(-50%,-50%) scale(1)}.chcard small{color:#FFC93C;font-weight:800;letter-spacing:.2em;text-transform:uppercase}.chcard b{font-size:clamp(34px,7vw,64px);line-height:1}.chcard span{font-size:16px;opacity:.9}
+body.possessed::after{content:'';position:fixed;inset:0;pointer-events:none;box-shadow:inset 0 0 160px 60px rgba(155,77,255,.55);z-index:30}
 .achtoast{position:fixed;left:50%;bottom:92px;transform:translate(-50%,20px);opacity:0;pointer-events:none;z-index:60;background:#16181D;color:#fff;border:2px solid #FFC93C;border-radius:14px;padding:10px 16px;display:flex;flex-direction:column;gap:2px;min-width:240px;max-width:min(420px,calc(100vw - 32px));transition:opacity .3s,transform .3s;box-shadow:0 10px 30px rgba(0,0,0,.35)}
 .achtoast.on{opacity:1;transform:translate(-50%,0)}
 .achtoast small{color:#FFC93C;font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.06em}.achtoast span{font-size:13px;opacity:.8}
@@ -3922,7 +3924,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
     if (act2 === 'leave') { closePause(); endFight(); }
     if (act2 === 'unsnap') { unsnap(); renderPause(); }
     if (act2 === 'fx') { lowFx = !lowFx; fxChosen = true; try { localStorage.setItem('ru-lowfx', lowFx ? '1' : '0'); } catch (er) {} applyFx(); renderPause(); }
-    if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon', 'ru-arm', 'ru-evsolo', 'ru-evdone', 'ru-incursion', 'ru-instab', 'ru-recap', 'ru-lost', 'ru-saviour', 'ru-spark', 'ru-alt', 'ru-altseen', 'ru-metdoom', 'ru-inchero', 'ru-ach', 'ru-pet', 'ru-shop', 'ru-parts', 'ru-wreck', 'ru-cvwon', 'ru-galactus', 'ru-cvforced', 'ru-galbite', 'ru-eaten', 'ru-story'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
+    if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon', 'ru-arm', 'ru-evsolo', 'ru-evdone', 'ru-incursion', 'ru-instab', 'ru-recap', 'ru-lost', 'ru-saviour', 'ru-spark', 'ru-alt', 'ru-altseen', 'ru-metdoom', 'ru-inchero', 'ru-ach', 'ru-pet', 'ru-shop', 'ru-parts', 'ru-wreck', 'ru-cvwon', 'ru-galactus', 'ru-cvforced', 'ru-galbite', 'ru-eaten', 'ru-story', 'ru-cmask', 'ru-ultronred'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
   });
   menuBtn.onclick = () => openPause();
   function applyFx(){
@@ -4357,7 +4359,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
   const ARM_TIME = 3 * 24 * 3600 * 1000;
   let arm = null; try { arm = JSON.parse(localStorage.getItem('ru-arm') || 'null'); } catch (e) {}
   const armLeft = () => arm ? Math.max(0, arm.until - Date.now()) : 0;
-  const armHurt = () => armLeft() > 0;
+  const armHurt = () => !normalView && armLeft() > 0;
   const armFactor = () => armHurt() ? 1 - .4 * armLeft() / ARM_TIME : 1;
   function snapBack(){
     storyFlag('snapback');
@@ -4510,7 +4512,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
   addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || !entered || e.repeat) return; if (e.key.toLowerCase() === 'v' && !photoOn) setPov(!tpv); });
   // your body, kept in sync with your look, your weapon and whether your arm is burned
   function meStep(dt, now){
-    const want = entered && (tpv || mirror || !!EV) && !(EV && EV.cx && EV.cx.gal && (EV.cx.gal.phase === 'eat' || EV.cx.gal.phase === 'fall'));
+    const want = entered && (tpv || mirror || !!EV) && !(EV && EV.cx && EV.cx.gal && (EV.cx.gal.phase === 'eat' || EV.cx.gal.phase === 'fall')) && !(EV && EV.st && EV.st.lp);
     if (!want) { if (me && me.g.parent) me.g.parent.remove(me.g); return; }
     const L = curLook(), key = JSON.stringify(L) + armHurt() + (EV ? EV.scale || 1 : 1);
     if (key !== meKey) { if (me) { if (me.g.parent) me.g.parent.remove(me.g); disposeDeep(me.g); } me = avatar(L, { burn: armHurt(), s: EV ? EV.scale || 1 : 1 }); meKey = key; meHeld = undefined; }
@@ -4683,6 +4685,27 @@ body.inevent .goalhud{top:130px;opacity:.9}
   const isErased = k => !!(SG.flags.erased && SG.flags.erased.includes(k));
   const rackStolen = () => SG.active && SG.ch === 7 && !SG.flags['evwin:of'];
   let evOptsNow = {};
+  // ---------- Chapters 10-12: back on the streets ----------
+  OUTFITS.uscrap = { hero: 1, c1: '#6A6E78', c2: '#FF3030', metal: 1, gloves: 1, mask: 'helmet', glow: 1 };
+  OUTFITS.puppeteer = { hero: 1, c1: '#2A1A3A', c2: '#B07CFF', hair: 'long', hairCol: '#E8E8F0', skin: '#E8D8E8', cape: 1, gloves: 1 };
+  OUTFITS.copycat = { hero: 1, c1: '#C8102E', c2: '#FFC93C', gloves: 1, mask: 'capcowl', emblem: 'star', cape: 1 };
+  HEROES.udrone = { name: 'Ultron drone', hp: 45, kind: 'ranged', dmg: 5, cd: .9, col: 0xFF3030, speed: 5.2 };
+  HEROES.uscrap = { name: 'Scrap bot', outfit: 'uscrap', hp: 90, kind: 'melee', dmg: 9, range: 2.3, cd: .8, speed: 3.8 };
+  HEROES.ustation = { name: 'Power substation', hp: 260, kind: 'static', r: 1.3 };
+  HEROES.userver = { name: 'Broker server rack', hp: 220, kind: 'static', r: 1 };
+  HEROES.ucable = { name: 'Power cable', hp: 200, kind: 'static', r: .9 };
+  HEROES.ultronx = { name: 'Ultron (scrap body)', hp: 2000, kind: 'boss', dmg: 11, range: 3, cd: 1, speed: 4.6, r: 1.1 };
+  HEROES.pgwen = Object.assign({}, HEROES.gwen, { name: 'Spider-Gwen (possessed)', hp: 160 });
+  HEROES.pcarter = Object.assign({}, HEROES.carter, { name: 'Captain Carter (possessed)', hp: 180 });
+  HEROES.pjay = Object.assign({}, HEROES.jay, { name: 'Jay Garrick (possessed)', hp: 150 });
+  HEROES.puppeteer = { name: 'The Puppeteer', outfit: 'puppeteer', hp: 1300, kind: 'boss', dmg: 9, range: 2.4, cd: 1, speed: 5, r: .6 };
+  HEROES.copycat = { name: 'The Copycat', outfit: 'copycat', hp: 900, kind: 'boss', dmg: 9, range: 2.4, cd: .9, speed: 5.4, r: .6 };
+  HEROES.copyrun = Object.assign({}, HEROES.copycat, { kind: 'melee', hp: 9999 });
+  EVENTS.st = { name: 'Bangalore', hidden: 1, teams: { me: 'Rayan', en: 'Enemies' }, col: { me: '#FFC93C', en: '#FF3C3C' }, time: 600, fixed: 'me', blurb: '' };
+  // how hurt you still are: a bit better each chapter, and not all the way back until the very end
+  const ST_FRAIL = { u: [.75, .72, 1.2], p: [.85, .82, 1.12], c: [.92, .9, 1.06] };
+  const ST_TITLE = { u1: 'Ultron: the drones', u2: 'Ultron: cut the power', u3: 'Ultron: the data centre', p1: 'The Puppeteer: the pods', p2: 'The Puppeteer: the heroes', p3: 'The Puppeteer', c1: 'Copycat: the market', c2: 'Copycat: the rooftops', c3: 'Copycat' };
+  var normalView = false;
   HEROES.anchor = { name: 'Universe anchor', hp: 600, kind: 'static', r: 1.1 };
   const RIFTS = [45, 135, 225, 315].map(a => [Math.cos(a * Math.PI / 180) * 24, Math.sin(a * Math.PI / 180) * 24]);
   // solo records, and which events you've played (the Final Incursion is open from the start)
@@ -4709,8 +4732,8 @@ body.inevent .goalhud{top:130px;opacity:.9}
   function buildArena(k, home){
     if (eventScene) { if (eventScene.userData.homeG) eventScene.remove(eventScene.userData.homeG); disposeDeep(eventScene); }
     const sc = eventScene = new THREE.Scene();
-    PILLARS.length = 0; if (!home && !['cv', 'of', 'br'].includes(k)) PILL0.forEach(p => PILLARS.push(p));
-    const T = { avx: { sky: 0x0B1224, fog: 0x0B1224, floor: '#1B2233', line: '#3C7CFF', wall: 0x2A3550 }, wwh: { sky: 0x6B3A1E, fog: 0x7A4A2A, floor: '#C9A46A', line: '#8A6B4A', wall: 0x8A6B4A }, inj: { sky: 0x1A1416, fog: 0x2A1E1E, floor: '#3A3A3E', line: '#C8102E', wall: 0x2A2D33 }, inc: { sky: 0x12051F, fog: 0x2A0F3A, floor: home ? '#3A3430' : '#241A30', line: '#9B4DFF', wall: 0x2A1A3A }, cw: { sky: 0x101826, fog: 0x1A2233, floor: '#2A2D38', line: '#C8102E', wall: 0x2A3040 }, sw: { sky: 0x1A1030, fog: 0x2A1A3A, floor: '#2A3A2A', line: '#3CE8A0', wall: 0x3A2A4A }, fp: { sky: 0x240808, fog: 0x3A1010, floor: '#3A1A1A', line: '#FFC93C', wall: 0x4A1A1A }, dks: { sky: 0x2A0A05, fog: 0x3A1205, floor: '#2A1A12', line: '#FF6A2E', wall: 0x3A1A0A }, cv: { sky: 0x160A26, fog: 0x2A1040, floor: '#2A2438', line: '#FF3C8A', wall: 0x2A1A3A }, of: { sky: 0xE8E6E0, fog: 0xE8E6E0, floor: '#CFCAC0', line: '#8A8F99', wall: 0xDAD6CE }, br: { sky: 0x0A0E18, fog: 0x121826, floor: '#2A2D33', line: '#FF8A2E', wall: 0x1A1E28 } }[k];
+    PILLARS.length = 0; if (!home && !['cv', 'of', 'br', 'st'].includes(k)) PILL0.forEach(p => PILLARS.push(p));
+    const T = { avx: { sky: 0x0B1224, fog: 0x0B1224, floor: '#1B2233', line: '#3C7CFF', wall: 0x2A3550 }, wwh: { sky: 0x6B3A1E, fog: 0x7A4A2A, floor: '#C9A46A', line: '#8A6B4A', wall: 0x8A6B4A }, inj: { sky: 0x1A1416, fog: 0x2A1E1E, floor: '#3A3A3E', line: '#C8102E', wall: 0x2A2D33 }, inc: { sky: 0x12051F, fog: 0x2A0F3A, floor: home ? '#3A3430' : '#241A30', line: '#9B4DFF', wall: 0x2A1A3A }, cw: { sky: 0x101826, fog: 0x1A2233, floor: '#2A2D38', line: '#C8102E', wall: 0x2A3040 }, sw: { sky: 0x1A1030, fog: 0x2A1A3A, floor: '#2A3A2A', line: '#3CE8A0', wall: 0x3A2A4A }, fp: { sky: 0x240808, fog: 0x3A1010, floor: '#3A1A1A', line: '#FFC93C', wall: 0x4A1A1A }, dks: { sky: 0x2A0A05, fog: 0x3A1205, floor: '#2A1A12', line: '#FF6A2E', wall: 0x3A1A0A }, cv: { sky: 0x160A26, fog: 0x2A1040, floor: '#2A2438', line: '#FF3C8A', wall: 0x2A1A3A }, of: { sky: 0xE8E6E0, fog: 0xE8E6E0, floor: '#CFCAC0', line: '#8A8F99', wall: 0xDAD6CE }, br: { sky: 0x0A0E18, fog: 0x121826, floor: '#2A2D33', line: '#FF8A2E', wall: 0x1A1E28 }, st: { sky: 0x0A0E18, fog: 0x121826, floor: '#2A2D33', line: '#3C7CFF', wall: 0x1A1E28 } }[k];
     sc.background = new THREE.Color(T.sky); sc.fog = new THREE.Fog(T.fog, 30, 90);
     sc.add(new THREE.HemisphereLight(0xFFFFFF, 0x333344, .75)); const sun = new THREE.DirectionalLight(0xFFF1DC, .8); sun.position.set(10, 20, 8); sc.add(sun);
     const ft = tex(512, 512, (g, w, h) => { g.fillStyle = T.floor; g.fillRect(0, 0, w, h); g.strokeStyle = T.line; g.globalAlpha = .35; g.lineWidth = 3; for (let i = 0; i <= w; i += 64) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.moveTo(0, i); g.lineTo(w, i); g.stroke(); } if (k !== 'avx') { g.globalAlpha = .12; for (let i = 0; i < 400; i++) { g.fillStyle = '#000'; g.fillRect(Math.random() * w, Math.random() * h, 3, 3); } } });
@@ -4729,6 +4752,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
     if (k === 'cv') cvArena(sc);
     if (k === 'of') ofArena(sc);
     if (k === 'br') brArena(sc, evOptsNow.part || 1);
+    if (k === 'st') stArena(sc, evOptsNow.part || 'u1');
     if (k === 'sw' || k === 'cv') { if (k === 'sw') sign('BATTLEWORLD', '#3CE8A0', 0, -ER - 1.5, 0); sc.userData.flags = FLAGS.map(([x, z, nm]) => { const ring = new THREE.Mesh(new THREE.RingGeometry(2.9, 3.2, 48), new THREE.MeshBasicMaterial({ color: 0xDDDDDD, transparent: true, opacity: .8, side: THREE.DoubleSide })); ring.rotation.x = -Math.PI / 2; ring.position.set(x, .04, z); sc.add(ring); cyl(.06, .06, 4, mat(0xAAAAAA, { metalness: .6 }), x, 2, z, sc, 8); const flag = new THREE.Mesh(new THREE.PlaneGeometry(1.4, .9), new THREE.MeshBasicMaterial({ color: 0xDDDDDD, side: THREE.DoubleSide })); flag.position.set(x + .72, 3.5, z); sc.add(flag); const lb = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, map: tex(512, 96, (g, w, h) => { g.fillStyle = 'rgba(11,13,20,.8)'; g.fillRect(0, 0, w, h); g.fillStyle = '#FFFFFF'; g.font = `800 58px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(nm.toUpperCase(), w / 2, h / 2 + 3); }) })); lb.scale.set(3.2, .6, 1); lb.position.set(x, 4.8, z); sc.add(lb); return { ring, flag }; }); }
     if (k === 'fp') sign('FLASHPOINT', '#FFC93C', 0, -ER - 1.5, 0);
     if (k === 'dks') { sign('APOKOLIPS', '#FF6A2E', 0, -ER - 1.5, 0); PITS.forEach(([x, z, rr]) => { const pit = new THREE.Mesh(new THREE.CircleGeometry(rr, 32), new THREE.MeshBasicMaterial({ color: 0xFF6A2E })); pit.rotation.x = -Math.PI / 2; pit.position.set(x, .05, z); sc.add(pit); const rim = new THREE.Mesh(new THREE.RingGeometry(rr, rr + .35, 32), new THREE.MeshBasicMaterial({ color: 0x2A1208, side: THREE.DoubleSide })); rim.rotation.x = -Math.PI / 2; rim.position.set(x, .06, z); sc.add(rim); const l = new THREE.PointLight(0xFF6A2E, 1.6, 9, 2); l.position.set(x, 1, z); sc.add(l); });
@@ -4776,7 +4800,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
     EV.units.push(u); return u;
   }
   function dropUnit(u){ if (u.av.g.parent) u.av.g.parent.remove(u.av.g); disposeDeep(u.av.g); EV.units = EV.units.filter(q => q !== u); }
-  const spawnOf = team => { const K = EV.k; if (K === 'inc') { if (team === 'inc') { const [x, z] = RIFTS[Math.floor(Math.random() * RIFTS.length)]; return [x + (Math.random() - .5) * 3, z + (Math.random() - .5) * 3]; } return [(Math.random() - .5) * 5, (Math.random() - .5) * 5]; } if (K === 'wwh') { if (team === 'hulk') return [0, 0]; const a = Math.random() * Math.PI * 2; return [Math.cos(a) * 21, Math.sin(a) * 21]; } if (K === 'of' || K === 'br') { if (team === 'me') return [(Math.random() - .5) * 4, 12]; const a = Math.random() * Math.PI * 2; return [Math.cos(a) * 18, Math.sin(a) * 18 - 4]; } if (K === 'cv') { if (team === 'cv') return [(Math.random() - .5) * 8, 11 + Math.random() * 2]; const [x, z] = RIFTS[Math.floor(Math.random() * RIFTS.length)]; return [x + (Math.random() - .5) * 3, z + (Math.random() - .5) * 3]; } const s = ['av', 'ins', 'tc', 'rb', 'fl', 'jl'].includes(team) ? 1 : -1; return [(Math.random() - .5) * 8, s * (21 + Math.random() * 2)]; };
+  const spawnOf = team => { const K = EV.k; if (K === 'inc') { if (team === 'inc') { const [x, z] = RIFTS[Math.floor(Math.random() * RIFTS.length)]; return [x + (Math.random() - .5) * 3, z + (Math.random() - .5) * 3]; } return [(Math.random() - .5) * 5, (Math.random() - .5) * 5]; } if (K === 'wwh') { if (team === 'hulk') return [0, 0]; const a = Math.random() * Math.PI * 2; return [Math.cos(a) * 21, Math.sin(a) * 21]; } if (K === 'of' || K === 'br' || K === 'st') { if (team === 'me') return [(Math.random() - .5) * 4, 12]; const a = Math.random() * Math.PI * 2; return [Math.cos(a) * 18, Math.sin(a) * 18 - 4]; } if (K === 'cv') { if (team === 'cv') return [(Math.random() - .5) * 8, 11 + Math.random() * 2]; const [x, z] = RIFTS[Math.floor(Math.random() * RIFTS.length)]; return [x + (Math.random() - .5) * 3, z + (Math.random() - .5) * 3]; } const s = ['av', 'ins', 'tc', 'rb', 'fl', 'jl'].includes(team) ? 1 : -1; return [(Math.random() - .5) * 8, s * (21 + Math.random() * 2)]; };
   // ---------- starting and leaving ----------
   const evHud = $('#evHud'), evBox = $('#evBox'), evHurt = $('#evHurt');
   function remoteHulk(){ let r = null; ghosts.forEach((g, id) => { if (g.e && g.e.k === 'wwh' && g.e.h === 'hulk' && performance.now() - g.seen < 6000) r = id; }); return r; }
@@ -4818,6 +4842,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
       if (k === 'sw') { PICKS.rb.filter(h => h !== hero).slice(0, 4).forEach(h => place(addUnit({ hero: h, team: 'rb' }))); ['v_iron', 'v_cap', 'v_thor', 'v_batman'].forEach(h => place(addUnit({ hero: h, team: 'dm' }))); for (let i = 0; i < 2; i++) place(addUnit({ hero: 'trooper', team: 'dm' })); EV.flags = FLAGS.map(([x, z, nm]) => ({ x, z, nm, own: 0, cap: 0 })); }
       if (k === 'fp') { place(addUnit({ hero: 'rflash', team: 'rf' })); EV.shards = []; }
       if (k === 'dks') { PICKS.jl.filter(h => h !== hero).slice(0, 3).forEach(h => place(addUnit({ hero: h, team: 'jl' }))); const dk = addUnit({ hero: 'darkseid', team: 'apk' }); dk.x = 0; dk.z = -16; dk.boss = 1; EV.boss = dk; for (let i = 0; i < 5; i++) place(addUnit({ hero: 'parademon', team: 'apk' })); EV.tubeT = 20; }
+      if (k === 'st') { const part = opts.part || 'u1', fr = ST_FRAIL[part[0]]; EVENTS.st.name = ST_TITLE[part]; EV.max = EV.hp = Math.round(EV.max * fr[0]); EV.frailHit = fr[1]; EV.frailTake = fr[2]; stSetup(part); }
       if (k === 'of') { const b = addUnit({ hero: 'overfitx', team: 'ofx' }); b.x = 0; b.z = -16; b.boss = 1; b.overfit = 1; ofModel(b); EV.boss = b; EV.of = { si: 0, pt: 0, cur: '', count: {}, told: {}, hits: 0, final: false }; }
       if (k === 'br') { const part = opts.part || 1; EV.part = part; EV.br = { part, prog: 0, far: 0, ang: 0, bits: [], broke: [], floor: 0 }; EV.frailHit = .55 + .1 * (part - 1); EV.max = EV.hp = Math.round(EV.max * [.6, .7, .8, .9][part - 1]);
         if (part === 1) { const T = makeTruck(); eventScene.add(T); EV.br.truck = T; }
@@ -4840,7 +4865,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
       inWorld = true; zone = 'event'; falling = false; vy = 0; walkTarget = null; pos.set(sx, 1.6, sz); yaw = home ? Math.PI : sz > 0 ? 0 : Math.PI; pitch = -.08; if (k === 'wwh' && team === 'heroes') yaw = Math.atan2(sx, sz);
       closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Leave the event'; jumpBtn.hidden = fine; uiZone();
       evHud.hidden = false; $('#evEnd').hidden = true; ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = false); $('#evSp').textContent = `${H.sp}\n(E)`; document.body.classList.add('inevent');
-      say(k === 'of' ? 'The last world left is your own room. The Overfit is here, wearing everything he stole. Mix up your attacks: he learns anything you repeat. E improvises something random.' : k === 'br' ? ['Tail the truck. Stay between 6 and 13 metres: any closer and they\u2019ll spot you.', 'Clear out his guards quietly. Their gear is cheap knock-offs, but you\u2019re hurt: one wrong move and you\u2019re done.', 'Floor by floor to the top. You won\u2019t get back up if you go down.', 'The Broker, in a suit built from the wreckage of every battle. Break it apart piece by piece.'][(opts.part || 1) - 1] : k === 'cv' ? `Convergence. Every universe is about to collide. Guard the three anchors and survive until Doom shows up.` : isPvp(k) ? `You’re ${H.name}. First team to ${EVENTS[k].goal} takedowns wins.` : k === 'sw' ? 'Capture the three domain flags: stand in a ring with no enemies inside. First side to 120 points wins.' : k === 'fp' ? 'You’re the Flash. Grab ten glowing timeline shards before Reverse-Flash does. E dashes through anyone in your way.' : k === 'dks' ? 'Darkseid is here. Stay out of the fire pits, beat the Parademons and take him down. Watch out for his Omega Beams.' : k === 'wwh' ? (team === 'hulk' ? 'You’re the Hulk. Smash the heroes and survive until time runs out. Space to leap, E to thunderclap.' : 'Take the Hulk down before time runs out. Stay spread out: his thunderclap hits everyone nearby.') : k === 'inc' ? 'The other Earth is coming. Hold the three golden anchors against the variants pouring out of the rifts, then take down Doom.' : 'Superman is invulnerable. Hold the green Kryptonite emitter to weaken him, then hit him with everything.', 5200);
+      say(k === 'st' ? ({ u1: 'Ultron\u2019s drones, in the rain. You\u2019re still hurt, so pick your fights.', u2: 'Five connections keep him alive: three substations and two server racks. Break them all.', u3: 'Three cables feed his body. While they\u2019re plugged in, he heals and shrugs off your hits. Cut them first.', p1: 'Knock each possessed villain out to snap her string. They don\u2019t want to hurt you. She does.', p2: 'Your friends, on her strings. Knock them out to set them free. Watch out: she can get into your head too.', p3: 'She hides behind her puppets. Break every string, then hit her while she\u2019s exposed.', c1: 'Put out the fires (stand in them) and free the people trapped under the stalls (stand next to them).', c2: 'He\u2019s fast and he won\u2019t fight fair. Land 5 hits to wear him down.', c3: 'The Copycat, in a cape he bought online. Beat him.' })[opts.part || 'u1'] : k === 'of' ? 'The last world left is your own room. The Overfit is here, wearing everything he stole. Mix up your attacks: he learns anything you repeat. E improvises something random.' : k === 'br' ? ['Tail the truck. Stay between 6 and 13 metres: any closer and they\u2019ll spot you.', 'Clear out his guards quietly. Their gear is cheap knock-offs, but you\u2019re hurt: one wrong move and you\u2019re done.', 'Floor by floor to the top. You won\u2019t get back up if you go down.', 'The Broker, in a suit built from the wreckage of every battle. Break it apart piece by piece.'][(opts.part || 1) - 1] : k === 'cv' ? `Convergence. Every universe is about to collide. Guard the three anchors and survive until Doom shows up.` : isPvp(k) ? `You’re ${H.name}. First team to ${EVENTS[k].goal} takedowns wins.` : k === 'sw' ? 'Capture the three domain flags: stand in a ring with no enemies inside. First side to 120 points wins.' : k === 'fp' ? 'You’re the Flash. Grab ten glowing timeline shards before Reverse-Flash does. E dashes through anyone in your way.' : k === 'dks' ? 'Darkseid is here. Stay out of the fire pits, beat the Parademons and take him down. Watch out for his Omega Beams.' : k === 'wwh' ? (team === 'hulk' ? 'You’re the Hulk. Smash the heroes and survive until time runs out. Space to leap, E to thunderclap.' : 'Take the Hulk down before time runs out. Stay spread out: his thunderclap hits everyone nearby.') : k === 'inc' ? 'The other Earth is coming. Hold the three golden anchors against the variants pouring out of the rifts, then take down Doom.' : 'Superman is invulnerable. Hold the green Kryptonite emitter to weaken him, then hit him with everything.', 5200);
       if (k === 'cv') { $('#worldBack').hidden = true; if (opts.forced) say('The portal misfires! Every universe is colliding at once, and you\u2019ve been pulled into the middle of it. There\u2019s no way out but through.', 6000); }
       if (home) { const bh = instab >= 6 ? 'The Beyonder' : 'Doom'; say(opts.hunted ? `${bh} is waiting in the street outside your house. Go and beat him, and hold the anchors.` : `${bh} is waiting in the street outside your house. Beat him there and hold the anchors.`, 5200); EV.shake = .8; tone(50, 1.5, 'sawtooth', .08, 25); }
       if (fine && canvas.requestPointerLock) canvas.requestPointerLock();
@@ -4848,6 +4873,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
   }
   function place(u){ const [x, z] = spawnOf(u.team); u.x = x; u.z = z; u.yaw = z > 0 ? 0 : Math.PI; return u; }
   function stopEvent(quiet){
+    if (EV && EV.camT > 0) tpv = EV.camSaved; document.body.classList.remove('possessed');
     if (!EV) return; EV.units.slice().forEach(dropUnit); EV.shots.forEach(s => s.m && s.m.parent && s.m.parent.remove(s.m)); EV.fx.forEach(f => f.m.parent && f.m.parent.remove(f.m));
     const wasHome = EV.home; EV = null; evHud.hidden = true; evHurt.style.opacity = 0; document.body.classList.remove('inevent'); if (document.pointerLockElement) document.exitPointerLock();
     if (!quiet && wasHome) travel('room');
@@ -4859,7 +4885,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
   const alive = u => !(u.isMe ? EV.dead > 0 : u.dead > 0);
   const bodies = () => [EV.me].concat(EV.units);
   function evAttack(){
-    if (!EV || EV.over || EV.dead > 0 || EV.cd > 0) return; const H = HEROES[EV.hero];
+    if (!EV || EV.over || EV.dead > 0 || EV.cd > 0 || EV.lockT > 0) return; const H = HEROES[EV.hero];
     EV.cd = H.cd * (EV.rage > 0 ? .6 : 1); EV.swing = .3;
     const dm = H.dmg * armFactor() * (EV.rage > 0 ? 1.6 : 1);
     if (H.kind === 'melee') { const f = evFwd(); let hit = 0;
@@ -4868,7 +4894,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
     } else { shoot({ x: pos.x, z: pos.z, yaw, dmg: dm, team: EV.team, col: H.col, from: 'me' }); tone(900, .05, 'sawtooth', .03, 1400); }
   }
   function evSpecial(){
-    if (!EV || EV.over || EV.dead > 0 || EV.spCd > 0) return; const H = HEROES[EV.hero]; EV.spCd = H.spCd; EV.swing = .3;
+    if (!EV || EV.over || EV.dead > 0 || EV.spCd > 0 || EV.lockT > 0) return; const H = HEROES[EV.hero]; EV.spCd = H.spCd; EV.swing = .3;
     special2(EV.me, EV.hero, pos.x, pos.z, yaw, 'me'); tone(300, .4, 'sawtooth', .05, 900);
   }
   // the specials (the same for you and for bots)
@@ -4898,7 +4924,10 @@ body.inevent .goalhud{top:130px;opacity:.9}
     if (u.isMe) return hurtMe(d, from);
     if (u.shield > 0) { d = 0; if (from === 'me' && !EV.toldShield) { EV.toldShield = 1; say('Shielded! Survive the shockwaves and fight the variants until it drops.', 3200); } }
     if (u.boss && EV.k === 'cv') d *= EV.weak > 0 ? 1.6 : 1;
-    if (EV.k === 'br' && from === 'me') d *= EV.frailHit || 1;
+    if ((EV.k === 'br' || EV.k === 'st') && from === 'me') d *= EV.frailHit || 1;
+    if (u.hero === 'copyrun') { if (from === 'me' || from === EV.me) copyTag(u); return; }
+    if (EV.k === 'st' && u.hero === 'puppeteer' && !(EV.st.exposed > 0)) { d = 0; if (from === 'me' && !EV.st.toldHide) { EV.st.toldHide = 1; say('Your hits slide off her. She\u2019s shielded by her puppets. Break their strings first.', 3000); } }
+    if (EV.k === 'st' && u.hero === 'ultronx' && EV.st.cables.some(c => c.dead <= 0)) d *= .4;
     if (EV.k === 'br' && u.hero === 'broker' && EV.br && EV.br.broke[2]) d *= 1.5;
     if (u.overfit && from !== 'fin') { const O = EV.of; if (O.final) d *= .04; else if (from === 'me' || from === EV.me) { if (O.cur === 'time' && O.pt > 0) O.hits++; }
       if (!O.final && from === 'me') { const kind = performance.now() - (EV.spAt || 0) < 900 ? EV.improv || 'basic' : 'basic'; O.count[kind] = (O.count[kind] || 0) + 1; if (kind !== 'basic') O.count.basic = Math.max(0, (O.count.basic || 0) - 3);
@@ -4910,7 +4939,8 @@ body.inevent .goalhud{top:130px;opacity:.9}
     u.hp -= d; if (u.hp <= 0) killUnit(u, from);
   }
   function killUnit(u, from){
-    u.dead = u.boss || u.hero === 'hulk' || u.hero === 'anchor' || (EV.k === 'inc' && u.team === 'inc') ? 999 : u.hero === 'trooper' ? 8 : 6; u.hp = 0; u.av.g.visible = false;
+    if (u.puppet) say(`The string snaps. ${HEROES[u.hero].name.replace(' (possessed)', '')} slumps, free of her.`, 2200);
+    u.dead = u.boss || u.hero === 'hulk' || u.hero === 'anchor' || ['st', 'br', 'of'].includes(EV.k) || (EV.k === 'inc' && u.team === 'inc') ? 999 : u.hero === 'trooper' ? 8 : 6; u.hp = 0; u.av.g.visible = false;
     if (u.hero === 'anchor') { const left = EV.anchors.filter(a => a.dead <= 0).length; say(left ? `An anchor fell! ${left} left.` : 'The last anchor fell\u2026', 3000); tone(70, 1, 'sawtooth', .07, 40); if (!left) return endMatch(false); }
     const killerTeam = from === 'me' ? EV.team : from && from.team; if (killerTeam && EV.k !== 'sw' && EV.k !== 'fp') EV.score[killerTeam] = (EV.score[killerTeam] || 0) + 1;
     if (from === 'me') { EV.kos++; if (isPvp(EV.k)) lbAdd(LBK[EV.team], 1); tone(180, .3, 'square', .05, 60); }
@@ -4924,15 +4954,17 @@ body.inevent .goalhud{top:130px;opacity:.9}
     if (EV.dead > 0 || EV.inv > 0 || EV.over) return;
     if (!(from && from.remote)) d *= EV.diffIn;
     if (EV.k === 'br') d *= 1.25;
+    if (EV.k === 'st') d *= EV.frailTake || 1;
     EV.hp -= d; EV.hurtT = .4; tone(120, .15, 'sawtooth', .04, 70);
-    const oneLife = EV.k === 'wwh' && EV.hero === 'hulk' || EV.k === 'br';
+    const oneLife = EV.k === 'wwh' && EV.hero === 'hulk' || EV.k === 'br' || EV.k === 'st';
     if (EV.hp <= 0) { EV.hp = 0; EV.dead = oneLife ? 999 : 4; EV.deaths++; const kt = from && from.team; if (kt && EV.k !== 'sw' && EV.k !== 'fp') EV.score[kt] = (EV.score[kt] || 0) + 1;
       if (from && from.remote && mq) mq.pub(`${MP_TOPIC}/ev/${mpId}`, JSON.stringify({ ko: from.id }));
       if (oneLife) endMatch(false); else say('Down! Back in 4 seconds\u2026', 2400); checkGoal(); }
   }
   function checkGoal(){ if (scored(EV.k) && !EV.over) { const t = Object.keys(EV.score).find(t => EV.score[t] >= EVENTS[EV.k].goal); if (t) endMatch(t === EV.team); } }
   function endMatch(won){
-    if (EV && !EV.over) { storyFlag('ev:' + EV.k); if (won) storyFlag('evwin:' + EV.k); if (won && EV.k === 'br') storyFlag('br' + EV.part); }
+    if (EV && !EV.over) { storyFlag('ev:' + EV.k); if (won) storyFlag('evwin:' + EV.k); if (won && EV.k === 'br') storyFlag('br' + EV.part); if (won && EV.k === 'st') storyFlag(EV.st.part); }
+    if (EV && EV.k === 'st' && EV.st && EV.st.part === 'c3' && won && !EV.over) { EV.over = true; return lpStart(); }
     if (EV && EV.k === 'cv' && !won && !EV.over) { EV.over = true; return galEatStart(); }
     if (EV.over) return; EV.over = true; const endFight = EV.k === 'inc' && instab >= 6; if (document.pointerLockElement) document.exitPointerLock();
     const E = EVENTS[EV.k], other = Object.keys(E.teams).find(t => t !== EV.team);
@@ -4948,7 +4980,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
       if (won && (scarOn || altOn)) { if (scarOn) setScar(false); if (altOn) setAlt(false); setTimeout(() => say('You stopped the incursion. Your Earth, and your room, are whole again.', 4200), 2500); } }
     if (!evDone.includes(EV.k)) { evDone.push(EV.k); try { localStorage.setItem('ru-evdone', JSON.stringify(evDone)); } catch (e) {} }
     if (EV.solo) { const r0 = soloRec[EV.k] || (soloRec[EV.k] = { w: 0, l: 0 }); r0[won ? 'w' : 'l']++; try { localStorage.setItem('ru-evsolo', JSON.stringify(soloRec)); } catch (e) {} }
-    const title = EV.k === 'of' ? (won ? 'The Overfit failed to generalise. Every world is coming back.' : 'The Overfit learned everything.') : EV.k === 'br' ? (won ? ['You followed the trucks to a warehouse by the lake.', 'The Broker is auctioning multiverse weapons tonight.', 'You made it to the roof.', 'The Broker is finished.'][EV.part - 1] : 'You\u2019re too hurt to keep going. Rest, then try again.') : EV.k === 'cv' ? (won ? 'You beat Galactus!' : EV.cx && EV.cx.gal ? 'Galactus ate the multiverse.' : 'Everything collided, and nothing was left standing.') : isPvp(EV.k) ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'sw' ? (won ? 'Battleworld is free! The Rebels hold the domains.' : 'Doom\u2019s Legion holds Battleworld.') : EV.k === 'fp' ? (won ? 'Timeline restored!' : 'Reverse-Flash wins. The timeline stays broken.') : EV.k === 'dks' ? (won ? 'Darkseid falls! Apokolips retreats.' : 'Darkseid is. And Darkseid wins.') : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : endFight ? 'The Beyonder wins. Everything goes white\u2026' : 'The two Earths are about to collide\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
+    const title = EV.k === 'st' ? (won ? ({ u1: 'The drones are down, but every screen is still watching.', u2: 'His connections are cut. The screens go dark.', u3: 'You pulled the plug. Ultron is offline.', p1: 'The pod villains are free of her strings.', p2: 'Your friends snap out of it.', p3: 'Her hold breaks. Everyone is free.', c1: 'The market is safe. He ran for the rooftops.', c2: 'You caught up with him.' })[EV.st.part] || 'Done.' : 'You\u2019re too hurt to keep going. Rest, then try again.') : EV.k === 'of' ? (won ? 'The Overfit failed to generalise. Every world is coming back.' : 'The Overfit learned everything.') : EV.k === 'br' ? (won ? ['You followed the trucks to a warehouse by the lake.', 'The Broker is auctioning multiverse weapons tonight.', 'You made it to the roof.', 'The Broker is finished.'][EV.part - 1] : 'You\u2019re too hurt to keep going. Rest, then try again.') : EV.k === 'cv' ? (won ? 'You beat Galactus!' : EV.cx && EV.cx.gal ? 'Galactus ate the multiverse.' : 'Everything collided, and nothing was left standing.') : isPvp(EV.k) ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'sw' ? (won ? 'Battleworld is free! The Rebels hold the domains.' : 'Doom\u2019s Legion holds Battleworld.') : EV.k === 'fp' ? (won ? 'Timeline restored!' : 'Reverse-Flash wins. The timeline stays broken.') : EV.k === 'dks' ? (won ? 'Darkseid falls! Apokolips retreats.' : 'Darkseid is. And Darkseid wins.') : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : endFight ? 'The Beyonder wins. Everything goes white\u2026' : 'The two Earths are about to collide\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
     $('#evEndT').textContent = title; $('#evEndS').textContent = `Takedowns ${EV.kos} · Times down ${EV.deaths} · Damage ${fmtN(EV.dmg)}. ${EV.solo ? soloLine(EV.k) + '.' : mq ? 'Global: ' + lbLine(EV.k) : ''}`;
     $('#evEnd').hidden = false; [523, 659, 784].forEach((f, i) => setTimeout(() => tone(won ? f : f / 2, .2, 'triangle', .05), i * 110));
   }
@@ -5453,7 +5485,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
   function showCredits(won){
     const bossN = BOSSES.filter(d => beaten.has(d.id)).length;
     const lines = won === 'saga'
-      ? ['THE MULTIVERSE SAGA', '', ...SAGA.map((C, i) => `Chapter ${i + 1}: ${C.title}`), '', 'You survived the snap, the incursions, Galactus, the Beyonder and the Overfit.', 'And then you took down one man in a stolen suit, with a burned arm, in the rain.', '', 'THE END', '', 'The comic in the lair has turned gold. Replay any chapter from it.', '', 'Thanks for playing.', '\u2014 Rayan']
+      ? ['THE MULTIVERSE SAGA', '', ...SAGA.map((C, i) => `Chapter ${i + 1}: ${C.title}`), '', 'You survived the snap, the incursions, Galactus, the Beyonder and the Overfit.', 'You beat the Broker, Ultron, the Puppeteer, and a copycat in a cheap mask.', 'And then you turned the last page.', '', 'It was just a story. Probably.', '', 'THE END', '', 'The comic in the lair has turned gold. Replay any chapter from it.', '', 'Thanks for playing.', '\u2014 Rayan']
       : won === 'eaten'
       ? ['GALACTUS ATE YOUR EARTH', '', 'Well, a bite of it.', '', 'Every universe collided, and the Devourer of Worlds was hungry.', `He also ate ${eaten.slice(-3).map(k => AREAS[k].name).join(', ')}.`, '', 'There\u2019s a hole in your room now. You can see space through it. And him.', '', 'THE SILVER SURFER IS WAITING', '', 'Find him in your room when you want a rematch.', '', '\u2014 Rayan']
       : won === 'galactus'
@@ -6145,6 +6177,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
   // free play never changes; the story just gives you one thing to do next, and remembers where you are
   let SG = { ch: 0, step: 0, flags: {}, active: false, done: [], hide: false, gold: false };
   try { Object.assign(SG, JSON.parse(localStorage.getItem('ru-story') || '{}')); } catch (e) {}
+  if (SG.gold && SG.done.includes(8) && !SG.done.includes(11)) { SG.gold = false; SG.ch = 9; SG.step = 0; SG.flags = {}; SG.active = false; try { localStorage.setItem('ru-story', JSON.stringify(SG)); } catch (e) {} }
   const saveSG = () => { try { localStorage.setItem('ru-story', JSON.stringify(SG)); } catch (e) {} };
   function storyFlag(f){ if (!SG.active) return; if (SG.flags[f]) return; SG.flags[f] = true; saveSG(); }
   const F = () => SG.flags;
@@ -6194,8 +6227,27 @@ body.inevent .goalhud{top:130px;opacity:.9}
       { t: 'Follow the Broker’s truck through Bangalore at night. Stay close, but not too close.', go: () => startEvent('br', 'me', 'rayan', { solo: true, diff: evDiff, part: 1 }), check: () => F().br1 },
       { t: 'Sneak into his warehouse and find out what he’s planning.', go: () => startEvent('br', 'me', 'rayan', { solo: true, diff: evDiff, part: 2 }), check: () => F().br2 },
       { t: 'The auction is tonight. Fight your way up his tower.', go: () => startEvent('br', 'me', 'rayan', { solo: true, diff: evDiff, part: 3 }), check: () => F().br3 },
-      { t: 'Take down the Broker on the roof of his tower.', go: () => startEvent('br', 'me', 'rayan', { solo: true, diff: evDiff, part: 4 }), check: () => F().br4 },
-      { t: 'It’s over. Go up to your own roof.', check: () => inZ('roof'), done: brEnding, where: () => ['room', V(0, 2.6, 9.6)] }
+      { t: 'Take down the Broker on the roof of his tower.', go: () => startEvent('br', 'me', 'rayan', { solo: true, diff: evDiff, part: 4 }), check: () => F().br4 }
+    ] },
+    { title: 'Ultron', tag: 'He never really left.', start: () => say('You’re still hurting, but a little stronger than before.', 3600), steps: [
+      { t: 'Your phone, your TV, every screen in Bangalore: the same face. Ultron is back. Go up to the roof and look at the city.', check: () => inZ('roof'), where: () => ['room', V(0, 2.6, 9.6)] },
+      { t: 'His drones are hunting you through the streets. Fight them off.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'u1' }), check: () => F().u1 },
+      { t: 'Cut his connections: the power substations, and the Broker’s seized servers.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'u2' }), check: () => F().u2 },
+      { t: 'He’s built himself a body out of scrap cars and drones at a data centre. Unplug him.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'u3' }), check: () => F().u3, done: () => { try { localStorage.setItem('ru-ultronred', '1'); } catch (e) {} if (!recap.includes('ultron')) { recap.push('ultron'); saveInstab(); } } },
+      { t: 'Go down to the lair and check Ultron’s pod.', check: () => inZ('lair'), where: () => ['lair', podPos('ultron')], done: () => say('Ultron’s pod glows red again. He’s locked back inside, where he belongs.', 4200) }
+    ] },
+    { title: 'The Puppeteer', tag: 'Nobody moves unless she says so.', start: () => say('Stronger again. Not all the way back yet.', 3000), steps: [
+      { t: 'Something is wrong in the lair. Go and look at the pods.', check: () => inZ('lair'), where: () => ['lair', podPos('joker')], done: () => say('Every pod is glowing purple, and the villains inside are awake.', 3600) },
+      { t: 'The villains in the pods are awake, and they’re all speaking in the same voice. Break her strings.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'p1' }), check: () => F().p1 },
+      { t: 'She’s taken the heroes too. Spider-Gwen, Captain Carter and Jay Garrick are coming for you.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'p2' }), check: () => F().p2 },
+      { t: 'Find the Puppeteer in the old theatre and break her hold.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'p3' }), check: () => F().p3, done: () => say('Her hold breaks. Everyone snaps out of it at once, blinking, like they just woke up.', 4600) }
+    ] },
+    { title: 'Copycat', tag: 'Every hero gets one eventually.', start: () => say('Almost yourself again.', 2600), steps: [
+      { t: 'Clips of your fights are all over Bangalore. Read the Daily Bugle in the lair.', check: () => F().bugle, where: () => ['lair', V(-9, 2.2, 9.3)] },
+      { t: 'Someone is copying you, badly. Follow his trail through the market and clean up his mess.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'c1' }), check: () => F().c1 },
+      { t: 'He’s running across the rooftops. Catch him.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'c2' }), check: () => F().c2 },
+      { t: 'Fight the Copycat on the roof, in the rain.', go: () => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'c3' }), check: () => F().lastpage },
+      { t: 'The comic is open on your desk, at its last page. Close it.', keep: () => { if (!normalView && !inWorld) enterNormal(); }, check: () => F().closed, where: () => ['room', V(-2.5, 1.9, -4.2)], done: finaleCredits }
     ] }
   ];
   const sagaLen = () => SAGA.length;
@@ -6222,6 +6274,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
     if (now < sagaT) { if (beacon && beacon.visible) beacon.userData.ring.rotation.z += dt * 2; return; } sagaT = now + 400;
     renderGoal();
     const s = SG.active && curStep();
+    if (s && s.keep) s.keep();
     if (s && SG.entered !== SG.ch + ':' + SG.step) { SG.entered = SG.ch + ':' + SG.step; saveSG(); if (s.enter) s.enter(); }
     // the beam of light over where you need to go
     const w = s && s.where && !SG.hide ? s.where() : null, sc = w ? (w[0] === 'room' ? scene : w[0] === 'lair' ? lairScene : w[0] === 'roof' ? roofScene : null) : null;
@@ -6388,6 +6441,214 @@ body.inevent .goalhud{top:130px;opacity:.9}
     lines.forEach((l, i) => setTimeout(() => say(l, 3800), i * 4000)); setTimeout(() => showCredits('saga'), lines.length * 4000 + 600);
   }
 
+  // ======================= Chapters 10-12: Ultron, the Puppeteer, the Copycat =======================
+  const ultronFaceTex = () => tex(256, 256, (c, w, h) => { c.fillStyle = '#1A0406'; c.fillRect(0, 0, w, h); c.strokeStyle = '#FF3030'; c.lineWidth = 6; c.beginPath(); c.moveTo(60, 40); c.lineTo(196, 40); c.lineTo(220, 140); c.lineTo(128, 226); c.lineTo(36, 140); c.closePath(); c.stroke(); c.fillStyle = '#FF3030'; c.shadowColor = '#FF3030'; c.shadowBlur = 20; [[88, 110], [168, 110]].forEach(([x, y]) => { c.beginPath(); c.moveTo(x - 26, y - 6); c.lineTo(x + 26, y - 6); c.lineTo(x + 18, y + 8); c.lineTo(x - 18, y + 8); c.closePath(); c.fill(); }); c.fillRect(84, 170, 88, 6); c.font = '800 22px monospace'; c.textAlign = 'center'; c.fillText('I’M BACK', 128, 250); });
+  // his face on every screen while he's loose
+  let faceG = null, roofFaces = null;
+  function ultronFaces(on){
+    if (!on) { if (faceG) { scene.remove(faceG); disposeDeep(faceG); faceG = null; } if (roofFaces) { roofScene.remove(roofFaces); disposeDeep(roofFaces); roofFaces = null; } return; }
+    if (!faceG) { faceG = new THREE.Group(); scene.add(faceG); const m = new THREE.Mesh(new THREE.PlaneGeometry(.5, .32), new THREE.MeshBasicMaterial({ map: ultronFaceTex() })); m.position.set(-3.05, 1.02, -4.47); m.rotation.x = -.15; faceG.add(m); const h = new THREE.Sprite(new THREE.SpriteMaterial({ map: ultronFaceTex(), transparent: true, opacity: .85 })); h.scale.set(1, 1, 1); h.position.set(-3, 2.1, -4); faceG.add(h); faceG.userData.h = h; faceG.traverse(o => o.userData.noPick = true); }
+    if (!roofFaces && roofScene) { roofFaces = new THREE.Group(); roofScene.add(roofFaces); [[-40, 30, -90], [35, 26, -80], [70, 34, -40], [-70, 28, -30]].forEach(([x, y, z]) => { const s2 = new THREE.Sprite(new THREE.SpriteMaterial({ map: ultronFaceTex(), fog: false })); s2.scale.set(18, 18, 1); s2.position.set(x, y, z); roofFaces.add(s2); }); }
+  }
+  // Ultron's drones: a little flying body instead of a person
+  function droneAv(u){
+    const old = u.av.g; if (old.parent) old.parent.remove(old); const g = new THREE.Group(); box(.55, .16, .55, mat(0x2A2D33, { metalness: .7 }), 0, 0, 0, g); const rot = [[-.36, -.36], [.36, -.36], [-.36, .36], [.36, .36]].map(([x, z]) => cyl(.18, .18, .02, mat(0x16181D), x, .1, z, g, 12)); sph(.07, glowM(0xFF3030, { emissiveIntensity: 2 }), 0, -.05, -.3, g);
+    g.add(u.tag); u.tag.position.y = .6; u.tag.scale.set(1.2, .3, 1); eventScene.add(g); u.y = 2.2; u.av = { g, hold(){}, anim(t){ rot.forEach(r => r.rotation.y += .5); g.position.y = 2.2 + Math.sin(t * 3 + u.x) * .15; } };
+  }
+  // a static target with its own look (substations, server racks, cables)
+  function staticAv(u, kind){
+    const old = u.av.g; if (old.parent) old.parent.remove(old); const g = new THREE.Group();
+    if (kind === 'ustation') { box(2.2, 1.8, 1.4, mat(0x5A5E68, { metalness: .5 }), 0, .9, 0, g); [-.6, .6].forEach(x => cyl(.12, .12, .8, mat(0xC8C8C8), x, 2.2, 0, g, 8)); box(2.24, .2, 1.44, mat(0xFFC93C), 0, 1.3, 0, g); sph(.12, glowM(0x3CE8E8, { emissiveIntensity: 1.8 }), 0, 2.7, 0, g); }
+    if (kind === 'userver') { box(1, 2.4, .9, mat(0x16181D, { metalness: .4 }), 0, 1.2, 0, g); for (let i = 0; i < 8; i++) box(.8, .05, .02, glowM(i % 2 ? 0xFF8A2E : 0x3CE870, { emissiveIntensity: 1.4 }), 0, .4 + i * .25, .46, g); }
+    if (kind === 'ucable') { cyl(.2, .3, 3, mat(0x3A3D44, { metalness: .6 }), 0, 1.5, 0, g, 10); sph(.25, glowM(0xFF3030, { emissiveIntensity: 1.6 }), 0, 3.1, 0, g); }
+    g.add(u.tag); u.tag.position.y = 3.4; u.tag.scale.set(1.6, .4, 1); eventScene.add(g); u.av = { g, hold(){}, anim(){} };
+  }
+  // Ultron's body, bolted together from scrap cars and drones
+  function ultronAv(u){
+    const old = u.av.g; if (old.parent) old.parent.remove(old); const g = new THREE.Group(), s = 1.5; const car = mat(0xB3121E, { metalness: .5, roughness: .35 }), car2 = mat(0x3C7CFF, { metalness: .5, roughness: .35 }), steel = mat(0x5A5E68, { metalness: .7 }), tyre = mat(0x16181D);
+    [-.45, .45].forEach(x => { for (let i = 0; i < 3; i++) cyl(.38 * s, .38 * s, .3 * s, tyre, x * s, (.4 + i * .5) * s, 0, g, 14).rotation.z = Math.PI / 2; });
+    box(1.8 * s, 1.1 * s, 1 * s, car, 0, 2.3 * s, 0, g); box(1.6 * s, .4 * s, .9 * s, mat(0x9FD8FF, { transparent: true, opacity: .6 }), 0, 2.95 * s, 0, g);
+    const arms = [-1, 1].map(sd => { const a = new THREE.Group(); a.position.set(sd * 1.15 * s, 2.7 * s, 0); g.add(a); box(.5 * s, 1.6 * s, .5 * s, sd < 0 ? car2 : steel, 0, -.8 * s, 0, a); box(.7 * s, .5 * s, .7 * s, steel, 0, -1.7 * s, 0, a); return a; });
+    const head = box(.9 * s, .7 * s, .8 * s, steel, 0, 3.55 * s, 0, g); [-.2, .2].forEach(x => box(.24 * s, .07 * s, .02 * s, glowM(0xFF3030, { emissiveIntensity: 2.2 }), x * s, 3.6 * s, .41 * s, g));
+    const orbit = new THREE.Group(); orbit.position.y = 3 * s; g.add(orbit); for (let i = 0; i < 4; i++) { const d = new THREE.Group(); const a = i / 4 * Math.PI * 2; d.position.set(Math.cos(a) * 2.4, 0, Math.sin(a) * 2.4); box(.4, .12, .4, mat(0x2A2D33), 0, 0, 0, d); sph(.06, glowM(0xFF3030, { emissiveIntensity: 2 }), 0, -.05, .2, d); orbit.add(d); }
+    g.add(u.tag); u.tag.position.y = 4.8 * s; u.tag.scale.set(1.2, .3, 1); eventScene.add(g);
+    u.av = { g, hold(){}, anim(t, mv, sw){ orbit.rotation.y += .03; arms.forEach((a, i) => a.rotation.x = Math.sin(t * 2 + i * Math.PI) * .3 * (mv || .3) - (sw > 0 ? 1.2 * sw : 0)); head.rotation.y = Math.sin(t * .7) * .3; } };
+  }
+  // pod villains, possessed, fighting in their own bodies
+  function creatureAv(u, id, sc){
+    const old = u.av.g; if (old.parent) old.parent.remove(old); const M = CREATURE3D[id](false); M.g.scale.setScalar((M.s0 || 1.2) * (sc || 1)); M.g.add(u.tag); u.tag.position.y = 2.4; u.tag.scale.set(.9, .22, 1); eventScene.add(M.g);
+    u.av = { g: M.g, hold(){}, anim(t, mv, sw){ M.anim({ st: sw > 0 ? 'attack' : 'roam', mv: '', a: t * 2, hp: 1, max: 1, swing: sw, mouth: sw, ring: 0, w: 1, vx: 0, vy: 0 }, t, .6); } };
+  }
+  // the strings from the Puppeteer to everyone she controls
+  function stringsStep(){
+    const S = EV.st; if (!S.strings) { S.strings = new THREE.Group(); eventScene.add(S.strings); }
+    const top = EV.boss && EV.boss.dead <= 0 && EV.boss.hero === 'puppeteer' ? V(EV.boss.x, 3.2, EV.boss.z) : V(0, 26, -30);
+    const pts = []; EV.units.forEach(u => { if (u.puppet && u.dead <= 0) pts.push(V(u.x, 2.2, u.z), top); });
+    const g = S.strings; while (g.children.length) { const c = g.children.pop(); c.geometry.dispose(); }
+    if (pts.length) { const l = new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0xB07CFF, transparent: true, opacity: .75 })); g.add(l); }
+  }
+  const PUPPET_LINES = ['“You can’t fight all of us.”', '“They were so easy to pick up.”', '“Every villain you locked away is mine now.”', '“Why fight? Just let go.”', '“I’ll let them go when you stop moving.”'];
+  function addPuppet(kind, x, z){
+    let u;
+    if (kind.startsWith('pod:')) { const id = kind.slice(4), def = BOSSES.find(d => d.id === id); if (!HEROES['pp_' + id]) HEROES['pp_' + id] = { name: `${def.name} (possessed)`, hp: 240, kind: 'melee', dmg: 9, range: 2.6, cd: .8, speed: 4.6, r: .7 }; u = addUnit({ hero: 'pp_' + id, team: 'en' }); creatureAv(u, id, 1); }
+    else u = addUnit({ hero: kind, team: 'en' });
+    u.x = x; u.z = z; u.puppet = 1; if (EV.st && EV.st.ready) { u.hp = u.max = Math.round(u.max * EV.foeHp); drawTag(u); } return u;
+  }
+  // her worst trick: for a few seconds, she's in your head
+  function possessMe(){
+    const S = EV.st, k = ['rev', 'lock', 'cam'][S.trick++ % 3]; document.body.classList.add('possessed');
+    if (k === 'rev') { EV.mindT = 4; say('She’s in your head! Your controls are reversed.', 2400); }
+    if (k === 'lock') { EV.lockT = 3.5; say('She’s in your head! You can’t move.', 2400); }
+    if (k === 'cam') { EV.camT = 4; EV.camSaved = tpv; tpv = true; say('She pulls you out of your own eyes. You’re watching yourself.', 2600); }
+    tone(200, 1.2, 'sine', .05, 90); setTimeout(() => document.body.classList.remove('possessed'), 4000);
+  }
+  function stArena(sc, part){
+    const street = part === 'u1' || part === 'u2' || part === 'p2' || part === 'c2' || part === 'c3';
+    const win = [0, 1, 2].map(() => new THREE.MeshStandardMaterial({ color: 0x1B1D24, map: winTex(true, ['#FFD27A', '#FFC93C', '#C9CFD8']), emissive: 0xFFFFFF, emissiveMap: winTex(true, ['#FFD27A', '#FFC93C', '#C9CFD8']), emissiveIntensity: .5 }));
+    if (street || part === 'c1') for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2, R = ER + 8 + Math.random() * 12, h = 10 + Math.random() * 30, w = 6 + Math.random() * 6, rooftop = part === 'c2' || part === 'c3' || part === 'p2'; const bld = box(w, h, w, win[i % 3], Math.cos(a) * R, rooftop ? h / 2 - 34 : h / 2, Math.sin(a) * R, sc); bld.userData.noPick = true; }
+    if (part === 'u1' || part === 'u2') { for (let z = -24; z < 24; z += 4) box(.3, .02, 2, mat(0xFFC93C), 0, .02, z, sc); [[-14, -20], [16, -18], [-20, 10], [20, 12]].forEach(([x, z], i) => { const scr = new THREE.Mesh(new THREE.PlaneGeometry(7, 7), new THREE.MeshBasicMaterial({ map: ultronFaceTex() })); scr.position.set(x * 1.35, 12, z * 1.35); scr.lookAt(0, 12, 0); sc.add(scr); }); }
+    if (part === 'u3') { const rack = mat(0x16181D, { metalness: .4 }), led = glowM(0x3CE8E8, { emissiveIntensity: 1.2 }); [-12, -6, 6, 12].forEach(x => [-10, 0, 10].forEach(z => { box(1.4, 3, 5, rack, x, 1.5, z, sc); box(1.42, .06, 4.6, led, x, 2.4, z, sc); PILLARS.push({ x, z: z - 1.6, r: 1 }, { x, z: z + 1.6, r: 1 }); })); const l = new THREE.PointLight(0x3CE8E8, 1.2, 40, 2); l.position.set(0, 8, 0); sc.add(l); sc.fog.far = 70; }
+    if (part === 'p1' || part === 'p3') { const stone = mat(0x2A2D33, { roughness: 1 }); for (let i = 0; i < 10; i++) { const a = i / 10 * Math.PI * 2, x = Math.cos(a) * (ER - 2), z = Math.sin(a) * (ER - 2); cyl(1, 1.1, .3, stone, x, .15, z, sc, 20); cyl(.95, .95, 2.6, new THREE.MeshStandardMaterial({ color: 0xB07CFF, transparent: true, opacity: .15, emissive: 0xB07CFF, emissiveIntensity: .3 }), x, 1.6, z, sc, 20); } }
+    if (part === 'p3') { const curtain = mat(0x7A0A1A, { roughness: .9 }); for (let i = 0; i < 8; i++) box(3.6, 9, .3, curtain, -12.6 + i * 3.6, 4.5, -ER + 1, sc); [-8, 0, 8].forEach(x => { const s2 = new THREE.SpotLight(0xFFE8C0, 2, 40, .35, .5, 1); s2.position.set(x, 14, 6); s2.target.position.set(x * .5, 0, -6); sc.add(s2); sc.add(s2.target); }); }
+    if (part === 'c1') { const aw = [0xC8102E, 0xFFC93C, 0x3C7CFF, 0x5E9A3A, 0xE8428C]; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2 + .2, R = 10 + (i % 2) * 7, x = Math.cos(a) * R, z = Math.sin(a) * R; const st = new THREE.Group(); st.position.set(x, 0, z); st.rotation.y = -a; sc.add(st); box(2.4, 1, 1.2, mat(0x6A4E3A), 0, .5, 0, st); box(2.8, .08, 1.8, mat(aw[i % 5]), 0, 2.3, .2, st); PILLARS.push({ x, z, r: 1.3 }); } [[-8, 4], [8, -4], [0, 12]].forEach(([x, z]) => { const l = new THREE.PointLight(0xFFC080, 1, 16, 2); l.position.set(x, 5, z); sc.add(l); }); }
+    if (part === 'c2' || part === 'c3' || part === 'p2') { const unit = mat(0x8A8F99, { metalness: .4 }); [[-10, -8], [11, 6], [-6, 12], [14, -12], [-16, 4]].forEach(([x, z], i) => { if (i % 2) { cyl(1.4, 1.4, 3, mat(0x5A5E68), x, 1.5, z, sc, 16); } else box(2.4, 1.6, 1.6, unit, x, .8, z, sc); PILLARS.push({ x, z, r: 1.5 }); }); }
+    if (part !== 'u3' && part !== 'p1' && part !== 'p3') { const n = lowFx ? 500 : 1600, P = new Float32Array(n * 6); for (let i = 0; i < n; i++) { const x = (Math.random() - .5) * 70, y = Math.random() * 30, z = (Math.random() - .5) * 70; P.set([x, y, z, x, y - .6, z], i * 6); } const rg = new THREE.BufferGeometry(); rg.setAttribute('position', new THREE.BufferAttribute(P, 3)); const rain = new THREE.LineSegments(rg, new THREE.LineBasicMaterial({ color: 0x9FB4D8, transparent: true, opacity: part === 'c2' ? .15 : .45 })); sc.add(rain); sc.userData.rain = rain; }
+  }
+  function stSetup(part){
+    const S = EV.st = { part, trick: 0, possT: 12, wave: 0, fires: [], people: [], tags: 0, ready: false }, add = (h, x, z) => { const u = addUnit({ hero: h, team: 'en' }); u.x = x; u.z = z; if (S.ready) { u.hp = u.max = Math.round(u.max * EV.foeHp); drawTag(u); } if (h === 'udrone') droneAv(u); return u; }, ring = (n, R) => Array.from({ length: n }, (_, i) => [Math.cos(i / n * Math.PI * 2) * R, Math.sin(i / n * Math.PI * 2) * R - 4]);
+    S.add = add; S.ring = ring;
+    if (part === 'u1') S.wave = 0;
+    if (part === 'u2') { S.targets = [[-16, -12, 'ustation'], [16, -12, 'ustation'], [0, -20, 'ustation'], [-12, 10, 'userver'], [12, 10, 'userver']].map(([x, z, h]) => { const u = add(h, x, z); staticAv(u, h); return u; }); S.droneT = 2; }
+    if (part === 'u3') { const b = add('ultronx', 0, -14); ultronAv(b); b.boss = 1; EV.boss = b; S.cables = [[-12, -18], [12, -18], [0, -24]].map(([x, z]) => { const u = add('ucable', x, z); staticAv(u, 'ucable'); return u; }); S.cableLine = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xFF3030 })); eventScene.add(S.cableLine); for (let i = 0; i < 3; i++) add('udrone', (i - 1) * 6, -8); }
+    if (part === 'p1') { const ids = BOSSES.filter(d => !CREATURES[d.id].seg && !['thanos', 'ultron', 'darkseid', 'celestial', 'gorr'].includes(d.id) && CREATURE3D[d.id]).map(d => d.id).sort(() => Math.random() - .5).slice(0, 4); ids.forEach((id, i) => { const [x, z] = ring(4, 14)[i]; addPuppet('pod:' + id, x, z); }); S.lineT = 3; }
+    if (part === 'p2') { [['pgwen', -10, -12], ['pcarter', 10, -12], ['pjay', 0, -18]].forEach(([h, x, z]) => addPuppet(h, x, z)); S.lineT = 3; }
+    if (part === 'p3') { const b = addUnit({ hero: 'puppeteer', team: 'en' }); b.x = 0; b.z = -20; b.boss = 1; EV.boss = b; S.cycle = 0; puppetWave(); S.lineT = 4; }
+    if (part === 'c1') { S.fires = [[-12, -8], [9, -14], [14, 8], [-6, 14]].map(([x, z]) => { const g = new THREE.Group(); g.position.set(x, 0, z); eventScene.add(g); for (let i = 0; i < 5; i++) { const f = new THREE.Mesh(new THREE.ConeGeometry(.35, 1 + Math.random(), 8), glowM(i % 2 ? 0xFF6A2E : 0xFFC93C, { emissiveIntensity: 1.8 })); f.position.set((Math.random() - .5) * 1.2, .6, (Math.random() - .5) * 1.2); g.add(f); } const l = new THREE.PointLight(0xFF6A2E, 1.4, 8, 2); l.position.y = 1.2; g.add(l); return { g, x, z, t: 0, out: false }; });
+      S.people = [[-4, -20], [18, -4], [-18, 8]].map(([x, z], i) => { const a = avatar(Object.assign({}, LOOK0, { c1: (i * 3) % SUITC.length, c2: (i * 5 + 2) % SUITC.length, hair: i === 1 ? 'long' : 'short', skin: i + 1 })); a.g.position.set(x, 0, z); a.g.rotation.x = -1.2; a.g.position.y = .3; eventScene.add(a.g); const beam = box(2.4, .3, .4, mat(0x6A4E3A), x, .7, z, eventScene); beam.rotation.y = .6; return { a, beam, x, z, t: 0, free: false }; });
+      const cc = avatar(Object.assign({}, look, { outfit: 'copycat' })); cc.g.position.set(0, 6, -26); eventScene.add(cc.g); box(4, 6, 3, mat(0x3A3D44), 0, 3, -26, eventScene); S.cc = cc; }
+    if (part === 'c2') { const u = addUnit({ hero: 'copyrun', team: 'en' }); u.x = 0; u.z = -10; u.stun = 1e9; S.runner = u; S.goal = null; S.throwT = 3; }
+    if (part === 'c3') { const b = addUnit({ hero: 'copycat', team: 'en' }); b.x = 0; b.z = -12; b.boss = 1; EV.boss = b; }
+  }
+  function puppetWave(){
+    const S = EV.st; S.cycle++; const pool = ['pgwen', 'pcarter', 'pjay'].concat(BOSSES.filter(d => !CREATURES[d.id].seg && ['loki', 'hela', 'joker', 'harley', 'bane'].includes(d.id)).map(d => 'pod:' + d.id)).sort(() => Math.random() - .5).slice(0, 3);
+    pool.forEach((k, i) => { const a = (i / 3) * Math.PI * 2, b = EV.boss; addPuppet(k, b.x + Math.cos(a) * 5, b.z + Math.sin(a) * 5 + 4); });
+    S.exposed = 0; say(S.cycle === 1 ? 'She hides behind everyone she’s controlling. Knock them out to break the strings.' : 'She grabs new puppets. Break them too.', 3200);
+  }
+  function stStep(dt, t){
+    const S = EV.st, sc = eventScene, P = S.part; S.ready = true;
+    const rain = sc.userData.rain; if (rain) { const a = rain.geometry.attributes.position.array; for (let i = 0; i < a.length; i += 6) { a[i + 1] -= 22 * dt; a[i + 4] -= 22 * dt; if (a[i + 1] < 0) { a[i + 1] += 30; a[i + 4] += 30; } } rain.geometry.attributes.position.needsUpdate = true; }
+    if (EV.lockT > 0) EV.lockT -= dt; if (EV.mindT > 0) EV.mindT -= dt;
+    if (EV.camT > 0 && (EV.camT -= dt) <= 0) tpv = EV.camSaved;
+    const alive2 = f => EV.units.filter(u => u.team === 'en' && u.dead <= 0 && f(u));
+    if (P === 'u1') { if (!alive2(() => true).length && !EV.over) { if (S.wave >= 3) endMatch(true); else { S.wave++; const n = 2 + S.wave * 2; S.ring(n, 16).forEach(([x, z], i) => S.add(i % 3 === 2 ? 'uscrap' : 'udrone', x, z)); say(S.wave === 1 ? 'His drones drop out of the rain.' : S.wave === 2 ? 'More of them, and scrap bots on the ground.' : 'The last wave. Every camera on the street is watching you.', 2600); } } }
+    if (P === 'u2') { const left = S.targets.filter(u => u.dead <= 0).length; if (!left && !EV.over) { say('The last connection sparks and dies. The screens across the city flicker off.', 3200); endMatch(true); }
+      if ((S.droneT -= dt) <= 0) { S.droneT = 12; if (alive2(u => u.hero === 'udrone').length < 6) S.ring(2, 18).forEach(([x, z]) => S.add('udrone', x + (Math.random() - .5) * 6, z)); } }
+    if (P === 'u3') { const b = EV.boss, on = S.cables.filter(u => u.dead <= 0);
+      const pts = []; on.forEach(u => pts.push(V(u.x, 3, u.z), V(b.x, 3.5, b.z))); S.cableLine.geometry.dispose(); S.cableLine.geometry = new THREE.BufferGeometry().setFromPoints(pts.length ? pts : [V(0, -5, 0), V(0, -5, 0)]);
+      if (b.dead <= 0 && on.length) b.hp = Math.min(b.max, b.hp + b.max * .008 * dt);
+      if (!on.length && !S.toldUnplug) { S.toldUnplug = 1; say('Every cable is cut. He’s running on his own battery now. Take him apart!', 3000); } }
+    if (P === 'p1' || P === 'p2' || P === 'p3') { stringsStep();
+      if ((S.lineT -= dt) <= 0) { S.lineT = 8; const p = alive2(u => u.puppet)[0]; if (p) say(`${HEROES[p.hero].name.replace(' (possessed)', '')}, in her voice: ${PUPPET_LINES[Math.floor(Math.random() * PUPPET_LINES.length)]}`, 3000); }
+      if (P !== 'p1' && (S.possT -= dt) <= 0) { S.possT = 13; possessMe(); }
+      if (P !== 'p3' && !alive2(u => u.puppet).length && !EV.over) endMatch(true);
+      if (P === 'p3') { const b = EV.boss; if (b.dead <= 0) { const pup = alive2(u => u.puppet).length;
+        if (!pup && !S.exposed) { S.exposed = 18; say('Her strings are cut! She’s exposed. Hit her now!', 2600); }
+        if (S.exposed > 0) { S.exposed -= dt; if (S.exposed <= 0) { if (b.hp > b.max * .35) puppetWave(); else S.exposed = 999; } } } } }
+    if (P === 'c1') {
+      S.fires.forEach(f => { if (f.out) return; f.g.children.forEach((c, i) => { if (c.isMesh) c.scale.y = 1 + Math.sin(t * 8 + i) * .2; }); if (Math.hypot(pos.x - f.x, pos.z - f.z) < 1.8) { f.t += dt; if (f.t > 2) { f.out = true; f.g.visible = false; say(`Fire out. ${S.fires.filter(q => !q.out).length} left.`, 1600); tone(300, .3, 'sine', .04, 120); } } else f.t = Math.max(0, f.t - dt); });
+      S.people.forEach(p => { if (p.free) return; if (Math.hypot(pos.x - p.x, pos.z - p.z) < 2) { p.t += dt; if (p.t > 2) { p.free = true; eventScene.remove(p.beam); p.a.g.rotation.x = 0; p.a.g.position.y = 0; say(['“Thanks! That wasn’t you earlier… was it?”', '“He said he was you. He knocked the whole stall over.”', '“You’re the real one, right?”'][S.people.indexOf(p)], 2800); } } else p.t = Math.max(0, p.t - dt); if (p.free) p.a.anim(t, 0, 0); });
+      if (S.cc) { S.cc.anim(t, 0, 0); S.cc.g.rotation.y = Math.atan2(pos.x, pos.z + 26); }
+      if (S.fires.every(f => f.out) && S.people.every(p => p.free) && !EV.over) { say('The Copycat laughs from the rooftop and runs.', 2600); endMatch(true); }
+    }
+    if (P === 'c2') { const u = S.runner, d = Math.hypot(pos.x - u.x, pos.z - u.z);
+      if (!S.goal || Math.hypot(S.goal[0] - u.x, S.goal[1] - u.z) < 1 || d < 5) { if (!S.goal || d < 5 || Math.hypot(S.goal[0] - u.x, S.goal[1] - u.z) < 1) { let g = null; for (let i = 0; i < 12; i++) { const a = Math.random() * Math.PI * 2, r = 8 + Math.random() * 16, x = Math.cos(a) * r, z = Math.sin(a) * r; if (evValid(x, z) && Math.hypot(x - pos.x, z - pos.z) > 12) { g = [x, z]; break; } } if (g) S.goal = g; } }
+      if (S.goal) { const dx = S.goal[0] - u.x, dz = S.goal[1] - u.z, dd = Math.hypot(dx, dz); if (dd > .5) { moveUnit(u, dx, dz, 4.6, dt); u.yaw = Math.atan2(-dx, -dz); u.mv = 1; } else u.mv = 0; }
+      if ((S.throwT -= dt) <= 0 && d < 16) { S.throwT = 3.5; shoot({ x: u.x, z: u.z, yaw: Math.atan2(-(pos.x - u.x), -(pos.z - u.z)), dmg: 6, team: 'en', col: 0xFFC93C, from: u }); }
+      if (S.tags >= 5 && !EV.over) { say('“Fine! You want a real fight? Meet me on the tower roof.”', 3000); endMatch(true); } }
+  }
+  // the Copycat can't be hurt while he's running; each hit that lands just counts
+  function copyTag(u){ const S = EV.st; if (S.tagCd > performance.now()) return; S.tagCd = performance.now() + 900; S.tags++; S.goal = null; u.kx = (u.x - pos.x) * 2; u.kz = (u.z - pos.z) * 2; say(`Got him! (${S.tags}/5)`, 1200); tone(500, .15, 'square', .05, 300); }
+
+  // ======================= The Last Page =======================
+  function lpStart(){
+    const S = EV.st; if (document.pointerLockElement) document.exitPointerLock(); evHud.hidden = true; S.lp = { t0: performance.now(), saved: tpv }; tpv = false;
+    // a cell at the police station, somewhere off to the side
+    const cell = new THREE.Group(); cell.position.set(300, 0, 0); eventScene.add(cell); box(8, .2, 6, mat(0x5A5E68), 0, -.1, 0, cell); box(8, 3.4, .2, mat(0x8A8F99), 0, 1.7, -3, cell); box(.2, 3.4, 6, mat(0x8A8F99), -4, 1.7, 0, cell); box(.2, 3.4, 6, mat(0x8A8F99), 4, 1.7, 0, cell);
+    for (let i = 0; i < 16; i++) cyl(.04, .04, 3.2, mat(0x2A2D33, { metalness: .8 }), -3.75 + i * .5, 1.6, 3, cell, 8); box(2.4, .5, .8, mat(0x6A4E3A), -1.5, .25, -2.4, cell);
+    const cc = avatar(Object.assign({}, look, { outfit: 'copycat' })); cc.g.position.set(-1.5, .25, -2.2); cell.add(cc.g); const l = new THREE.PointLight(0xFFF1D6, 1.2, 10, 2); l.position.set(0, 3, 0); cell.add(l);
+    const plate = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex(512, 96, (c, w, h) => { c.fillStyle = 'rgba(11,13,20,.85)'; c.fillRect(0, 0, w, h); c.fillStyle = '#FFFFFF'; c.font = `800 44px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('BANGALORE CITY POLICE', w / 2, h / 2 + 3); }) })); plate.scale.set(4, .75, 1); plate.position.set(0, 3.8, 3); cell.add(plate); S.lp.cell = cell;
+    eventScene.fog.far = 400; say('Bangalore City Police: “We’ll take it from here.” The Copycat sits in a cell, still in his cheap mask.', 4600);
+  }
+  function lpStep(dt, now){
+    const S = EV.st, L = S.lp, T = (now - L.t0) / 1000;
+    if (T < 5) { pos.set(300, 1.6, 6.5); yaw = 0; pitch = -.05; return; }
+    if (!L.back) { L.back = 1; say('It’s over. You turn to leave the roof in the rain…', 3200); }
+    const k = clamp((T - 8) / 8, 0, 1);
+    pos.set(0, 1.6 - .9 * k, 16); yaw = Math.PI + Math.sin(T * .3) * .05; pitch = .05 + .08 * k;
+    if (T > 8 && !L.fall) { L.fall = 1; say('…and your legs give out. That last hit went deeper than you thought. Or maybe it’s everything since the snap, catching up all at once.', 6000); }
+    if (T > 12 && !L.dawn) { L.dawn = 1; say('The rain eases. The sky over Bangalore starts to go pale.', 3600); }
+    eventScene.background = new THREE.Color(0x0A0E18).lerp(new THREE.Color(0xE8B890), clamp((T - 10) / 8, 0, 1) * .6);
+    if (eventScene.userData.rain) eventScene.userData.rain.material.opacity = .45 * (1 - k);
+    canvas.style.filter = `grayscale(${clamp((T - 8) / 10, 0, 1)}) brightness(${1 - clamp((T - 18) / 4, 0, 1) * .6})`;
+    // flashes of everything that happened
+    const flashes = [[18, 'thanos'], [19.2, 'rayans'], [20.4, 'galactus'], [21.6, 'overfit']];
+    flashes.forEach(([at, what], i) => { if (T > at && !L['f' + i]) { L['f' + i] = 1; if (L.flash) { eventScene.remove(L.flash); } const g = new THREE.Group(), fw = V(-Math.sin(yaw), 0, -Math.cos(yaw)); g.position.copy(pos).addScaledVector(fw, 5); g.position.y = 0; g.rotation.y = yaw; eventScene.add(g); L.flash = g;
+        if (what === 'thanos' || what === 'overfit') { const M = CREATURE3D[what](false); M.g.scale.setScalar((M.s0 || 1.2) * 1.4); g.add(M.g); }
+        if (what === 'rayans') ALT_KEYS.slice(0, 5).forEach((k2, j) => { const E = ALT_EARTHS[k2], a = avatar(E.other === 'swap' ? look : Object.assign({}, look, { outfit: E.other })); a.g.position.set(-2.4 + j * 1.2, 0, 0); g.add(a.g); });
+        if (what === 'galactus') { const G = makeGalactus(); G.g.scale.setScalar(.08); g.add(G.g); }
+        fadeEl.style.background = '#FFFFFF'; fadeEl.classList.add('on'); setTimeout(() => fadeEl.classList.remove('on'), 140); } });
+    if (T > 22.8 && !L.black) { L.black = 1; if (L.flash) eventScene.remove(L.flash); fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); }
+    if (T > 24.5 && !L.page) { L.page = 1; [0, 60, 120, 180].forEach((d, i) => setTimeout(() => tone(2400 - i * 400, .12, 'triangle', .02, 800), d)); }
+    if (T > 26 && !L.done) { L.done = 1; tpv = L.saved; canvas.style.filter = ''; storyFlag('c3'); stopEvent(true); travel('room'); enterNormal(); pos.copy(views.projects ? views.projects.pos : V(-3.2, 1.45, -2.5)); yaw = 0; pitch = -.3; storyFlag('lastpage'); setTimeout(() => { fadeEl.classList.remove('on'); say('You wake up in your room. It’s daylight. Your arm doesn’t hurt. Everything is… normal?', 5200); }, 400); }
+  }
+  // waking up: the room exactly as it was before any of it
+  let lastComic = null;
+  function enterNormal(){
+    if (!SG.flags.lpSaved) { SG.flags.lpSaved = { scar: scarOn, alt: altOn ? altK : null, night: night }; saveSG(); }
+    normalView = true; if (scarOn) setScar(false); if (altOn) setAlt(false); if (night) flipLights();
+    [trophy, sparkT, galTrophy, biteG, phoneG, faceG, phoneG && phoneG.userData.qr && phoneG.userData.qr.parent].forEach(g => { if (g) g.visible = false; }); [roofGal && roofGal.g, roofHelm].forEach(g => { if (g) g.visible = false; });
+    idleShown = undefined; meKey = '';
+    if (!lastComic) { const g = lastComic = new THREE.Group(); g.position.set(-2.5, .805, -4.2); g.rotation.y = .2; scene.add(g);
+      const pageM = t2 => new THREE.MeshBasicMaterial({ map: t2, side: THREE.DoubleSide });
+      const left = new THREE.Mesh(new THREE.PlaneGeometry(.3, .42), pageM(tex(256, 360, (c, w, h) => { c.fillStyle = '#F4EFE2'; c.fillRect(0, 0, w, h); c.strokeStyle = '#16181D'; c.lineWidth = 4; [[10, 10, 236, 160], [10, 180, 110, 170], [130, 180, 116, 170]].forEach(([x, y, ww, hh]) => c.strokeRect(x, y, ww, hh)); c.fillStyle = '#9AA0AA'; c.fillRect(20, 20, 216, 140); c.fillStyle = '#16181D'; c.font = '700 16px sans-serif'; c.fillText('...and the sun came up.', 24, 330); })));
+      left.rotation.x = -Math.PI / 2; left.position.x = -.155; g.add(left);
+      const rightT = tex(256, 360, (c, w, h) => { c.fillStyle = '#F4EFE2'; c.fillRect(0, 0, w, h); c.fillStyle = '#16181D'; c.font = `900 52px ${DISPLAY}`; c.textAlign = 'center'; c.fillText('THE END', w / 2, h / 2 + 10); c.font = '600 14px sans-serif'; c.fillText('THE MULTIVERSE SAGA #12', w / 2, h - 20); });
+      const hinge = new THREE.Group(); g.add(hinge); const right = new THREE.Mesh(new THREE.PlaneGeometry(.3, .42), pageM(rightT)); right.rotation.x = -Math.PI / 2; right.position.x = .155; hinge.add(right); g.userData.hinge = hinge;
+      const glow = new THREE.PointLight(0xFFC93C, .8, 2.5, 2); glow.position.y = .4; g.add(glow);
+      g.userData.egg = 'lastpage'; LABELS.lastpage = 'Close the comic'; }
+    lastComic.visible = true;
+  }
+  function exitNormal(){
+    const sv = SG.flags.lpSaved; normalView = false;
+    if (sv) { if (sv.alt) setAlt(true, sv.alt); else if (sv.scar) setScar(true); if (sv.night && !night) flipLights(); }
+    [trophy, sparkT, galTrophy, biteG, phoneG, phoneG && phoneG.userData.qr && phoneG.userData.qr.parent].forEach(g => { if (g) g.visible = true; }); [roofGal && roofGal.g, roofHelm].forEach(g => { if (g) g.visible = true; });
+    idleShown = undefined; meKey = '';
+  }
+  function closeComic(){
+    if (!lastComic || lastComic.userData.closing) return; lastComic.userData.closing = true; [900, 700].forEach((f, i) => setTimeout(() => tone(f, .15, 'triangle', .03, f * .7), i * 120));
+    const h = lastComic.userData.hinge, t0 = performance.now(); const step = () => { const k = clamp((performance.now() - t0) / 700, 0, 1); h.rotation.z = Math.PI * k; if (k < 1) requestAnimationFrame(step); else { storyFlag('closed'); } }; step();
+  }
+  function podTint(){
+    if (!pods.length) return; let red = false; try { red = localStorage.getItem('ru-ultronred') === '1'; } catch (e) {} const puppet = SG.active && SG.ch === 10 && !SG.flags.p3;
+    pods.forEach(pd => { const m = pd.glass.material; if (!pd.col0) pd.col0 = m.color.clone(); const c = puppet ? new THREE.Color(0xB07CFF) : red && pd.def.id === 'ultron' ? new THREE.Color(0xFF2020) : pd.col0; m.color.copy(c); m.emissive.copy(c); m.emissiveIntensity = puppet || red && pd.def.id === 'ultron' ? .6 : .25; });
+  }
+  function stHud(){
+    const S = EV.st, P = S.part, n = f => EV.units.filter(u => u.team === 'en' && u.dead <= 0 && f(u)).length, tag = (EV.lockT > 0 ? ' \u00B7 <b style="color:#B07CFF">YOU CAN\u2019T MOVE</b>' : '') + (EV.mindT > 0 ? ' \u00B7 <b style="color:#B07CFF">CONTROLS REVERSED</b>' : '') + ' \u00B7 <small>recovering</small>';
+    return (P === 'u1' ? `Wave ${S.wave}/3 \u00B7 enemies left ${n(() => true)}` : P === 'u2' ? `Connections left ${S.targets.filter(u => u.dead <= 0).length}/5` : P === 'u3' ? (S.cables.some(c => c.dead <= 0) ? `Cables left ${S.cables.filter(c => c.dead <= 0).length}/3` : 'Take him apart') : P === 'p3' ? (S.exposed > 0 ? '<b style="color:#FFC93C">SHE\u2019S EXPOSED</b>' : `Puppets shielding her: ${n(u => u.puppet)}`) : P[0] === 'p' ? `Puppets left ${n(u => u.puppet)}` : P === 'c1' ? `Fires out ${S.fires.filter(f => f.out).length}/4 \u00B7 people freed ${S.people.filter(q => q.free).length}/3` : P === 'c2' ? `Caught him ${S.tags}/5` : 'Beat the Copycat') + tag;
+  }
+  function finaleCredits(){
+    setTimeout(() => { showCredits('saga'); const btn = $('#credGo'); if (btn) { const old = btn.onclick; btn.onclick = e => { if (old) old(e); if (lastComic) { scene.remove(lastComic); disposeDeep(lastComic); lastComic = null; } exitNormal(); placeMask(true); }; } }, 900);
+  }
+  // one small thing that doesn't fit: his mask, on your floor
+  let maskG = null;
+  function placeMask(fresh){
+    if (maskG) return; if (fresh) { try { localStorage.setItem('ru-cmask', '1'); } catch (e) {} } else { try { if (localStorage.getItem('ru-cmask') !== '1') return; } catch (e) { return; } }
+    const g = maskG = new THREE.Group(); g.position.set(1.1, .02, 1.7); g.rotation.set(-Math.PI / 2 + .2, 0, .7); scene.add(g);
+    const m = new THREE.Mesh(new THREE.CircleGeometry(.14, 20, 0, Math.PI), mat(0xC8102E, { side: THREE.DoubleSide })); g.add(m); [-.05, .05].forEach(x => { const e = new THREE.Mesh(new THREE.CircleGeometry(.025, 12), new THREE.MeshBasicMaterial({ color: 0x16181D, side: THREE.DoubleSide })); e.position.set(x, .05, .002); g.add(e); });
+    g.userData.egg = 'cmask'; LABELS.cmask = 'A cheap red mask';
+    if (fresh) setTimeout(() => say('Something’s on the floor by your feet. A cheap red mask. It was just a story… wasn’t it?', 5200), 1500);
+  }
+
   // ======================= little things: the Bugle, voicemail, achievements, night, Diwali, pets =======================
   const deedsHeadlines = () => {
     const n = BOSSES.filter(d => beaten.has(d.id)).length, H = [];
@@ -6416,7 +6677,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
     const mk = addMarkerTo(lairScene, V(-9, 1.3, 9.3)); mk.userData.egg = 'bugle';
   }
   function readBugle(){
-    const H = deedsHeadlines(), h = H[bugleI++ % H.length]; const top = bugleG.userData.top; top.material.map.dispose(); top.material.map = bugleTex(h); top.material.needsUpdate = true;
+    const H = deedsHeadlines(), h = SG.active && SG.ch === 11 && !SG.flags.bugle ? 'MASKED "HERO" WRECKS MARKET. WAS IT RAYAN?' : H[bugleI++ % H.length]; storyFlag('bugle'); const top = bugleG.userData.top; top.material.map.dispose(); top.material.map = bugleTex(h); top.material.needsUpdate = true;
     tone(900, .05, 'square', .03, 700); ach('bugle'); return say(`DAILY BUGLE: ${h}`, 4200);
   }
   // voicemail: the phone on the desk has messages from villains you haven't beaten
@@ -6522,6 +6783,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
   let nightChecked = false;
   function littleStep(dt, now){
     sagaStep(dt, now); droneStep(dt, now);
+    if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (SG.active && SG.ch === 8 && SG.step === 1 && roofScene && !droneG) spawnDrones();
     if (EV && EV.k === 'cv' && EV.cx && EV.cx.gal && EV.cx.gal.phase === 'fall') galFall(dt, now);
     if (EV && EV.k === 'cv' && EV.cx && EV.cx.gal && EV.cx.gal.phase === 'eat') galEat(dt, now);
@@ -6537,7 +6799,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
     if (galBeaten && roofScene && !roofHelm) buildGalTrophy();
     if (diwaliG && !reduce) diwaliG.children.forEach(o => { if (o.userData.ph !== undefined) o.material.emissiveIntensity = 1 + Math.sin(now / 300 + o.userData.ph) * .6; });
     if (now < achT) return; achT = now + 2000;
-    ACH.forEach(a => { if (!achGot.includes(a[0]) && a[3]()) ach(a[0]); }); achFirst = false; refreshWallMap();
+    ACH.forEach(a => { if (!achGot.includes(a[0]) && a[3]()) ach(a[0]); }); achFirst = false; refreshWallMap(); podTint(); ultronFaces(SG.active && SG.ch === 9 && !SG.flags.u3 && !normalView);
     if (entered && !nightChecked) { nightChecked = true; if (phaseNow() === 'night' && !night && !inWorld) { flipLights(); say('It’s night in Bangalore, so the lights are low. The villains in the lair get bolder after dark.', 4600); } if (diwaliNow()) { buildDiwali(); setTimeout(() => say('Happy Diwali! The room is lit up for the festival.', 4000), 5000); } }
   }
 
@@ -6666,7 +6928,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
         if ((!EV.bossUp || EV.home) && (EV.home ? EV.waveT <= 0 || !foes.some(u => !u.boss) && EV.waveT < 10 : !foes.length || EV.waveT <= 0)) spawnWave();
         const e2 = eventScene.userData.earth; if (e2) { const p = 1 - EV.t / EVENTS.inc.time; e2.scale.setScalar(1 + p * 3); e2.position.y = 60 - p * 25; e2.rotation.y += dt * .05; }
       }
-      if (EV.k === 'sw') swStep(dt); if (EV.k === 'fp') fpStep(dt, t); if (EV.k === 'dks') dksStep(dt); if (EV.k === 'cv') cvStep(dt, t); if (EV.k === 'of') ofStep(dt, t); if (EV.k === 'br') brStep(dt, t);
+      if (EV.k === 'sw') swStep(dt); if (EV.k === 'fp') fpStep(dt, t); if (EV.k === 'dks') dksStep(dt); if (EV.k === 'cv') cvStep(dt, t); if (EV.k === 'of') ofStep(dt, t); if (EV.k === 'br') brStep(dt, t); if (EV.k === 'st') stStep(dt, t);
       if (EV.t <= 0) endMatch(EV.k === 'inc' ? false : scored(EV.k) ? EV.score[EV.team] > Math.max(...Object.entries(EV.score).filter(([k]) => k !== EV.team).map(([, v]) => v)) : EV.k === 'wwh' ? EV.team === 'hulk' : false);
       // Hulk (you): a leap that lands with a smash
       if (EV.hero === 'hulk' && EV.leapV) { pos.x += EV.leapV.x * dt; pos.z += EV.leapV.z * dt; if (!evValid(pos.x, pos.z)) { pos.x -= EV.leapV.x * dt; pos.z -= EV.leapV.z * dt; } if (grounded && vy === 0 && EV.leapT > .2) { EV.leapV = null; special2(EV.me, 'hulk', pos.x, pos.z, yaw, 'me'); EV.shake = .6; tone(60, .5, 'sawtooth', .07, 30); } EV.leapT += dt; }
@@ -6691,10 +6953,10 @@ body.inevent .goalhud{top:130px;opacity:.9}
     });
     // HUD
     const E = EVENTS[EV.k], sc = Object.entries(EV.score).map(([k, v]) => `<b style="color:${E.col[k]}">${E.teams[k]} ${Math.floor(v)}</b>`).join(' · ');
-    $('#evScore').innerHTML = EV.k === 'of' ? `Stones used ${EV.of.si}/6 \u00B7 Worlds left ${Object.keys(AREAS).length - (SG.flags.erased || []).length}/${Object.keys(AREAS).length}${EV.mindT > 0 ? ' \u00B7 <b style="color:#FFC93C">CONTROLS REVERSED</b>' : ''}${EV.of.final ? ' \u00B7 <b style="color:#FFC93C">PRESS E</b>' : ''}` : EV.k === 'br' ? (EV.br.part === 1 ? `Tailing ${Math.floor(EV.br.prog)}/40 s \u00B7 ${Math.round(Math.hypot(pos.x - EV.br.truck.position.x, pos.z - EV.br.truck.position.z))} m away \u00B7 <small>weakened</small>` : EV.br.part === 2 ? (EV.br.laptop ? `Reading his plans ${Math.floor(EV.br.hack)}/3 s` : `Guards left ${EV.units.filter(u => u.team === 'bk' && u.dead <= 0).length} \u00B7 <small>weakened</small>`) : EV.br.part === 3 ? `Floor ${EV.br.floor}/3 \u00B7 guards left ${EV.units.filter(u => u.team === 'bk' && u.dead <= 0).length} \u00B7 <small>weakened</small>` : 'Break the suit apart \u00B7 <small>weakened</small>') : EV.k === 'cv' ? `${EV.cx.gal ? (EV.cx.gal.phase === 'kneel' ? '<b style="color:#BFE8FF">GALACTUS IS KNEELING: HIT THE CORE</b>' : `<b style="color:#BFE8FF">GALACTUS</b> \u00B7 Siphons ${EV.cx.gal.siphons.filter(u => u.dead <= 0).length}/4`) : `Collisions ${Math.max(0, EV.cx.stage + 1)}/${CV_STAGES.length}${EV.cx.stage >= 0 && CV_STAGES[EV.cx.stage] ? ' \u00B7 ' + CV_STAGES[EV.cx.stage][0] : ''}`} \u00B7 Anchors ${EV.anchors.filter(a => a.dead <= 0).length}/3 \u00B7 Flags ${EV.flags.filter(f => f.own === 1).length}/3${EV.weak > 0 ? ' \u00B7 <b style="color:#9CFF7A">KRYPTONITE</b>' : ''}` : scored(EV.k) ? sc + ` <small>(first to ${E.goal})</small>` : EV.k === 'dks' ? `Parademons ${EV.units.filter(u => u.hero === 'parademon' && u.dead <= 0).length} \u00B7 stay out of the fire` : EV.k === 'wwh' ? `Takedowns ${EV.kos}` : EV.k === 'inc' ? `Wave ${Math.min(EV.wave, 5)}/5 \u00B7 Anchors ${EV.anchors.filter(a => a.dead <= 0).length}/3` : `Kryptonite ${Math.round(EV.charge * 100)}%${EV.weak > 0 ? ' · <b style="color:#9CFF7A">WEAKENED</b>' : ''}`;
+    $('#evScore').innerHTML = EV.k === 'st' ? stHud() : EV.k === 'of' ? `Stones used ${EV.of.si}/6 \u00B7 Worlds left ${Object.keys(AREAS).length - (SG.flags.erased || []).length}/${Object.keys(AREAS).length}${EV.mindT > 0 ? ' \u00B7 <b style="color:#FFC93C">CONTROLS REVERSED</b>' : ''}${EV.of.final ? ' \u00B7 <b style="color:#FFC93C">PRESS E</b>' : ''}` : EV.k === 'br' ? (EV.br.part === 1 ? `Tailing ${Math.floor(EV.br.prog)}/40 s \u00B7 ${Math.round(Math.hypot(pos.x - EV.br.truck.position.x, pos.z - EV.br.truck.position.z))} m away \u00B7 <small>weakened</small>` : EV.br.part === 2 ? (EV.br.laptop ? `Reading his plans ${Math.floor(EV.br.hack)}/3 s` : `Guards left ${EV.units.filter(u => u.team === 'bk' && u.dead <= 0).length} \u00B7 <small>weakened</small>`) : EV.br.part === 3 ? `Floor ${EV.br.floor}/3 \u00B7 guards left ${EV.units.filter(u => u.team === 'bk' && u.dead <= 0).length} \u00B7 <small>weakened</small>` : 'Break the suit apart \u00B7 <small>weakened</small>') : EV.k === 'cv' ? `${EV.cx.gal ? (EV.cx.gal.phase === 'kneel' ? '<b style="color:#BFE8FF">GALACTUS IS KNEELING: HIT THE CORE</b>' : `<b style="color:#BFE8FF">GALACTUS</b> \u00B7 Siphons ${EV.cx.gal.siphons.filter(u => u.dead <= 0).length}/4`) : `Collisions ${Math.max(0, EV.cx.stage + 1)}/${CV_STAGES.length}${EV.cx.stage >= 0 && CV_STAGES[EV.cx.stage] ? ' \u00B7 ' + CV_STAGES[EV.cx.stage][0] : ''}`} \u00B7 Anchors ${EV.anchors.filter(a => a.dead <= 0).length}/3 \u00B7 Flags ${EV.flags.filter(f => f.own === 1).length}/3${EV.weak > 0 ? ' \u00B7 <b style="color:#9CFF7A">KRYPTONITE</b>' : ''}` : scored(EV.k) ? sc + ` <small>(first to ${E.goal})</small>` : EV.k === 'dks' ? `Parademons ${EV.units.filter(u => u.hero === 'parademon' && u.dead <= 0).length} \u00B7 stay out of the fire` : EV.k === 'wwh' ? `Takedowns ${EV.kos}` : EV.k === 'inc' ? `Wave ${Math.min(EV.wave, 5)}/5 \u00B7 Anchors ${EV.anchors.filter(a => a.dead <= 0).length}/3` : `Kryptonite ${Math.round(EV.charge * 100)}%${EV.weak > 0 ? ' · <b style="color:#9CFF7A">WEAKENED</b>' : ''}`;
     $('#evTitle').textContent = E.name; $('#evTime').textContent = `${Math.floor(Math.max(0, EV.t) / 60)}:${String(Math.floor(Math.max(0, EV.t) % 60)).padStart(2, '0')}`;
     $('#evHero').textContent = `${H.name}${armHurt() ? ' · burned arm' : ''}`; $('#evHp').style.width = `${clamp(EV.hp / EV.max, 0, 1) * 100}%`;
-    const boss = EV.k === 'of' || EV.k === 'br' ? (EV.boss && EV.boss.dead <= 0 ? EV.boss : null) : EV.k === 'cv' ? (EV.units.find(u => u.final && u.dead <= 0) || EV.units.find(u => u.boss && u.dead <= 0) || null) : EV.k === 'inj' || EV.k === 'inc' || EV.k === 'dks' ? (EV.boss && EV.boss.dead <= 0 ? EV.boss : null) : EV.k === 'wwh' && EV.team !== 'hulk' ? EV.units.find(u => u.hero === 'hulk') : null;
+    const boss = EV.k === 'of' || EV.k === 'br' || EV.k === 'st' ? (EV.boss && EV.boss.dead <= 0 ? EV.boss : null) : EV.k === 'cv' ? (EV.units.find(u => u.final && u.dead <= 0) || EV.units.find(u => u.boss && u.dead <= 0) || null) : EV.k === 'inj' || EV.k === 'inc' || EV.k === 'dks' ? (EV.boss && EV.boss.dead <= 0 ? EV.boss : null) : EV.k === 'wwh' && EV.team !== 'hulk' ? EV.units.find(u => u.hero === 'hulk') : null;
     $('#evBoss').hidden = !boss; if (boss) { $('#evBossName').textContent = HEROES[boss.hero].name + (boss.remote ? ' (a real player)' : ''); $('#evBossHp').style.width = `${clamp(boss.hp / boss.max, 0, 1) * 100}%`; }
     $('#evSp').classList.toggle('cool', EV.spCd > 0); evHurt.style.opacity = EV.dead > 0 ? .7 : (EV.hurtT = Math.max(0, (EV.hurtT || 0) - dt)) > 0 ? EV.hurtT * 1.5 : 0;
     $('#evMsg').textContent = EV.dead > 0 && !(EV.k === 'wwh' && EV.hero === 'hulk') ? `Back in ${Math.ceil(EV.dead)}…` : '';
@@ -7689,6 +7951,8 @@ body.inevent .goalhud{top:130px;opacity:.9}
     if (p.egg === 'voicemail') return playVoicemail();
     if (p.egg === 'qportal') return enterArea('quantum');
     if (p.egg === 'surfer') return surferRematch();
+    if (p.egg === 'lastpage') return closeComic();
+    if (p.egg === 'cmask') { tone(300, .2, 'sine', .03); return say('A cheap red mask with a star on it. The Copycat\u2019s? But it was just a story\u2026', 4200); }
     if (p.egg === 'galhelm') { tone(60, .8, 'sawtooth', .05, 40); return say('A piece of Galactus\u2019s helmet. It still hums. The rest of it is out on the skyline.', 4000); }
     if (p.egg === 'radicals') return flyTo(views.scroll.pos.clone(), views.scroll.look, openGame);
     if (p.egg === 'crate') return digCrate();
@@ -7779,7 +8043,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
         if (camTween) { cancel(camTween); camTween = null; }
         walkTarget = null; exitTelescope();
         yaw += turn * 1.8 * dt;
-        const sp = (A ? (A.blocking ? 2 : 4.2) : EV ? EV.speed * (EV.dead > 0 ? 0 : 1) : zone === 'collapse' && inWorld ? (RUN && RUN.slow > 0 ? 3.5 : 7) : zone === 'void' && inWorld ? 4 : inWorld && !grounded && zone !== 'space' ? 1.8 : 2.6) * dt;
+        const sp = (A ? (A.blocking ? 2 : 4.2) : EV ? EV.speed * (EV.dead > 0 || EV.lockT > 0 ? 0 : 1) : zone === 'collapse' && inWorld ? (RUN && RUN.slow > 0 ? 3.5 : 7) : zone === 'void' && inWorld ? 4 : inWorld && !grounded && zone !== 'space' ? 1.8 : 2.6) * dt;
         const inv2 = EV && EV.mindT > 0 ? -1 : 1;
         const nx = pos.x + (-Math.sin(yaw) * f + Math.cos(yaw) * s) * sp * inv2;
         const nz = pos.z + (-Math.cos(yaw) * f - Math.sin(yaw) * s) * sp * inv2;
@@ -7817,7 +8081,7 @@ body.inevent .goalhud{top:130px;opacity:.9}
   setMuted(muted);
   $('#soundBtn').onclick = () => { audio(); setMuted(!muted); if (!muted) tone(660, .1, 'sine', .08); };
   // things saved from last time that change the scenes: only once every scene variable exists
-  try { if (lowFx) applyFx(); if (scarOn) setScar(true); if (altOn) setAlt(true); buildTrophy(); buildSpark(); buildPhone(); buildGalTrophy(); buildBite(); if (petK !== 'none') setPet(petK); } catch (err) { console.error(err); }
+  try { if (lowFx) applyFx(); if (scarOn) setScar(true); if (altOn) setAlt(true); buildTrophy(); buildSpark(); buildPhone(); buildGalTrophy(); buildBite(); placeMask(false); if (petK !== 'none') setPet(petK); } catch (err) { console.error(err); }
   requestAnimationFrame(frame);
   $('#load').classList.add('off');
 })();
