@@ -3915,7 +3915,7 @@ body.photo .scarbanner{visibility:hidden}
     if (act2 === 'leave') { closePause(); endFight(); }
     if (act2 === 'unsnap') { unsnap(); renderPause(); }
     if (act2 === 'fx') { lowFx = !lowFx; fxChosen = true; try { localStorage.setItem('ru-lowfx', lowFx ? '1' : '0'); } catch (er) {} applyFx(); renderPause(); }
-    if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon', 'ru-arm', 'ru-evsolo', 'ru-evdone', 'ru-incursion', 'ru-instab', 'ru-recap', 'ru-lost', 'ru-saviour', 'ru-spark', 'ru-alt', 'ru-altseen', 'ru-metdoom', 'ru-inchero', 'ru-ach', 'ru-pet', 'ru-shop', 'ru-parts', 'ru-wreck', 'ru-cvwon', 'ru-galactus', 'ru-cvforced'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
+    if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon', 'ru-arm', 'ru-evsolo', 'ru-evdone', 'ru-incursion', 'ru-instab', 'ru-recap', 'ru-lost', 'ru-saviour', 'ru-spark', 'ru-alt', 'ru-altseen', 'ru-metdoom', 'ru-inchero', 'ru-ach', 'ru-pet', 'ru-shop', 'ru-parts', 'ru-wreck', 'ru-cvwon', 'ru-galactus', 'ru-cvforced', 'ru-galbite', 'ru-eaten'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
   });
   menuBtn.onclick = () => openPause();
   function applyFx(){
@@ -4502,7 +4502,7 @@ body.photo .scarbanner{visibility:hidden}
   addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || !entered || e.repeat) return; if (e.key.toLowerCase() === 'v' && !photoOn) setPov(!tpv); });
   // your body, kept in sync with your look, your weapon and whether your arm is burned
   function meStep(dt, now){
-    const want = entered && (tpv || mirror || !!EV);
+    const want = entered && (tpv || mirror || !!EV) && !(EV && EV.cx && EV.cx.gal && (EV.cx.gal.phase === 'eat' || EV.cx.gal.phase === 'fall'));
     if (!want) { if (me && me.g.parent) me.g.parent.remove(me.g); return; }
     const L = curLook(), key = JSON.stringify(L) + armHurt() + (EV ? EV.scale || 1 : 1);
     if (key !== meKey) { if (me) { if (me.g.parent) me.g.parent.remove(me.g); disposeDeep(me.g); } me = avatar(L, { burn: armHurt(), s: EV ? EV.scale || 1 : 1 }); meKey = key; meHeld = undefined; }
@@ -4791,7 +4791,7 @@ body.photo .scarbanner{visibility:hidden}
       if (k === 'dks') { PICKS.jl.filter(h => h !== hero).slice(0, 3).forEach(h => place(addUnit({ hero: h, team: 'jl' }))); const dk = addUnit({ hero: 'darkseid', team: 'apk' }); dk.x = 0; dk.z = -16; dk.boss = 1; EV.boss = dk; for (let i = 0; i < 5; i++) place(addUnit({ hero: 'parademon', team: 'apk' })); EV.tubeT = 20; }
       if (k === 'cv') { PICKS.cv.filter(h => h !== hero).slice(0, 5).forEach((h, i) => place(addUnit({ hero: h, team: 'cv', role: i < 2 ? 'flag' : '' })));
         EV.anchors = [90, 210, 330].map(a => { const u = addUnit({ hero: 'anchor', team: 'cv' }); u.x = Math.cos(a * Math.PI / 180) * 8; u.z = Math.sin(a * Math.PI / 180) * 8; return u; });
-        EV.flags = FLAGS.map(([x, z, nm]) => ({ x, z, nm, own: 0, cap: 0 })); EV.cx = { stage: -1, t: 3, shards: [], spawnT: 20, falls: [], chunks: [] }; placeChunk('home', false);
+        EV.flags = FLAGS.map(([x, z, nm]) => ({ x, z, nm, own: 0, cap: 0 })); EV.cx = { stage: -1, t: 3, shards: [], spawnT: 20, falls: [], chunks: [] }; placeChunk('home', false); if (opts.galOnly) { EV.cx.stage = CV_STAGES.length; EV.cx.t = 1e9; setTimeout(() => { if (EV && EV.k === 'cv' && !EV.cx.gal) startGalactus(null); }, 2500); }
         ['v_iron', 'v_cap', 'v_batman'].forEach((h, i) => place(addUnit({ hero: h, team: 'kx', role: i < 2 ? 'flag' : '' }))); for (let i = 0; i < 2; i++) place(addUnit({ hero: 'trooper', team: 'kx' })); }
       if (isPvp(k)) { PICKS[team].filter(h => h !== hero).concat(PICKS[team][0]).slice(0, 3).forEach(h => place(addUnit({ hero: h, team }))); PICKS[foe].concat(PICKS[foe][1]).forEach(h => place(addUnit({ hero: h, team: foe }))); }
       if (k === 'wwh') { if (team === 'hulk') ['cap', 'iron', 'thor', 'wolverine', 'cyclops'].forEach(h => place(addUnit({ hero: h, team: 'heroes' }))); else { ['iron', 'thor', 'wolverine', 'storm'].filter(h => h !== hero).slice(0, 4).forEach(h => place(addUnit({ hero: h, team: 'heroes' }))); if (opts.solo || !remoteHulk()) place(addUnit({ hero: 'hulk', team: 'hulk', hp: 2200, max: 2200 })); } }
@@ -4891,6 +4891,7 @@ body.photo .scarbanner{visibility:hidden}
   }
   function checkGoal(){ if (scored(EV.k) && !EV.over) { const t = Object.keys(EV.score).find(t => EV.score[t] >= EVENTS[EV.k].goal); if (t) endMatch(t === EV.team); } }
   function endMatch(won){
+    if (EV && EV.k === 'cv' && !won && !EV.over) { EV.over = true; return galEatStart(); }
     if (EV.over) return; EV.over = true; const endFight = EV.k === 'inc' && instab >= 6; if (document.pointerLockElement) document.exitPointerLock();
     const E = EVENTS[EV.k], other = Object.keys(E.teams).find(t => t !== EV.team);
     if (isPvp(EV.k) && won) lbAdd(LBK[EV.team], 5);
@@ -5409,16 +5410,18 @@ body.photo .scarbanner{visibility:hidden}
   const credEl = $('#credits');
   function showCredits(won){
     const bossN = BOSSES.filter(d => beaten.has(d.id)).length;
-    const lines = won === 'galactus'
+    const lines = won === 'eaten'
+      ? ['GALACTUS ATE YOUR EARTH', '', 'Well, a bite of it.', '', 'Every universe collided, and the Devourer of Worlds was hungry.', `He also ate ${eaten.slice(-3).map(k => AREAS[k].name).join(', ')}.`, '', 'There\u2019s a hole in your room now. You can see space through it. And him.', '', 'THE SILVER SURFER IS WAITING', '', 'Find him in your room when you want a rematch.', '', '\u2014 Rayan']
+      : won === 'galactus'
       ? ['YOU BEAT GALACTUS', '', 'Every universe collided. Doom thought he\u2019d won, and then Galactus ate him.', 'Every Rayan from every Earth stood together, and the Devourer of Worlds went down like a mountain.', '', `Creatures and villains beaten: ${bossN} of ${BOSSES.length}`, `Other Earths you lived on: ${altSeen.length} of ${ALT_KEYS.length}`, `Secrets found: ${found.size} of ${TOTAL}`, '', 'DEVOURER OF THE DEVOURER', '', 'His helmet is on the Bangalore skyline now. Go up to the roof and look.', 'A piece of it is waiting by your door.', '', 'Thanks for exploring.', '\u2014 Rayan']
       : won === 'spark'
       ? ['A NEW BEGINNING', '', 'The Beyonder beat you, and the multiverse was gone.', 'But you carried seven memories through the Void, and they became the first spark of a new universe.', '', ...MEMS.map(m => m.line), '', `Creatures and villains beaten: ${bossN} of ${BOSSES.length}`, `Earths lost along the way: ${earthsLost}`, `Secrets found: ${found.size} of ${TOTAL}`, '', 'THE FIRST SPARK', '', 'A tiny universe is waiting for you in your room.', '', 'Thanks for exploring.', '\u2014 Rayan']
       : won
       ? ['THE MULTIVERSE IS REBORN', '', 'You beat the Beyonder and brought every Earth back from The End.', '', `Creatures and villains beaten: ${bossN} of ${BOSSES.length}`, `Events played: ${evDone.length} of 4`, `Earths lost along the way: ${earthsLost}`, `Other Earths you lived on: ${altSeen.length} of ${ALT_KEYS.length}`, `Secrets found: ${found.size} of ${TOTAL}`, '', 'SAVIOUR OF THE MULTIVERSE', '', 'A trophy is waiting for you in your room.', '', 'Thanks for exploring.', '\u2014 Rayan']
       : ['THE END', '', 'Every Earth fell into yours, and the multiverse ended.', '', `Creatures and villains beaten: ${bossN} of ${BOSSES.length}`, `Events played: ${evDone.length} of 4`, `Earths lost: ${earthsLost}`, `Other Earths you lived on: ${altSeen.length} of ${ALT_KEYS.length}`, `Secrets found: ${found.size} of ${TOTAL}`, '', 'Every story ends.', 'Some of them get a reboot.', '', 'One last chance: beat the Beyonder in the Final Incursion to bring everything back.', '', 'Thanks for exploring.', '\u2014 Rayan'];
-    credEl.innerHTML = `<div class="credroll ${won ? 'won' : ''}">${lines.map((l, i) => i === 0 ? `<h2 class="display">${esc(l)}</h2>` : l === 'SAVIOUR OF THE MULTIVERSE' || l === 'THE FIRST SPARK' || l === 'DEVOURER OF THE DEVOURER' ? `<h3 class="display">${esc(l)}</h3>` : `<p>${esc(l) || '&nbsp;'}</p>`).join('')}</div><button class="btn alt" type="button" id="credGo">Continue</button>`;
+    credEl.innerHTML = `<div class="credroll ${won ? 'won' : ''}">${lines.map((l, i) => i === 0 ? `<h2 class="display">${esc(l)}</h2>` : l === 'SAVIOUR OF THE MULTIVERSE' || l === 'THE FIRST SPARK' || l === 'DEVOURER OF THE DEVOURER' || l === 'THE SILVER SURFER IS WAITING' ? `<h3 class="display">${esc(l)}</h3>` : `<p>${esc(l) || '&nbsp;'}</p>`).join('')}</div><button class="btn alt" type="button" id="credGo">Continue</button>`;
     credEl.classList.add('on'); if (document.pointerLockElement) document.exitPointerLock();
-    $('#credGo').onclick = () => { credEl.classList.remove('on'); say(won === 'galactus' ? 'You\u2019re home. There\u2019s a piece of Galactus\u2019s helmet by the door, and the rest of it on the skyline.' : won === 'spark' ? 'A new universe, built from seven memories. The First Spark is by the door.' : won ? 'Everything is back. Your trophy is by the door.' : 'The End. Only fragments are left. The war table in the lair still works\u2026 barely.', 5000); };
+    $('#credGo').onclick = () => { credEl.classList.remove('on'); say(won === 'eaten' ? 'There\u2019s a bite out of your room. The Silver Surfer is hovering by the bookshelf, waiting.' : won === 'galactus' ? 'You\u2019re home. There\u2019s a piece of Galactus\u2019s helmet by the door, and the rest of it on the skyline.' : won === 'spark' ? 'A new universe, built from seven memories. The First Spark is by the door.' : won ? 'Everything is back. Your trophy is by the door.' : 'The End. Only fragments are left. The war table in the lair still works\u2026 barely.', 5000); };
     [262, 330, 392, 523].forEach((f, i) => setTimeout(() => tone(won ? f * 1.5 : f / 2, 1.2, 'triangle', .05), i * 500));
   }
   // what's left: grey dust, and the words in the sky
@@ -5771,6 +5774,74 @@ body.photo .scarbanner{visibility:hidden}
   const cvForceNow = () => { if (A || EV || RUN || VOID) return false; try { if (localStorage.getItem('ru-cvforced') === '1') return false; } catch (e) { return false; } return altSeen.length + visitedAreas.length >= 4; };
   function forceConvergence(){ try { localStorage.setItem('ru-cvforced', '1'); } catch (e) {} closePause(); tone(60, 2, 'sawtooth', .08, 30); say('The portal is misfiring…', 1800); setTimeout(() => startEvent('cv', 'cv', incHero, { solo: true, diff: evDiff, forced: true }), 900); }
 
+  // ======================= if Galactus wins: he takes a bite out of your Earth =======================
+  let galBite = false, eaten = []; try { galBite = localStorage.getItem('ru-galbite') === '1'; eaten = JSON.parse(localStorage.getItem('ru-eaten') || '[]').filter(k => AREAS[k]); } catch (e) {}
+  let biteG = null, roofGal = null, surferShown = false;
+  function galEatStart(){
+    const cx = EV.cx; if (document.pointerLockElement) document.exitPointerLock(); evHud.hidden = true;
+    if (!cx.gal) { const G = makeGalactus(); G.g.position.set(0, -110, -78); eventScene.add(G.g); const hand = makeHand(); eventScene.add(hand); eventScene.fog.near = 90; eventScene.fog.far = 420; cx.gal = { G, hand, siphons: [], t0: performance.now() }; cx.gal.late = true; }
+    const gal = cx.gal; if (gal.slam) { eventScene.remove(gal.slam.warn); gal.slam = null; } if (gal.sweep) { eventScene.remove(gal.sweep.warn); eventScene.remove(gal.sweep.beam); gal.sweep = null; }
+    gal.siphons.forEach(u => { if (u.beam) u.beam.visible = false; });
+    gal.phase = 'eat'; gal.eatT0 = performance.now(); gal.saved = { tpv }; tpv = false;
+    gal.hand.scale.setScalar(3); gal.hand.position.set(0, 120, 0); if (!gal.hand.parent) eventScene.add(gal.hand);
+    // the chunk of your Earth he's about to scoop up
+    const chunk = new THREE.Mesh(new THREE.CylinderGeometry(14, 6, 10, 9), mat(0x5A4A3A, { flatShading: true, fog: false })); chunk.visible = false; eventScene.add(chunk); gal.chunk = chunk;
+    galSay(gal.late ? 'The anchors are gone. Something enormous rises over the horizon… GALACTUS.' : 'The last anchor falls. GALACTUS: “YOUR WORLD IS MINE.”', 3600);
+  }
+  function galEat(dt, now){
+    const gal = EV.cx.gal, G = gal.G, T = (now - gal.eatT0) / 1000;
+    // pull the camera up and back so you can see all of him
+    const k = clamp(T / 3, 0, 1); pos.set(0, 1.6 + 40 * k, 12 + 40 * k); yaw = 0; pitch = .1 + .15 * k;
+    G.g.position.y = Math.min(0, G.g.position.y + dt * 60);
+    if (T > 2.5) { const q = clamp((T - 2.5) / 2, 0, 1); G.body.rotation.x = .55 * q; G.g.position.z = -78 + 20 * q; }
+    // the hand scoops the middle of the battlefield
+    if (T > 3.5 && T < 5.5) { const q = clamp((T - 3.5) / 1.2, 0, 1); gal.hand.position.set(0, 120 - 116 * q, 0); if (q >= 1 && !gal.scooped) { gal.scooped = true; EV.shake = 3; [40, 28].forEach((f, i) => setTimeout(() => tone(f, 2.5, 'sawtooth', .12, 12), i * 200)); gal.chunk.visible = true; EV.units.forEach(u => { if (Math.hypot(u.x, u.z) < 14) u.av.g.visible = false; }); } }
+    if (gal.scooped) { const q = clamp((T - 5.5) / 3, 0, 1); gal.hand.position.set(0, 4 + 70 * q, -40 * q); gal.chunk.position.set(gal.hand.position.x, gal.hand.position.y + 3, gal.hand.position.z); }
+    if (T > 8.5 && !gal.bit) { gal.bit = true; gal.chunk.visible = false; EV.shake = 2; [90, 60, 90, 50].forEach((f, i) => setTimeout(() => tone(f, .25, 'square', .1, 30), i * 180)); galSay('CRUNCH.', 1500); }
+    if (T > 10 && !gal.gone) { gal.gone = true; tpv = gal.saved.tpv; applyBite(); fade(() => { stopEvent(true); travel('room'); showCredits('eaten'); }, '#000000'); }
+  }
+  function applyBite(){
+    galBite = true; const pool = Object.keys(AREAS).filter(k => !eaten.includes(k)).sort(() => Math.random() - .5); eaten = eaten.concat(pool.slice(0, 3));
+    try { localStorage.setItem('ru-galbite', '1'); localStorage.setItem('ru-eaten', JSON.stringify(eaten)); } catch (e) {}
+    buildBite();
+  }
+  // the bite: a huge scalloped hole in the back wall and floor, with space (and his eyes) on the other side
+  const biteTex = () => tex(512, 512, (c, w, h) => {
+    c.clearRect(0, 0, w, h); c.save(); c.beginPath(); const cx = w * .62, cy = h * .45, R = 220; for (let i = 0; i <= 40; i++) { const a = i / 40 * Math.PI * 2, r = R * (.92 + (i % 2 ? .1 : 0)) * (1 + Math.sin(a * 3) * .05); c.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } c.closePath(); c.clip();
+    c.fillStyle = '#05030C'; c.fillRect(0, 0, w, h); for (let i = 0; i < 260; i++) { c.fillStyle = `rgba(255,255,255,${Math.random()})`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); }
+    const g2 = c.createRadialGradient(cx + 40, cy - 60, 5, cx + 40, cy - 60, 160); g2.addColorStop(0, 'rgba(155,77,255,.5)'); g2.addColorStop(1, 'rgba(155,77,255,0)'); c.fillStyle = g2; c.fillRect(0, 0, w, h);
+    c.fillStyle = '#BFE8FF'; [[-50, -70], [50, -70]].forEach(([dx, dy]) => { c.beginPath(); c.ellipse(cx + dx, cy + dy, 34, 10, 0, 0, 7); c.fill(); }); c.restore();
+    c.strokeStyle = '#3A2A20'; c.lineWidth = 14; c.beginPath(); for (let i = 0; i <= 40; i++) { const a = i / 40 * Math.PI * 2, r = R * (.92 + (i % 2 ? .1 : 0)) * (1 + Math.sin(a * 3) * .05); c.lineTo(cx + Math.cos(a) * r, cy + Math.sin(a) * r); } c.closePath(); c.stroke();
+  });
+  function buildBite(){
+    if (!galBite) return;
+    if (!biteG) { const g = biteG = new THREE.Group(); scene.add(g); const t2 = biteTex();
+      const wallHole = new THREE.Mesh(new THREE.PlaneGeometry(5, 5), new THREE.MeshBasicMaterial({ map: t2, transparent: true, depthWrite: false })); wallHole.position.set(2.2, 1.6, -4.88); g.add(wallHole);
+      const floorHole = new THREE.Mesh(new THREE.PlaneGeometry(4.4, 4.4), new THREE.MeshBasicMaterial({ map: t2, transparent: true, depthWrite: false })); floorHole.rotation.x = -Math.PI / 2; floorHole.position.set(2.6, .015, -3.4); g.add(floorHole);
+      const rub = mat(0x5A4A3A, { flatShading: true }); for (let i = 0; i < 14; i++) { const r2 = new THREE.Mesh(new THREE.DodecahedronGeometry(.08 + Math.random() * .16, 0), rub); r2.position.set(.6 + Math.random() * 3.6, 1 + Math.random() * 2.2, -4.6 + Math.random() * .8); r2.userData.drift = Math.random() * 6; g.add(r2); }
+      // the Silver Surfer, waiting to take you back for a rematch
+      const surfer = new THREE.Group(); surfer.position.set(-2.8, .3, 2.2); g.add(surfer);
+      const board = new THREE.Mesh(new THREE.CylinderGeometry(.35, .35, .06, 20), mat(0xE8ECF2, { metalness: .9, roughness: .15 })); board.scale.set(1, 1, 3); surfer.add(board);
+      const sv = avatar(Object.assign({}, LOOK0, { outfit: 'casual' })); sv.g.position.y = .05; sv.g.traverse(o => { if (o.isMesh) o.material = new THREE.MeshStandardMaterial({ color: 0xDDE3EA, metalness: .95, roughness: .15 }); }); surfer.add(sv.g); g.userData.surfer = surfer; g.userData.sv = sv;
+      const hit = new THREE.Mesh(new THREE.CylinderGeometry(.6, .6, 2.2, 8), new THREE.MeshBasicMaterial({ visible: false })); hit.position.y = 1; surfer.add(hit); surfer.userData.egg = 'surfer'; LABELS.surfer = 'The Silver Surfer: rematch Galactus';
+      g.traverse(o => { if (o !== surfer && o !== hit) o.userData.noPick = true; });
+    }
+    if (!roofGal && roofScene) { const G = makeGalactus(); G.g.position.set(40, -20, -230); G.g.rotation.y = -.25; G.body.rotation.x = .25; roofScene.add(G.g); roofGal = G; }
+  }
+  function clearBite(){
+    galBite = false; eaten = []; try { localStorage.removeItem('ru-galbite'); localStorage.removeItem('ru-eaten'); } catch (e) {}
+    if (biteG) { scene.remove(biteG); disposeDeep(biteG); biteG = null; } if (roofGal) { roofScene.remove(roofGal.g); disposeDeep(roofGal.g); roofGal = null; }
+  }
+  function biteStep(dt, now){
+    if (galBite && roofScene && !roofGal) buildBite();
+    if (biteG) { const t = now / 1000; biteG.children.forEach(o => { if (o.userData.drift !== undefined) { o.position.y += Math.sin(t + o.userData.drift) * .002; o.rotation.x += dt * .3; } }); const s = biteG.userData.surfer; if (s) { s.position.y = .3 + Math.sin(t * 1.4) * .08; s.rotation.y = Math.atan2(pos.x - s.position.x, pos.z - s.position.z); biteG.userData.sv.anim(t, 0, 0); } }
+    if (roofGal) roofGal.eyes.forEach(e => e.material.color.setHSL(.55, 1, .7 + Math.sin(now / 400) * .15));
+  }
+  function surferRematch(){
+    if (!confirm('The Silver Surfer: “He is still hungry. I can take you straight to him. Are you ready?”')) return say('The Silver Surfer: “I will wait. He will not.”', 3000);
+    startEvent('cv', 'cv', incHero, { solo: true, diff: evDiff, galOnly: true });
+  }
+
   // ======================= GALACTUS =======================
   // built from blocks, about 70 metres tall, standing just outside the arena
   function makeGalactus(){
@@ -5796,10 +5867,10 @@ body.photo .scarbanner{visibility:hidden}
   function makeHand(){ const g = new THREE.Group(), m = new THREE.MeshStandardMaterial({ color: 0x2A4AA8, roughness: .6, metalness: .35, fog: false }); const palm = new THREE.Mesh(new THREE.BoxGeometry(7, 2, 8), m); g.add(palm); for (let i = 0; i < 4; i++) { const f = new THREE.Mesh(new THREE.BoxGeometry(1.4, 1.6, 5), m); f.position.set(-2.4 + i * 1.6, 0, 6); g.add(f); } const th = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 4), m); th.position.set(4.2, 0, 1); th.rotation.y = -.6; g.add(th); g.traverse(o => o.userData.noPick = true); return g; }
   function startGalactus(dm){
     const cx = EV.cx, G = makeGalactus(); G.g.position.set(0, -110, -78); eventScene.add(G.g);
-    const hand = makeHand(); hand.position.set(dm.x, 70, dm.z); eventScene.add(hand);
+    const hand = makeHand(); hand.position.set(dm ? dm.x : 0, 70, dm ? dm.z : 0); if (dm) eventScene.add(hand);
     eventScene.fog.near = 90; eventScene.fog.far = 420;
     cx.gal = { G, hand, phase: 'rise', t0: performance.now(), dm, slamT: 6, sweepT: 12, strikeT: 20, jayT: 10, siphons: [], coreHp: null, round: 0, sweep: null, slam: null };
-    dm.stun = 999; say(`${HEROES[dm.hero].name}: “Kneel before—”`, 2200); tone(30, 5, 'sawtooth', .09, 18); EV.shake = 2;
+    if (dm) { dm.stun = 999; say(`${HEROES[dm.hero].name}: “Kneel before—”`, 2200); } else say('GALACTUS rises over the horizon. The Silver Surfer drops you right in front of him.', 3600); tone(30, 5, 'sawtooth', .09, 18); EV.shake = 2;
     const eyes = eventScene.userData.eyes; if (eyes) eyes.visible = false;
   }
   function galSay(txt, ms){ say(txt, ms || 3200); tone(45, 1.4, 'sawtooth', .08, 30); setTimeout(() => tone(38, 1.2, 'sawtooth', .07, 25), 300); }
@@ -5817,7 +5888,7 @@ body.photo .scarbanner{visibility:hidden}
     // he rises over the horizon, and his hand comes down for Doom
     if (gal.phase === 'rise') {
       const k = clamp(T / 5, 0, 1); G.g.position.y = -110 + 110 * (1 - Math.pow(1 - k, 3)); EV.shake = Math.max(EV.shake || 0, .5);
-      const dm = gal.dm; if (T > 2.5) { const q = clamp((T - 2.5) / 1.5, 0, 1); gal.hand.position.set(dm.x, 70 - 66 * q, dm.z); }
+      const dm = gal.dm; if (!dm) { if (T > 5.5) { gal.phase = 'fight'; spawnSiphons(); allRayans(); } return; } if (T > 2.5) { const q = clamp((T - 2.5) / 1.5, 0, 1); gal.hand.position.set(dm.x, 70 - 66 * q, dm.z); }
       if (T > 4.2 && !gal.grabbed) { gal.grabbed = true; galSay('A hand the size of a building closes around Doom.', 2600); }
       if (T > 4.2) { const q = clamp((T - 4.2) / 2.5, 0, 1); gal.hand.position.y = 4 + 70 * q; dm.y = gal.hand.position.y - 2; dm.x += (0 - dm.x) * q * .05; }
       if (T > 7.5) { dropUnit(gal.dm); EV.boss = null; eventScene.remove(gal.hand); gal.hand.position.y = 80; galSay(`GALACTUS ate ${HEROES[gal.dm.hero].name}. Whole.`, 3400); gal.phase = 'fight'; spawnSiphons(); allRayans(); }
@@ -5891,7 +5962,7 @@ body.photo .scarbanner{visibility:hidden}
     // the Earths fly apart, back to where they belong
     if (T > 9) for (let i = 0; i < 7; i++) { const e = eventScene.userData['earth' + i]; if (e) { const a = i / 7 * Math.PI * 2; e.position.lerp(V(Math.cos(a) * 260, 90, Math.sin(a) * 260), dt * .3); } }
     if (T > 10 && !gal.said) { gal.said = true; say('The Earths are pulling apart. Every universe is going home.', 3600); setTimeout(() => say('Earth-2149’s Rayan: “Same time next incursion?”', 3200), 3600); }
-    if (T > 16 && !gal.done) { gal.done = true; tpv = gal.saved.tpv; galBeaten = true; try { localStorage.setItem('ru-galactus', '1'); } catch (e) {} EV.over = false; endMatch(true); setTimeout(() => fade(() => { stopEvent(true); travel('room'); showCredits('galactus'); buildGalTrophy(); }, '#FFFFFF'), 1800); }
+    if (T > 16 && !gal.done) { gal.done = true; tpv = gal.saved.tpv; galBeaten = true; try { localStorage.setItem('ru-galactus', '1'); } catch (e) {} const wasBit = galBite; clearBite(); EV.over = false; endMatch(true); if (wasBit) setTimeout(() => say('The bite in your room has filled back in, and every world he ate is back.', 5000), 9000); setTimeout(() => fade(() => { stopEvent(true); travel('room'); showCredits('galactus'); buildGalTrophy(); }, '#FFFFFF'), 1800); }
   }
   // what you keep: his helmet on the Bangalore skyline, and a little one by the door
   let galTrophy = null, roofHelm = null;
@@ -5960,7 +6031,7 @@ body.photo .scarbanner{visibility:hidden}
     { id: 'space', name: 'Deep space', x: 570, y: 720, seen: () => !!snapState || armHurt(), noGo: 1 },
     { id: 'void', name: 'The Void', x: 120, y: 820, seen: () => firstSpark, noGo: 1 }
   ];
-  const wallMapState = () => ({ home: HOME_PLACES.map(p => p.seen() ? 1 : 0).join(''), areas: Object.keys(AREAS).map(k => visitedAreas.includes(k) ? 1 : 0).join(''), earths: ALT_KEYS.map(k => altSeen.includes(k) ? 1 : 0).join(''), ev: Object.keys(EVENTS).map(k => evDone.includes(k) ? 1 : 0).join(''), b: beaten.size, cur: altOn ? altK : '' });
+  const wallMapState = () => ({ home: HOME_PLACES.map(p => p.seen() ? 1 : 0).join(''), areas: Object.keys(AREAS).map(k => visitedAreas.includes(k) ? 1 : 0).join(''), earths: ALT_KEYS.map(k => altSeen.includes(k) ? 1 : 0).join(''), ev: Object.keys(EVENTS).map(k => evDone.includes(k) ? 1 : 0).join(''), b: beaten.size, cur: altOn ? altK : '', eaten: eaten.join(',') });
   function drawWallMap(c){
     const g = c.getContext('2d'), W = c.width, H = c.height, S = wallMapState();
     g.fillStyle = '#0E1420'; g.fillRect(0, 0, W, H);
@@ -5988,7 +6059,7 @@ body.photo .scarbanner{visibility:hidden}
     ks.forEach((k, i) => { const a = i / ks.length * Math.PI * 2 - Math.PI / 2, x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R * .95; line([cx, cy], [x, y], S.areas[i] === '1'); });
     g.beginPath(); g.arc(cx, cy, 58, 0, 7); const gr = g.createRadialGradient(cx, cy, 5, cx, cy, 58); gr.addColorStop(0, '#FFFFFF'); gr.addColorStop(.5, '#9B4DFF'); gr.addColorStop(1, '#3C7CFF'); g.fillStyle = gr; g.fill();
     g.fillStyle = '#FFFFFF'; g.font = '700 24px "Instrument Sans", sans-serif'; g.fillText('Multiverse Gate', cx, cy + 92);
-    ks.forEach((k, i) => { const a = i / ks.length * Math.PI * 2 - Math.PI / 2, x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R * .95; node(x, y, 30, AREAS[k].col, S.areas[i] === '1', AREAS[k].name.replace(/^The /, ''), AREAS[k].uni); });
+    ks.forEach((k, i) => { const a = i / ks.length * Math.PI * 2 - Math.PI / 2, x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R * .95; if (eaten.includes(k)) { g.strokeStyle = '#FF3C3C'; g.lineWidth = 10; g.beginPath(); g.moveTo(x - 34, y - 34); g.lineTo(x + 34, y + 34); g.moveTo(x + 34, y - 34); g.lineTo(x - 34, y + 34); g.stroke(); g.fillStyle = '#FF5A5A'; g.font = '800 20px "Instrument Sans", sans-serif'; g.textAlign = 'center'; g.fillText('EATEN', x, y - 44); return; } node(x, y, 30, AREAS[k].col, S.areas[i] === '1', AREAS[k].name.replace(/^The /, ''), AREAS[k].uni); });
     // the other Earths you've lived on
     const ex = 1720; g.fillStyle = '#FFC93C'; g.font = '800 34px "Instrument Sans", sans-serif'; g.fillText('OTHER EARTHS', ex + 60, 210);
     ALT_KEYS.forEach((k, i) => { const y = 280 + i * 100, x = ex + (i % 2) * 120; node(x, y, 28, ALT_EARTHS[k].tint, S.earths[i] === '1', ALT_EARTHS[k].name, S.cur === k ? 'you live here' : ''); });
@@ -6159,6 +6230,8 @@ body.photo .scarbanner{visibility:hidden}
   let nightChecked = false;
   function littleStep(dt, now){
     if (EV && EV.k === 'cv' && EV.cx && EV.cx.gal && EV.cx.gal.phase === 'fall') galFall(dt, now);
+    if (EV && EV.k === 'cv' && EV.cx && EV.cx.gal && EV.cx.gal.phase === 'eat') galEat(dt, now);
+    biteStep(dt, now);
     petStep(dt, now);
     if (phoneG) phoneG.userData.qr.rotation.y += dt * 2;
     if (phoneG) phoneG.userData.led.visible = BOSSES.some(d => !beaten.has(d.id) && TAUNTS[d.id]) && Math.floor(now / 600) % 2 === 0;
@@ -6321,7 +6394,7 @@ body.photo .scarbanner{visibility:hidden}
     });
     // HUD
     const E = EVENTS[EV.k], sc = Object.entries(EV.score).map(([k, v]) => `<b style="color:${E.col[k]}">${E.teams[k]} ${Math.floor(v)}</b>`).join(' · ');
-    $('#evScore').innerHTML = EV.k === 'cv' ? `${EV.cx.gal ? (EV.cx.gal.phase === 'kneel' ? '<b style="color:#BFE8FF">GALACTUS IS KNEELING: HIT THE CORE</b>' : `<b style="color:#BFE8FF">GALACTUS</b> \u00B7 Siphons ${EV.cx.gal.siphons.filter(u => u.dead <= 0).length}/4`) : `Collisions ${Math.max(0, EV.cx.stage + 1)}/${CV_STAGES.length}${EV.cx.stage >= 0 ? ' \u00B7 ' + CV_STAGES[EV.cx.stage][0] : ''}`} \u00B7 Anchors ${EV.anchors.filter(a => a.dead <= 0).length}/3 \u00B7 Flags ${EV.flags.filter(f => f.own === 1).length}/3${EV.weak > 0 ? ' \u00B7 <b style="color:#9CFF7A">KRYPTONITE</b>' : ''}` : scored(EV.k) ? sc + ` <small>(first to ${E.goal})</small>` : EV.k === 'dks' ? `Parademons ${EV.units.filter(u => u.hero === 'parademon' && u.dead <= 0).length} \u00B7 stay out of the fire` : EV.k === 'wwh' ? `Takedowns ${EV.kos}` : EV.k === 'inc' ? `Wave ${Math.min(EV.wave, 5)}/5 \u00B7 Anchors ${EV.anchors.filter(a => a.dead <= 0).length}/3` : `Kryptonite ${Math.round(EV.charge * 100)}%${EV.weak > 0 ? ' · <b style="color:#9CFF7A">WEAKENED</b>' : ''}`;
+    $('#evScore').innerHTML = EV.k === 'cv' ? `${EV.cx.gal ? (EV.cx.gal.phase === 'kneel' ? '<b style="color:#BFE8FF">GALACTUS IS KNEELING: HIT THE CORE</b>' : `<b style="color:#BFE8FF">GALACTUS</b> \u00B7 Siphons ${EV.cx.gal.siphons.filter(u => u.dead <= 0).length}/4`) : `Collisions ${Math.max(0, EV.cx.stage + 1)}/${CV_STAGES.length}${EV.cx.stage >= 0 && CV_STAGES[EV.cx.stage] ? ' \u00B7 ' + CV_STAGES[EV.cx.stage][0] : ''}`} \u00B7 Anchors ${EV.anchors.filter(a => a.dead <= 0).length}/3 \u00B7 Flags ${EV.flags.filter(f => f.own === 1).length}/3${EV.weak > 0 ? ' \u00B7 <b style="color:#9CFF7A">KRYPTONITE</b>' : ''}` : scored(EV.k) ? sc + ` <small>(first to ${E.goal})</small>` : EV.k === 'dks' ? `Parademons ${EV.units.filter(u => u.hero === 'parademon' && u.dead <= 0).length} \u00B7 stay out of the fire` : EV.k === 'wwh' ? `Takedowns ${EV.kos}` : EV.k === 'inc' ? `Wave ${Math.min(EV.wave, 5)}/5 \u00B7 Anchors ${EV.anchors.filter(a => a.dead <= 0).length}/3` : `Kryptonite ${Math.round(EV.charge * 100)}%${EV.weak > 0 ? ' · <b style="color:#9CFF7A">WEAKENED</b>' : ''}`;
     $('#evTitle').textContent = E.name; $('#evTime').textContent = `${Math.floor(Math.max(0, EV.t) / 60)}:${String(Math.floor(Math.max(0, EV.t) % 60)).padStart(2, '0')}`;
     $('#evHero').textContent = `${H.name}${armHurt() ? ' · burned arm' : ''}`; $('#evHp').style.width = `${clamp(EV.hp / EV.max, 0, 1) * 100}%`;
     const boss = EV.k === 'cv' ? (EV.units.find(u => u.final && u.dead <= 0) || EV.units.find(u => u.boss && u.dead <= 0) || null) : EV.k === 'inj' || EV.k === 'inc' || EV.k === 'dks' ? (EV.boss && EV.boss.dead <= 0 ? EV.boss : null) : EV.k === 'wwh' && EV.team !== 'hulk' ? EV.units.find(u => u.hero === 'hulk') : null;
@@ -6491,6 +6564,7 @@ body.photo .scarbanner{visibility:hidden}
   };
   // ---------- going places ----------
   function enterArea(k){
+    if (eaten.includes(k)) return say(`Galactus ate ${AREAS[k].name}. Beat him to bring it back: the Silver Surfer is waiting in your room.`, 4200);
     if (cvForceNow()) return forceConvergence();
     if (A || EV) return say(A ? 'Finish your fight first.' : 'Leave the event first.', 2200);
     closePanel(); putBackRecord(); endTour(true); exitTelescope();
@@ -6672,7 +6746,7 @@ body.photo .scarbanner{visibility:hidden}
     closePause(); if (document.pointerLockElement) document.exitPointerLock();
     mvBox.querySelector('.gbox').innerHTML = `<div class="ghead"><h2 class="display">The Multiverse Gate</h2><button class="close" type="button" data-mv="close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
       <p class="gmsg">Pick a world. Use “Back to the lair” to come home, and the sling ring remembers everywhere you’ve been.</p>
-      <div class="mvgrid">${Object.entries(AREAS).map(([k, a]) => `<button type="button" class="mvcard" data-mv="${k}" style="--c:${a.col}"><small>${a.uni}${visitedAreas.includes(k) ? ' · visited' : ''}</small><b>${a.name}</b><span>${a.blurb}</span></button>`).join('')}</div>`;
+      <div class="mvgrid">${Object.entries(AREAS).map(([k, a]) => `<button type="button" class="mvcard" data-mv="${k}" style="--c:${a.col}"><small>${a.uni}${eaten.includes(k) ? ' · EATEN BY GALACTUS' : visitedAreas.includes(k) ? ' · visited' : ''}</small><b>${a.name}</b><span>${a.blurb}</span></button>`).join('')}</div>`;
     mvBox.classList.add('on'); mvBox.querySelector('.close').focus();
   }
   mvBox.addEventListener('click', e => { const b = e.target.closest('[data-mv]'); if (!b) return; mvBox.classList.remove('on'); if (b.dataset.mv !== 'close') enterArea(b.dataset.mv); });
@@ -7314,6 +7388,7 @@ body.photo .scarbanner{visibility:hidden}
     if (p.egg === 'bugle') return readBugle();
     if (p.egg === 'repair') return repairJunk();
     if (p.egg === 'lairmap') return openWallMap();
+    if (p.egg === 'surfer') return surferRematch();
     if (p.egg === 'galhelm') { tone(60, .8, 'sawtooth', .05, 40); return say('A piece of Galactus\u2019s helmet. It still hums. The rest of it is out on the skyline.', 4000); }
     if (p.egg === 'radicals') return flyTo(views.scroll.pos.clone(), views.scroll.look, openGame);
     if (p.egg === 'crate') return digCrate();
@@ -7440,7 +7515,7 @@ body.photo .scarbanner{visibility:hidden}
   setMuted(muted);
   $('#soundBtn').onclick = () => { audio(); setMuted(!muted); if (!muted) tone(660, .1, 'sine', .08); };
   // things saved from last time that change the scenes: only once every scene variable exists
-  try { if (lowFx) applyFx(); if (scarOn) setScar(true); if (altOn) setAlt(true); buildTrophy(); buildSpark(); buildPhone(); buildGalTrophy(); if (petK !== 'none') setPet(petK); } catch (err) { console.error(err); }
+  try { if (lowFx) applyFx(); if (scarOn) setScar(true); if (altOn) setAlt(true); buildTrophy(); buildSpark(); buildPhone(); buildGalTrophy(); buildBite(); if (petK !== 'none') setPet(petK); } catch (err) { console.error(err); }
   requestAnimationFrame(frame);
   $('#load').classList.add('off');
 })();
