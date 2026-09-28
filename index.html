@@ -4740,7 +4740,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   HEROES.pcarter = Object.assign({}, HEROES.carter, { name: 'Captain Carter (possessed)', hp: 180 });
   HEROES.pjay = Object.assign({}, HEROES.jay, { name: 'Jay Garrick (possessed)', hp: 150 });
   HEROES.puppeteer = { name: 'The Puppeteer', outfit: 'puppeteer', hp: 900, kind: 'boss', bk: .55, dmg: 7, range: 2.4, cd: 1, speed: 5, r: .6 };
-  HEROES.copycat = { name: 'The Copycat', outfit: 'copycat', hp: 700, kind: 'boss', bk: .55, dmg: 8, range: 2.4, cd: .9, speed: 5.4, r: .6 };
+  HEROES.copycat = { name: 'The Copycat', outfit: 'copycat', hp: 600, kind: 'boss', bk: .45, dmg: 7, range: 2.4, cd: .9, speed: 4.6, r: .6 };
   HEROES.copyrun = Object.assign({}, HEROES.copycat, { kind: 'melee', hp: 9999 });
   EVENTS.st = { name: 'Bangalore', hidden: 1, teams: { me: 'Rayan', en: 'Enemies' }, col: { me: '#FFC93C', en: '#FF3C3C' }, time: 600, fixed: 'me', blurb: '' };
   // how hurt you still are: a bit better each chapter, and not all the way back until the very end
@@ -4934,7 +4934,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function evAttack(){
     if (!EV || EV.over || EV.dead > 0 || EV.cd > 0 || EV.lockT > 0 || EV.intro || EV.blocking || EV.flinch > 0) return; const H = HEROES[EV.hero];
     EV.cd = H.cd * (EV.rage > 0 ? .6 : 1) * (EV.wpn === 'claws' ? .85 : 1); EV.swing = .3; EV.punchSide = -(EV.punchSide || -1);
-    const dm = H.dmg * armFactor() * (EV.rage > 0 ? 1.6 : 1) * (EV.wpn === 'claws' ? 1.4 : 1) * (EV.pain ? .8 : 1);
+    const dm = H.dmg * armFactor() * (EV.rage > 0 ? 1.6 : 1) * (EV.wpn === 'claws' ? 1.4 : 1) * (EV.pain ? .9 : 1);
     if (H.kind === 'melee') { const f = evFwd(); let hit = 0;
       bodies().forEach(u => { if (u.isMe || !alive(u) || teamOf(u) === EV.team) return; const dx = u.x - pos.x, dz = u.z - pos.z, d = Math.hypot(dx, dz) - (HEROES[u.hero].r || .5); if (d < H.range && Math.abs(angDiff(Math.atan2(-dx, -dz), yaw)) < (H.arc || .9)) { hitUnit(u, dm, 'me'); hit++; } });
       tone(hit ? 240 : 420, .06, hit ? 'square' : 'sine', .04, hit ? 120 : 700); if (EV.hero === 'hulk') { EV.shake = .3; }
@@ -5002,7 +5002,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (EV.dead > 0 || EV.inv > 0 || EV.over) return;
     if (!(from && from.remote)) d *= EV.diffIn;
     if (EV.k === 'br') d *= 1.1;
-    if (from && from.hero === 'copycat' && EV.ccClaws) d *= 1.25;
+    if (from && from.hero === 'copycat' && EV.ccClaws) d *= 1.1;
     if (EV.blocking) { d *= .25; KIT.stam = Math.max(0, KIT.stam - .14); tone(1200, .05, 'square', .03, 800); if (KIT.stam <= 0) { EV.blocking = false; EV.guardT = 1.2; say('Guard broken!', 1200); } }
     if (EV.k === 'st') d *= EV.frailTake || 1;
     EV.hp -= d; EV.hurtT = .4; tone(120, .15, 'sawtooth', .04, 70);
@@ -6893,7 +6893,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // from chapter 9 until the end of the story, the only weapon left is Wolverine's claws
   function lostWeapon(id){ try { return SG.ch >= 8 && !SG.gold && id !== 'claws'; } catch (e) { return false; } }
   const canClaws = () => !!EV && EV.hero === 'rayan' && (EV.k === 'br' || EV.k === 'st') && kitReached() && !EV.clawsTorn;
-  function kitSpeed(){ let m = 1; if (kitOn()) { if (KIT.crouchK > .5) m *= .5; else if (KIT.sprinting) m *= 1.6; } if (EV && EV.blocking) m *= .5; if (EV && EV.pain) m *= EV.flinch > 0 ? .15 : .72; return m; }
+  function kitSpeed(){ let m = 1; if (kitOn()) { if (KIT.crouchK > .5) m *= .5; else if (KIT.sprinting) m *= 1.6; } if (EV && EV.blocking) m *= .5; if (EV && EV.pain) m *= EV.flinch > 0 ? .3 : .82; return m; }
   const kitEl = document.createElement('div'); kitEl.className = 'kitui'; kitEl.hidden = true; kitEl.innerHTML = '<span class="stam"><i></i></span><button type="button" data-kit="sprint">Sprint</button><button type="button" data-kit="crouch">Crouch</button>'; document.body.appendChild(kitEl);
   kitEl.addEventListener('click', e => { const b = e.target.closest('[data-kit]'); if (!b) return; if (b.dataset.kit === 'sprint') KIT.sprint = !KIT.sprint; else KIT.crouch = !KIT.crouch; });
   addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || !entered) return; const k = e.key.toLowerCase();
@@ -6919,7 +6919,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     kitEl.querySelector('[data-kit="sprint"]').classList.toggle('on', KIT.sprint); kitEl.querySelector('[data-kit="crouch"]').classList.toggle('on', KIT.crouch);
     evKitHud();
     // crippling pain after the Copycat tears the claws off
-    if (EV && EV.pain) { EV.painT = (EV.painT || 5) - dt; EV.flinch = Math.max(0, (EV.flinch || 0) - dt); if (EV.painT <= 0 && !EV.over) { EV.painT = 4.5 + Math.random() * 2.5; EV.flinch = .6; EV.shake = Math.max(EV.shake || 0, .35); painFlash(); tone(90, .5, 'sawtooth', .05, 50); } }
+    if (EV && EV.pain) { EV.painT = (EV.painT || 5) - dt; EV.flinch = Math.max(0, (EV.flinch || 0) - dt); if (EV.painT <= 0 && !EV.over) { EV.painT = 4.5 + Math.random() * 2.5; EV.flinch = .4; EV.shake = Math.max(EV.shake || 0, .35); painFlash(); tone(90, .5, 'sawtooth', .05, 50); } }
   }
   const painEl = document.createElement('div'); painEl.className = 'painfx'; document.body.appendChild(painEl);
   function painFlash(){ painEl.classList.remove('flash'); void painEl.offsetWidth; painEl.classList.add('flash'); }
@@ -6929,7 +6929,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     b.x = pos.x - Math.sin(yaw) * 1.6; b.z = pos.z - Math.cos(yaw) * 1.6; b.yaw = yaw + Math.PI;
     DLG = null; dlgPlay([['Copycat', 'Nice claws. I think I’ll take those.'], ['ME', 'Don’t… AAAGH!']]);
     setTimeout(() => { if (!EV || EV.over || !EV.st || EV.st.part !== 'c3') return;
-      EV.clawsTorn = true; EV.wpn = 'fists'; EV.prop = null; EV.pain = true; EV.painT = 4; EV.shake = 1.4; EV.hp = Math.max(1, EV.hp - EV.max * .2);
+      EV.clawsTorn = true; EV.wpn = 'fists'; EV.prop = null; EV.pain = true; EV.painT = 4; EV.shake = 1.4; EV.hp = Math.max(1, EV.hp - EV.max * .1);
       document.body.classList.add('pain'); painFlash(); canvas.style.filter = 'blur(3px) saturate(1.6)'; setTimeout(() => { if (canvas.style.filter.startsWith('blur')) canvas.style.filter = ''; }, 1600);
       [180, 120, 80].forEach((f, i) => setTimeout(() => tone(f, .5, 'sawtooth', .07, f / 3), i * 160));
       if (b.av && b.av.hold) b.av.hold('claws'); EV.ccClaws = true;
@@ -7359,7 +7359,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if ((u.retarget = (u.retarget || 0) - dt) <= 0 || !u.tgt || !alive(u.tgt)) { u.retarget = 2; u.tgt = nearestFoe(u); }
       const T = u.tgt; if (!T) return;
       const r = Math.random(), d = Math.hypot(T.x - u.x, T.z - u.z);
-      u.act = d < 3 ? { k: 'punch', t: .35 } : r < .45 ? { k: 'heat', t: .8 } : r < .75 ? { k: 'dash', t: .6 } : { k: godlike(u.hero) ? 'pulse' : 'freeze', t: .7 };
+      u.act = u.hero === 'copycat' ? (d < 3 ? { k: 'punch', t: .5 } : { k: 'dash', t: .9 }) : d < 3 ? { k: 'punch', t: .35 } : r < .45 ? { k: 'heat', t: .8 } : r < .75 ? { k: 'dash', t: .6 } : { k: godlike(u.hero) ? 'pulse' : 'freeze', t: .7 };
       u.act.yaw = Math.atan2(-(T.x - u.x), -(T.z - u.z)); u.act.done = false; u.yaw = u.act.yaw;
       if (u.act.k === 'pulse') { const pr0 = u.enraged ? 6.5 : 5; u.act.tel = new THREE.Mesh(new THREE.RingGeometry(pr0 - .4, pr0, 48), new THREE.MeshBasicMaterial({ color: 0xFF3C3C, transparent: true, opacity: .4, side: THREE.DoubleSide, depthWrite: false })); u.act.tel.rotation.x = -Math.PI / 2; u.act.tel.position.set(u.x, .05, u.z); eventScene.add(u.act.tel); }
       else if (u.act.k !== 'punch') { const L = u.act.k === 'freeze' ? 7 : 20; u.act.tel = new THREE.Mesh(new THREE.PlaneGeometry(u.act.k === 'freeze' ? 4 : 1.2, L), new THREE.MeshBasicMaterial({ color: 0xFF3C3C, transparent: true, opacity: .35, side: THREE.DoubleSide, depthWrite: false })); u.act.tel.rotation.x = -Math.PI / 2; u.act.tel.rotation.z = -u.yaw; const fx = -Math.sin(u.yaw), fz = -Math.cos(u.yaw); u.act.tel.position.set(u.x + fx * L / 2, .05, u.z + fz * L / 2); eventScene.add(u.act.tel); }
@@ -7377,7 +7377,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (a.k === 'freeze') { line(7, 2, 10); ringFx2(u.x + fx * 4, u.z + fz * 4, 2.5, 0xBFE8FF); bodies().forEach(o => { if (!o.isMe && alive(o) && teamOf(o) !== u.team && Math.hypot(o.x - u.x - fx * 4, o.z - u.z - fz * 4) < 3) o.stun = 1.2; }); if (Math.hypot(pos.x - u.x - fx * 4, pos.z - u.z - fz * 4) < 3) EV.slow = 2; }
       if (a.k === 'dash') { line(14, 1.2, 26); for (let k = 0; k < 14; k += .5) { const nx = u.x + fx * .5, nz = u.z + fz * .5; if (!evValid(nx, nz)) break; u.x = nx; u.z = nz; } A0shake(); tone(90, .3, 'sawtooth', .06, 40); }
       if (a.k === 'punch') { const T = u.tgt; if (T && alive(T) && Math.hypot(T.x - u.x, T.z - u.z) < 3.2) { hitUnit(T, 14 * wk, u); knock(T, T.x - u.x, T.z - u.z, 4); } }
-      a.t = a.k === 'punch' ? .5 : godlike(u.hero) ? (u.enraged ? .5 : .85) : 1.4;
+      a.t = u.hero === 'copycat' ? (a.k === 'punch' ? 1.1 : 2) : a.k === 'punch' ? .5 : godlike(u.hero) ? (u.enraged ? .5 : .85) : 1.4;
     }
     if (a.done && a.t > 0 && u.tgt) { const T = u.tgt, dx = T.x - u.x, dz = T.z - u.z; if (Math.hypot(dx, dz) > 2.5) { moveUnit(u, dx, dz, HEROES[u.hero].speed * (EV.weak > 0 ? .5 : 1) * (u.enraged ? 1.35 : 1), dt); u.mv = 1; } u.yaw = Math.atan2(-dx, -dz); }
   }
