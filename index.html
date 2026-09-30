@@ -2633,7 +2633,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // hitting an illusion or a drone pops it instead
     if (x !== undefined && A.mins.length) { const np = nearPart(x, y); if (np.min && np.e < 24) return popMin(np.min); }
     if (A.w.id === 'necro' && !A.fists && GODS.has(A.def.id)) n *= 3;
-    n *= 2 * weaponEff() * armFactor(); wear(.015);
+    n *= 2 * weaponEff() * armFactor() * upgEdge(); wear(.015);
     if (b.mv === 'snap' && b.st === 'wind') { b.snapHp += n; if (b.snapHp >= 50) { b.st = 'rest'; b.t = .6; b.stun = 2.5; b.tel = null; A.snapping = false; tone(200, .4, 'triangle', .06, 900); say('You stopped the snap!', 2600); } }
     b.hp -= n; b.flash = .08; mpHit(n);
     A.nums.push({ x: (x ?? b.x) + (Math.random() - .5) * 20, y: (y ?? b.y) - 20, v: Math.round(n), life: .8 });
@@ -4784,7 +4784,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   HEROES.copyrun = Object.assign({}, HEROES.copycat, { kind: 'melee', hp: 9999 });
   EVENTS.st = { name: 'Bangalore', hidden: 1, teams: { me: 'You', en: 'Enemies' }, col: { me: '#FFC93C', en: '#FF3C3C' }, time: 600, fixed: 'me', blurb: '' };
   // how hurt you still are: a bit better each chapter, and not all the way back until the very end
-  const ST_FRAIL = { u: [.9, .85, 1.05], p: [.95, .9, 1], c: [1, .95, 1], l: [.8, .85, 1.1] };
+  const ST_FRAIL = { u: [1, 1, 1], p: [1, 1, 1], c: [1, 1, 1], l: [.8, .85, 1.1] };
   const ST_TITLE = { u1: 'Ultron: the drones', u2: 'Ultron: cut the power', u3: 'Ultron: the data centre', p1: 'The Puppeteer: the pods', p2: 'The Puppeteer: the heroes', p3: 'The Puppeteer', c1: 'Copycat: the market', c2: 'Copycat: the rooftops', c3: 'Copycat', l1: 'Last Stand: your street', l2: 'Last Stand: the market', l3: 'Last Stand: the tower', l4: 'Last Stand: the dam' };
   HEROES.broker2 = Object.assign({}, HEROES.broker, { name: 'The Broker (older)', hp: 1000, scale: 1.15, bk: .5 });
   HEROES.rclone = { name: 'The clone', self: 1, hp: 700, kind: 'boss', bk: .5, dmg: 8, range: 2.4, cd: .8, speed: 5.2, r: .6, prop: 'claws' };
@@ -4929,7 +4929,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (k === 'dks') { PICKS.jl.filter(h => h !== hero).slice(0, 3).forEach(h => place(addUnit({ hero: h, team: 'jl' }))); const dk = addUnit({ hero: 'darkseid', team: 'apk' }); dk.x = 0; dk.z = -16; dk.boss = 1; EV.boss = dk; for (let i = 0; i < 5; i++) place(addUnit({ hero: 'parademon', team: 'apk' })); EV.tubeT = 20; }
       if (k === 'st') { const part = opts.part || 'u1', fr = ST_FRAIL[part[0]]; EVENTS.st.name = ST_TITLE[part]; EV.max = EV.hp = Math.round(EV.max * fr[0]); EV.frailHit = fr[1]; EV.frailTake = fr[2]; stSetup(part); }
       if (k === 'of') { const b = addUnit({ hero: 'overfitx', team: 'ofx' }); b.x = 0; b.z = -16; b.boss = 1; b.overfit = 1; ofModel(b); EV.boss = b; EV.of = { si: 0, pt: 0, cur: '', count: {}, told: {}, hits: 0, final: false }; }
-      if (k === 'br') { const part = opts.part || 1; EV.part = part; EV.br = { part, prog: 0, far: 0, ang: 0, bits: [], broke: [], floor: 0 }; EV.frailHit = .8 + .05 * (part - 1); EV.max = EV.hp = Math.round(EV.max * [.85, .9, .95, 1][part - 1]);
+      if (k === 'br') { const part = opts.part || 1; EV.part = part; EV.br = { part, prog: 0, far: 0, ang: 0, bits: [], broke: [], floor: 0 }; EV.frailHit = 1;
         if (part === 1) { const T = makeTruck(); eventScene.add(T); EV.br.truck = T; }
         if (part === 2) { for (let i = 0; i < 5; i++) place(addUnit({ hero: 'kguard', team: 'bk' })); for (let i = 0; i < 3; i++) place(addUnit({ hero: 'kthor', team: 'bk' }));
           // in the city they're under the warehouse roof, not spread across the whole yard
@@ -4978,7 +4978,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function evAttack(){
     if (!EV || EV.over || EV.dead > 0 || EV.cd > 0 || EV.lockT > 0 || EV.intro || EV.blocking || EV.flinch > 0) return; const H = HEROES[EV.hero];
     EV.cd = H.cd * (EV.rage > 0 ? .6 : 1) * (EV.wpn === 'claws' ? .85 : 1) * (EV.slowMe > 0 ? 2 : 1); EV.swing = .3; EV.punchSide = -(EV.punchSide || -1);
-    const dm = H.dmg * armFactor() * (EV.rage > 0 ? 1.6 : 1) * (EV.wpn === 'claws' ? 1.4 : 1) * (EV.pain ? .9 : 1) * (EV.laststand ? 2.5 : 1);
+    const dm = H.dmg * armFactor() * (EV.rage > 0 ? 1.6 : 1) * (EV.wpn === 'claws' ? 1.4 : 1) * (EV.pain ? .9 : 1) * (EV.laststand ? 2.5 : 1) * upgEdge();
     if (H.kind === 'melee') { const f = evFwd(); let hit = 0;
       bodies().forEach(u => { if (u.isMe || !alive(u) || teamOf(u) === EV.team) return; const dx = u.x - pos.x, dz = u.z - pos.z, d = Math.hypot(dx, dz) - (HEROES[u.hero].r || .5); if (d < H.range && Math.abs(angDiff(Math.atan2(-dx, -dz), yaw)) < (H.arc || .9)) { hitUnit(u, dm, 'me'); hit++; } });
       tone(hit ? 240 : 420, .06, hit ? 'square' : 'sine', .04, hit ? 120 : 700); if (EV.hero === 'hulk') { EV.shake = .3; }
@@ -5037,6 +5037,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     u.hp -= d; if (u.hp <= 0) killUnit(u, from);
   }
   function killUnit(u, from){
+    storyKill(u, from);
     if (u.puppet) say(`The string snaps. ${HEROES[u.hero].name.replace(' (possessed)', '')} slumps, free of her.`, 2200);
     if (EV.k === 'st' && EV.st && EV.st.part === 'd1') EV.st.recent.push({ u, t: performance.now(), x: u.x, z: u.z });
     u.dead = u.ally ? 10 : u.boss || u.hero === 'hulk' || u.hero === 'anchor' || ['st', 'br', 'of'].includes(EV.k) || (EV.k === 'inc' && u.team === 'inc') ? 999 : u.hero === 'trooper' ? 8 : 6; u.hp = 0; u.av.g.visible = false;
@@ -5056,8 +5057,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!(from && from.remote)) d *= EV.diffIn;
     if (from && from.hero === 'copycat' && EV.ccClaws) d *= 1.1;
     if (EV.blocking && EV.st && EV.st.noBlock) { if (!EV.st.toldBlock) { EV.st.toldBlock = 1; say('Blocking doesn\u2019t help. They know exactly where you\u2019ll guard. They learned it from you.', 3400); } }
-    else if (EV.blocking) { d *= EV.hero === 'echo18' ? .1 : .25; KIT.stam = Math.max(0, KIT.stam - (EV.hero === 'echo18' ? .06 : .14)); tone(1200, .05, 'square', .03, 800); if (KIT.stam <= 0) { EV.blocking = false; EV.guardT = 1.2; say('Guard broken!', 1200); } }
+    else if (EV.blocking) { d *= EV.hero === 'echo18' ? .1 : .25; KIT.stam = Math.max(0, KIT.stam - (EV.hero === 'echo18' ? .06 : .14) * upgReflex()); tone(1200, .05, 'square', .03, 800); if (KIT.stam <= 0) { EV.blocking = false; EV.guardT = 1.2; say('Guard broken!', 1200); } }
     if (EV.k === 'st') d *= EV.frailTake || 1;
+    d *= upgIron();
     EV.hp -= d; EV.hurtT = .4; EV.calm = 0; if (EV.laststand && EV.hp < 1) EV.hp = 1; tone(120, .15, 'sawtooth', .04, 70);
     const oneLife = EV.k === 'wwh' && EV.hero === 'hulk' || EV.k === 'br' || EV.k === 'st';
     if (EV.hp <= 0 && EV.party && partyDown()) return;
@@ -6309,6 +6311,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // ---------------- Act 1: The Multiverse ----------------
     { id: 'room', title: 'Your Room', tag: 'Where it all starts.', steps: [
       { t: 'Tilt the Batman figure on the bookshelf to open the secret lair.', check: () => F().lair || found.has('lair') && zone === 'lair', where: () => ['room', V(4.5, 2.4, -.5)] },
+      invStep('room', 'Something’s off about this place. Look around: your desk upstairs, the Synthetic’s pod, the comic on its stand'),
       { t: 'Take a weapon from the rack on the back wall of the lair.', check: () => F().weapon, where: () => ['lair', V(-12.6, 3.2, -10.2)] },
       { t: 'Open the Synthetic’s pod and beat it. It copies whatever you just did.', check: () => F()['beat:synthetic'], where: () => ['lair', podPos('synthetic')] }
     ] },
@@ -6318,9 +6321,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     ] },
     { id: 'incursion', title: 'Incursion', tag: 'Another Earth is falling into yours.', start: () => say('Ebony Maw’s last words: “It was a gift. From a man in green armour.” Over Bangalore, the sky has a second Earth in it.', 6000), steps: [
       { t: 'Read the multiverse map on the lair wall.', check: () => F().lairmap, where: () => ['lair', V(-6.2, 4.6, 10.6)] },
-      { t: 'Go through the Multiverse Gate in the lair and see what’s happening to the other worlds.', go: () => openGate(), check: () => areaFlags() >= 1, where: () => ['lair', V(0, 3.6, 8.4)] },
+      invStep('gate', 'Go through the Multiverse Gate in the lair. On three other worlds, find the same file', { go: () => openGate() }),
       { t: 'The other Earth’s heroes are split over letting it through. Settle it: play Civil War.', go: () => openLobby('cw'), check: () => F()['ev:cw'] },
       { t: 'Stop the Final Incursion.', go: () => openLobby('inc'), check: () => F().collide },
+      { id: 'c-breach', t: 'The other Earth’s {N} is holding the breach open. Decide.', keep: () => choiceKeep('breach', v => say(v === 'pull' ? 'You pull them through. Half your street comes with them.' : 'You seal it. For a second you can still hear them on the other side.', 4200)), check: () => !!SG.choice.breach },
       { t: 'You made it to the other Earth. Talk to this Earth’s {N}.', skip: () => !altOn, check: () => F().otherme, where: () => ['room', V(-3.2, 2.6, 2.6)] },
       { t: () => F().gallost ? 'Galactus won. The Silver Surfer is in your room: take his rematch.' : 'Doom led something here. Every universe is colliding. Survive Convergence.', go: () => F().gallost ? surferRematch() : openLobby('cv'), check: () => F().galactus }
     ] },
@@ -6334,14 +6338,17 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       { t: 'Something is watching your house. Go up to the roof.', check: () => inZ('roof'), where: () => ['room', V(0, 2.6, 9.6)] },
       { id: 'drones', t: 'Drones! Shoot down all three (click them).', check: () => F().drones },
       { id: 'tail', t: 'The Broker’s truck is parked in your street. Take the fire escape down and follow it on foot. Stay close, but not too close.', site: { k: 'br', part: 1, at: 'home', p: [-6, 6], r: 11 }, where: siteWhere, check: () => F().br1 },
+      invStep('lot', 'Before you go in, search the Broker’s crates around the lake warehouse', { site: { k: 'inv', at: 'lake', r: 30 } }),
       { id: 'warehouse', t: 'The truck stopped at a warehouse by the lake. Sneak in and find out what he’s selling. Crouch so the guards don’t see you coming.', site: { k: 'br', part: 2, at: 'lake', r: 26 }, where: siteWhere, check: () => F().br2 },
       { t: 'The auction is tonight, at the top of Broker Tower. Fight your way up, floor by floor.', site: { k: 'br', part: 3, at: 'tower', r: 24 }, where: siteWhere, check: () => F().br3 },
-      { t: 'Take the lift up to the roof and take down the Broker.', site: { k: 'br', part: 4, at: 'tower', roof: 1, r: 26 }, where: siteWhere, check: () => F().br4 }
+      { t: 'Take the lift up to the roof and take down the Broker.', site: { k: 'br', part: 4, at: 'tower', roof: 1, r: 26 }, where: siteWhere, check: () => F().br4 },
+      { id: 'c-file', t: 'He’s cuffed to his own railing, and he wants to make a deal. Decide.', keep: () => choiceKeep('file', v => say(v === 'file' ? 'You take the file. “Subject 04: adaptive.” He walks off whistling.' : 'You wait with him in the rain until the police come.', 4200)), check: () => !!SG.choice.file }
     ] },
     { id: 'ultron', title: 'Ultron', tag: 'Built from somebody else’s scans.', start: () => say('The Broker’s servers upload everything they have, all at once. Every screen in Bangalore shows the same face.', 5200), steps: [
       { t: 'Ultron is back. Go up to the roof and look at the city.', check: () => inZ('roof'), where: () => ['room', V(0, 2.6, 9.6)] },
       { t: 'His drones are hunting you through the streets. Take the fire escape down and fight them off.', site: { k: 'st', part: 'u1', at: 'home', r: 30 }, where: siteWhere, check: () => F().u1 },
       { t: 'Cut his connections: three power substations around the city, and the two scan servers he took from outside Broker Tower.', site: { k: 'st', part: 'u2', at: 'home', r: 90 }, where: siteWhere, check: () => F().u2 },
+      invStep('scan', 'The servers at the data centre have labels. Read them before you go in', { site: { k: 'inv', at: 'data', r: 30 } }),
       { t: 'He’s built himself a body out of scrap at the data centre. Get there and unplug him.', site: { k: 'st', part: 'u3', at: 'data', r: 24 }, where: siteWhere, check: () => F().u3, done: () => { try { localStorage.setItem('ru-ultronred', '1'); } catch (e) {} if (!recap.includes('ultron')) { recap.push('ultron'); saveInstab(); } } },
       { t: 'Go down to the lair and check Ultron’s pod.', check: () => inZ('lair'), where: () => ['lair', podPos('ultron')], done: () => say('Ultron’s pod glows red again. His last broadcast is still looping on your phone: “one of their copies walks your lair”.', 5200) }
     ] },
@@ -6366,6 +6373,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       { t: 'The Broker’s men are going door to door in your street. Climb down and stop them.', site: { k: 'st', part: 'l1', at: 'home', r: 30 }, where: siteWhere, check: () => F().l1 },
       { t: 'The market is on fire and people are trapped. Get them out.', site: { k: 'st', part: 'l2', at: 'market', r: 24 }, where: siteWhere, check: () => F().l2 },
       { t: 'The Broker is at his tower. Make him tell you what he’s done.', site: { k: 'st', part: 'l3', at: 'tower', r: 24 }, where: siteWhere, check: () => F().l3 },
+      invStep('dam', 'Somewhere at the foot of Broker Tower is the feed from the dam cameras. Find it', { site: { k: 'inv', at: 'tower', r: 30 } }),
       { t: 'Your clone is at the dam by the lake. If the dam breaks, the city floods.', site: { k: 'st', part: 'l4', at: 'lake', r: 26 }, where: siteWhere, check: () => F().i13 }
     ] },
     { id: 'echo', title: 'Echo', tag: 'Five years on. You are the Copycat.', start: () => say('Five years since the dam. Nobody has worn a mask in Bangalore since. You’re the Copycat now: older, a bit wiser, still not very good at this.', 7000), steps: [
@@ -6389,6 +6397,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { id: 'original', title: 'The Original', tag: 'The long way home, and who he was.', start: () => enterDsp('crash'), end: () => { SG.w.g3 = 1; }, steps: [
       { t: 'You and the Copycat are alive, somewhere in deep space. Echo isn’t.', site: { k: 'scene', dsp: 'crash', p: [0, 0], r: 40, run: sceneCrash }, where: dspWhere, check: () => F().crash20 },
       { t: 'Cross to the wreck. Something huge is drifting in it.', site: { k: 'st', part: 'e1', dsp: 'wreck', p: [0, 0], r: 60, hero: 'hero18' }, where: dspWhere, check: () => F().e1 },
+      invStep('wreck', 'Search Thanos’s wreck. Something in it is still sparking green', { site: { k: 'inv', dsp: 'wreck', p: [0, 0], r: 40 }, where: () => clueWhere() || dspWhere() }),
       { t: 'An old gate on the last rock, past the outpost. Someone is guarding it.', site: { k: 'st', part: 'e3', dsp: 'gate', p: [0, 0], r: 60, hero: 'hero18' }, where: dspWhere, check: () => F().e3 },
       { t: 'The gate is open. Step through it and fall home.', site: { k: 'scene', dsp: 'gate', p: [0, -10], r: 4, run: sceneHome }, where: dspWhere, check: () => F().home20 },
       { t: 'Before you face him, find out who he was. His file is in the security office in the lobby of your tower.', site: { k: 'scene', twr: 'lobby', p: [2, -6.6], r: 4, run: sceneFile }, where: twrWhere, check: () => F().file21 },
@@ -6401,6 +6410,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       { t: 'Leave flowers at the lake for Echo and the Copycat.', site: { k: 'scene', at: 'lake', p: [-110, -126], r: 6, run: sceneFlowers }, where: siteWhere, check: () => F().flow22 },
       { t: 'The Broker kept backups. Search his old security office in the lobby of your tower.', site: { k: 'scene', twr: 'lobby', p: [2, -6.6], r: 4, run: sceneHidden }, where: twrWhere, check: () => F().lift22 },
       { t: 'The first level of the clone vault. His security clones are waking up. You’re on your own.', site: { k: 'st', part: 'v1', twr: 'v1', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().v1 },
+      invStep('vault', 'Read the batch manifests on the first two levels of the vault', { site: { k: 'inv', twr: 'v1', p: [0, 0], r: 60 }, where: () => clueWhere() || twrWhere() }),
       { t: 'Take the lift further down. More of his security clones.', site: { k: 'st', part: 'v2', twr: 'v2', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().v2 },
       { t: 'The bottom of the vault. Echo and the Copycat are here, in the tanks by the console.', site: { k: 'scene', twr: 'v3', p: [0, -5], r: 6, run: sceneOffer }, where: twrWhere, check: () => F().fin22 }
     ] },
@@ -6415,6 +6425,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { id: 'doom', title: 'Doom', tag: 'This time, it ends.', start: () => { if (!A && !EV) enterBlr([HOUSE.door[0], HOUSE.door[1] + 3.4, Math.PI]); say('A green light falls out of the sky and hits your street, right next to the old crater. Something in it is still talking.', 5200); }, steps: [
       { t: 'Something crashed in your street, glowing green. Go and look.', site: { k: 'scene', at: 'home', p: [4, 8], r: 6, run: sceneBot }, where: siteWhere, check: () => F().bot24 },
       { t: 'Doombots are landing in the market. Clear them out.', site: { k: 'st', part: 'x1', at: 'market', r: 24, hero: 'hero18' }, where: siteWhere, check: () => F().x1 },
+      invStep('ledger', 'Something at the data centre is keeping count. Find it before you go in', { site: { k: 'inv', at: 'data', r: 30 } }),
       { t: 'Doom’s signal is coming from the data centre. Shut it down.', site: { k: 'st', part: 'x2', at: 'data', r: 24, hero: 'hero18' }, where: siteWhere, check: () => F().x2 },
       { t: 'The real Doom is waiting on the roof of Broker Tower. Only one of them doesn’t spark.', site: { k: 'st', part: 'x3', at: 'tower', roof: 1, r: 26, hero: 'hero18' }, where: siteWhere, check: () => F().fin24 }
     ] }
@@ -6537,7 +6548,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       <div class="sgname"><label for="sgName">Your hero name</label><input id="sgName" type="text" maxlength="20" autocomplete="off" placeholder="Type your name" value="${esc(hasHeroName() ? heroName() : '')}"></div>
       <p class="gmsg">Story mode. It shows you one thing to do next and saves your place at every step, so you can leave for free play and come back whenever you like.</p>
       <div class="gact">${SG.sagaDone && !SG.active && !SG.resume ? '' : `<button class="btn alt" type="button" data-sg="${SG.active ? 'close' : 'go'}">${SG.active ? 'Keep playing' : started ? 'Continue the story' : 'Start the story'}</button>`}${SG.active ? '<button class="btn" type="button" data-sg="pause">Pause the story</button>' : ''}${SG.active ? `<button class="btn" type="button" data-sg="hide">${SG.hide ? 'Show goals' : 'Hide goals'}</button>` : ''}</div>
-      ${rows}`;
+      ${rows}${logHtml()}`;
     sagaBox.classList.add('on'); sagaBox.querySelector('.close').focus();
   }
   sagaBox.addEventListener('click', e => { const b = e.target.closest('[data-sg]'); if (!b) return; const a = b.dataset.sg;
@@ -7090,7 +7101,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const S = s.site, p = siteXZ(S), lvl = S.roof ? TW.roof : 0, inside = Math.abs(BL.off.y - lvl) < .01 && Math.hypot(mx - p[0], mz - p[1]) < S.r;
     if (!inside) { BL.needOut = false; return; }
     if (BL.needOut && now < BL.hold) return;
-    BL.needOut = false; if (S.k === 'scene') { if (BL.sceneKey !== SG.ch + ':' + SG.step) { BL.sceneKey = SG.ch + ':' + SG.step; S.run(); } return; } startEvent(S.k, 'me', S.hero || 'rayan', { solo: true, diff: evDiff, part: S.part, site: S.at });
+    BL.needOut = false; if (S.k === 'inv') return; if (S.k === 'scene') { if (BL.sceneKey !== SG.ch + ':' + SG.step) { BL.sceneKey = SG.ch + ':' + SG.step; S.run(); } return; } startEvent(S.k, 'me', S.hero || 'rayan', { solo: true, diff: evDiff, part: S.part, site: S.at });
   }
   // ---------- sprint, crouch, block, weapons and pain (chapter 9 on) ----------
   var KIT = { stam: 1, sprint: false, crouch: false, crouchK: 0, restT: 0, winded: false, sprinting: false };
@@ -7871,6 +7882,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // the next thing in the story, if it's in here
     const s = SG.active && curStep(); if (!s || !s.site || !s.site.twr || s.check() || s.site.twr !== TWR.floor) return;
     const S = s.site; if (Math.hypot(pos.x - S.p[0], pos.z - S.p[1]) > S.r) return;
+    if (S.k === 'inv') return;
     if (S.k === 'scene') { if (TWR.sceneKey !== SG.ch + ':' + SG.step) { TWR.sceneKey = SG.ch + ':' + SG.step; S.run(); } return; }
     if (now < (TWR.hold || 0)) return;
     startEvent(S.k, 'me', S.hero || 'rayan', { solo: true, diff: evDiff, part: S.part, twr: true });
@@ -8061,6 +8073,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     for (const [d, to] of D.ex) { const [dx, dz] = DIRV[d], al = pos.x * dx + pos.z * dz, pp = Math.abs(pos.x * dz - pos.z * dx); if (al > D.R + 5.8 && pp < 1.8 && !DSP.busy) { DSP.busy = true; setTimeout(() => DSP.busy = false, 2500); say('You cross the bridge of junk, trying not to look down. There is no down.', 2600); return enterDsp(to, DSP.cur); } }
     const s = SG.active && curStep(); if (!s || !s.site || !s.site.dsp || s.check() || s.site.dsp !== DSP.cur) return;
     const S = s.site; if (Math.hypot(pos.x - S.p[0], pos.z - S.p[1]) > S.r) return;
+    if (S.k === 'inv') return;
     if (S.k === 'scene') { if (DSP.sceneKey !== SG.ch + ':' + SG.step) { DSP.sceneKey = SG.ch + ':' + SG.step; S.run(); } return; }
     if (now < DSP.hold) return;
     startEvent(S.k, 'me', S.hero || 'rayan', { solo: true, diff: evDiff, part: S.part, dsp: true });
@@ -8406,6 +8419,174 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (T > 30 + cards.length * 4.5 + 1 && !c.done) { c.done = 1; storyFlag('fin24'); SG.i24 = true; SG.mvEnd = true; saveSG(); if (BL.rain) BL.rain.visible = true;
       cinEnd(() => { c.earths.forEach(e => { if (e.parent) e.parent.remove(e); }); if (sc.background && c.bg0) sc.background.copy(c.bg0); if (sc.fog && c.fog0) sc.fog.color.copy(c.fog0); endCard(''); endCardEl.style.color = ''; pos.y = c.y0; pitch = 0; showCredits('i24'); setTimeout(() => fadeEl.classList.remove('on'), 800); }); }
   }
+  // ======================= The story's own systems: choices, traces, files, pages, bond =======================
+  // Everything here is saved in SG, next to the chapter you're on.
+  SG.choice = SG.choice || {}; SG.bond = SG.bond || { echo: 50, copy: 50 }; SG.files = SG.files || {}; SG.pages = SG.pages || {};
+  SG.upg = SG.upg || { mimic: 0, mend: 0, iron: 0, edge: 0, reflex: 0 }; SG.traces = SG.traces || 0; SG.w = SG.w || {};
+  const mechCss = document.createElement('style');
+  mechCss.textContent = '.choicebox .gbox{max-width:520px}.choicebox .cq{font-size:1.05rem;line-height:1.5;margin:6px 0 16px}.choicebox .cbtns{display:flex;flex-direction:column;gap:10px}.choicebox .cbtns .btn{width:100%;text-align:left}.mechp h3{margin:18px 0 6px}.mechp .card{margin:8px 0}.mechp .up{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0}.mechp .up small{display:block;opacity:.7}';
+  document.head.appendChild(mechCss);
+  function showMech(html){ panelBody.innerHTML = `<div class="sec mechp">${html}</div>`; panel.scrollTop = 0; panel.classList.add('on'); if (document.pointerLockElement) document.exitPointerLock(); }
+
+  // ---------- choices: four of them, recorded in the Broker's log, quoted back at the end ----------
+  const CHOICES = {
+    breach: { q: 'The other Earth is about to hit yours. Its {N} is holding the breach open with both hands, begging to come through.', a: [['pull', 'Pull them through'], ['seal', 'Seal the breach']],
+      log: { pull: 'Subject 04 pulled another version of itself through the breach. Sentimental about self. Collection arranged for tonight.', seal: 'Subject 04 sealed the breach on another version of itself. Will sacrifice a copy to save the original. Useful.' } },
+    file: { q: 'The Broker, cuffed to his own railing: “Let me walk, and I’ll give you your file. You’ll want to read it, number four.”', a: [['file', 'Take the file, let him walk'], ['arrest', 'Take him in']],
+      log: { file: 'Subject 04 took its own file and let me go. Read it. Did not understand it. As designed.', arrest: 'Subject 04 had me arrested. Lawyers engaged. Release expected in under a year.' } },
+    mask: { q: 'The Copycat is pinned under you in the rain. Every rooftop has a phone pointed at you. The crowd wants to see his face.', a: [['quiet', 'Hand him over quietly'], ['unmask', 'Unmask him for the cameras']],
+      log: { quiet: 'Subject 04 protected the batch-two reject. Attachment forming. Monitor.', unmask: 'Subject 04 unmasked the batch-two reject on camera. The reject will not forgive it. Good.' } },
+    deal: { q: 'The Broker, on the screen: “Work for me. One job, tonight. Do it and I wake them both.”', a: [['refuse', 'Refuse. Smash the console.'], ['accept', 'Accept. Do the job.']],
+      log: { refuse: 'Subject 04 refused the offer and destroyed the console. Wake them anyway. Hollow.', accept: 'Subject 04 carried the core to the roof for us. One night. Latveria has it now. Wake them anyway. Hollow.' } }
+  };
+  const choiceBox = document.createElement('div'); choiceBox.className = 'game choicebox'; choiceBox.setAttribute('role', 'dialog'); choiceBox.innerHTML = '<div class="gbox"></div>'; document.body.appendChild(choiceBox);
+  let choiceCb = null;
+  function askChoice(id, then, custom){
+    const C = custom || CHOICES[id]; choiceCb = { id, then, C, custom: !!custom }; if (document.pointerLockElement) document.exitPointerLock();
+    choiceBox.querySelector('.gbox').innerHTML = `<div class="ghead"><h2 class="display">${custom ? 'Say something' : 'Your choice'}</h2></div><p class="cq">${esc(nmT(C.q))}</p><div class="cbtns">${C.a.map(([v, l]) => `<button class="btn alt" type="button" data-ch="${v}">${esc(nmT(l))}</button>`).join('')}</div>${custom ? '' : '<p class="gmsg">This is saved, and the story remembers it.</p>'}`;
+    choiceBox.classList.add('on'); tone(520, .2, 'triangle', .04);
+  }
+  choiceBox.addEventListener('click', e => { const b = e.target.closest('[data-ch]'); if (!b || !choiceCb) return; const { id, then, custom } = choiceCb, v = b.dataset.ch; choiceCb = null; choiceBox.classList.remove('on');
+    if (!custom) { SG.choice[id] = v; saveSG(); tone(660, .15, 'triangle', .05); } if (then) then(v); });
+  // a step that waits for a choice
+  function choiceKeep(id, then){ if (SG.choice[id] || choiceCb || EV || A || BL.cine || DLG || CARDS || choiceBox.classList.contains('on')) return; askChoice(id, then); }
+  const chose = (id, v) => SG.choice && SG.choice[id] === v;
+
+  // ---------- bond with Echo and the Copycat ----------
+  const bondUp = (who, n, why) => { if (!SG.bond) return; SG.bond[who] = clamp((SG.bond[who] || 50) + n, 0, 100); saveSG(); if (why) say(why, 2600); };
+  const bondHi = who => (SG.bond[who] || 50) >= 70, bondLo = who => (SG.bond[who] || 50) <= 30;
+  // a short talk in the lair between chapters: two ways to answer, one of them kinder
+  function bondTalk(flag, who, lines, q, kind, cold, after){
+    if (SG.flags[flag] || SG.flags[flag + 'On'] || !inZ('lair') || A || EV || BL.cine || choiceCb) return; SG.flags[flag + 'On'] = 1; DLG = null;
+    dlgPlay(lines, { block: true, done: () => askChoice(flag, v => { bondUp(who, v === 'kind' ? 15 : -10); dlgPlay(v === 'kind' ? after[0] : after[1], { block: true, done: () => storyFlag(flag) }); }, { q, a: [['kind', kind], ['cold', cold]] }) });
+  }
+
+  // ---------- traces: beat a copy, keep a little of what it could do ----------
+  const COPYISH = new Set(['sfake', 'blank', 'clone2', 'clone3', 'clone4', 'clone5', 'rclone', 'ccold', 'zfrag', 'zm_hero', 'zm_echo', 'zm_copy', 'hol_echo', 'hol_copy', 'hol_hero', 'sc_doom', 'sc_rflash', 'sc_pup', 'sc_broker', 'sc_dark', 'dbot', 'dbotm', 'echo', 'copycat', 'pgwen', 'pcarter', 'pjay']);
+  function traceGain(n, why){ SG.traces = (SG.traces || 0) + n; saveSG(); say(`${why ? why + ' ' : ''}+${n} trace${n > 1 ? 's' : ''}. Spend them at the bench in the lair.`, 3000); tone(990, .12, 'triangle', .04, 1480); }
+  function storyKill(u, from){
+    if (!EV || !SG.active || !['st', 'br'].includes(EV.k) || u.ally || u.team === EV.team) return;
+    if (COPYISH.has(u.hero) && from === 'me' && (EV.trGot = (EV.trGot || 0)) < 3) { EV.trGot++; traceGain(1, 'You keep a piece of what it could do.'); }
+    const fh = from && from.hero; if (fh && (EV.bondGot = EV.bondGot || 0) < 8) { const who = ['echo18', 'echoAlly'].includes(fh) ? 'echo' : ['copy18'].includes(fh) ? 'copy' : null; if (who) { EV.bondGot += 2; bondUp(who, 2); } }
+  }
+  const UPG = { edge: ['Edge', 'Hit harder.', l => `+${l * 12}% damage`], iron: ['Iron', 'Take less damage.', l => `-${l * 10}% damage taken`], mend: ['Mend', 'Heal slowly in a fight.', l => `${(l * .5).toFixed(1)} health a second`], reflex: ['Reflex', 'Blocking costs less stamina.', l => `-${l * 20}% block cost`], mimic: ['Mimic', 'Your special comes back faster.', l => `-${l * 15}% special cooldown`] };
+  const upgLv = k => (SG.upg && SG.upg[k]) || 0, upgOff = k => !!(EV && EV.st && EV.st.absorbed && EV.st.absorbed.has(k));
+  const upgOn = k => SG.active && !upgOff(k) ? upgLv(k) : 0;
+  const upgEdge = () => 1 + .12 * upgOn('edge'), upgIron = () => 1 - .1 * upgOn('iron'), upgReflex = () => 1 - .2 * upgOn('reflex');
+  function openBench(){
+    const rows = Object.entries(UPG).map(([k, [nm, d, fx]]) => { const l = upgLv(k), cost = l + 1; return `<div class="up"><span><b>${nm} ${'●'.repeat(l)}${'○'.repeat(3 - l)}</b><small>${d} ${l ? 'Now: ' + fx(l) + '.' : ''}</small></span>${l < 3 ? `<button class="btn${SG.traces >= cost ? ' alt' : ''}" type="button" data-up="${k}" ${SG.traces >= cost ? '' : 'disabled'}>${cost} trace${cost > 1 ? 's' : ''}</button>` : '<small>Full</small>'}</div>`; }).join('');
+    showMech(`<p class="meta">The bench in the lair</p><h2 class="display">Traces: ${SG.traces || 0}</h2><p class="sub">Every copy you beat leaves something behind: a reflex, a habit, a way of taking a hit. You don’t know why you can keep them. You just can.</p>${rows}`);
+  }
+  panelBody.addEventListener('click', e => { const b = e.target.closest('[data-up]'); if (!b) return; const k = b.dataset.up, cost = upgLv(k) + 1; if (SG.traces < cost || upgLv(k) >= 3) return; SG.traces -= cost; SG.upg[k] = upgLv(k) + 1; saveSG(); tone(1175, .15, 'triangle', .05); openBench(); });
+  function upgFrame(dt){
+    if (!EV || !SG.active || EV.over || EV.dead > 0) return;
+    const m = upgOn('mend'); if (m && EV.hurtT <= 0 && EV.hp < EV.max) EV.hp = Math.min(EV.max, EV.hp + dt * .5 * m);
+    const mi = upgOn('mimic'); if (mi && EV.spCd > 0) EV.spCd = Math.max(0, EV.spCd - dt * .15 * mi);
+  }
+
+  // ---------- investigation files and comic pages: walk into them, or click them ----------
+  // at: [x, y, z] in the zone's own coordinates ('blr' uses map coordinates and ground level)
+  const CLUES = [
+    { id: 'photo', g: 'room', zone: 'room', at: [-1.9, 1.05, -3.6], title: 'An empty photo frame', text: 'A frame on your desk you’ve never really looked at. No photo in it. Just a small stamp in the corner: BD-CP · 04 · DAY 1.' },
+    { id: 'podlabel', g: 'room', zone: 'lair', at: () => { const p = podPos('synthetic'); return [p.x + 1.4, 1.3, p.z + 2.8]; }, title: 'A label on the Synthetic’s pod', text: 'Stamped into the metal: BD-CP / BATCH 0 / SYNTHETIC. Broker Dynamics. Continuity Programme. You don’t remember buying this pod.' },
+    { id: 'comic', g: 'room', zone: 'lair', at: [-4.1, 1.3, 7.6], title: 'The comic on its stand', text: 'The Multiverse Saga, issue one. Page one shows you opening the Synthetic’s pod and fighting it. You haven’t done that yet. The ink is still wet.' },
+    { id: 'lot', g: 'lot', zone: 'blr', at: [-98, -104], title: 'Auction lot list', text: 'Tonight’s lots, top of Broker Tower. Lot 17: weapons, recovered from Subject 04’s lair by the Overfit. Lot 31: B3-U6 (unfinished). Reserve: do not sell to anyone but Latveria.' },
+    { id: 'wire', g: 'lot', zone: 'blr', at: [-122, -98], title: 'A wire transfer', text: 'From: the Treasury of Latveria. To: Broker Dynamics, Continuity Programme. Memo: FOR THE HARVEST. The number has too many zeros to read at a glance.' },
+    { id: 'sublevel', g: 'lot', zone: 'blr', at: [-104, -122], title: 'A sign from a crate', text: 'SUBLEVEL: DO NOT OPEN. Shipping address: your street. Your building. The basement.' },
+    { id: 'scan04', g: 'scan', zone: 'blr', at: [96, 98], title: 'Server label: SCAN 04', text: 'A full body scan, taken while the subject was asleep. Subject 04. Height, reach, reflexes, the way you favour your left side. Ultron was built out of this.' },
+    { id: 'scanb3', g: 'scan', zone: 'blr', at: [124, 104], title: 'Server label: SCAN B3-U6', text: 'Another body scan, marked “template: Subject 04”. Batch three, unit six. Status: unfinished. You don’t know who that is yet.' },
+    { id: 'damfeed', g: 'dam', zone: 'blr', at: [96, -96], title: 'The dam camera feed', text: 'Live footage from the dam, with a label on every figure. The workers. The clone. And you, at the edge of the frame, labelled T4-B.' },
+    { id: 'core', g: 'wreck', zone: 'dsp', rock: 'wreck', at: [7, 1.2, -9], title: 'A burnt-out Gauntlet socket', text: 'The fifth stone in Thanos’s Gauntlet was never a stone. It’s a Doombot core, green, dead, still warm.' },
+    { id: 'comms', g: 'wreck', zone: 'dsp', rock: 'wreck', at: [-9, 1.2, 6], title: 'A comms log', text: 'Latveria to Broker Dynamics: “Specimen four is adapting faster than projected. Do not intervene. Let it watch everything.” Broker Dynamics to Latveria: “Understood. Same time, next story.”' },
+    { id: 'man1', g: 'vault', zone: 'twr', floor: 'v1', at: [-12, 1.2, -6], title: 'Batch manifest, level one', text: 'Batch one. Tank 1: failed. Tank 2: failed. Tank 3: failed (strings; sold to a theatre). Tank 4: see level two.' },
+    { id: 'man2', g: 'vault', zone: 'twr', floor: 'v2', at: [-12, 1.2, 6], title: 'Batch manifest, level two', text: 'Tank 4: RELEASED. Tank 4: RELEASED. The second line is in different ink, dated the night after the dam.' },
+    { id: 'ledger', g: 'ledger', zone: 'blr', at: [96, 122], title: 'The harvest ledger', text: 'A column of Earths, and next to each one a {N}. Taken. Taken. Taken. At the bottom, a total: eleven thousand. Under it, a new line in green ink: +1.' }
+  ];
+  const PAGES = [
+    ['room', 'room', [2.9, 1.05, 3.2], 'Year 0. Broker Dynamics buys a man nobody will miss and locks him under a tower. The label on the file: PATIENT ZERO.'],
+    ['snap', 'lair', () => { const p = podPos('thanos'); return [p.x - 1.4, 1.3, p.z + 2.8]; }, 'Year 0. Batch zero. It grows, it copies, it screams. They call it the Synthetic and put it in a pod.'],
+    ['incursion', 'roof', [2.2, 1.2, 2.4], 'Year 1. Batch one: four tanks. Three fail. One of the failures can pull strings.'],
+    ['beyond', 'lair', [1.6, 1.3, 6.4], 'Year 1. Tank four opens. A child with no photos. They give it a room, a street, and a Batman figure on a shelf.'],
+    ['broker', 'blr', [-116, -94], 'Year 2. A wire transfer from Latveria arrives. Memo line: FOR THE HARVEST.'],
+    ['ultron', 'blr', [118, 118], 'Year 3. Batch two. One reject walks out in a lab coat, and later in a cheap mask.'],
+    ['puppet', 'blr', [-96, 116], 'Year 5. The body scans are sold to an artificial intelligence with a grudge.'],
+    ['copycat', 'blr', [10, 118], 'Year 6. A Gauntlet leaves Latveria in a crate marked MEDICAL. There is a Doombot core in the fifth stone.'],
+    ['last', 'blr', [-124, -118], 'Year 7. The incursion schedule. Every Earth with a version of Subject 04 is circled in green.'],
+    ['echo', 'blr', [118, -96], 'Year 8. Doom gives Galactus directions, and sends a Doombot to wave him in.'],
+    ['pz', 'twr', [-10, 1.2, 8], 'Year 9. Batch three, unit six, grown from Subject 04’s scans. Someone in the lab calls it Echo.', 'b1'],
+    ['original', 'dsp', [6, 1.2, 6], 'Year 12. The dam. Camera label T4-B. Subject 04 does not get up. A regrowth order is signed the same night.', null, 'gate'],
+    ['backups', 'twr', [-12, 1.2, 0], 'Year 13. Batch five. Two companion units ordered, from templates that are dead.', 'v2'],
+    ['batch5', 'twr', [8, 1.2, -6], 'Year 13. The harvest ledger is closed at eleven thousand and one. The one is you.', 'sky'],
+    ['doom', 'blr', [-6, 10], 'The last entry, in green ink: WHEN THE ORIGINAL IS FOUND, END THE BOOK.']
+  ].map(([ch, zone, at, text, floor, rock], i) => ({ id: 'page' + (i + 2), n: i + 2, ch, zone, at, text, floor, rock, title: `Comic page ${i + 2}`, page: true }));
+  const PAGE1 = 'Page 1, dated years before your first memory. Two men shake hands on the roof of an empty tower: one in green armour, one in a grey suit. Under them, the contract’s only line: FIND THE ONE THAT CAN’T BE COPIED.';
+  const pagesGot = () => PAGES.filter(p => SG.pages[p.id]).length;
+  const clueGot = c => c.page ? !!SG.pages[c.id] : !!SG.files[c.id];
+  const invGroup = () => { const s = SG.active && curStep(); return s && s.inv || null; };
+  const invLeft = g => CLUES.filter(c => c.g === g && !SG.files[c.id]).length + (g === 'gate' ? Math.max(0, 3 - gateGot()) : 0);
+  const gateGot = () => Object.keys(SG.files).filter(k => k.startsWith('gate:')).length;
+  const invCount = g => g === 'gate' ? `${Math.min(3, gateGot())}/3` : `${CLUES.filter(c => c.g === g && SG.files[c.id]).length}/${CLUES.filter(c => c.g === g).length}`;
+  const invDone = g => invLeft(g) === 0;
+  const pageOpen = p => { const i = chIx(p.ch); return SG.sagaDone || SG.done.includes(i) || SG.ch >= i; };
+  const clueZoneOk = c => c.zone === 'room' ? !inWorld : inWorld && (c.zone === 'area' ? zone === c.area : zone === c.zone || zone === 'event' && EV && (c.zone === 'blr' && EV.inMap || c.zone === 'twr' && EV.inTwr || c.zone === 'dsp' && EV.inDsp)) && (!c.floor || TWR.floor === c.floor) && (!c.rock || DSP.cur === c.rock);
+  const clueParent = c => c.zone === 'room' ? scene : c.zone === 'lair' ? lairScene : c.zone === 'roof' ? roofScene : c.zone === 'blr' ? BL.sc : c.zone === 'twr' ? TWR.floors && TWR.floors[c.floor] : c.zone === 'dsp' ? DSP.rocks && DSP.rocks[c.rock] : c.zone === 'area' ? areaScenes[c.area] : null;
+  const clueLocal = c => { const a = typeof c.at === 'function' ? c.at() : c.at; if (c.zone === 'blr') { const [lx, lz] = toLocal(a[0], a[1]); return V(lx, 1.2 - (BL.off.y || 0), lz); } return V(a[0], a[1], a[2]); };
+  const clueTex = {};
+  function clueMesh(c){
+    const key = c.page ? 'page' : 'file', t = clueTex[key] || (clueTex[key] = tex(128, 128, (g, w, h) => { g.fillStyle = c.page ? '#F6EFDD' : '#FFC93C'; g.beginPath(); g.arc(64, 64, 56, 0, 7); g.fill(); g.fillStyle = '#16181D'; g.font = `900 ${c.page ? 44 : 62}px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(c.page ? 'PG' : '!', 64, 68); }));
+    const g = new THREE.Group(), sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: t, transparent: true, depthWrite: false })); sp.scale.set(.55, .55, 1); g.add(sp);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(.35, .45, 24), new THREE.MeshBasicMaterial({ color: c.page ? 0xF6EFDD : 0xFFC93C, transparent: true, opacity: .6, side: THREE.DoubleSide, depthWrite: false })); ring.rotation.x = -Math.PI / 2; ring.position.y = -1; g.add(ring);
+    g.traverse(o => o.userData.egg = 'clue:' + c.id); LABELS['clue:' + c.id] = c.title; return g;
+  }
+  const clueObjs = {};
+  function activeClues(){
+    const g = SG.active && invGroup(), L = CLUES.filter(c => c.g === g && !SG.files[c.id]);
+    if (g === 'gate' && AREAS[zone] && gateGot() < 3 && !SG.files['gate:' + zone]) { const an = areaAnim[zone], id = 'gate:' + zone; if (an) L.push({ id, g, zone: 'area', area: zone, at: [an.spawn[0] + 2, 1.3, an.spawn[1] - 3], title: 'A Continuity Programme file', text: `Another world’s copy of the same file. SUBJECT 04 VARIANT, ${AREAS[zone].name.toUpperCase()}: HARVESTED. EARTH SCHEDULED TO COLLIDE. Signed with a green thumbprint.` }); }
+    return L.concat(PAGES.filter(p => !SG.pages[p.id] && pageOpen(p)));
+  }
+  function clueStep(dt, now){
+    if (!entered || A) return; const act = activeClues(), ids = new Set(act.map(c => c.id));
+    Object.keys(clueObjs).forEach(id => { if (!ids.has(id)) { const o = clueObjs[id]; if (o.g.parent) o.g.parent.remove(o.g); delete clueObjs[id]; } });
+    for (const c of act) {
+      const par = clueParent(c); if (!par) continue;
+      let o = clueObjs[c.id]; if (!o || o.g.parent !== par) { if (o && o.g.parent) o.g.parent.remove(o.g); o = clueObjs[c.id] = { g: clueMesh(c), c }; par.add(o.g); }
+      const p = clueLocal(c); o.g.position.set(p.x, p.y + Math.sin(now / 400 + p.x) * .08, p.z); o.g.visible = clueZoneOk(c);
+      if (o.g.visible && !EV && !BL.cine && Math.hypot(pos.x - p.x, pos.z - p.z) < 1.5 && Math.abs(pos.y - p.y) < 3) grabClue(c);
+    }
+  }
+  function grabClue(c){
+    if (clueGot(c)) return; if (c.page) SG.pages[c.id] = 1; else SG.files[c.id] = 1; saveSG();
+    const o = clueObjs[c.id]; if (o && o.g.parent) o.g.parent.remove(o.g); delete clueObjs[c.id];
+    [587, 740, 880].forEach((f, k) => setTimeout(() => tone(f, .2, 'sine', .05), k * 90));
+    const g = c.g, left = g ? invLeft(g) : 0;
+    showMech(`<p class="meta">${c.page ? `Comic page ${c.n} of 16 · ${pagesGot()} of ${PAGES.length} found` : 'Continuity Programme file'}</p><h2 class="display">${esc(c.title)}</h2><p class="jtext">${esc(nmT(c.text))}</p>${g ? `<p class="meta" style="margin-top:14px">${left ? `${left} more to find here.` : 'That’s everything here.'}</p>` : ''}`);
+  }
+  function clueWhere(){
+    const g = invGroup(); if (!g) return null;
+    const L = activeClues().filter(c => c.g === g), here = L.filter(clueZoneOk);
+    if (here.length) { const best = here.map(c => [c, clueLocal(c)]).sort((a, b) => Math.hypot(a[1].x - pos.x, a[1].z - pos.z) - Math.hypot(b[1].x - pos.x, b[1].z - pos.z))[0]; const zk = best[0].zone === 'area' ? zone : best[0].zone; return [zk, best[1].clone().add(V(0, -.2, 0))]; }
+    const c = L[0], s = curStep(); if (!c) return g === 'gate' ? (inZ('lair') ? ['lair', V(0, 3.6, 8.4)] : null) : null;
+    if (c.zone === 'blr') return s.site ? siteWhere() : null; if (c.zone === 'twr') return twrWhere(); if (c.zone === 'dsp') return dspWhere();
+    return null;
+  }
+  function invStep(g, t, extra){ return Object.assign({ inv: g, t: () => `${nmT(t)} (${invCount(g)})`, check: () => invDone(g), where: clueWhere }, extra || {}); }
+
+  // ---------- the lair: the bench, and the comic's other pages (log, files, pages) ----------
+  let upBenchG = null;
+  function buildUpBench(){
+    if (upBenchG || !lairScene) return; const g = upBenchG = new THREE.Group(); g.position.set(-15.6, 0, -7.6); g.rotation.y = Math.PI / 2; lairScene.add(g);
+    box(2.2, .12, 1, mat(0x5A4632), 0, 1, 0, g); [[-1, -.4], [1, -.4], [-1, .4], [1, .4]].forEach(([x, z]) => box(.1, 1, .1, mat(0x3A2D22), x, .5, z, g));
+    const glow = box(.6, .08, .4, glowM(0x7FD6FF, { emissiveIntensity: 1.2 }), 0, 1.1, 0, g); glow.userData.egg = 'upbench';
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, map: tex(512, 96, (c, w, h) => { c.fillStyle = 'rgba(11,13,20,.85)'; c.fillRect(0, 0, w, h); c.fillStyle = '#7FD6FF'; c.font = `800 46px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('THE BENCH · UPGRADES', w / 2, h / 2 + 3); }) })); s.scale.set(2.4, .45, 1); s.position.set(0, 2, 0); g.add(s);
+    g.traverse(o => { if (o.isMesh) o.userData.egg = 'upbench'; }); LABELS.upbench = 'The bench: spend traces on upgrades';
+  }
+  function logHtml(){
+    const ch = Object.entries(CHOICES).filter(([k]) => SG.choice[k]).map(([k, C]) => `<div class="card"><p class="meta">Log entry</p><p class="jtext">${esc(nmT(C.log[SG.choice[k]] || 'Decided off the page.'))}</p></div>`).join('');
+    const fl = CLUES.filter(c => SG.files[c.id]).concat(Object.keys(SG.files).filter(k => k.startsWith('gate:')).map(k => ({ title: 'A file from ' + (AREAS[k.slice(5)] ? AREAS[k.slice(5)].name : 'another world'), text: 'SUBJECT 04 VARIANT: HARVESTED.' })));
+    const pg = PAGES.filter(p => SG.pages[p.id]);
+    return `<h3>The log</h3>${ch || '<p class="gmsg">Nothing decided yet.</p>'}<h3>Files (${fl.length})</h3>${fl.map(c => `<div class="card"><p class="meta">${esc(c.title)}</p><p class="jtext">${esc(nmT(c.text))}</p></div>`).join('') || '<p class="gmsg">None found yet.</p>'}<h3>Comic pages (${pg.length} of ${PAGES.length})</h3>${pg.map(p => `<div class="card"><p class="meta">Page ${p.n}</p><p class="jtext">${esc(nmT(p.text))}</p></div>`).join('') || '<p class="gmsg">Someone tore pages out of this comic. They could be anywhere.</p>'}<p class="gmsg">Traces: ${SG.traces || 0} · Bond: Echo ${SG.bond.echo}, the Copycat ${SG.bond.copy}</p>`;
+  }
+
   // ======================= little things: the Bugle, voicemail, achievements, night, Diwali, pets =======================
   const deedsHeadlines = () => {
     const n = BOSSES.filter(d => beaten.has(d.id)).length, H = [];
@@ -8539,7 +8720,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // every couple of seconds: achievements, the real night, and the phone light
   let nightChecked = false;
   function littleStep(dt, now){
-    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); dspStep(dt, now); wreckStep(now); kitStep(dt);
+    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt);
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.dz) deathStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.fin) finalStep(dt, now);
@@ -9669,6 +9850,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!p) return;
     if (p.door) return enter();
     if (!entered) return;
+    if (p.egg === 'upbench') return openBench();
+    if (typeof p.egg === 'string' && p.egg.startsWith('clue:')) { const c = activeClues().find(q => 'clue:' + q.id === p.egg); if (c) grabClue(c); return; }
     if (inWorld) {
       if (p.egg !== 'telescope') exitTelescope();
       if (p.page) return collectPage(p.page);
