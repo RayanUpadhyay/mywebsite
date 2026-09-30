@@ -2630,6 +2630,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function popMin(m){ A.mins = A.mins.filter(o => o !== m); A.fx.push({ k: 'ghost', x: m.x, y: m.y, r: m.r * 1.6, life: .35, max: .35 }); tone(m.k === 'drone' ? 180 : 900, .12, m.k === 'drone' ? 'square' : 'sine', .04, m.k === 'drone' ? 60 : 1500); }
   function hitBoss(n, x, y){
     const b = A.boss; if (b.hp <= 0 || A.over) return;
+    n = synthRule(n); if (!n) return;
     // hitting an illusion or a drone pops it instead
     if (x !== undefined && A.mins.length) { const np = nearPart(x, y); if (np.min && np.e < 24) return popMin(np.min); }
     if (A.w.id === 'necro' && !A.fists && GODS.has(A.def.id)) n *= 3;
@@ -2721,7 +2722,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         for (let k = 0; k < 10; k++) { const an = Math.random() * Math.PI * 2; b.x = clamp(q.x + Math.cos(an) * 190, B.x0 + b.r, B.x1 - b.r); b.y = clamp(q.y + Math.sin(an) * 190, B.y0 + b.r, B.y1 - b.r); if (Math.hypot(b.x - q.x, b.y - q.y) > 140) break; }
         b.vx = b.vy = 0; b.glitch = 0; for (let k = 0; k < 12; k++) { const an = k / 12 * Math.PI * 2; foe(b.x, b.y, Math.cos(an) * 170, Math.sin(an) * 170, { r: 9, col: '#3B7BFF' }); } tone(90, .1, 'square', .04, 900); rest(b, .5); } },
     reality: { wind: .5, go(b){ const q = aim(); for (let k = 0; k < 10; k++) { const an = k / 10 * Math.PI * 2; foe(q.x + Math.cos(an) * 240, q.y + Math.sin(an) * 240, -Math.cos(an) * 115, -Math.sin(an) * 115, { r: 9, col: '#E8303C', life: 3.4 }); } tone(300, .3, 'triangle', .05, 120); rest(b, .5); } },
-    snap: { wind: 3.4, fixed: 1, start(b){ b.snapHp = 0; b.tel = null; A.snapping = true; tone(60, 1.5, 'sawtooth', .06, 90); say(`${A.def.name} raised the gauntlet. Hit him hard to stop the snap!`, 3200); }, go(b){ A.snapping = false; performSnap(); rest(b, 1); } },
+    snap: { wind: 3.4, fixed: 1, start(b){ b.snapHp = 0; b.tel = null; A.snapping = true; tone(60, 1.5, 'sawtooth', .06, 90); say(SG.active && chId() === 'snap' ? 'Thanos raises the Gauntlet. The fifth stone is spitting green sparks, like something inside it is shorting out. Hit him before he snaps!' : `${A.def.name} raised the gauntlet. Hit him hard to stop the snap!`, 3200); }, go(b){ A.snapping = false; performSnap(); rest(b, 1); } },
     // Loki: knives and illusions
     daggers: { wind: .35, start(b){ lockOn(b); }, go(b){ for (let k = -3; k <= 3; k++) { const an = b.sa + k * .14; foe(b.x + Math.cos(an) * b.r, b.y + Math.sin(an) * b.r, Math.cos(an) * 330, Math.sin(an) * 330, { r: 7, shape: 'dagger', col: '#DCE3EA' }); } tone(1200, .05, 'triangle', .03, 700); rest(b, .45); } },
     clones: { wind: .5, start(b){ b.glitch = 1; },
@@ -4987,6 +4988,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // Rayan only improvises against the Overfit; everywhere else it's just your hands (and the claws)
   const noImprov = (hero, k) => hero === 'rayan' && k !== 'of' || ['copyhero', 'hero18', 'echo18'].includes(hero);
   function evSpecial(){
+    if (EV) EV.spNow = .5;
     if (!EV || EV.over || EV.dead > 0 || EV.spCd > 0 || EV.lockT > 0 || EV.intro || EV.blocking || EV.flinch > 0 || noImprov(EV.hero, EV.k)) return;
     if (EV.hero === 'copy18') { EV.spCd = 2.5; EV.swing = .3; return copyBack(); } const H = HEROES[EV.hero]; EV.spCd = H.spCd; EV.swing = .3;
     special2(EV.me, EV.hero, pos.x, pos.z, yaw, 'me'); tone(300, .4, 'sawtooth', .05, 900);
@@ -5020,6 +5022,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (u.boss && EV.k === 'cv') d *= EV.weak > 0 ? 1.6 : 1;
     if (EV.k === 'st' && EV.st && EV.st.part && EV.st.part[0] === 'z') { d = zHit(u, d, from); if (!d) return; }
     if (EV.k === 'st' && EV.st && EV.st.part === 'k3') d = kHit(u, d, from);
+    { const d2 = storyHit(u, d, from); if (!d2) return; d = d2; }
     if (u.hero === 'scrb' && EV.st && EV.st.ph !== 'open') { if (EV.st.ph === 'shield' && from === 'me' && EV.hero === 'hero18') { EV.st.shHp -= d; tone(1400, .05, 'square', .03, 900); if (EV.st.shHp <= 0) { EV.st.ph = 'hit'; EV.st.bigT = 2.5; say('The hero smashes the shield apart!', 2600); } } else if (from === 'me' && !EV.st.toldSh) { EV.st.toldSh = 1; say(EV.st.ph === 'shield' ? 'Nothing gets through that shield. Only the hero hits hard enough. (Tab)' : 'It shrugs it off. Do the thing only one of you can do.', 2600); } return; }
     if ((EV.k === 'br' || EV.k === 'st') && from === 'me') d *= EV.frailHit || 1;
     if (EV.k === 'br' && EV.part === 2 && from === 'me' && !u.alert) { d *= KIT.crouchK > .5 ? 4 : 2; brAlert(u, 6, true); if (!EV.br.toldTake) { EV.br.toldTake = 1; say('Takedown! Hitting them before they see you hurts a lot more, especially from a crouch.', 3000); } }
@@ -5059,7 +5062,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (EV.blocking && EV.st && EV.st.noBlock) { if (!EV.st.toldBlock) { EV.st.toldBlock = 1; say('Blocking doesn\u2019t help. They know exactly where you\u2019ll guard. They learned it from you.', 3400); } }
     else if (EV.blocking) { d *= EV.hero === 'echo18' ? .1 : .25; KIT.stam = Math.max(0, KIT.stam - (EV.hero === 'echo18' ? .06 : .14) * upgReflex()); tone(1200, .05, 'square', .03, 800); if (KIT.stam <= 0) { EV.blocking = false; EV.guardT = 1.2; say('Guard broken!', 1200); } }
     if (EV.k === 'st') d *= EV.frailTake || 1;
-    d *= upgIron();
+    d *= upgIron(); d = storyHurt(d, from);
     EV.hp -= d; EV.hurtT = .4; EV.calm = 0; if (EV.laststand && EV.hp < 1) EV.hp = 1; tone(120, .15, 'sawtooth', .04, 70);
     const oneLife = EV.k === 'wwh' && EV.hero === 'hulk' || EV.k === 'br' || EV.k === 'st';
     if (EV.hp <= 0 && EV.party && partyDown()) return;
@@ -5070,7 +5073,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function checkGoal(){ if (scored(EV.k) && !EV.over) { const t = Object.keys(EV.score).find(t => EV.score[t] >= EVENTS[EV.k].goal); if (t) endMatch(t === EV.team); } }
   function endMatch(won){
     if (EV && !EV.over) { storyFlag('ev:' + EV.k); if (won) storyFlag('evwin:' + EV.k); if (won && EV.k === 'br') storyFlag('br' + EV.part); if (won && EV.k === 'st') storyFlag(EV.st.part); }
-    if (EV && EV.k === 'st' && EV.st && EV.st.part === 'c3' && won && !EV.over) { EV.over = true; return lpStart(); }
+    if (EV && EV.k === 'st' && EV.st && EV.st.part === 'c3' && won && !EV.over) { EV.over = true; if (SG.active && !SG.choice.mask) return maskChoice(); return lpStart(); }
     if (EV && EV.k === 'st' && EV.st && EV.st.part === 'l4' && won && !EV.over) { EV.over = true; return deathStart(); }
     if (EV && EV.k === 'st' && EV.st && EV.st.part === 'n3' && won && !EV.over) { EV.over = true; return finalStart(); }
     if (EV && EV.k === 'st' && EV.st && ['y4', 'd4', 's3', 'z3', 'w4'].includes(EV.st.part) && won && !EV.over) { EV.over = true; return cinStart({ y4: 'synth', d4: 'dl', s3: 'scr', z3: 'pz', w4: 'end23' }[EV.st.part]); }
@@ -6313,7 +6316,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       { t: 'Tilt the Batman figure on the bookshelf to open the secret lair.', check: () => F().lair || found.has('lair') && zone === 'lair', where: () => ['room', V(4.5, 2.4, -.5)] },
       invStep('room', 'Something’s off about this place. Look around: your desk upstairs, the Synthetic’s pod, the comic on its stand'),
       { t: 'Take a weapon from the rack on the back wall of the lair.', check: () => F().weapon, where: () => ['lair', V(-12.6, 3.2, -10.2)] },
-      { t: 'Open the Synthetic’s pod and beat it. It copies whatever you just did.', check: () => F()['beat:synthetic'], where: () => ['lair', podPos('synthetic')] }
+      { t: 'Open the Synthetic’s pod and beat it. It copies whatever you just did.', check: () => F()['beat:synthetic'], where: () => ['lair', podPos('synthetic')], done: () => { traceGain(1, 'The Synthetic leaves something behind.'); setTimeout(() => say('Up on its stand, the comic turns a page by itself.', 3600), 3200); } }
     ] },
     { id: 'snap', title: 'Snapped', tag: 'He is inevitable. Somebody made sure of it.', start: () => say('The comic on the stand turned a page by itself. Thanos’s pod is open.', 4200), steps: [
       { t: 'Open Thanos’s pod and fight him. When he raises the Gauntlet, hit the stone that sparks green.', check: () => F().snapped || F()['beat:thanos'], where: () => ['lair', podPos('thanos')] },
@@ -6333,7 +6336,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       { t: 'The Beyonder is here. He only stops to warn you: when he talks, stop and listen. Beat him in the Final Incursion.', go: () => openLobby('inc'), check: () => F().beyond }
     ] },
     // ---------------- Act 2: The Broker's City ----------------
-    { id: 'broker', title: 'The Broker', tag: 'Somebody has been watching your house.', start: () => say('Morning. The Beyonder’s last words are still in your head: the man in green did not die, and the man under the tower keeps the book.', 6000), steps: [
+    { id: 'broker', title: 'The Broker', tag: 'Somebody has been watching your house.', start: () => say('Morning. The Beyonder’s last words are still in your head: the man in green did not die, and the man under the tower keeps the book. The comic in the lair is missing pages. And the Bugle has a photo from the incursion: a man in a cheap mask, filming everything.', 8000), steps: [
       { id: 'rack', t: 'The weapon rack in the lair is empty. Go and look.', check: () => inZ('lair'), where: () => ['lair', V(-12.6, 3.2, -10.2)], done: () => say('Everything is gone except Wolverine’s claws. There’s a scrap of paper on the hook: LOT 17 · BROKER DYNAMICS.', 5200) },
       { t: 'Something is watching your house. Go up to the roof.', check: () => inZ('roof'), where: () => ['room', V(0, 2.6, 9.6)] },
       { id: 'drones', t: 'Drones! Shoot down all three (click them).', check: () => F().drones },
@@ -6385,10 +6388,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       { t: 'The sixth one thinks it’s {N}. It’s on the roof of Broker Tower. Stop it without killing it.', site: { k: 'st', part: 'n1', at: 'tower', roof: 1, r: 26, hero: 'copyhero' }, where: siteWhere, check: () => F().n1 },
       { t: 'Take it to the grave by the lake. Show it the truth.', site: { k: 'scene', at: 'lake', p: [-116, -129], r: 5, run: sceneGrave }, where: siteWhere, check: () => F().grave15 },
       { t: 'The buyers’ men are clearing the market. Fight them with Echo.', site: { k: 'st', part: 'n2', at: 'market', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().n2 },
+      { t: 'Echo wants to see the lair, where {N} kept everything. Take Echo down.', keep: () => bondTalk('talkE', 'echo', [['Echo', 'So this is where {N} kept everything.'], ['ME', 'Kept it, fought in it, lost most of it.'], ['Echo', 'I remember this room like it’s mine. It isn’t, is it?']], 'Echo is waiting for an answer.', 'It’s yours now too.', 'No. It isn’t.', [[['Echo', '…Same time, next story, then?'], ['ME', 'Same time, next story.']], [['Echo', 'Right. Just a copy.']]]), check: () => F().talkE, where: () => ['lair', V(-4.8, 2, 8.6)] },
       { t: 'The Replicator is on the roof of Broker Tower. Break its cores before it prints more of them.', site: { k: 'st', part: 'n3', at: 'tower', roof: 1, r: 26, hero: 'copyhero' }, where: siteWhere, check: () => F().fin },
       { t: 'Someone else is on the roof. Go and see.', site: { k: 'scene', at: 'tower', roof: 1, r: 22, run: sceneCliff }, where: siteWhere, check: () => F().cliff }
     ] },
     { id: 'pz', title: 'Patient Zero', tag: 'The flood opened the vault under the tower.', start: () => say('{N} is back, and doesn’t know how. Echo can feel something under the tower, awake since the flood.', 6000), end: () => { SG.w.g2 = 1; }, steps: [
+      { t: 'The Copycat is waiting for you in the lair.', keep: () => bondTalk('talkC', 'copy', [['The Copycat', 'You died. I buried you. I put your claws on the grave.'], ['{N}', 'I know. I don’t know how I’m here.'], ['The Copycat', 'Neither does anyone. That’s what scares me.']], 'The Copycat is looking at you like you might be a copy.', 'Whatever I am, I’m glad you kept going.', 'Stop looking at me like that.', [[['The Copycat', '…Yeah. Me too.']], [['The Copycat', 'Fine.']]]), check: () => F().talkC, where: () => ['lair', V(-4.8, 2, 8.6)] },
       { t: 'Something woke up in the basement of your tower. Get into the tower (the stairs on your roof, or the front door on the street) and take the lift down.', site: { k: 'scene', twr: 'b1', p: [-15, 0], r: 7, run: sceneVault }, where: twrWhere, check: () => F().vault19 },
       { t: 'He went up through the gym. The failed copies he made are still there, and they learn.', site: { k: 'st', part: 'z1', twr: 'gym', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().z1 },
       { t: 'On the office floor, he’s grown copies of the three of you.', site: { k: 'st', part: 'z2', twr: 'office', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().z2 },
@@ -6412,7 +6417,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       { t: 'The first level of the clone vault. His security clones are waking up. You’re on your own.', site: { k: 'st', part: 'v1', twr: 'v1', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().v1 },
       invStep('vault', 'Read the batch manifests on the first two levels of the vault', { site: { k: 'inv', twr: 'v1', p: [0, 0], r: 60 }, where: () => clueWhere() || twrWhere() }),
       { t: 'Take the lift further down. More of his security clones.', site: { k: 'st', part: 'v2', twr: 'v2', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().v2 },
-      { t: 'The bottom of the vault. Echo and the Copycat are here, in the tanks by the console.', site: { k: 'scene', twr: 'v3', p: [0, -5], r: 6, run: sceneOffer }, where: twrWhere, check: () => F().fin22 }
+      { t: 'The bottom of the vault. Echo and the Copycat are here, in the tanks by the console.', site: { k: 'scene', twr: 'v3', p: [0, -5], r: 6, run: sceneOffer }, where: twrWhere, check: () => !!SG.choice.deal || F().fin22 },
+      { t: 'Carry the core up to the roof of your tower. Don’t look inside it.', skip: () => !chose('deal', 'accept') || F().fin22, check: () => inZ('roof'), where: () => inZ('twr') ? ['twr', V(18.5, 1.2, 0)] : inZ('room') ? ['room', V(0, 2.6, 9.6)] : null, done: coreHandover },
+      { t: 'Down in the vault, the tanks are draining.', check: () => F().fin22 }
     ] },
     { id: 'batch5', title: 'Batch Five', tag: 'The tanks are open.', start: () => { if (TWR.sc) TWR.tanks.filter(t => t.fl === 'v3').forEach(t => { t.lv = 0; t.drain = false; t.liq.scale.y = .001; t.liq.position.y = .3; }); say('The tanks are empty. Two of the lids are open, and someone is breathing.', 5000); }, steps: [
       { t: 'Two figures are standing by the open tanks at the bottom of the clone vault.', site: { k: 'scene', twr: 'v3', p: [0, -5], r: 8, run: sceneWake23 }, where: twrWhere, check: () => F().wake23 },
@@ -6474,7 +6481,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // every long cutscene can be skipped: it jumps to the end, and everything it would have done still happens
   const cineSkipEl = document.createElement('button'); cineSkipEl.type = 'button'; cineSkipEl.className = 'cineskip'; cineSkipEl.textContent = 'Skip scene \u25B8\u25B8'; cineSkipEl.hidden = true; document.body.appendChild(cineSkipEl);
   function cineOn(){ const S = EV && EV.st; return (S ? S.cin || S.fin || S.dz || S.lp : null) || CARDS || null; }
-  function skipCine(){ const S = EV && EV.st; if (CARDS && !(S && (S.cin || S.fin || S.dz || S.lp))) return cardSkip(); const o = cineOn(); if (!o) return; const end = S.cin ? { synth: 29.5, dl: 16.5, scr: 23.5, pz: 23.5, pzl: 32.5, cc21: 24.5, fall21: 25.5, hol23: 16.5, end23: 11.5, doom24: 57.5 }[S.cin.kind] : S.fin ? 49.5 : S.dz ? 37.5 : 26.5; o.t0 = Math.min(o.t0, performance.now() - end * 1000); DLG = null; dlgEl.hidden = true; }
+  function skipCine(){ const S = EV && EV.st; if (CARDS && !(S && (S.cin || S.fin || S.dz || S.lp))) return cardSkip(); const o = cineOn(); if (!o) return; const end = S.cin ? { synth: 29.5, dl: 16.5, scr: 23.5, pz: 23.5, pzl: 32.5, cc21: 24.5, fall21: 25.5, hol23: 16.5, end23: 11.5, doom24: 64 }[S.cin.kind] : S.fin ? 49.5 : S.dz ? 37.5 : 26.5; o.t0 = Math.min(o.t0, performance.now() - end * 1000); DLG = null; dlgEl.hidden = true; }
   cineSkipEl.addEventListener('click', e => { e.stopPropagation(); skipCine(); });
   addEventListener('keydown', e => { if (e.key === 'Enter' && cineOn() && !(DLG && DLG.block)) { e.preventDefault(); skipCine(); } });
   function skipChapter(){
@@ -6511,7 +6518,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // a chapter is over: wait for its last scene to finish, then straight into the next one (with a card between books)
   function waitCalm(fn){ const t = () => EV || A || RUN || VOID || CARDS || BL.cine || credEl.classList.contains('on') ? setTimeout(t, 500) : fn(); setTimeout(t, 300); }
   function chapterDone(was, skipped){
-    if (!SG.done.includes(was)) SG.done.push(was); SG.w = SG.w || {}; if (SAGA[was].end) SAGA[was].end(); if (was >= chIx('copycat')) SG.gold = true;
+    if (!SG.done.includes(was)) SG.done.push(was); SG.w = SG.w || {}; if (SAGA[was].end) SAGA[was].end(); if (CH_END[SAGA[was].id]) CH_END[SAGA[was].id](); if (was >= chIx('copycat')) SG.gold = true;
     const nx = was + 1; goalKey = ''; goalEl.hidden = true; if (beacon) beacon.visible = false;
     if (nx >= SAGA.length) { SG.active = false; SG.resume = false; SG.sagaDone = true; saveSG(); return; }
     Object.assign(SG, { active: false, ch: nx, step: 0, flags: {}, resume: true }); saveSG();
@@ -6760,7 +6767,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function stSetup(part){
     const S = EV.st = { part, trick: 0, possT: 12, wave: 0, fires: [], people: [], tags: 0, ready: false }, add = (h, x, z) => { const u = addUnit({ hero: h, team: 'en' }); u.x = x; u.z = z; if (S.ready) { u.hp = u.max = Math.round(u.max * EV.foeHp); drawTag(u); } if (h === 'udrone') droneAv(u); return u; }, ring = (n, R) => Array.from({ length: n }, (_, i) => [Math.cos(i / n * Math.PI * 2) * R, Math.sin(i / n * Math.PI * 2) * R - 4]);
     S.add = add; S.ring = ring;
-    stSetup2(part); zSetup(part); kSetup(part); vSetup(part); xSetup(part);
+    stSetup2(part); zSetup(part); kSetup(part); vSetup(part); xSetup(part); actSetup(part);
     if (part === 'u1') S.wave = 0;
     if (part === 'u2') { S.targets = (EV.inMap ? U2_TARGETS.map(([x, z, h]) => [...toLocal(x, z), h]) : [[-16, -12, 'ustation'], [16, -12, 'ustation'], [0, -20, 'ustation'], [-12, 10, 'userver'], [12, 10, 'userver']]).map(([x, z, h]) => { const u = add(h, x, z); staticAv(u, h); return u; }); S.droneT = 2; }
     if (part === 'u3') { const b = add('ultronx', 0, -14); ultronAv(b); b.boss = 1; EV.boss = b; S.cables = [[-12, -18], [12, -18], [0, -24]].map(([x, z]) => { const u = add('ucable', x, z); staticAv(u, 'ucable'); return u; }); S.cableLine = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xFF3030 })); eventScene.add(S.cableLine); for (let i = 0; i < 3; i++) add('udrone', (i - 1) * 6, -8); }
@@ -6895,7 +6902,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function stHud(){
     const S = EV.st, P = S.part, n = f => EV.units.filter(u => u.team === 'en' && u.dead <= 0 && f(u)).length, tag = (EV.lockT > 0 ? ' \u00B7 <b style="color:#B07CFF">YOU CAN\u2019T MOVE</b>' : '') + (EV.mindT > 0 ? ' \u00B7 <b style="color:#B07CFF">CONTROLS REVERSED</b>' : '') + ' \u00B7 <small>recovering</small>';
-    return (P === 'u1' ? `Wave ${S.wave}/3 \u00B7 enemies left ${n(() => true)}` : P === 'u2' ? `Connections left ${S.targets.filter(u => u.dead <= 0).length}/5` : P === 'u3' ? (S.cables.some(c => c.dead <= 0) ? `Cables left ${S.cables.filter(c => c.dead <= 0).length}/3` : 'Take him apart') : P === 'p3' ? (S.exposed > 0 ? '<b style="color:#FFC93C">SHE\u2019S EXPOSED</b>' : `Puppets shielding her: ${n(u => u.puppet)}`) : P[0] === 'p' ? `Puppets left ${n(u => u.puppet)}` : P === 'y1' ? `Real people found ${S.found}/3 \u00B7 fakes loose ${n(() => true)}` : P === 'y2' ? `Servers left ${S.targets.filter(u => u.dead <= 0).length}/3` : P === 'y3' ? `Replay ${S.wave}/3` : P === 'y4' ? 'Stop the Synthetic' : P === 'd1' ? `Wave ${S.wave}/2 \u00B7 left ${n(() => true)}` : P === 'd2' ? `Guards left ${n(() => true)}` : P === 'd3' ? 'You can see it coming' : P === 'd4' ? 'Stop the Deadline' : P === 's1' || P === 's2' ? `Left ${n(() => true)}` : P === 'e1' || P === 'e2' || P === 'e3' ? 'Get past them and keep going' : P[0] === 'v' || P === 'w2' || P === 'w3' ? `Security clones left ${n(() => true)} \u00B7 on your own` : P === 'w1' ? '<b style="color:#FF6A4E">KILL SWITCH ARMED</b> \u00B7 you can\u2019t save them' : P === 'x1' || P === 'x2' ? `Doombots left ${n(() => true)}` : P === 'x3' ? 'Stop Doom \u00B7 the Earths are falling' : P === 'w4' ? 'End the Broker' : P === 'k1' ? 'Hold him in your street' : P === 'k2' ? 'Keep him away from the market' : P === 'k3' ? (S.edge ? '<b>DRIVE HIM OFF THE EDGE</b>' : 'Wear him down') : P === 'z1' ? `Pieces left ${n(() => true)} \u00B7 they learn whoever hit them last` : P === 'z2' ? `Copies left ${n(() => true)} \u00B7 nobody fights their own copy` : P === 'z3' ? (S.final ? '<b>HIT IT WITH ALL THREE</b>' : `Adapted to: ${PARTY.map(h => `${esc(nmT(HEROES[h].name))} ${Math.round(S.res[h] * 100)}%`).join(' \u00B7 ')}`) : P === 's3' ? ({ shield: '<b>SHIELD</b>: only the hero can break it', hit: '<b>BIG HIT</b>: Echo, block it', scramble: '<b>SCRAMBLE</b>: Copycat, copy it (E)', open: '<b>IT\u2019S OPEN</b>' })[S.ph] : P === 'm1' || P === 'm2' ? 'Stop the clone' : P === 'm3' ? `Clones left ${n(() => true)}` : P === 'n1' ? 'Stop it. Don\u2019t kill it.' : P === 'n2' ? `The buyers\u2019 men left ${n(() => true)}` : P === 'n3' ? `Replicator cores left ${S.cores.filter(u => u.dead <= 0).length}/3` : P === 'l1' ? `The Broker\u2019s men left ${n(() => true)}` : P === 'l3' ? 'Stop the Broker' : P === 'l4' ? (EV.laststand ? '<b style="color:#FF6A4E">LAST STAND</b>' : 'Stop the clone') : P === 'c1' || P === 'l2' ? `${P === 'l2' ? `Men left ${n(() => true)} \u00B7 ` : ''}Fires out ${S.fires.filter(f => f.out).length}/4 \u00B7 people freed ${S.people.filter(q => q.free).length}/3` : P === 'c2' ? `Caught him ${S.tags}/5` : 'Beat the Copycat') + tag;
+    return (P === 'u1' ? `Wave ${S.wave}/3 \u00B7 enemies left ${n(() => true)}` : P === 'u2' ? `Connections left ${S.targets.filter(u => u.dead <= 0).length}/5` : P === 'u3' ? (S.cables.some(c => c.dead <= 0) ? `Cables left ${S.cables.filter(c => c.dead <= 0).length}/3` : 'Take him apart') : P === 'p3' ? (S.exposed > 0 ? '<b style="color:#FFC93C">SHE\u2019S EXPOSED</b>' : `Puppets shielding her: ${n(u => u.puppet)}`) : P[0] === 'p' ? `Puppets left ${n(u => u.puppet)}` : P === 'y1' ? `Real people found ${S.found}/3 \u00B7 fakes loose ${n(() => true)}` : P === 'y2' ? `Servers left ${S.targets.filter(u => u.dead <= 0).length}/3` : P === 'y3' ? `Replay ${S.wave}/3` : P === 'y4' ? 'Stop the Synthetic' : P === 'd1' ? `Wave ${S.wave}/2 \u00B7 left ${n(() => true)}` : P === 'd2' ? `Guards left ${n(() => true)}` : P === 'd3' ? 'You can see it coming' : P === 'd4' ? 'Stop the Deadline' : P === 's1' || P === 's2' ? `Left ${n(() => true)}` : P === 'e1' || P === 'e2' || P === 'e3' ? 'Get past them and keep going' : P[0] === 'v' || P === 'w2' || P === 'w3' ? `Security clones left ${n(() => true)} \u00B7 on your own` : P === 'w1' ? '<b style="color:#FF6A4E">KILL SWITCH ARMED</b> \u00B7 you can\u2019t save them' : P === 'x1' || P === 'x2' ? `Doombots left ${n(() => true)}` : P === 'x3' ? 'Only the real Doom doesn\u2019t spark \u00B7 the Earths are falling' : P === 'w4' ? 'End the Broker' : P === 'k1' ? 'Hold him in your street' : P === 'k2' ? 'Keep him away from the market' : P === 'k3' ? (S.edge ? '<b>DRIVE HIM OFF THE EDGE</b>' : 'Wear him down') : P === 'z1' ? `Pieces left ${n(() => true)} \u00B7 they learn whoever hit them last` : P === 'z2' ? `Copies left ${n(() => true)} \u00B7 nobody fights their own copy` : P === 'z3' ? (S.final ? '<b>HIT IT WITH ALL THREE</b>' : `Adapted to: ${PARTY.map(h => `${esc(nmT(HEROES[h].name))} ${Math.round(S.res[h] * 100)}%`).join(' \u00B7 ')}`) : P === 's3' ? ({ shield: '<b>SHIELD</b>: only the hero can break it', hit: '<b>BIG HIT</b>: Echo, block it', scramble: '<b>SCRAMBLE</b>: Copycat, copy it (E)', open: '<b>IT\u2019S OPEN</b>' })[S.ph] : P === 'm1' || P === 'm2' ? 'Stop the clone' : P === 'm3' ? `Clones left ${n(() => true)}` : P === 'n1' ? 'Stop it. Don\u2019t kill it.' : P === 'n2' ? `The buyers\u2019 men left ${n(() => true)}` : P === 'n3' ? `Replicator cores left ${S.cores.filter(u => u.dead <= 0).length}/3` : P === 'l1' ? `The Broker\u2019s men left ${n(() => true)}` : P === 'l3' ? 'Stop the Broker' : P === 'l4' ? (EV.laststand ? '<b style="color:#FF6A4E">LAST STAND</b>' : `Stop the clone \u00B7 the dam holds ${Math.max(0, Math.ceil(S.dam == null ? 150 : S.dam))}s`) : P === 'c1' || P === 'l2' ? `${P === 'l2' ? `Men left ${n(() => true)} \u00B7 ` : ''}Fires out ${S.fires.filter(f => f.out).length}/4 \u00B7 people freed ${S.people.filter(q => q.free).length}/3` : P === 'c2' ? `Caught him ${S.tags}/5` : 'Beat the Copycat') + tag;
   }
   function finaleCredits(){
     setTimeout(() => { if (lastComic) { scene.remove(lastComic); disposeDeep(lastComic); lastComic = null; } exitNormal(); placeMask(true); say('It was just a story. Probably. There’s a cheap mask on your floor that wasn’t there before.', 5200); }, 900);
@@ -7440,7 +7447,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (T > 2.5 && !D.l1) { D.l1 = 1; DLG = null; dlgPlay([['ME', 'The dam’s holding… good.'], ['ME', 'So this is what it feels like.']]); }
     if (T > 9 && !D.black) { D.black = 1; fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); DLG = null; dlgEl.hidden = true; }
     if (T > 10 && !D.c1) { D.c1 = 1; endCard('{N} died on the bank of the lake. The dam held. Bangalore didn’t flood.'); }
-    if (T > 14.5 && !D.c2) { D.c2 = 1; endCard('Nobody in the city ever found out who was under the mask.'); }
+    if (T > 14.5 && !D.c2) { D.c2 = 1; endCard('Nobody ever found out who was under the mask. And under your tower, the flood reached a vault nobody knew was there. Something in it opened its eyes.'); }
     if (T > 19 && !D.g) { D.g = 1; endCard(''); canvas.style.filter = 'saturate(.75)'; D.bg = eventScene.background.clone(); eventScene.background = new THREE.Color(0xA8ACB2); eventScene.fog.color.setHex(0xA8ACB2); eventScene.fog.far = 120; fadeEl.classList.remove('on'); }
     if (T >= 19) { pos.set(400 + Math.sin((T - 19) * .08) * .5, 1.6, 10 - Math.min(T - 19, 14) * .22); yaw = 0; pitch = -.16; }
     if (T > 22 && T < 27) { const k = clamp((T - 22) / 4, 0, 1), c = D.cc.g.position; c.set(7 - 6 * k, 0, 2 - 1 * k); D.cc.g.rotation.y = Math.atan2(-(0 - c.x), -(0 - c.z)) + Math.PI; D.cc.anim(now / 1000, k < 1 ? 1 : 0, 0); }
@@ -7518,7 +7525,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function sceneGrave(){
     const [gx, gz] = graveLocal(), fig = BL.fig2 = avatar(Object.assign({}, look)); fig.g.position.set(gx + 1.6, 0, gz + 1); fig.g.rotation.y = Math.atan2(1.6, 1); BL.sc.add(fig.g);
-    cityScene([['{N}', 'That’s my name on it.'], ['ME', 'It’s their name. You just have their face.'], ['{N}', 'Then what am I?'], ['ME', 'Same thing I was. A copy.'], ['ME', 'Copies can still choose who they are.'], ['{N}', '…Then call me Echo.']], graveLocal, () => {
+    cityScene([['{N}', 'That’s my name on it.'], ['ME', 'It’s their name. You just have their face.'], ['{N}', 'Then what am I?'], ['ME', 'Same thing I was. A copy.'], ['ME', 'Copies can still choose who they are.'], ['{N}', '…Then call me Echo.'], ['ME', 'There was a tag in your collar. B3-U6. Template: Subject 04. Base: Patient Zero.'], ['Echo', 'Who’s Patient Zero?'], ['ME', 'No idea. Same time, next story, we find out.']], graveLocal, () => {
       BL.sc.remove(fig.g); disposeDeep(fig.g); BL.fig2 = null;
       say('Explosions across the city. The Broker’s buyers are erasing everything: the tower, the clones, anyone who saw. They’re starting with the market.', 5200); tone(50, 1.2, 'sawtooth', .07, 30); storyFlag('grave15'); });
   }
@@ -8136,7 +8143,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!c.l1) { c.l1 = 1; if (EV.hero === 'echo18') partySwitch('hero18'); say('Patient Zero stops adapting. He doesn’t need to.', 3000); dlgPlay([['Patient Zero', 'Adapt? I don’t adapt to copies. I made you.'], ['Patient Zero', 'The Broker’s clones. Ultron’s scans. The Synthetic. Echo. {N}. All of you started as me.']]); }
     if (T > 9 && !c.echo) { c.echo = 1; let e = EV.units.find(u => u.ally && u.hero === 'echo18'); if (!e) { e = addUnit({ hero: 'echo18', team: 'me' }); e.ally = 1; } e.dead = 0; e.av.g.visible = true; e.stun = 999; e.x = pos.x + (b.x - pos.x) * .7 + (b.z - pos.z) * .12; e.z = pos.z + (b.z - pos.z) * .7 - (b.x - pos.x) * .12; e.yaw = Math.atan2(-(b.x - e.x), -(b.z - e.z)); c.e = e; DLG = null; dlgPlay([['Echo', 'Not them. Me.']]); }
     if (T > 11.5 && !c.hit) { c.hit = 1; fadeEl.style.background = '#FFFFFF'; fadeEl.classList.add('on'); setTimeout(() => fadeEl.classList.remove('on'), 160); EV.shake = 1.5; tone(60, 1.2, 'sawtooth', .08, 30); if (c.e) corpse(c.e); say('Patient Zero kills Echo.', 3600); }
-    if (T > 13 && !c.l2) { c.l2 = 1; dlgPlay([['Echo', 'Told you… we weren’t built to last.']]); }
+    if (T > 13 && !c.l2) { c.l2 = 1; dlgPlay(echoLast()); }
     if (T > 18 && !c.l3) { c.l3 = 1; DLG = null; dlgPlay([['Patient Zero', 'And you two. Out of my tower.']]); }
     if (T > 20 && !c.blast) { c.blast = 1; fadeEl.style.background = '#FFFFFF'; fadeEl.classList.add('on'); setTimeout(() => fadeEl.classList.remove('on'), 300); EV.shake = 2; [80, 60, 40].forEach((f, i) => setTimeout(() => tone(f, 1, 'sawtooth', .08, 25), i * 200)); say('He hits you and the Copycat with everything he has. The glass explodes outward, and so do you.', 4200); if (TWR.skyDome) TWR.skyDome.material.color.setHex(0x000000); }
     if (T > 20.4 && T < 27) { pos.y += dt * 70; pitch += (1.3 - pitch) * Math.min(1, dt * 2); }
@@ -8150,7 +8157,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       dlgPlay([['Patient Zero', 'You. The copy of a copy. Do you know what you are to me?'], ['The Copycat', 'Yeah. The one who got better.']]); }
     if (c.cc && !c.hit) cinLook(c.cc.x, c.cc.z, dt);
     if (T > 8 && !c.hit) { c.hit = 1; fadeEl.style.background = '#FFFFFF'; fadeEl.classList.add('on'); setTimeout(() => fadeEl.classList.remove('on'), 160); EV.shake = 1.5; tone(60, 1.2, 'sawtooth', .08, 30); corpse(c.cc); say('Patient Zero kills the Copycat.', 3600); }
-    if (T > 10 && !c.l2) { c.l2 = 1; DLG = null; dlgPlay([['{N}', 'No. No, no, no.'], ['The Copycat', 'Hey. Same time… next story.']]); }
+    if (T > 10 && !c.l2) { c.l2 = 1; DLG = null; dlgPlay(ccLast()); }
     if (T > 18 && !c.l3) { c.l3 = 1; DLG = null; dlgPlay([['Patient Zero', 'The roof of Broker Tower. Come and finish it, copy.']]); }
     if (T > 20 && b && !c.up) { c.up = 1; b.stun = 999; }
     if (c.up && b && b.av.g.visible) { b.av.g.position.y += dt * 30; if (b.av.g.position.y > 40) b.av.g.visible = false; }
@@ -8269,25 +8276,25 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       fade(() => { showFloor('v1'); pos.set(15.4, 1.6, 0); yaw = Math.PI / 2; pitch = -.05; TWR.liftArm = false; say('Clone vault, level 1. Rows of glowing tanks, as far as the dark goes.', 4000); }, '#000000'); });
   }
   function sceneOffer(){
-    cityScene([['The Broker', 'There you are. Same time, next story. I told you I kept the backups.'], ['{N}', 'You’re dead.'], ['The Broker', 'That was a backup too. Everything in this building is.'], ['The Broker', 'Echo. The Copycat. Grown, patterned, ready. Work for me, and I wake them tonight.'], ['{N}', 'And if I don’t?'], ['The Broker', 'Then they sleep. Forever is a long time, hero.'], ['{N}', 'No.']], () => [0, -11], () => {
+    cityScene([['The Broker', 'There you are. Same time, next story. I told you I kept the backups.'], ['{N}', 'You’re dead.'], ['The Broker', 'That was a backup too. Everything in this building is.'], ['The Broker', 'Echo. The Copycat. Grown, patterned, ready. Work for me, and I wake them tonight.'], ['{N}', 'And if I don’t?'], ['The Broker', 'Then they sleep. Forever is a long time, hero.']], () => [0, -11], () => askChoice('deal', v => { if (v === 'accept') return acceptCore(); DLG = null; dlgPlay([['{N}', 'No.']]);
       fadeEl.style.background = '#FFFFFF'; fadeEl.classList.add('on'); setTimeout(() => fadeEl.classList.remove('on'), 140); [300, 180, 90].forEach((f, i) => setTimeout(() => tone(f, .3, 'sawtooth', .06, f / 3), i * 90));
       if (TWR.console) TWR.console.material.emissiveIntensity = 0; if (TWR.screen) TWR.screen.visible = false; drainAll(.12); drainSnd();
       say('You put your fist through the console. Sparks. Then, all around you, the tanks start to drain.', 4200);
       cardSeq([[3, () => { fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); endCard('Down in the dark, the tanks drain, one by one.'); drainSnd(); }],
         [7, () => endCard('TO BE CONTINUED')],
-        [11, () => { endCard(''); fadeEl.classList.remove('on'); storyFlag('fin22'); }, 1]]); });
+        [11, () => { endCard(''); fadeEl.classList.remove('on'); storyFlag('fin22'); }, 1]]); }));
   }
   // ---------- #23 scenes ----------
   function sceneWake23(){
     [TWR.tEcho, TWR.tCopy].forEach(t => { if (!t) return; t.lv = 0; t.liq.scale.y = .001; t.glass.visible = false; if (t.fig) t.fig.g.visible = false; });
     const figs = [[-3.2, Object.assign({}, look)], [3.2, Object.assign({}, look, { outfit: 'copycat' })]].map(([x, L]) => { const av = avatar(L); av.g.position.set(x, 0, -9); av.g.rotation.y = Math.atan2(pos.x - x, pos.z + 9); TWR.floors.v3.add(av.g); return av; });
-    cityScene([['Echo', 'Hey. You look terrible.'], ['The Copycat', 'Did we win? Tell me we won. I had a whole speech.'], ['{N}', 'You’re here. You’re really here.'], ['Echo', 'Where else would we be?'], ['The Copycat', 'Same time… next story.'], ['{N}', '…Say that again.'], ['The Copycat', 'Same time… next story.'], ['Echo', 'Template load complete. Subject: Patient Zero. Pattern: companion.'], ['{N}', 'No. No, no, no.'], ['The Broker', 'Did you think I’d grow them with souls? They’re his. Every cell. I just gave them the right faces.']], () => [0, -9], () => {
+    cityScene([['Echo', 'Hey. You look terrible.'], ['The Copycat', 'Did we win? Tell me we won. I had a whole speech.'], ['{N}', 'You’re here. You’re really here.'], ['Echo', 'Where else would we be?'], ['The Copycat', 'Same time… next story.'], ['{N}', '…Say that again.'], ['The Copycat', 'Same time… next story.'], ...wakeExtra(), ['Echo', 'Template load complete. Subject: Patient Zero. Pattern: companion.'], ['{N}', 'No. No, no, no.'], ['The Broker', 'Did you think I’d grow them with souls? They’re his. Every cell. I just gave them the right faces.']], () => [0, -9], () => {
       figs.forEach(f => { TWR.floors.v3.remove(f.g); disposeDeep(f.g); }); TWR.hold = 0; storyFlag('wake23'); });
     setTimeout(() => { if (BL.cine) say('He says it exactly the same way. The same pause. Like a recording.', 3200); }, 9000);
   }
   function sceneReveal(){
     const b = avatar(Object.assign({}, look, { outfit: 'brkpz' })); b.g.scale.setScalar(1.4); b.g.position.set(0, 0, -8); b.g.rotation.y = Math.atan2(pos.x, pos.z + 8); TWR.floors.sky.add(b.g); if (TWR.skyDome) TWR.skyDome.material.color.setHex(0x05060A);
-    cityScene([['{N}', 'The sky garden. Echo died right there.'], ['The Broker', 'Echo. The Copycat. And you, {N}. Did you think I’d only keep backups of them?'], ['{N}', 'No.'], ['The Broker', 'You died in the flood. Chapter twelve, if anyone was counting. And then you came back. Did you ever ask how?'], ['The Broker', 'Tank four. Same template as the rest. You’ve been one of mine ever since.'], ['{N}', 'Then I’m the copy that ends you.'], ['The Broker', 'I built this suit out of what was left of him. Let’s find out.']], () => [0, -8], () => {
+    cityScene([['{N}', 'The sky garden. Echo died right there.'], ['The Broker', 'Echo. The Copycat. And you, {N}. Did you think I’d only keep backups of them?'], ['{N}', 'No.'], ['The Broker', 'You died in the flood. Chapter twelve, if anyone was counting. And then you came back. Did you ever ask how?'], ['The Broker', 'Tank four. Same template as the rest. You’ve been one of mine ever since.'], ...revealExtra(), ['{N}', 'Then I’m the copy that ends you.'], ['The Broker', 'I built this suit out of what was left of him. Let’s find out.']], () => [0, -8], () => {
       TWR.floors.sky.remove(b.g); disposeDeep(b.g); TWR.hold = 0; storyFlag('rev23'); });
   }
   // ---------- the fights ----------
@@ -8401,7 +8408,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const b = EV.boss, S = EV.st, sc = eventScene;
     if (!c.l1) { c.l1 = 1; c.bg0 = sc.background && sc.background.clone(); c.fog0 = sc.fog && sc.fog.color.clone(); c.earths = S.earths || []; c.from = c.earths.map(e => e.position.clone()); c.y0 = pos.y;
       if (b) { b.stun = 999; b.av.g.visible = true; }
-      dlgPlay([['Doom', 'Enough.'], ['Doom', 'You have beaten me. Congratulations. It changes nothing.'], ['Doom', 'While you mourned in your little tower, I lit every incursion at once. Every Earth. Every story.'], ['Doom', 'The other eleven thousand of you begged at the end. Every one. Will you?'], ['{N}', 'You’ll die too.'], ['Doom', 'Doom has died a hundred times, in a hundred Doombots. This time I take the whole story with me.']]); }
+      dlgPlay([['Doom', 'Enough.'], ['Doom', 'You have beaten me. Congratulations. It changes nothing.'], ['Doom', 'While you mourned in your little tower, I lit every incursion at once. Every Earth. Every story.'], ['Doom', 'The other eleven thousand of you begged at the end. Every one. Will you?'], ['{N}', 'You’ll die too.'], ['Doom', 'Doom has died a hundred times, in a hundred Doombots. This time I take the whole story with me.'], ['Doom', 'I paid the Broker to find the one version of you that could not be copied. There is no such version. You were a copy all along. Tank four.']]); }
     if (b && T < 14) cinLook(b.x, b.z, dt); else if (T >= 14) pitch += (.45 - pitch) * Math.min(1, dt * 1.2);
     const k = clamp(T / 30, 0, 1), to = V(pos.x, 150, pos.z - 190);
     c.earths.forEach((e, i) => { e.position.lerpVectors(c.from[i], to, k * k); e.scale.setScalar(1 + k * 1.6); e.rotation.y += dt * (.1 + i * .05); });
@@ -8411,9 +8418,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (T > 11 && !c.rain) { c.rain = 1; if (BL.rain) BL.rain.visible = false; say('The rain stops. Not because it’s over. Because there’s nowhere left for it to fall.', 4200); }
     if (T > 14 && !c.kneel) { c.kneel = 1; DLG = null; dlgPlay([['{N}', 'Echo. Copycat. I’m sorry.'], ['{N}', 'I couldn’t hold this one.']]); say('Your legs give out. You kneel. Doom always said you would.', 4200); }
     if (c.kneel) pos.y += (c.y0 - .75 - pos.y) * Math.min(1, dt * 1.5);
-    if (T > 19 && !c.ghost) { c.ghost = 1; DLG = null; dlgPlay([['Echo', '(far away) Same time, next story?'], ['The Copycat', '(fainter) …next…']]); }
+    if (T > 19 && !c.ghost) { c.ghost = 1; DLG = null; dlgPlay(finalMemory()); }
     if (T > 24 && !c.dk) { c.dk = 1; DLG = null; dlgPlay([['Doom', 'At last. Silence.']]); if (b) { b.av.g.position.y = -.6; b.av.g.rotation.x = .3; } say('Doom kneels too. Not to you. To nothing.', 3600); }
-    const cards = ['The Earths touched.', 'Bangalore went first. Then the lake, and the three graves beside it.', 'Then the tower, and every tank under it, and the copy that was still asking for his name.', 'Then the lair. The comic. Every page of it.', 'Then Doom. Then {N}.', 'No reboot. No spark. No next story.'];
+    const cards = doomCards() || ['The Earths touched.', 'Bangalore went first. Then the lake, and the three graves beside it.', 'Then the tower, and every tank under it, and the copy that was still asking for his name.', 'Then the lair. The comic. Every page of it.', 'Then Doom. Then {N}.', 'No reboot. No spark. No next story.'];
     if (T > 29 && !c.white) { c.white = 1; endCardEl.style.color = '#2A2D33'; fadeEl.style.background = '#FFFFFF'; fadeEl.classList.add('on'); DLG = null; dlgEl.hidden = true; tone(20, 5, 'sawtooth', .08, 15); }
     cards.forEach((t, i) => { if (T > 30 + i * 4.5 && !c['c' + i]) { c['c' + i] = 1; endCard(t); } });
     if (T > 30 + cards.length * 4.5 + 1 && !c.done) { c.done = 1; storyFlag('fin24'); SG.i24 = true; SG.mvEnd = true; saveSG(); if (BL.rain) BL.rain.visible = true;
@@ -8587,6 +8594,118 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     return `<h3>The log</h3>${ch || '<p class="gmsg">Nothing decided yet.</p>'}<h3>Files (${fl.length})</h3>${fl.map(c => `<div class="card"><p class="meta">${esc(c.title)}</p><p class="jtext">${esc(nmT(c.text))}</p></div>`).join('') || '<p class="gmsg">None found yet.</p>'}<h3>Comic pages (${pg.length} of ${PAGES.length})</h3>${pg.map(p => `<div class="card"><p class="meta">Page ${p.n}</p><p class="jtext">${esc(nmT(p.text))}</p></div>`).join('') || '<p class="gmsg">Someone tore pages out of this comic. They could be anywhere.</p>'}<p class="gmsg">Traces: ${SG.traces || 0} · Bond: Echo ${SG.bond.echo}, the Copycat ${SG.bond.copy}</p>`;
   }
 
+  // ======================= The acts: one rule per boss, and what the story remembers =======================
+  // The Puppeteer, not the Synthetic, now runs the fake market and the theatre replays.
+  Object.assign(NARR, {
+    y1: { intro: () => [['The Puppeteer', 'Which of them are real? Go on. Guess.'], ['ME', 'She’s filled the market with copies. The people too.'], ['ME', 'Watch them. Her copies can’t hold still properly.']],
+      beats: [[() => EV.st.found >= 1, 'ME', 'One real. Two to go.'], [() => EV.st.fakes >= 2, 'The Puppeteer', 'Wrong again.']],
+      outro: w => w ? [['ME', 'Three real people. Everyone else was hers.']] : [['The Puppeteer', 'You can’t tell the difference either. Interesting.']] },
+    y3: { intro: () => [['The Puppeteer', 'Welcome to my theatre. Tonight: your greatest hits.'], ['ME', 'Replays. Old fights. But the details are wrong.']],
+      beats: [[() => EV.st.wave >= 2, 'ME', 'The drones are flying backwards.'], [() => EV.st.wave >= 3, 'The Puppeteer', 'I know every fight you’ve ever had. Someone kept very good notes.']],
+      outro: w => w ? [['The Puppeteer', 'Come backstage, then.']] : [['The Puppeteer', 'Again. From the top.']] }
+  });
+  if (NARR.z3 && NARR.z3.beats) NARR.z3.beats.push([() => nb() < .5, 'Patient Zero', 'You take from them. The copies you beat. You keep a little of each. Like I do. Where do you think you got that?']);
+  // Doom quotes back every choice you made
+  const doomQuotes = () => [
+    SG.choice.breach === 'pull' ? ['Doom', 'You pulled another you through a hole in the sky. I collected them that same night.'] : SG.choice.breach === 'seal' ? ['Doom', 'You shut the door on another you. I have done the same eleven thousand times.'] : null,
+    SG.choice.file === 'file' ? ['Doom', 'You read your own file and still did not understand it. “Adaptive.” Adaptive from what?'] : SG.choice.file === 'arrest' ? ['Doom', 'You arrested the Broker. He was out in eleven months. I paid.'] : null,
+    SG.choice.mask === 'quiet' ? ['Doom', 'You protected the clown in the mask. How touching. He died anyway.'] : SG.choice.mask === 'unmask' ? ['Doom', 'You tore the clown’s mask off for the cameras. He never quite forgave you, did he?'] : null,
+    SG.choice.deal === 'accept' ? ['Doom', 'And you worked for us, for one night. The core you carried up those stairs is in my armour now.'] : SG.choice.deal === 'refuse' ? ['Doom', 'You broke the Broker’s console. As if the machines were ever the problem.'] : null
+  ].filter(Boolean);
+  Object.assign(NARR, { x3: Object.assign({}, NARR.x3, { intro: () => [['Doom', 'Galactus ate a machine, boy. Doom does not die in other people’s stories.'], ...doomQuotes(), ['{N}', 'Then why come back at all?'], ['Doom', 'To finish it. Four of me stand on this roof. Only one of us is not a machine. Find me, if you can.']] }) });
+  HEROES.dbot24 = { name: 'Victor von Doom', outfit: 'doom', hp: 9999, kind: 'boss', bk: .8, dmg: 6, range: 2.6, cd: 1.2, speed: 5, r: .7, scale: 1.2 };
+  HEROES.bplate = { name: 'A plate on the suit', hp: 140, kind: 'static', r: .6 };
+  const echoLast = () => bondHi('echo') ? [['Echo', 'The grave by the lake. You let me pick my own name.'], ['Echo', 'Same time, next story. You promised.']] : bondLo('echo') ? [['Echo', 'Guess I was only ever a copy.']] : [['Echo', 'Told you… we weren’t built to last.']];
+  const ccLast = () => bondHi('copy') ? [['{N}', 'No. No, no, no.'], ['The Copycat', 'Hey. You got better too, you know. Both of us did.'], ['The Copycat', 'Same time… next story.']] : bondLo('copy') ? [['{N}', 'No.'], ['The Copycat', 'You never did like me much.'], ['The Copycat', 'Same time… whatever.']] : [['{N}', 'No. No, no, no.'], ['The Copycat', 'Hey. Same time… next story.']];
+  const wakeExtra = () => chose('breach', 'pull') ? [['{N}', 'There’s a third tank open. The label says HARVESTED. It’s the other me. The one I pulled through.']] : [];
+  const revealExtra = () => [['The Broker', 'The empty photo frame. “Number four.” The label on the dam feed. My puppet’s strings catching you. The way you keep a little of every copy you beat. None of it made you wonder?'], ...(chose('file', 'file') ? [['The Broker', 'You even read your file. “Adaptive.” You never asked what you were adapted from.']] : []), ...(chose('deal', 'accept') ? [['The Broker', 'And you worked for me. For one night. Like a good product.']] : [])];
+
+  // ---------- the Synthetic (pod fight): hit it three times in a row and it throws the combo back ----------
+  function synthRule(n){
+    if (!(A && A.def.id === 'synthetic' && SG.active && chId() === 'room')) return n;
+    const t = performance.now(); A.synN = t - (A.synL || 0) < 700 ? (A.synN || 0) + 1 : 1; A.synL = t;
+    if (A.synN >= 3) { A.synN = 0; hurt(A.boss.x, A.boss.y); if (!A.synTold) { A.synTold = 1; say('It copied your combo and threw it back at you. Pause between hits.', 3200); } return 0; }
+    return n;
+  }
+  // ---------- hits in story fights ----------
+  function storyHit(u, d, from){
+    if (!SG.active || !EV) return d; const S = EV.st || {};
+    // the Beyonder: only solid right after he's finished warning you
+    if (EV.k === 'inc' && u.hero === 'beyonder' && EV.byd && chId() === 'beyond' && from === 'me') { const B = EV.byd;
+      if (B.warn > 0) { B.hit = true; if (!B.toldHit) { B.toldHit = 1; say('He’s talking. Stop. Listen.', 2000); } return 0; }
+      if (B.ghost > 0) return 0; return B.open > 0 ? d * 2.2 : d * .35; }
+    // the Overfit at the gate: memorises the last three hits
+    if (u.hero === 'ofspace' && from === 'me') { const k = EV.spNow > 0 ? 'sp' : EV.wpn || 'x'; if (S.ofK === k) S.ofN = (S.ofN || 0) + 1; else { S.ofK = k; S.ofN = 1; }
+      if (S.ofN > 3) { if (!S.ofTold) { S.ofTold = 1; say('“Memorised.” Switch it up: another weapon, your special, or let the Copycat hit him.', 3600); } return 0; } }
+    // Doom's roof: three Doombots and one Doom
+    if (u.hero === 'dbot24') { if (from === 'me') { const all = [EV.boss, ...EV.units.filter(q => q.hero === 'dbot24')].filter(q => q && q.dead <= 0), ps = all.map(q => [q.x, q.z]).sort(() => Math.random() - .5); all.forEach((q, i) => { q.x = ps[i][0]; q.z = ps[i][1]; }); tone(1400, .1, 'square', .03); if (!S.dbTold || Math.random() < .3) { S.dbTold = 1; say('Sparks. A Doombot. They shuffle.', 1800); } } return 0; }
+    // the Broker in Patient Zero's suit: plates hold the upgrades he took from you
+    if (u.hero === 'bplate' && u.hp - d <= 0 && S.absorbed && u.upg) { S.absorbed.delete(u.upg); say(`You tear the plate off. ${UPG[u.upg][0]} is yours again.`, 2600); tone(880, .2, 'triangle', .05, 1320); }
+    return d;
+  }
+  // hits you take: hollow friends hold back if you were close
+  function storyHurt(d, from){
+    if (!SG.active || !EV || !from) return d;
+    if (EV.brBuff > 0 && from.boss) d *= 1.5;
+    if (from.hero === 'hol_echo' && bondHi('echo')) { if (!EV.st.heldE) { EV.st.heldE = 1; say('Echo is holding back. Just a little. Somewhere in there, something remembers you.', 3600); } d *= .6; }
+    if (from.hero === 'hol_copy' && bondHi('copy')) { if (!EV.st.heldC) { EV.st.heldC = 1; say('The Copycat pulls the punch at the last second. Then looks confused about why.', 3600); } d *= .6; }
+    return d;
+  }
+  // ---------- every frame of a story fight ----------
+  const BYD_WARN = ['The man in green did not die in the belly of Galactus.', 'The man under your tower keeps a book about you.', 'Everything you have fought was bought. Everything.', 'Page one was written before you were born.', 'When the green one finds what he is looking for, he will close the book.'];
+  function storyFrame(dt, now){
+    if (!EV || !SG.active) return; const S = EV.st || {}, P = S.part, b = EV.boss; if (EV.spNow > 0) EV.spNow -= dt; if (EV.brBuff > 0) EV.brBuff -= dt;
+    if (EV.over) return;
+    // Doom at the Final Incursion: green sparks out of his shoulder
+    if (EV.k === 'inc' && chId() === 'incursion' && b && b.hero === 'doom' && !b.sparked && b.av) { b.sparked = 1; const sp = sph(.12, glowM(0x3CE870, { emissiveIntensity: 2.4 }), .45, 1.6, 0, b.av.g, 1, 1, 1, 6); sp.userData.spark = 1; say('Green sparks are spitting out of Doom’s shoulder, like something inside him is shorting out.', 4200); }
+    if (b && b.av && b.av.g) b.av.g.traverse(o => { if (o.userData.spark) o.visible = Math.random() > .35; });
+    // the Beyonder's warnings
+    if (EV.k === 'inc' && chId() === 'beyond' && b && b.hero === 'beyonder') { const B = EV.byd || (EV.byd = { t: 5, warn: 0, open: 0, ghost: 0, i: 0 });
+      B.open -= dt; B.ghost -= dt;
+      if (B.warn > 0) { B.warn -= dt; if (B.warn <= 0) { if (B.hit) { B.ghost = 5; say('You weren’t listening. He goes see-through, and your hands pass through him.', 3200); } else { B.open = 5; say('He finished. For a moment he’s solid, and open. Now!', 2800); tone(660, .3, 'triangle', .05, 990); } B.t = 7; } }
+      else if ((B.t -= dt) <= 0) { B.warn = 4; B.hit = false; DLG = null; dlgPlay([['The Beyonder', BYD_WARN[B.i++ % BYD_WARN.length]]]); } }
+    // the Broker scans his product
+    if (EV.k === 'br' && EV.part === 4 && b) { const C = EV.scan || (EV.scan = { t: 4, on: 0, a: 0, fx: 0 });
+      if ((C.t -= dt) <= 0) { C.on = 2.4; C.t = 7.5; C.a = Math.atan2(pos.z - b.z, pos.x - b.x) + 1.4; if (!C.told) { C.told = 1; say('A green scan line sweeps the roof. Crouch under it (C), or he’ll know your numbers.', 3600); } }
+      if (C.on > 0) { C.on -= dt; C.a -= dt * 1.2; if ((C.fx -= dt) <= 0) { C.fx = .08; beamFx(b.x, b.z, b.x + Math.cos(C.a) * 34, b.z + Math.sin(C.a) * 34, 0x3CE870, .25); }
+        const pa = Math.atan2(pos.z - b.z, pos.x - b.x); if (Math.abs(angDiff(pa, C.a)) < .12 && !KIT.crouch && !(EV.brBuff > 0)) { EV.brBuff = 5; say('He scanned you. The Broker: “I know your numbers.” He hits harder for a while.', 3000); } }
+      if (b.hp < b.max * .55 && !C.four) { C.four = 1; DLG = null; dlgPlay([['The Broker', 'Come on, number four. You were built better than this.'], ['{N}', 'Built?']]); } }
+    if (EV.k !== 'st') return;
+    // the Puppeteer's strings catch you too
+    if (P === 'p3') { if ((S.strT = (S.strT == null ? 9 : S.strT) - dt) <= 0) { S.strT = 11; EV.mindT = 2; if (!S.strTold) { S.strTold = 1; DLG = null; dlgPlay([['The Puppeteer', 'Funny. You shouldn’t be on my strings. My strings only hold copies.']]); } else say('Her strings catch you again. Controls reversed.', 1600); } }
+    // the dam won't hold forever
+    if (P === 'l4' && !EV.laststand) { S.dam = (S.dam == null ? 150 : S.dam) - dt; if (S.dam <= 0) { say('The dam gives way. Try again.', 3000); return endMatch(false); } }
+    // the Broker, years later: if he walked with your file, he's had time to upgrade
+    if (P === 'l3' && b && !S.fileBoost) { S.fileBoost = 1; if (chose('file', 'file')) { b.max = b.hp = Math.round(b.max * 1.3); drawTag(b); say('He walked, and he kept your file. He’s had years to build a suit around your numbers.', 4200); } }
+    // Patient Zero's suit
+    if (P === 'w4' && b && S.plates) { S.plates.forEach((u, i) => { if (u.dead > 0) return; const a = now / 900 + i * Math.PI * 2 / S.plates.length; u.x = b.x + Math.cos(a) * 2.2; u.z = b.z + Math.sin(a) * 2.2; }); }
+    // Doom's roof: the Doombots spark, he doesn't
+    if (P === 'x3') EV.units.forEach(u => { if (u.hero === 'dbot24' && u.av && !u.spark) { u.spark = sph(.12, glowM(0x3CE870, { emissiveIntensity: 2.4 }), .45, 1.6, 0, u.av.g, 1, 1, 1, 6); } if (u.spark) u.spark.visible = Math.random() > .3; });
+  }
+  // extra set-up for the new rules
+  function actSetup(part){
+    const S = EV.st; if (!SG.active) return;
+    if (part === 'w4') { S.absorbed = new Set(Object.keys(UPG).filter(k => upgLv(k) > 0)); S.plates = [...S.absorbed].map(k => { const u = S.add('bplate', 0, -8); u.upg = k; return u; });
+      setTimeout(() => { if (!EV || !EV.st || EV.st !== S) return; say(S.absorbed.size ? `The suit reaches into you and takes what you took: ${[...S.absorbed].map(k => UPG[k][0]).join(', ')}. Tear the glowing plates off to get them back.` : 'The suit reaches into you for anything you took from a copy. You never took anything. It finds nothing.', 5200); }, 2500); }
+    if (part === 'x3') { const b = EV.boss; if (b) [[-8, -6], [8, -6], [0, -2]].forEach(([x, z]) => { const u = addUnit({ hero: 'dbot24', team: 'en' }); u.x = x; u.z = z; }); }
+  }
+  // ---------- choices in the middle of scenes ----------
+  function maskChoice(){ askChoice('mask', v => { SG.bond.copy = v === 'quiet' ? 65 : 25; saveSG(); say(v === 'quiet' ? 'You keep his mask on and hand him to the police. As they take him away: “Same time, next story.”' : 'You pull his mask off for the cameras. He doesn’t look at you. As they take him away, flat: “Same time, next story.”', 5200); setTimeout(() => lpStart(), 2600); }); }
+  function acceptCore(){ SG.flags.core = 1; saveSG(); DLG = null; dlgPlay([['{N}', '…Fine. One job.'], ['The Broker', 'Good. There’s a core on the console. Carry it up to the roof of your tower. Don’t look inside it.']]); }
+  function coreHandover(){
+    cardSeq([[0, () => say('A drone with a single green eye drops out of the clouds and takes the core out of your hands.', 4200)],
+      [4, () => { DLG = null; dlgPlay([['The Broker', 'Good. Now watch what I do with my side of the deal.']]); }],
+      [7, () => { fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); endCard('Far below, in the vault, the tanks start to drain anyway.'); drainAll(.12); drainSnd(); }],
+      [11, () => endCard('TO BE CONTINUED')],
+      [15, () => { endCard(''); fadeEl.classList.remove('on'); storyFlag('fin22'); }, 1]]);
+  }
+  // what each chapter leaves behind when it ends
+  function tro(k){ SG.w.tro = SG.w.tro || []; if (!SG.w.tro.includes(k)) SG.w.tro.push(k); }
+  const CH_END = { room: () => tro('synth'), snap: () => tro('gauntlet'), incursion: () => { SG.w.debris = 1; tro('crater'); }, beyond: () => tro('beyond'), broker: () => tro('visor'), ultron: () => tro('eye'), puppet: () => tro('strings'), copycat: () => { SG.w.towerLit = 1; tro('mask'); }, last: () => tro('dam'), echo: () => tro('core'), pz: () => tro('vault'), original: () => tro('boot'), backups: () => tro('manifest'), batch5: () => tro('tank') };
+  // the last thing you hear: whoever you were close to
+  function finalMemory(){ const L = []; if (bondHi('echo')) L.push(['Echo', '(far away) Same time, next story?']); if (bondHi('copy')) L.push(['The Copycat', '(fainter) …next story.']); if (!L.length) L.push(['{N}', 'Nobody answers. You were alone for most of it.']); return L; }
+  function doomCards(){ const c = ['The Earths touched.', 'Bangalore went first. Then the lake, and the three graves beside it.', 'Then the tower, and every tank under it, and the copy that was still asking for his name.', 'Then the lair. The comic. Every page of it.', 'Then Doom. Then {N}.']; if (pagesGot() >= PAGES.length) c.push(PAGE1); c.push('No reboot. No spark. No next story.'); return c; }
+
   // ======================= little things: the Bugle, voicemail, achievements, night, Diwali, pets =======================
   const deedsHeadlines = () => {
     const n = BOSSES.filter(d => beaten.has(d.id)).length, H = [];
@@ -8720,7 +8839,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // every couple of seconds: achievements, the real night, and the phone light
   let nightChecked = false;
   function littleStep(dt, now){
-    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt);
+    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt);
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.dz) deathStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.fin) finalStep(dt, now);
