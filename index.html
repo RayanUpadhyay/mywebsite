@@ -8362,7 +8362,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // you, one Earth at a time. You're the last. He doesn't want to win. He wants it all to end, and this time it does.
   HEROES.dbot = { name: 'Doombot', outfit: 'doom', hp: 110, kind: 'ranged', dmg: 6, cd: .85, col: 0x3CE870, speed: 4.4 };
   HEROES.dbotm = { name: 'Doombot (melee)', outfit: 'doom', hp: 150, kind: 'melee', dmg: 7, range: 2.4, cd: .75, speed: 5 };
-  HEROES.doom24 = { name: 'Victor von Doom', outfit: 'doom', hp: 1700, kind: 'boss', bk: .8, dmg: 10, range: 2.6, cd: .95, speed: 5.4, r: .7, scale: 1.2 };
+  HEROES.doom24 = { name: 'Victor von Doom', outfit: 'doom', hp: 1100, kind: 'boss', bk: .8, dmg: 7, range: 2.6, cd: .95, speed: 5.4, r: .7, scale: 1.2 };
   Object.assign(ST_TITLE, { x1: 'Doom: the market', x2: 'Doom: the data centre', x3: 'Doom: the roof of Broker Tower' });
   Object.assign(ST_FRAIL, { x: [1, 1, 1] });
   Object.assign(SPK, { 'Doombot': '#8FCF7A' });
@@ -8400,7 +8400,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const k = 1 - b.hp / b.max, to = V(pos.x, 70, pos.z - 60);
     S.earths.forEach((e, i) => { e.position.lerpVectors(e.userData.from, to, k * .45); e.rotation.y += dt * (.05 + i * .02); });
     if (Math.random() < dt * k * .6) { EV.shake = Math.max(EV.shake || 0, .4); tone(30 + Math.random() * 25, 1.2, 'sawtooth', .04, 20); }
-    if (b.hp < b.max * .5 && !S.guards) { S.guards = 1; S.ring(3, 9).forEach(([x, z]) => S.add('dbot', x, z)); }
+    if (b.hp < b.max * .5 && !S.guards) { S.guards = 1; S.ring(1, 9).forEach(([x, z]) => S.add('dbot', x, z)); }
     if (b.hp < b.max * .15) { EV.over = true; cinStart('doom24'); }
   }
   // he loses the fight and wins anyway
@@ -8637,8 +8637,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // the Overfit at the gate: memorises the last three hits
     if (u.hero === 'ofspace' && from === 'me') { const k = EV.spNow > 0 ? 'sp' : EV.wpn || 'x'; if (S.ofK === k) S.ofN = (S.ofN || 0) + 1; else { S.ofK = k; S.ofN = 1; }
       if (S.ofN > 3) { if (!S.ofTold) { S.ofTold = 1; say('“Memorised.” Switch it up: another weapon, your special, or let the Copycat hit him.', 3600); } return 0; } }
-    // Doom's roof: three Doombots and one Doom
-    if (u.hero === 'dbot24') { if (from === 'me') { const all = [EV.boss, ...EV.units.filter(q => q.hero === 'dbot24')].filter(q => q && q.dead <= 0), ps = all.map(q => [q.x, q.z]).sort(() => Math.random() - .5); all.forEach((q, i) => { q.x = ps[i][0]; q.z = ps[i][1]; }); tone(1400, .1, 'square', .03); if (!S.dbTold || Math.random() < .3) { S.dbTold = 1; say('Sparks. A Doombot. They shuffle.', 1800); } } return 0; }
+    // Doom's roof: two Doombots and one Doom. They only shuffle some of the time
+    if (u.hero === 'dbot24') { if (from === 'me' && Math.random() < .34) { const all = [EV.boss, ...EV.units.filter(q => q.hero === 'dbot24')].filter(q => q && q.dead <= 0), ps = all.map(q => [q.x, q.z]).sort(() => Math.random() - .5); all.forEach((q, i) => { q.x = ps[i][0]; q.z = ps[i][1]; }); tone(1400, .1, 'square', .03); if (!S.dbTold || Math.random() < .3) { S.dbTold = 1; say('Sparks. A Doombot. They shuffle.', 1800); } } return 0; }
     // the Broker in Patient Zero's suit: plates hold the upgrades he took from you
     if (u.hero === 'bplate' && u.hp - d <= 0 && S.absorbed && u.upg) { S.absorbed.delete(u.upg); say(`You tear the plate off. ${UPG[u.upg][0]} is yours again.`, 2600); tone(880, .2, 'triangle', .05, 1320); }
     return d;
@@ -8687,7 +8687,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const S = EV.st; if (!SG.active) return;
     if (part === 'w4') { S.absorbed = new Set(Object.keys(UPG).filter(k => upgLv(k) > 0)); S.plates = [...S.absorbed].map(k => { const u = S.add('bplate', 0, -8); u.upg = k; return u; });
       setTimeout(() => { if (!EV || !EV.st || EV.st !== S) return; say(S.absorbed.size ? `The suit reaches into you and takes what you took: ${[...S.absorbed].map(k => UPG[k][0]).join(', ')}. Tear the glowing plates off to get them back.` : 'The suit reaches into you for anything you took from a copy. You never took anything. It finds nothing.', 5200); }, 2500); }
-    if (part === 'x3') { const b = EV.boss; if (b) [[-8, -6], [8, -6], [0, -2]].forEach(([x, z]) => { const u = addUnit({ hero: 'dbot24', team: 'en' }); u.x = x; u.z = z; }); }
+    if (part === 'x3') { const b = EV.boss; if (b) [[-8, -6], [8, -6]].forEach(([x, z]) => { const u = addUnit({ hero: 'dbot24', team: 'en' }); u.x = x; u.z = z; }); }
   }
   // ---------- choices in the middle of scenes ----------
   function maskChoice(){ askChoice('mask', v => { SG.bond.copy = v === 'quiet' ? 65 : 25; saveSG(); say(v === 'quiet' ? 'You keep his mask on and hand him to the police. As they take him away: “Same time, next story.”' : 'You pull his mask off for the cameras. He doesn’t look at you. As they take him away, flat: “Same time, next story.”', 5200); setTimeout(() => lpStart(), 2600); }); }
