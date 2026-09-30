@@ -8706,6 +8706,58 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function finalMemory(){ const L = []; if (bondHi('echo')) L.push(['Echo', '(far away) Same time, next story?']); if (bondHi('copy')) L.push(['The Copycat', '(fainter) …next story.']); if (!L.length) L.push(['{N}', 'Nobody answers. You were alone for most of it.']); return L; }
   function doomCards(){ const c = ['The Earths touched.', 'Bangalore went first. Then the lake, and the three graves beside it.', 'Then the tower, and every tank under it, and the copy that was still asking for his name.', 'Then the lair. The comic. Every page of it.', 'Then Doom. Then {N}.']; if (pagesGot() >= PAGES.length) c.push(PAGE1); c.push('No reboot. No spark. No next story.'); return c; }
 
+  // ======================= The world remembers =======================
+  // Once something happens in the story it stays: the Doombot crater, what came through the breach, the tower lights,
+  // the graves (set in the chapters themselves), trophies on a shelf in the lair, and the Bugle's front pages.
+  function storyHeadlines(){
+    const W = SG.w || {}, C = SG.choice || {}, L = [];
+    if (W.debris) L.push('STRANGE GREEN DEBRIS IN OLD STREET: SCIENTISTS BAFFLED');
+    if (C.breach === 'pull') L.push('HALF A STREET FROM ANOTHER EARTH LANDS IN BANGALORE'); if (C.breach === 'seal') L.push('HERO SEALS THE SKY. “I COULD HEAR THEM ON THE OTHER SIDE,” SAYS WITNESS');
+    if (C.file === 'arrest') L.push('BROKER DYNAMICS CEO ARRESTED ON HIS OWN ROOF'); if (C.file === 'file') L.push('BROKER DYNAMICS CEO WALKS FREE. WHO LET HIM GO?');
+    if (C.mask === 'unmask') L.push('COPYCAT UNMASKED LIVE: “JUST SOME GUY,” SAYS CROWD'); if (C.mask === 'quiet') L.push('MASKED COPYCAT IN CUSTODY. IDENTITY STILL A MYSTERY');
+    if (W.towerLit) L.push('BROKER TOWER LIGHTS BACK ON. NOBODY WILL SAY WHO PAYS THE BILL');
+    if (W.g1) L.push('MASKED HERO DIES HOLDING THE DAM. CITY LEAVES FLOWERS AT THE LAKE');
+    if (W.g2) L.push('SECOND GRAVE BY THE LAKE. NO SURNAME, JUST “ECHO”');
+    if (W.g3) L.push('THIRD GRAVE BY THE LAKE HAS A CHEAP MASK ON IT');
+    if (C.deal === 'accept') L.push('DRONE SEEN LEAVING TOWER ROOF WITH GLOWING CARGO');
+    return L.reverse();
+  }
+  const WG = {};
+  function storyWorldStep(){
+    const W = SG.w || {};
+    if (BL.sc && BL.mapG && !WG.blr) {
+      const g = WG.blr = new THREE.Group(); BL.mapG.add(g);
+      // the first Doombot's crater, still sparking
+      const cr = WG.crater = new THREE.Group(); cr.position.set(8, 0, 12); g.add(cr);
+      const disc = new THREE.Mesh(new THREE.CircleGeometry(2.6, 24), mat(0x1A1B21, { roughness: 1 })); disc.rotation.x = -Math.PI / 2; disc.position.y = .03; cr.add(disc);
+      for (let i = 0; i < 9; i++) { const a = i * .7, r = .6 + (i % 3) * .6; const w = box(.5, .12, .18, mat(0x3A3D44, { metalness: .8 }), Math.cos(a) * r, .1, Math.sin(a) * r, cr); w.rotation.y = a; }
+      WG.sparks = [0, 1, 2].map(i => sph(.08, glowM(0x3CE870, { emissiveIntensity: 2.4 }), (i - 1) * .7, .25, (i % 2) * .5, cr, 1, 1, 1, 6));
+      // what came through the breach, if you pulled it through
+      const pw = WG.pull = new THREE.Group(); pw.position.set(-12, 0, 14); g.add(pw);
+      [[0, 0, .3], [2.4, 1.2, -.4], [-1.8, 2, .9]].forEach(([x, z, r]) => { const c = box(2.4, 1.2, 1.6, mat(0x6A5A8A, { roughness: .9 }), x, .6, z, pw); c.rotation.set(.2, r, .15); });
+      // a stone by the lake for the Earth you sealed off
+      const mk = WG.marker = new THREE.Group(); mk.position.set(-98, 0, -131); g.add(mk); box(.7, .9, .25, mat(0x8A8F99, { roughness: 1 }), 0, .45, 0, mk);
+      const lb = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, map: tex(512, 96, (c, w, h) => { c.fillStyle = 'rgba(11,13,20,.8)'; c.fillRect(0, 0, w, h); c.fillStyle = '#E8E3D6'; c.font = `700 40px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('FOR THE OTHER ONE', w / 2, h / 2 + 3); }) })); lb.scale.set(1.8, .34, 1); lb.position.y = 1.4; mk.add(lb);
+      // Broker Tower's lights
+      const tl = WG.tower = new THREE.Group(); tl.position.set(TW.x, TW.roof + 5, TW.z); g.add(tl); sph(.5, glowM(0xFF3030, { emissiveIntensity: 2 }), 0, 0, 0, tl, 1, 1, 1, 10); const pl = new THREE.PointLight(0xFF3030, 1.6, 60, 2); tl.add(pl);
+      g.traverse(o => { if (o.isMesh || o.isSprite) o.userData.noPick = true; });
+    }
+    if (WG.blr) { WG.crater.visible = !!W.debris; WG.pull.visible = chose('breach', 'pull'); WG.marker.visible = chose('breach', 'seal'); WG.tower.visible = !!W.towerLit; if (W.debris) WG.sparks.forEach(s => s.visible = Math.random() > .4); }
+    if (lairScene && !WG.shelf) buildShelf();
+    if (WG.shelf) { const T = SG.w.tro || []; Object.entries(WG.tro).forEach(([k, o]) => o.visible = T.includes(k)); }
+  }
+  // the trophy shelf in the lair
+  const TROPH = [['synth', 'The Synthetic’s shell', 0x8A8F99], ['gauntlet', 'A shard of the Gauntlet. It still sparks green.', 0xE8B04A], ['crater', 'A piece of the first Doombot', 0x3CE870], ['beyond', 'A hole in the air, shaped like a torn page', 0xF6EFDD], ['visor', 'The Broker’s visor', 0xFF8A2E], ['eye', 'One of Ultron’s eyes', 0xFF3030], ['strings', 'The Puppeteer’s strings', 0xB07CFF], ['mask', 'A spare cheap mask', 0xC0271C], ['dam', 'A chunk of the dam', 0x6A6E78], ['core', 'A Replicator core', 0x3CE8E8], ['vault', 'A bolt from the vault door', 0xA8ACB2], ['boot', 'Concrete with Patient Zero’s footprint in it', 0x5A5550], ['manifest', 'The batch manifest: “Tank 4: RELEASED. RELEASED.”', 0xFAFAF7], ['tank', 'A piece of tank glass', 0x9FD8FF]];
+  function buildShelf(){
+    const g = WG.shelf = new THREE.Group(); g.position.set(-17.1, 0, 0); lairScene.add(g); WG.tro = {};
+    [1.1, 2.1].forEach(y => box(.6, .08, 13, mat(0x5A4632), 0, y, 2.5, g));
+    TROPH.forEach(([k, label, col], i) => { const row = i < 7 ? 0 : 1, z = -3 + (i % 7) * 1.8, o = new THREE.Group(); o.position.set(0, row ? 2.14 : 1.14, z); g.add(o); WG.tro[k] = o;
+      const m = glowM(col, { emissiveIntensity: k === 'gauntlet' || k === 'crater' || k === 'core' ? .9 : .25 });
+      if (k === 'strings') [-.12, 0, .12].forEach(x => cyl(.012, .012, .5, m, x, .25, 0, o, 4)); else if (k === 'tank' || k === 'vault') cyl(.18, .18, .1, m, 0, .05, 0, o, 12); else if (k === 'manifest') box(.3, .02, .4, m, 0, .01, 0, o); else if (k === 'eye' || k === 'beyond') sph(.15, m, 0, .15, 0, o, 1, 1, 1, 10); else box(.3, .25, .3, m, 0, .13, 0, o);
+      o.traverse(q => q.userData.egg = 'troph:' + k); LABELS['troph:' + k] = label; o.visible = false; });
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, map: tex(512, 96, (c, w, h) => { c.fillStyle = 'rgba(11,13,20,.85)'; c.fillRect(0, 0, w, h); c.fillStyle = '#FFC93C'; c.font = `800 46px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('WHAT THEY LEFT BEHIND', w / 2, h / 2 + 3); }) })); s.scale.set(3, .56, 1); s.position.set(.3, 3.1, 2.5); g.add(s);
+  }
+
   // ======================= little things: the Bugle, voicemail, achievements, night, Diwali, pets =======================
   const deedsHeadlines = () => {
     const n = BOSSES.filter(d => beaten.has(d.id)).length, H = [];
@@ -8721,7 +8773,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (firstSpark) H.push('NEW UNIVERSE BORN FROM SEVEN MEMORIES');
     if (breach && breach.loose.length) H.push('CONTAINMENT BREACH IN MYSTERIOUS LAIR. NEIGHBOURS REPORT LOUD NOISES');
     H.push('SPIDER-MAN: THREAT OR MENACE?', 'LOCAL STUDENT’S RESEARCH ASKS IF SYNTHETIC DATA IS FAIR', 'NOTHING HAPPENED TODAY, SAYS EDITOR (IT DID)');
-    return H;
+    H.unshift(...storyHeadlines()); return H;
   };
   // a stack of Daily Bugles on a crate in the lair
   let bugleG = null, bugleI = 0;
@@ -8839,7 +8891,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // every couple of seconds: achievements, the real night, and the phone light
   let nightChecked = false;
   function littleStep(dt, now){
-    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt);
+    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt);
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.dz) deathStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.fin) finalStep(dt, now);
