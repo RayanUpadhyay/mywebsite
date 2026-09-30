@@ -444,3 +444,145 @@ Each commit gets a push attempt and the file is sent.
 2. **Heroes Divided:** in ch 3 I've made Civil War required and AvX / Injustice optional (worth pages). Or all three required, or all optional?
 3. **Cuts:** the Apokolips/Darkseid rock, the Deadline old-age walk and the Scrambler as a villain drop out of the story (they stay in free play where they exist). OK to cut?
 4. **Upgrades replacing stat changes:** some chapters are currently tuned around the hero being old or hurt. Last Stand would keep a story-forced low-HP finale, but everything else scales from upgrades instead. OK?
+
+---
+
+# Follow-up: The Undoing
+
+Status: **draft for approval.** No game code changes until this is signed off.
+
+Two chapters after the chapter 15 ending, in a new **Act 5: The Undoing**. The copy of {N} who stepped out of the tank at the end of Batch Five is the only version Doom never harvested. That makes him the one that can't be copied. He goes into the Broker's log, kills Doom on page 1 and tears the page in half, so the deal is never signed. The world that results is saved for good and shows everywhere, including free play.
+
+## F1. Where it slots in
+
+- `BOOKS` gains `[15, 16, 'The Undoing']`. The menu shows "Act 5: The Undoing", and the chapter cards read "Act 5 · Chapter 16" and "Act 5 · Chapter 17".
+- Chapter 15 still ends on the white-out cards. Then comes an "End of Act 4 / Act 5" card, and chapter 16 starts in the white.
+- **Credits:**
+  - The single credits roll moves to after chapter 17. It's no longer silent: after "the end" it plays one soft phrase.
+  - The old silent chapter 15 credits roll only when Act 5 is locked (see F5).
+
+## F2. Chapter 16: The Log
+
+- **Setting:** a new zone, `log`, built like deep space (its own scene and local coordinates). It's a white void with a line of big comic panels floating in it. Each panel is a walkable platform with an ink border, a caption and a frozen diorama of one earlier chapter, made from props and avatars the game already has:
+  - the dam and the graves
+  - the tanks
+  - the Galactus crater
+  - the roof in the rain
+  - the Synthetic's pod
+
+  The panels run backwards: 15, 14, and so on down to 1, then page 1 at the far end. Narrow "gutter" bridges join them.
+- **Steps:**
+  1. **Wake in the white (scene).** The Beyonder is there. He hands over the pages he tore out of the Broker's log: "They survived because they were never in his book." Every page the player found appears as a glowing panel in their hand. The Beyonder names him: "You are the one he could not copy. You were never harvested."
+  2. **Walk back through Act 4, then Act 3, Act 2 and Act 1.** Four checkpoint steps, one per act, with a beacon at the next act's first panel. Each chapter panel shows a one-line caption card as you step on it (skippable). Any comic page you **missed** is waiting somewhere in its own chapter's panel, so you can still collect it here.
+  3. **Panel fights (only if FIGHTS = fights, see F5).** Three short fights against ink "echoes":
+     - Act 3's panels: failed copies
+     - Act 2's panels: puppets on strings
+     - Act 1's panels: Doombots
+  4. **Page 1 (scene).** The Doom–Broker handshake on the roof of an empty tower, frozen in ink. As {N} reaches it, Doom's inked head turns: "You."
+- **Hook:** Doom steps out of the drawing, and the page becomes a place.
+- **World changes:** none yet.
+
+## F3. Chapter 17: Page One
+
+- **Setting:** inside page 1, drawn in ink. It's the roof of the empty tower years ago, with the Broker frozen mid-handshake. The floor is a grid of panel tiles.
+- **Steps:**
+  1. **Doom steps out (scene):** "A copy I never harvested. So you were the one. How irritating."
+  2. **Fight:** Doom, in ink (`o1`).
+  3. **The kill (cinematic):** Doom breaks apart into ink. {N} picks up page 1 with Doom in it and tears it in half. White.
+  4. **The new timeline:** a skippable montage of cards and short shots, then the bittersweet catch (F4), the final card and the credits.
+- **Boss rule: he rewrites the page.** Every ~9 seconds, with a clear warning (the ink tile flashes for 2 seconds first), he does one of these:
+  - draws a wall across the roof
+  - draws in two Doombots
+  - erases a row of floor tiles (standing on an erased tile hurts, and you're pushed back onto solid tiles)
+
+  **Every comic page the player has is a panel he can't touch.** Those pages lie on the floor as glowing safe zones: walls never cut through them, erasures skip them, and Doombots won't enter them. There are always at least 3 (the Beyonder's own torn corners), so a player with few pages can still win, plus one per page collected, up to 10.
+- **Easier by design:**
+  - Doom has about 900 health (after difficulty scaling) and hits for about 60% of chapter 15 Doom.
+  - Every attack has a long wind-up.
+  - Drawn Doombots have 60 health each.
+  - The fight ends when he dies. He is killed, not spared.
+- **Hook:** the new timeline, then the credits, then the ending in the room (F6).
+- **World changes:** `SG.w.newTL = true`. Also saved: `SG.w.original = true` and `SG.w.chosenName` (see F6).
+
+## F4. The bittersweet catch (by bond)
+
+- **Echo was never grown.**
+  - High Echo bond (≥ 70): in the montage, and afterwards in free play (rarely) at the lake, a stranger who looks like {N} walks past the bench, glances back and keeps walking. Caption: "Someone you almost knew."
+  - Low bond: the lake is just a lake.
+- **The Copycat is just a guy in a cheap mask,** selling masks at the market, in the montage and in free play.
+  - High Copycat bond: walk up to him and he says "Same time… next story?" and waves.
+  - Low bond: "Mask? Fifty rupees."
+- **{N} is the original, not tank four.** The room photo is real (F7), and the final card changes:
+  - **Old:** "The first thing he did was ask for his name."
+  - **New:** "The first thing he did was choose one."
+- **Choosing the name:** after the credits, the story menu opens with the hero-name box focused and the prompt "Choose your name." Whatever the player types (or keeps) is saved as `SG.w.chosenName` and used by the room photo caption.
+
+## F5. Your calls
+
+The request has two open options. My recommendation for each:
+
+- **ACCESS: unlock for everyone after chapter 15 (recommended).**
+  - Every player gets the hopeful ending.
+  - Pages still matter, because each one is a safe zone in the Doom fight, and missed pages can still be collected inside the log in chapter 16.
+  - Chapter 15 then flows straight into Act 5, and the chapter 15 credits never play. The alternative is "only with all 15 pages". Then chapter 15 rolls its silent credits when Act 5 is locked, and after credits the comic says "Some pages are still missing."
+- **FIGHTS: three short panel fights in chapter 16 (recommended).**
+  - A walk through 15 panels with no pressure risks feeling flat.
+  - The fights are short (4–5 weak ink enemies each) and use the existing security-clone, puppet and Doombot units.
+  - The alternative is exploration only.
+- **"No pods from the programme":** I read this as removing the Synthetic's pod (it was batch zero), the "BD-CP" pod labels and the traces bench. The other villain pods stay, because free-play pod fights depend on them. The separate repair bench (free play) also stays. Say if you want every pod gone. Then free-play pod fights would need a new way in.
+
+## F6. Doom in chapter 15, easier as asked
+
+- **Victor von Doom:** health 1700 → 1100, damage 10 → 7.
+- **Decoys:** three Doombots → two. Hitting a Doombot shuffles them only one time in three, and the "only one doesn't spark" hint stays on screen.
+- **Guards at half health:** 3 Doombots → 1.
+- The 15% threshold for the ending cinematic stays.
+
+## F7. The new timeline: saved once, applied everywhere
+
+- **Saved:** `SG.w.newTL = true` (in `ru-story`, like every other world flag).
+- **Read:** one function everything uses:
+
+  ```
+  newTL() = SG.w.newTL && !(SG.active && SG.ch <= 14)
+  ```
+
+  So while a player **replays chapters 1–15** from the menu, the old world is shown. The moment the story isn't active (free play), or Act 5 is active, the new world is back. Nothing is rebuilt or deleted: each thing below is built once and shown or hidden every frame by `newTL()`, so a reload, a replay and free play all just work.
+
+| Zone | Old timeline | New timeline |
+|---|---|---|
+| Room | Empty frame, "BD-CP · 04 · DAY 1" | Framed baby photo, caption "{chosen name} · day one" |
+| Lair | Synthetic's pod, BD-CP labels, traces bench, trophy shelf, the Broker's-log comic (blank after the end) | No Synthetic pod or labels, no traces bench, no trophy shelf; the comic is an ordinary "The Multiverse Saga #1" with a normal cover |
+| Bangalore | Broker Tower, Doombot crater, breach wreckage or lake stone, collapsed blocks, three graves, night and rain | Broker Tower replaced by a park (grass, trees, benches, a fountain) and its lift, doors and roof removed; no crater, wreckage, stone or graves; collapsed blocks standing again; clear evening sky, no rain; about 14 people walking the streets and market |
+| Your tower | Vault door on b1, "SUBLEVEL" sign, clone vault floors v1–v3 in the lift | b1 is storage (crates and shelving, no vault door), v1–v3 gone from the lift |
+| Bugle | Programme-era headlines | New headlines: "EMPTY LOT BECOMES CITY’S NEWEST PARK", "NOBODY CAN REMEMBER WHY THAT LOT WAS EMPTY", "LOCAL MASKED HERO STOPS BUS THIEF, IS VERY POLITE ABOUT IT", "MASK SELLER AT MARKET SAYS BUSINESS IS ‘FINE, THANKS’" |
+| Deep space and the log | Only reachable in the story | Unchanged; the story reaches them only through Act 5 or replays |
+
+Story sites that relied on Broker Tower (the roof fights) only run during replays, and replays show the old tower, so they keep working.
+
+## F8. Old saves and free play
+
+- **Saves that finished chapter 15:** Act 5 unlocks (or, if pages are required, unlocks once all 15 are found). "Continue the story" then starts chapter 16, with a one-line notice.
+- **Saves before chapter 15:** unchanged; they reach Act 5 naturally.
+- **Free play:** keeps every event, the pods (except the Synthetic's), the Gate, trophies from free-play fights (the Galactus helmet stays) and the lift, minus the vault floors.
+- **Replays:** chapters 1–15 replay in the old timeline, and chapters 16–17 replay inside the log. Replaying chapter 17 does not undo the new timeline; it stays set.
+
+## F9. Build and test
+
+**Commits, in order:**
+1. Act 5 skeleton, access rule, credits moved, easier chapter 15 Doom.
+2. The `log` zone and chapter 16.
+3. Chapter 17, the Doom fight and the tear.
+4. The new timeline in every zone, the bittersweet catch and the name choice.
+5. Test fixes.
+
+**Headless tests** (Chromium in `/opt/pw-browsers`, the `mktest.py` hook):
+- **Both chapters:** chapters 16 and 17 start to finish, including missed pages collected in the log.
+- **The Doom fight:** the kill, rewrites happening, safe zones protecting, and 3 zones with 0 pages vs. more with many.
+- **Bond variants:** high- and low-bond endings (stranger at the lake, the mask seller's line).
+- **Timeline:** after a reload, the new timeline shows in the room, lair, Bangalore and your tower; a replay of an early chapter shows the old timeline, then the new one returns.
+- **Access:** the locked path (if chosen) plays the chapter 15 credits.
+- **Free play:** unaffected.
+- **Throughout:** screenshots of each key scene, and no page errors.
+
+Each commit gets a push attempt and the file is sent.
