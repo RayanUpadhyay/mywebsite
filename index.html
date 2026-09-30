@@ -4584,7 +4584,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 
   // ---------- third person, and the character screen ----------
   let EV = null;   // the event you're playing, if any (it can put you in a hero's suit)
-  const curLook = () => { if (EV && EV.look) return EV.look; try { if (SG.active && SG.ch >= 13 && SG.ch <= 16) return Object.assign({}, look, { outfit: 'copycat', mask: 1, cape: 1 }, SG.flags.old ? { hairC: 5, mask: 0 } : {}); } catch (e) {} return look; };
+  const curLook = () => { if (EV && EV.look) return EV.look; try { if (SG.active && chId() === 'echo') return Object.assign({}, look, { outfit: 'copycat', mask: 1, cape: 1 }, SG.flags.old ? { hairC: 5, mask: 0 } : {}); } catch (e) {} return look; };
   let tpv = false; try { tpv = localStorage.getItem('ru-pov') === '3'; } catch (e) {}
   let mirror = false, me = null, meKey = '', meHeld, meLast = V(0, 0, 0), meMv = 0;
   const povBtn = $('#povBtn');
@@ -4764,7 +4764,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const evKeys = () => Object.keys(EVENTS).filter(k => !EVENTS[k].hidden);
   const STONES6 = [['space', 'Space', 0x3C7CFF], ['reality', 'Reality', 0xE8423C], ['power', 'Power', 0x9B4DFF], ['time', 'Time', 0x3CE870], ['mind', 'Mind', 0xFFC93C], ['soul', 'Soul', 0xFF8A2E]];
   const isErased = k => !!(SG.flags.erased && SG.flags.erased.includes(k));
-  const rackStolen = () => SG.active && SG.ch === 7 && !SG.flags['evwin:of'];
+  const rackStolen = () => SG.active && chId() === 'broker' && !SG.flags.br3;
   let evOptsNow = {};
   // ---------- Chapters 10-12: back on the streets ----------
   OUTFITS.uscrap = { hero: 1, c1: '#6A6E78', c2: '#FF3030', metal: 1, gloves: 1, mask: 'helmet', glow: 1 };
@@ -5082,7 +5082,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (EV.k === 'wwh') lbAdd(won === (EV.team === 'hulk') ? 'h' : 'r', 1);
     if (EV.k === 'inj') lbAdd(won ? 'w' : 'l', 1);
     if (EV.k === 'inc') { lbAdd(won ? 'i' : 'f', 1);
-      if (!won) { const wasEnd = instab >= 6; instab = Math.min(6, instab + 1); earthsLost++; try { localStorage.setItem('ru-lost', String(earthsLost)); } catch (e) {} saveInstab(); ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = true); setTimeout(wasEnd ? startVoid : instab >= 6 ? startEnd : startCollision, 3500); }
+      if (!won) { const wasEnd = instab >= 6; instab = Math.min(6, instab + 1); earthsLost++; try { localStorage.setItem('ru-lost', String(earthsLost)); } catch (e) {} saveInstab(); ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = true); if (wasEnd && SG.active && chId() === 'beyond') { instab = 6; saveInstab(); ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = false); setTimeout(() => say('You weren\u2019t listening. When he talks, stop and hear him out. Try again.', 5200), 1500); } else setTimeout(wasEnd ? startVoid : instab >= 6 ? startEnd : startCollision, 3500); }
       if (won) { const wasEnd = instab >= 6; instab = 0; recap = []; saveInstab(); buildBreach(); canvas.style.filter = ''; if (wasEnd) { storyFlag('beyond'); saviour = true; try { localStorage.setItem('ru-saviour', '1'); } catch (e) {} buildTrophy(); setTimeout(() => showCredits(true), 2500); } }
       if (won && (scarOn || altOn)) { if (scarOn) setScar(false); if (altOn) setAlt(false); setTimeout(() => say('You stopped the incursion. Your Earth, and your room, are whole again.', 4200), 2500); } }
     if (!evDone.includes(EV.k)) { evDone.push(EV.k); try { localStorage.setItem('ru-evdone', JSON.stringify(evDone)); } catch (e) {} }
@@ -5590,11 +5590,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // the credits
   const credEl = $('#credits');
   function showCredits(won){
+    if (SG.active && won !== 'i24') { say(won === true ? 'Every Earth is back. There\u2019s a trophy by your door.' : won === 'eaten' ? 'Galactus took a bite out of your Earth. The Silver Surfer is waiting in your room.' : won === 'galactus' ? 'Galactus is down. A piece of his helmet is on the skyline.' : 'The story isn\u2019t over.', 4200); return; }
     const bossN = BOSSES.filter(d => beaten.has(d.id)).length;
     const lines = won === 'i21'
       ? ['THE MULTIVERSE SAGA', '', ...SAGA.map((C, i) => `Chapter ${i + 1}: ${C.title}`), '', 'In memory of Echo, and the Copycat.', '{N} kept going.', '', 'THE END', '', 'That should have been the last page.', 'Thanks for reading all twenty-one.', '\u2014 Rayan']
       : won === 'i24'
-      ? ['THE MULTIVERSE SAGA', ...BOOKS.flatMap(([a0, z0, bn], b) => ['', `BOOK ${b + 1}: ${bn.toUpperCase()}`, ...SAGA.slice(a0, z0 + 1).map((C, k) => `Chapter ${a0 + k + 1}: ${C.title} \u2014 erased`)]), '', 'Doom kept his word.', 'Every Earth. Every story. Every {N}.', 'Echo. The Copycat. The city. The lake. The graves.', '', 'THE END', '', 'There is no one left to read this.']
+      ? ['THE MULTIVERSE SAGA', ...BOOKS.flatMap(([a0, z0, bn], b) => ['', `ACT ${b + 1}: ${bn.toUpperCase()}`, ...SAGA.slice(a0, z0 + 1).map((C, k) => `Chapter ${a0 + k + 1}: ${C.title} \u2014 erased`)]), '', 'Doom kept his word.', 'Every Earth. Every story. Every {N}.', 'Echo. The Copycat. The city. The lake. The graves.', '', 'THE END', '', 'There is no one left to read this.']
       : won === 'i23'
       ? ['THE MULTIVERSE SAGA', '', ...SAGA.map((C, i) => `Chapter ${i + 1}: ${C.title}`), '', 'Echo.', 'The Copycat.', '{N}.', '', 'None of them were the first.', 'None of them were the last.', '', 'THE END', '', '\u2014 Rayan']
       : won === 'i19'
@@ -6296,9 +6297,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 
   // ======================= STORY MODE: The Multiverse Saga =======================
   // free play never changes; the story just gives you one thing to do next, and remembers where you are
-  let SG = { ch: 0, step: 0, flags: {}, active: false, done: [], hide: false, gold: false };
+  let SG = { ch: 0, step: 0, flags: {}, active: false, done: [], hide: false, gold: false, w: {} };
   try { Object.assign(SG, JSON.parse(localStorage.getItem('ru-story') || '{}')); } catch (e) {}
-  if (SG.gold && SG.done.includes(8) && !SG.done.includes(11)) { SG.gold = false; SG.ch = 9; SG.step = 0; SG.flags = {}; SG.active = false; try { localStorage.setItem('ru-story', JSON.stringify(SG)); } catch (e) {} }
   const saveSG = () => { try { localStorage.setItem('ru-story', JSON.stringify(SG)); } catch (e) {} };
   function storyFlag(f){ if (!SG.active) return; if (SG.flags[f]) return; SG.flags[f] = true; saveSG(); }
   const F = () => SG.flags;
@@ -6306,140 +6306,105 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const inZ = z => z === 'room' ? !inWorld : inWorld && zone === z;
   const podPos = id => { const i = BOSSES.findIndex(d => d.id === id); return pods[i] ? pods[i].g.getWorldPosition(V(0, 0, 0)).add(V(0, 3.4, 0)) : V(0, 3, 0); };
   const SAGA = [
-    { title: 'Your Room', tag: 'Where it all starts.', steps: [
+    // ---------------- Act 1: The Multiverse ----------------
+    { id: 'room', title: 'Your Room', tag: 'Where it all starts.', steps: [
       { t: 'Tilt the Batman figure on the bookshelf to open the secret lair.', check: () => F().lair || found.has('lair') && zone === 'lair', where: () => ['room', V(4.5, 2.4, -.5)] },
       { t: 'Take a weapon from the rack on the back wall of the lair.', check: () => F().weapon, where: () => ['lair', V(-12.6, 3.2, -10.2)] },
-      { t: 'Open the Synthetic’s pod and beat it.', check: () => F()['beat:synthetic'], where: () => ['lair', podPos('synthetic')] }
+      { t: 'Open the Synthetic’s pod and beat it. It copies whatever you just did.', check: () => F()['beat:synthetic'], where: () => ['lair', podPos('synthetic')] }
     ] },
-    { title: 'Snapped', tag: 'He is inevitable.', steps: [
-      { t: 'Open Thanos’s pod and fight him. Watch out for the snap.', check: () => F().snapped || F()['beat:thanos'], where: () => ['lair', podPos('thanos')] },
+    { id: 'snap', title: 'Snapped', tag: 'He is inevitable. Somebody made sure of it.', start: () => say('The comic on the stand turned a page by itself. Thanos’s pod is open.', 4200), steps: [
+      { t: 'Open Thanos’s pod and fight him. When he raises the Gauntlet, hit the stone that sparks green.', check: () => F().snapped || F()['beat:thanos'], where: () => ['lair', podPos('thanos')] },
       { t: 'You’ve been snapped into deep space. Get home: beat Ebony Maw and snap everyone back.', skip: () => !F().snapped, check: () => F().snapback || !snapState }
     ] },
-    { title: 'Heroes Divided', tag: 'The multiverse is cracking, and so are the heroes.', steps: [
-      { t: 'Play Avengers vs. X-Men.', go: () => openLobby('avx'), check: () => F()['ev:avx'] },
-      { t: 'Play Civil War.', go: () => openLobby('cw'), check: () => F()['ev:cw'] },
-      { t: 'Superman has taken over. Lead the Insurgency in Injustice.', go: () => openLobby('inj'), check: () => F()['ev:inj'] }
-    ] },
-    { title: 'Worlds Apart', tag: 'The Gate is open.', steps: [
-      { t: 'Open the Multiverse Gate in the lair and visit another world.', go: () => openGate(), check: () => areaFlags() >= 1, where: () => ['lair', V(0, 3.6, 8.4)] },
-      { t: 'Visit two more worlds.', go: () => openGate(), check: () => areaFlags() >= 3 },
-      { t: 'The timelines are breaking. Play Secret Wars.', go: () => openLobby('sw'), check: () => F()['ev:sw'] },
-      { t: 'Play Flashpoint.', go: () => openLobby('fp'), check: () => F()['ev:fp'] }
-    ] },
-    { title: 'Incursion', tag: 'Another Earth is falling into yours.', steps: [
+    { id: 'incursion', title: 'Incursion', tag: 'Another Earth is falling into yours.', start: () => say('Ebony Maw’s last words: “It was a gift. From a man in green armour.” Over Bangalore, the sky has a second Earth in it.', 6000), steps: [
+      { t: 'Read the multiverse map on the lair wall.', check: () => F().lairmap, where: () => ['lair', V(-6.2, 4.6, 10.6)] },
+      { t: 'Go through the Multiverse Gate in the lair and see what’s happening to the other worlds.', go: () => openGate(), check: () => areaFlags() >= 1, where: () => ['lair', V(0, 3.6, 8.4)] },
+      { t: 'The other Earth’s heroes are split over letting it through. Settle it: play Civil War.', go: () => openLobby('cw'), check: () => F()['ev:cw'] },
       { t: 'Stop the Final Incursion.', go: () => openLobby('inc'), check: () => F().collide },
-      { t: 'You made it to another Earth. Talk to this Earth’s {N}.', skip: () => !altOn, check: () => F().otherme, where: () => ['room', V(-3.2, 2.6, 2.6)] }
+      { t: 'You made it to the other Earth. Talk to this Earth’s {N}.', skip: () => !altOn, check: () => F().otherme, where: () => ['room', V(-3.2, 2.6, 2.6)] },
+      { t: () => F().gallost ? 'Galactus won. The Silver Surfer is in your room: take his rematch.' : 'Doom led something here. Every universe is colliding. Survive Convergence.', go: () => F().gallost ? surferRematch() : openLobby('cv'), check: () => F().galactus }
     ] },
-    { title: 'Convergence', tag: 'Every universe, all at once.', steps: [
-      { t: () => F().gallost ? 'Galactus won. The Silver Surfer is in your room: take his rematch.' : 'Every universe is colliding. Survive Convergence.', go: () => F().gallost ? surferRematch() : openLobby('cv'), check: () => F().galactus }
-    ] },
-    { title: 'Beyond', tag: 'Something older than Galactus has noticed.', steps: [
+    { id: 'beyond', title: 'Beyond', tag: 'Something older has noticed.', start: () => say('Galactus ate Doom. In the crater there’s no body. Just wires, still sparking green. Then the sky goes white.', 6000), steps: [
       { t: 'Something is wrong with the sky. Go up to the roof.', check: () => inZ('roof'), done: () => { instab = 6; saveInstab(); startEnd(); } },
-      { t: 'The End is here. Beat the Beyonder in the Final Incursion. If you lose, you’ll fall into the Void.', go: () => openLobby('inc'), check: () => F().beyond }
+      { t: 'The Beyonder is here. He only stops to warn you: when he talks, stop and listen. Beat him in the Final Incursion.', go: () => openLobby('inc'), check: () => F().beyond }
     ] },
-    { title: 'Overfit', tag: 'He memorised everything.', start: () => say('Something is wrong in the lair…', 2600), steps: [
-      { t: 'Your weapon rack has been emptied. Go down to the lair and look.', check: () => inZ('lair'), where: () => ['lair', V(-12.6, 3.2, -10.2)] },
-      { t: 'Worlds are disappearing. Check the multiverse map on the lair wall.', enter: () => { eraseWorld(); eraseWorld(); say('Two worlds just vanished from the multiverse.', 3200); }, check: () => F().lairmap, where: () => ['lair', V(-6.2, 4.6, 10.6)] },
-      { t: 'The Overfit survived, and he stole everything: the Gauntlet, Mjölnir, the Necrosword. He’s waiting in the last world left. Stop him.', go: () => startEvent('of', 'me', 'rayan', { solo: true, diff: evDiff }), check: () => F()['evwin:of'] }
-    ] },
-    { title: 'The Broker', tag: 'No gods this time. Just you, and you’re hurt.', start: () => say('After everything you’ve been through, your body is done: less health, barely any healing, and your arm is burning again. And everything the Overfit stole crumbled to dust with him. The rack in the lair is empty now, except for Wolverine’s claws.', 8000), steps: [
+    // ---------------- Act 2: The Broker's City ----------------
+    { id: 'broker', title: 'The Broker', tag: 'Somebody has been watching your house.', start: () => say('Morning. The Beyonder’s last words are still in your head: the man in green did not die, and the man under the tower keeps the book.', 6000), steps: [
+      { id: 'rack', t: 'The weapon rack in the lair is empty. Go and look.', check: () => inZ('lair'), where: () => ['lair', V(-12.6, 3.2, -10.2)], done: () => say('Everything is gone except Wolverine’s claws. There’s a scrap of paper on the hook: LOT 17 · BROKER DYNAMICS.', 5200) },
       { t: 'Something is watching your house. Go up to the roof.', check: () => inZ('roof'), where: () => ['room', V(0, 2.6, 9.6)] },
-      { t: 'Drones! Shoot down all three (click them).', check: () => F().drones },
-      { t: 'The Broker’s truck is parked in your street. Take the fire escape down and follow it on foot. Stay close, but not too close.', site: { k: 'br', part: 1, at: 'home', p: [-6, 6], r: 11 }, where: siteWhere, check: () => F().br1 },
-      { t: 'The truck stopped at a warehouse by the lake. Sneak in and find out what he’s planning. Crouch so the guards don’t see you coming.', site: { k: 'br', part: 2, at: 'lake', r: 26 }, where: siteWhere, check: () => F().br2 },
-      { t: 'The auction is tonight, at the top of Broker Tower on the other side of the city. Get there and fight your way up, floor by floor.', site: { k: 'br', part: 3, at: 'tower', r: 24 }, where: siteWhere, check: () => F().br3 },
-      { t: 'Take the lift up to the roof of his tower and take down the Broker.', site: { k: 'br', part: 4, at: 'tower', roof: 1, r: 26 }, where: siteWhere, check: () => F().br4 }
+      { id: 'drones', t: 'Drones! Shoot down all three (click them).', check: () => F().drones },
+      { id: 'tail', t: 'The Broker’s truck is parked in your street. Take the fire escape down and follow it on foot. Stay close, but not too close.', site: { k: 'br', part: 1, at: 'home', p: [-6, 6], r: 11 }, where: siteWhere, check: () => F().br1 },
+      { id: 'warehouse', t: 'The truck stopped at a warehouse by the lake. Sneak in and find out what he’s selling. Crouch so the guards don’t see you coming.', site: { k: 'br', part: 2, at: 'lake', r: 26 }, where: siteWhere, check: () => F().br2 },
+      { t: 'The auction is tonight, at the top of Broker Tower. Fight your way up, floor by floor.', site: { k: 'br', part: 3, at: 'tower', r: 24 }, where: siteWhere, check: () => F().br3 },
+      { t: 'Take the lift up to the roof and take down the Broker.', site: { k: 'br', part: 4, at: 'tower', roof: 1, r: 26 }, where: siteWhere, check: () => F().br4 }
     ] },
-    { title: 'Ultron', tag: 'He never really left.', start: () => say('You’re still hurting, but a little stronger than before.', 3600), steps: [
-      { t: 'Your phone, your TV, every screen in Bangalore: the same face. Ultron is back. Go up to the roof and look at the city.', check: () => inZ('roof'), where: () => ['room', V(0, 2.6, 9.6)] },
+    { id: 'ultron', title: 'Ultron', tag: 'Built from somebody else’s scans.', start: () => say('The Broker’s servers upload everything they have, all at once. Every screen in Bangalore shows the same face.', 5200), steps: [
+      { t: 'Ultron is back. Go up to the roof and look at the city.', check: () => inZ('roof'), where: () => ['room', V(0, 2.6, 9.6)] },
       { t: 'His drones are hunting you through the streets. Take the fire escape down and fight them off.', site: { k: 'st', part: 'u1', at: 'home', r: 30 }, where: siteWhere, check: () => F().u1 },
-      { t: 'Cut his connections: three power substations around the city, and the two servers he took from outside Broker Tower.', site: { k: 'st', part: 'u2', at: 'home', r: 90 }, where: siteWhere, check: () => F().u2 },
-      { t: 'He’s built himself a body out of scrap cars and drones at the data centre. Get there and unplug him.', site: { k: 'st', part: 'u3', at: 'data', r: 24 }, where: siteWhere, check: () => F().u3, done: () => { try { localStorage.setItem('ru-ultronred', '1'); } catch (e) {} if (!recap.includes('ultron')) { recap.push('ultron'); saveInstab(); } } },
-      { t: 'Go down to the lair and check Ultron’s pod.', check: () => inZ('lair'), where: () => ['lair', podPos('ultron')], done: () => say('Ultron’s pod glows red again. He’s locked back inside, where he belongs.', 4200) }
+      { t: 'Cut his connections: three power substations around the city, and the two scan servers he took from outside Broker Tower.', site: { k: 'st', part: 'u2', at: 'home', r: 90 }, where: siteWhere, check: () => F().u2 },
+      { t: 'He’s built himself a body out of scrap at the data centre. Get there and unplug him.', site: { k: 'st', part: 'u3', at: 'data', r: 24 }, where: siteWhere, check: () => F().u3, done: () => { try { localStorage.setItem('ru-ultronred', '1'); } catch (e) {} if (!recap.includes('ultron')) { recap.push('ultron'); saveInstab(); } } },
+      { t: 'Go down to the lair and check Ultron’s pod.', check: () => inZ('lair'), where: () => ['lair', podPos('ultron')], done: () => say('Ultron’s pod glows red again. His last broadcast is still looping on your phone: “one of their copies walks your lair”.', 5200) }
     ] },
-    { title: 'The Puppeteer', tag: 'Nobody moves unless she says so.', start: () => say('Stronger again. Not all the way back yet.', 3000), steps: [
+    { id: 'puppet', title: 'The Puppeteer', tag: 'She can only pull the strings of copies.', start: () => say('One of their copies walks your lair. You hear it before you see it: every pod door, opening at once.', 5200), steps: [
       { t: 'Something is wrong in the lair. Go and look at the pods.', check: () => inZ('lair'), where: () => ['lair', podPos('joker')], done: () => say('Every pod is glowing purple, and the villains inside are awake.', 3600) },
-      { t: 'The villains broke out of their pods, walked up the stairs and out of your front door, all speaking in the same voice. They’re in your street. Break her strings.', site: { k: 'st', part: 'p1', at: 'home', r: 30 }, where: siteWhere, check: () => F().p1 },
+      { t: 'The villains walked out of your front door, all speaking in the same voice. They’re in your street. Break her strings.', site: { k: 'st', part: 'p1', at: 'home', r: 30 }, where: siteWhere, check: () => F().p1 },
+      { t: 'The market is full of people. Some of them are her copies. Find the real ones.', site: { k: 'st', part: 'y1', at: 'market', r: 24 }, where: siteWhere, check: () => F().y1 },
       { t: 'She’s taken the heroes too. Spider-Gwen, Captain Carter and Jay Garrick are waiting for you at the market.', site: { k: 'st', part: 'p2', at: 'market', r: 24 }, where: siteWhere, check: () => F().p2 },
-      { t: 'Find the Puppeteer in the old theatre and break her hold.', site: { k: 'st', part: 'p3', at: 'theatre', r: 24 }, where: siteWhere, check: () => F().p3, done: () => say('Her hold breaks. Everyone snaps out of it at once, blinking, like they just woke up.', 4600) }
+      { t: 'She’s replaying your old fights at the theatre, slightly wrong. Get through them.', site: { k: 'st', part: 'y3', at: 'theatre', r: 24 }, where: siteWhere, check: () => F().y3 },
+      { t: 'Find the Puppeteer in the old theatre and break her hold.', site: { k: 'st', part: 'p3', at: 'theatre', r: 24 }, where: siteWhere, check: () => F().p3, done: () => say('Her hold breaks. Her last words: “They threw me away too. The next reject is already wearing your face.”', 5200) }
     ] },
-    { title: 'Copycat', tag: 'Every hero gets one eventually.', start: () => say('Almost yourself again.', 2600), steps: [
+    { id: 'copycat', title: 'Copycat', tag: 'Every hero gets one eventually.', start: () => say('The next reject is already wearing your face. By morning, the clips are everywhere.', 4200), steps: [
       { t: 'Clips of your fights are all over Bangalore. Read the Daily Bugle in the lair.', check: () => F().bugle, where: () => ['lair', V(-9, 2.2, 9.3)] },
       { t: 'Someone is copying you, badly. Go to the market, follow his trail and clean up his mess.', site: { k: 'st', part: 'c1', at: 'market', r: 24 }, where: siteWhere, check: () => F().c1 },
       { t: 'He’s running off through the market lanes. Catch him.', site: { k: 'st', part: 'c2', at: 'market', r: 80 }, where: siteWhere, check: () => F().c2 },
       { t: 'He’s waiting on the roof of Broker Tower. Take the lift up and fight him, in the rain.', site: { k: 'st', part: 'c3', at: 'tower', roof: 1, r: 26 }, where: siteWhere, check: () => F().lastpage },
       { t: 'The comic is open on your desk, at its last page. Close it.', keep: () => { if (!normalView && !inWorld) enterNormal(); }, check: () => F().closed, where: () => ['room', V(-2.5, 1.9, -4.2)], done: finaleCredits }
     ] },
-    { title: 'Last Stand', tag: 'Years later. The Broker is out.', start: () => say('Years later. Your hair is going grey, your knees are shot, and the claws are long gone. You barely heal any more. Then one night the sky over Bangalore turns orange.', 7000), steps: [
-      { t: 'Something is burning. Go up to the roof and look at the city.', check: () => inZ('roof'), where: () => ['room', V(0, 2.6, 9.6)], done: () => say('Fires all over Bangalore. And Broker Tower is lit up again. He\u2019s out.', 4200) },
-      { t: 'The Broker\u2019s men are going door to door in your street. Climb down and stop them.', site: { k: 'st', part: 'l1', at: 'home', r: 30 }, where: siteWhere, check: () => F().l1 },
+    // ---------------- Act 3: Legacy ----------------
+    { id: 'last', title: 'Last Stand', tag: 'Years later. The Broker is out.', start: () => say('Years later. Your hair is going grey, your knees are shot, and the claws are long gone. Then one night the sky over Bangalore turns orange.', 7000), end: () => { SG.w.g1 = 1; SG.w.vault = 1; }, steps: [
+      { t: 'Something is burning. Go up to the roof and look at the city.', check: () => inZ('roof'), where: () => ['room', V(0, 2.6, 9.6)], done: () => say('Fires all over Bangalore. And Broker Tower is lit up again. He’s out.', 4200) },
+      { t: 'The Broker’s men are going door to door in your street. Climb down and stop them.', site: { k: 'st', part: 'l1', at: 'home', r: 30 }, where: siteWhere, check: () => F().l1 },
       { t: 'The market is on fire and people are trapped. Get them out.', site: { k: 'st', part: 'l2', at: 'market', r: 24 }, where: siteWhere, check: () => F().l2 },
-      { t: 'The Broker is at his tower. Make him tell you what he\u2019s done.', site: { k: 'st', part: 'l3', at: 'tower', r: 24 }, where: siteWhere, check: () => F().l3 },
-      { t: 'Your clone is at the dam by the lake. If the dam breaks, the city floods. This is the last fight.', site: { k: 'st', part: 'l4', at: 'lake', r: 26 }, where: siteWhere, check: () => F().i13 }
+      { t: 'The Broker is at his tower. Make him tell you what he’s done.', site: { k: 'st', part: 'l3', at: 'tower', r: 24 }, where: siteWhere, check: () => F().l3 },
+      { t: 'Your clone is at the dam by the lake. If the dam breaks, the city floods.', site: { k: 'st', part: 'l4', at: 'lake', r: 26 }, where: siteWhere, check: () => F().i13 }
     ] },
-    { title: 'Legacy', tag: 'Five years on. You are the Copycat.', start: () => say('Five years since the dam. Nobody has worn a mask in Bangalore since. You\u2019re the Copycat now: older, a bit wiser, still not very good at this.', 7000), steps: [
+    { id: 'echo', title: 'Echo', tag: 'Five years on. You are the Copycat.', start: () => say('Five years since the dam. Nobody has worn a mask in Bangalore since. You’re the Copycat now: older, a bit wiser, still not very good at this.', 7000), steps: [
       { t: 'Every screen in the city just changed. Go up to the roof and look.', check: () => inZ('roof'), where: () => ['room', V(0, 2.6, 9.6)], done: () => say('Every screen says the same thing: SIX SOLD. FIVE AWAKE. Under it, a photo of the grave by the lake.', 5200) },
-      { t: 'Go to the grave by the lake. You\u2019ll need what you left there.', site: { k: 'scene', at: 'lake', p: [-116, -129], r: 5, run: sceneClaws }, where: siteWhere, check: () => F().claws14 },
-      { t: 'Clone Two is tearing up the old street. It\u2019s fast.', site: { k: 'st', part: 'm1', at: 'home', r: 30, hero: 'copyhero' }, where: siteWhere, check: () => F().m1 },
+      { t: 'Go to the grave by the lake. You’ll need what you left there.', site: { k: 'scene', at: 'lake', p: [-116, -129], r: 5, run: sceneClaws }, where: siteWhere, check: () => F().claws14 },
+      { t: 'Clone Two is tearing up the old street. It’s fast.', site: { k: 'st', part: 'm1', at: 'home', r: 30, hero: 'copyhero' }, where: siteWhere, check: () => F().m1 },
       { t: 'Clone Three is at the data centre, in armour.', site: { k: 'st', part: 'm2', at: 'data', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().m2 },
       { t: 'Clones Four and Five are at the old theatre.', site: { k: 'st', part: 'm3', at: 'theatre', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().m3 },
-      { t: 'Six were sold. Someone is waiting on the roof of Broker Tower. Take the lift up.', site: { k: 'scene', at: 'tower', roof: 1, r: 22, run: sceneCliff }, where: siteWhere, check: () => F().cliff }
-    ] },
-    { title: 'Echo', tag: 'The sixth copy thinks it’s you.', start: () => say('It has their face. Their voice. It remembers the dam.', 4200), steps: [
-      { t: 'The sixth clone thinks it\u2019s {N}. Stop it without killing it.', site: { k: 'st', part: 'n1', at: 'tower', roof: 1, r: 26, hero: 'copyhero' }, where: siteWhere, check: () => F().n1 },
+      { t: 'The sixth one thinks it’s {N}. It’s on the roof of Broker Tower. Stop it without killing it.', site: { k: 'st', part: 'n1', at: 'tower', roof: 1, r: 26, hero: 'copyhero' }, where: siteWhere, check: () => F().n1 },
       { t: 'Take it to the grave by the lake. Show it the truth.', site: { k: 'scene', at: 'lake', p: [-116, -129], r: 5, run: sceneGrave }, where: siteWhere, check: () => F().grave15 },
-      { t: 'The buyers\u2019 men are clearing the market. Fight them with Echo.', site: { k: 'st', part: 'n2', at: 'market', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().n2 },
-      { t: 'The Replicator is on the roof of Broker Tower. Break its cores and end this.', site: { k: 'st', part: 'n3', at: 'tower', roof: 1, r: 26, hero: 'copyhero' }, where: siteWhere, check: () => F().fin }
+      { t: 'The buyers’ men are clearing the market. Fight them with Echo.', site: { k: 'st', part: 'n2', at: 'market', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().n2 },
+      { t: 'The Replicator is on the roof of Broker Tower. Break its cores before it prints more of them.', site: { k: 'st', part: 'n3', at: 'tower', roof: 1, r: 26, hero: 'copyhero' }, where: siteWhere, check: () => F().fin },
+      { t: 'Someone else is on the roof. Go and see.', site: { k: 'scene', at: 'tower', roof: 1, r: 22, run: sceneCliff }, where: siteWhere, check: () => F().cliff }
     ] },
-    { title: 'Synthetic', tag: 'The first creature wakes up.', start: () => { SG.podOut = Object.assign(SG.podOut || {}, { synthetic: 1 }); saveSG(); say('A crack in the lair, late at night. Glass. Something small and many-legged, and then nothing.', 5200); }, steps: [
-      { t: 'The Synthetic\u2019s pod in the lair is empty. Go and look.', check: () => inZ('lair'), where: () => ['lair', podPos('synthetic')], done: () => say('The glass is cracked from the inside. It took the wreck of the Replicator with it: every copy anyone ever made, and Echo\u2019s memories of {N}.', 6000) },
-      { t: 'The market is full of people again. Some of them aren\u2019t people. Find the real ones.', site: { k: 'st', part: 'y1', at: 'market', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().y1 },
-      { t: 'It\u2019s learning from Ultron\u2019s old servers at the data centre. Shut them down.', site: { k: 'st', part: 'y2', at: 'data', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().y2 },
-      { t: 'It\u2019s replaying old fights at the theatre, slightly wrong.', site: { k: 'st', part: 'y3', at: 'theatre', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().y3 },
-      { t: 'It\u2019s waiting at the lake, by the graves.', site: { k: 'st', part: 'y4', at: 'lake', r: 26, hero: 'copyhero' }, where: siteWhere, check: () => F().y4end }
-    ] },
-    { title: 'Deadline', tag: 'Time\u2019s up.', start: () => say('Every clock is wrong. There\u2019s a number counting down in the corner of your eye, and the city is freezing, street by street.', 6000), steps: [
-      { t: 'It\u2019s replaying the drone attack in the old street, and rewinding time. Finish them fast.', site: { k: 'st', part: 'd1', at: 'home', r: 30, hero: 'copyhero' }, where: siteWhere, check: () => F().d1 },
-      { t: 'At the foot of Broker Tower, time is dragging. Sometimes for them, sometimes for you.', site: { k: 'st', part: 'd2', at: 'tower', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().d2 },
-      { t: 'At the data centre, Ultron\u2019s scrap body again. This time you can see a few seconds ahead.', site: { k: 'st', part: 'd3', at: 'data', r: 24, hero: 'copyhero' }, where: siteWhere, check: () => F().d3 },
-      { t: 'The Deadline is waiting in the lair. It wants to talk.', keep: () => lairTalk('offer17', [['The Deadline', 'Tick. Tock. I can give them back, you know. {N}. Echo. Both of them, alive.'], ['ME', 'What\u2019s the catch?'], ['The Deadline', 'You. You never existed. No mask, no Copycat. Just a city that had its heroes all along.'], ['ME', '\u2026'], ['ME', 'No. They chose. I chose. You don\u2019t get to take that.'], ['The Deadline', 'Then come to the top of the tower. Bring a watch.']]), check: () => F().offer17, where: () => ['lair', podPos('deadline')] },
-      { t: 'The Deadline is on the roof of Broker Tower. Every second you spend there, it takes.', site: { k: 'st', part: 'd4', at: 'tower', roof: 1, r: 26, hero: 'copyhero' }, where: siteWhere, check: () => F().d4 },
-      { t: 'Walk to the lake. Every street you pass starts again.', site: { k: 'scene', at: 'lake', p: [-113, -127], r: 4, run: sceneOld }, where: siteWhere, check: () => F().old17 }
-    ] },
-    { title: 'Scrambled', tag: 'Something is tearing the story open.', start: () => { SG.podOut = Object.assign(SG.podOut || {}, { scrambler: 1 }); saveSG(); enterBlrAt(-110, -126); }, steps: [
-      { t: 'You wake up standing on your own grave. You\u2019re not alone.', site: { k: 'scene', at: 'lake', p: [-110, -126], r: 6, run: sceneWake }, where: siteWhere, check: () => F().wake18 },
-      { t: 'The Scrambler has flooded the market. Clear it out, all three of you.', site: { k: 'st', part: 's1', at: 'market', r: 24, hero: 'hero18' }, where: siteWhere, check: () => F().s1 },
-      { t: 'Your old street is wearing the roof of Broker Tower. Clear it out.', site: { k: 'st', part: 's2', at: 'home', r: 30, hero: 'hero18' }, where: siteWhere, check: () => F().s2 },
-      { t: 'Before the end, go down to the lair together.', keep: () => lairTalk('lair18', [['{N}', 'I died so the city wouldn\u2019t drown. That counted.'], ['Echo', 'I was a copy for a week and a person for one day. That day counted.'], ['The Copycat', 'I was a joke in a cheap mask for years. Then I wasn\u2019t. That counted too.'], ['{N}', 'Then let\u2019s make it count one more time.']]), check: () => F().lair18, where: () => ['lair', podPos('scrambler')] },
-      { t: 'The Scrambler is at the old theatre, tearing up the last page. End it together.', site: { k: 'st', part: 's3', at: 'theatre', r: 24, hero: 'hero18' }, where: siteWhere, check: () => F().fin18 }
-    ] },
-    { title: 'Patient Zero', tag: 'Something was locked in the basement.', start: () => say('Same time next story, the Copycat said. Deep under your tower, a door that was never meant to open just did.', 6000), steps: [
+    { id: 'pz', title: 'Patient Zero', tag: 'The flood opened the vault under the tower.', start: () => say('{N} is back, and doesn’t know how. Echo can feel something under the tower, awake since the flood.', 6000), end: () => { SG.w.g2 = 1; }, steps: [
       { t: 'Something woke up in the basement of your tower. Get into the tower (the stairs on your roof, or the front door on the street) and take the lift down.', site: { k: 'scene', twr: 'b1', p: [-15, 0], r: 7, run: sceneVault }, where: twrWhere, check: () => F().vault19 },
       { t: 'He went up through the gym. The failed copies he made are still there, and they learn.', site: { k: 'st', part: 'z1', twr: 'gym', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().z1 },
-      { t: 'On the office floor, he\u2019s grown copies of the three of you.', site: { k: 'st', part: 'z2', twr: 'office', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().z2 },
-      { t: 'He\u2019s at the top of your tower, in the sky garden. Everyone you\u2019ve ever fought was copied from him. So were you.', site: { k: 'st', part: 'z3', twr: 'sky', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().fin19 }
+      { t: 'On the office floor, he’s grown copies of the three of you.', site: { k: 'st', part: 'z2', twr: 'office', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().z2 },
+      { t: 'He’s at the top of your tower, in the sky garden.', site: { k: 'st', part: 'z3', twr: 'sky', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().fin19 }
     ] },
-    { title: 'Deep Space', tag: 'The long way home.', start: () => enterDsp('crash'), steps: [
-      { t: 'You and the Copycat are alive, somewhere in deep space. Echo isn\u2019t.', site: { k: 'scene', dsp: 'crash', p: [0, 0], r: 40, run: sceneCrash }, where: dspWhere, check: () => F().crash20 },
+    { id: 'original', title: 'The Original', tag: 'The long way home, and who he was.', start: () => enterDsp('crash'), end: () => { SG.w.g3 = 1; }, steps: [
+      { t: 'You and the Copycat are alive, somewhere in deep space. Echo isn’t.', site: { k: 'scene', dsp: 'crash', p: [0, 0], r: 40, run: sceneCrash }, where: dspWhere, check: () => F().crash20 },
       { t: 'Cross to the wreck. Something huge is drifting in it.', site: { k: 'st', part: 'e1', dsp: 'wreck', p: [0, 0], r: 60, hero: 'hero18' }, where: dspWhere, check: () => F().e1 },
-      { t: 'The next rock is an Apokolips outpost. Get through it.', site: { k: 'st', part: 'e2', dsp: 'outpost', p: [0, 0], r: 60, hero: 'hero18' }, where: dspWhere, check: () => F().e2 },
-      { t: 'An old gate on the last rock. Someone is guarding it.', site: { k: 'st', part: 'e3', dsp: 'gate', p: [0, 0], r: 60, hero: 'hero18' }, where: dspWhere, check: () => F().e3 },
-      { t: 'The gate is open. Step through it and fall home.', site: { k: 'scene', dsp: 'gate', p: [0, -10], r: 4, run: sceneHome }, where: dspWhere, check: () => F().home20 }
-    ] },
-    { title: 'The Original', tag: 'Who he was, before any of you.', start: () => say('Home. Bangalore is dark, and in the distance something heavy is walking through it.', 5200), steps: [
+      { t: 'An old gate on the last rock, past the outpost. Someone is guarding it.', site: { k: 'st', part: 'e3', dsp: 'gate', p: [0, 0], r: 60, hero: 'hero18' }, where: dspWhere, check: () => F().e3 },
+      { t: 'The gate is open. Step through it and fall home.', site: { k: 'scene', dsp: 'gate', p: [0, -10], r: 4, run: sceneHome }, where: dspWhere, check: () => F().home20 },
       { t: 'Before you face him, find out who he was. His file is in the security office in the lobby of your tower.', site: { k: 'scene', twr: 'lobby', p: [2, -6.6], r: 4, run: sceneFile }, where: twrWhere, check: () => F().file21 },
-      { t: 'He\u2019s tearing up your old street. Stop him, both of you.', site: { k: 'st', part: 'k1', at: 'home', r: 30, hero: 'hero18' }, where: siteWhere, check: () => F().k1 },
-      { t: 'He\u2019s in the market, flattening it. Catch him there.', site: { k: 'st', part: 'k2', at: 'market', r: 24, hero: 'hero18' }, where: siteWhere, check: () => F().k2 },
+      { t: 'He’s tearing up your old street. Stop him, both of you.', site: { k: 'st', part: 'k1', at: 'home', r: 30, hero: 'hero18' }, where: siteWhere, check: () => F().k1 },
+      { t: 'He’s in the market, flattening it. Catch him there.', site: { k: 'st', part: 'k2', at: 'market', r: 24, hero: 'hero18' }, where: siteWhere, check: () => F().k2 },
       { t: 'The roof of Broker Tower. Finish it, alone.', site: { k: 'st', part: 'k3', at: 'tower', roof: 1, r: 26, hero: 'hero18' }, where: siteWhere, check: () => F().fin21 }
     ] },
-    { title: 'Same Time, Next Story', tag: 'The Broker kept backups.', start: () => { if (!A && !EV) enterBlr([-110, -116, 0]); say('A week later. Rain on the lake, and two graves with nobody’s flowers on them.', 5000); }, steps: [
+    // ---------------- Act 4: The Last Page ----------------
+    { id: 'backups', title: 'Backups', tag: 'The Broker kept everything.', start: () => { if (!A && !EV) enterBlr([-110, -116, 0]); say('A week later. A Broker Dynamics truck took his body off the street. Rain on the lake, and graves with nobody’s flowers on them.', 6000); }, end: () => { SG.w.cvault = 1; }, steps: [
       { t: 'Leave flowers at the lake for Echo and the Copycat.', site: { k: 'scene', at: 'lake', p: [-110, -126], r: 6, run: sceneFlowers }, where: siteWhere, check: () => F().flow22 },
       { t: 'The Broker kept backups. Search his old security office in the lobby of your tower.', site: { k: 'scene', twr: 'lobby', p: [2, -6.6], r: 4, run: sceneHidden }, where: twrWhere, check: () => F().lift22 },
       { t: 'The first level of the clone vault. His security clones are waking up. You’re on your own.', site: { k: 'st', part: 'v1', twr: 'v1', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().v1 },
       { t: 'Take the lift further down. More of his security clones.', site: { k: 'st', part: 'v2', twr: 'v2', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().v2 },
       { t: 'The bottom of the vault. Echo and the Copycat are here, in the tanks by the console.', site: { k: 'scene', twr: 'v3', p: [0, -5], r: 6, run: sceneOffer }, where: twrWhere, check: () => F().fin22 }
     ] },
-    { title: 'Batch Five', tag: 'The tanks are open.', start: () => { if (TWR.sc) TWR.tanks.filter(t => t.fl === 'v3').forEach(t => { t.lv = 0; t.drain = false; t.liq.scale.y = .001; t.liq.position.y = .3; }); say('The tanks are empty. Two of the lids are open, and someone is breathing.', 5000); }, steps: [
+    { id: 'batch5', title: 'Batch Five', tag: 'The tanks are open.', start: () => { if (TWR.sc) TWR.tanks.filter(t => t.fl === 'v3').forEach(t => { t.lv = 0; t.drain = false; t.liq.scale.y = .001; t.liq.position.y = .3; }); say('The tanks are empty. Two of the lids are open, and someone is breathing.', 5000); }, steps: [
       { t: 'Two figures are standing by the open tanks at the bottom of the clone vault.', site: { k: 'scene', twr: 'v3', p: [0, -5], r: 8, run: sceneWake23 }, where: twrWhere, check: () => F().wake23 },
       { t: 'They’re not them. The Broker’s kill switch is on them. You can’t save them.', site: { k: 'st', part: 'w1', twr: 'v3', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().w1 },
       { t: 'Climb. The lights are failing. The gym first.', site: { k: 'st', part: 'w2', twr: 'gym', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().w2 },
@@ -6447,18 +6412,32 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       { t: 'The sky garden. Where Echo died.', site: { k: 'scene', twr: 'sky', p: [0, 0], r: 12, run: sceneReveal }, where: twrWhere, check: () => F().rev23 },
       { t: 'End the Broker.', site: { k: 'st', part: 'w4', twr: 'sky', p: [0, 0], r: 60, hero: 'hero18' }, where: twrWhere, check: () => F().brk23 }
     ] },
-    { title: 'Doom', tag: 'This time, it ends.', start: () => { if (!A && !EV) enterBlr([HOUSE.door[0], HOUSE.door[1] + 3.4, Math.PI]); say('A green light falls out of the sky and hits your street. Something in it is still talking.', 5200); }, steps: [
+    { id: 'doom', title: 'Doom', tag: 'This time, it ends.', start: () => { if (!A && !EV) enterBlr([HOUSE.door[0], HOUSE.door[1] + 3.4, Math.PI]); say('A green light falls out of the sky and hits your street, right next to the old crater. Something in it is still talking.', 5200); }, steps: [
       { t: 'Something crashed in your street, glowing green. Go and look.', site: { k: 'scene', at: 'home', p: [4, 8], r: 6, run: sceneBot }, where: siteWhere, check: () => F().bot24 },
       { t: 'Doombots are landing in the market. Clear them out.', site: { k: 'st', part: 'x1', at: 'market', r: 24, hero: 'hero18' }, where: siteWhere, check: () => F().x1 },
       { t: 'Doom’s signal is coming from the data centre. Shut it down.', site: { k: 'st', part: 'x2', at: 'data', r: 24, hero: 'hero18' }, where: siteWhere, check: () => F().x2 },
-      { t: 'The real Doom is waiting on the roof of Broker Tower.', site: { k: 'st', part: 'x3', at: 'tower', roof: 1, r: 26, hero: 'hero18' }, where: siteWhere, check: () => F().fin24 }
+      { t: 'The real Doom is waiting on the roof of Broker Tower. Only one of them doesn’t spark.', site: { k: 'st', part: 'x3', at: 'tower', roof: 1, r: 26, hero: 'hero18' }, where: siteWhere, check: () => F().fin24 }
     ] }
   ];
-  // the story is one run of chapters, in five books
-  const BOOKS = [[0, 6, 'The Multiverse'], [7, 11, 'The Broker\u2019s City'], [12, 17, 'Legacy'], [18, 20, 'Patient Zero'], [21, 23, 'The Last Page']];
+  // the story is one run of fifteen chapters, in four acts
+  const BOOKS = [[0, 3, 'The Multiverse'], [4, 7, 'The Broker\u2019s City'], [8, 11, 'Legacy'], [12, 14, 'The Last Page']];
   const bookOf = i => BOOKS.findIndex(([a, z]) => i >= a && i <= z);
-  // saves from before the books: a finished chapter 12 used to stop and wait for the comic; now it carries on
-  if (SG.gold && !SG.active && !SG.sagaDone && !SG.resume) { const nx = SAGA.findIndex((C, i) => i >= 12 && !SG.done.includes(i)); if (nx < 0) SG.sagaDone = true; else Object.assign(SG, { ch: nx, step: 0, flags: {}, resume: true }); saveSG(); }
+  function chId(){ try { return SAGA[SG.ch] ? SAGA[SG.ch].id : ''; } catch (e) { return ''; } }
+  function chIx(id){ try { return SAGA.findIndex(C => C.id === id); } catch (e) { return -1; } }
+  function stepId(){ try { const st = SAGA[SG.ch].steps[SG.step]; return st && st.id || ''; } catch (e) { return ''; } }
+  const stepIx = id => SAGA[SG.ch] ? SAGA[SG.ch].steps.findIndex(q => q.id === id) : -1;
+  // saves from the old 24-chapter story start again at the matching new chapter
+  (function migrate(){
+    if (SG.v === 2) return; const had = SG.done.length || SG.ch > 0 || SG.active || SG.resume; SG.v = 2; SG.w = SG.w || {};
+    Object.keys(SG).filter(k => /^i\d+$/.test(k)).forEach(k => delete SG[k]); SG.podOpen = {}; SG.podOut = {};
+    if (!had) return saveSG();
+    const MAP = [0, 1, 2, 2, 2, 2, 3, 4, 4, 5, 6, 7, 8, 9, 9, 10, 10, 10, 10, 11, 11, 12, 13, 14];
+    const nx = SG.sagaDone ? SAGA.length : MAP[Math.min(23, SG.ch)] || 0;
+    SG.done = [...Array(Math.min(nx, SAGA.length)).keys()]; SG.gold = nx > chIx('copycat'); SG.flags = {}; SG.step = 0; SG.active = false;
+    if (nx > chIx('last')) Object.assign(SG.w, { g1: 1, vault: 1 }); if (nx > chIx('pz')) SG.w.g2 = 1; if (nx > chIx('original')) SG.w.g3 = 1; if (nx > chIx('backups')) SG.w.cvault = 1;
+    if (nx >= SAGA.length) { SG.sagaDone = true; SG.resume = false; SG.ch = SAGA.length - 1; } else { SG.sagaDone = false; SG.ch = nx; SG.resume = true; SG.migNote = nx + 1; }
+    SG.traces = (SG.traces || 0) + SG.done.length * 2; saveSG();
+  })();
   // the goal line in the corner, and a beam of light over where to go
   const goalEl = document.createElement('div'); goalEl.className = 'goalhud'; goalEl.hidden = true; document.body.appendChild(goalEl);
   const cardEl = document.createElement('div'); cardEl.className = 'chcard'; document.body.appendChild(cardEl);
@@ -6467,7 +6446,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const curStep = () => { const C = SAGA[SG.ch]; return C && C.steps[SG.step]; };
   const stepText = s => nmT(typeof s.t === 'function' ? s.t() : s.t);
   function chapterCard(i){
-    const C = SAGA[i]; cardEl.innerHTML = `<small>Book ${bookOf(i) + 1} \u00B7 Chapter ${i + 1}</small><b class="display">${esc(C.title)}</b><span>${esc(C.tag)}</span>`; cardEl.classList.remove('on'); void cardEl.offsetWidth; cardEl.classList.add('on');
+    const C = SAGA[i]; cardEl.innerHTML = `<small>Act ${bookOf(i) + 1} \u00B7 Chapter ${i + 1}</small><b class="display">${esc(C.title)}</b><span>${esc(C.tag)}</span>`; cardEl.classList.remove('on'); void cardEl.offsetWidth; cardEl.classList.add('on');
     [196, 262, 330].forEach((f, k) => setTimeout(() => tone(f, .6, 'triangle', .05), k * 180)); clearTimeout(chapterCard.t); chapterCard.t = setTimeout(() => cardEl.classList.remove('on'), 4200);
   }
   function startChapter(i){ SG.ch = i; SG.step = 0; SG.flags = {}; SG.active = true; SG.resume = false; saveSG(); chapterCard(i); if (SAGA[i].start) SAGA[i].start(); }
@@ -6491,8 +6470,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (EV || A || RUN || VOID) return say('Finish or leave this fight first.', 2400);
     const i = SG.ch; if (!SAGA[i] || !SG.active && !SG.resume) return;
     // put back anything the chapter left half-done
-    if (i === 6 && instab >= 6) { instab = 0; saveInstab(); buildBreach(); canvas.style.filter = ''; }
-    if (i === 9) { try { localStorage.setItem('ru-ultronred', '1'); } catch (e) {} if (!recap.includes('ultron')) { recap.push('ultron'); saveInstab(); } }
+    if (SAGA[i].id === 'beyond' && instab >= 6) { instab = 0; saveInstab(); buildBreach(); canvas.style.filter = ''; }
+    if (SAGA[i].id === 'ultron') { try { localStorage.setItem('ru-ultronred', '1'); } catch (e) {} if (!recap.includes('ultron')) { recap.push('ultron'); saveInstab(); } }
     if (normalView) { if (lastComic) { scene.remove(lastComic); disposeDeep(lastComic); lastComic = null; } exitNormal(); }
     if (BL.cine) { BL.cine = null; DLG = null; dlgEl.hidden = true; document.body.classList.remove('cine'); }
     if (CARDS) cardSkip();
@@ -6501,7 +6480,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function sagaStep(dt, now){
     if (SG.active && entered && !hasHeroName() && !sagaStep.asked && !A && !EV && !sagaBox.classList.contains('on')) { sagaStep.asked = true; setTimeout(() => { openSaga(); const f = sagaBox.querySelector('#sgName'); if (f) f.focus(); say('Before you go on: what\u2019s your hero\u2019s name?', 3200); }, 1200); }
     if (now < sagaT) { if (beacon && beacon.visible) beacon.userData.ring.rotation.z += dt * 2; return; } sagaT = now + 400;
-    renderGoal();
+    renderGoal(); if (entered && SG.migNote) { say(`The story has been rewritten. You\u2019re at the start of Chapter ${SG.migNote}. Open the comic in the lair to carry on.`, 6000); SG.migNote = 0; saveSG(); }
     const s = SG.active && curStep();
     if (s && s.keep) s.keep();
     if (s && SG.entered !== SG.ch + ':' + SG.step) { SG.entered = SG.ch + ':' + SG.step; saveSG(); if (s.enter) s.enter(); }
@@ -6521,7 +6500,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // a chapter is over: wait for its last scene to finish, then straight into the next one (with a card between books)
   function waitCalm(fn){ const t = () => EV || A || RUN || VOID || CARDS || BL.cine || credEl.classList.contains('on') ? setTimeout(t, 500) : fn(); setTimeout(t, 300); }
   function chapterDone(was, skipped){
-    if (!SG.done.includes(was)) SG.done.push(was); SG['i' + (was + 1)] = true; if (was >= 11) SG.gold = true;
+    if (!SG.done.includes(was)) SG.done.push(was); SG.w = SG.w || {}; if (SAGA[was].end) SAGA[was].end(); if (was >= chIx('copycat')) SG.gold = true;
     const nx = was + 1; goalKey = ''; goalEl.hidden = true; if (beacon) beacon.visible = false;
     if (nx >= SAGA.length) { SG.active = false; SG.resume = false; SG.sagaDone = true; saveSG(); return; }
     Object.assign(SG, { active: false, ch: nx, step: 0, flags: {}, resume: true }); saveSG();
@@ -6532,8 +6511,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function bookEnd(b, then){
     const [, , nm] = BOOKS[b], [, , nx] = BOOKS[b + 1], show = (sm, big) => { clearTimeout(chapterCard.t); cardEl.innerHTML = `<small>${sm}</small><b class="display">${esc(big)}</b>`; cardEl.classList.remove('on'); void cardEl.offsetWidth; cardEl.classList.add('on'); };
-    cardSeq([[0, () => { fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); show(`End of Book ${b + 1}`, nm); tone(196, 1.2, 'triangle', .04); }],
-      [4, () => { show(`Book ${b + 2}`, nx); tone(262, 1.2, 'triangle', .04); }],
+    cardSeq([[0, () => { fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); show(`End of Act ${b + 1}`, nm); tone(196, 1.2, 'triangle', .04); }],
+      [4, () => { show(`Act ${b + 2}`, nx); tone(262, 1.2, 'triangle', .04); }],
       [8, () => { cardEl.classList.remove('on'); fadeEl.classList.remove('on'); then(); }, 1]]);
   }
 
@@ -6552,8 +6531,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const sagaBox = document.createElement('div'); sagaBox.className = 'game'; sagaBox.setAttribute('role', 'dialog'); sagaBox.setAttribute('aria-label', 'The Multiverse Saga'); sagaBox.innerHTML = '<div class="gbox"></div>'; document.body.appendChild(sagaBox);
   function openSaga(){
     if (document.pointerLockElement) document.exitPointerLock(); const started = SG.active || SG.done.length || SG.ch > 0;
-    const rows = BOOKS.map(([a0, z0, bn], b) => `<h3>Book ${b + 1}: ${esc(bn)}</h3>` + SAGA.slice(a0, z0 + 1).map((C, k) => { const i = a0 + k, done = SG.done.includes(i), cur = SG.ch === i && (SG.active || SG.resume) && !done, open = done || i <= SG.ch || SG.gold && i < 12;
-      return `<div class="prow"><b>${i + 1}. ${open ? esc(nmT(C.title)) : '???'}<br><small>${done ? 'Finished' : cur ? (SG.active ? 'You\u2019re here' : 'Up next') : open ? '' : 'Not reached yet'}</small></b>${done || SG.gold && i < 12 ? `<button class="btn" type="button" data-sg="replay:${i}">Replay</button>` : ''}${cur && started ? '<button class="btn" type="button" data-sg="skip">Skip chapter</button>' : ''}</div>`; }).join('')).join('');
+    const rows = BOOKS.map(([a0, z0, bn], b) => `<h3>Act ${b + 1}: ${esc(bn)}</h3>` + SAGA.slice(a0, z0 + 1).map((C, k) => { const i = a0 + k, done = SG.done.includes(i), cur = SG.ch === i && (SG.active || SG.resume) && !done, open = done || i <= SG.ch;
+      return `<div class="prow"><b>${i + 1}. ${open ? esc(nmT(C.title)) : '???'}<br><small>${done ? 'Finished' : cur ? (SG.active ? 'You\u2019re here' : 'Up next') : open ? '' : 'Not reached yet'}</small></b>${done ? `<button class="btn" type="button" data-sg="replay:${i}">Replay</button>` : ''}${cur && started ? '<button class="btn" type="button" data-sg="skip">Skip chapter</button>' : ''}</div>`; }).join('')).join('');
     sagaBox.querySelector('.gbox').innerHTML = `<div class="ghead"><h2 class="display">The Multiverse Saga</h2><button class="close" type="button" data-sg="close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
       <div class="sgname"><label for="sgName">Your hero name</label><input id="sgName" type="text" maxlength="20" autocomplete="off" placeholder="Type your name" value="${esc(hasHeroName() ? heroName() : '')}"></div>
       <p class="gmsg">Story mode. It shows you one thing to do next and saves your place at every step, so you can leave for free play and come back whenever you like.</p>
@@ -6900,7 +6879,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const h = lastComic.userData.hinge, t0 = performance.now(); const step = () => { const k = clamp((performance.now() - t0) / 700, 0, 1); h.rotation.z = Math.PI * k; if (k < 1) requestAnimationFrame(step); else { storyFlag('closed'); } }; step();
   }
   function podTint(){
-    if (!pods.length) return; let red = false; try { red = localStorage.getItem('ru-ultronred') === '1'; } catch (e) {} const puppet = SG.active && SG.ch === 10 && !SG.flags.p3;
+    if (!pods.length) return; let red = false; try { red = localStorage.getItem('ru-ultronred') === '1'; } catch (e) {} const puppet = SG.active && chId() === 'puppet' && !SG.flags.p3;
     pods.forEach(pd => { const m = pd.glass.material; if (!pd.col0) pd.col0 = m.color.clone(); const c = puppet ? new THREE.Color(0xB07CFF) : red && pd.def.id === 'ultron' ? new THREE.Color(0xFF2020) : pd.col0; m.color.copy(c); m.emissive.copy(c); m.emissiveIntensity = puppet || red && pd.def.id === 'ultron' ? .6 : .25; });
   }
   function stHud(){
@@ -7084,10 +7063,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // the fire escape on the roof takes you down into the street
     if (kitReached() && roofScene && !fireG) fireEscape(); if (fireG) fireG.visible = kitReached();
     if (fireG && fireG.visible && inWorld && zone === 'roof' && !A && !EV && Math.hypot(pos.x - FIRE_ESC[0], pos.z - FIRE_ESC[1]) < 1 && !BL.busy) { BL.busy = true; setTimeout(() => BL.busy = false, 2500); enterBlr(); }
-    if (BL.sc) { const mood = ch13() ? 'burn' : SG.active && SG.ch === 17 ? 'scr' : 'night'; if (BL.mood !== mood) { BL.mood = mood; BL.fireG.visible = mood === 'burn'; const col = { burn: 0x3A1A10, scr: 0x24103A, night: 0x0B1224 }[mood]; BL.sc.background.setHex(col); BL.sc.fog.color.setHex(col); }
+    if (BL.sc) { const mood = ch13() ? 'burn' : SG.active && chId() === 'scrambled' ? 'scr' : 'night'; if (BL.mood !== mood) { BL.mood = mood; BL.fireG.visible = mood === 'burn'; const col = { burn: 0x3A1A10, scr: 0x24103A, night: 0x0B1224 }[mood]; BL.sc.background.setHex(col); BL.sc.fog.color.setHex(col); }
       if (mood === 'scr' && inBlr() && !EV && Math.random() < dt * .25) { canvas.style.filter = 'hue-rotate(160deg) saturate(1.6)'; setTimeout(() => { if (canvas.style.filter.startsWith('hue-rotate(160')) canvas.style.filter = ''; }, 140); } }
     const here = BL.sc && inBlr(); if (!here) { navEl.hidden = true; return; }
-    hint.classList.remove('on'); sceneStep(dt); if (BL.grave) { BL.grave.visible = !!SG.i13; BL.graveClaws.visible = !SG.clawsTaken; BL.grave2.visible = !!SG.i15; BL.grave3.visible = !!SG.i17; }
+    hint.classList.remove('on'); sceneStep(dt); if (BL.grave) { const W = SG.w || {}; BL.grave.visible = !!W.g1; BL.graveClaws.visible = !!W.g1 && !SG.clawsTaken; BL.grave2.visible = !!W.g2; BL.grave3.visible = !!W.g3; }
     const R = BL.rain; if (R) { R.position.set(pos.x, 0, pos.z); if (!EV) { const a = R.geometry.attributes.position.array; for (let i = 0; i < a.length; i += 6) { a[i + 1] -= 22 * dt; a[i + 4] -= 22 * dt; if (a[i + 1] < 0) { a[i + 1] += 30; a[i + 4] += 30; } } R.geometry.attributes.position.needsUpdate = true; } }
     // riding the lift
     if (BL.ride) { const r = BL.ride, k = clamp((now - r.t0) / r.dur, 0, 1), e = k * k * (3 - 2 * k); BL.off.y = r.from + (r.to - r.from) * e; BL.mapG.position.y = -BL.off.y;
@@ -7105,7 +7084,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // back inside through your front door
     if (BL.off.y === 0 && Math.hypot(mx - HOUSE.door[0], mz - HOUSE.door[1]) < 1.3 && !BL.busy) { BL.busy = true; setTimeout(() => BL.busy = false, 2500); return enterTwr('lobby', [-17, 0], -Math.PI / 2); }
     // the Broker's truck waits in your street until you follow it, then waits at the lake
-    const st = SG.active && SG.ch === 8 ? SG.step : -1; BL.trucks.home.visible = st === 2; BL.trucks.lake.visible = st >= 3;
+    const brk = SG.active && chId() === 'broker', st = brk ? SG.step : -1; BL.trucks.home.visible = brk && stepId() === 'tail'; BL.trucks.lake.visible = brk && st >= stepIx('warehouse');
     // walking into the next fight starts it
     const s = SG.active && curStep(); if (!s || !s.site || s.site.twr || s.site.dsp || BL.ride || EV || s.check()) return;
     const S = s.site, p = siteXZ(S), lvl = S.roof ? TW.roof : 0, inside = Math.abs(BL.off.y - lvl) < .01 && Math.hypot(mx - p[0], mz - p[1]) < S.r;
@@ -7115,10 +7094,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   // ---------- sprint, crouch, block, weapons and pain (chapter 9 on) ----------
   var KIT = { stam: 1, sprint: false, crouch: false, crouchK: 0, restT: 0, winded: false, sprinting: false };
-  const kitReached = () => { try { return SG.ch >= 8 || SG.gold; } catch (e) { return false; } };
+  const kitReached = () => { try { return SG.ch >= chIx('broker') || SG.gold || SG.sagaDone; } catch (e) { return false; } };
   const kitOn = () => kitReached() && inWorld && !A && ['blr', 'roof', 'lair', 'event', 'twr', 'dsp'].includes(zone);
   // from chapter 9 until the end of the story, the only weapon left is Wolverine's claws
-  function lostWeapon(id){ try { return SG.active && SG.ch === 12 || SG.active && SG.ch > 12 && id !== 'claws' || SG.ch >= 8 && !SG.gold && id !== 'claws'; } catch (e) { return false; } }
+  function lostWeapon(id){ try { const L = chIx('last'); return SG.active && SG.ch === L || SG.active && SG.ch > L && id !== 'claws' || SG.ch >= chIx('broker') && !SG.gold && id !== 'claws'; } catch (e) { return false; } }
   const canClaws = () => !!EV && (EV.hero === 'rayan' || EV.hero === 'copyhero') && (EV.k === 'br' || EV.k === 'st') && kitReached() && !EV.clawsTorn && !ch13();
   function kitSpeed(){ if (BL && BL.cine) return 0; let m = 1; if (SG.flags && SG.flags.old && !EV) m *= .6; if (EV && EV.slowMe > 0) m *= .45; if (EV && EV.st && EV.st.part === 's1') m *= .8; if (kitOn()) { if (KIT.crouchK > .5) m *= .5; else if (KIT.sprinting) m *= 1.6; } if (EV && EV.blocking) m *= .5; if (EV && EV.pain) m *= EV.flinch > 0 ? .3 : .82; return m; }
   const kitEl = document.createElement('div'); kitEl.className = 'kitui'; kitEl.hidden = true; kitEl.innerHTML = '<span class="stam"><i></i></span><button type="button" data-kit="sprint">Sprint</button><button type="button" data-kit="crouch">Crouch</button>'; document.body.appendChild(kitEl);
@@ -7336,7 +7315,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const dlgEl = document.createElement('div'); dlgEl.className = 'dlg'; dlgEl.hidden = true; dlgEl.innerHTML = '<b class="dlgw"></b><span class="dlgt"></span><button class="dlgskip" type="button">Skip ▸▸</button><small class="dlgh"></small>'; document.body.appendChild(dlgEl);
   const callEl = document.createElement('div'); callEl.className = 'fightcall'; callEl.hidden = true; document.body.appendChild(callEl);
   let DLG = null;
-  const who = s => s === 'ME' ? (EV && HEROES[EV.hero] ? HEROES[EV.hero].name : SG.active && SG.ch >= 13 ? 'The Copycat' : heroName()) : s;
+  const who = s => s === 'ME' ? (EV && HEROES[EV.hero] ? HEROES[EV.hero].name : SG.active && chId() === 'echo' ? 'The Copycat' : heroName()) : s;
   function dlgShow(){
     const L = DLG.lines[DLG.i], raw = typeof L[0] === 'function' ? L[0]() : L[0], nm = nmT(who(raw)), tx = nmT(typeof L[1] === 'function' ? L[1]() : L[1]);
     const w = dlgEl.querySelector('.dlgw'); w.textContent = nm; w.style.color = SPK[nm] || (raw === 'ME' ? '#FFC93C' : '#E8E3D6');
@@ -7415,7 +7394,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       outro: w => w ? [] : [['The clone', '…']]
     }
   });
-  const ch13 = () => SG.active && SG.ch === 12;
+  const ch13 = () => SG.active && chId() === 'last';
   // the last fight: it puts the claws through you, and you get up anyway
   function lastStand(){
     const S = EV.st, b = EV.boss; S.impaled = true; EV.lockT = 2.8; b.stun = 2.8; EV.blocking = false;
@@ -7717,7 +7696,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ---------- #17: the countdown, the freeze, and getting old ----------
   const clockEl = document.createElement('div'); clockEl.className = 'clockhud'; clockEl.hidden = true; document.body.appendChild(clockEl);
   function ch17Step(dt){
-    const on = SG.active && SG.ch === 16 && entered, run = on && !SG.flags.dlDone;
+    const on = SG.active && chId() === 'deadline' && entered, run = on && !SG.flags.dlDone;
     clockEl.hidden = !run;
     const cin = EV && EV.st && (EV.st.cin || EV.st.dz || EV.st.fin || EV.st.lp);
     if (!on || cin) { if (BL.fz) { BL.fz = false; if (!cin) canvas.style.filter = ''; } return; }
@@ -7872,7 +7851,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   liftEl.addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; liftEl.hidden = true; const f = b.dataset.f; if (!f) return; tone(660, .12, 'sine', .04, 880);
     if (f === 'roof') return fade(() => { travel('roof'); pos.set(HUT[0], 1.6, HUT[1] + 1.4); yaw = 0; say('The roof.', 1400); }, '#06070B');
     fade(() => { showFloor(f); pos.set(15.4, 1.6, 0); yaw = Math.PI / 2; pitch = -.05; TWR.liftArm = false; say(`${tName(f)}.`, 1600); setTimeout(() => tone(1175, .15, 'triangle', .05), 150); }, '#06070B'); });
-  const towerVault = () => { try { return !!SG.i19 || SG.active && SG.ch === 18; } catch (e) { return false; } };
+  const towerVault = () => { try { return !!(SG.w && SG.w.vault) || SG.active && chId() === 'pz'; } catch (e) { return false; } };
   // the stairwell hut on your roof
   let hutG = null;
   function roofHut(){ if (hutG || !roofScene) return; const g = hutG = new THREE.Group(); g.position.set(HUT[0], 0, HUT[1] - 1.1); roofScene.add(g); box(1.8, 2.4, 1.4, mat(0xCFC6B6, { roughness: 1 }), 0, 1.2, 0, g); box(.9, 2, .06, mat(0x5A4632), 0, 1, .71, g);
@@ -8061,7 +8040,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     fade(() => {
       web.p = null; drawWeb(); walkTarget = null; exitTelescope(); inWorld = true; zone = 'dsp'; vy = 0; falling = false; grounded = true; showRock(id);
       const D = DROCKS[id]; let x = 0, z = D.R * .4, yw = 0; const e = from && D.ex.find(q => q[1] === from); if (e) { const [dx, dz] = DIRV[e[0]]; x = dx * (D.R - 3); z = dz * (D.R - 3); yw = Math.atan2(dx, dz); }
-      pos.set(x, 1.6, z); yaw = yw; pitch = -.05; closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = SG.active && SG.ch === 19; $('#worldBack').textContent = 'Back to your room'; jumpBtn.hidden = fine; uiZone();
+      pos.set(x, 1.6, z); yaw = yw; pitch = -.05; closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = SG.active && chId() === 'original'; $('#worldBack').textContent = 'Back to your room'; jumpBtn.hidden = fine; uiZone();
       say(D.name + '.', 1800);
     }, '#000000');
   }
@@ -8090,7 +8069,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function dspBack(){
     if (DSP.keep) DSP.sc.children.slice().forEach(o => { if (!DSP.keep.has(o)) { DSP.sc.remove(o); if (o !== viewG && !(me && o === me.g) && o !== beacon) disposeDeep(o); } });
     DSP.keep = null; PILLARS.length = 0; DSP.hold = performance.now() + (DSP.lastWon ? 2000 : 12000); DSP.lastWon = false;
-    if (inWorld && zone === 'event') { zone = 'dsp'; $('#worldBack').hidden = SG.active && SG.ch === 19; hotEl.hidden = false; }
+    if (inWorld && zone === 'event') { zone = 'dsp'; $('#worldBack').hidden = SG.active && chId() === 'original'; hotEl.hidden = false; }
   }
   // ---------- the city comes down around you (#21) ----------
   function setWreck(b, k){ const m4 = new THREE.Matrix4(), h = b.h * (1 - .78 * k); m4.compose(V((b.x0 + b.x1) / 2, h / 2, (b.z0 + b.z1) / 2), new THREE.Quaternion(), V(b.x1 - b.x0, h, b.z1 - b.z0)); b.im.setMatrixAt(b.i, m4); b.im.instanceMatrix.needsUpdate = true; }
@@ -8173,14 +8152,14 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (T > 11 && !c.b1) { c.b1 = 1; fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); DLG = null; dlgEl.hidden = true; endCard('Patient Zero was the first of all of them. He was also the last.'); }
     if (T > 15.5 && !c.b2) { c.b2 = 1; endCard('Bangalore rebuilt every street he broke.'); }
     if (T > 20 && !c.b3) { c.b3 = 1; endCard('Every year, you leave flowers at the lake for Echo and the Copycat. You never miss one.'); }
-    if (T > 25 && !c.done) { c.done = 1; storyFlag('fin21'); SG.i21 = true; SG.wreck = []; saveSG(); cinEnd(() => { pos.y = 1.6; pitch = 0; endCard(''); fadeEl.classList.remove('on'); }); }
+    if (T > 25 && !c.done) { c.done = 1; storyFlag('fin21'); saveSG(); cinEnd(() => { pos.y = 1.6; pitch = 0; endCard(''); fadeEl.classList.remove('on'); }); }
   }
 
   // ======================= Issues #22 and #23: Same Time, Next Story, and The Last Page =======================
   // The Broker kept backups. Under Patient Zero's old vault there are three more levels of tanks, and Echo and the Copycat
   // are floating in two of them. #22 goes down. #23 comes back up, and it doesn't end well.
   TFLOORS.push(['v1', 'Clone vault, level 1'], ['v2', 'Clone vault, level 2'], ['v3', 'Clone vault, level 3']);
-  const cvOpen = () => { try { return !!(SG.i22 || SG.active && (SG.ch === 22 || SG.ch === 21 && SG.flags.lift22)); } catch (e) { return false; } };
+  const cvOpen = () => { try { return !!(SG.w && SG.w.cvault || SG.active && (chId() === 'batch5' || chId() === 'backups' && SG.flags.lift22)); } catch (e) { return false; } };
   OUTFITS.brkpz = { hero: 1, c1: '#C8CCD4', c2: '#FF8A2E', metal: 1, gloves: 1, mask: 'helmet', glow: 1 };
   HEROES.sc_doom = { name: 'Security clone (Doom)', outfit: 'doom', hp: 130, kind: 'ranged', dmg: 6, cd: .9, col: 0x3CE870, speed: 4.2 };
   HEROES.sc_rflash = { name: 'Security clone (Reverse-Flash)', outfit: 'rflash', hp: 100, kind: 'melee', dmg: 6, range: 2.2, cd: .55, speed: 6.6 };
@@ -8246,7 +8225,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // the lights, and the tanks draining
   function vaultStep(dt, now){
     if (!TWR.sc) return;
-    const hemi = TWR.hemi || (TWR.hemi = TWR.sc.children.find(o => o.isHemisphereLight)), vf = /^v\d$/.test(TWR.floor), dark = SG.active && SG.ch === 22;
+    const hemi = TWR.hemi || (TWR.hemi = TWR.sc.children.find(o => o.isHemisphereLight)), vf = /^v\d$/.test(TWR.floor), dark = SG.active && chId() === 'batch5';
     if (hemi) hemi.intensity = vf ? .1 : dark ? .2 : .75;
     const g = TWR.floors[TWR.floor]; if (g) g.children.forEach(o => { if (!o.isPointLight) return; if (o.userData.i0 == null) o.userData.i0 = o.intensity; o.intensity = dark && !vf ? (Math.random() < .03 ? 0 : o.userData.i0 * (.3 + .25 * Math.sin(now * .004 + o.position.x))) : o.userData.i0; });
     TWR.tanks.forEach(t => { if (!t.drain) return; t.lv = Math.max(0, t.lv - dt * t.rate); t.liq.scale.y = Math.max(.001, t.lv); t.liq.position.y = .3 + 1.35 * t.lv; if (t.lv <= 0) t.drain = false; });
@@ -8455,7 +8434,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const mk = addMarkerTo(lairScene, V(-9, 1.3, 9.3)); mk.userData.egg = 'bugle';
   }
   function readBugle(){
-    const H = deedsHeadlines(), h = SG.active && SG.ch === 11 && !SG.flags.bugle ? 'MASKED "HERO" WRECKS MARKET. WAS IT RAYAN?' : H[bugleI++ % H.length]; storyFlag('bugle'); const top = bugleG.userData.top; top.material.map.dispose(); top.material.map = bugleTex(h); top.material.needsUpdate = true;
+    const H = deedsHeadlines(), h = SG.active && chId() === 'copycat' && !SG.flags.bugle ? 'MASKED "HERO" WRECKS MARKET. WAS IT RAYAN?' : H[bugleI++ % H.length]; storyFlag('bugle'); const top = bugleG.userData.top; top.material.map.dispose(); top.material.map = bugleTex(h); top.material.needsUpdate = true;
     tone(900, .05, 'square', .03, 700); ach('bugle'); return say(`DAILY BUGLE: ${h}`, 4200);
   }
   // voicemail: the phone on the desk has messages from villains you haven't beaten
@@ -8566,7 +8545,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (EV && EV.k === 'st' && EV.st && EV.st.fin) finalStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.cin) cinStep(dt, now);
     ch17Step(dt); partyHud(); cineSkipEl.hidden = !cineOn();
-    if (SG.active && SG.ch === 8 && SG.step === 1 && roofScene && !droneG) spawnDrones();
+    if (SG.active && chId() === 'broker' && stepId() === 'drones' && roofScene && !droneG) spawnDrones();
     if (EV && EV.k === 'cv' && EV.cx && EV.cx.gal && EV.cx.gal.phase === 'fall') galFall(dt, now);
     if (EV && EV.k === 'cv' && EV.cx && EV.cx.gal && EV.cx.gal.phase === 'eat') galEat(dt, now);
     biteStep(dt, now);
@@ -8581,7 +8560,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (galBeaten && roofScene && !roofHelm) buildGalTrophy();
     if (diwaliG && !reduce) diwaliG.children.forEach(o => { if (o.userData.ph !== undefined) o.material.emissiveIntensity = 1 + Math.sin(now / 300 + o.userData.ph) * .6; });
     if (now < achT) return; achT = now + 2000;
-    ACH.forEach(a => { if (!achGot.includes(a[0]) && a[3]()) ach(a[0]); }); achFirst = false; refreshWallMap(); podTint(); ultronFaces(SG.active && SG.ch === 9 && !SG.flags.u3 && !normalView);
+    ACH.forEach(a => { if (!achGot.includes(a[0]) && a[3]()) ach(a[0]); }); achFirst = false; refreshWallMap(); podTint(); ultronFaces(SG.active && chId() === 'ultron' && !SG.flags.u3 && !normalView);
     if (entered && !nightChecked) { nightChecked = true; if (phaseNow() === 'night' && !night && !inWorld) { flipLights(); say('It’s night in Bangalore, so the lights are low. The villains in the lair get bolder after dark.', 4600); } if (diwaliNow()) { buildDiwali(); setTimeout(() => say('Happy Diwali! The room is lit up for the festival.', 4000), 5000); } }
   }
 
@@ -8708,7 +8687,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         const em = eventScene.userData.emitter; if (em) { em.cr.rotation.y += dt * 2; em.cr.scale.setScalar(1 + EV.charge * .6 + (EV.weak > 0 ? .4 : 0)); em.ring.material.opacity = .4 + EV.charge * .6; }
         if (EV.boss) EV.boss.av.g.traverse(o => { if (o.isMesh && o.material.emissive) o.material.emissive.setHex(EV.weak > 0 ? 0x1F7A45 : 0); });
       }
-      if (EV.k === 'inc' && SG.active && SG.ch === 4 && EV.boss && EV.boss.dead <= 0 && EV.boss.hp < EV.boss.max * .2 && !EV.scripted) { EV.scripted = true; say('Doom laughs. The other Earth is already here\u2026', 3000); setTimeout(() => { if (EV && !EV.over) { EV.anchors.forEach(a => { a.hp = 0; a.dead = 999; a.av.g.visible = false; }); endMatch(false); } }, 1500); }
+      if (EV.k === 'inc' && SG.active && chId() === 'incursion' && EV.boss && EV.boss.dead <= 0 && EV.boss.hp < EV.boss.max * .2 && !EV.scripted) { EV.scripted = true; say('Doom laughs. The other Earth is already here\u2026', 3000); setTimeout(() => { if (EV && !EV.over) { EV.anchors.forEach(a => { a.hp = 0; a.dead = 999; a.av.g.visible = false; }); endMatch(false); } }, 1500); }
       if (EV.k === 'inc') {
         EV.waveT -= dt; const foes = EV.units.filter(u => u.team === 'inc' && u.dead <= 0);
         if ((!EV.bossUp || EV.home) && (EV.home ? EV.waveT <= 0 || !foes.some(u => !u.boss) && EV.waveT < 10 : !foes.length || EV.waveT <= 0)) spawnWave();
