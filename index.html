@@ -125,6 +125,16 @@ h1,h2,h3,p{margin:0}
 .sec p{color:var(--muted)}
 .sec p + p{margin-top:8px}
 .card{border:1px solid var(--line);border-radius:18px;padding:18px;margin-top:12px}
+.letterform{margin-top:22px;padding-top:18px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:12px}
+.letterform label{display:block;font-size:14px;font-weight:700;color:var(--ink)}
+.letterform label span{display:inline;font-weight:500;color:var(--muted)}
+.letterform input,.letterform textarea{display:block;margin-top:6px;font:16px/1.45 system-ui,sans-serif;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--tile);color:var(--ink);resize:vertical;width:100%}
+.letterform input:focus,.letterform textarea:focus{outline:2px solid #2B45E0;outline-offset:1px}
+.letterform .btn{align-self:flex-start;background:#2B45E0;color:#FFFFFF}.letterform .btn:disabled{opacity:.6;cursor:wait}
+.letterform .lf-note{font-size:14px}
+.letterform .lf-status{font-size:14px;min-height:1.4em}
+.letterform .lf-status.err{color:#C8102E}
+.letterform .lf-hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 .meta{font-size:14px;color:var(--muted);margin-bottom:6px}
 .pill{display:inline-block;padding:3px 10px;border-radius:999px;background:var(--sun);color:#16181D;font-size:13px;font-weight:600;margin:0 6px 8px 0}
 .row{display:flex;gap:14px;align-items:baseline;padding:12px 0;border-top:1px solid var(--line)}
@@ -739,6 +749,16 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         <a href="https://github.com/RayanUpadhyay" target="_blank" rel="noopener">GitHub</a>
         <a href="https://mandalink.org" target="_blank" rel="noopener">Mandalink</a>
       </div>
+      <form class="letterform" novalidate>
+        <h3 class="display">Leave a letter in the mailbox</h3>
+        <p class="lf-note">Only Rayan reads these. Nothing you write here is posted on the site.</p>
+        <label>Your name <span>(optional)</span><input name="name" maxlength="60" autocomplete="name"></label>
+        <label>Your message<textarea name="message" maxlength="1500" rows="5" required></textarea></label>
+        <label>Your email, if you'd like a reply <span>(optional)</span><input name="email" type="email" maxlength="120" autocomplete="email"></label>
+        <input name="botcheck" class="lf-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <button class="btn alt" type="submit">Post it</button>
+        <p class="lf-status" role="status" aria-live="polite"></p>
+      </form>
     </section>
 
     <section class="sec only-panel" data-s="swim">
@@ -1537,6 +1557,37 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const flag = new THREE.Group(); flag.position.set(3.89, .88, 3.93); contact.add(flag);
   box(.015, .22, .02, mat(0xE4572E), 0, .1, 0, flag); box(.015, .07, .08, mat(0xE4572E), 0, .18, .04, flag);
   box(.22, .01, .14, mat(0xFFFFFF), 3.62, .74, 3.62, contact).rotation.y = .5;
+  // ---------- letters: visitors post one here; it is emailed to Rayan and never shown on the site ----------
+  // MAILBOX_KEY is a Web3Forms access key: go to web3forms.com, enter the email the letters should go to, paste the key it sends
+  const MAILBOX_KEY = '';
+  const sentBefore = () => { try { return +(localStorage.getItem('ru-letters') || 0); } catch (e) { return 0; } };
+  flag.rotation.x = sentBefore() ? 0 : Math.PI / 2;
+  function postLetterAnim(){
+    const env = box(.2, .01, .13, mat(0xFFFFFF), 3.7, .9, 4.25, contact), t0 = performance.now(), fx0 = flag.rotation.x;
+    const step = now => { const k = Math.min(1, (now - t0) / 900); env.position.z = 4.25 - k * .3; env.position.y = .9 - k * .02; env.scale.setScalar(1 - k * .3); flag.rotation.x = fx0 * (1 - Math.min(1, k * 1.4)); if (k < 1) requestAnimationFrame(step); else { contact.remove(env); env.geometry.dispose(); } };
+    requestAnimationFrame(step); [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, .18, 'triangle', .05), 500 + i * 110));
+  }
+  document.addEventListener('submit', async e => {
+    const f = e.target.closest && e.target.closest('.letterform'); if (!f) return; e.preventDefault();
+    const st = f.querySelector('.lf-status'), btn = f.querySelector('button'), say2 = (t, err) => { st.textContent = t; st.classList.toggle('err', !!err); };
+    const fv = n => (f.querySelector(`[name="${n}"]`) || {}).value || '', name = fv('name').trim().slice(0, 60), msg = fv('message').trim().slice(0, 1500), mail = fv('email').trim().slice(0, 120);
+    if (msg.length < 2) return say2('Write something first.', true);
+    if (mail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail)) return say2('That email doesn\u2019t look right. Leave it empty if you don\u2019t want a reply.', true);
+    let last = 0; try { last = +(localStorage.getItem('ru-letter-at') || 0); } catch (er) {}
+    if (Date.now() - last < 60000) return say2('One letter a minute, please. The mailbox is small.', true);
+    if (fv('botcheck')) { f.reset(); return say2('Posted.'); }
+    if (!MAILBOX_KEY) return say2('The mailbox isn\u2019t connected yet. Your letter is still here; try again soon.', true);
+    btn.disabled = true; say2('Posting\u2026');
+    try {
+      const r = await fetch('https://api.web3forms.com/submit', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({ access_key: MAILBOX_KEY, subject: 'A letter in your website mailbox', from_name: 'rayanupadhyay.com mailbox', name: name || 'Someone', email: mail || undefined, message: msg, botcheck: false }) });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.success) throw new Error(j.message || 'HTTP ' + r.status);
+      try { localStorage.setItem('ru-letter-at', String(Date.now())); localStorage.setItem('ru-letters', String(sentBefore() + 1)); } catch (er) {}
+      f.reset(); say2('Posted. The flag on the mailbox is up, so Rayan will see it.'); postLetterAnim();
+    } catch (er) { say2('It didn\u2019t go through (' + er.message + '). Your letter is still here; try again in a bit.', true); }
+    btn.disabled = false;
+  });
 
   // Mandarin scroll: the radical game
   const scroll = new THREE.Group(); scroll.position.set(-4.9, 0, -1.7); scroll.userData.egg = 'radicals'; scene.add(scroll);
@@ -11111,6 +11162,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 
   const keys = {};
   addEventListener('keydown', e => {
+    if (/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) && e.key !== 'Escape') return;
     if (collBox.classList.contains('on')) return;
     if (brief.classList.contains('on')) { if (e.key === 'Escape') showBrief(false); return; }
     if (mvBox.classList.contains('on')) { if (e.key === 'Escape') mvBox.classList.remove('on'); return; }
