@@ -510,7 +510,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 <div class="top">
   <a class="mark" href="#" id="home" aria-label="Rayan Upadhyay"><span>RU</span><b>Rayan Upadhyay</b></a>
   <div class="right">
-    <button class="btn badge" id="badge" type="button" hidden>Secrets 0/12</button>
+    <button class="btn badge" id="badge" type="button" hidden>Secrets 0/13</button>
     <button class="btn" id="worldBack" type="button" hidden>Back to the room</button>
     <button class="btn sbtn" id="soundBtn" type="button" aria-label="Mute sound" aria-pressed="false"></button>
     <button class="btn" id="simpleBtn" type="button">Simple version</button>
@@ -1772,7 +1772,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const inDoor = (x, z) => vaultOpen && x > 4.2 && x <= 5.7 && z >= -.25 && z <= .85;
   const inVault = (x, z) => vaultOpen && x > 5.7 && x <= 8.0 && z >= -1.0 && z <= 1.6;
   const inHall = (x, z) => entered && ((Math.abs(x) < .45 && z > 4.2 && z <= 5.5) || (Math.abs(x) < 1.2 && z > 5.5 && z < 10.3));
-  const valid = (x, z) => inWorld ? zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? blrValid(x, z) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
+  const valid = (x, z) => inWorld ? zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? (SW.roof ? swRoofOK(x, z) : blrValid(x, z)) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
   const region = x => x > 4.9 ? 'vault' : 'room';
   function flyTo(target, dir, done){
     if (inWorld) { const a = dir ? lookAngles(target, dir) : null; return moveCam(target, a ? a.yaw : null, a ? a.pitch : null, 1, done); }
@@ -1821,6 +1821,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     celestial: ['The Celestial', 'Inspired by the MCU, and the idea that the biggest fight should happen over my own city.'],
     lair: ['The lair', 'Inspired by my Batman figure collection, and the idea that every hero needs a secret base.'],
     arcade: ['The back room', 'Inspired by arcades, and by the games I play to switch my brain off after a long week.'],
+    streets: ['Street sweeper', 'Inspired by the comics where the hero’s own city throws up a new villain every week, and he has to know every street to keep up.'],
     binary: ['The full stack', 'Inspired by loving every layer of building things, from the AI model all the way down to the 0s and 1s.']
   };
   const TOTAL = Object.keys(SECRETS).length, found = new Set();
@@ -2513,6 +2514,37 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!cityAir && !A && !web.p && zone === 'city' && pos.y - 1.6 <= G + .1 && !cityPhysics.out) { cityPhysics.out = true; setTimeout(() => { cityPhysics.out = false; }, 1500); enterBlr([pos.x - 20, pos.z - 20, yaw]); }
     drawWeb();
   }
+  // ---------- swinging anywhere in Bangalore ----------
+  // Down in the streets a web sticks to whatever building you're looking at. You swing, let go, fly, and land on a roof
+  // (and walk around up there) or back in the street. Step off a roof edge and you fall.
+  const SW = { on: false, roof: 0, lx: 0, lz: 0 }, bTops = new Map();
+  function bTop(mx, mz){
+    if (!bTops.size && BL.bld) BL.bld.forEach(b => { for (let gx = Math.floor(b.x0 / 16); gx <= Math.floor(b.x1 / 16); gx++) for (let gz = Math.floor(b.z0 / 16); gz <= Math.floor(b.z1 / 16); gz++) { const k = gx + ',' + gz; if (!bTops.has(k)) bTops.set(k, []); bTops.get(k).push(b); } });
+    const L = bTops.get(Math.floor(mx / 16) + ',' + Math.floor(mz / 16)); let t = 0; if (L) for (const b of L) if (mx > b.x0 && mx < b.x1 && mz > b.z0 && mz < b.z1) { const h = (SG.wreck || []).includes(b.key) && !newTL() ? b.h * .22 : b.h; if (h > t) t = h; } return t;
+  }
+  const swBlocked = (mx, mz, feet) => Math.abs(mx) > 262 || Math.abs(mz) > 262 || inTowerZone(mx, mz, 1) || bTop(mx, mz) > feet + .45;
+  const swRoofOK = (x, z) => { const [mx, mz] = toMap(x, z); return !swBlocked(mx, mz, SW.roof); };
+  function swReset(){ SW.on = false; SW.roof = 0; if (zone === 'blr' && web.p) { web.p = null; drawWeb(); } }
+  function webSwingStep(dt){
+    if (EV || A || BL.lvl || DRV.on || Math.abs(BL.off.y) > .01) { if (SW.on || SW.roof) { swReset(); pos.y = 1.6; } return; }
+    if (SW.on) {
+      cityV.y -= 22 * dt; if (web.p) { const f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0); if (f) { cityV.x += -Math.sin(yaw) * f * 12 * dt; cityV.z += -Math.cos(yaw) * f * 12 * dt; } } else { cityV.x *= .996; cityV.z *= .996; }
+      pos.addScaledVector(cityV, dt);
+      // the web reels you in as you hold it, so even from the pavement you're pulled up and away
+      if (web.p) { web.L = Math.max(4, web.L - 6 * dt); tmpV.subVectors(web.p, pos).normalize(); cityV.addScaledVector(tmpV, 9 * dt); }
+      if (web.p) { tmpV.subVectors(pos, web.p); const L = tmpV.length(); if (L > web.L) { tmpV.multiplyScalar(1 / L); pos.copy(web.p).addScaledVector(tmpV, web.L); const vr = cityV.dot(tmpV); if (vr > 0) cityV.addScaledVector(tmpV, -vr); } }
+      if (pos.y > 150) { pos.y = 150; cityV.y = Math.min(0, cityV.y); }
+      // into a wall: back to where you were
+      let [mx, mz] = toMap(pos.x, pos.z); if (swBlocked(mx, mz, pos.y - 1.6)) { pos.x = SW.lx; pos.z = SW.lz; cityV.x *= -.2; cityV.z *= -.2; [mx, mz] = toMap(pos.x, pos.z); }
+      const sup = bTop(mx, mz);
+      if (pos.y - 1.6 <= sup && cityV.y <= 0) { pos.y = sup + 1.6; cityV.set(0, 0, 0); web.p = null; SW.on = false; SW.roof = sup > .3 ? sup : 0; vy = 0; grounded = true; tone(140, .08, 'sine', .05); drawWeb(); }
+    } else if (SW.roof) {
+      const [mx, mz] = toMap(pos.x, pos.z), t = bTop(mx, mz);
+      if (t < SW.roof - .35) { SW.on = true; cityV.set(0, 0, 0); SW.roof = 0; } else pos.y = SW.roof + 1.6;
+    }
+    SW.lx = pos.x; SW.lz = pos.z; drawWeb();
+  }
+  function swJump(){ if (SW.on) return; SW.on = true; SW.roof = 0; cityV.set(-Math.sin(yaw) * 2.5, 7.5, -Math.cos(yaw) * 2.5); tone(420, .08, 'sine', .04, 620); }
   function toRoofTop(teleport){
     web.p = null; cityAir = false; cityV.set(0, 0, 0); zone = 'roof'; vy = 0;
     if (teleport) { pos.set(0, 1.6, -2.4); yaw = 0; pitch = 0; }
@@ -2521,19 +2553,23 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function cityJump(){ if (!cityAir) { cityV.set(-Math.sin(yaw) * 2, 7, -Math.cos(yaw) * 2); cityAir = true; tone(420, .08, 'sine', .04, 620); } }
   // shoot a web: it sticks to whatever building you're looking at (or somewhere up in the sky if you miss)
   function webStart(){
-    if (held !== 'web' || dustedWeapon('web') || !inWorld || (zone !== 'roof' && zone !== 'city') || web.p) return;
+    if (held !== 'web' && inv.includes('web') && !dustedWeapon('web') && inWorld && (zone === 'blr' || zone === 'roof' || zone === 'city') && !EV && !A) hold('web');
+    const street = inWorld && zone === 'blr' && !EV && !A && !BL.lvl && !DRV.on && !BL.cine && Math.abs(BL.off.y) < .01;
+    if (held !== 'web' || dustedWeapon('web') || !inWorld || (zone !== 'roof' && zone !== 'city' && !street) || web.p) return;
     ndc.set(0, 0); ray.setFromCamera(ndc, camera);
     const hit = ray.intersectObjects(BL.bld ? [...new Set(BL.bld.map(b => b.im))] : [], false).find(h => h.distance < 90);
     if (hit) web.p = hit.point.clone(); else { ray.ray.direction.normalize(); web.p = pos.clone().addScaledVector(ray.ray.direction, 26).add(tmpV.set(0, 16, 0)); }
     web.L = pos.distanceTo(web.p) * .92;
+    if (street) { if (!SW.on) { cityV.set(-Math.sin(yaw) * 3, SW.roof ? 3 : 6, -Math.cos(yaw) * 3); SW.on = true; SW.roof = 0; } walkTarget = null; tone(1400, .12, 'triangle', .04, 500); drawWeb(); return; }
     if (zone === 'roof') { zone = 'city'; cityV.set(-Math.sin(yaw) * 3, 2, -Math.cos(yaw) * 3); $('#worldBack').textContent = A ? 'Leave the fight' : 'Back to the rooftop'; }
     cityAir = true; tone(1400, .12, 'triangle', .04, 500);
   }
   function webEnd(){ if (!web.p) return; web.p = null; cityV.y += 2.5; cityV.multiplyScalar(1.08); tone(700, .06, 'sine', .03, 1000); drawWeb(); }
   function drawWeb(){
     if (!web.line) { web.line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(0, 0, 0), V(0, 1, 0)]), new THREE.LineBasicMaterial({ color: 0xF4F4F4 })); web.line.userData.noPick = true; }
-    if (!web.p || !roofScene) { if (web.line.parent) web.line.parent.remove(web.line); return; }
-    if (web.line.parent !== roofScene) roofScene.add(web.line);
+    const wsc = zone === 'blr' ? BL.sc : roofScene;
+    if (!web.p || !wsc) { if (web.line.parent) web.line.parent.remove(web.line); return; }
+    if (web.line.parent !== wsc) wsc.add(web.line);
     const hand = tmpV.set(.3, -.25, -.4).applyQuaternion(camera.quaternion).add(pos);
     web.line.geometry.setFromPoints([hand.clone(), web.p]);
   }
@@ -3976,9 +4012,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (menuBtn.hidden) { menuBtn.hidden = false; povBtn.hidden = false; povBtn.textContent = tpv ? '1st person' : '3rd person'; }
     if (!A) idleView();
     // web-shooters on the rooftop (or down in Bangalore): swinging is available
-    const canSwing = held === 'web' && !dustedWeapon('web') && inWorld && (zone === 'roof' || zone === 'city');
+    const canSwing = (held === 'web' || inv.includes('web') && zone === 'blr') && !dustedWeapon('web') && inWorld && (zone === 'roof' || zone === 'city' || zone === 'blr' && !EV && !BL.lvl && !DRV.on);
     if (swingBtn.hidden === (canSwing && !fine)) swingBtn.hidden = !(canSwing && !fine);
-    if (canSwing && !swingHinted) { swingHinted = true; say(fine ? 'Web-shooters: hold Q to shoot a web and swing into Bangalore. Release to let go.' : 'Web-shooters: hold Swing to shoot a web and swing into Bangalore.', 4200); }
+    if (canSwing && !swingHinted) { swingHinted = true; say(fine ? 'Web-shooters: aim at a building and hold Q to swing. Release to let go; land on any roof. Space jumps off a roof.' : 'Web-shooters: aim at a building and hold Swing. Let go to fly; land on any roof.', 4200); }
   }
   const swingBtn = $('#swingBtn'); let swingHinted = false;
   swingBtn.addEventListener('pointerdown', e => { e.preventDefault(); webStart(); }); ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => swingBtn.addEventListener(ev, () => webEnd()));
@@ -4900,7 +4936,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       inWorld = true; zone = 'event'; falling = false; vy = 0; walkTarget = null; if (!inMap && !inTwr && !inDsp) { pos.set(sx, 1.6, sz); yaw = home ? Math.PI : sz > 0 ? 0 : Math.PI; pitch = -.08; } else if (retry && k === 'br' && (opts.part || 1) === 1) { const [lx, lz] = toLocal(8, 10); pos.set(lx, 1.6, lz); } if (k === 'wwh' && team === 'heroes') yaw = Math.atan2(sx, sz);
       closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = inMap || inTwr || inDsp ? 'Leave the fight' : 'Leave the event'; jumpBtn.hidden = fine; uiZone();
       evHud.hidden = false; $('#evEnd').hidden = true; ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = false); if (inMap || inTwr || inDsp) $('#evSwap').hidden = true; $('#evSp').textContent = `${H.sp}\n(E)`; $('#evSp').hidden = noImprov(hero, k); document.body.classList.add('inevent');
-      say(k === 'st' ? ({ u1: 'Ultron\u2019s drones, in the rain. You\u2019re still hurt, so pick your fights.', u2: 'Five connections keep him alive: three substations and two server racks. Break them all.', u3: 'Three cables feed his body. While they\u2019re plugged in, he heals and shrugs off your hits. Cut them first.', p1: 'Knock each possessed villain out to snap her string. They don\u2019t want to hurt you. She does.', p2: 'Your friends, on her strings. Knock them out to set them free. Watch out: she can get into your head too.', p3: 'She hides behind her puppets. Break every string, then hit her while she\u2019s exposed.', c1: 'Put out the fires (stand in them) and free the people trapped under the stalls (stand next to them).', c2: 'He\u2019s fast and he won\u2019t fight fair. Land 5 hits to wear him down.', c3: 'The Copycat, in a cape he bought online. Beat him.' })[opts.part || 'u1'] : k === 'of' ? 'The last world left is your own room. The Overfit is here, wearing everything he stole. Mix up your attacks: he learns anything you repeat. E improvises something random.' : k === 'br' ? ['Tail the truck. Stay between 6 and 13 metres: any closer and they\u2019ll spot you.', 'Clear out his guards quietly. Their gear is cheap knock-offs, but you\u2019re hurt: one wrong move and you\u2019re done.', 'Floor by floor to the top. You won\u2019t get back up if you go down.', 'The Broker, in a suit built from the wreckage of every battle. Break it apart piece by piece.'][(opts.part || 1) - 1] : k === 'cv' ? `Convergence. Every universe is about to collide. Guard the three anchors and survive until Doom shows up.` : isPvp(k) ? `You’re ${H.name}. First team to ${EVENTS[k].goal} takedowns wins.` : k === 'sw' ? 'Capture the three domain flags: stand in a ring with no enemies inside. First side to 120 points wins.' : k === 'fp' ? 'You’re the Flash. Grab ten glowing timeline shards before Reverse-Flash does. E dashes through anyone in your way.' : k === 'dks' ? 'Darkseid is here. Stay out of the fire pits, beat the Parademons and take him down. Watch out for his Omega Beams.' : k === 'wwh' ? (team === 'hulk' ? 'You’re the Hulk. Smash the heroes and survive until time runs out. Space to leap, E to thunderclap.' : 'Take the Hulk down before time runs out. Stay spread out: his thunderclap hits everyone nearby.') : k === 'inc' ? 'The other Earth is coming. Hold the three golden anchors against the variants pouring out of the rifts, then take down Doom.' : 'Superman is invulnerable. Hold the green Kryptonite emitter to weaken him, then hit him with everything.', 5200);
+      say(k === 'st' ? ({ u1: 'Ultron\u2019s drones, in the rain. You\u2019re still hurt, so pick your fights.', u2: 'Five connections keep him alive: three substations and two server racks. Break them all.', u3: 'Three cables feed his body. While they\u2019re plugged in, he heals and shrugs off your hits. Cut them first.', p1: 'Knock each possessed villain out to snap her string. They don\u2019t want to hurt you. She does.', p2: 'Your friends, on her strings. Knock them out to set them free. Watch out: she can get into your head too.', p3: 'She hides behind her puppets. Break every string, then hit her while she\u2019s exposed.', c1: 'Put out the fires (stand in them) and free the people trapped under the stalls (stand next to them).', c2: 'He\u2019s fast and he won\u2019t fight fair. Land 5 hits to wear him down.', c3: 'The Copycat, in a cape he bought online. Beat him.' })[opts.part || 'u1'] || (SBOSS.find(q => q.id === opts.part) || {}).intro || '' : k === 'of' ? 'The last world left is your own room. The Overfit is here, wearing everything he stole. Mix up your attacks: he learns anything you repeat. E improvises something random.' : k === 'br' ? ['Tail the truck. Stay between 6 and 13 metres: any closer and they\u2019ll spot you.', 'Clear out his guards quietly. Their gear is cheap knock-offs, but you\u2019re hurt: one wrong move and you\u2019re done.', 'Floor by floor to the top. You won\u2019t get back up if you go down.', 'The Broker, in a suit built from the wreckage of every battle. Break it apart piece by piece.'][(opts.part || 1) - 1] : k === 'cv' ? `Convergence. Every universe is about to collide. Guard the three anchors and survive until Doom shows up.` : isPvp(k) ? `You’re ${H.name}. First team to ${EVENTS[k].goal} takedowns wins.` : k === 'sw' ? 'Capture the three domain flags: stand in a ring with no enemies inside. First side to 120 points wins.' : k === 'fp' ? 'You’re the Flash. Grab ten glowing timeline shards before Reverse-Flash does. E dashes through anyone in your way.' : k === 'dks' ? 'Darkseid is here. Stay out of the fire pits, beat the Parademons and take him down. Watch out for his Omega Beams.' : k === 'wwh' ? (team === 'hulk' ? 'You’re the Hulk. Smash the heroes and survive until time runs out. Space to leap, E to thunderclap.' : 'Take the Hulk down before time runs out. Stay spread out: his thunderclap hits everyone nearby.') : k === 'inc' ? 'The other Earth is coming. Hold the three golden anchors against the variants pouring out of the rifts, then take down Doom.' : 'Superman is invulnerable. Hold the green Kryptonite emitter to weaken him, then hit him with everything.', 5200);
       if (k === 'cv') { $('#worldBack').hidden = true; if (opts.forced) say('The portal misfires! Every universe is colliding at once, and you\u2019ve been pulled into the middle of it. There\u2019s no way out but through.', 6000); }
       narrStart();
       if (home) { const bh = instab >= 6 ? 'The Beyonder' : 'Doom'; say(opts.hunted ? `${bh} is waiting in the street outside your house. Go and beat him, and hold the anchors.` : `${bh} is waiting in the street outside your house. Beat him there and hold the anchors.`, 5200); EV.shake = .8; tone(50, 1.5, 'sawtooth', .08, 25); }
@@ -5019,7 +5055,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function checkGoal(){ if (scored(EV.k) && !EV.over) { const t = Object.keys(EV.score).find(t => EV.score[t] >= EVENTS[EV.k].goal); if (t) endMatch(t === EV.team); } }
   function endMatch(won){
-    if (EV && !EV.over) { storyFlag('ev:' + EV.k); if (won) storyFlag('evwin:' + EV.k); if (won && EV.k === 'br') storyFlag('br' + EV.part); if (won && EV.k === 'st') storyFlag(EV.st.part); }
+    if (EV && !EV.over) { storyFlag('ev:' + EV.k); if (won) storyFlag('evwin:' + EV.k); if (won && EV.k === 'br') storyFlag('br' + EV.part); if (won && EV.k === 'st') { storyFlag(EV.st.part); sbWon(EV.st.part); } }
     if (EV && EV.k === 'st' && EV.st && EV.st.part === 'c3' && won && !EV.over) { EV.over = true; if (SG.active && !SG.choice.mask) return maskChoice(); return lpStart(); }
     if (EV && EV.k === 'st' && EV.st && EV.st.part === 'l4' && won && !EV.over) { EV.over = true; return deathStart(); }
     if (EV && EV.k === 'st' && EV.st && EV.st.part === 'n3' && won && !EV.over) { EV.over = true; return finalStart(); }
@@ -5039,7 +5075,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (won && (scarOn || altOn)) { if (scarOn) setScar(false); if (altOn) setAlt(false); setTimeout(() => say('You stopped the incursion. Your Earth, and your room, are whole again.', 4200), 2500); } }
     if (!evDone.includes(EV.k)) { evDone.push(EV.k); try { localStorage.setItem('ru-evdone', JSON.stringify(evDone)); } catch (e) {} }
     if (EV.solo) { const r0 = soloRec[EV.k] || (soloRec[EV.k] = { w: 0, l: 0 }); r0[won ? 'w' : 'l']++; try { localStorage.setItem('ru-evsolo', JSON.stringify(soloRec)); } catch (e) {} }
-    const title = EV.k === 'st' ? (won ? ({ u1: 'The drones are down, but every screen is still watching.', u2: 'His connections are cut. The screens go dark.', u3: 'You pulled the plug. Ultron is offline.', p1: 'The pod villains are free of her strings.', p2: 'Your friends snap out of it.', p3: 'Her hold breaks. Everyone is free.', c1: 'The market is safe. He ran for the rooftops.', l1: 'Your street is clear.', m1: 'Clone Two is down.', m2: 'Clone Three is down.', m3: 'Clones Four and Five are down.', n1: 'The sixth clone stops fighting.', n2: 'The market is safe.', y1: 'You found the real people.', y2: 'The servers are dead.', y3: 'The replays stop.', d1: 'The street runs forward again.', d2: 'The guards are down. The clock is still running.', d3: 'Ultron\u2019s ghost is gone.', s1: 'The market drains.', s2: 'The street is a street again.', z1: 'The failed copies stop moving.', z2: 'The copies fall apart.', e1: 'Thanos drifts away into the dark.', e2: 'The outpost goes quiet.', e3: 'The Overfit powers down for good.', k1: 'He\u2019s running for the market.', v1: 'Level one is clear. The vault goes further down.', x1: 'The market is clear. The signal is coming from the data centre.', x2: 'The signal is dead. He’s on Broker Tower.', v2: 'Level two is clear. One more.', w2: 'The gym is quiet. The lights keep dying.', w3: 'The offices are dark. One floor left.', l2: 'Everyone got out of the market.', l3: 'The Broker is finished. But the clone is already gone.', c2: 'You caught up with him.' })[EV.st.part] || 'Done.' : 'You\u2019re too hurt to keep going. Rest, then try again.') : EV.k === 'of' ? (won ? 'The Overfit failed to generalise. Every world is coming back.' : 'The Overfit learned everything.') : EV.k === 'br' ? (won ? ['You followed the trucks to a warehouse by the lake.', 'The Broker is auctioning multiverse weapons tonight.', 'You made it to the roof.', 'The Broker is finished.'][EV.part - 1] : 'You\u2019re too hurt to keep going. Rest, then try again.') : EV.k === 'cv' ? (won ? 'You beat Galactus!' : EV.cx && EV.cx.gal ? 'Galactus ate the multiverse.' : 'Everything collided, and nothing was left standing.') : isPvp(EV.k) ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'sw' ? (won ? 'Battleworld is free! The Rebels hold the domains.' : 'Doom\u2019s Legion holds Battleworld.') : EV.k === 'fp' ? (won ? 'Timeline restored!' : 'Reverse-Flash wins. The timeline stays broken.') : EV.k === 'dks' ? (won ? 'Darkseid falls! Apokolips retreats.' : 'Darkseid is. And Darkseid wins.') : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : endFight ? 'The Beyonder wins. Everything goes white\u2026' : 'The two Earths are about to collide\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
+    const title = EV.k === 'st' ? (won ? ({ u1: 'The drones are down, but every screen is still watching.', u2: 'His connections are cut. The screens go dark.', u3: 'You pulled the plug. Ultron is offline.', p1: 'The pod villains are free of her strings.', p2: 'Your friends snap out of it.', p3: 'Her hold breaks. Everyone is free.', c1: 'The market is safe. He ran for the rooftops.', l1: 'Your street is clear.', m1: 'Clone Two is down.', m2: 'Clone Three is down.', m3: 'Clones Four and Five are down.', n1: 'The sixth clone stops fighting.', n2: 'The market is safe.', y1: 'You found the real people.', y2: 'The servers are dead.', y3: 'The replays stop.', d1: 'The street runs forward again.', d2: 'The guards are down. The clock is still running.', d3: 'Ultron\u2019s ghost is gone.', s1: 'The market drains.', s2: 'The street is a street again.', z1: 'The failed copies stop moving.', z2: 'The copies fall apart.', e1: 'Thanos drifts away into the dark.', e2: 'The outpost goes quiet.', e3: 'The Overfit powers down for good.', k1: 'He\u2019s running for the market.', v1: 'Level one is clear. The vault goes further down.', x1: 'The market is clear. The signal is coming from the data centre.', x2: 'The signal is dead. He’s on Broker Tower.', v2: 'Level two is clear. One more.', w2: 'The gym is quiet. The lights keep dying.', w3: 'The offices are dark. One floor left.', l2: 'Everyone got out of the market.', l3: 'The Broker is finished. But the clone is already gone.', c2: 'You caught up with him.' })[EV.st.part] || (SBOSS.find(q => q.id === EV.st.part) || {}).win || 'Done.' : 'You\u2019re too hurt to keep going. Rest, then try again.') : EV.k === 'of' ? (won ? 'The Overfit failed to generalise. Every world is coming back.' : 'The Overfit learned everything.') : EV.k === 'br' ? (won ? ['You followed the trucks to a warehouse by the lake.', 'The Broker is auctioning multiverse weapons tonight.', 'You made it to the roof.', 'The Broker is finished.'][EV.part - 1] : 'You\u2019re too hurt to keep going. Rest, then try again.') : EV.k === 'cv' ? (won ? 'You beat Galactus!' : EV.cx && EV.cx.gal ? 'Galactus ate the multiverse.' : 'Everything collided, and nothing was left standing.') : isPvp(EV.k) ? `${E.teams[won ? EV.team : other]} win!` : EV.k === 'sw' ? (won ? 'Battleworld is free! The Rebels hold the domains.' : 'Doom\u2019s Legion holds Battleworld.') : EV.k === 'fp' ? (won ? 'Timeline restored!' : 'Reverse-Flash wins. The timeline stays broken.') : EV.k === 'dks' ? (won ? 'Darkseid falls! Apokolips retreats.' : 'Darkseid is. And Darkseid wins.') : EV.k === 'wwh' ? (won === (EV.team === 'hulk') ? 'Hulk is strongest one there is!' : 'The heroes brought the Hulk down!') : EV.k === 'inc' ? (won ? 'Incursion stopped. Both universes survive!' : endFight ? 'The Beyonder wins. Everything goes white\u2026' : 'The two Earths are about to collide\u2026') : won ? 'Superman has fallen. The Regime is broken!' : 'The Regime holds\u2026 for now.';
     $('#evEndT').textContent = nmT(title); $('#evEndS').textContent = `Takedowns ${EV.kos} · Times down ${EV.deaths} · Damage ${fmtN(EV.dmg)}. ${EV.solo ? soloLine(EV.k) + '.' : mq ? 'Global: ' + lbLine(EV.k) : ''}`;
     const outroT = narrOutro(won), E0 = EV; setTimeout(() => { if (!EV || EV !== E0) return; if ((E0.inMap || E0.inTwr || E0.inDsp) && won) { BL.lastWon = true; TWR.lastWon = true; DSP.lastWon = true; return stopEvent(); } $('#evEnd').hidden = false; [523, 659, 784].forEach((f, i) => setTimeout(() => tone(won ? f : f / 2, .2, 'triangle', .05), i * 110)); }, outroT);
   }
@@ -6733,7 +6769,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function stSetup(part){
     const S = EV.st = { part, trick: 0, possT: 12, wave: 0, fires: [], people: [], tags: 0, ready: false }, add = (h, x, z) => { const u = addUnit({ hero: h, team: 'en' }); u.x = x; u.z = z; if (S.ready) { u.hp = u.max = Math.round(u.max * EV.foeHp); drawTag(u); } if (h === 'udrone') droneAv(u); return u; }, ring = (n, R) => Array.from({ length: n }, (_, i) => [Math.cos(i / n * Math.PI * 2) * R, Math.sin(i / n * Math.PI * 2) * R - 4]);
     S.add = add; S.ring = ring;
-    stSetup2(part); zSetup(part); kSetup(part); vSetup(part); xSetup(part); actSetup(part); a5Setup(part);
+    stSetup2(part); sbSetup(part); zSetup(part); kSetup(part); vSetup(part); xSetup(part); actSetup(part); a5Setup(part);
     if (part === 'u1') S.wave = 0;
     if (part === 'u2') { S.targets = (EV.inMap ? U2_TARGETS.map(([x, z, h]) => [...toLocal(x, z), h]) : [[-16, -12, 'ustation'], [16, -12, 'ustation'], [0, -20, 'ustation'], [-12, 10, 'userver'], [12, 10, 'userver']]).map(([x, z, h]) => { const u = add(h, x, z); staticAv(u, h); return u; }); S.droneT = 2; }
     if (part === 'u3') { const b = add('ultronx', 0, -14); ultronAv(b); b.boss = 1; EV.boss = b; S.cables = [[-12, -18], [12, -18], [0, -24]].map(([x, z]) => { const u = add('ucable', x, z); staticAv(u, 'ucable'); return u; }); S.cableLine = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xFF3030 })); eventScene.add(S.cableLine); for (let i = 0; i < 3; i++) add('udrone', (i - 1) * 6, -8); }
@@ -6785,7 +6821,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if ((P === 'm3' || P === 'n2') && !alive2(() => true).length && !EV.over) endMatch(true);
     if (P === 'n1' && !S.stop && EV.boss && EV.boss.dead <= 0 && EV.boss.hp < EV.boss.max * .5 && !EV.over && !EV.intro) { S.stop = 1; EV.boss.stun = 999; endMatch(true); }
     if (P === 'n3' && !EV.over) repStep(dt);
-    stStep2(dt, t, P, S, alive2); zStep(dt, P, S, alive2); kStep(dt, P, S); vStep(dt, P, S, alive2); xStep(dt, P, S, alive2);
+    stStep2(dt, t, P, S, alive2); sbStep(dt, t, P, S, alive2); zStep(dt, P, S, alive2); kStep(dt, P, S); vStep(dt, P, S, alive2); xStep(dt, P, S, alive2);
     if (P === 'l4' && !S.impaled && EV.boss && EV.boss.dead <= 0 && EV.boss.hp < EV.boss.max * .35 && !EV.over && !EV.intro) lastStand();
     if (P === 'c1' || P === 'l2') {
       S.fires.forEach(f => { if (f.out) return; f.g.children.forEach((c, i) => { if (c.isMesh) c.scale.y = 1 + Math.sin(t * 8 + i) * .2; }); if (Math.hypot(pos.x - f.x, pos.z - f.z) < 1.8) { f.t += dt; if (f.t > 2) { f.out = true; f.g.visible = false; say(`Fire out. ${S.fires.filter(q => !q.out).length} left.`, 1600); tone(300, .3, 'sine', .04, 120); } } else f.t = Math.max(0, f.t - dt); });
@@ -6868,7 +6904,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function stHud(){
     const S = EV.st, P = S.part, n = f => EV.units.filter(u => u.team === 'en' && u.dead <= 0 && f(u)).length, tag = (EV.lockT > 0 ? ' \u00B7 <b style="color:#B07CFF">YOU CAN\u2019T MOVE</b>' : '') + (EV.mindT > 0 ? ' \u00B7 <b style="color:#B07CFF">CONTROLS REVERSED</b>' : '') + ' \u00B7 <small>recovering</small>';
-    return (P === 'u1' ? `Wave ${S.wave}/3 \u00B7 enemies left ${n(() => true)}` : P === 'u2' ? `Connections left ${S.targets.filter(u => u.dead <= 0).length}/5` : P === 'u3' ? (S.cables.some(c => c.dead <= 0) ? `Cables left ${S.cables.filter(c => c.dead <= 0).length}/3` : 'Take him apart') : P === 'p3' ? (S.exposed > 0 ? '<b style="color:#FFC93C">SHE\u2019S EXPOSED</b>' : `Puppets shielding her: ${n(u => u.puppet)}`) : P[0] === 'p' ? `Puppets left ${n(u => u.puppet)}` : P === 'y1' ? `Real people found ${S.found}/3 \u00B7 fakes loose ${n(() => true)}` : P === 'y2' ? `Servers left ${S.targets.filter(u => u.dead <= 0).length}/3` : P === 'y3' ? `Replay ${S.wave}/3` : P === 'y4' ? 'Stop the Synthetic' : P === 'd1' ? `Wave ${S.wave}/2 \u00B7 left ${n(() => true)}` : P === 'd2' ? `Guards left ${n(() => true)}` : P === 'd3' ? 'You can see it coming' : P === 'd4' ? 'Stop the Deadline' : P === 's1' || P === 's2' ? `Left ${n(() => true)}` : P === 'e1' || P === 'e2' || P === 'e3' ? 'Get past them and keep going' : P[0] === 'v' || P === 'w2' || P === 'w3' ? `Security clones left ${n(() => true)} \u00B7 on your own` : P === 'w1' ? '<b style="color:#FF6A4E">KILL SWITCH ARMED</b> \u00B7 you can\u2019t save them' : P === 'x1' || P === 'x2' ? `Doombots left ${n(() => true)}` : P === 'o1' ? 'Stand on the pages: he can\u2019t rewrite them' : /^q\d$/.test(P) ? `Ink left ${n(() => true)}` : P === 'x3' ? 'Only the real Doom doesn\u2019t spark \u00B7 the Earths are falling' : P === 'w4' ? 'End the Broker' : P === 'k1' ? 'Hold him in your street' : P === 'k2' ? 'Keep him away from the market' : P === 'k3' ? (S.edge ? '<b>DRIVE HIM OFF THE EDGE</b>' : 'Wear him down') : P === 'z1' ? `Pieces left ${n(() => true)} \u00B7 they learn whoever hit them last` : P === 'z2' ? `Copies left ${n(() => true)} \u00B7 nobody fights their own copy` : P === 'z3' ? (S.final ? '<b>HIT IT WITH ALL THREE</b>' : `Adapted to: ${PARTY.map(h => `${esc(nmT(HEROES[h].name))} ${Math.round(S.res[h] * 100)}%`).join(' \u00B7 ')}`) : P === 's3' ? ({ shield: '<b>SHIELD</b>: only the hero can break it', hit: '<b>BIG HIT</b>: Echo, block it', scramble: '<b>SCRAMBLE</b>: Copycat, copy it (E)', open: '<b>IT\u2019S OPEN</b>' })[S.ph] : P === 'm1' || P === 'm2' ? 'Stop the clone' : P === 'm3' ? `Clones left ${n(() => true)}` : P === 'n1' ? 'Stop it. Don\u2019t kill it.' : P === 'n2' ? `The buyers\u2019 men left ${n(() => true)}` : P === 'n3' ? `Replicator cores left ${S.cores.filter(u => u.dead <= 0).length}/3` : P === 'l1' ? `The Broker\u2019s men left ${n(() => true)}` : P === 'l3' ? 'Stop the Broker' : P === 'l4' ? (EV.laststand ? '<b style="color:#FF6A4E">LAST STAND</b>' : `Stop the clone \u00B7 the dam holds ${Math.max(0, Math.ceil(S.dam == null ? 150 : S.dam))}s`) : P === 'c1' || P === 'l2' ? `${P === 'l2' ? `Men left ${n(() => true)} \u00B7 ` : ''}Fires out ${S.fires.filter(f => f.out).length}/4 \u00B7 people freed ${S.people.filter(q => q.free).length}/3` : P === 'c2' ? `Caught him ${S.tags}/5` : 'Beat the Copycat') + tag;
+    return (P === 'u1' ? `Wave ${S.wave}/3 \u00B7 enemies left ${n(() => true)}` : P === 'u2' ? `Connections left ${S.targets.filter(u => u.dead <= 0).length}/5` : P === 'u3' ? (S.cables.some(c => c.dead <= 0) ? `Cables left ${S.cables.filter(c => c.dead <= 0).length}/3` : 'Take him apart') : P === 'p3' ? (S.exposed > 0 ? '<b style="color:#FFC93C">SHE\u2019S EXPOSED</b>' : `Puppets shielding her: ${n(u => u.puppet)}`) : P[0] === 'p' ? `Puppets left ${n(u => u.puppet)}` : P === 'y1' ? `Real people found ${S.found}/3 \u00B7 fakes loose ${n(() => true)}` : P === 'y2' ? `Servers left ${S.targets.filter(u => u.dead <= 0).length}/3` : P === 'y3' ? `Replay ${S.wave}/3` : P === 'y4' ? 'Stop the Synthetic' : P === 'd1' ? `Wave ${S.wave}/2 \u00B7 left ${n(() => true)}` : P === 'd2' ? `Guards left ${n(() => true)}` : P === 'd3' ? 'You can see it coming' : P === 'd4' ? 'Stop the Deadline' : P === 's1' || P === 's2' ? `Left ${n(() => true)}` : P === 'e1' || P === 'e2' || P === 'e3' ? 'Get past them and keep going' : P[0] === 'v' || P === 'w2' || P === 'w3' ? `Security clones left ${n(() => true)} \u00B7 on your own` : P === 'w1' ? '<b style="color:#FF6A4E">KILL SWITCH ARMED</b> \u00B7 you can\u2019t save them' : P === 'x1' || P === 'x2' ? `Doombots left ${n(() => true)}` : P === 'o1' ? 'Stand on the pages: he can\u2019t rewrite them' : /^q\d$/.test(P) ? `Ink left ${n(() => true)}` : P === 'x3' ? 'Only the real Doom doesn\u2019t spark \u00B7 the Earths are falling' : P === 'w4' ? 'End the Broker' : P === 'k1' ? 'Hold him in your street' : P === 'k2' ? 'Keep him away from the market' : P === 'k3' ? (S.edge ? '<b>DRIVE HIM OFF THE EDGE</b>' : 'Wear him down') : P === 'z1' ? `Pieces left ${n(() => true)} \u00B7 they learn whoever hit them last` : P === 'z2' ? `Copies left ${n(() => true)} \u00B7 nobody fights their own copy` : P === 'z3' ? (S.final ? '<b>HIT IT WITH ALL THREE</b>' : `Adapted to: ${PARTY.map(h => `${esc(nmT(HEROES[h].name))} ${Math.round(S.res[h] * 100)}%`).join(' \u00B7 ')}`) : P === 's3' ? ({ shield: '<b>SHIELD</b>: only the hero can break it', hit: '<b>BIG HIT</b>: Echo, block it', scramble: '<b>SCRAMBLE</b>: Copycat, copy it (E)', open: '<b>IT\u2019S OPEN</b>' })[S.ph] : P === 'm1' || P === 'm2' ? 'Stop the clone' : P === 'm3' ? `Clones left ${n(() => true)}` : P === 'n1' ? 'Stop it. Don\u2019t kill it.' : P === 'n2' ? `The buyers\u2019 men left ${n(() => true)}` : P === 'n3' ? `Replicator cores left ${S.cores.filter(u => u.dead <= 0).length}/3` : P === 'l1' ? `The Broker\u2019s men left ${n(() => true)}` : P === 'l3' ? 'Stop the Broker' : P === 'l4' ? (EV.laststand ? '<b style="color:#FF6A4E">LAST STAND</b>' : `Stop the clone \u00B7 the dam holds ${Math.max(0, Math.ceil(S.dam == null ? 150 : S.dam))}s`) : P === 'c1' || P === 'l2' ? `${P === 'l2' ? `Men left ${n(() => true)} \u00B7 ` : ''}Fires out ${S.fires.filter(f => f.out).length}/4 \u00B7 people freed ${S.people.filter(q => q.free).length}/3` : P === 'c2' ? `Caught him ${S.tags}/5` : S.sb ? `Beat ${S.sb.B.name}${S.sb.mad ? ' · he’s angry now' : ''}` : 'Beat the Copycat') + tag;
   }
   function finaleCredits(){
     setTimeout(() => { if (lastComic) { scene.remove(lastComic); disposeDeep(lastComic); lastComic = null; } exitNormal(); placeMask(true); say('It was just a story. Probably. There’s a cheap mask on your floor that wasn’t there before.', 5200); }, 900);
@@ -6888,6 +6924,92 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // sprint) from place to place, and each fight starts where you find it. Whichever spot you're fighting in is moved to
   // the origin (the whole map shifts under you), so the fight code keeps working in its own little coordinates.
   const DIST = { home: { x: 0, z: 0, name: 'your street' }, lake: { x: -110, z: -110, name: 'the warehouse by the lake' }, tower: { x: 110, z: -110, name: 'Broker Tower' }, data: { x: 110, z: 110, name: 'the data centre' }, theatre: { x: -110, z: 110, name: 'the old theatre' }, market: { x: 0, z: 110, name: 'the market' } };
+  // ======================= Street bosses: six new villains loose in Bangalore =======================
+  // Each one waits in its own patch of the city under a red beacon you can see from far off. Walk up and press F (or tap
+  // Fight). They are story-style fights in the real streets, each with one trick of its own. Beaten ones turn green;
+  // you can always go back for a rematch.
+  OUTFITS.sb_gridlock = { hero: 1, c1: '#FF8A1E', c2: '#16181D', gloves: 1, mask: 'helmet', stripes: 1 };
+  OUTFITS.sb_monsoon = { hero: 1, c1: '#1E3A5A', c2: '#3CB0A8', hair: 'long', hairCol: '#C9D8E8', cape: 1, gloves: 1, mask: 'hood' };
+  OUTFITS.sb_static = { hero: 1, c1: '#16181D', c2: '#3CE8E8', gloves: 1, mask: 'visor', emblem: 'bolt' };
+  OUTFITS.sb_smog = { hero: 1, c1: '#4A5A3A', c2: '#2A2D33', gloves: 1, mask: 'helmet' };
+  OUTFITS.sb_pothole = { hero: 1, c1: '#5A4632', c2: '#8A8F99', skin: '#7A5A3A', hair: 'bald', bare: 1 };
+  OUTFITS.sb_rust = { hero: 1, c1: '#8A4A1E', c2: '#5A5E68', gloves: 1, metal: 1, mask: 'helmet', glow: 1 };
+  HEROES.sb_gridlock = { name: 'Gridlock', outfit: 'sb_gridlock', hp: 820, kind: 'boss', bk: .35, dmg: 9, range: 2.6, cd: 1.1, speed: 3.6, r: .8, scale: 1.4 };
+  HEROES.sb_monsoon = { name: 'Monsoon', outfit: 'sb_monsoon', hp: 620, kind: 'ranged', dmg: 6, cd: .9, col: 0x3CB0E8, speed: 3.8, r: .6, scale: 1.1 };
+  HEROES.sb_static = { name: 'Static', outfit: 'sb_static', hp: 560, kind: 'boss', bk: .45, dmg: 7, range: 2.3, cd: .6, speed: 6.2, r: .6 };
+  HEROES.sb_smog = { name: 'The Smog', outfit: 'sb_smog', hp: 700, kind: 'ranged', dmg: 5, cd: 1.1, col: 0x9CFF7A, speed: 3.4, r: .7, scale: 1.15 };
+  HEROES.sb_pothole = { name: 'Pothole', outfit: 'sb_pothole', hp: 950, kind: 'boss', bk: .3, dmg: 11, range: 2.8, cd: 1.3, speed: 3.2, r: .9, scale: 1.55 };
+  HEROES.sb_rust = { name: 'Rustbolt', outfit: 'sb_rust', hp: 760, kind: 'ranged', dmg: 7, cd: .8, col: 0xFF8A2E, speed: 3, r: .8, scale: 1.3 };
+  const SBOSS = [
+    { id: 'b1', hero: 'sb_gridlock', at: [192, 0], name: 'Gridlock', mins: ['kguard', 'kguard'], intro: 'Gridlock: every jam in Bangalore, in one body. When he lowers his head, get out of the way.', win: 'Gridlock is down. Somewhere, a signal turns green.' },
+    { id: 'b2', hero: 'sb_monsoon', at: [-27, 165], name: 'Monsoon', mins: [], intro: 'Monsoon pulls the clouds down onto the street. Lightning lands where the rings glow, so keep moving.', win: 'The storm breaks. The sun comes out over the puddles.' },
+    { id: 'b3', hero: 'sb_static', at: [220, 192], name: 'Static', mins: ['udrone', 'udrone', 'udrone'], intro: 'Static rides the power lines. He blinks behind you and lets go a shock, so watch for the blue ring.', win: 'Static fizzles out. The street lights steady.' },
+    { id: 'b4', hero: 'sb_smog', at: [-192, 220], name: 'The Smog', mins: ['kguard', 'kguard', 'kguard'], intro: 'The Smog breathes out green clouds. Don’t stand in them.', win: 'The air clears. You can see the hills again.' },
+    { id: 'b5', hero: 'sb_pothole', at: [55, -192], name: 'Pothole', mins: [], intro: 'Pothole leaps and lands like a road collapsing. Get out of the ring before he comes down.', win: 'Pothole is down. Someone is already filling him in with tar.' },
+    { id: 'b6', hero: 'sb_rust', at: [-220, -27], name: 'Rustbolt', mins: ['uscrap', 'udrone'], intro: 'Rustbolt builds an army out of scrap. Take him down before the yard fills up.', win: 'Rustbolt falls apart into a heap of bolts and old bicycle chains.' }
+  ];
+  SBOSS.forEach(B => { DIST['sb' + B.id] = { x: B.at[0], z: B.at[1], name: B.name }; ST_TITLE[B.id] = B.name; });
+  ST_FRAIL.b = [1.1, 1, .9];
+  let SBK = {}; try { SBK = JSON.parse(localStorage.getItem('ru-sboss') || '{}'); } catch (e) {}
+  function sbSetup(part){
+    const B = SBOSS.find(q => q.id === part); if (!B) return; const S = EV.st, b = addUnit({ hero: B.hero, team: 'en' }); b.x = 0; b.z = -12; b.boss = 1; EV.boss = b;
+    S.sb = { B, b, t: 3.5, marks: [], tick: 0, mad: false }; B.mins.forEach((h, i) => { const a = i / B.mins.length * 6.28; S.add(h, Math.cos(a) * 12, Math.sin(a) * 12 - 4); });
+  }
+  function sbMark(x, z, r, col, life, hit, fill){
+    const Z = EV.st.sb, par = EV.inMap && BL.partG ? BL.partG : eventScene, g = new THREE.Group(); g.position.set(x, .07, z); par.add(g);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(r * .9, r, 40), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .85, side: THREE.DoubleSide, depthWrite: false })); ring.rotation.x = -Math.PI / 2; g.add(ring);
+    const disc = new THREE.Mesh(new THREE.CircleGeometry(r, 40), new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: fill ? .3 : .22, side: THREE.DoubleSide, depthWrite: false })); disc.rotation.x = -Math.PI / 2; disc.scale.setScalar(fill ? 1 : .01); g.add(disc);
+    Z.marks.push({ g, disc, t: life, life, x, z, r, hit, fill });
+  }
+  function sbStep(dt, t, P, S, alive2){
+    const Z = S.sb; if (!Z) return; const b = Z.b, me = [pos.x, pos.z], near = (x, z, r) => Math.hypot(me[0] - x, me[1] - z) < r;
+    Z.marks.forEach(m => { m.t -= dt; if (!m.fill) m.disc.scale.setScalar(Math.max(.01, 1 - m.t / m.life)); if (m.t <= 0 && !m.done) { m.done = true; if (m.hit && b.dead <= 0) m.hit(m); } });
+    Z.marks = Z.marks.filter(m => { if (m.t > (m.linger ? -m.linger : 0)) return true; if (m.g.parent) m.g.parent.remove(m.g); disposeDeep(m.g); return false; });
+    if (b.dead > 0 || EV.over) return;
+    if (!Z.mad && b.hp < b.max * .5) { Z.mad = true; say(`${Z.B.name} is hurt, and angry. Faster now.`, 2400); tone(110, .5, 'sawtooth', .05, 70); }
+    const cdm = Z.mad ? .65 : 1;
+    // Gridlock: winds up, then charges in a straight line
+    if (P === 'b1') {
+      if (Z.dash) { const D = Z.dash; D.t -= dt; b.stun = .2; b.x += D.dx * 24 * dt; b.z += D.dz * 24 * dt; if (!D.hit && near(b.x, b.z, 1.8)) { D.hit = true; hurtMe(14, b); const k = 2.5; const nx = pos.x + D.dx * k, nz = pos.z + D.dz * k; if (valid(nx, nz)) { pos.x = nx; pos.z = nz; } tone(90, .3, 'sawtooth', .05); } if (D.t <= 0) Z.dash = null; }
+      else if ((Z.t -= dt) <= 0) { Z.t = 6.5 * cdm; const dx = me[0] - b.x, dz = me[1] - b.z, d = Math.hypot(dx, dz) || 1; b.stun = 1; b.yaw = Math.atan2(dx, dz); tone(70, .9, 'sawtooth', .04, 160);
+        for (let k = 1; k <= 6; k++) sbMark(b.x + dx / d * k * 3, b.z + dz / d * k * 3, 1.1, 0xFF6A1E, .9, null, true);
+        setTimeout(() => { if (EV && EV.st === S && b.dead <= 0) Z.dash = { dx: dx / d, dz: dz / d, t: .85, hit: false }; }, 900); }
+    }
+    // Monsoon: lightning wherever the rings glow
+    if (P === 'b2' && (Z.t -= dt) <= 0) { Z.t = 3.4 * cdm; const n = Z.mad ? 4 : 3; for (let i = 0; i < n; i++) { const a = Math.random() * 6.28, r = i ? 2.5 + Math.random() * 3 : 0; sbMark(me[0] + Math.cos(a) * r, me[1] + Math.sin(a) * r, 2.3, 0x9FD8FF, 1.25, m => { const bolt = new THREE.Mesh(new THREE.CylinderGeometry(.12, .35, 40, 6), new THREE.MeshBasicMaterial({ color: 0xE8F4FF })); bolt.position.y = 20; m.g.add(bolt); m.linger = .18; tone(60, .5, 'sawtooth', .06, 30); if (near(m.x, m.z, m.r)) hurtMe(12, b); }); } }
+    // Static: blinks behind you, then a shock ring
+    if (P === 'b3' && (Z.t -= dt) <= 0) { Z.t = 5 * cdm; const bx = pos.x + Math.sin(yaw) * 2.4, bz = pos.z + Math.cos(yaw) * 2.4; b.x = bx; b.z = bz; b.stun = .7; tone(1800, .15, 'square', .04, 300); if (!Z.told) { Z.told = 1; say('He’s behind you!', 1400); }
+      sbMark(bx, bz, 3, 0x3CE8E8, .75, m => { tone(220, .2, 'square', .05); if (near(m.x, m.z, m.r)) hurtMe(9, b); }); }
+    // The Smog: poison clouds that hang about
+    if (P === 'b4') { if ((Z.t -= dt) <= 0) { Z.t = 4.2 * cdm; const par = EV.inMap && BL.partG ? BL.partG : eventScene, cl = new THREE.Mesh(new THREE.SphereGeometry(3, 16, 10), new THREE.MeshBasicMaterial({ color: 0x8CE860, transparent: true, opacity: .32, depthWrite: false })); cl.scale.y = .5; cl.position.set(me[0], .8, me[1]); par.add(cl); (Z.clouds = Z.clouds || []).push({ m: cl, t: 7 }); tone(150, .6, 'sine', .03, 90); }
+      (Z.clouds || []).forEach(c => { c.t -= dt; c.m.material.opacity = Math.min(.32, c.t * .2); }); Z.clouds = (Z.clouds || []).filter(c => { if (c.t > 0) return true; if (c.m.parent) c.m.parent.remove(c.m); disposeDeep(c.m); return false; });
+      if ((Z.tick -= dt) <= 0) { Z.tick = .6; if (Z.clouds.some(c => near(c.m.position.x, c.m.position.z, 3))) { hurtMe(4, b); if (!Z.told) { Z.told = 1; say('Get out of the smog!', 1400); } } } }
+    // Pothole: leaps up and comes down on you
+    if (P === 'b5') { if (Z.leap) { const L = Z.leap; L.t += dt; const f = Math.min(1, L.t / L.dur); b.x = L.a[0] + (L.b[0] - L.a[0]) * f; b.z = L.a[1] + (L.b[1] - L.a[1]) * f; b.stun = .3; if (b.av) b.av.g.position.y = Math.sin(f * Math.PI) * 7; if (f >= 1) { if (b.av) b.av.g.position.y = 0; Z.leap = null; } }
+      else if ((Z.t -= dt) <= 0) { Z.t = 6 * cdm; const tx = me[0], tz = me[1]; Z.leap = { a: [b.x, b.z], b: [tx, tz], t: 0, dur: 1.15 }; tone(80, .4, 'sawtooth', .04, 200);
+        sbMark(tx, tz, 4.2, 0xFFC93C, 1.15, m => { tone(55, .6, 'sawtooth', .07, 30); if (near(m.x, m.z, m.r)) { hurtMe(16, b); const dx = pos.x - m.x, dz = pos.z - m.z, d = Math.hypot(dx, dz) || 1, nx = pos.x + dx / d * 3, nz = pos.z + dz / d * 3; if (valid(nx, nz)) { pos.x = nx; pos.z = nz; } } }); } }
+    // Rustbolt: builds more of them out of the scrap
+    if (P === 'b6' && (Z.t -= dt) <= 0) { Z.t = 9 * cdm; if (alive2(u => u !== b).length < 5) { for (let i = 0; i < 2; i++) { const a = Math.random() * 6.28; S.add(i ? 'udrone' : 'uscrap', b.x + Math.cos(a) * 3, b.z + Math.sin(a) * 3); } say('Rustbolt bolts together two more.', 1600); tone(300, .3, 'square', .03, 150); } }
+  }
+  // out in the city: beacons, and the button to start
+  const sbBtn = document.createElement('button'); sbBtn.type = 'button'; sbBtn.className = 'btn alt drvbtn sbbtn'; sbBtn.hidden = true; document.body.appendChild(sbBtn);
+  { const s = document.createElement('style'); s.textContent = '.sbbtn{bottom:224px;background:#C8102E;color:#fff}'; document.head.appendChild(s); }
+  let sbNear = null, sbBuilt = false;
+  function sbWorld(){
+    if (!BL.sc || !BLC.built) return;
+    if (!sbBuilt) { sbBuilt = true; SBOSS.forEach(B => { const g = new THREE.Group(); g.position.set(B.at[0], 0, B.at[1]); BL.mapG.add(g);
+      const col = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.4, 70, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xFF3030, transparent: true, opacity: .2, depthWrite: false, side: THREE.DoubleSide })); col.position.y = 35; g.add(col);
+      const mk = done => tex(512, 160, (c, w, h) => { c.fillStyle = done ? 'rgba(20,60,30,.85)' : 'rgba(80,8,8,.85)'; c.beginPath(); c.roundRect ? c.roundRect(4, 4, w - 8, h - 8, 30) : c.rect(4, 4, w - 8, h - 8); c.fill(); c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `900 60px ${DISPLAY}`; c.fillText(B.name.toUpperCase(), w / 2, 64); c.font = '700 30px sans-serif'; c.fillStyle = done ? '#9FE8A8' : '#FFB0A8'; c.fillText(done ? 'BEATEN · REMATCH?' : 'STREET BOSS', w / 2, 120); });
+      const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: mk(!!SBK[B.id]), transparent: true, depthWrite: false })); sp.scale.set(6, 1.9, 1); sp.position.y = 7; g.add(sp);
+      Object.assign(B, { g, col, sp, mk }); g.traverse(o => o.userData.noPick = true); }); }
+    const fighting = EV && EV.inMap; SBOSS.forEach(B => { B.g.visible = !fighting; const done = !!SBK[B.id]; if (B.shown !== done) { B.shown = done; B.col.material.color.setHex(done ? 0x3CE870 : 0xFF3030); B.sp.material.map = B.mk(done); B.sp.material.needsUpdate = true; } });
+    sbNear = null; if (onGround() && !EV && !A && !BL.cine && !DRV.on && !PL.ride) { const [mx, mz] = toMap(pos.x, pos.z); sbNear = SBOSS.find(B => Math.hypot(B.at[0] - mx, B.at[1] - mz) < 13) || null; }
+    sbBtn.hidden = !sbNear; if (sbNear) sbBtn.textContent = `${SBK[sbNear.id] ? 'Rematch' : 'Fight'} ${sbNear.name}${fine ? ' (F)' : ''}`;
+  }
+  function sbFight(B){ if (!B || EV || A) return; sbBtn.hidden = true; startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: B.id, site: 'sb' + B.id }); }
+  sbBtn.addEventListener('click', e => { e.stopPropagation(); sbFight(sbNear); });
+  addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'f' && sbNear) sbFight(sbNear); });
+  function sbWon(part){ const B = SBOSS.find(q => q.id === part); if (!B) return; SBK[part] = Date.now(); try { localStorage.setItem('ru-sboss', JSON.stringify(SBK)); } catch (e) {} if (SBOSS.every(q => SBK[q.id])) setTimeout(() => secret('streets'), 2500); }
   const TW = { x: 110, z: -110, r: 28, floor: 6, roof: 18 }, TDOOR = [TW.x - TW.r - 3, TW.z], LIFT = [TW.x + 20, TW.z];
   const HOUSE = { x0: -27, x1: -13, z0: -27, z1: -13, door: [-20, -11.6] }, FIRE_DOWN = [-10, -8], FIRE_ESC = [5, -3];
   const TRUCK_ROUTE = [[-6, 6], [-55, 0], [-55, -55], [-110, -55], [-110, -84]];
@@ -6987,7 +7109,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!BL.sc) buildBlr();
     fade(() => {
       web.p = null; drawWeb(); walkTarget = null; exitTelescope(); inWorld = true; zone = 'blr'; vy = 0; falling = false; grounded = true;
-      blrRebase(0, 0, 0); pos.set(FIRE_DOWN[0], 1.6, FIRE_DOWN[1]); yaw = Math.atan2(FIRE_DOWN[0], FIRE_DOWN[1]); pitch = -.05; if (at) { const [lx, lz] = toLocal(at[0], at[1]); pos.set(lx, 1.6, lz); yaw = at[2] != null ? at[2] : Math.PI; } BL.sc.fog.far = 170; BL.liftArm = true;
+      SW.on = false; SW.roof = 0; blrRebase(0, 0, 0); pos.set(FIRE_DOWN[0], 1.6, FIRE_DOWN[1]); yaw = Math.atan2(FIRE_DOWN[0], FIRE_DOWN[1]); pitch = -.05; if (at) { const [lx, lz] = toLocal(at[0], at[1]); pos.set(lx, 1.6, lz); yaw = at[2] != null ? at[2] : Math.PI; } BL.sc.fog.far = 170; BL.liftArm = true;
       closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Go home'; jumpBtn.hidden = fine; uiZone();
       if (!at) say(`You climb down the fire escape into your street. ${fine ? 'Shift to sprint, C to crouch.' : 'Use the Sprint and Crouch buttons.'}`, 4200);
     }, '#06070B');
@@ -9140,12 +9262,23 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       Object.assign(GFX, { comp: C, rp, ao, bloom: bl, w, h, aoOn: true }); } catch (e) { console.error(e); GFX.noPost = true; } }
   const cityScene3 = sc => !!sc && (sc === BL.sc || sc === TWR.sc || sc === roofScene);
   const roofView = () => inWorld && (zone === 'roof' || zone === 'city') && !!roofScene && !!BL.sc && !!BLC.sky;
+  // flat 4B: four floors up, its balcony over the street in front of your tower
+  const flatView = () => inWorld && zone === 'twr' && TWR.floor === 'flats' && !!BL.sc && !!BLC.sky && pos.z > 13.8;
+  const cityLive = () => roofView() || flatView();
+  function flatLink(){ if (BL.off.x !== -23 || BL.off.y !== 12.4 || BL.off.z !== -33) { BL.off.set(-23, 12.4, -33); BL.mapG.position.set(23, -12.4, 33); BL.lvl = null; } if (BL.mapG.parent !== BL.sc) BL.sc.add(BL.mapG); }
   function gfxRender(sc){
     if (sc === roofScene && roofSky) roofSky.visible = !roofView();
     if (sc === roofScene && roofView()) {
       roofLink(); const C = GFX.cur; if (C) { roofHemi.intensity = C.hemiI * 1.6; roofHemi.color.copy(C.hemiC); roofHemi.groundColor.copy(C.hemiG); roofSun.intensity = C.sunI; roofSun.color.copy(C.sunC); roofSun.position.copy(C.sd).multiplyScalar(40); roofScene.fog.color.copy(C.fog); roofScene.fog.near = C.near; roofScene.fog.far = C.far + 200; BL.sc.fog.color.copy(C.fog); }
       roofScene.environment = BL.sc.environment; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = GFX.exposure; GFX.haze.value = C ? C.haze : 0; GFX.fogY.value = BL.off.y;
       renderer.render(BL.sc, camera); const ac = renderer.autoClear; renderer.autoClear = false; renderer.render(roofScene, camera); renderer.autoClear = ac;
+      renderer.toneMapping = THREE.NoToneMapping; renderer.toneMappingExposure = 1; GFX.last = 0; return;
+    }
+    if (BLC.flatFake) BLC.flatFake.visible = !(sc === TWR.sc && flatView());
+    if (sc === TWR.sc && flatView()) {
+      flatLink(); const C = GFX.cur; if (C) BL.sc.fog.color.copy(C.fog);
+      renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = GFX.exposure; GFX.haze.value = C ? C.haze : 0; GFX.fogY.value = BL.off.y;
+      renderer.render(BL.sc, camera); const bg = TWR.sc.background, ac = renderer.autoClear; TWR.sc.background = null; renderer.autoClear = false; renderer.clearDepth(); renderer.toneMappingExposure = 1.1; renderer.render(TWR.sc, camera); renderer.autoClear = ac; TWR.sc.background = bg;
       renderer.toneMapping = THREE.NoToneMapping; renderer.toneMappingExposure = 1; GFX.last = 0; return;
     }
     const city = cityScene3(sc); renderer.toneMapping = city ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping; renderer.toneMappingExposure = city ? (sc === BL.sc ? GFX.exposure : 1.1) : 1;
@@ -9325,7 +9458,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const want = V(lx - fx * back, up, lz - fz * back); if (!BLC.cam) BLC.cam = want.clone(); BLC.cam.lerp(want, Math.min(1, dt * 5)); camera.position.copy(BLC.cam); camera.lookAt(lx + fx * 5, 1.1, lz + fz * 5); viewG.visible = false;
   }
   // walking into traffic: you get nudged out of the way
-  function carShove(v){ if (Math.abs((v.y || 0) - BL.off.y) > .5 || !v.g.visible) return; const [mx, mz] = toMap(pos.x, pos.z), rx = mx - v.x, rz = mz - v.z, fx = v.fx != null ? v.fx : Math.sin(v.h), fz = v.fz != null ? v.fz : Math.cos(v.h), al = rx * fx + rz * fz, sd = rx * fz - rz * fx;
+  function carShove(v){ if (Math.abs((v.y || 0) - BL.off.y) > .5 || !v.g.visible || pos.y > 2.6) return; const [mx, mz] = toMap(pos.x, pos.z), rx = mx - v.x, rz = mz - v.z, fx = v.fx != null ? v.fx : Math.sin(v.h), fz = v.fz != null ? v.fz : Math.cos(v.h), al = rx * fx + rz * fz, sd = rx * fz - rz * fx;
     if (Math.abs(al) > v.L / 2 + .45 || Math.abs(sd) > v.W / 2 + .45) return; const ns = Math.sign(sd || 1) * (v.W / 2 + .5), [ax, az] = toLocal(v.x + fx * al + fz * ns, v.z + fz * al - fx * ns); if (blrValid(ax, az)) { pos.x = ax; pos.z = az; } if (v.v > 4 && !BLC.ouch) { BLC.ouch = 1; setTimeout(() => BLC.ouch = 0, 2500); say('Whoa. Watch the traffic.', 1600); tone(420, .2, 'square', .03); } }
   // ---------- your own tower: furniture and neighbours; Broker Tower: floors worth visiting ----------
   function twrPlus(){
@@ -9382,7 +9515,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (TWR.sc && TWR.floors.lobby && !BLC.twr) try { twrPlus(); } catch (err) { console.error(err); }
     if (BLC.res) { const show = !EV && (!SG.active || newTL()); BLC.res.forEach((r, i) => { r.a.g.visible = show; if (!show || !r.a.g.parent.visible) return; const k = (now / 1000 * r.sp + r.o) % 2, f = k < 1 ? k : 2 - k; r.a.g.position.set(r.p[0] + (r.q[0] - r.p[0]) * f, 0, r.p[1] + (r.q[1] - r.p[1]) * f); r.a.g.rotation.y = Math.atan2(r.q[0] - r.p[0], r.q[1] - r.p[1]) + (k < 1 ? 0 : Math.PI); if (r.a.anim) r.a.anim(now / 1000 + i, 1, 0); }); }
     if (!BLC.built || !BLC.sky) return;
-    const roofV = roofView(), inB = roofV || inWorld && (zone === 'blr' || zone === 'event' && EV && EV.inMap); if (!inB) { if (DRV.on) getOut(true); drvBtn.hidden = true; return; }
+    if (flatView()) flatLink();
+    const roofV = cityLive(), inB = roofV || inWorld && (zone === 'blr' || zone === 'event' && EV && EV.inMap); if (!inB) { if (DRV.on) getOut(true); drvBtn.hidden = true; return; }
     const mood = BL.mood || 'night'; if (BLC.mood !== mood) applyMood(mood);
     BLC.sky.position.set(camera.position.x, 0, camera.position.z); skyStep(dt, now);
     const M = BLC.M; BLC.sun.position.set(pos.x + M.sd.x * 140, M.sd.y * 140, pos.z + M.sd.z * 140); BLC.sun.target.position.set(pos.x, 0, pos.z);
@@ -9410,7 +9544,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const plCss = document.createElement('style'); plCss.textContent = '.placecard{position:fixed;left:50%;top:70px;transform:translate(-50%,-8px);z-index:45;background:rgba(11,13,20,.82);color:#fff;padding:10px 18px;border-radius:14px;text-align:center;opacity:0;pointer-events:none;transition:opacity .4s,transform .4s;font:600 13px/1.35 system-ui,sans-serif}.placecard b{display:block;font:800 20px/1.2 "Bricolage Grotesque",system-ui,sans-serif;letter-spacing:.02em}.placecard.on{opacity:1;transform:translate(-50%,0)}'; document.head.appendChild(plCss);
   function placeHere(p){ const isNew = !PL.found.has(p.id); if (isNew) { PL.found.add(p.id); try { localStorage.setItem('ru-places', JSON.stringify([...PL.found])); } catch (e) {} }
     plCard.innerHTML = `<small>${isNew ? 'NEW PLACE' : 'YOU’RE AT'}</small><b>${esc(p.name)}</b><small>Places found ${PL.found.size} of ${PL.list.length}</small>`; plCard.classList.add('on'); clearTimeout(placeHere.t); placeHere.t = setTimeout(() => plCard.classList.remove('on'), 3200); if (isNew) tone(784, .2, 'triangle', .04); }
-  const onGround = () => inWorld && zone === 'blr' && !BL.lvl && Math.abs(BL.off.y) < .01;
+  const onGround = () => inWorld && zone === 'blr' && !BL.lvl && Math.abs(BL.off.y) < .01 && pos.y < 2.2;
   const onLvl = id => inWorld && zone === 'blr' && BL.lvl && BL.lvl.id === id;
   const inBoxR = (x, z, r) => x > r[0] && x < r[1] && z > r[2] && z < r[3];
   function addPlace(id, name, test, view){ PL.list.push({ id, name, test, view }); }
@@ -9688,13 +9822,26 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       P.push(B3(4.8, .03, 3.4, 0x7A3A3A, -.8, .03, 21.2));
       P.push(B3(.7, .9, 4.6, 0xEEF1F5, 8.3, .45, 17.2), B3(.72, .05, 4.6, 0x3A3D44, 8.3, .92, 17.2), B3(.8, 1.9, .8, 0xDCE3EA, 8.2, .95, 20.2), B3(.5, .04, .4, 0x16181D, 8.3, .95, 16), B3(.4, .1, .3, 0xB8BCC4, 8.3, .92, 18.4)); so([7.9, 8.8, 14.9, 19.5]); so([7.8, 8.8, 19.8, 20.6]);
       P.push(B3(1.6, .06, 1, 0x8A6B4A, 5.8, .78, 22.5), C3(.06, .76, 0x2A2D33, 5.8, .38, 22.5, 6)); so([5, 6.6, 22, 23]); [[5.1, 22.5], [6.5, 22.5]].forEach(([x, z]) => P.push(B3(.45, .45, .45, 0x6A4E3A, x, .23, z)));
-      P.push(B3(11.2, .04, 2.2, 0xC8BCA4, 3, .02, 26.1), B3(11.2, 1.1, .08, 0x5A5E68, 3, .55, 27.2), B3(.12, 3, .12, 0x5A5E68, -2.6, 1.5, 25), B3(.12, 3, .12, 0x5A5E68, 8.6, 1.5, 25), B3(11.2, .12, .12, 0x5A5E68, 3, 3, 25));
+      P.push(B3(11.2, .04, 2.2, 0xC8BCA4, 3, .02, 26.1), B3(11.2, .45, .16, 0xE8DCC8, 3, .225, 27.2), B3(11.2, .06, .1, 0x2A2D33, 3, 1.05, 27.2), ...Array.from({ length: 29 }, (_, i) => B3(.03, .6, .03, 0x2A2D33, -2.6 + i * .4, .75, 27.2)), B3(.12, 3, .12, 0x5A5E68, -2.6, 1.5, 25), B3(.12, 3, .12, 0x5A5E68, 8.6, 1.5, 25), B3(11.2, .12, .12, 0x5A5E68, 3, 3, 25));
       P.push(C3(.3, .5, 0xB8906A, -2, .25, 26.6, 10), S3(.45, 0x3F7A44, -2, .8, 26.6), C3(.3, .5, 0xB8906A, 8, .25, 26.6, 10), S3(.45, 0x3F7A44, 8, .8, 26.6), B3(.5, .45, .5, 0xF4F1E8, 3, .23, 26.3)); so([-2.4, -1.6, 26.2, 27]); so([7.6, 8.4, 26.2, 27]);
+      // a home, not a showroom: a bed, a desk, books, pictures, curtains, washing on the line, a fan and warm lights
+      P.push(B3(2.2, .4, 1.4, 0x6A4E3A, 7.5, .2, 24.2), B3(2.1, .2, 1.35, 0xEEF1F5, 7.5, .5, 24.2), B3(.5, .15, 1.1, 0xFFFFFF, 8.35, .67, 24.2), B3(1.3, .06, 1.38, 0x2E5A9A, 6.95, .62, 24.2), B3(.08, .9, 1.4, 0x5A4632, 8.62, .65, 24.2)); so([6.4, 8.7, 23.45, 24.95]);
+      P.push(B3(.7, .06, 1.4, 0x8A6B4A, 4.5, .75, 17.2), B3(.06, .72, .06, 0x2A2D33, 4.2, .37, 16.6), B3(.06, .72, .06, 0x2A2D33, 4.2, .37, 17.8), B3(.4, .02, .3, 0x2A2D33, 4.45, .79, 17.2), B3(.02, .27, .4, 0x16181D, 4.66, .92, 17.2), B3(.05, .2, .05, 0x2A2D33, 4.7, .9, 16.75), B3(.45, .45, .45, 0x2A2D33, 3.75, .23, 17.2), B3(.06, .5, .45, 0x2A2D33, 3.5, .7, 17.2)); so([4.1, 4.9, 16.5, 17.9]);
+      P.push(B3(.4, 2.1, 1.6, 0x6A4E3A, -2.55, 1.05, 22.3)); for (let r = 0; r < 4; r++) { P.push(B3(.38, .04, 1.56, 0x4A3828, -2.55, .45 + r * .5, 22.3)); for (let k = 0; k < 9; k++) P.push(B3(.26, .3 + (k * 7 % 5) * .03, .12, [0xC8102E, 0x2E5A9A, 0xF2C230, 0x1F7A45, 0xEEF1F5, 0x6B3FA0][(k + r * 2) % 6], -2.5, .63 + r * .5, 21.6 + k * .155)); } so([-2.8, -2.3, 21.45, 23.15]);
+      [[4.88, 1.75, 16.6, 0xC8102E], [4.88, 1.75, 17.6, 0x2E5A9A], [4.88, 2.4, 17.1, 0xF2C230]].forEach(([x, y, z, c]) => P.push(B3(.03, .5, .4, 0xF4F1E8, x, y, z), B3(.035, .4, .3, c, x, y, z)));
+      P.push(B3(.03, .7, 1, 0xF4F1E8, 8.68, 1.9, 24.2), B3(.035, .6, .9, 0x3C7CA8, 8.67, 1.9, 24.2));
+      P.push(B3(.7, 3, .1, 0xC8864A, -2.25, 1.6, 25.05), B3(.7, 3, .1, 0xC8864A, 8.25, 1.6, 25.05), B3(11, .05, .05, 0x8A8F99, 3, 3.15, 25.05));
+      P.push(B3(10, .015, .015, 0xEEF1F5, 3, 2.2, 26.7)); [[-1, 0xC8102E], [.2, 0x2E5A9A], [1.4, 0xF2C230], [2.6, 0xEEF1F5], [5, 0x1F7A45], [6.3, 0xD94C8A]].forEach(([x, c]) => P.push(B3(.55, .7, .02, c, x, 1.85, 26.7)));
+      P.push(B3(.9, .4, .3, 0x6A4E3A, 1.4, .2, 15), B3(1.1, .01, .7, 0x8A6B4A, 3, .045, 15.2), C3(.15, .25, 0xC9CFD8, 8.3, 1.08, 16.1, 12), B3(.05, .06, .05, 0x16181D, 8.3, 1.24, 16.1), B3(.12, .5, 1.2, 0x8A6B4A, 8.72, 1.6, 17.6)); so([.9, 1.9, 14.8, 15.2]);
+      for (let k = 0; k < 6; k++) P.push(C3(.04, .1, [0xC8102E, 0xF2C230, 0x8A4A1E, 0x1F7A45, 0xE07A1E, 0xEEF1F5][k], 8.6, 1.42 + (k % 2) * .25, 17.2 + (k >> 1) * .35, 8));
       decor(P, F);
-      // the view from the balcony: a sky and the city far below
-      const sky = new THREE.Mesh(new THREE.SphereGeometry(190, 24, 12), new THREE.MeshBasicMaterial({ side: THREE.BackSide, map: tex(64, 256, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#1A3A7A'); gr.addColorStop(.5, '#F0A070'); gr.addColorStop(.52, '#2A2D33'); gr.addColorStop(1, '#16181D'); c.fillStyle = gr; c.fillRect(0, 0, w, h); }) })); sky.position.set(3, 0, 30); F.add(sky);
+      [[3, 18.5], [3, 23.5]].forEach(([x, z]) => { const l = new THREE.PointLight(0xFFD9A8, .7, 13, 2); l.position.set(x, 3.6, z); F.add(l); const t = new THREE.Mesh(new THREE.BoxGeometry(1.2, .05, .05), new THREE.MeshBasicMaterial({ color: 0xF4FBFF })); t.position.set(x, 4.05, z); F.add(t); });
+      { const fan = BLC.flatFan = new THREE.Group(); fan.position.set(3, 3.7, 21); F.add(fan); cyl(.03, .03, .4, mat(0x6A6E74), 0, .22, 0, fan, 6); cyl(.12, .1, .12, mat(0x8A8F99, { metalness: .5 }), 0, 0, 0, fan, 12); for (let i = 0; i < 3; i++) { const pv = new THREE.Group(); pv.rotation.y = i * Math.PI * 2 / 3; fan.add(pv); box(.7, .015, .13, mat(0x8A6B4A), .42, -.02, 0, pv); } }
+      // the view from the balcony: the real city, drawn underneath (see gfxRender); this painted one is only a stand-in
+      const fake = BLC.flatFake = new THREE.Group(); F.add(fake);
+      const sky = new THREE.Mesh(new THREE.SphereGeometry(190, 24, 12), new THREE.MeshBasicMaterial({ side: THREE.BackSide, map: tex(64, 256, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#1A3A7A'); gr.addColorStop(.5, '#F0A070'); gr.addColorStop(.52, '#2A2D33'); gr.addColorStop(1, '#16181D'); c.fillStyle = gr; c.fillRect(0, 0, w, h); }) })); sky.position.set(3, 0, 30); fake.add(sky);
       const win = new THREE.MeshStandardMaterial({ color: 0x1B1D24, map: winTex(true, ['#FFD27A', '#FFC93C', '#C9CFD8']), emissive: 0xFFFFFF, emissiveMap: winTex(true, ['#FFD27A', '#C9CFD8']), emissiveIntensity: .5 });
-      for (let i = 0; i < 26; i++) { const a = -Math.PI * .9 + i / 26 * Math.PI * .8, R2 = 50 + (i % 5) * 16, hh = 20 + (i * 37 % 45); box(9, hh, 9, win, 3 + Math.cos(a) * R2 * -1, hh / 2 - 70, 30 - Math.sin(a) * R2, F); }
+      for (let i = 0; i < 26; i++) { const a = -Math.PI * .9 + i / 26 * Math.PI * .8, R2 = 50 + (i % 5) * 16, hh = 20 + (i * 37 % 45); box(9, hh, 9, win, 3 + Math.cos(a) * R2 * -1, hh / 2 - 70, 30 - Math.sin(a) * R2, fake); }
       F.traverse(o => { if (o.isMesh) o.userData.noPick = true; });
     }
     if (S) { const P = [B3(8.6, .3, 10.6, 0xE8E3D6, -14.6, .15, 0)], water = new THREE.Mesh(new THREE.PlaneGeometry(7.6, 9.6), new THREE.MeshStandardMaterial({ color: 0x2EA8D8, roughness: .06, metalness: .2, emissive: 0x0A3A5A, emissiveIntensity: .35, transparent: true, opacity: .92 })); water.rotation.x = -Math.PI / 2; water.position.set(-14.6, .31, 0); S.add(water); BLC.poolW = water;
@@ -10117,7 +10264,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function pedStep(dt, now){
     if (!PED.built) { if (BLC.built && BLC.streetG && BL.grid) { PED.built = true; try { pedBuild(); } catch (err) { console.error(err); } } return; }
     if (!PED.ims) return;
-    const roofV = roofView(), mood = BL.mood || 'night', I = PED.ims;
+    const roofV = cityLive(), mood = BL.mood || 'night', I = PED.ims;
     const show = (roofV || inWorld && zone === 'blr') && !EV && !BL.cine && mood !== 'burn' && mood !== 'scr';
     Object.values(I).forEach(im => im.visible = show); if (BLC.cartM) BLC.cartM.visible = !(mood === 'burn' || mood === 'scr');
     if (!show) { PED.bub.forEach(b => { b.s.visible = false; b.p = null; }); return; }
@@ -10186,12 +10333,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   // ---------- every frame ----------
   function placeStep(dt, now){
-    binStep(dt, now); pedStep(dt, now); if (inWorld && zone === 'blr' || roofView()) detCull(); if (inWorld && zone === 'blr') doorStep(); else if (doorNear || !doorBtn.hidden) { doorNear = null; doorBtn.hidden = true; }
+    binStep(dt, now); pedStep(dt, now); if (inWorld && zone === 'blr' || cityLive()) detCull(); if (BLC.flatFan && inWorld && zone === 'twr' && TWR.floor === 'flats') BLC.flatFan.rotation.y += dt * 7; if (inWorld && zone === 'blr') { doorStep(); sbWorld(); } else { if (!sbBtn.hidden) sbBtn.hidden = true; if (EV && EV.inMap && sbBuilt) SBOSS.forEach(B => { if (B.g) B.g.visible = false; }); } if (inWorld && zone === 'blr') {} else if (doorNear || !doorBtn.hidden) { doorNear = null; doorBtn.hidden = true; }
     if (TWR.sc && TWR.floors.flats && !BLC.twrPl) try { twrPlaces(); } catch (e) { console.error(e); }
     lvStep(now);
     if (PL.ride) rideStep();
     const inB = inWorld && zone === 'blr';
-    if (inB || roofView()) { const C = GFX.cur; if (C) { BLC.signMs.forEach(m => m.emissiveIntensity = .12 + C.win * .9); if (BLC.fairyM) BLC.fairyM.visible = C.win > .3; }
+    if (inB || cityLive()) { const C = GFX.cur; if (C) { BLC.signMs.forEach(m => m.emissiveIntensity = .12 + C.win * .9); if (BLC.fairyM) BLC.fairyM.visible = C.win > .3; }
       (BLC.joggers || []).forEach((j, i) => { const a = (now / 1000 * j.sp + j.o) % (Math.PI * 2); j.a.g.position.set(Math.cos(a) * 15.2, 0, Math.sin(a) * 15.2); j.a.g.rotation.y = -a + Math.PI; if (j.a.anim) j.a.anim(now / 400 + i, 1, 0); });
       cricketStep(dt); (BLC.cloth || []).forEach((c, i) => c.rotation.x = Math.sin(now / 500 + i) * .25); if (BLC.flame) BLC.flame.scale.setScalar(.8 + Math.random() * .4);
       (BLC.bells || []).forEach(b => { b.sw *= Math.max(0, 1 - dt * 1.5); b.g.rotation.z = Math.sin(now / 90) * b.sw; }); }
@@ -11503,7 +11650,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       tone(160, 1.2, 'sine', .06, 80);
     }, '#05060C');
   }
-  function jump(){ if (inWorld && zone === 'city') return cityJump(); if (EV && EV.hero === 'hulk' && grounded && !EV.over) { vy = 9; EV.leapV = V(-Math.sin(yaw) * 10, 0, -Math.cos(yaw) * 10); EV.leapT = 0; grounded = false; tone(200, .3, 'sawtooth', .05, 80); return; } if (inWorld && grounded) { vy = 6.4; grounded = false; tone(420, .08, 'sine', .04, 620); } }
+  function jump(){ if (inWorld && zone === 'city') return cityJump(); if (inWorld && zone === 'blr' && SW.roof && !EV) return swJump(); if (EV && EV.hero === 'hulk' && grounded && !EV.over) { vy = 9; EV.leapV = V(-Math.sin(yaw) * 10, 0, -Math.cos(yaw) * 10); EV.leapT = 0; grounded = false; tone(200, .3, 'sawtooth', .05, 80); return; } if (inWorld && grounded) { vy = 6.4; grounded = false; tone(420, .08, 'sine', .04, 620); } }
   jumpBtn.addEventListener('pointerdown', e => { e.preventDefault(); jump(); });
   function splitChar(g){
     const d = g.userData, [ch, py, en, c1, c2, story] = HANZI[d.hanzi];
@@ -11645,6 +11792,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // stepping (or being knocked) off the rooftop means falling into Bangalore
     if (zone === 'roof' && (pos.y < .5 || !platformAt(pos.x, pos.z) && pos.y < 1.4)) { zone = 'city'; cityAir = true; cityV.set(0, Math.min(0, vy), 0); cityLast = null; $('#worldBack').textContent = A ? 'Leave the fight' : 'Back to the rooftop'; }
     if (zone === 'city') { cityPhysics(dt); return roofStep(dt, now); }
+    if (zone === 'blr' && (SW.on || SW.roof)) { webSwingStep(dt); if (SW.on || SW.roof) return; }
     // gravity
     const plat = platformAt(pos.x, pos.z), feet = pos.y - 1.6;
     if (plat && vy <= 0 && feet <= .02 && feet > -.7) { if (!grounded && vy < -3) tone(140, .06, 'sine', .05); pos.y = 1.6; vy = 0; grounded = true; }
@@ -11903,7 +12051,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       t.update(t.linear ? p : ease(p));
       if (p >= 1) { tweens.splice(i, 1); t.done && t.done(); }
     }
-    if (entered && !DRV.on && !DRV.lock && !(A && A.intro) && !(zone === 'city' && web.p) && !(RUN && (RUN.phase === 'watch' || RUN.phase === 'endwatch'))) {
+    if (entered && !DRV.on && !DRV.lock && !(A && A.intro) && !(zone === 'city' && web.p) && !(zone === 'blr' && SW.on) && !(RUN && (RUN.phase === 'watch' || RUN.phase === 'endwatch'))) {
       let f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0);
       let s = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
       if (Math.hypot(joy.x, joy.y) > .15) { f -= joy.y; s += joy.x; }
