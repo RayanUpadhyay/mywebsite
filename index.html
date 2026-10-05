@@ -6916,7 +6916,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // roads on a grid, with dashed centre lines
     const L = [-275, -220, -165, -110, -55, 0, 55, 110, 165, 220, 275], rt = tex(64, 512, (c, w, h) => { c.fillStyle = '#34373F'; c.fillRect(0, 0, w, h); c.fillStyle = '#E8C04A'; for (let y = 0; y < h; y += 64) c.fillRect(w / 2 - 2, y, 4, 34); c.fillStyle = '#6A6E78'; c.fillRect(0, 0, 3, h); c.fillRect(w - 3, 0, 3, h); });
     rt.wrapT = THREE.RepeatWrapping; rt.repeat.set(1, 33); const roadM = new THREE.MeshStandardMaterial({ map: rt, roughness: .95 });
-    L.forEach(l => { [0, 1].forEach(dir => { const r = new THREE.Mesh(new THREE.PlaneGeometry(10, 550), roadM); r.rotation.x = -Math.PI / 2; if (dir) r.rotation.z = Math.PI / 2; r.position.set(dir ? 0 : l, .01 + dir * .005, dir ? l : 0); r.userData.walk = true; g.add(r); }); });
+    L.forEach(l => { [0, 1].forEach(dir => { const r = new THREE.Mesh(new THREE.PlaneGeometry(10, 550), roadM); r.rotation.x = -Math.PI / 2; if (dir) r.rotation.z = Math.PI / 2; r.position.set(dir ? 0 : l, .01 + dir * .02, dir ? l : 0); r.userData.walk = true; g.add(r); }); });
     // buildings in the blocks between the roads (none in the open squares where things happen)
     const clear = (x0, x1, z0, z1) => Object.values(DIST).every(d => { const cx = clamp(d.x, x0, x1), cz = clamp(d.z, z0, z1); return Math.hypot(cx - d.x, cz - d.z) > 31; }) && !(x1 > HOUSE.x0 - 3 && x0 < HOUSE.x1 + 3 && z1 > HOUSE.z0 - 3 && z0 < HOUSE.z1 + 3) && !(x0 < -124 && z1 > -170 && z0 < -62) && !(x1 > -130 && x0 < -90 && z1 > 70 && z0 < 82);
     const winM = [0, 1, 2].map(i => new THREE.MeshStandardMaterial({ color: 0x1B1D24, map: winTex(true, ['#FFD27A', '#FFC93C', '#C9CFD8']), emissive: 0xFFFFFF, emissiveMap: winTex(true, [['#FFD27A', '#C9CFD8'], ['#FFC93C', '#9FD8FF'], ['#FFB070', '#FFD27A']][i]), emissiveIntensity: .45 }));
@@ -9059,7 +9059,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ---------- sky, sun and weather ----------
   // ---------- sky, sun and weather: a palette for every hour of the day, eased from one to the next ----------
   const PAL = {
-    night: { top: 0x02040C, fog: 0x0A0F1C, glow: 0x8090B0, hemi: [.3, 0x6070A0, 0x101216], sun: [.3, 0xB8C8FF], win: 1, lamps: 1, stars: 1, near: 30, far: 210, exp: 1.35, bloom: 1.05, haze: .45 },
+    night: { top: 0x02040C, fog: 0x0A0F1C, glow: 0x8090B0, hemi: [.24, 0x6070A0, 0x101216], sun: [.22, 0xB8C8FF], win: 1, lamps: 1, stars: 1, near: 30, far: 210, exp: 1.2, bloom: 1.05, haze: .45 },
     dawn: { top: 0x3A5A9A, fog: 0xF0B888, glow: 0xFFB070, hemi: [.45, 0xFFD8B0, 0x40342A], sun: [1.25, 0xFFB880], win: .45, lamps: .35, stars: .12, near: 40, far: 250, exp: 1.05, bloom: .7, haze: .95 },
     day: { top: 0x4A88D0, fog: 0xE4D2AC, glow: 0xFFE0A0, hemi: [.52, 0xFFEAD0, 0x5A4A34], sun: [1.65, 0xFFE6B8], win: .04, lamps: 0, stars: 0, near: 70, far: 320, exp: .86, bloom: .4, haze: .8 },
     dusk: { top: 0x2E3A6E, fog: 0xF4A060, glow: 0xFF8A3A, hemi: [.4, 0xFFB890, 0x342820], sun: [1.15, 0xFFA060], win: .6, lamps: .7, stars: .1, near: 40, far: 250, exp: 1.05, bloom: .75, haze: 1.0 },
@@ -9251,8 +9251,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       for (let t = -260; t < 260; t += 5) { const c = t + 2.5, o = l + side * 6.2, x = dir ? c : o, z = dir ? o : c, skip = ROADS.some(r => Math.abs(c - r) < 8) || offMap(x, z) || inTowerZone(x, z, 3); if (skip) { flush(); continue; } if (run) run[1] = t + 5; else run = [t, t + 5]; } flush(); })));
     inst(gB(2.4, .16, 5), BLC.kerbM = mat(0x5C5954, { roughness: .95 }), kerb, g).receiveShadow = true; inst(gB(.18, .2, 5), mat(0xA8A49A), lineK, g);
     // zebra crossings on every side of every junction
-    const zeb = []; BLC.nodes.forEach(n => [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dz]) => { for (let s = -4; s <= 4; s += 1.1) zeb.push([n.x + dx * 7.6 + (dx ? 0 : s), .025, n.z + dz * 7.6 + (dz ? 0 : s), dx ? Math.PI / 2 : 0]); }));
+    const zeb = []; BLC.nodes.forEach(n => [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dz]) => { for (let s = -4; s <= 4; s += 1.1) zeb.push([n.x + dx * 7.6 + (dx ? 0 : s), .05, n.z + dz * 7.6 + (dz ? 0 : s), dx ? Math.PI / 2 : 0]); }));
     inst(gB(.55, .02, 2.4), mat(0xEDEBE3, { roughness: .8 }), zeb, g);
+    // a plain patch of asphalt where two roads cross, so neither road's markings run through the junction
+    { const jt = tex(128, 128, (c, w, h) => { c.fillStyle = '#3A3C41'; c.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { const v = 40 + Math.random() * 40; c.fillStyle = `rgb(${v},${v},${v + 4})`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); } });
+      const jm = new THREE.MeshStandardMaterial({ map: jt, roughness: .92 }), js = []; ROADS.forEach(x => ROADS.forEach(z => { if (!(x < -126 && z > -168 && z < -60)) js.push([x, .04, z, 0, 1, 1, 1, -Math.PI / 2]); }));
+      const jim = inst(new THREE.PlaneGeometry(10, 10), jm, js, g); jim.receiveShadow = true; BLC.junctM = jm; }
     // traffic lights at the kerb on the left of every approach, one set of lamps per direction
     const poles = [], heads = [], lamps = { nsR: [], nsG: [], ewR: [], ewG: [] };
     BLC.nodes.forEach(n => [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dz]) => { const lx = dz, lz = -dx, x = n.x - dx * 9.2 + lx * 6.4, z = n.z - dz * 9.2 + lz * 6.4, ns = !!dz, ry = Math.atan2(-dx, -dz); poles.push([x, 2, z]); heads.push([x, 3.9, z, ry]);
@@ -9481,8 +9485,19 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     });
     addTalk(STN[1].x + 14, MZ + 5.2, 'metro', 'The ticket man', 'Token or smart card? …Neither? Fine. Just this once. Don’t tell the Metro.');
     const tr = BLC.train = new THREE.Group(); tr.position.set(STN[1].x, MY + .5, MZ); g.add(tr);
-    const carG = bake([[gB(2.8, 2.9, 17.5), 0x6A3A9A, 0, 1.7, 0], [gB(2.84, .9, 16), 0x16181D, 0, 2.2, 0], ...[-6, -2, 2, 6].map(z => [gB(2.86, 1.9, 1.2), 0x8A8F99, 0, 1.25, z]), [gB(2.84, .25, 17.5), 0xE8E3D6, 0, 1.2, 0], [gB(2.6, .3, 17), 0x8A8F99, 0, 3.25, 0], [gB(2.4, .4, 15), 0x2A2D33, 0, .2, 0]]);
-    [-18, 0, 18].forEach(x => { const m = new THREE.Mesh(carG, vBodyM()); m.rotation.y = Math.PI / 2; m.position.x = x; m.castShadow = true; tr.add(m); });
+    // each car is hollow: you ride inside it, so it has windows, benches, grab poles and strip lights
+    const PUR = 0x6A3A9A, DOORS = [-6, -2, 2, 6], cp = [[gB(2.7, .12, 17.4), 0x8A8F99, 0, .3, 0], [gB(2.4, .4, 15), 0x2A2D33, 0, .2, 0], [gB(2.8, .12, 17.5), PUR, 0, 3.2, 0], [gB(2.6, .3, 17), 0x8A8F99, 0, 3.35, 0], [gB(2.6, .04, 17.2), 0xE8E8EC, 0, 3.12, 0]];
+    [-1, 1].forEach(sd => { const x = sd * 1.37; cp.push([gB(.06, 1.0, 17.5), PUR, x, .85, 0], [gB(.07, .18, 17.5), 0xE8E3D6, x, 1.44, 0], [gB(.06, .58, 17.5), PUR, x, 2.86, 0]);
+      for (let z = -8.75; z <= 8.76; z += 2.5) if (!DOORS.some(d => Math.abs(d - z) < 1)) cp.push([gB(.06, 1.05, .5), PUR, x, 2.06, z]);
+      DOORS.forEach(z => cp.push([gB(.08, 2.3, 1.3), 0x8A8F99, x, 1.45, z], [gB(.09, .9, .5), GLASS, x, 2.0, z - .3], [gB(.09, .9, .5), GLASS, x, 2.0, z + .3]));
+      [[-8.2, -6.7], [-5.3, -2.7], [-1.3, 1.3], [2.7, 5.3], [6.7, 8.2]].forEach(([z0, z1]) => { const c = (z0 + z1) / 2, L = z1 - z0; cp.push([gB(.45, .1, L), 0x2E5A9A, sd * 1.1, .72, c], [gB(.4, .4, L), 0x5A5E68, sd * 1.1, .48, c], [gB(.08, .5, L), 0x2E5A9A, sd * 1.3, 1.0, c]); });
+      cp.push([new THREE.CylinderGeometry(.025, .025, 17, 6), 0xC9CFD8, sd * .75, 2.3, 0, Math.PI / 2, 0, 0]); for (let z = -6; z <= 6; z += 4) cp.push([new THREE.CylinderGeometry(.03, .03, 2.8, 6), 0xC9CFD8, sd * .55, 1.75, z]); });
+    [-1, 1].forEach(e => cp.push([gB(2.8, 2.9, .08), PUR, 0, 1.75, e * 8.75], [gB(1.2, .8, .09), GLASS, 0, 2.2, e * 8.75]));
+    const carG = bake(cp), lightG = bake([[gB(.18, .03, 16), 0xF4FBFF, .6, 3.09, 0], [gB(.18, .03, 16), 0xF4FBFF, -.6, 3.09, 0]]);
+    const glassM = new THREE.MeshStandardMaterial({ color: 0x9FC4E8, transparent: true, opacity: .28, roughness: .05, metalness: .3, depthWrite: false, side: THREE.DoubleSide });
+    [-18, 0, 18].forEach(x => { const m = new THREE.Mesh(carG, vBodyM()); m.rotation.y = Math.PI / 2; m.position.x = x; m.castShadow = true; tr.add(m);
+      const l = new THREE.Mesh(lightG, vLightM()); l.rotation.y = Math.PI / 2; l.position.x = x; tr.add(l);
+      [-1, 1].forEach(sd => { const w = new THREE.Mesh(new THREE.PlaneGeometry(17.4, 1.05), glassM); w.position.set(x, 2.06, sd * 1.37); if (sd < 0) w.rotation.y = Math.PI; w.renderOrder = 2; tr.add(w); }); });
     BLC.trainS = { x: STN[1].x, to: 0, v: 0, wait: 8, at: 1 }; g.traverse(o => { if (o.isMesh) o.userData.noPick = true; });
   }
   function trainStep(dt){ const S = BLC.trainS; if (S.wait > 0) { S.wait -= dt; if (S.wait <= 0) S.at = -1; return; }
@@ -9507,7 +9522,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const hw = Wr / 2;
     if (S.id === 'darshini') { P.push(B3(Wr - 2, 1.05, .8, 0xB8BCC4, 0, .52, Dr - 1.6), B3(Wr - 2, .05, .9, 0x8A8F99, 0, 1.07, Dr - 1.6)); so(-hw + 1, hw - 1, Dr - 2, Dr - 1.2); for (let i = 0; i < 6; i++) P.push(C3(.06, .14, 0xD8DCE0, -hw + 1.8 + i * .5, 1.16, Dr - 1.6, 8));
       [[-hw + 2.2, 2.4], [0, 2.8], [hw - 2.2, 2.4]].forEach(([u, v]) => { P.push(C3(.45, .06, 0xB8BCC4, u, 1.05, v, 14), C3(.07, 1.05, 0x5A5E68, u, .52, v, 6)); so(u - .45, u + .45, v - .45, v + .45); });
-      P.push(B3(3, 1.2, .05, 0x16181D, 0, 2.6, Dr - .08)); person(0, Dr - .7); }
+      { const mb = textPlane(3, 1.2, (c, w, h) => { c.fillStyle = '#1A3A2A'; c.fillRect(0, 0, w, h); c.strokeStyle = '#8A6B4A'; c.lineWidth = 14; c.strokeRect(0, 0, w, h); c.fillStyle = '#FFE08A'; c.font = `900 ${h * .13}px ${DISPLAY}`; c.textAlign = 'center'; c.fillText('SRI KRISHNA DARSHINI', w / 2, h * .2); c.font = `700 ${h * .09}px sans-serif`; c.fillStyle = '#FFFFFF'; c.textAlign = 'left';
+          [['Idli Vada', '40'], ['Masala Dosa', '60'], ['Khara Bath', '35'], ['Kesari Bath', '35'], ['Mangalore Buns', '30'], ['Filter Kaapi', '20']].forEach(([n, pr], i) => { const x = i % 2 ? w * .54 : w * .06, y = h * (.42 + (i >> 1) * .2); c.fillText(n, x, y); c.fillText('₹' + pr, x + w * .32, y); }); }, .35);
+        mb.position.set(0, 2.6, Dr - .1); mb.rotation.y = Math.PI; F.g.add(mb); } person(0, Dr - .7); }
     if (S.id === 'books') { shelf(-hw + .45, Dr / 2, Dr - 1, .8, 3, 0x6A4E3A, Math.PI / 2); shelf(hw - .45, Dr / 2, Dr - 1, .8, 3, 0x6A4E3A, Math.PI / 2); shelf(0, Dr - .5, Wr - 3, .7, 3, 0x6A4E3A);
       const cols = [0xC8102E, 0x3C7CFF, 0xFFC93C, 0x3F7A44, 0xB07CFF, 0xE8E3D6, 0xFF8A2E]; for (let i = 0; i < 40; i++) { const side = i % 2 ? 1 : -1, v = 1 + (i / 2 | 0) % 8 * ((Dr - 2) / 8), y = .75 + (i % 4) * .55; P.push(B3(.2, .42, .12, cols[i % 7], side * (hw - .5), y, v + .1)); }
       P.push(B3(2, .8, 1.2, 0x8A6B4A, 0, .4, 3)); so(-1, 1, 2.4, 3.6); for (let i = 0; i < 8; i++) P.push(B3(.3, .06, .4, cols[i % 7], -.8 + i * .23, .83, 3 + (i % 2) * .2)); P.push(B3(1.6, .95, .6, 0x5A4632, hw - 2.4, .47, 1.6)); so(hw - 3.2, hw - 1.6, 1.3, 1.9); person(hw - 2.4, 2.3); }
@@ -9701,7 +9718,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     add(...PARK_B, 3600, (x, z) => Math.abs(Math.hypot(x, z) - 15) < 1.6 || Math.abs(x) < 1.6 || Math.abs(z) < 1.6 || Math.hypot(x, z) < 5);
     add(...TEMPLE_B, 1800, (x, z) => Math.abs(x) < 14.6 && Math.abs(z) < 14.6);
     add(...CRICKET_B, 1800, (x, z) => Math.hypot(x, z) < 20.6);
-    const blade = bake([[new THREE.PlaneGeometry(.11, .8, 1, 3).translate(0, .4, 0), 0xFFFFFF, 0, 0, 0], [new THREE.PlaneGeometry(.11, .8, 1, 3).translate(0, .4, 0), 0xFFFFFF, 0, 0, 0, 0, Math.PI / 2, 0]]);
+    // tapered blades, two crossed planes each, darker at the root
+    const tuft = () => { const g = new THREE.PlaneGeometry(.08, .55, 1, 3).translate(0, .275, 0), p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) * (1 - p.getY(i) / .6)); g.computeVertexNormals(); return g; };
+    const blade = bake([[tuft(), 0xFFFFFF, 0, 0, 0], [tuft(), 0xFFFFFF, 0, 0, 0, 0, Math.PI / 2, 0], [tuft(), 0xFFFFFF, .05, 0, .03, 0, Math.PI / 4, 0]]);
     const m = new THREE.MeshStandardMaterial({ vertexColors: true, side: THREE.DoubleSide, roughness: .85 });
     m.onBeforeCompile = sh => { sh.uniforms.uTime = GFX.time; sh.vertexShader = sh.vertexShader.replace('#include <common>', '#include <common>\nuniform float uTime;').replace('#include <begin_vertex>', `#include <begin_vertex>
       vec4 gIp = vec4(0.0, 0.0, 0.0, 1.0);
@@ -9710,7 +9729,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       #endif
       transformed.x += sin(uTime * 1.7 + gIp.x * 0.35 + gIp.z * 0.23) * 0.14 * position.y; transformed.z += cos(uTime * 1.3 + gIp.x * 0.2) * 0.07 * position.y;`); };
     m.customProgramCacheKey = () => 'grass';
-    const im = inst(blade, m, pts, BL.mapG); const c = new THREE.Color(); pts.forEach((_, i) => im.setColorAt(i, c.setHSL(.09 + Math.random() * .08, .6 + Math.random() * .2, .26 + Math.random() * .12))); if (im.instanceColor) im.instanceColor.needsUpdate = true; BLC.grass = im;
+    const im = inst(blade, m, pts, BL.mapG); const c = new THREE.Color(); pts.forEach((_, i) => im.setColorAt(i, c.setHSL(.16 + Math.random() * .1, .42 + Math.random() * .2, .24 + Math.random() * .1))); if (im.instanceColor) im.instanceColor.needsUpdate = true; BLC.grass = im;
   }
   // ======================= A more lived-in city: facades, doors you can open, and people =======================
   const DET0 = new THREE.Matrix4().makeScale(0, 0, 0);
@@ -9833,7 +9852,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const P = [], bx = (w, h, dd, c, x, y, z, ry = 0) => P.push(B3(w, h, dd, c, x, y, z, ry)), cy = (r, h, c, x, y, z, seg = 12, rt) => P.push(C3(r, h, c, x, y, z, seg, rt)), sp = (r, c, x, y, z) => P.push([new THREE.SphereGeometry(r, 10, 8), c, x, y, z]);
     const box2 = (w, h, dd, c, x, y, z) => { bx(w, h, dd, c, x, y, z); sol(x - w / 2, x + w / 2, z - dd / 2, z + dd / 2); };
     const ST = { apt: ['mosaic', 0xC9BFA6, 0xFFE2B8], tiffin: ['granite', 0xD8C27A, 0xFFF0D8], kirana: ['oxide', 0xC9B48A, 0xFFE8C8], office: ['vinyl', 0xC8CED6, 0xEAF2FF], medicals: ['vinyl', 0xCFE0D6, 0xEFFFF4], gym: ['rubber', 0x3A3D44, 0xFFFFFF], tailor: ['wood', 0xC9A89A, 0xFFE2C0], home: ['mosaic', 0xD8B47A, 0xFFD9A0] }[T];
-    const wall = ST[1], day = !(GFX.cur && GFX.cur.win > .55);
+    const wall = ST[1], day = !(palTarget(BL.mood || 'clear').win > .55);
     // the shell: floor, ceiling, walls, the doorway you came in by, a window full of daylight (or night)
     const fl = new THREE.Mesh(new THREE.PlaneGeometry(X, Z), mat(0xFFFFFF, { map: binTile(ST[0]), roughness: T === 'gym' ? .95 : .45 })); fl.material.map.repeat.set(X / 1.4, Z / 1.4); fl.material.color.setHex(0xB8B2A8); fl.rotation.x = -Math.PI / 2; fl.receiveShadow = true; fl.userData.walk = true; g.add(fl);
     const ce = new THREE.Mesh(new THREE.PlaneGeometry(X, Z), mat(0xD8D4CC, { roughness: 1 })); ce.rotation.x = Math.PI / 2; ce.position.y = H; g.add(ce);
