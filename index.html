@@ -3606,7 +3606,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // outside fights, whatever you're holding is in your hand as you walk around
   let idleShown;
   function idleView(){
-    const sc = sceneOf();
+    const sc = sceneOf(); if (!sc) return;
     // in a fight you see your own fists (or your hero's hammer, shield or claws), and they punch when you attack
     const old = !EV && SG.flags && SG.flags.old, hk = EV ? 'ev:' + EV.hero + ':' + (EV.prop || 'fists') : old ? 'old' : held;
     if (idleShown !== hk || viewG.parent !== sc) { clearView(); if (viewG.parent) viewG.parent.remove(viewG); sc.add(viewG); idleShown = hk; if (old) { spareHand(-1); const c = new THREE.Group(); c.userData.base = V(.3, -.4, -.55); c.position.copy(c.userData.base); viewG.add(c); const blade = mkWeapon('claws'); blade.scale.setScalar(.5); blade.rotation.set(Math.PI, 0, 0); blade.position.y = -.2; c.add(blade); box(.12, .05, .05, mat(0x6A4E3A), 0, .08, 0, c); c.traverse(o => { if (o.isMesh) { o.castShadow = false; o.userData.noPick = true; } }); } else if (EV) buildView(EV.prop || 'fists', false); else if (held) buildView(held, held === 'claws' && condition('claws').broken); else { spareHand(1); spareHand(-1); } }
@@ -12738,7 +12738,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const BZ_KEY = 'ru-bz';
   function bzFresh(){ return { v: 1, t: 0, out: 0, cr: 0, jobs: 0, kills: 0, upg: { jet: 0, arm: 0, blast: 0 }, fac: [1, 1, 1], bea: [1, 1, 1], inf: '', breach: [], clear: 0, seen: 0 }; }
   function bzLoad(){ let s = null; try { s = JSON.parse(localStorage.getItem(BZ_KEY) || 'null'); } catch (e) {} if (!s || s.v !== 1) s = bzFresh(); s.upg = Object.assign({ jet: 0, arm: 0, blast: 0 }, s.upg || {}); return s; }
-  function bzSave(){ if (!BZ.s) return; if (BZ.inf) BZ.s.inf = Array.from(BZ.inf, v => Math.round(clamp(v, 0, 1) * 9)).join(''); try { localStorage.setItem(BZ_KEY, JSON.stringify(BZ.s)); } catch (e) {} }
+  function bzSave(){ if (!BZ.s) return; if (BZ.inf) BZ.ws.inf = Array.from(BZ.inf, v => Math.round(clamp(v, 0, 1) * 9)).join(''); try { localStorage.setItem(BZ_KEY, JSON.stringify(BZ.s)); } catch (e) {} }
   BZ.s = bzLoad();
   // seeded noise, so every visit builds the same Moon
   function bzHash(x, z, s){ let h = (x * 374761393 + z * 668265263 + s * 982451653) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967295; }
@@ -12771,22 +12771,22 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const MC_SHUTTLE = [146, 32];
   function segDist(px, pz, ax, az, bx, bz){ const dx = bx - ax, dz = bz - az, L = dx * dx + dz * dz || 1, t = clamp(((px - ax) * dx + (pz - az) * dz) / L, 0, 1); return Math.hypot(px - ax - dx * t, pz - az - dz * t); }
   function mcCraters(){
-    const r = rng(LUNA.seed), L = MC_MINES.map(([x, z, R]) => [x, z, R, 1]); let n = 0;
-    const nearRoad = (x, z, R) => MC_ROADS.some(p => p.some((a, i) => i && segDist(x, z, p[i - 1][0], p[i - 1][1], a[0], a[1]) < R * 1.25 + 6));
+    const r = rng(BZ.P.seed), L = BZ.P.mines.map(([x, z, R]) => [x, z, R, 1]); let n = 0;
+    const nearRoad = (x, z, R) => BZ.P.roads.some(p => p.some((a, i) => i && segDist(x, z, p[i - 1][0], p[i - 1][1], a[0], a[1]) < R * 1.25 + 6));
     while (L.length < 95 && n++ < 1500) { const x = (r() - .5) * 520, z = (r() - .5) * 520, R = 8 + Math.pow(r(), 2.2) * 40;
-      if (MC_FLAT.some(([fx, fz, fr]) => Math.hypot(x - fx, z - fz) < fr + R * 1.3 + 10)) continue; if (L.some(c => Math.hypot(c[0] - x, c[1] - z) < (c[2] + R) * .55)) continue;
-      if (MC_TOWERS.some(([tx, tz]) => Math.hypot(tx - x, tz - z) < R * 1.4 + 6) || nearRoad(x, z, R)) continue; L.push([x, z, R, 0]); }
+      if (BZ.P.flat.some(([fx, fz, fr]) => Math.hypot(x - fx, z - fz) < fr + R * 1.3 + 10)) continue; if (L.some(c => Math.hypot(c[0] - x, c[1] - z) < (c[2] + R) * .55)) continue;
+      if (BZ.P.towers.some(([tx, tz]) => Math.hypot(tx - x, tz - z) < R * 1.4 + 6) || nearRoad(x, z, R)) continue; L.push([x, z, R, 0]); }
     return L;
   }
   function mcHeight(x, z){
     let h = (bzFbm(x / 140 + 50, z / 140 + 50, 11, 4) - .5) * 16 + (bzFbm(x / 26, z / 26, 23, 3) - .5) * 2.4;
     for (const [cx, cz, R, pit] of BZ.crat) { const d = Math.hypot(x - cx, z - cz) / R; if (d > 1.7) continue; const dep = R * (pit ? .42 : .22), rim = R * .09;
       h += d < 1 ? (pit ? -dep * Math.min(1, (1 - d) * 3.2) : -dep * (1 - d * d)) + rim * Math.pow(d, 4) : rim * Math.pow(1 - (d - 1) / .7, 2); }
-    for (const [fx, fz, fr] of MC_FLAT) { const d = Math.hypot(x - fx, z - fz); if (d < fr + 26) { const k = d < fr ? 1 : 1 - (d - fr) / 26, s = k * k * (3 - 2 * k); h *= 1 - s; } }
+    for (const [fx, fz, fr] of BZ.P.flat) { const d = Math.hypot(x - fx, z - fz); if (d < fr + 26) { const k = d < fr ? 1 : 1 - (d - fr) / 26, s = k * k * (3 - 2 * k); h *= 1 - s; } }
     const e = Math.max(Math.abs(x), Math.abs(z)) - 226; if (e > 0) h += e * e * .011 + bzFbm(x / 18, z / 18, 5, 2) * e * .28;
     return h;
   }
-  function bzTerr(x, z){ const N = LUNA.N, s = LUNA.step, H = BZ.H; if (!H) return 0; const fx = clamp((x + LUNA.half) / s, 0, N - 1.001), fz = clamp((z + LUNA.half) / s, 0, N - 1.001), i = fx | 0, j = fz | 0, u = fx - i, v = fz - j, a = H[j * N + i], b = H[(j + 1) * N + i], d = H[j * N + i + 1], c = H[(j + 1) * N + i + 1];
+  function bzTerr(x, z){ const N = BZ.P.N, s = BZ.P.step, H = BZ.H; if (!H) return 0; const fx = clamp((x + BZ.P.half) / s, 0, N - 1.001), fz = clamp((z + BZ.P.half) / s, 0, N - 1.001), i = fx | 0, j = fz | 0, u = fx - i, v = fz - j, a = H[j * N + i], b = H[(j + 1) * N + i], d = H[j * N + i + 1], c = H[(j + 1) * N + i + 1];
     return u + v < 1 ? a + (d - a) * u + (b - a) * v : c + (b - c) * (1 - u) + (d - c) * (1 - v); }
   // ---------- colliders: circles, boxes and tube segments, bucketed in a 20 m grid ----------
   function bzAdd(c){ if (c.bot == null) c.bot = -99; BZ.cols.push(c); const r = c.r || 0, x0 = c.t === 'b' ? c.x0 : Math.min(c.x, c.bx == null ? c.x : c.bx) - r, x1 = c.t === 'b' ? c.x1 : Math.max(c.x, c.bx == null ? c.x : c.bx) + r, z0 = c.t === 'b' ? c.z0 : Math.min(c.z, c.bz == null ? c.z : c.bz) - r, z1 = c.t === 'b' ? c.z1 : Math.max(c.z, c.bz == null ? c.z : c.bz) + r;
@@ -12889,33 +12889,36 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); g.setIndex(I); return g; }
   function bzMerge(geos){ const P = [], N = [], U = [], I = []; let o = 0; geos.forEach(g => { const p = g.attributes.position.array, n = g.attributes.normal.array, u = g.attributes.uv.array; P.push(...p); N.push(...n); U.push(...u); g.index.array.forEach(i => I.push(i + o)); o += p.length / 3; g.dispose(); });
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.Float32BufferAttribute(N, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); g.setIndex(I); return g; }
-  function bzBuildMoon(){
-    const sc = BZ.sc = new THREE.Scene(); sc.background = new THREE.Color(0x000000); BZ.cols = []; BZ.grid = new Map(); BZ.anchors = []; BZ.domes = MC_DOMES.map(d => Object.assign({}, d, { doors: d.doors.slice() })); BZ.ents = []; BZ.shots = []; BZ.fx = []; BZ.ppl = []; BZ.bots = []; BZ.rovers = []; BZ.bugs = []; BZ.facs = []; BZ.beas = [];
+  function bzBuildWorld(){
+    BZ.towers = []; const sc = BZ.sc = new THREE.Scene(); sc.background = new THREE.Color(0x000000); BZ.cols = []; BZ.grid = new Map(); BZ.anchors = []; BZ.domes = BZ.P.domes.map(d => Object.assign({}, d, { doors: d.doors.slice() })); BZ.ents = []; BZ.shots = []; BZ.fx = []; BZ.ppl = []; BZ.bots = []; BZ.rovers = []; BZ.bugs = []; BZ.facs = []; BZ.beas = [];
     BZ.u = { uInf: { value: bzInfTex() }, uT: { value: 0 } }; BZ.anchorM = new THREE.MeshBasicMaterial({ visible: false }); BZ.anchorG = new THREE.Group(); BZ.anchorG.visible = false; sc.add(BZ.anchorG);
     BZ.lightM = new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }); BZ.redM = new THREE.MeshBasicMaterial({ color: 0xFF2A1A, toneMapped: false });
-    BZ.crat = mcCraters(); const N = LUNA.N, H = BZ.H = new Float32Array(N * N); for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) H[j * N + i] = mcHeight(-LUNA.half + i * LUNA.step, -LUNA.half + j * LUNA.step);
+    BZ.crat = BZ.P.craters(); const N = BZ.P.N, H = BZ.H = new Float32Array(N * N); for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) H[j * N + i] = BZ.P.height(-BZ.P.half + i * BZ.P.step, -BZ.P.half + j * BZ.P.step);
     // the ground
     const pos = new Float32Array(N * N * 3), col = new Float32Array(N * N * 3), uv = new Float32Array(N * N * 2), idx = [];
-    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const k = j * N + i, x = -LUNA.half + i * LUNA.step, z = -LUNA.half + j * LUNA.step; pos.set([x, H[k], z], k * 3); uv.set([x / 9, z / 9], k * 2);
-      const mare = bzFbm(x / 90 + 7, z / 90 + 3, 41, 3), hl = (H[k] - (H[k - 1] || H[k])) * .06, v = clamp(.62 - Math.max(0, mare - .55) * .9 + hl + (bzHash(i, j, 8) - .5) * .04, .28, .8); col.set([v, v * .985, v * .96], k * 3);
+    for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const k = j * N + i, x = -BZ.P.half + i * BZ.P.step, z = -BZ.P.half + j * BZ.P.step; pos.set([x, H[k], z], k * 3); uv.set([x / 9, z / 9], k * 2);
+      if (BZ.P.colors) { const c3 = BZ.P.colors(x, z, H[k]), hl = (H[k] - (H[k - 1] || H[k])) * .04; col.set([clamp(c3[0] + hl, 0, 1), clamp(c3[1] + hl, 0, 1), clamp(c3[2] + hl, 0, 1)], k * 3); } else { const mare = bzFbm(x / 90 + 7, z / 90 + 3, 41, 3), hl = (H[k] - (H[k - 1] || H[k])) * .06, v = clamp(.62 - Math.max(0, mare - .55) * .9 + hl + (bzHash(i, j, 8) - .5) * .04, .28, .8); col.set([v, v * .985, v * .96], k * 3); }
       if (i < N - 1 && j < N - 1) { const a = k, b = k + N, c = k + N + 1, d = k + 1; idx.push(a, b, d, b, c, d); } }
     const tg = new THREE.BufferGeometry(); tg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); tg.setAttribute('color', new THREE.BufferAttribute(col, 3)); tg.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); tg.setIndex(idx); tg.computeVertexNormals();
-    const ground = new THREE.Mesh(tg, bzGroundM(bzRegolith())); ground.receiveShadow = true; ground.userData.noPick = true; sc.add(ground); BZ.ground = ground;
-    // sky: stars, the Earth, the Sun
+    const ground = new THREE.Mesh(tg, bzGroundM(BZ.P.tex ? BZ.P.tex() : bzRegolith())); ground.receiveShadow = true; ground.userData.noPick = true; sc.add(ground); BZ.ground = ground;
+    // sky: stars, the Earth, the Sun (or whatever this world has instead)
+    const SK = BZ.P.sky; if (SK) { sc.background = new THREE.Color(SK.bg); sc.fog = new THREE.Fog(SK.fog, SK.near, SK.far); }
+    if (!SK) {
     const n = lowFx ? 1200 : 2600, sp = new Float32Array(n * 3), r0 = rng(77); for (let i = 0; i < n; i++) { const u = r0() * 1.2 - .2, t = r0() * 6.283, s2 = Math.sqrt(1 - u * u); sp.set([Math.cos(t) * s2 * 1400, u * 1400, Math.sin(t) * s2 * 1400], i * 3); }
     const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(sp, 3)); const stars = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xFFFFFF, size: 1.4, sizeAttenuation: false, toneMapped: false })); stars.userData.noPick = true; sc.add(stars); BZ.stars = stars;
     const earth = new THREE.Mesh(new THREE.SphereGeometry(90, 48, 32), new THREE.MeshStandardMaterial({ map: earthTex(), roughness: .8, emissive: 0x0A1A3A, emissiveIntensity: .25 })); earth.position.set(-420, 520, -980); sc.add(earth); BZ.earth = earth;
     const atmo = new THREE.Mesh(new THREE.SphereGeometry(95, 40, 24), new THREE.MeshBasicMaterial({ color: 0x5AA0FF, transparent: true, opacity: .22, side: THREE.BackSide, toneMapped: false })); atmo.position.copy(earth.position); sc.add(atmo);
     const sunS = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex(128, 128, (c, w, h) => { const g = c.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.2, 'rgba(255,250,235,.9)'); g.addColorStop(1, 'rgba(255,240,200,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); }), transparent: true, depthWrite: false, toneMapped: false })); sunS.scale.set(160, 160, 1); sunS.position.set(900, 420, 520); sc.add(sunS);
-    const sun = BZ.sun = new THREE.DirectionalLight(0xFFF6E8, 2.4); sun.position.set(900, 420, 520).normalize().multiplyScalar(200); sc.add(sun); sc.add(sun.target);
+    } else if (BZ.P.skyBuild) BZ.P.skyBuild(sc);
+    const sun = BZ.sun = new THREE.DirectionalLight(SK ? SK.sun : 0xFFF6E8, SK ? SK.sunI : 2.4); sun.position.set(900, 420, 520).normalize().multiplyScalar(200); sc.add(sun); sc.add(sun.target);
     if (fine && !lowFx) { sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); const C = sun.shadow.camera; C.left = C.bottom = -70; C.right = C.top = 70; C.near = 10; C.far = 420; sun.shadow.bias = -.0006; }
-    BZ.hemi = new THREE.HemisphereLight(0x8090B0, 0x3A3A3A, .55); sc.add(BZ.hemi); BZ.amb = new THREE.AmbientLight(0x40465A, .35); sc.add(BZ.amb);
+    BZ.hemi = SK ? new THREE.HemisphereLight(SK.hemi[0], SK.hemi[1], SK.hemi[2]) : new THREE.HemisphereLight(0x8090B0, 0x3A3A3A, .55); BZ.sunI = SK ? SK.sunI : 2.4; BZ.hemiI = BZ.hemi.intensity; BZ.hemiC = BZ.hemi.color.clone(); sc.add(BZ.hemi); BZ.amb = new THREE.AmbientLight(0x40465A, .35); sc.add(BZ.amb);
     // everything static goes into a few merged meshes
     const P = [], L = [], G = [];
     BZ.domes.forEach(d => bzBuildDome(d, P, L, G));
     // pressurised tubes on legs: walk underneath, or land on top
     const dm = id => BZ.domes.find(d => d.id === id);
-    MC_TUBES.forEach(([a, b]) => { const A2 = dm(a), B2 = dm(b), dx = B2.x - A2.x, dz = B2.z - A2.z, D = Math.hypot(dx, dz), ux = dx / D, uz = dz / D, ra = Math.sqrt(A2.R * A2.R - 20.25), rb = Math.sqrt(B2.R * B2.R - 20.25), x0 = A2.x + ux * ra, z0 = A2.z + uz * ra, x1 = B2.x - ux * rb, z1 = B2.z - uz * rb, L2 = Math.hypot(x1 - x0, z1 - z0), ry = Math.atan2(dx, dz);
+    BZ.P.tubes.forEach(([a, b]) => { const A2 = dm(a), B2 = dm(b), dx = B2.x - A2.x, dz = B2.z - A2.z, D = Math.hypot(dx, dz), ux = dx / D, uz = dz / D, ra = Math.sqrt(A2.R * A2.R - 20.25), rb = Math.sqrt(B2.R * B2.R - 20.25), x0 = A2.x + ux * ra, z0 = A2.z + uz * ra, x1 = B2.x - ux * rb, z1 = B2.z - uz * rb, L2 = Math.hypot(x1 - x0, z1 - z0), ry = Math.atan2(dx, dz);
       P.push([new THREE.CylinderGeometry(1.4, 1.4, L2, 16, 1, true), 0xE8EBF0, (x0 + x1) / 2, 4.5, (z0 + z1) / 2, 0, Math.atan2(uz, -ux), Math.PI / 2]);
       for (let t = 4; t < L2 - 2; t += 8) { const x = x0 + ux * t, z = z0 + uz * t; P.push(B3(.5, 3.2, .5, 0x8A8F99, x, 1.6, z), [new THREE.TorusGeometry(1.45, .12, 4, 20), 0xC9CFD8, x, 4.5, z, 0, ry, 0]); L.push([new THREE.TorusGeometry(1.46, .05, 3, 20), 0x35C8F0, x + ux * 4, 4.5, z + uz * 4, 0, ry, 0]); bzAdd({ t: 'c', x, z, r: .35, top: 3.1 }); }
       bzAdd({ t: 's', x: x0, z: z0, bx: x1, bz: z1, r: 1.4, top: 5.9, bot: 3.1 }); bzAnchor(new THREE.CylinderGeometry(1.4, 1.4, L2, 8), (x0 + x1) / 2, 4.5, (z0 + z1) / 2).rotation.set(Math.PI / 2, ry, 0, 'YXZ'); });
@@ -12924,10 +12927,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const radial = BZ.domes.filter(d => d.kind !== 'green' && d.kind !== 'hub').map(d => { const a = Math.atan2(d.z, d.x), r1 = Math.hypot(d.x, d.z) - d.R - 3.5; return [[Math.cos(a) * 36, Math.sin(a) * 36], [Math.cos(a) * r1, Math.sin(a) * r1]]; }).filter(p => Math.hypot(...p[1]) > 38);
     const hubR = [[[0, 21], [0, 32]], [[0, -21], [0, -32]]];
     const roadM = new THREE.MeshStandardMaterial({ map: bzRoadTex(), roughness: .95, polygonOffset: true, polygonOffsetFactor: -2, side: THREE.DoubleSide });
-    const road = new THREE.Mesh(bzMerge([bzRibbon(ring, 6, .07), ...MC_ROADS.map(p => bzRibbon(p, 6, .08)), ...radial.map(p => bzRibbon(p, 4, .08)), ...hubR.map(p => bzRibbon(p, 4, .08))]), roadM); road.receiveShadow = true; road.userData.noPick = true; sc.add(road);
+    const road = new THREE.Mesh(bzMerge([bzRibbon(ring, 6, .07), ...BZ.P.roads.map(p => bzRibbon(p, 6, .08)), ...radial.map(p => bzRibbon(p, 4, .08)), ...hubR.map(p => bzRibbon(p, 4, .08))]), roadM); road.receiveShadow = true; road.userData.noPick = true; sc.add(road);
     for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2 + .1, x = Math.cos(a) * 38.5, z = Math.sin(a) * 38.5; if (BZ.domes.some(d => Math.hypot(d.x - x, d.z - z) < d.R + 2)) continue; P.push(C3(.12, 5, 0x8A8F99, x, 2.5, z, 6), B3(1.2, .15, .3, 0x8A8F99, x - Math.cos(a) * .5, 5, z - Math.sin(a) * .5, -a + Math.PI / 2)); L.push(B3(.9, .08, .25, 0xFFF0C8, x - Math.cos(a) * .6, 4.9, z - Math.sin(a) * .6, -a + Math.PI / 2)); bzAdd({ t: 'c', x, z, r: .2 }); }
     // landing pads, with the station shuttle on the middle one
-    MC_PADS.forEach(([x, z, k]) => { P.push([new THREE.CylinderGeometry(11, 11.6, .7, 6), 0x9A9EA6, x, .35, z]); for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; L.push(S3(.22, i % 2 ? 0xFFC93C : 0x35C8F0, x + Math.cos(a) * 10.6, .78, z + Math.sin(a) * 10.6, 6)); }
+    BZ.P.pads.forEach(([x, z, k]) => { P.push([new THREE.CylinderGeometry(11, 11.6, .7, 6), 0x9A9EA6, x, .35, z]); for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; L.push(S3(.22, i % 2 ? 0xFFC93C : 0x35C8F0, x + Math.cos(a) * 10.6, .78, z + Math.sin(a) * 10.6, 6)); }
       P.push(B3(1, .04, 7, 0xF4F1E8, x - 2, .72, z), B3(1, .04, 7, 0xF4F1E8, x + 2, .72, z), B3(4, .04, 1, 0xF4F1E8, x, .72, z)); bzAdd({ t: 'c', x, z, r: 10.6, top: .7 });
       if (k === 'lander') { P.push([new THREE.CylinderGeometry(2.2, 3, 3.4, 8), 0xD8C890, x, 3.6, z], [new THREE.ConeGeometry(2.2, 2, 8), 0xE8EBF0, x, 6.3, z], [new THREE.CylinderGeometry(1, 1.6, 1.4, 10), 0x3A3D48, x, 1.5, z]); for (let i = 0; i < 4; i++) { const a = i * Math.PI / 2 + .78; P.push(B3(.18, 3.2, .18, 0x8A8F99, x + Math.cos(a) * 3.2, 1.9, z + Math.sin(a) * 3.2, 0, Math.sin(a) * .4, -Math.cos(a) * .4), C3(.6, .12, 0x8A8F99, x + Math.cos(a) * 3.8, .78, z + Math.sin(a) * 3.8, 8)); } bzAdd({ t: 'c', x, z, r: 3.2, top: 7.3 }); }
       if (k === 'cargo') { for (let i = 0; i < 6; i++) { const cx = x - 5 + (i % 3) * 2.6, cz = z + 5 + Math.floor(i / 3) * 2.4; P.push(B3(2.2, 2, 2, [0xE8501E, 0x2A6AFF, 0xFFC93C][i % 3], cx, 1.7, cz)); bzAdd({ t: 'b', x0: cx - 1.1, x1: cx + 1.1, z0: cz - 1, z1: cz + 1, top: 2.7 }); }
@@ -12935,23 +12938,23 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (k === 'shuttle') { P.push([new THREE.CylinderGeometry(2.4, 2.8, 9, 12), 0xF4F4F4, x, 5.2, z - 1], [new THREE.ConeGeometry(2.4, 3.4, 12), 0xF4F4F4, x, 11.4, z - 1], B3(9, .5, 4, 0xE8EBF0, x, 2.4, z - 1), B3(1.6, 2.4, .2, 0x3A3D48, x, 2.6, z + 1.6), [new THREE.CylinderGeometry(.8, 1.4, 1.2, 10), 0x3A3D48, x, .9, z - 1]); L.push(B3(1.4, .1, .1, 0x3CE870, x, 3.9, z + 1.7), B3(4, .3, .05, 0x35C8F0, x, 7, z + 1.42)); bzAdd({ t: 'c', x, z: z - 1, r: 2.8, top: 13 }); bzAdd({ t: 'b', x0: x - 4.5, x1: x + 4.5, z0: z - 3, z1: z + 1, top: 2.65 }); bzAnchor(new THREE.CylinderGeometry(2.4, 2.8, 12, 8), x, 6, z - 1); }
       const s = bzSign(k === 'shuttle' ? 'Station Shuttle' : k === 'cargo' ? 'Cargo Depot' : 'Landing Pad 1', k === 'shuttle' ? 'TO ORBITAL STATION KALPANA' : k === 'cargo' ? 'DELIVERIES' : 'LUNAR LANDER', '#FFC93C', 6); s.position.set(x, k === 'shuttle' ? 15 : 9, z); sc.add(s); });
     // comms towers: tall enough to swing from
-    MC_TOWERS.forEach(([x, z, h], i) => { const g0 = bzTerr(x, z), Q = []; bzLattice(Q, 0, 0, h, 5, 0xC9CFD8); Q.push([new THREE.SphereGeometry(2.2, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), 0xF4F4F4, 1.6, h - 3, 0, 0, 0, Math.PI * .6], C3(.12, 4, 0x8A8F99, 0, h + 2, 0, 6), B3(1.6, 1.8, 1, 0x3A3F4A, 1.2, .9, 2.8)); Q.forEach(q => { q[2] += x; q[3] += g0; q[4] += z; P.push(q); });
+    BZ.P.towers.forEach(([x, z, h], i) => { const g0 = bzTerr(x, z), Q = []; bzLattice(Q, 0, 0, h, 5, 0xC9CFD8); Q.push([new THREE.SphereGeometry(2.2, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), 0xF4F4F4, 1.6, h - 3, 0, 0, 0, Math.PI * .6], C3(.12, 4, 0x8A8F99, 0, h + 2, 0, 6), B3(1.6, 1.8, 1, 0x3A3F4A, 1.2, .9, 2.8)); Q.forEach(q => { q[2] += x; q[3] += g0; q[4] += z; P.push(q); });
       const lamp = new THREE.Mesh(new THREE.SphereGeometry(.4, 8, 6), BZ.redM); lamp.position.set(x, g0 + h + 4, z); sc.add(lamp); bzAdd({ t: 'c', x, z, r: 3, top: null }); bzAnchor(gB(5, h, 5), x, g0 + h / 2, z); BZ.towers = BZ.towers || []; BZ.towers[i] = { x, z, h, g0, lamp, panel: [x + 1.2, z + 3.6] }; });
     // solar fields
     const panG = new THREE.BoxGeometry(3, .08, 1.7), postG = new THREE.CylinderGeometry(.08, .08, 1.2, 5), pans = [];
-    MC_SOLAR.forEach(([cx, cz, nx, nz]) => { for (let a = 0; a < nx; a++) for (let b = 0; b < nz; b++) pans.push([cx + (a - (nx - 1) / 2) * 3.4, cz + (b - (nz - 1) / 2) * 3.4]); for (let b = 0; b < nz; b++) { const z = cz + (b - (nz - 1) / 2) * 3.4; bzAdd({ t: 'b', x0: cx - nx * 1.7, x1: cx + nx * 1.7, z0: z - .8, z1: z + .8, top: 1.4 }); } });
+    BZ.P.solar.forEach(([cx, cz, nx, nz]) => { for (let a = 0; a < nx; a++) for (let b = 0; b < nz; b++) pans.push([cx + (a - (nx - 1) / 2) * 3.4, cz + (b - (nz - 1) / 2) * 3.4]); for (let b = 0; b < nz; b++) { const z = cz + (b - (nz - 1) / 2) * 3.4; bzAdd({ t: 'b', x0: cx - nx * 1.7, x1: cx + nx * 1.7, z0: z - .8, z1: z + .8, top: 1.4 }); } });
     const panM = new THREE.InstancedMesh(panG, new THREE.MeshStandardMaterial({ color: 0x1A2A5A, metalness: .6, roughness: .25, emissive: 0x050A20 }), pans.length), postM = new THREE.InstancedMesh(postG, mat(0x8A8F99), pans.length), m4 = new THREE.Matrix4(), q4 = new THREE.Quaternion(), e4 = new THREE.Euler();
     pans.forEach(([x, z], i) => { const y = bzTerr(x, z); panM.setMatrixAt(i, m4.compose(V(x, y + 1.3, z), q4.setFromEuler(e4.set(-.45, 0, 0)), V(1, 1, 1))); postM.setMatrixAt(i, m4.compose(V(x, y + .6, z), q4.set(0, 0, 0, 1), V(1, 1, 1))); });
     panM.castShadow = true; panM.userData.noPick = postM.userData.noPick = true; sc.add(panM, postM); BZ.panels = pans;
     // mines: pits, drill rigs, conveyors, ore
-    MC_MINES.forEach(([x, z, R, nm], i) => { const a = Math.atan2(-z, -x), rx = x + Math.cos(a) * (R + 6), rz = z + Math.sin(a) * (R + 6), g0 = bzTerr(rx, rz), Q = []; bzLattice(Q, 0, 0, 34, 6, 0xE8501E); Q.forEach(q => { q[2] += rx; q[3] += g0; q[4] += rz; P.push(q); }); bzAdd({ t: 'c', x: rx, z: rz, r: 3.4 }); bzAnchor(gB(6, 34, 6), rx, g0 + 17, rz);
+    BZ.P.mines.forEach(([x, z, R, nm], i) => { const a = Math.atan2(-z, -x), rx = x + Math.cos(a) * (R + 6), rz = z + Math.sin(a) * (R + 6), g0 = bzTerr(rx, rz), Q = []; bzLattice(Q, 0, 0, 34, 6, 0xE8501E); Q.forEach(q => { q[2] += rx; q[3] += g0; q[4] += rz; P.push(q); }); bzAdd({ t: 'c', x: rx, z: rz, r: 3.4 }); bzAnchor(gB(6, 34, 6), rx, g0 + 17, rz);
       const sx = rx + Math.cos(a + 1.3) * 9, sz = rz + Math.sin(a + 1.3) * 9, sg0 = bzTerr(sx, sz); P.push(B3(8, 3, 5, 0xD8DCE2, sx, sg0 + 1.5, sz, -a)); L.push(B3(5, .6, .05, 0x35C8F0, sx + Math.cos(a) * 2.53, sg0 + 2, sz + Math.sin(a) * 2.53, -a + Math.PI / 2)); bzAdd({ t: 'c', x: sx, z: sz, r: 3.6, top: sg0 + 3 });
       const hx = x + Math.cos(a - 1.2) * (R + 9), hz = z + Math.sin(a - 1.2) * (R + 9), hg = bzTerr(hx, hz); P.push([new THREE.ConeGeometry(5, 4, 9), 0x6A6058, hx, hg + 2, hz]); bzAdd({ t: 'c', x: hx, z: hz, r: 4, top: hg + 3 });
       const bx = x + Math.cos(a - .6) * R * .5, bz = z + Math.sin(a - .6) * R * .5, L2 = Math.hypot(hx - bx, hz - bz), ga = bzTerr(bx, bz), gb2 = hg + 3.6; P.push([gB(1.2, .4, L2), 0x2A2D33, (bx + hx) / 2, (ga + gb2) / 2 + 1, (bz + hz) / 2, Math.atan2(-(gb2 - ga), L2), Math.atan2(hx - bx, hz - bz), 0]);
       const ex = x + Math.cos(a + 2.2) * R * .3, ez = z + Math.sin(a + 2.2) * R * .3, eg = bzTerr(ex, ez); P.push(B3(3, 1.6, 5, 0xFFC93C, ex, eg + 1.4, ez, a), B3(2.2, 1.6, 2, 0x3A3D48, ex, eg + 2.8, ez, a), B3(.5, .5, 5, 0xFFC93C, ex + Math.cos(a) * 2, eg + 3.5, ez + Math.sin(a) * 2, -.5, -a + Math.PI / 2)); bzAdd({ t: 'c', x: ex, z: ez, r: 2.5, top: eg + 3.6 });
       const s = bzSign(nm, 'HELIUM-3 · REGOLITH', '#E8501E', 7); s.position.set(sx, sg0 + 6, sz); sc.add(s); });
     // scattered boulders
-    const rg = rng(31), rocks = []; for (let i = 0; i < (lowFx ? 160 : 320); i++) { const x = (rg() - .5) * 500, z = (rg() - .5) * 500, s = .4 + Math.pow(rg(), 3) * 3.6; if (Math.hypot(x, z) < 95 || MC_FLAT.some(([fx, fz, fr]) => Math.hypot(x - fx, z - fz) < fr) || MC_ROADS.some(p => p.some((q, k) => k && segDist(x, z, p[k - 1][0], p[k - 1][1], q[0], q[1]) < 5 + s))) continue; rocks.push([x, z, s, rg() * 6]); if (s > 1.2) bzAdd({ t: 'c', x, z, r: s * .8, top: bzTerr(x, z) + s * 1.1 }); }
+    const rg = rng(31), rocks = []; for (let i = 0; i < (lowFx ? 160 : 320); i++) { const x = (rg() - .5) * 500, z = (rg() - .5) * 500, s = .4 + Math.pow(rg(), 3) * 3.6; if (Math.hypot(x, z) < 95 || BZ.P.flat.some(([fx, fz, fr]) => Math.hypot(x - fx, z - fz) < fr) || BZ.P.roads.some(p => p.some((q, k) => k && segDist(x, z, p[k - 1][0], p[k - 1][1], q[0], q[1]) < 5 + s))) continue; rocks.push([x, z, s, rg() * 6]); if (s > 1.2) bzAdd({ t: 'c', x, z, r: s * .8, top: bzTerr(x, z) + s * 1.1 }); }
     const rockM = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), new THREE.MeshStandardMaterial({ color: 0x8A8780, roughness: 1, flatShading: true }), rocks.length);
     rocks.forEach(([x, z, s, r], i) => rockM.setMatrixAt(i, m4.compose(V(x, bzTerr(x, z) + s * .3, z), q4.setFromEuler(e4.set(r, r * 2, r * .5)), V(s, s * .7, s * 1.1)))); rockM.castShadow = rockM.receiveShadow = true; rockM.userData.noPick = true; sc.add(rockM);
     // a flag by the hub, and a plaque
@@ -12966,7 +12969,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     BZ.wpM = new THREE.Mesh(new THREE.CylinderGeometry(.9, .9, 60, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFC93C, transparent: true, opacity: .28, depthWrite: false, side: THREE.DoubleSide, toneMapped: false })); BZ.wpM.visible = false; BZ.wpM.userData.noPick = true; sc.add(BZ.wpM);
     sc.updateMatrixWorld(true);
     bzPeople(); bzVehicles(); bzInfInit();
-    if (BZ.s.out) bzOutbreakSetup(true);
+    if (BZ.P.instant && !BZ.ws.out) { BZ.ws.out = 1; BZ.ws.outAt = 0; }
+    if (BZ.ws.out) bzOutbreakSetup(true);
+    if (BZ.ws.cel === 1) setTimeout(() => bzCelSummon(true), 500);
   }
   // ---------- colony life: colonists, maintenance robots, rovers, buggies ----------
   const BZ_RING = 34;
@@ -12994,7 +12999,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     for (let i = 0; i < (lowFx ? 4 : 7); i++) { const g = new THREE.Group(), m = new THREE.Mesh(botBody, propM()); m.castShadow = true; g.add(m); const eye = new THREE.Mesh(eyeG, BZ.eyeOk); eye.position.set(0, 1.06, -.26); g.add(eye); const t = i / 7 * 6.28; g.position.set(Math.cos(t) * BZ_RING, 0, Math.sin(t) * BZ_RING); BZ.sc.add(g); BZ.bots.push({ g, eye, x: g.position.x, z: g.position.z, tx: g.position.x, tz: g.position.z, wait: Math.random() * 4, bad: false }); }
   }
   function bzPeopleStep(dt, now){
-    const t = now / 1000, out = !!BZ.s.out;
+    const t = now / 1000, out = !!BZ.ws.out;
     for (const p of BZ.ppl) {
       const far = Math.hypot(p.x - pos.x, p.z - pos.z) > 110; p.a.g.visible = !far;
       if (p.st === 'held') continue;
@@ -13022,14 +13027,14 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function bzBuggyMesh(){ return bake([B3(2.2, .25, 3.6, 0x8A8F99, 0, .9, 0), B3(1.9, .1, 1.2, 0x2A2D33, 0, 1.06, .2), B3(.9, .7, .12, 0x3A3D48, .45, 1.4, .8), B3(.9, .7, .12, 0x3A3D48, -.45, 1.4, .8), B3(.08, 1.2, .08, 0xD8DCE2, 1, 1.6, .9), B3(.08, 1.2, .08, 0xD8DCE2, -1, 1.6, .9), B3(2.08, .08, .08, 0xD8DCE2, 0, 2.2, .9), [new THREE.SphereGeometry(.5, 10, 6, 0, 6.283, 0, 1.2), 0xF4F4F4, -.6, 1.9, -1.4], B3(1.4, .5, .9, 0xFFC93C, 0, 1.3, -1.3), B3(2.6, .1, 1, 0xD8DCE2, 0, 1.35, 1.6), B3(2.6, .1, 1, 0xD8DCE2, 0, 1.35, -1.6)]); }
   function bzVehicles(){
     const roverG = bzRoverMesh(), wheelG = new THREE.CylinderGeometry(.55, .55, .45, 14), wheelM = mat(0x2A2D33, { roughness: .9 }), hubM = mat(0xC9CFD8, { metalness: .6, roughness: .3 }), hubG = new THREE.CylinderGeometry(.3, .3, .47, 8);
-    [[0, 1], [2, 1], [3, 1], [4, 0]].slice(0, lowFx ? 2 : 4).forEach(([ri, dir], i) => { const g = new THREE.Group(), m = new THREE.Mesh(roverG, propM()); m.castShadow = true; g.add(m); BZ.sc.add(g); const path = MC_ROADS[ri]; BZ.rovers.push({ g, path, seg: dir ? 0 : path.length - 2, t: Math.random(), dir, spd: 8, x: path[0][0], z: path[0][1], yaw: 0, wait: i * 3 }); });
+    [[0, 1], [2, 1], [3, 1], [4, 0]].slice(0, lowFx ? 2 : 4).forEach(([ri, dir], i) => { const g = new THREE.Group(), m = new THREE.Mesh(roverG, propM()); m.castShadow = true; g.add(m); BZ.sc.add(g); const path = BZ.P.roads[ri]; BZ.rovers.push({ g, path, seg: dir ? 0 : path.length - 2, t: Math.random(), dir, spd: 8, x: path[0][0], z: path[0][1], yaw: 0, wait: i * 3 }); });
     const bugG = bzBuggyMesh(), drvG = bake([B3(.55, .7, .4, 0xE8EBF0, 0, 1.55, .35), S3(.26, 0xE8EBF0, 0, 2.05, .35, 10), B3(.34, .16, .06, 0xD9A93A, 0, 2.06, .1), B3(.5, .5, .2, 0xC9CFD8, 0, 1.6, .62)]);
     [[10, 44, 0], [116, 2, Math.PI / 2], [-158, 160, -Math.PI / 2]].forEach(([x, z, yw]) => { const g = new THREE.Group(), body = new THREE.Mesh(bugG, propM()); body.castShadow = true; g.add(body); const wheels = [[1.25, 1.25], [-1.25, 1.25], [1.25, -1.25], [-1.25, -1.25]].map(([wx, wz]) => { const w = new THREE.Group(); w.position.set(wx, .55, wz); const t = new THREE.Mesh(wheelG, wheelM); t.rotation.z = Math.PI / 2; const h = new THREE.Mesh(hubG, hubM); h.rotation.z = Math.PI / 2; w.add(t, h); g.add(w); return w; });
       const drv = new THREE.Mesh(drvG, propM()); drv.visible = false; g.add(drv); BZ.sc.add(g); const y = bzTerr(x, z); BZ.bugs.push({ g, wheels, drv, x, z, y, yaw: yw, spd: 0, vy: 0, air: false, pitch: 0, roll: 0, home: [x, z, yw] }); g.position.set(x, y, z); g.rotation.y = yw; });
   }
   function bzRoverStep(dt){
     for (const r of BZ.rovers) {
-      if (BZ.s.out && !r.parked) { r.parked = true; }
+      if (BZ.ws.out && !r.parked) { r.parked = true; }
       if (r.parked || (r.wait -= dt) > 0) { r.g.position.set(r.x, bzTerr(r.x, r.z), r.z); continue; }
       const a = r.path[r.seg], b = r.path[r.seg + 1], L = Math.hypot(b[0] - a[0], b[1] - a[1]); let blocked = Math.hypot(pos.x - r.x, pos.z - r.z) < 7 && ((pos.x - r.x) * -Math.sin(r.yaw) + (pos.z - r.z) * -Math.cos(r.yaw)) > 0;
       if (!blocked) r.t += (r.dir ? 1 : -1) * r.spd * dt / L; else if (!r.honk) { r.honk = 1; tone(330, .3, 'square', .03); setTimeout(() => r.honk = 0, 2500); }
@@ -13048,8 +13053,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (Math.abs(b.spd) > .05) { if (bzBlocked(nx, nz, b.y + .2, b.x, b.z, 1.3)) { if (Math.abs(b.spd) > 6 && me2) { tone(90, .25, 'sawtooth', .05, 60); BZ.shake = .3; bzNoiseAdd(.3); } b.spd *= -.3; } else { b.x = nx; b.z = nz; } }
     const sx = Math.cos(b.yaw), sz = -Math.sin(b.yaw), h = (ox, oz) => bzSupport(b.x + fx * oz + sx * ox, b.z + fz * oz + sz * ox, b.y + .3);
     const hfl = h(-1.1, 1.4), hfr = h(1.1, 1.4), hbl = h(-1.1, -1.4), hbr = h(1.1, -1.4), gy = (hfl + hfr + hbl + hbr) / 4;
-    if (b.air) { b.vy -= LUNA.G * dt; b.y += b.vy * dt; if (b.y <= gy) { if (b.vy < -5 && me2) { tone(110, .15, 'sine', .06); BZ.shake = .2; bzNoiseAdd(.15); } b.y = gy; b.air = false; b.vy = 0; } }
-    else { const vn = (gy - b.y) / Math.max(dt, .001); if (vn < b.vy - LUNA.G * dt * 2.5 && b.vy > -1 && Math.abs(b.spd) > 4) { b.air = true; b.vy -= LUNA.G * dt; b.y += b.vy * dt; } else { b.vy = clamp(vn, -15, 15); b.y = gy; } }
+    if (b.air) { b.vy -= BZ.P.G * dt; b.y += b.vy * dt; if (b.y <= gy) { if (b.vy < -5 && me2) { tone(110, .15, 'sine', .06); BZ.shake = .2; bzNoiseAdd(.15); } b.y = gy; b.air = false; b.vy = 0; } }
+    else { const vn = (gy - b.y) / Math.max(dt, .001); if (vn < b.vy - BZ.P.G * dt * 2.5 && b.vy > -1 && Math.abs(b.spd) > 4) { b.air = true; b.vy -= BZ.P.G * dt; b.y += b.vy * dt; } else { b.vy = clamp(vn, -15, 15); b.y = gy; } }
     if (!b.air) { b.pitch += (Math.atan2((hfl + hfr) - (hbl + hbr), 5.6) - b.pitch) * Math.min(1, dt * 8); b.roll += (Math.atan2((hfr + hbr) - (hfl + hbl), 4.4) - b.roll) * Math.min(1, dt * 8); }
     b.g.position.set(b.x, b.y, b.z); b.g.rotation.set(b.pitch, b.yaw, -b.roll, 'YXZ'); b.wheels.forEach(w => w.rotation.x -= b.spd * dt / .55);
     if (me2) { pos.set(b.x, b.y + 2.1, b.z); BZ.feet = b.y + .5; yaw = b.yaw; if (Math.abs(b.spd) > 2) bzNoiseAdd(.2 * dt * Math.abs(b.spd) / 10); }
@@ -13062,22 +13067,23 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function bzJump(){ if (BZ.bug) { if (!BZ.bug.air) { BZ.bug.air = true; BZ.bug.vy = 6; tone(260, .15, 'sine', .04, 400); } return; } if (BZ.grounded) { BZ.v.y = BZ.crouch ? 8.4 : 6.6; BZ.grounded = false; BZ.jetArm = false; tone(420, .08, 'sine', .04, 620); } else BZ.jetArm = true; }
   function bzCrouch(on){ BZ.crouch = on; if (BZ.padEl) BZ.padEl.querySelector('[data-b="crouch"]').classList.toggle('on', on); }
   function bzWeb(){
-    if (BZ.bug || BZ.web || BZ.dead) return; ndc.set(0, 0); ray.setFromCamera(ndc, camera); const reach = 110;
-    const hit = ray.intersectObjects(BZ.anchors, false).find(h => h.distance < reach && h.point.y > BZ.feet + 2);
+    if (BZ.bug || BZ.web || BZ.dead) return; ndc.set(0, 0); ray.setFromCamera(ndc, camera); const reach = BZ.gi.some(S => S.cel && S.alive) ? 200 : 110;
+    let hit = ray.intersectObjects(BZ.anchors, false).find(h => h.distance < reach && h.point.y > BZ.feet + 2);
+    if (!hit && BZ.P.wallWeb) hit = ray.intersectObject(BZ.ground, false).find(h => h.distance < reach && h.point.y > BZ.feet + 4 && h.face && h.face.normal.y < .6);
     if (!hit) { if (!BZ.webHint || BZ.t - BZ.webHint > 6) { BZ.webHint = BZ.t; say('Nothing to swing from there. Aim at a comms tower, a drill rig, a tube or a dome.', 2600); } return; }
     BZ.web = { p: hit.point.clone(), L: hit.distance * .9 }; if (BZ.gi.some(S => S.proxies.includes(hit.object))) { BZ.web.obj = hit.object; BZ.web.l = hit.object.worldToLocal(hit.point.clone()); } if (BZ.grounded) { BZ.v.y = 5; BZ.grounded = false; } tone(1400, .12, 'triangle', .04, 500); bzNoiseAdd(.05);
     if (!BZ.s.swung) { BZ.s.swung = 1; say('Webs stick to anything tall. In one-sixth gravity, you can fly a long way.', 3600); }
   }
   function bzWebEnd(){ if (!BZ.web) return; BZ.web = null; BZ.v.y += 2.5; BZ.v.x *= 1.1; BZ.v.z *= 1.1; tone(700, .06, 'sine', .03, 1000); }
   function bzMove(dt){
-    const v = BZ.v, G = BZ.web ? 9 : LUNA.G, upg = BZ.s.upg;
+    const v = BZ.v, G = BZ.web ? 9 : BZ.P.G, upg = BZ.s.upg;
     const [f, s] = bzInput(), turn = (keys.arrowleft ? 1 : 0) - (keys.arrowright ? 1 : 0); yaw += turn * 1.8 * dt; const mag = Math.max(1, Math.hypot(f, s));
     if (BZ.web && BZ.web.obj) BZ.web.p.copy(BZ.web.obj.localToWorld(BZ.web.l.clone()));
     if (BZ.web) { if (f) { v.x += -Math.sin(yaw) * f * 14 * dt; v.z += -Math.cos(yaw) * f * 14 * dt; } BZ.web.L = Math.max(5, BZ.web.L - 7 * dt); tmpV.subVectors(BZ.web.p, pos).normalize(); v.addScaledVector(tmpV, 10 * dt); }
     else { const sp = (BZ.crouch ? 2.3 : BZ.keys.shift ? 8.5 : 5.2) * (BZ.carry ? .85 : 1), tx = (-Math.sin(yaw) * f + Math.cos(yaw) * s) / mag * sp, tz = (-Math.cos(yaw) * f - Math.sin(yaw) * s) / mag * sp, k = BZ.grounded ? Math.min(1, dt * 12) : Math.min(1, dt * 1.4); v.x += (tx - v.x) * k; v.z += (tz - v.z) * k; if (BZ.keys.shift && BZ.grounded && (f || s)) bzNoiseAdd(.04 * dt); }
     if (BZ.grounded) BZ.airT = 0; else if ((BZ.airT = (BZ.airT || 0) + dt) > .35 && BZ.keys[' ']) BZ.jetArm = true;
     const jet = BZ.keys[' '] && BZ.jetArm && !BZ.grounded && BZ.jet > 0 && !BZ.web;
-    if (jet) { v.y += (LUNA.G + 6.5 + upg.jet) * dt; if (f || s) { v.x += -Math.sin(yaw) * f * 5 * dt; v.z += -Math.cos(yaw) * f * 5 * dt; } BZ.jet = Math.max(0, BZ.jet - 26 * dt); bzNoiseAdd(.32 * dt); if ((BZ.jetSnd = (BZ.jetSnd || 0) - dt) <= 0) { BZ.jetSnd = .12; tone(70 + Math.random() * 30, .14, 'sawtooth', .025); } bzPuff(pos.x + Math.sin(yaw) * .35, BZ.feet + .9, pos.z + Math.cos(yaw) * .35); }
+    if (jet) { v.y += (BZ.P.G + 6.5 + upg.jet) * dt; if (f || s) { v.x += -Math.sin(yaw) * f * 5 * dt; v.z += -Math.cos(yaw) * f * 5 * dt; } BZ.jet = Math.max(0, BZ.jet - 26 * dt); bzNoiseAdd(.32 * dt); if ((BZ.jetSnd = (BZ.jetSnd || 0) - dt) <= 0) { BZ.jetSnd = .12; tone(70 + Math.random() * 30, .14, 'sawtooth', .025); } bzPuff(pos.x + Math.sin(yaw) * .35, BZ.feet + .9, pos.z + Math.cos(yaw) * .35); }
     else if (BZ.grounded) BZ.jet = Math.min(bzJetMax(), BZ.jet + 32 * dt);
     BZ.jetOn = jet; v.y = Math.max(v.y - G * dt, -42);
     if (BZ.web) { const p0 = tmpV.copy(pos).addScaledVector(v, dt), d = p0.distanceTo(BZ.web.p); if (d > BZ.web.L) { tmpV2.subVectors(p0, BZ.web.p).normalize(); const vr = v.dot(tmpV2); if (vr > 0) v.addScaledVector(tmpV2, -vr); } }
@@ -13121,7 +13127,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function bzFxStep(dt){
     for (let i = BZ.fx.length - 1; i >= 0; i--) { const f = BZ.fx[i]; f.life -= dt;
       if (f.boom) { const k = 1 - f.life / f.max; f.m.scale.setScalar(1 + k * f.boom); f.m.material.opacity = Math.max(0, 1 - k); }
-      else { if (f.g) f.v.y -= LUNA.G * dt; f.m.position.addScaledVector(f.v, dt); if (f.grow) f.m.scale.multiplyScalar(1 + f.grow * dt); if (f.spin) { f.m.rotation.x += dt * 4; f.m.rotation.y += dt * 3; } const gy = bzTerr(f.m.position.x, f.m.position.z); if (f.m.position.y < gy + .05) { f.m.position.y = gy + .05; f.v.multiplyScalar(.4); f.v.y = Math.abs(f.v.y) * .3; } }
+      else { if (f.g) f.v.y -= BZ.P.G * dt; f.m.position.addScaledVector(f.v, dt); if (f.grow) f.m.scale.multiplyScalar(1 + f.grow * dt); if (f.spin) { f.m.rotation.x += dt * 4; f.m.rotation.y += dt * 3; } const gy = bzTerr(f.m.position.x, f.m.position.z); if (f.m.position.y < gy + .05) { f.m.position.y = gy + .05; f.v.multiplyScalar(.4); f.v.y = Math.abs(f.v.y) * .3; } }
       if (f.life <= 0) { BZ.sc.remove(f.m); if (f.boom) f.m.material.dispose(); BZ.fx.splice(i, 1); } }
   }
   // ---------- the berserkers: angular machines with glowing red seams ----------
@@ -13158,10 +13164,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function bzKill(e){ e.hp = 0; e.dead = 2; bzBoom(e.x, e.y + e.h * .5, e.z, false); BZ.sc.remove(e.g); BZ.s.kills++; const pay = e.k === 'drone' ? 3 : e.k === 'hunter' ? 5 : 10; BZ.s.cr += pay; bzCredit(pay); }
   function bzCredit(n){ if (!n) return; BZ.crPop = (BZ.crPop || 0) + n; clearTimeout(bzCredit.t); bzCredit.t = setTimeout(() => { BZ.crPop = 0; }, 1800); }
   function bzMakeNoise(x, z, rad){ for (const e of BZ.ents) { if (e.hp <= 0) continue; if (Math.hypot(e.x - x, e.z - z) < rad && e.st !== 'hunt') { e.st = 'hunt'; e.seen = BZ.t - 4; e.lx = x + (Math.random() - .5) * 8; e.lz = z + (Math.random() - .5) * 8; } } if (BZ.giantNoise) BZ.giantNoise(x, z, rad); }
-  function bzNoiseAdd(n){ if (BZ.s && BZ.s.out) BZ.noise = Math.min(1, BZ.noise + n); }
+  function bzNoiseAdd(n){ if (BZ.s && BZ.ws.out) BZ.noise = Math.min(1, BZ.noise + n); }
   function bzShoot(from, tx, ty, tz, spd, dmg){ const p = V(from.x, from.y, from.z), d = V(tx - p.x, ty - p.y, tz - p.z).normalize(), m = new THREE.Mesh(BZ.g.bolt, BZ.m.bolt); m.position.copy(p); m.lookAt(tx, ty, tz); BZ.sc.add(m); BZ.shots.push({ m, p, v: d.multiplyScalar(spd), life: 2.2, dmg }); tone(880, .07, 'square', .02, 300); }
   function bzThink(e){
-    const dp = Math.hypot(pos.x - e.x, pos.z - e.z), D = BZ_K[e.k], sight = D.sight * (BZ.crouch ? .55 : 1) * (BZ.inDome ? .5 : 1) * (BZ.bug ? 1.3 : 1);
+    const dp = Math.hypot(pos.x - e.x, pos.z - e.z), D = BZ_K[e.k], sight = D.sight * (BZ.sightK || 1) * (BZ.crouch ? .55 : 1) * (BZ.inDome ? .5 : 1) * (BZ.bug ? 1.3 : 1);
     if (!BZ.dead && dp < sight && Math.abs(pos.y - e.y) < 30) { if (e.st !== 'hunt' && dp > 10) tone(340, .2, 'square', .02, 700); e.st = 'hunt'; e.seen = BZ.t; e.lx = pos.x; e.lz = pos.z; }
     if (e.st === 'hunt') { if (BZ.t - e.seen > 9) e.st = e.raid ? 'raid' : 'patrol'; else { e.tx = e.lx; e.tz = e.lz; } }
     if (e.st === 'raid' && e.raid) { const d = e.raid, a = Math.atan2(e.z - d.z, e.x - d.x); e.tx = d.x + Math.cos(a) * (d.R + 4); e.tz = d.z + Math.sin(a) * (d.R + 4); }
@@ -13182,7 +13188,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (hunting && want <= .3) e.yaw += angDiff(e.yaw, Math.atan2(-(pos.x - e.x), -(pos.z - e.z))) * Math.min(1, dt * 6);
     const gy = bzTerr(e.x, e.z);
     if (e.k === 'drone') { const ty2 = e.stun > 0 ? gy + 1 : hunting ? Math.max(gy + 4, BZ.feet + 4.5) : gy + e.alt; e.y += (ty2 + Math.sin(now / 500 + e.ph) * .4 - e.y) * Math.min(1, dt * 2); e.parts.rot.rotation.y += dt * 30; }
-    else { if (e.vy || e.y > gy + .05) { e.vy -= LUNA.G * dt; e.y += e.vy * dt; if (e.y <= gy) { e.y = gy; e.vy = 0; } } else e.y = gy; const t = now / 1000 * (e.k === 'hunter' ? 9 : 6) * Math.min(1, sp / 2 + .2) + e.ph, mv = Math.min(1, sp / 3);
+    else { if (e.vy || e.y > gy + .05) { e.vy -= BZ.P.G * dt; e.y += e.vy * dt; if (e.y <= gy) { e.y = gy; e.vy = 0; } } else e.y = gy; const t = now / 1000 * (e.k === 'hunter' ? 9 : 6) * Math.min(1, sp / 2 + .2) + e.ph, mv = Math.min(1, sp / 3);
       if (e.k === 'hunter') { e.parts.legs.forEach((L, i) => { const s = Math.sin(t + i * Math.PI); L.hip.rotation.x = s * .7 * mv; L.knee.rotation.x = Math.max(0, -Math.cos(t + i * Math.PI)) * .9 * mv; }); e.parts.arms.forEach((A2, i) => A2.rotation.x = e.atk > 0 ? -1.4 : -Math.sin(t + i * Math.PI) * .5 * mv); }
       else e.parts.legs.forEach((h, i) => { const s = Math.sin(t + (i % 2 ? 0 : Math.PI) + Math.floor(i / 2) * 2.1); h.rotation.x = s * .45 * mv; h.rotation.z = Math.max(0, Math.cos(t + (i % 2 ? 0 : Math.PI) + Math.floor(i / 2) * 2.1)) * .3 * mv * h.userData.sd; }); }
     e.atk = Math.max(0, (e.atk || 0) - dt);
@@ -13214,7 +13220,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   // ---------- factories: they build more of them out of scrap ----------
   function bzFactory(i){
-    const [x, z] = MC_FACS[i], gy = bzTerr(x, z), a = Math.atan2(-z, -x), P = [], R = [], g = new THREE.Group(); g.position.set(x, gy, z); g.rotation.y = -a + Math.PI / 2; BZ.sc.add(g);
+    const [x, z] = BZ.P.facs[i], gy = bzTerr(x, z), a = Math.atan2(-z, -x), P = [], R = [], g = new THREE.Group(); g.position.set(x, gy, z); g.rotation.y = -a + Math.PI / 2; BZ.sc.add(g);
     P.push(B3(22, 2, 22, 0x2A2C31, 0, 1, 0), B3(16, 6, 16, 0x34373D, 0, 5, -1, Math.PI / 4 * 0), B3(10, 5, 10, 0x2A2C31, 0, 10.5, -2, .2), [new THREE.OctahedronGeometry(4, 0), 0x45484F, 0, 15, -3]);
     for (const s of [-1, 1]) { P.push(B3(2.4, 18, 2.4, 0x2A2C31, s * 8, 9, -7, .3), [new THREE.ConeGeometry(1.8, 3, 4), 0x45484F, s * 8, 19.5, -7]); R.push(B3(.2, 16, .2, 0xFF2A1A, s * 8 + 1.25, 9, -7)); P.push(B3(1, 1, 14, 0x45484F, s * 6, 14, 2, 0, -.5)); }
     R.push(B3(16.2, .2, .2, 0xFF2A1A, 0, 8, 7.02), B3(.2, 6, .2, 0xFF2A1A, 8.02, 5, 7), B3(.2, 6, .2, 0xFF2A1A, -8.02, 5, 7), B3(10.2, .2, .2, 0xFF2A1A, 0, 13, 3), B3(22.2, .2, .2, 0xFF2A1A, 0, 2.05, 11.02));
@@ -13222,12 +13228,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const body = new THREE.Mesh(bake(P), propM()); body.castShadow = true; g.add(body); const seams = new THREE.Mesh(bake(R), BZ.lightM); g.add(seams);
     const core = new THREE.Mesh(new THREE.OctahedronGeometry(1.5, 0), new THREE.MeshBasicMaterial({ color: 0xFF2A1A, toneMapped: false })); core.position.set(0, 4.2, 8.6); g.add(core);
     const cage = new THREE.Mesh(new THREE.TorusGeometry(2.1, .14, 4, 4), BZ.m.hull2); cage.position.copy(core.position); g.add(cage);
-    const fx = Math.cos(a), fz = Math.sin(a); const F = { i, x, z, g, body, seams, core, cage, hp: 400 * BZ.s.fac[i], max: 400, spawnT: 6 + i * 4, up: BZ.s.out && !BZ.riseNow ? 1 : 0, gy, cx: x + fx * 8.6, cz: z + fz * 8.6, cy: gy + 4.2, door: [x + fx * 13, z + fz * 13] };
-    bzAdd({ t: 'c', x, z, r: 10.5, top: gy + 2 + (BZ.s.fac[i] > 0 ? 0 : 0) }); bzAdd({ t: 'c', x: x - fx, z: z - fz, r: 7.5 }); bzAnchor(gB(16, 20, 16), x, gy + 10, z);
+    const fx = Math.cos(a), fz = Math.sin(a); const F = { i, x, z, g, body, seams, core, cage, hp: 400 * BZ.ws.fac[i], max: 400, spawnT: 6 + i * 4, up: BZ.ws.out && !BZ.riseNow ? 1 : 0, gy, cx: x + fx * 8.6, cz: z + fz * 8.6, cy: gy + 4.2, door: [x + fx * 13, z + fz * 13] };
+    bzAdd({ t: 'c', x, z, r: 10.5, top: gy + 2 + (BZ.ws.fac[i] > 0 ? 0 : 0) }); bzAdd({ t: 'c', x: x - fx, z: z - fz, r: 7.5 }); bzAnchor(gB(16, 20, 16), x, gy + 10, z);
     if (F.hp <= 0) bzFacDead(F, true); g.position.y = F.up >= 1 ? gy : gy - 26; return F;
   }
-  function bzFacDead(F, quiet){ F.hp = 0; BZ.s.fac[F.i] = 0; F.core.visible = false; F.seams.material = BZ.m.hull2; F.cage.rotation.x = .6; if (!quiet) { bzBoom(F.cx, F.cy, F.cz, true); setTimeout(() => BZ.sc && bzBoom(F.x, F.gy + 12, F.z, true), 500); BZ.s.cr += 60; bzCredit(60); bzAlert('FACTORY DESTROYED', 'It won’t build any more of them.', '#3CE870'); bzSave(); bzCheckClear(); } }
-  function bzHitFac(F, dmg){ if (F.hp <= 0) return; F.hp -= dmg; BZ.s.fac[F.i] = Math.max(0, F.hp / F.max); bzSpark(F.cx, F.cy, F.cz, 0xFFE0A0, 8); tone(300, .08, 'square', .04, 140); bzMakeNoise(F.x, F.z, 60); F.spawnT = Math.min(F.spawnT, 3); if (F.hp <= 0) bzFacDead(F); }
+  function bzFacDead(F, quiet){ F.hp = 0; BZ.ws.fac[F.i] = 0; F.core.visible = false; F.seams.material = BZ.m.hull2; F.cage.rotation.x = .6; if (!quiet) { bzBoom(F.cx, F.cy, F.cz, true); setTimeout(() => BZ.sc && bzBoom(F.x, F.gy + 12, F.z, true), 500); BZ.s.cr += 60; bzCredit(60); bzAlert('FACTORY DESTROYED', 'It won’t build any more of them.', '#3CE870'); bzSave(); bzCheckClear(); } }
+  function bzHitFac(F, dmg){ if (F.hp <= 0) return; F.hp -= dmg; BZ.ws.fac[F.i] = Math.max(0, F.hp / F.max); bzSpark(F.cx, F.cy, F.cz, 0xFFE0A0, 8); tone(300, .08, 'square', .04, 140); bzMakeNoise(F.x, F.z, 60); F.spawnT = Math.min(F.spawnT, 3); if (F.hp <= 0) bzFacDead(F); }
   function bzFacStep(F, dt, now){
     if (F.up < 1) { F.up = Math.min(1, F.up + dt / 8); F.g.position.y = F.gy - 26 * (1 - F.up); if (Math.hypot(F.x - pos.x, F.z - pos.z) < 260 && !reduce) BZ.shake = Math.max(BZ.shake, .25); if (F.up < 1) return; }
     if (F.hp <= 0) return; F.core.rotation.y += dt * 2; F.core.scale.setScalar(1 + Math.sin(now / 200) * .08); F.cage.rotation.z += dt;
@@ -13238,7 +13244,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const ICELL = 20, IN = 28;
   const iIdx = (x, z) => { const i = Math.floor((x + 280) / ICELL), j = Math.floor((z + 280) / ICELL); return i < 0 || j < 0 || i >= IN || j >= IN ? -1 : j * IN + i; };
   function bzInfInit(){
-    BZ.inf = new Float32Array(IN * IN); const s = BZ.s.inf; if (s && s.length === IN * IN) for (let i = 0; i < IN * IN; i++) BZ.inf[i] = (+s[i] || 0) / 9;
+    BZ.inf = new Float32Array(IN * IN); const s = BZ.ws.inf; if (s && s.length === IN * IN) for (let i = 0; i < IN * IN; i++) BZ.inf[i] = (+s[i] || 0) / 9;
     BZ.spikes = new THREE.InstancedMesh(BZ.g ? BZ.g.spike : new THREE.ConeGeometry(.7, 4, 4), new THREE.MeshStandardMaterial({ color: 0x1E1F23, metalness: .85, roughness: .35, emissive: 0x500A04, emissiveIntensity: .8 }), lowFx ? 500 : 1100); BZ.spikes.count = 0; BZ.spikes.userData.noPick = true; BZ.spikes.castShadow = !lowFx; BZ.sc.add(BZ.spikes); bzInfApply();
   }
   function bzInfApply(){
@@ -13259,27 +13265,27 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     bzInfApply();
   }
   // ---------- beacons: comms towers the signal has hijacked ----------
-  function bzBeacons(){ BZ.beas = MC_BEAC.map((ti, i) => { const T = BZ.towers[ti], ring = new THREE.Mesh(BZ.g.ping, new THREE.MeshBasicMaterial({ color: 0xFF2A1A, transparent: true, opacity: .8, depthWrite: false, toneMapped: false })); ring.rotation.x = Math.PI / 2; ring.position.set(T.x, T.g0 + T.h + 1, T.z); ring.visible = !!BZ.s.bea[i]; BZ.sc.add(ring); T.lamp.material = BZ.s.bea[i] ? BZ.m.seam : BZ.eyeOk; return { i, T, ring, t: 6 + i * 7, x: T.panel[0], z: T.panel[1] }; }); }
-  function bzBeaconStep(dt){ for (const B of BZ.beas) { if (!BZ.s.bea[B.i]) continue; B.ring.scale.setScalar(1 + (1 - B.t / 22) * 5); B.ring.material.opacity = .8 * B.t / 22; if ((B.t -= dt) <= 0) { B.t = 22; bzMakeNoise(B.T.x, B.T.z, 110); const d = Math.hypot(B.T.x - pos.x, B.T.z - pos.z); if (d < 200) tone(1180, .5, 'sine', .05 * (1 - d / 200), 900); if (Math.random() < .5) { const e = bzSpawn('drone', B.T.x + (Math.random() - .5) * 20, B.T.z + (Math.random() - .5) * 20, { home: -1 }); if (e) e.st = 'patrol'; } } } }
-  function bzSilence(B){ BZ.s.bea[B.i] = 0; B.ring.visible = false; B.T.lamp.material = BZ.eyeOk; BZ.s.cr += 30; bzCredit(30); tone(660, .3, 'sine', .05, 330); bzAlert('BEACON SILENCED', `${BZ.s.bea.filter(Boolean).length} still pinging.`, '#3CE870'); bzSave(); bzCheckClear(); }
+  function bzBeacons(){ BZ.beas = BZ.P.beac.map((ti, i) => { const T = BZ.towers[ti], ring = new THREE.Mesh(BZ.g.ping, new THREE.MeshBasicMaterial({ color: 0xFF2A1A, transparent: true, opacity: .8, depthWrite: false, toneMapped: false })); ring.rotation.x = Math.PI / 2; ring.position.set(T.x, T.g0 + T.h + 1, T.z); ring.visible = !!BZ.ws.bea[i]; BZ.sc.add(ring); T.lamp.material = BZ.ws.bea[i] ? BZ.m.seam : BZ.eyeOk; return { i, T, ring, t: 6 + i * 7, x: T.panel[0], z: T.panel[1] }; }); }
+  function bzBeaconStep(dt){ for (const B of BZ.beas) { if (!BZ.ws.bea[B.i]) continue; B.ring.scale.setScalar(1 + (1 - B.t / 22) * 5); B.ring.material.opacity = .8 * B.t / 22; if ((B.t -= dt) <= 0) { B.t = 22; bzMakeNoise(B.T.x, B.T.z, 110); const d = Math.hypot(B.T.x - pos.x, B.T.z - pos.z); if (d < 200) tone(1180, .5, 'sine', .05 * (1 - d / 200), 900); if (Math.random() < .5) { const e = bzSpawn('drone', B.T.x + (Math.random() - .5) * 20, B.T.z + (Math.random() - .5) * 20, { home: -1 }); if (e) e.st = 'patrol'; } } } }
+  function bzSilence(B){ BZ.ws.bea[B.i] = 0; B.ring.visible = false; B.T.lamp.material = BZ.eyeOk; BZ.s.cr += 30; bzCredit(30); tone(660, .3, 'sine', .05, 330); bzAlert('BEACON SILENCED', `${BZ.ws.bea.filter(Boolean).length} still pinging.`, '#3CE870'); bzSave(); bzCheckClear(); }
   // ---------- raids on the domes ----------
   function bzRaid(){
-    const D = BZ.domes.filter(d => d.id !== 'hub' && !BZ.s.breach.includes(d.id)); if (!D.length) return; const alive = BZ.facs.filter(F => F.hp > 0);
+    const D = BZ.domes.filter(d => d.id !== 'hub' && !BZ.ws.breach.includes(d.id)); if (!D.length) return; const alive = BZ.facs.filter(F => F.hp > 0);
     const d = D.sort((a, b) => { const sa = BZ.inf[iIdx(a.x, a.z)] || 0, sb = BZ.inf[iIdx(b.x, b.z)] || 0; return sb - sa + (Math.random() - .5) * .6; })[0]; d.hp = 100;
-    const F = alive.length ? alive[Math.floor(Math.random() * alive.length)] : null, a = F ? Math.atan2(F.z - d.z, F.x - d.x) : Math.random() * 6.28, n = 4 + alive.length + ((BZ.s.raids || 0) > 3 ? 1 : 0), list = [];
+    const F = alive.length ? alive[Math.floor(Math.random() * alive.length)] : null, a = F ? Math.atan2(F.z - d.z, F.x - d.x) : Math.random() * 6.28, n = 4 + alive.length + ((BZ.ws.raids || 0) > 3 ? 1 : 0), list = [];
     for (let i = 0; i < n; i++) { const r = 95 + Math.random() * 25, b = a + (Math.random() - .5) * .6, k = i % 4 === 3 ? 'crawler' : i % 2 ? 'hunter' : 'drone', e = bzSpawn(k, clamp(d.x + Math.cos(b) * r, -225, 225), clamp(d.z + Math.sin(b) * r, -225, 225), { st: 'raid', raid: d, force: true, home: F ? F.i : -1 }); if (e) list.push(e); }
-    BZ.raid = { d, list, t: 0 }; BZ.s.raids = (BZ.s.raids || 0) + 1; bzAlert(`RAID ON ${d.name.toUpperCase()}`, 'Machines are heading for the dome. Stop them before they break in.', '#FF3C3C'); tone(440, .4, 'square', .04); setTimeout(() => tone(330, .4, 'square', .04), 450);
+    BZ.raid = { d, list, t: 0 }; BZ.ws.raids = (BZ.ws.raids || 0) + 1; bzAlert(`RAID ON ${d.name.toUpperCase()}`, 'Machines are heading for the dome. Stop them before they break in.', '#FF3C3C'); tone(440, .4, 'square', .04); setTimeout(() => tone(330, .4, 'square', .04), 450);
   }
   function bzRaidStep(dt){
     const R = BZ.raid; if (!R) return; R.t += dt; const left = R.list.filter(e => e.hp > 0);
     if (!left.length) { BZ.raid = null; BZ.s.cr += 40; bzCredit(40); bzAlert('RAID REPELLED', `${R.d.name} is safe.`, '#3CE870'); bzSave(); return; }
-    if (R.d.hp <= 0) { BZ.raid = null; BZ.s.breach.push(R.d.id); left.forEach(e => { e.raid = null; e.st = 'patrol'; }); bzAlert(`${R.d.name.toUpperCase()} BREACHED`, 'The colonists got out. Reseal it from the airlock.', '#FF3C3C'); bzBreachFx(); bzSave(); }
+    if (R.d.hp <= 0) { BZ.raid = null; BZ.ws.breach.push(R.d.id); left.forEach(e => { e.raid = null; e.st = 'patrol'; }); bzAlert(`${R.d.name.toUpperCase()} BREACHED`, 'The colonists got out. Reseal it from the airlock.', '#FF3C3C'); bzBreachFx(); bzSave(); }
   }
-  function bzBreachFx(){ (BZ.breachFx || []).forEach(m => BZ.sc.remove(m)); BZ.breachFx = BZ.s.breach.map(id => { const d = BZ.domes.find(q => q.id === id); if (!d) return null; const m = new THREE.Mesh(new THREE.SphereGeometry(d.R + .3, 24, 10, 0, 6.283, 0, Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xFF2A1A, transparent: true, opacity: .12, depthWrite: false, side: THREE.DoubleSide, toneMapped: false })); m.position.set(d.x, 0, d.z); m.userData.noPick = true; BZ.sc.add(m); BZ.ppl.forEach(p => { if (p.d === d) { p.d = null; p.st = 'idle'; p.path = null; p.wait = 0; } }); return m; }).filter(Boolean); }
+  function bzBreachFx(){ (BZ.breachFx || []).forEach(m => BZ.sc.remove(m)); BZ.breachFx = BZ.ws.breach.map(id => { const d = BZ.domes.find(q => q.id === id); if (!d) return null; const m = new THREE.Mesh(new THREE.SphereGeometry(d.R + .3, 24, 10, 0, 6.283, 0, Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xFF2A1A, transparent: true, opacity: .12, depthWrite: false, side: THREE.DoubleSide, toneMapped: false })); m.position.set(d.x, 0, d.z); m.userData.noPick = true; BZ.sc.add(m); BZ.ppl.forEach(p => { if (p.d === d) { p.d = null; p.st = 'idle'; p.path = null; p.wait = 0; } }); return m; }).filter(Boolean); }
   // ---------- the outbreak ----------
   const BZ_TRIGGER = 270;
   function bzOutbreakStart(){
-    BZ.s.out = 1; BZ.s.outAt = BZ.s.t; BZ.riseNow = true; bzSave(); BZ.flick = 9; bzMusic('tense');
+    BZ.ws.out = 1; BZ.ws.outAt = BZ.ws.t; BZ.riseNow = true; bzSave(); BZ.flick = 9; bzMusic('tense');
     say('Control: “All stations, we’re picking up a signal from deep space. Repeating. It’s… counting.”', 5200);
     setTimeout(() => { if (!BZ.sc) return; bzAlert('SIGNAL DETECTED', 'Every light in the colony flickers at once.', '#FF3C3C'); tone(55, 3, 'sawtooth', .05, 40); }, 2600);
     setTimeout(() => { if (!BZ.sc) return; bzOutbreakSetup(false); BZ.riseNow = false; say('Something is coming up out of the ground. Three of them. Self-replicating machines: they wipe out anything that makes noise.', 6000);
@@ -13287,19 +13293,19 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     setTimeout(() => { if (!BZ.sc) return; bzAlert('OUTBREAK', 'Keep quiet. Silence the beacons. Destroy the factories.', '#FF3C3C'); say(fine ? 'Noise draws them in: the phone, the buggy, the jetpack, fighting. Crouch (C) to stay hidden. F punches, R fires a web blast.' : 'Noise draws them in: the phone, the buggy, the jetpack, fighting. Crouch to stay hidden.', 6500); BZ.raidT = 120; }, 14000);
   }
   function bzOutbreakSetup(loaded){
-    if (BZ.facs.length) return; BZ.facs = MC_FACS.map((q, i) => bzFactory(i)); if (!loaded) BZ.facs.forEach(F => { if (F.hp > 0) { F.up = 0; F.g.position.y = F.gy - 26; } }); bzBeacons(); bzBreachFx(); BZ.raidT = loaded ? 90 : 120;
+    if (BZ.facs.length) return; BZ.facs = BZ.P.facs.map((q, i) => bzFactory(i)); if (!loaded) BZ.facs.forEach(F => { if (F.hp > 0) { F.up = 0; F.g.position.y = F.gy - 26; } }); bzBeacons(); bzBreachFx(); BZ.raidT = loaded ? 90 : 120;
     const lab = BZ.domes.find(d => d.id === 'lab'); if (lab && lab.jar) { const frag = new THREE.Mesh(BZ.g.dCore, BZ.m.hull); frag.position.set(lab.jar[0], 1.8, lab.jar[1]); frag.scale.setScalar(.9); BZ.sc.add(frag); const eye = new THREE.Mesh(BZ.g.eye, BZ.m.seam); eye.position.set(lab.jar[0], 1.8, lab.jar[1] - .56); BZ.sc.add(eye); BZ.frag = frag; }
-    if (loaded) { const pop = Math.min(10, 2 + BZ.facs.filter(F => F.hp > 0).length * 3); for (let i = 0; i < pop; i++) { const c = bzInfCell() || MC_FACS[i % 3]; const e = bzSpawn(i % 3 ? 'drone' : 'hunter', c[0] + (Math.random() - .5) * 20, c[1] + (Math.random() - .5) * 20, { home: i % 3 }); if (e) e.st = 'patrol'; } }
+    if (loaded) { const pop = Math.min(10, 2 + BZ.facs.filter(F => F.hp > 0).length * 3); for (let i = 0; i < pop; i++) { const c = bzInfCell() || BZ.P.facs[i % 3]; const e = bzSpawn(i % 3 ? 'drone' : 'hunter', c[0] + (Math.random() - .5) * 20, c[1] + (Math.random() - .5) * 20, { home: i % 3 }); if (e) e.st = 'patrol'; } }
   }
-  function bzCheckClear(){ if (BZ.s.clear || BZ.s.fac.some(v => v > 0) || BZ.s.bea.some(Boolean) || (BZ.s.sen || [0, 0]).some(v => v !== 2)) return; BZ.s.clear = 1; BZ.s.cr += 150; bzCredit(150); bzSave(); bzMusic('calm');
-    setTimeout(() => { bzAlert('TRANQUILITY IS SAFE', 'For now. The signal came from much further out.', '#3CE870'); say('Control: “The factories are scrap and the beacons are quiet. But that signal didn’t start here. It came from out past Mars.”', 7000); }, 1500); }
+  function bzCheckClear(){ if (BZ.ws.clear || BZ.ws.fac.some(v => v > 0) || BZ.ws.bea.some(Boolean) || (BZ.ws.sen || [0, 0]).some(v => v !== 2)) return; if (BZ.ws.cel !== 2) { if (!BZ.ws.cel) { BZ.ws.cel = 1; bzSave(); setTimeout(() => bzCelSummon(false), 3000); } return; } BZ.ws.clear = 1; if (BZ.P.id !== 'moon') { BZ.s.w = BZ.s.w || {}; BZ.s.w[BZ.P.id] = 'clear'; } BZ.s.cr += 150; bzCredit(150); bzSave(); bzMusic('calm');
+    setTimeout(() => { bzAlert(BZ.P.id === 'moon' ? 'TRANQUILITY IS SAFE' : `${BZ.P.title.toUpperCase()} IS CLEAR`, BZ.P.id === 'moon' ? 'For now. The signal came from much further out.' : 'On to the next world.', '#3CE870'); say(BZ.P.id === 'moon' ? 'Control: “The factories are scrap and the beacons are quiet. But that signal didn’t start here. It came from out past Mars.”' : `${BZ.P.title} is clear. The ship is waiting at the pad: the star map on the station shows where they went next.`, 7000); }, 1500); }
   // ---------- jobs ----------
   const bzJobAt = j => j.step === 0 ? j.from : j.to;
   function bzMkOffer(){
     const r = Math.random(), core = bzCore(), dome = core[Math.floor(Math.random() * core.length)];
-    if (r < .38) { const opts = [...MC_SOLAR.map(([x, z]) => [x, z - 12, 'the solar field']), ...MC_TOWERS.map(([x, z], i) => [x + 1.2, z + 3.6, `comms tower ${i + 1}`]), ...MC_PADS.map(([x, z]) => [x + 9, z, 'the landing pad lights'])], o = opts[Math.floor(Math.random() * opts.length)];
+    if (r < .38) { const opts = [...BZ.P.solar.map(([x, z]) => [x, z - 12, 'the solar field']), ...BZ.P.towers.map(([x, z], i) => [x + 1.2, z + 3.6, `comms tower ${i + 1}`]), ...BZ.P.pads.map(([x, z]) => [x + 9, z, 'the landing pad lights'])], o = opts[Math.floor(Math.random() * opts.length)];
       return { k: 'repair', title: `Fix ${o[2]}`, desc: 'Something shorted out. Go and hold E on the sparks to fix it.', pay: 25, from: [o[0], o[1]], to: null, step: 0 }; }
-    if (r < .7) { const spots = [...MC_MINES.map(([x, z, R]) => [x + R * .2, z - R * .2]), ...BZ.crat.filter(c => !c[3] && c[2] > 18).slice(0, 8).map(c => [c[0], c[1]])], s = spots[Math.floor(Math.random() * spots.length)];
+    if (r < .7) { const spots = [...BZ.P.mines.map(([x, z, R]) => [x + R * .2, z - R * .2]), ...BZ.crat.filter(c => !c[3] && c[2] > 18).slice(0, 8).map(c => [c[0], c[1]])], s = spots[Math.floor(Math.random() * spots.length)];
       return { k: 'rescue', title: 'Find a stranded colonist', desc: 'Their rover broke down and their oxygen is running low. Find them and bring them back to any dome.', pay: 45, from: s, to: null, step: 0, t: 210 }; }
     const to = dome; const bx = BZ.cargo || [124, 73]; return { k: 'deliver', title: `Deliver supplies to ${to.name}`, desc: 'Pick up a crate at the cargo depot by the landing pads, then carry it to the dome’s airlock.', pay: 30, from: bx, to: bzDoorFor(to, bx[0], bx[1])[1], dome: to.id, step: 0 };
   }
@@ -13319,7 +13325,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function bzPrompts(){
     const L = [], at = (x, z, r) => Math.hypot(pos.x - x, pos.z - z) < r;
     if (BZ.bug) { L.push({ t: 'Get out of the buggy', go: () => bzBugOut() }); return L[0]; }
-    if (at(MC_SHUTTLE[0], MC_SHUTTLE[1] + 3, 4.5) && BZ.feet < 2) L.push({ t: 'Board the shuttle back to the station', go: () => bzLeave() });
+    if (at(BZ.P.shuttle[0], BZ.P.shuttle[1] + 3, 4.5) && BZ.feet < 2) L.push({ t: 'Board the shuttle back to the station', go: () => bzLeave() });
     for (const b of BZ.bugs) if (at(b.x, b.z, 3.2)) { L.push({ t: 'Drive the moon buggy', go: () => bzBugIn(b) }); break; }
     const hub = BZ.domes[0]; if (hub.term && at(hub.term[0], hub.term[1], 2.2)) L.push({ t: 'Use the colony terminal', go: () => { phoneOpen('jobs'); } });
     const j = BZ.job; if (j) { const p = bzJobAt(j);
@@ -13327,9 +13333,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (j.k === 'rescue' && j.step === 0 && j.npc && at(j.npc.x, j.npc.z, 2.6)) L.push({ t: 'Hold E to help them up', hold: 1.2, go: () => { j.step = 1; j.npc.st = 'follow'; say(`${j.npc.name}: “Oh thank god. Get me to a dome. Any dome.”`, 3200); } });
       if (j.k === 'deliver' && j.step === 0 && at(p[0], p[1], 3.4)) L.push({ t: 'Pick up the crate', go: () => { j.step = 1; BZ.carry = true; BZ.carryM = new THREE.Mesh(new THREE.BoxGeometry(.8, .6, .6), mat(0xE8501E)); BZ.sc.add(BZ.carryM); say(`Now take it to ${BZ.domes.find(d => d.id === j.dome).name}.`, 2600); } });
       if (j.k === 'deliver' && j.step === 1 && at(p[0], p[1], 3.4)) L.push({ t: 'Drop off the crate', go: () => bzJobDone() }); }
-    for (const B of BZ.beas) if (BZ.s.bea[B.i] && at(B.x, B.z, 3)) L.push({ t: 'Hold E to silence the beacon (stay quiet)', hold: 4, go: () => bzSilence(B) });
+    for (const B of BZ.beas) if (BZ.ws.bea[B.i] && at(B.x, B.z, 3)) L.push({ t: 'Hold E to silence the beacon (stay quiet)', hold: 4, go: () => bzSilence(B) });
     for (const p of BZ.ppl) if (p.st === 'down' && at(p.x, p.z, 2.4)) { L.push({ t: `Hold E to get ${p.name} up`, hold: 1.5, go: () => { p.st = 'idle'; p.path = null; p.wait = 0; p.a.g.rotation.set(0, p.face, 0); BZ.s.cr += 10; bzCredit(10); say(`${p.name}: “Thanks. I owe you one.”`, 2200); } }); break; }
-    for (const id of BZ.s.breach) { const d = BZ.domes.find(q => q.id === id), o = d && bzDoorFor(d, pos.x, pos.z)[1]; if (o && at(o[0], o[1], 4)) { L.push({ t: `Hold E to reseal ${d.name}`, hold: 4, go: () => { BZ.s.breach = BZ.s.breach.filter(q => q !== id); d.hp = 100; bzBreachFx(); BZ.s.cr += 20; bzCredit(20); bzAlert('DOME RESEALED', `${d.name} holds air again.`, '#3CE870'); bzSave(); } }); break; } }
+    for (const id of BZ.ws.breach) { const d = BZ.domes.find(q => q.id === id), o = d && bzDoorFor(d, pos.x, pos.z)[1]; if (o && at(o[0], o[1], 4)) { L.push({ t: `Hold E to reseal ${d.name}`, hold: 4, go: () => { BZ.ws.breach = BZ.ws.breach.filter(q => q !== id); d.hp = 100; bzBreachFx(); BZ.s.cr += 20; bzCredit(20); bzAlert('DOME RESEALED', `${d.name} holds air again.`, '#3CE870'); bzSave(); } }); break; } }
     const lab = BZ.domes.find(d => d.id === 'lab'); if (lab && BZ.frag && at(lab.jar[0], lab.jar[1], 3)) L.push({ t: 'Look at the specimen', go: () => say('A piece of one of them, in a sealed jar. The red slit follows you around the room. It’s still trying to call home.', 4600) });
     return L.sort((a, b) => (b.hold ? 1 : 0) - (a.hold ? 1 : 0))[0] || null;
   }
@@ -13343,7 +13349,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 .bzpad{position:fixed;right:14px;bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:7;display:flex;flex-direction:column;gap:8px}.bzpad button{width:62px;height:62px;border-radius:50%;border:0;background:rgba(11,13,20,.7);color:#fff;font:800 12px/1 system-ui,sans-serif}.bzpad button.on{background:#FFC93C;color:#16181D}
 .bzpad[hidden],.bzhud[hidden]{display:none!important}.bzflick{position:fixed;inset:0;z-index:5;pointer-events:none;background:#000;opacity:0}.bzhold{position:absolute;left:0;bottom:0;height:3px;background:#FFC93C;width:0}`;
   document.head.appendChild(bzCss);
-  BZ.hud = document.createElement('div'); BZ.hud.className = 'bzhud'; BZ.hud.hidden = true; BZ.hud.innerHTML = '<div class="bzt"><b>Tranquility Colony</b><span class="bzst" id="bzSt"></span></div><div class="bzbar"><label>Suit</label><i><em id="bzHp" style="background:#3CE870"></em></i></div><div class="bzbar"><label>Jet</label><i><em id="bzJet" style="background:#35C8F0"></em></i></div><div class="bzbar" id="bzNr"><label>Noise</label><i><em id="bzNoise" style="background:#FF8A2E"></em></i></div><small id="bzObj"></small>'; document.body.appendChild(BZ.hud);
+  BZ.hud = document.createElement('div'); BZ.hud.className = 'bzhud'; BZ.hud.hidden = true; BZ.hud.innerHTML = '<div class="bzt"><b id="bzTitle">Tranquility Colony</b><span class="bzst" id="bzSt"></span></div><div class="bzbar"><label>Suit</label><i><em id="bzHp" style="background:#3CE870"></em></i></div><div class="bzbar"><label>Jet</label><i><em id="bzJet" style="background:#35C8F0"></em></i></div><div class="bzbar" id="bzNr"><label>Noise</label><i><em id="bzNoise" style="background:#FF8A2E"></em></i></div><small id="bzObj"></small>'; document.body.appendChild(BZ.hud);
   BZ.alertEl = document.createElement('div'); BZ.alertEl.className = 'bzalert'; document.body.appendChild(BZ.alertEl);
   BZ.flickEl = document.createElement('div'); BZ.flickEl.className = 'bzflick'; document.body.appendChild(BZ.flickEl);
   BZ.btn = document.createElement('button'); BZ.btn.type = 'button'; BZ.btn.className = 'btn alt drvbtn'; BZ.btn.hidden = true; BZ.btn.style.overflow = 'hidden'; document.body.appendChild(BZ.btn);
@@ -13353,13 +13359,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function bzAlert(t, sub, col){ BZ.alertEl.innerHTML = `<b style="color:${col || '#fff'}">${esc(t)}</b><span>${esc(sub || '')}</span>`; BZ.alertEl.classList.add('on'); clearTimeout(bzAlert.t); bzAlert.t = setTimeout(() => BZ.alertEl.classList.remove('on'), 3400); }
   function bzHudShow(on){ BZ.hud.hidden = !on; BZ.padEl.hidden = !on || fine; if (!on) { BZ.btn.hidden = true; BZ.alertEl.classList.remove('on'); BZ.flickEl.style.opacity = 0; } }
   function bzHudStep(){
-    const $h = id => BZ.hud.querySelector(id), st = $h('#bzSt'), out = BZ.s.out, alive = BZ.facs.filter(F => F.hp > 0).length, bea = BZ.s.bea.filter(Boolean).length;
-    st.textContent = BZ.s.clear ? `Safe · ${BZ.s.cr} cr` : out ? `OUTBREAK · ${Math.round(bzInfPct() * 100)}% infected · ${BZ.s.cr} cr` : `All quiet · ${BZ.s.cr} cr`; st.classList.toggle('red', !!out && !BZ.s.clear);
+    const $h = id => BZ.hud.querySelector(id), st = $h('#bzSt'), out = BZ.ws.out, alive = BZ.facs.filter(F => F.hp > 0).length, bea = BZ.ws.bea.filter(Boolean).length;
+    st.textContent = BZ.ws.clear ? `Safe · ${BZ.s.cr} cr` : out ? `OUTBREAK · ${Math.round(bzInfPct() * 100)}% infected · ${BZ.s.cr} cr` : `All quiet · ${BZ.s.cr} cr`; st.classList.toggle('red', !!out && !BZ.ws.clear);
     $h('#bzHp').style.width = `${clamp(BZ.hp / bzHpMax(), 0, 1) * 100}%`; $h('#bzJet').style.width = `${BZ.jet / bzJetMax() * 100}%`; $h('#bzNr').hidden = !out; $h('#bzNoise').style.width = `${BZ.noise * 100}%`;
     const j = BZ.job, obj = $h('#bzObj'); let txt = '';
     if (BZ.raid) txt = `Defend ${BZ.raid.d.name}: ${BZ.raid.list.filter(e => e.hp > 0).length} machines left · dome ${Math.max(0, Math.round(BZ.raid.d.hp))}%`;
     else if (j) { const p = bzJobAt(j); txt = `${j.title} · ${Math.round(Math.hypot(p[0] - pos.x, p[1] - pos.z))} m${j.k === 'rescue' ? ` · oxygen ${Math.max(0, Math.round(j.t))} s` : ''}${j.k === 'deliver' ? (j.step ? ' · drop it at the airlock' : ' · pick up a crate') : ''}`; }
-    else if (out && !BZ.s.clear) txt = `${alive} factor${alive === 1 ? 'y' : 'ies'} · ${bea} beacon${bea === 1 ? '' : 's'} left · phone for the map`;
+    else if (out && !BZ.ws.clear) txt = `${alive} factor${alive === 1 ? 'y' : 'ies'} · ${bea} beacon${bea === 1 ? '' : 's'} left · phone for the map`;
     else txt = 'Phone (M) for colony jobs and the map';
     if (BZ.crPop) txt += `  +${BZ.crPop} cr`; obj.textContent = txt;
   }
@@ -13374,14 +13380,16 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function bzMusicStop(){ if (!BZ.mus) return; const a = audio(), { g, nodes } = BZ.mus; BZ.mus = null; try { g.gain.cancelScheduledValues(a.currentTime); g.gain.setValueAtTime(g.gain.value, a.currentTime); g.gain.linearRampToValueAtTime(0, a.currentTime + 1.2); } catch (e) {} setTimeout(() => { nodes.forEach(n => { try { n.stop(); } catch (e) {} }); g.disconnect(); }, 1400); }
   // ---------- every frame on the Moon ----------
   function bzStep(dt, now){
-    if (!BZ.sc) return; BZ.t += dt; BZ.u.uT.value = now / 1000; const S = BZ.s;
+    if (!BZ.sc) return; BZ.t += dt; BZ.u.uT.value = now / 1000; const S = BZ.ws;
     BZ.atkT -= dt; BZ.blastT -= dt; BZ.swing = Math.max(0, BZ.swing - dt);
     if (!BZ.dead && !BZ.grab) { if (BZ.bug) { BZ.bugs.forEach(b => bzBugStep(b, dt)); } else { bzMove(dt); BZ.bugs.forEach(b => { if (b.spd || b.air) bzBugStep(b, dt); }); } }
     if ((BZ.hurtT += dt) > 6 && BZ.hp < bzHpMax() && !BZ.dead) BZ.hp = Math.min(bzHpMax(), BZ.hp + 5 * dt);
     BZ.pain = Math.max(0, (BZ.pain || 0) - dt * .8); evHurt.style.opacity = BZ.pain;
     BZ.noise = Math.max(0, BZ.noise - .22 * dt * (BZ.crouch ? 1.6 : 1)); if ((BZ.noiseT = (BZ.noiseT || 0) - dt) <= 0) { BZ.noiseT = 1; if (BZ.noise > .12) bzMakeNoise(pos.x, pos.z, BZ.noise * 170); }
     // time on the Moon (saved): stay long enough and the signal arrives
-    if (!S.out) { S.t += dt; if (S.t >= BZ_TRIGGER) bzOutbreakStart(); }
+    if (!S.out && BZ.P.id === 'moon') { S.t += dt; if (S.t >= BZ_TRIGGER) bzOutbreakStart(); }
+    if (BZ.P.weather) BZ.P.weather(dt);
+    if ((BZ.spT = (BZ.spT || 0) + dt) > 5) { BZ.spT = 0; try { bzSpread(5); } catch (e) {} }
     if ((BZ.saveT += dt) > 5) { BZ.saveT = 0; bzSave(); }
     if (BZ.flick > 0) { BZ.flick -= dt; const on = Math.random() < .35; BZ.lightM.color.setScalar(on ? .15 : 1); BZ.flickEl.style.opacity = reduce ? 0 : on ? .35 : 0; if (BZ.flick <= 0) { BZ.lightM.color.setScalar(1); BZ.flickEl.style.opacity = 0; } }
     else if (S.out && !S.clear) BZ.lightM.color.setRGB(1, .55 + .35 * Math.sin(now / 400), .55 + .35 * Math.sin(now / 400));
@@ -13414,18 +13422,19 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     camera.updateMatrixWorld();
   }
   // ---------- getting there and back ----------
-  function bzEnter(){
-    if (EV || A || BZ.busy) return; BZ.busy = true;
-    fade(() => { try { if (!BZ.sc) { bzAssets(); bzBuildMoon(); } } catch (err) { console.error(err); BZ.busy = false; say('The shuttle couldn’t land. Try again.', 2600); return; }
+  function bzEnter(id){
+    id = id || 'moon'; if (EV || A || BZ.busy) return; BZ.busy = true; if (BZ.sc && BZ.P.id !== id) bzFree(); BZ.P = BZ_WORLDS[id]; BZ.ws = bzWorld(id); const HT = BZ.hud.querySelector('#bzTitle'); if (HT) HT.textContent = BZ.P.title;
+    fade(() => { try { if (!BZ.sc) { bzAssets(); bzBuildWorld(); } } catch (err) { console.error(err); BZ.busy = false; say('The shuttle couldn’t land. Try again.', 2600); return; }
       web.p = null; drawWeb(); walkTarget = null; exitTelescope(); inWorld = true; zone = 'mc'; vy = 0; grounded = true; BZ.v.set(0, 0, 0); BZ.web = null; BZ.bug = null; BZ.dead = false; BZ.hp = bzHpMax(); BZ.jet = bzJetMax(); BZ.eye = 1.6; BZ.crouch = false; BZ.noise = 0;
-      pos.set(MC_SHUTTLE[0] - 4, 0, MC_SHUTTLE[1] + 5.5); BZ.feet = bzSupport(pos.x, pos.z, 5); pos.y = BZ.feet + 1.6; yaw = Math.PI / 2 + .25; pitch = -.05;
-      camera.near = .1; camera.far = 2400; camera.updateProjectionMatrix(); STA.btn.hidden = true;
-      closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Back to the station'; jumpBtn.hidden = fine; uiZone(); bzHudShow(true); bzMusic(BZ.s.out && !BZ.s.clear ? 'tense' : 'calm'); bzOffers(); BZ.busy = false;
-      if (!BZ.s.seen) { BZ.s.seen = 1; bzSave(); setTimeout(() => say('Tranquility Colony, the Moon. Gravity is one-sixth of Earth’s: you jump a lot higher here.', 5000), 300); setTimeout(() => say(fine ? 'Space jumps (hold it in the air for the jetpack), Q swings a web off anything tall, E uses things. Phone (M) for colony jobs.' : 'Jump (hold it in the air for the jetpack), Swing to web off anything tall. The phone has colony jobs.', 6000), 5600); }
-      else say(BZ.s.out && !BZ.s.clear ? 'Back on the Moon. Keep your head down.' : 'Back on the Moon.', 2600);
+      pos.set(BZ.P.shuttle[0] - 4, 0, BZ.P.shuttle[1] + 5.5); BZ.feet = bzSupport(pos.x, pos.z, 5); pos.y = BZ.feet + 1.6; yaw = Math.PI / 2 + .25; pitch = -.05;
+      camera.near = .1; camera.far = BZ.P.id === 'moon' ? 3000 : 2600; camera.updateProjectionMatrix(); STA.btn.hidden = true; if (BZ.P.arrive && !BZ.ws.seenHere) { BZ.ws.seenHere = 1; setTimeout(() => say(BZ.P.arrive, 6000), 400); }
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Back to the station'; jumpBtn.hidden = fine; uiZone(); bzHudShow(true); bzMusic(BZ.ws.out && !BZ.ws.clear ? 'tense' : 'calm'); BZ.offers = []; bzOffers(); BZ.busy = false;
+      if (BZ.P.id !== 'moon') {}
+      else if (!BZ.s.seen) { BZ.s.seen = 1; bzSave(); setTimeout(() => say('Tranquility Colony, the Moon. Gravity is one-sixth of Earth’s: you jump a lot higher here.', 5000), 300); setTimeout(() => say(fine ? 'Space jumps (hold it in the air for the jetpack), Q swings a web off anything tall, E uses things. Phone (M) for colony jobs.' : 'Jump (hold it in the air for the jetpack), Swing to web off anything tall. The phone has colony jobs.', 6000), 5600); }
+      else say(BZ.ws.out && !BZ.ws.clear ? 'Back on the Moon. Keep your head down.' : 'Back on the Moon.', 2600);
     }, '#000000');
   }
-  function bzLeave(){ if (BZ.busy) return; BZ.busy = true; bzSave(); fade(() => { if (BZ.bug) bzBugOut(true); BZ.web = null; bzHudShow(false); bzMusicStop(); bzFree(); BZ.busy = false; enterStation(true); say('The shuttle docks with Orbital Station Kalpana.', 2600); }, '#000000'); }
+  function bzLeave(){ if (BZ.busy) return; BZ.busy = true; bzSave(); const wasMoon = BZ.P.id === 'moon'; fade(() => { if (BZ.bug) bzBugOut(true); BZ.web = null; bzHudShow(false); bzMusicStop(); bzFree(); BZ.busy = false; enterStation(true); say(wasMoon ? 'The shuttle docks with Orbital Station Kalpana.' : 'The ship brings you home to Orbital Station Kalpana.', 2600); }, '#000000'); }
   function bzFree(){
     const sc = BZ.sc; if (!sc) return; bzSave(); [viewG, me && me.g, beacon, web.line].forEach(o => { if (o && o.parent === sc) sc.remove(o); });
     const keep = new Set([propM()]); sc.traverse(o => { if (o.geometry) o.geometry.dispose(); const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach(m => { if (keep.has(m)) return; if (m.map) m.map.dispose(); m.dispose(); }); });
@@ -13482,15 +13491,16 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const _w1 = new THREE.Vector3(), _w2 = new THREE.Vector3(), _w3 = new THREE.Vector3();
   const segEnds = s => { s.a.getWorldPosition(_w1); if (s.b) s.b.getWorldPosition(_w2); else _w2.copy(V(...s.off)).applyMatrix4(s.a.matrixWorld); return [_w1, _w2]; };
   function segPointDist(p, a, b){ const ab = _w3.subVectors(b, a), t = clamp(tmpV2.subVectors(p, a).dot(ab) / Math.max(ab.lengthSq(), 1e-6), 0, 1); return p.distanceTo(tmpV2.copy(a).addScaledVector(ab, t)); }
-  BZ.giantBlock = (x, z, feet, rad) => { for (const S of BZ.gi) { if (!S.alive && !S.wreck) continue; if (Math.hypot(S.x - x, S.z - z) > 30) continue; const p = V(x, feet + .9, z); for (const s of S.segs) { if (s.gone) continue; const [a, b] = segEnds(s); if (segPointDist(p, a, b) < s.r + rad) return true; } } return false; };
-  BZ.giantSupport = (x, z, feet) => { let g = -1e9; BZ.gPlat = null; for (const S of BZ.gi) { if (Math.hypot(S.x - x, S.z - z) > 30) continue; for (const m of S.plats) { if (!m.parent || !m.visible) continue; const l = m.worldToLocal(_w1.set(x, feet, z)), bb = m.geometry.boundingBox; if (l.x < bb.min.x - .3 || l.x > bb.max.x + .3 || l.z < bb.min.z - .3 || l.z > bb.max.z + .3) continue; const top = m.localToWorld(_w2.set(l.x, bb.max.y, l.z)).y; if (feet >= top - .9 && top > g) { g = top; BZ.gPlat = m; } } } return g; };
-  function senWeakAt(p, rad){ let best = null, bd = 1e9; for (const S of BZ.gi) { if (!S.alive || S.y > S.gy + 2) continue; for (const w of Object.values(S.weak)) { if (w.hp <= 0) continue; w.m.getWorldPosition(_w1); const d = _w1.distanceTo(p); if (d < w.r + rad && d < bd) { bd = d; best = [S, w]; } } } return best; }
-  BZ.giantPunch = dmg => { if (BZ.grab) { BZ.grab.hits++; tone(300, .08, 'square', .05); if (BZ.grab.hits >= 4) senRelease(true); return; } const p = V(pos.x - Math.sin(yaw) * 1.2, BZ.feet + 1.2, pos.z - Math.cos(yaw) * 1.2), h = senWeakAt(p, 1.6); if (h) return senHit(h[0], h[1], dmg * 1.2); for (const S of BZ.gi) if (S.alive && S.segs.some(s => { const [a, b] = segEnds(s); return segPointDist(p, a, b) < s.r + 1; })) { tone(900, .05, 'square', .03, 1400); bzSpark(p.x, p.y, p.z, 0xFFE0A0, 3); if (!BZ.armorTip) { BZ.armorTip = 1; say('Solid armour. Hit the glowing red joints: knees, shoulders, head, chest.', 3200); } return; } };
-  BZ.giantShot = s => { const h = senWeakAt(s.p, .6); if (h) { senHit(h[0], h[1], s.dmg * 1.4); return true; } for (const S of BZ.gi) if (S.alive && Math.hypot(S.x - s.p.x, S.z - s.p.z) < 14 && S.segs.some(q => { if (q.gone) return false; const [a, b] = segEnds(q); return segPointDist(s.p, a, b) < q.r; })) { bzSpark(s.p.x, s.p.y, s.p.z, 0xFFE0A0, 2); tone(1400, .04, 'square', .02); return true; } return false; };
+  BZ.giantBlock = (x, z, feet, rad) => { for (const S of BZ.gi) { if (!S.alive && !S.wreck) continue; if (Math.hypot(S.x - x, S.z - z) > (S.rad || 30)) continue; const p = V(x, feet + .9, z); for (const s of S.segs) { if (s.gone) continue; const [a, b] = segEnds(s); if (segPointDist(p, a, b) < s.r + rad) return true; } } return false; };
+  BZ.giantSupport = (x, z, feet) => { let g = -1e9; BZ.gPlat = null; for (const S of BZ.gi) { if (Math.hypot(S.x - x, S.z - z) > (S.rad || 30)) continue; for (const m of S.plats) { if (!m.parent || !m.visible) continue; const l = m.worldToLocal(_w1.set(x, feet, z)), bb = m.geometry.boundingBox; if (l.x < bb.min.x - .3 || l.x > bb.max.x + .3 || l.z < bb.min.z - .3 || l.z > bb.max.z + .3) continue; const top = m.localToWorld(_w2.set(l.x, bb.max.y, l.z)).y; if (feet >= top - .9 && top > g) { g = top; BZ.gPlat = m; } } } return g; };
+  function senWeakAt(p, rad){ let best = null, bd = 1e9; for (const S of BZ.gi) { if (!S.alive || S.y > S.gy + 2 || S.cel && S.rise < 1) continue; for (const w of Object.values(S.weak)) { if (w.hp <= 0) continue; w.m.getWorldPosition(_w1); const d = _w1.distanceTo(p); if (d < w.r + rad && d < bd) { bd = d; best = [S, w]; } } } return best; }
+  BZ.giantPunch = dmg => { if (BZ.grab) { BZ.grab.hits++; tone(300, .08, 'square', .05); if (BZ.grab.hits >= 4) senRelease(true); return; } const p = V(pos.x - Math.sin(yaw) * 1.2, BZ.feet + 1.2, pos.z - Math.cos(yaw) * 1.2), h = senWeakAt(p, 1.6); if (h) return senHit(h[0], h[1], dmg * 1.2); if (celHitTurret(p, dmg)) return; for (const S of BZ.gi) if (S.alive && S.segs.some(s => { const [a, b] = segEnds(s); return segPointDist(p, a, b) < s.r + 1; })) { tone(900, .05, 'square', .03, 1400); bzSpark(p.x, p.y, p.z, 0xFFE0A0, 3); if (!BZ.armorTip) { BZ.armorTip = 1; say('Solid armour. Hit the glowing red joints: knees, shoulders, head, chest.', 3200); } return; } };
+  BZ.giantShot = s => { const h = senWeakAt(s.p, .6); if (h) { senHit(h[0], h[1], s.dmg * 1.4); return true; } if (celHitTurret(s.p, s.dmg)) return true; for (const S of BZ.gi) if (S.alive && Math.hypot(S.x - s.p.x, S.z - s.p.z) < 14 && S.segs.some(q => { if (q.gone) return false; const [a, b] = segEnds(q); return segPointDist(s.p, a, b) < q.r; })) { bzSpark(s.p.x, s.p.y, s.p.z, 0xFFE0A0, 2); tone(1400, .04, 'square', .02); return true; } return false; };
   BZ.giantNoise = (x, z, rad) => { for (const S of BZ.gi) if (S.alive && S.st !== 'hunt' && Math.hypot(S.x - x, S.z - z) < rad * 1.6) { S.tx = x; S.tz = z; S.st = 'investigate'; S.seen = BZ.t - 6; } };
-  BZ.giantMap = (dot, lbl) => { for (const S of BZ.gi) if (S.alive) { dot(S.x, S.z, '#FF3C3C', 14, '#fff'); lbl(S.x, S.z, 'Sentinel'); } };
+  BZ.giantMap = (dot, lbl) => { for (const S of BZ.gi) if (S.alive) { dot(S.x, S.z, '#FF3C3C', S.cel ? 22 : 14, '#fff'); lbl(S.x, S.z, S.cel ? S.name : 'Sentinel'); } };
   function senHit(S, w, dmg){ if (w.hp <= 0) return; w.hp -= dmg; bzSpark(...w.m.getWorldPosition(_w1).toArray(), 0xFFE0A0, 8); tone(420, .1, 'square', .05, 160); S.st = 'hunt'; S.seen = BZ.t; S.flash = .12; if (w.hp <= 0) senBreak(S, w); }
   function senBreak(S, w){
+    if (S.cel) return celBreak(S, w);
     w.m.visible = false; const p = w.m.getWorldPosition(new THREE.Vector3()); bzBoom(p.x, p.y, p.z, true); BZ.s.cr += 25; bzCredit(25);
     const drop = part => { const seg = S.segs.filter(s => { let o = s.a; while (o) { if (o === part) return true; o = o.parent; } return false; }); seg.forEach(s => s.gone = true); S.plats.forEach(m => { let o = m; while (o) { if (o === part) { m.visible = false; break; } o = o.parent; } }); BZ.sc.attach(part); BZ.fall = BZ.fall || []; BZ.fall.push({ o: part, v: V((Math.random() - .5) * 3, 0, (Math.random() - .5) * 3), t: 0, spin: (Math.random() - .5) * 1.5 }); };
     if (w.k === 'kneeL' || w.k === 'kneeR') { drop(w.part); S.kneel = 1; bzAlert('LEG DOWN', 'It’s on its knees. Go for the chest.', '#FFC93C'); }
@@ -13500,9 +13510,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function senDie(S){
     S.alive = false; S.dieT = 0; if (S.held) senRelease(false); if (S.beam) { S.beam.m.parent && S.beam.m.parent.remove(S.beam.m); S.beam = null; } S.cone.visible = false; if (S.spot) S.spot.visible = false; S.proxies.forEach(m => { BZ.anchors = BZ.anchors.filter(q => q !== m); }); if (BZ.web && BZ.web.obj && S.proxies.includes(BZ.web.obj)) bzWebEnd();
-    BZ.s.cr += 150; bzCredit(150); if (BZ.s.sen) BZ.s.sen[S.slot] = 2; bzSave(); bzAlert('SENTINEL DESTROYED', 'Thirty-six metres of machine, coming down.', '#3CE870'); tone(50, 3, 'sawtooth', .07, 25);
+    BZ.s.cr += 150; bzCredit(150); if (BZ.ws.sen) BZ.ws.sen[S.slot] = 2; bzSave(); bzAlert('SENTINEL DESTROYED', 'Thirty-six metres of machine, coming down.', '#3CE870'); tone(50, 3, 'sawtooth', .07, 25);
     for (let i = 0; i < 6; i++) setTimeout(() => { if (!BZ.sc) return; const p = S.waist.localToWorld(V((Math.random() - .5) * 8, 2 + Math.random() * 9, (Math.random() - .5) * 5)); bzBoom(p.x, p.y, p.z, true); }, i * 330);
-    if (!BZ.gi.some(q => q.alive)) bzMusic(BZ.s.out && !BZ.s.clear ? 'tense' : 'calm'); setTimeout(() => bzCheckClear(), 4000);
+    if (!BZ.gi.some(q => q.alive)) bzMusic(BZ.ws.out && !BZ.ws.clear ? 'tense' : 'calm'); setTimeout(() => bzCheckClear(), 4000);
   }
   function senRelease(hurt){ const S = BZ.gi.find(q => q.held), H = S && S.held; if (!H) return; S.held = null; S.cd.grab = 12; if (H.me) { BZ.grab = null; BZ.v.set((Math.random() - .5) * 6, 4, (Math.random() - .5) * 6); BZ.grounded = false; if (hurt) { const sh = S.weak[H.arm.sd < 0 ? 'shL' : 'shR']; if (sh.hp > 0) senHit(S, sh, 60); } say('You’re free!', 1400); } else { H.p.st = 'down'; H.p.x = H.arm.hand.getWorldPosition(_w1).x; H.p.z = _w1.z; } }
   function senGrab(S, A2, who){ S.held = { arm: A2, me: who === 'me', p: who === 'me' ? null : who, t: 0 }; if (who === 'me') { BZ.grab = { hits: 0 }; if (BZ.web) bzWebEnd(); if (BZ.bug) bzBugOut(true); bzAlert('GRABBED!', fine ? 'Punch (F or click) to break its grip!' : 'Hit, hit, hit to break its grip!', '#FF3C3C'); } else { who.st = 'held'; say(`It’s got ${who.name}!`, 2400); } tone(140, .5, 'sawtooth', .05, 70); }
@@ -13561,20 +13571,20 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function senStomp(S){ const L = S.legs[Math.random() < .5 ? 0 : 1]; L.leg.rotation.x = -.5; const fp = L.ankle.getWorldPosition(new THREE.Vector3()); setTimeout(() => { if (!BZ.sc) return; const ring = new THREE.Mesh(BZ.g.ping, new THREE.MeshBasicMaterial({ color: 0xFF5A3A, transparent: true, opacity: .9, depthWrite: false, toneMapped: false })); ring.rotation.x = Math.PI / 2; ring.position.set(fp.x, S.gy + .4, fp.z); BZ.sc.add(ring); BZ.rings = BZ.rings || []; BZ.rings.push({ m: ring, r: 1, x: fp.x, z: fp.z, hit: false }); tone(40, 1, 'sawtooth', .08, 25); BZ.shake = Math.max(BZ.shake, .7); }, 500); }
   function bzRingStep(dt){ (BZ.rings || []).forEach(R => { R.r += dt * 15; R.m.scale.setScalar(R.r); R.m.material.opacity = Math.max(0, .9 - R.r / 26); const d = Math.hypot(pos.x - R.x, pos.z - R.z); if (!R.hit && Math.abs(d - R.r) < 1.4 && BZ.grounded && !BZ.dead) { R.hit = true; bzHurt(16); BZ.v.y = 5; BZ.grounded = false; } }); BZ.rings = (BZ.rings || []).filter(R => { if (R.r < 26) return true; BZ.sc.remove(R.m); R.m.material.dispose(); return false; }); }
-  function bzFallStep(dt){ (BZ.fall || []).forEach(F => { F.t += dt; F.v.y -= LUNA.G * dt; F.o.position.addScaledVector(F.v, dt); F.o.rotation.x += F.spin * dt; const g = bzTerr(F.o.position.x, F.o.position.z) + 1; if (F.o.position.y < g) { F.o.position.y = g; if (!F.landed) { F.landed = 1; bzBoom(F.o.position.x, g, F.o.position.z, false); } F.v.set(0, 0, 0); F.spin = 0; } if (F.t > 20) F.o.position.y -= dt * .5; }); BZ.fall = (BZ.fall || []).filter(F => { if (F.t < 30) return true; BZ.sc.remove(F.o); return false; }); }
+  function bzFallStep(dt){ (BZ.fall || []).forEach(F => { F.t += dt; F.v.y -= BZ.P.G * dt; F.o.position.addScaledVector(F.v, dt); F.o.rotation.x += F.spin * dt; const g = bzTerr(F.o.position.x, F.o.position.z) + 1; if (F.o.position.y < g) { F.o.position.y = g; if (!F.landed) { F.landed = 1; bzBoom(F.o.position.x, g, F.o.position.z, false); } F.v.set(0, 0, 0); F.spin = 0; } if (F.t > 20) F.o.position.y -= dt * .5; }); BZ.fall = (BZ.fall || []).filter(F => { if (F.t < 30) return true; BZ.sc.remove(F.o); return false; }); }
   // when Sentinels turn up on the Moon
   BZ.giantStep = (dt, now) => {
-    const S0 = BZ.s; if (!S0.sen) S0.sen = [0, 0];
+    const S0 = BZ.ws; if (!S0.sen) S0.sen = [0, 0];
     if (S0.out && !BZ.riseNow) { const dead = S0.fac.filter(v => v <= 0).length, since = S0.t - (S0.outAt || S0.t) + (BZ.outClock = (BZ.outClock || 0) + dt);
       void since; const want0 = BZ.outClock > 150 || dead >= 1, want1 = dead >= 2;
       [want0, want1].forEach((w, i) => { if (w && S0.sen[i] === 0 && !BZ.gi.some(q => q.slot === i)) { S0.sen[i] = 1; bzSave(); const F = BZ.facs[i] || BZ.facs[0], a = Math.atan2(F.z, F.x); senSpawn(i, clamp(Math.cos(a) * 140, -200, 200), clamp(Math.sin(a) * 140, -200, 200), true); } });
       S0.sen.forEach((st, i) => { if (st === 1 && !BZ.gi.some(q => q.slot === i)) { const F = BZ.facs[i] || BZ.facs[0]; senSpawn(i, F.x * .7, F.z * .7, false); } }); }
-    BZ.gi.forEach(S => senStep(S, dt, now)); bzRingStep(dt); bzFallStep(dt);
+    BZ.gi.forEach(S => S.cel ? celStep(S, dt, now) : senStep(S, dt, now)); bzRingStep(dt); bzFallStep(dt);
     // the sky darkens and the music changes while one is close
-    const close = BZ.gi.some(S => S.alive && Math.hypot(S.x - pos.x, S.z - pos.z) < 320); BZ.dark = (BZ.dark || 0) + ((close ? 1 : 0) - (BZ.dark || 0)) * Math.min(1, dt * .5); BZ.sun.intensity = 2.4 - BZ.dark * .9; BZ.hemi.intensity = .55 - BZ.dark * .25; BZ.hemi.color.setRGB(.5 + BZ.dark * .2, .56 - BZ.dark * .2, .69 - BZ.dark * .3);
-    if (close && (!BZ.mus || BZ.mus.mood !== 'giant')) bzMusic('giant'); else if (!close && BZ.mus && BZ.mus.mood === 'giant') bzMusic(BZ.s.out && !BZ.s.clear ? 'tense' : 'calm');
+    const close = BZ.gi.some(S => S.alive && Math.hypot(S.x - pos.x, S.z - pos.z) < (S.cel ? 2000 : 320)); BZ.dark = (BZ.dark || 0) + ((close ? 1 : 0) - (BZ.dark || 0)) * Math.min(1, dt * .5); BZ.sun.intensity = BZ.sunI * (1 - BZ.dark * .4); BZ.hemi.intensity = BZ.hemiI * (1 - BZ.dark * .45); BZ.hemi.color.copy(BZ.hemiC).lerp(BZ.darkC || (BZ.darkC = new THREE.Color(.7, .25, .2)), BZ.dark * .5);
+    if (close && (!BZ.mus || BZ.mus.mood !== 'giant')) bzMusic('giant'); else if (!close && BZ.mus && BZ.mus.mood === 'giant') bzMusic(BZ.ws.out && !BZ.ws.clear ? 'tense' : 'calm');
     // climbing: hold forward against a leg or the body
-    if (!BZ.grounded && !BZ.web && !BZ.bug && !BZ.grab) { const [f] = bzInput(); if (f > .3) { const p = V(pos.x, BZ.feet + .9, pos.z); for (const S of BZ.gi) { if (!S.alive || Math.hypot(S.x - pos.x, S.z - pos.z) > 22) continue; if (S.segs.some(s => { if (s.gone) return false; const [a, b] = segEnds(s); return segPointDist(p, a, b) < s.r + 1.2; })) { BZ.v.y = Math.max(BZ.v.y, 4.5); BZ.v.x *= .5; BZ.v.z *= .5; BZ.climb = .3; if (!BZ.climbTip) { BZ.climbTip = 1; say('Climbing. Keep holding forward. The glowing joints are weak points.', 3000); } break; } } } }
+    if (!BZ.grounded && !BZ.web && !BZ.bug && !BZ.grab) { const [f] = bzInput(); if (f > .3) { const p = V(pos.x, BZ.feet + .9, pos.z); for (const S of BZ.gi) { if (!S.alive || Math.hypot(S.x - pos.x, S.z - pos.z) > (S.rad || 22)) continue; if (S.segs.some(s => { if (s.gone) return false; const [a, b] = segEnds(s); return segPointDist(p, a, b) < s.r + 1.2; })) { BZ.v.y = Math.max(BZ.v.y, 4.5); BZ.v.x *= .5; BZ.v.z *= .5; BZ.climb = .3; if (!BZ.climbTip) { BZ.climbTip = 1; say('Climbing. Keep holding forward. The glowing joints are weak points.', 3000); } break; } } } }
   };
   // ---------- across space: the star map, the ship, and the fights on the way ----------
   const BZW = [
@@ -13686,7 +13696,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function spCam(dt){ const S = SPF; viewG.visible = false; camera.position.set(S.x * .7, S.y * .7 + 4.2, 15); camera.lookAt(S.x * .9, S.y * .9 + 1, -40); if (BZ.shake > 0) { BZ.shake = Math.max(0, BZ.shake - dt); if (!reduce && !lowFx) camera.position.x += (Math.random() - .5) * BZ.shake; } camera.updateMatrixWorld(); }
   function spEnd(ok){ const S = SPF; if (S.over) return; S.over = true; const dest = S.dest; bzSave(); if (ok) { bzAlert('ARRIVING', BZW.find(q => q.id === dest).name, '#3CE870'); tone(523, .4, 'triangle', .05); } else { bzAlert('HULL BREACH', 'The autopilot takes you home.', '#FF3C3C'); }
-    setTimeout(() => fade(() => { spFree(); if (ok && BZP[dest]) bzPlanetEnter(dest); else { enterStation(true); say(ok ? `${BZW.find(q => q.id === dest).name}: the landing zone is still too hot. The ship brings you back to the station.` : 'You limp back to the station. Patch the hull and try again.', 4600); } }, '#000000'), 1600); }
+    setTimeout(() => fade(() => { spFree(); if (ok && BZP[dest]) { zone = 'twr'; if (!TWR.sc) buildTwr(); if (!STA.built) buildStation(); showFloor('station'); bzPlanetEnter(dest); } else { enterStation(true); say(ok ? `${BZW.find(q => q.id === dest).name}: the landing zone is still too hot. The ship brings you back to the station.` : 'You limp back to the station. Patch the hull and try again.', 4600); } }, '#000000'), 1600); }
   function spAbort(){ if (!SPF.sc || SPF.over) return; SPF.over = true; fade(() => { spFree(); enterStation(true); say('You turned back.', 1800); }, '#000000'); }
   function spFree(){ const sc = SPF.sc; if (!sc) return; [viewG, me && me.g, beacon, web.line].forEach(o => { if (o && o.parent === sc) sc.remove(o); }); const keep = new Set([propM()]); sc.traverse(o => { if (o.geometry) o.geometry.dispose(); const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach(m => { if (keep.has(m)) return; if (m.map) m.map.dispose(); m.dispose(); }); }); SPF.sc = null; spHud(false); bzMusicStop(); if (me) me.g.visible = true; camera.near = .05; camera.far = 500; camera.updateProjectionMatrix(); hotEl.hidden = false; }
   function spIdle(){ if (SPF.sc && !(inWorld && zone === 'sp') && !SPF.busy) spFree(); }
@@ -13695,16 +13705,127 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // worlds that have been built (each planet adds itself here)
   const BZP = {};
   function bzPlanetEnter(id){ const P = BZP[id]; if (P && P.enter) P.enter(); else enterStation(true); }
+  // ---------- Mars: Valles mining town, a canyon through the middle, dust storms ----------
+  const MARS_CZ = x => 122 + Math.sin(x / 80) * 24 + Math.sin(x / 31 + 1) * 6, MARS_W = x => 36 + Math.sin(x / 57) * 7;
+  const MARS = { id: 'mars', title: 'Valles Mining Town', seed: 4242, half: 280, step: 4, G: 6.2, instant: true, celH: 420, celAt: [-40, MARS_CZ(-40)], celMode: 'rise', celName: 'Celestial-class “Ares”',
+    domes: MC_DOMES.map(d => Object.assign({}, d, { name: { hub: 'Valles Hub', canteen: 'Mess Hall', lab: 'Assay Lab', crew: 'Miners’ Bunks', habA: 'Bunkhouse A', habB: 'Bunkhouse B', habC: 'Bunkhouse C', habD: 'Bunkhouse D', gh1: 'Farm Dome 1', gh2: 'Farm Dome 2', gh3: 'Farm Dome 3' }[d.id] || d.name, doors: d.doors.slice() })),
+    flat: [[0, 0, 88], [-116, 4, 48], [134, 30, 52], [-60, -205, 34], [130, -105, 34], [-205, 205, 22], [190, 212, 22], [-232, -118, 20]],
+    roads: [[[37, 0], [70, 4], [96, 10], [116, 16]], [[-37, 0], [-70, 4], [-100, 8]], [[0, 37], [0, 60], [0, 100], [0, 122], [-60, 128], [-130, 126]], [[-26, -22], [-38, -72], [-80, -118], [-120, -150], [-146, -164]], [[25, -24], [58, -72], [100, -98]], [[0, 122], [80, 118], [140, 116]], [[-20, -30], [-50, -150], [-60, -186]]],
+    tubes: MC_TUBES, towers: [[40, -14, 55], [-84, -96, 50], [96, 52, 50], [-150, 44, 45], [178, -150, 50], [-40, 218, 45]], pads: MC_PADS, mines: [[-150, 128, 22, 'Canyon Mine'], [160, 118, 22, 'Ophir Mine'], [-172, -182, 26, 'North Mine']],
+    solar: [[-60, -205, 10, 6], [130, -105, 8, 5]], facs: [[-205, 205], [190, 212], [60, 124], [-232, -118]], beac: [2, 4], shuttle: MC_SHUTTLE,
+    sky: { bg: 0xC8956E, fog: 0xC08A62, near: 140, far: 820, sun: 0xFFE6CC, sunI: 2, hemi: [0xE8B090, 0x6A3420, .7] }
+  };
+  MARS.height = (x, z) => {
+    let h = (bzFbm(x / 150 + 9, z / 150 + 4, 61, 4) - .5) * 18 + (bzFbm(x / 28, z / 28, 67, 3) - .5) * 2.6 + Math.sin(x / 9 + Math.sin(z / 13) * 2) * .25;
+    for (const [cx, cz, R, pit] of BZ.crat) { const d = Math.hypot(x - cx, z - cz) / R; if (d > 1.7) continue; const dep = R * (pit ? .4 : .18), rim = R * .07; h += d < 1 ? (pit ? -dep * Math.min(1, (1 - d) * 3.2) : -dep * (1 - d * d)) + rim * Math.pow(d, 4) : rim * Math.pow(1 - (d - 1) / .7, 2); }
+    for (const [fx, fz, fr] of MARS.flat) { const d = Math.hypot(x - fx, z - fz); if (d < fr + 26) { const k = d < fr ? 1 : 1 - (d - fr) / 26, s = k * k * (3 - 2 * k); h *= 1 - s; } }
+    // the canyon: steep banded walls, a floor 45 m down, and a ramp cut into the north wall for the road
+    const cz = MARS_CZ(x), w = MARS_W(x), d = Math.abs(z - cz), t = clamp((d - w) / 16, 0, 1), s = t * t * (3 - 2 * t), floor = -45 + (bzFbm(x / 40, z / 40, 71, 2) - .5) * 5;
+    let c = floor + (h - floor) * s; if (s > 0 && s < 1) c += Math.round(Math.sin(c * .7) * 1.2);
+    for (const [bx, bz2, br] of [[-90, 128, 13], [110, 122, 11]]) { const db = Math.hypot(x - bx, z - bz2); if (db < br + 8) c = Math.max(c, floor + (h - floor) * clamp(1 - (db - br) / 8, 0, 1) * .85); }
+    if (Math.abs(x) < 10 && z > 50 && z < cz + 4) { const ramp = -Math.max(0, (z - 58) / (cz - 58)) * 45, k = clamp(1 - (Math.abs(x) - 5) / 5, 0, 1); c = c + (Math.max(ramp, floor) - c) * k; }
+    h = c; const e = Math.max(Math.abs(x), Math.abs(z)) - 226; if (e > 0) h += e * e * .012 + bzFbm(x / 18, z / 18, 5, 2) * e * .3;
+    return h;
+  };
+  MARS.craters = () => { const r = rng(MARS.seed), L = MARS.mines.map(([x, z, R]) => [x, z, R, 1]); let n = 0; while (L.length < 50 && n++ < 1200) { const x = (r() - .5) * 520, z = (r() - .5) * 520, R = 7 + Math.pow(r(), 2.4) * 26; if (Math.abs(z - MARS_CZ(x)) < MARS_W(x) + R + 20) continue; if (MARS.flat.some(([fx, fz, fr]) => Math.hypot(x - fx, z - fz) < fr + R * 1.3 + 10)) continue; if (L.some(c => Math.hypot(c[0] - x, c[1] - z) < (c[2] + R) * .55)) continue; if (MARS.towers.some(([tx, tz]) => Math.hypot(tx - x, tz - z) < R * 1.4 + 6)) continue; if (MARS.roads.some(p => p.some((a, i) => i && segDist(x, z, p[i - 1][0], p[i - 1][1], a[0], a[1]) < R * 1.25 + 6))) continue; L.push([x, z, R, 0]); } return L; };
+  MARS.colors = (x, z, h) => { const band = .5 + .5 * Math.sin(h * .55 + bzNoise(x / 20, z / 20, 3) * 2), dark = h < -10 ? .78 : 1, n = bzFbm(x / 70, z / 70, 77, 3); return [clamp((.66 + (n - .5) * .25 - (1 - band) * .08) * dark, .2, .9), clamp((.34 + (n - .5) * .12 - (1 - band) * .05) * dark, .1, .6), clamp((.2 + (n - .5) * .08) * dark, .06, .4)]; };
+  MARS.tex = () => { const t = tex(512, 512, (c, w, h) => { const r = rng(14); c.fillStyle = '#A86A48'; c.fillRect(0, 0, w, h); for (let i = 0; i < 2600; i++) { const v = r(); c.fillStyle = `rgba(${150 + v * 70 | 0},${80 + v * 40 | 0},${50 + v * 25 | 0},${.25 + r() * .5})`; c.fillRect(r() * w, r() * h, 1 + r() * 3, 1 + r() * 3); } c.strokeStyle = 'rgba(90,40,20,.25)'; c.lineWidth = 2; for (let i = 0; i < 30; i++) { c.beginPath(); c.moveTo(r() * w, r() * h); c.bezierCurveTo(r() * w, r() * h, r() * w, r() * h, r() * w, r() * h); c.stroke(); } for (let i = 0; i < 60; i++) { c.fillStyle = 'rgba(60,30,20,.4)'; c.beginPath(); c.arc(r() * w, r() * h, 1 + r() * 3, 0, 7); c.fill(); } }); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 4; return t; };
+  MARS.skyBuild = sc => { const phobos = new THREE.Mesh(new THREE.DodecahedronGeometry(14, 1), new THREE.MeshStandardMaterial({ color: 0x8A7A6A, roughness: 1, flatShading: true })); phobos.position.set(300, 520, -700); phobos.scale.set(1.3, 1, 1); phobos.material.fog = false; sc.add(phobos);
+    const sunS = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex(128, 128, (c, w, h) => { const g = c.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,250,1)'); g.addColorStop(.12, 'rgba(255,240,220,.9)'); g.addColorStop(1, 'rgba(220,200,255,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); }), transparent: true, depthWrite: false, toneMapped: false, fog: false })); sunS.scale.set(90, 90, 1); sunS.position.set(900, 420, 520); sc.add(sunS);
+    // the dust: streaks that blow across during storms
+    const n = lowFx ? 500 : 1500, P = new Float32Array(n * 3); for (let i = 0; i < n; i++) P.set([(Math.random() - .5) * 160, Math.random() * 40, (Math.random() - .5) * 160], i * 3); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); BZ.dust = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xE0A070, size: .35, transparent: true, opacity: 0, depthWrite: false })); BZ.dust.frustumCulled = false; sc.add(BZ.dust); BZ.storm = { t: 120 + Math.random() * 60, on: 0, k: 0 }; };
+  MARS.weather = dt => { const W = BZ.storm; if (!W) return; W.t -= dt; if (W.t <= 0) { W.on = !W.on; W.t = W.on ? 45 : 150 + Math.random() * 90; if (W.on) { bzAlert('DUST STORM', 'They can’t see far in this. Neither can you.', '#FF8A2E'); tone(90, 3, 'sawtooth', .03, 60); } else say('The storm passes. The sky turns butterscotch again.', 3000); }
+    W.k += ((W.on ? 1 : 0) - W.k) * Math.min(1, dt * .4); const f = BZ.sc.fog; f.near = 140 - W.k * 130; f.far = 820 - W.k * 720; f.color.setRGB(.75 - W.k * .1, .54 - W.k * .12, .38 - W.k * .1); BZ.sc.background.copy(f.color); BZ.sightK = 1 - W.k * .55;
+    const D = BZ.dust; D.material.opacity = W.k * .8; D.position.set(pos.x, BZ.feet - 5, pos.z); const p = D.geometry.attributes.position, a = p.array; for (let i = 0; i < a.length; i += 3) { a[i] += dt * (30 + (i % 7) * 4) * W.k; if (a[i] > 80) a[i] -= 160; } p.needsUpdate = true; if (W.k > .3 && !BZ.grounded) BZ.v.x += dt * 3 * W.k; };
+  MARS.arrive = 'Mars. Valles Mining Town, on the lip of the canyon. The berserkers got here first: four factories, the canyon full of them.';
+  // ---------- Celestial-class: berserker seed machines, hundreds of metres tall. Each one is a level ----------
+  // Built from a handful of merged meshes (one per body part), a low-detail stand-in for far away, and simple boxes and
+  // capsules for climbing and standing on. Only the head and the free arm move; small details animate only when you're close.
+  function celBuild(H, seed){
+    const r = rng(seed), root = new THREE.Group(), u = H / 100, M = BZ.m;
+    const S = { cel: true, H, u, root, weak: {}, plats: [], segs: [], proxies: [], parts: {}, far: new THREE.Group(), near: new THREE.Group(), turrets: [], vents: [] }; root.add(S.near, S.far);
+    const glowM2 = new THREE.MeshBasicMaterial({ color: 0xFF2A1A, toneMapped: false }); S.glowM = glowM2;
+    const grp = (p, x, y, z) => { const g = new THREE.Group(); g.position.set(x * u, y * u, z * u); p.add(g); return g; };
+    // a body part: one merged hull mesh with greebles, one merged seam mesh
+    const part = (p, w, h, d, cy, opt = {}) => { const P = [], L = [], col = opt.col || 0x2E3036, col2 = 0x44474E;
+      P.push([new THREE.BoxGeometry(w * u, h * u, d * u), col, 0, cy * u, 0]);
+      const n = lowFx ? 6 : 18; for (let i = 0; i < n; i++) { const fx = (r() - .5) * w, fy = cy + (r() - .5) * h * .9, side = r() < .5 ? -1 : 1, gw = (.08 + r() * .2) * w, gh = (.03 + r() * .12) * h; P.push([new THREE.BoxGeometry(gw * u, gh * u, .04 * d * u + .6), col2, fx * u, fy * u, side * (d / 2) * u]); if (r() < .4) L.push([new THREE.BoxGeometry(gw * .9 * u, .006 * H + .25, .3), 0xFF2A1A, fx * u, (fy - gh / 2) * u, side * (d / 2 + .03) * u]); }
+      L.push([new THREE.BoxGeometry(w * u * 1.01, .25 + .004 * H, d * u * 1.01), 0xFF2A1A, 0, (cy + h * .32) * u, 0]); if (opt.v) L.push([new THREE.BoxGeometry(.3 + .003 * H, h * u * .8, .4), 0xFF2A1A, 0, cy * u, -(d / 2 + .02) * u]);
+      const m = new THREE.Mesh(bake(P), propM()); m.castShadow = !lowFx; m.userData.noPick = true; p.add(m); const g = new THREE.Mesh(bake(L), BZ.lightM); g.userData.noPick = true; p.add(g);
+      const f = new THREE.Mesh(new THREE.BoxGeometry(w * u, h * u, d * u), M.hull); f.position.set(p.position.x, 0, 0); void f;
+      const prox = new THREE.Mesh(new THREE.BoxGeometry(w * u, h * u, d * u), BZ.anchorM); prox.position.y = cy * u; p.add(prox); S.proxies.push(prox); BZ.anchors.push(prox); return m; };
+    const plat = (p, w, d, y, x = 0, z = 0) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w * u, .1, d * u), M.hull2); m.position.set(x * u, y * u, z * u); m.userData.noPick = true; p.add(m); m.geometry.computeBoundingBox(); S.plats.push(m); return m; };
+    const weak = (k, p, x, y, z, name) => { const m = new THREE.Mesh(new THREE.OctahedronGeometry(1, 0), glowM2); m.scale.setScalar(2.2 + .012 * H); m.position.set(x * u, y * u, z * u); m.userData.noPick = true; p.add(m); const cage = new THREE.Mesh(new THREE.TorusGeometry(3 + .016 * H, .3 + .002 * H, 4, 6), M.hull2); cage.position.copy(m.position); p.add(cage); S.weak[k] = { k, name, m, cage, hp: 420 + H * .5, max: 420 + H * .5, r: 4 + .014 * H, part: null }; };
+    // legs and hips
+    const hips = S.parts.hips = grp(S.near, 0, 46, 0); part(hips, 34, 9, 20, 0); plat(hips, 34, 20, 4.6);
+    S.legs = [-1, 1].map(sd => { const leg = grp(hips, sd * 11, -4, 0); part(leg, 11, 20, 12, -10, { v: 1 }); const knee = grp(leg, 0, -20, 0); part(knee, 12, 5, 13, 0); plat(knee, 12, 13, 2.6); part(knee, 9.5, 18, 10.5, -11, { v: 1 }); const foot = grp(knee, 0, -22, 0); part(foot, 14, 4, 22, 0); plat(foot, 14, 22, 2.1, 0, 0);
+      S.segs.push({ a: leg, b: knee, r: 6 * u }, { a: knee, b: foot, r: 5.4 * u }); return { leg, knee, foot, sd }; });
+    weak('knee', S.legs[0].knee, 0, 0, -7.4, 'Knee reactor'); weak('hip', hips, 18, 0, -6, 'Hip reactor');
+    // the body: a tall angular chest with a balcony across the front
+    const body = S.parts.body = grp(hips, 0, 4.5, 0); part(body, 30, 36, 16, 18, { v: 1 }); plat(body, 30, 16, 36.1); plat(body, 30, 6, 16, 0, -11); part(body, 28, 1.5, 6, 15.2); weak('core', body, 0, 24, -8.6, 'Chest reactor');
+    S.segs.push({ a: body, b: null, off: [0, 36 * u, 0], r: 11 * u });
+    // the held-out arm is a walkway; the other one swings
+    const shL = grp(body, -19, 33, 0); part(shL, 10, 8, 10, 0); plat(shL, 10, 10, 4.1); const armL = grp(shL, 0, 0, 0); armL.rotation.x = Math.PI / 2; part(armL, 7, 34, 7, -17); const handL = grp(armL, 0, -35, 0); part(handL, 10, 6, 4, -2); weak('palm', handL, 0, -2, 0, 'Palm reactor');
+    const walk = plat(shL, 7, 34, 3.6, 0, -17); void walk; weak('shoulder', shL, -5.6, 2, 0, 'Shoulder reactor'); S.segs.push({ a: armL, b: handL, r: 4 * u });
+    const shR = S.parts.shR = grp(body, 19, 33, 0); part(shR, 10, 8, 10, 0); plat(shR, 10, 10, 4.1); const armR = S.parts.armR = grp(shR, 0, 0, 0); part(armR, 7, 34, 7, -17, { v: 1 }); const handR = grp(armR, 0, -35, 0); part(handR, 9, 8, 4, -2); S.segs.push({ a: shR, b: handR, r: 4.2 * u }); S.handR = handR;
+    // the head: angular, with a crown of spikes and a slit of light
+    const head = S.parts.head = grp(body, 0, 37, 0); part(head, 12, 12, 13, 6); plat(head, 12, 13, 12.1); const P = [], L = []; for (let i = 0; i < 7; i++) { const a = (i - 3) * .32; P.push([new THREE.ConeGeometry(1.4 * u, (6 + (3 - Math.abs(i - 3)) * 2.4) * u, 4), 0x44474E, Math.sin(a) * 6 * u, (13 + (3 - Math.abs(i - 3))) * u, Math.cos(a) * 2 * u, 0, 0, -a * .6]); } L.push([new THREE.BoxGeometry(9 * u, 1.2 * u, .5), 0xFF2A1A, 0, 7 * u, -6.6 * u]);
+    const crown = new THREE.Mesh(bake(P), propM()); head.add(crown); const eye = new THREE.Mesh(bake(L), BZ.lightM); head.add(eye); weak('crown', head, 0, 15.5, 0, 'Crown reactor'); S.segs.push({ a: head, b: null, off: [0, 12 * u, 0], r: 6.5 * u });
+    // far away it's just a silhouette
+    const F = [B3(34 * u, 9 * u, 20 * u, 0x2E3036, 0, 46 * u, 0), B3(11 * u, 44 * u, 12 * u, 0x2E3036, -11 * u, 22 * u, 0), B3(11 * u, 44 * u, 12 * u, 0x2E3036, 11 * u, 22 * u, 0), B3(30 * u, 36 * u, 16 * u, 0x2E3036, 0, 68.5 * u, 0), B3(12 * u, 13 * u, 13 * u, 0x2E3036, 0, 92 * u, 0), B3(7 * u, 7 * u, 40 * u, 0x2E3036, -19 * u, 83.5 * u, -18 * u), B3(7 * u, 40 * u, 7 * u, 0x2E3036, 19 * u, 66 * u, 0)];
+    const farM = new THREE.Mesh(bake(F), propM()); S.far.add(farM); const farL = new THREE.Mesh(bake([B3(30.4 * u, .5 * u, 16.4 * u, 0xFF2A1A, 0, 80 * u, 0), B3(34.4 * u, .5 * u, 20.4 * u, 0xFF2A1A, 0, 48 * u, 0), B3(9 * u, 1.2 * u, .5, 0xFF2A1A, 0, 92 * u, -6.6 * u)]), BZ.lightM); S.far.add(farL); S.far.visible = false;
+    // turrets on the ledges: the rest of the berserkers defend it
+    [[hips, 12, 5, -9], [hips, -12, 5, -9], [body, 10, 36.6, -5], [body, -10, 36.6, 5], [shL, 0, 4.6, -30], [body, 0, 16.5, -12], [head, 0, 12.6, 3]].forEach(([p, x, y, z]) => { const g = new THREE.Group(), b = new THREE.Mesh(BZ.g.dCore, M.hull); b.scale.set(1.4, .7, 1.4); g.add(b); const bar = new THREE.Mesh(BZ.g.limb, M.hull2); bar.rotation.x = Math.PI / 2; bar.position.set(0, .3, -.8); bar.scale.set(2, 3, 2); g.add(bar); const e2 = new THREE.Mesh(BZ.g.eye, M.seam); e2.position.set(0, .4, -.9); g.add(e2); g.position.set(x * u, y * u, z * u); g.scale.setScalar(1 + H / 600); p.add(g); S.turrets.push({ g, hp: 90, cd: 2 + r() * 3 }); });
+    return S;
+  }
+  function celSpawn(o){
+    const S = celBuild(o.H, o.seed || 7); Object.assign(S, { x: o.x, z: o.z, yaw: o.yaw || 0, gy: bzTerr(o.x, o.z), alive: true, rise: 0, mode: o.mode || 'rise', name: o.name || 'Celestial-class', cd: { sweep: 12 }, rad: o.H * .8, onDie: o.onDie });
+    S.root.position.set(S.x, S.gy + (S.mode === 'rise' ? -o.H * 1.02 : o.H * 2.2), S.z); S.root.rotation.y = S.yaw; BZ.sc.add(S.root); S.root.updateMatrixWorld(true); BZ.gi.push(S);
+    bzAlert(`${S.name.toUpperCase()}`, S.mode === 'rise' ? 'The ground is opening. Something enormous is coming up.' : 'Something enormous is coming down.', '#FF3C3C'); tone(40, 4, 'sawtooth', .07, 22); bzMusic('giant'); return S;
+  }
+  function celStep(S, dt, now){
+    if (S.dieT != null) { S.dieT += dt; const k = Math.min(1, S.dieT / 9); S.root.rotation.x = k * k * .9; S.root.position.y = S.gy - k * S.H * .15; if (Math.random() < dt * 4 && S.dieT < 8) { const p = S.parts.body.localToWorld(V((Math.random() - .5) * 30 * S.u, Math.random() * 36 * S.u, (Math.random() - .5) * 16 * S.u)); bzBoom(p.x, p.y, p.z, true); } if (!reduce) BZ.shake = Math.max(BZ.shake, .6 * (1 - k)); if (S.dieT > 9 && !S.done) { S.done = 1; S.wreck = true; bzMakeNoise(S.x, S.z, 1000); } S.root.updateMatrixWorld(true); return; }
+    const d = Math.hypot(pos.x - S.x, pos.z - S.z), farOff = d > S.H * 2.2 + 300; S.far.visible = farOff; S.near.visible = !farOff;
+    if (S.rise < 1) { S.rise = Math.min(1, S.rise + dt / 28); const k = 1 - Math.pow(1 - S.rise, 2); S.root.position.y = S.mode === 'rise' ? S.gy - S.H * 1.02 * (1 - k) : S.gy + S.H * 2.2 * (1 - k); if (!reduce) BZ.shake = Math.max(BZ.shake, .35); if (Math.random() < dt * 6) { const a = Math.random() * 6.28, rr = S.H * (.15 + Math.random() * .2); bzBoom(S.x + Math.cos(a) * rr, bzTerr(S.x + Math.cos(a) * rr, S.z + Math.sin(a) * rr) + 2, S.z + Math.sin(a) * rr, true); } if (S.rise >= 1) { bzAlert(`${S.name.toUpperCase()}`, `${Object.keys(S.weak).length} reactor nodes. Climb it and break them all.`, '#FF3C3C'); say('Swing onto it, climb the legs (hold forward), walk along the outstretched arm. The reactors glow red.', 6000); } S.root.updateMatrixWorld(true); return; }
+    let ride = null; if (BZ.grounded && d < S.H && Math.abs(bzSupport(pos.x, pos.z, BZ.feet) - BZ.feet) < .15 && BZ.gPlat) ride = { m: BZ.gPlat, l: BZ.gPlat.worldToLocal(V(pos.x, BZ.feet, pos.z)) };
+    // the head watches you; the free arm sweeps across the body (and anything standing on it)
+    const near = d < S.H * 1.5; if (near || (S.slow = (S.slow || 0) + dt) > .5) { const dtA = near ? dt : S.slow; S.slow = 0; const want = clamp(angDiff(S.yaw, Math.atan2(-(pos.x - S.x), -(pos.z - S.z))), -.8, .8); S.parts.head.rotation.y += (want - S.parts.head.rotation.y) * Math.min(1, dtA * .5);
+      S.sweep = (S.sweep || 0) + dtA * .18; S.parts.armR.rotation.x = Math.sin(S.sweep) * .5 - .1; S.parts.armR.rotation.z = Math.max(0, Math.sin(S.sweep * .7)) * .6; S.root.updateMatrixWorld(true); }
+    if (ride) { const w = ride.m.localToWorld(ride.l.clone()); pos.x = w.x; pos.z = w.z; BZ.feet = w.y; pos.y = BZ.feet + BZ.eye; }
+    if (near && !lowFx) S.turrets.forEach((T, i) => { if (T.hp > 0) T.g.children[1].rotation.z += dt * (1 + i * .1); });
+    // the free hand hurts if it hits you
+    if (near && S.handR) { const hp = S.handR.getWorldPosition(_w1); if (hp.distanceTo(V(pos.x, BZ.feet + 1, pos.z)) < 6 * S.u) { if (!S.hitT || BZ.t - S.hitT > 2) { S.hitT = BZ.t; bzHurt(22); BZ.v.add(V((pos.x - hp.x), 4, (pos.z - hp.z)).normalize().multiplyScalar(14)); BZ.grounded = false; say('The arm swatted you!', 1400); } } }
+    // turrets fire at you when you're on or near it
+    if (d < S.H * 1.3) S.turrets.forEach(T => { if (T.hp <= 0) return; T.cd -= dt; if (T.cd > 0) return; const tp = T.g.getWorldPosition(_w1); if (tp.distanceTo(V(pos.x, BZ.feet + 1, pos.z)) < 90) { T.cd = 2.6 + Math.random() * 1.5; bzShoot({ x: tp.x, y: tp.y + 1, z: tp.z }, pos.x, BZ.feet + 1, pos.z, 34, 6); } else T.cd = 1; });
+    // drones pour out while you're climbing
+    if ((S.cd.sweep -= dt) <= 0 && d < S.H * 1.6) { S.cd.sweep = 18; const hp = S.parts.body.localToWorld(V(0, 20 * S.u, -9 * S.u)); for (let i = 0; i < 3; i++) { const e = bzSpawn('drone', hp.x + (Math.random() - .5) * 10, hp.z + (Math.random() - .5) * 10, { home: -1 }); if (e) { e.y = hp.y; e.st = 'hunt'; e.seen = BZ.t; e.lx = pos.x; e.lz = pos.z; } } }
+    Object.values(S.weak).forEach(w => { if (w.hp > 0) { w.m.rotation.y += dt; w.cage.rotation.z += dt * .4; } });
+  }
+  function celHitTurret(p, dmg){ for (const S of BZ.gi) { if (!S.cel || !S.alive) continue; for (const T of S.turrets) { if (T.hp <= 0) continue; const tp = T.g.getWorldPosition(_w1); if (tp.distanceTo(p) < 2.6 + S.H / 300) { T.hp -= dmg; bzSpark(tp.x, tp.y, tp.z, 0xFFE0A0, 6); if (T.hp <= 0) { T.g.visible = false; bzBoom(tp.x, tp.y, tp.z, false); BZ.s.cr += 8; bzCredit(8); } return true; } } } return false; }
+  function celDie(S){ S.alive = false; S.dieT = 0; S.proxies.forEach(m => { BZ.anchors = BZ.anchors.filter(q => q !== m); }); if (BZ.web && BZ.web.obj && S.proxies.includes(BZ.web.obj)) bzWebEnd(); BZ.s.cr += 400; bzCredit(400); bzAlert(`${S.name.toUpperCase()} IS FALLING`, 'Every reactor is gone.', '#3CE870'); tone(36, 6, 'sawtooth', .08, 18); if (S.onDie) setTimeout(() => S.onDie(S), 9500); bzSave(); }
+  // ---------- every world the campaign knows about ----------
+  const BZ_WORLDS = {
+    moon: { id: 'moon', name: 'the Moon', title: 'Tranquility Colony', seed: LUNA.seed, half: LUNA.half, step: LUNA.step, N: LUNA.N, G: LUNA.G, domes: MC_DOMES, flat: MC_FLAT, roads: MC_ROADS, tubes: MC_TUBES, towers: MC_TOWERS, pads: MC_PADS, mines: MC_MINES, solar: MC_SOLAR, facs: MC_FACS, beac: MC_BEAC, shuttle: MC_SHUTTLE, height: mcHeight, craters: mcCraters, celH: 300, celAt: [-112, 196], celMode: 'rise', celName: 'Celestial-class “Selene”' },
+    mars: MARS
+  };
+  MARS.name = 'Mars'; MARS.N = MARS.half * 2 / MARS.step + 1; MARS.wallWeb = true;
+  BZ.P = BZ_WORLDS.moon; BZ.ws = BZ.s;
+  function bzWorld(id){ if (id === 'moon') return BZ.s; BZ.s.wd = BZ.s.wd || {}; const W = BZ_WORLDS[id]; return BZ.s.wd[id] || (BZ.s.wd[id] = { t: 0, out: 0, fac: W.facs.map(() => 1), bea: W.beac.map(() => 1), inf: '', breach: [], clear: 0, sen: [0, 0], cel: 0 }); }
+  BZP.mars = { enter: () => bzEnter('mars') };
+  function bzCelSummon(loaded){ if (!BZ.sc || BZ.gi.some(S => S.cel)) return; const P = BZ.P, at = P.celAt || [0, 160];
+    const S = celSpawn({ H: P.celH || 300, x: at[0], z: at[1], yaw: Math.atan2(at[0], at[1]), mode: P.celMode || 'rise', name: P.celName, seed: P.seed, onDie: () => { BZ.ws.cel = 2; bzSave(); bzCheckClear(); } });
+    if (loaded) { S.rise = 1; S.root.position.y = S.gy; S.root.updateMatrixWorld(true); } }
+  function celBreak(S, w){ w.m.visible = false; w.cage.visible = false; const p = w.m.getWorldPosition(new THREE.Vector3()); bzBoom(p.x, p.y, p.z, true); BZ.s.cr += 60; bzCredit(60); const left = Object.values(S.weak).filter(q => q.hp > 0).length; if (!left) celDie(S); else bzAlert('REACTOR DOWN', `${w.name}. ${left} to go.`, '#FFC93C'); }
   // ---------- the phone, on the Moon ----------
   function bzPhMapBase(){
-    const S = 1024, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), k = S / 560, X = x => (x + 280) * k, N = LUNA.N, H = BZ.H, img = g.createImageData(N, N);
+    const S = 1024, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), k = S / 560, X = x => (x + 280) * k, N = BZ.P.N, H = BZ.H, img = g.createImageData(N, N);
     for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) { const h = H[j * N + i], hx = H[j * N + Math.min(N - 1, i + 1)] - h, hz = H[Math.min(N - 1, j + 1) * N + i] - h, v = clamp(120 + h * 1.2 - (hx + hz) * 18, 30, 230), o = (j * N + i) * 4; img.data[o] = v; img.data[o + 1] = v; img.data[o + 2] = v * .97; img.data[o + 3] = 255; }
     const t = document.createElement('canvas'); t.width = t.height = N; t.getContext('2d').putImageData(img, 0, 0); g.imageSmoothingEnabled = true; g.drawImage(t, 0, 0, S, S);
-    g.strokeStyle = '#4F4E4C'; g.lineWidth = 6 * k; g.lineCap = 'round'; g.beginPath(); g.arc(X(0), X(0), 34 * k, 0, 7); g.stroke(); MC_ROADS.forEach(p => { g.beginPath(); p.forEach(([x, z], i) => i ? g.lineTo(X(x), X(z)) : g.moveTo(X(x), X(z))); g.stroke(); });
-    g.strokeStyle = '#E8EBF0'; g.lineWidth = 2.6 * k; MC_TUBES.forEach(([a, b]) => { const A2 = BZ.domes.find(d => d.id === a), B2 = BZ.domes.find(d => d.id === b); g.beginPath(); g.moveTo(X(A2.x), X(A2.z)); g.lineTo(X(B2.x), X(B2.z)); g.stroke(); });
+    g.strokeStyle = '#4F4E4C'; g.lineWidth = 6 * k; g.lineCap = 'round'; g.beginPath(); g.arc(X(0), X(0), 34 * k, 0, 7); g.stroke(); BZ.P.roads.forEach(p => { g.beginPath(); p.forEach(([x, z], i) => i ? g.lineTo(X(x), X(z)) : g.moveTo(X(x), X(z))); g.stroke(); });
+    g.strokeStyle = '#E8EBF0'; g.lineWidth = 2.6 * k; BZ.P.tubes.forEach(([a, b]) => { const A2 = BZ.domes.find(d => d.id === a), B2 = BZ.domes.find(d => d.id === b); g.beginPath(); g.moveTo(X(A2.x), X(A2.z)); g.lineTo(X(B2.x), X(B2.z)); g.stroke(); });
     BZ.domes.forEach(d => { g.fillStyle = d.kind === 'green' ? '#7FD08A' : d.kind === 'hub' ? '#35C8F0' : '#DDE6F0'; g.beginPath(); g.arc(X(d.x), X(d.z), d.R * k, 0, 7); g.fill(); });
-    MC_PADS.forEach(([x, z]) => { g.fillStyle = '#9A9EA6'; g.beginPath(); g.arc(X(x), X(z), 11 * k, 0, 7); g.fill(); }); MC_SOLAR.forEach(([x, z, nx, nz]) => { g.fillStyle = '#1A2A5A'; g.fillRect(X(x - nx * 1.7), X(z - nz * 1.7), nx * 3.4 * k, nz * 3.4 * k); });
-    MC_MINES.forEach(([x, z, R]) => { g.strokeStyle = '#E8501E'; g.lineWidth = 3; g.beginPath(); g.arc(X(x), X(z), R * k, 0, 7); g.stroke(); }); BZ.phBase = c;
+    BZ.P.pads.forEach(([x, z]) => { g.fillStyle = '#9A9EA6'; g.beginPath(); g.arc(X(x), X(z), 11 * k, 0, 7); g.fill(); }); BZ.P.solar.forEach(([x, z, nx, nz]) => { g.fillStyle = '#1A2A5A'; g.fillRect(X(x - nx * 1.7), X(z - nz * 1.7), nx * 3.4 * k, nz * 3.4 * k); });
+    BZ.P.mines.forEach(([x, z, R]) => { g.strokeStyle = '#E8501E'; g.lineWidth = 3; g.beginPath(); g.arc(X(x), X(z), R * k, 0, 7); g.stroke(); }); BZ.phBase = c;
   }
   function bzPhMap(B){
     B.innerHTML = '<canvas id="phCv" width="640" height="640"></canvas><div class="phrow"><button type="button" data-z="1">＋ Zoom in</button><button type="button" data-z="-1">－ Zoom out</button><button type="button" data-z="0">Centre on me</button><button type="button" data-z="x">Clear pin</button></div><div class="phleg"><span><i style="background:#FFC93C"></i>You / job</span><span><i style="background:#35C8F0"></i>Hub / pin</span><span><i style="background:#FF3C3C"></i>Berserkers</span><span><i style="background:#7A0A0A"></i>Infected ground</span><span><i style="background:#3CE870"></i>Buggy</span></div><p style="color:#9AA3AD;font-size:12px">Tranquility Colony, the Moon. Tap to drop a pin. Using the phone makes noise.</p>';
@@ -13715,10 +13836,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       g.fillStyle = 'rgba(150,10,10,.45)'; for (let c = 0; c < IN * IN; c++) { const v = BZ.inf[c]; if (v < .25) continue; const [px, py] = P(-280 + (c % IN) * ICELL, -280 + Math.floor(c / IN) * ICELL); g.globalAlpha = Math.min(1, v); g.fillRect(px, py, ICELL * sc + 1, ICELL * sc + 1); } g.globalAlpha = 1;
       const dot = (x, z, col, r = 7, ring) => { const [px, py] = P(x, z); if (px < -10 || py < -10 || px > W + 10 || py > W + 10) return; g.fillStyle = col; g.beginPath(); g.arc(px, py, r, 0, 7); g.fill(); if (ring) { g.strokeStyle = ring; g.lineWidth = 3; g.stroke(); } };
       const lbl = (x, z, t) => { if (BZ.phZ < 2.4) return; const [px, py] = P(x, z); g.font = '700 15px system-ui'; g.fillStyle = '#fff'; g.textAlign = 'center'; g.fillText(t, px, py - 12); };
-      BZ.domes.forEach(d => lbl(d.x, d.z, d.name)); MC_MINES.forEach(([x, z, , n]) => lbl(x, z, n)); lbl(MC_SHUTTLE[0], MC_SHUTTLE[1], 'Shuttle'); dot(MC_SHUTTLE[0], MC_SHUTTLE[1], '#fff', 6, '#16181D');
+      BZ.domes.forEach(d => lbl(d.x, d.z, d.name)); BZ.P.mines.forEach(([x, z, , n]) => lbl(x, z, n)); lbl(BZ.P.shuttle[0], BZ.P.shuttle[1], 'Shuttle'); dot(BZ.P.shuttle[0], BZ.P.shuttle[1], '#fff', 6, '#16181D');
       BZ.bugs.forEach(b => dot(b.x, b.z, '#3CE870', 6, '#16181D'));
       BZ.facs.forEach(F => { dot(F.x, F.z, F.hp > 0 ? '#FF3C3C' : '#555', 12, '#fff'); lbl(F.x, F.z, F.hp > 0 ? `Factory ${Math.round(F.hp / F.max * 100)}%` : 'Factory (scrap)'); });
-      BZ.beas.forEach(Bq => { if (BZ.s.bea[Bq.i]) { dot(Bq.T.x, Bq.T.z, '#FF8A2E', 9, '#fff'); lbl(Bq.T.x, Bq.T.z, 'Beacon'); } });
+      BZ.beas.forEach(Bq => { if (BZ.ws.bea[Bq.i]) { dot(Bq.T.x, Bq.T.z, '#FF8A2E', 9, '#fff'); lbl(Bq.T.x, Bq.T.z, 'Beacon'); } });
       BZ.ents.forEach(e => { if (e.hp > 0 && (e.st === 'hunt' || Math.hypot(e.x - pos.x, e.z - pos.z) < 90)) dot(e.x, e.z, '#FF3C3C', e.k === 'crawler' ? 6 : 4); });
       if (BZ.giantMap) BZ.giantMap(dot, lbl);
       BZ.ppl.forEach(p => { if (p.st === 'down' || p.st === 'stranded') dot(p.x, p.z, '#35C8F0', 7, '#fff'); });
@@ -13730,9 +13851,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     B.querySelector('.phrow').addEventListener('click', e => { const b = e.target.closest('[data-z]'); if (!b) return; const z = b.dataset.z; if (z === '1') BZ.phZ = Math.min(8, BZ.phZ * 1.6); else if (z === '-1') BZ.phZ = Math.max(1, BZ.phZ / 1.6); else if (z === '0') BZ.phC = [pos.x, pos.z]; else BZ.wp = null; draw(); });
   }
   function bzPhJobs(B){
-    const S = BZ.s, alive = BZ.facs.filter(F => F.hp > 0).length, bea = S.bea.filter(Boolean).length, j = BZ.job;
-    B.innerHTML = `<div class="phcard"><b>Tranquility Colony · ${S.cr} credits</b><small>${S.jobs} job${S.jobs === 1 ? '' : 's'} done · ${S.kills} machines scrapped${S.out ? ` · ${Math.round(bzInfPct() * 100)}% of the Moon infected` : ''}</small></div>`
-      + (S.out && !S.clear ? `<div class="phcard"><b style="color:#FF5A4A">Outbreak</b><small>${alive} factor${alive === 1 ? 'y' : 'ies'} still building machines · ${bea} beacon${bea === 1 ? '' : 's'} still pinging · ${S.breach.length} dome${S.breach.length === 1 ? '' : 's'} breached</small><div class="phrow">${BZ.facs.filter(F => F.hp > 0).map(F => `<button type="button" data-w="${F.x},${F.z}">Mark factory ${F.i + 1}</button>`).join('')}${BZ.beas.filter(Bq => S.bea[Bq.i]).map(Bq => `<button type="button" data-w="${Bq.T.x},${Bq.T.z}">Mark beacon</button>`).join('')}</div></div>` : S.clear ? '<div class="phcard"><b style="color:#3CE870">The colony is safe</b><small>The signal came from out past Mars.</small></div>' : '<div class="phcard"><b>All quiet</b><small>A normal day on the Moon.</small></div>')
+    const S = BZ.s, WS = BZ.ws, alive = BZ.facs.filter(F => F.hp > 0).length, bea = WS.bea.filter(Boolean).length, j = BZ.job;
+    B.innerHTML = `<div class="phcard"><b>${esc(BZ.P.title)} · ${S.cr} credits</b><small>${S.jobs} job${S.jobs === 1 ? '' : 's'} done · ${S.kills} machines scrapped${WS.out ? ` · ${Math.round(bzInfPct() * 100)}% of ${BZ.P.id === 'moon' ? 'the Moon' : BZ.P.name} infected` : ''}</small></div>`
+      + (WS.out && !WS.clear ? `<div class="phcard"><b style="color:#FF5A4A">Outbreak</b><small>${alive} factor${alive === 1 ? 'y' : 'ies'} still building machines · ${bea} beacon${bea === 1 ? '' : 's'} still pinging · ${WS.breach.length} dome${WS.breach.length === 1 ? '' : 's'} breached${WS.cel === 1 ? ' · a Celestial-class machine is standing over the map' : ''}</small><div class="phrow">${BZ.facs.filter(F => F.hp > 0).map(F => `<button type="button" data-w="${F.x},${F.z}">Mark factory ${F.i + 1}</button>`).join('')}${BZ.beas.filter(Bq => WS.bea[Bq.i]).map(Bq => `<button type="button" data-w="${Bq.T.x},${Bq.T.z}">Mark beacon</button>`).join('')}</div></div>` : WS.clear ? `<div class="phcard"><b style="color:#3CE870">${BZ.P.id === 'moon' ? 'The colony is safe' : 'Cleared'}</b><small>${BZ.P.id === 'moon' ? 'The signal came from out past Mars. The station’s star map can take you there.' : 'Back to the station: the star map shows where they went next.'}</small></div>` : '<div class="phcard"><b>All quiet</b><small>A normal day on the Moon.</small></div>')
       + (j ? `<div class="phcard"><b>Now: ${esc(j.title)}</b><small>${esc(j.desc)}</small><div class="phrow"><button type="button" data-a="drop">Give up this job</button></div></div>` : BZ.offers.map((o, i) => `<div class="phcard"><b>${esc(o.title)} · ${o.pay} cr</b><small>${esc(o.desc)}</small><div class="phrow"><button type="button" class="y" data-o="${i}">Take it</button></div></div>`).join(''));
     B.querySelectorAll('[data-o]').forEach(b => b.onclick = () => { bzJobStart(BZ.offers[+b.dataset.o]); phoneClose(); });
     B.querySelectorAll('[data-w]').forEach(b => b.onclick = () => { BZ.wp = b.dataset.w.split(',').map(Number); phoneClose(); say('Marked on your map.', 1400); });
