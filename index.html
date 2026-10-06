@@ -3653,7 +3653,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (k === 'f' || k === 'enter') { A.hold = true; attack(); } });
   addEventListener('keyup', e => { const k = e.key.toLowerCase(); akeys[k] = false; if (A && (k === 'f' || k === 'enter')) A.hold = false; });
   addEventListener('mouseup', () => { if (A) A.hold = false; });
-  canvas.addEventListener('contextmenu', e => { if (A || EV || inWorld && zone === 'mc') e.preventDefault(); });
+  canvas.addEventListener('contextmenu', e => { if (A || EV || inWorld && (zone === 'mc' || zone === 'sp')) e.preventDefault(); });
   addEventListener('keydown', e => { if (!EV || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; const k = e.key.toLowerCase(); if (k === 'e' && !e.repeat) evSpecial(); if (k === 'f' || k === 'enter') { EV.holdAtk = true; evAttack(); } });
   addEventListener('keyup', e => { if (EV && (e.key.toLowerCase() === 'f' || e.key === 'Enter')) EV.holdAtk = false; });
   // block: hold the right mouse button, Shift, or the Block button
@@ -4612,6 +4612,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (mirror) { const f = tv2.set(-Math.sin(yaw), 0, -Math.cos(yaw)); target = tv3.copy(eye).addScaledVector(f, 2.1); target.y -= .2; }
     else { const f = tv2.set(0, 0, -1).applyQuaternion(camera.quaternion), rt = V(1, 0, 0).applyQuaternion(camera.quaternion), d = EV && EV.big ? 7.5 : inWorld && (zone === 'city' || zone === 'space' || zone === 'event' || zone === 'mc') ? 3.4 : 2.4;
       target = tv3.copy(eye).addScaledVector(f, -d).addScaledVector(rt, .45); target.y += EV && EV.big ? 1.5 : .25; }
+    if (inWorld && zone === 'sp') return;
     if (inWorld && zone === 'mc') { if (!mirror) target.y = Math.max(target.y, bzTerr(target.x, target.z) + .4); camera.position.copy(target); if (mirror) camera.lookAt(pos.x, pos.y - .5, pos.z); camera.updateMatrixWorld(); return; }
     const dir = target.clone().sub(eye), len = dir.length(); dir.normalize();
     camRay.set(eye, dir); camRay.far = len; camRay.camera = camera;
@@ -7520,8 +7521,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     STA.ppl.forEach((p, i) => { p.a.g.position.y = Math.sin(now / 900 + i) * .05; p.a.anim(now / 1000, 0, 0); const d = Math.hypot(pos.x - p.x, pos.z - p.z); if (d < 2 && !p.said) { p.said = true; say(`${p.who}: “${p.line}”`, 4200); } else if (d > 4) p.said = false; });
     if (pos.x > 12.5 && Math.abs(pos.z) < 3) { STA.btn.hidden = false; STA.btn.textContent = `Take a shuttle down to the Moon${fine ? ' (E)' : ''}`; STA.act = 'moon'; }
     else if (pos.x < -13.5 && Math.abs(pos.z) < 3) { STA.btn.hidden = false; STA.btn.textContent = `Fly back down to Bangalore${fine ? ' (E)' : ''}`; STA.act = 'earth'; }
+    else if (bzMapOn() && Math.abs(pos.x) < 3.4 && pos.z > 3.4 && pos.z < 9) { STA.btn.hidden = false; STA.btn.textContent = `Open the star map${fine ? ' (E)' : ''}`; STA.act = 'stars'; }
+    bzStationShip(); if ((STA.spT = (STA.spT || 0) + dt) > 5) { STA.spT = 0; try { bzSpread(5); } catch (e) {} }
   }
-  function staAct(){ if (EV || A) return; if (STA.act === 'moon') return askChoice('shuttle', v => { if (v === 'colony') bzEnter(); else if (v === 'doom') staDoom(); }, { h: 'Shuttle bay', q: 'Where to? The colony shuttle lands at Tranquility, on the near side. The other one goes round the back.', a: [['colony', 'Tranquility Colony'], ['doom', 'The far side (Doom’s last backup)'], ['no', 'Stay on the station']] }); if (STA.act === 'earth') { fade(() => { enterBlr([SPC.x + 8, SPC.z + 14, 0]); say('Splashdown. Well, landing. Bangalore Space Centre.', 3000); }, '#000000'); } }
+  function staAct(){ if (EV || A) return; if (STA.act === 'stars') return bzStarMap(); if (STA.act === 'moon') return askChoice('shuttle', v => { if (v === 'colony') bzEnter(); else if (v === 'doom') staDoom(); }, { h: 'Shuttle bay', q: 'Where to? The colony shuttle lands at Tranquility, on the near side. The other one goes round the back.', a: [['colony', 'Tranquility Colony'], ['doom', 'The far side (Doom’s last backup)'], ['no', 'Stay on the station']] }); if (STA.act === 'earth') { fade(() => { enterBlr([SPC.x + 8, SPC.z + 14, 0]); say('Splashdown. Well, landing. Bangalore Space Centre.', 3000); }, '#000000'); } }
   function staDoom(){ if (EV || A) return; say('The shuttle drops away from the station. The Moon gets very big, very fast.', 3000); setTimeout(() => startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'mn1' }), 400); }
   STA.btn.addEventListener('click', e => { e.stopPropagation(); staAct(); });
   addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'e' && !STA.btn.hidden) staAct(); });
@@ -9865,7 +9868,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         fragmentShader: 'uniform sampler2D tDiffuse; uniform float uWarm; uniform float uVig; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); vec3 col = c.rgb * mix(vec3(1.0), vec3(1.07, 1.0, 0.88), uWarm); float l = dot(col, vec3(0.299, 0.587, 0.114)); col = mix(vec3(l), col, 1.0 + 0.15 * uWarm); col = mix(col, col * col * (3.0 - 2.0 * col), 0.3); col *= 1.0 - uVig * smoothstep(0.35, 0.9, distance(vUv, vec2(0.5))); gl_FragColor = vec4(col, c.a); }' });
       C.addPass(grade); GFX.grade = grade;
       Object.assign(GFX, { comp: C, rp, ao, bloom: bl, w, h, aoOn: true }); } catch (e) { console.error(e); GFX.noPost = true; } }
-  const cityScene3 = sc => !!sc && (sc === BL.sc || sc === TWR.sc || sc === roofScene || sc === BZ.sc);
+  const cityScene3 = sc => !!sc && (sc === BL.sc || sc === TWR.sc || sc === roofScene || sc === BZ.sc || sc === SPF.sc);
   const roofView = () => inWorld && (zone === 'roof' || zone === 'city') && !!roofScene && !!BL.sc && !!BLC.sky;
   // flat 4B: four floors up, its balcony over the street in front of your tower
   const flatView = () => inWorld && zone === 'twr' && TWR.floor === 'flats' && !!BL.sc && !!BLC.sky && pos.z > 13.8;
@@ -12061,7 +12064,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const platformAt = (x, z) => plats[zone].find(p => onPlat(x, z, p)) || null;
   let codeScene = null, chipScene = null, seaScene = null, falling = false;
   let spaceScene = null, eventScene = null; const areaScenes = {};
-  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene, event: eventScene, void: voidScene, blr: BL && BL.sc, twr: TWR && TWR.sc, dsp: DSP && DSP.sc, mc: BZ.sc })[zone] || areaScenes[zone] : scene;
+  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene, event: eventScene, void: voidScene, blr: BL && BL.sc, twr: TWR && TWR.sc, dsp: DSP && DSP.sc, mc: BZ.sc, sp: SPF.sc })[zone] || areaScenes[zone] : scene;
   function radTile(parent, ch, x, y, z){
     const m = new THREE.Mesh(new THREE.PlaneGeometry(.55, .55), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: tex(160, 160, (g, w, h) => { g.fillStyle = '#FFC93C'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, h, 24) : g.rect(0, 0, w, h); g.fill(); g.fillStyle = '#16181D'; g.font = `700 110px ${ZH}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, w / 2, h / 2 + 6); }) }));
     m.position.set(x, y, z); m.userData.collect = ch; m.userData.base = y; parent.add(m); worldAnim.tiles.push(m); return m;
@@ -12264,7 +12267,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // if the bookshelf is closed, the vault (and the operating table) is sealed off, so come back into the room instead
     fade(() => { inWorld = false; zone = 'hub'; uiZone(); walkTarget = null; vy = 0; pos.copy(saved.pos); yaw = saved.yaw; pitch = saved.pitch; if (region(pos.x) === 'vault' && !vaultOpen) { pos.set(3.2, 1.6, .3); yaw = Math.PI / 2; pitch = 0; } dock.classList.add('on'); $('#worldBack').hidden = true; jumpBtn.hidden = true; $('#worldBack').textContent = 'Back to the room'; });
   }
-  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : inWorld && zone === 'mc' ? bzLeave() : inWorld && zone === 'blr' ? leaveBlr() : inWorld && (zone === 'twr' || zone === 'dsp') ? fade(() => travel('room'), '#06070B') : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
+  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : inWorld && zone === 'mc' ? bzLeave() : inWorld && zone === 'sp' ? spAbort() : inWorld && zone === 'blr' ? leaveBlr() : inWorld && (zone === 'twr' || zone === 'dsp') ? fade(() => travel('room'), '#06070B') : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
   function enterAI(){
     fade(() => {
       if (!aiScene) buildAI();
@@ -12274,7 +12277,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       tone(160, 1.2, 'sine', .06, 80);
     }, '#05060C');
   }
-  function jump(){ if (inWorld && zone === 'mc') return bzJump(); if (inWorld && zone === 'city') return cityJump(); if (inWorld && zone === 'blr' && SW.roof && !EV) return swJump(); if (EV && EV.hero === 'hulk' && grounded && !EV.over) { vy = 9; EV.leapV = V(-Math.sin(yaw) * 10, 0, -Math.cos(yaw) * 10); EV.leapT = 0; grounded = false; tone(200, .3, 'sawtooth', .05, 80); return; } if (inWorld && grounded) { vy = 6.4; grounded = false; tone(420, .08, 'sine', .04, 620); } }
+  function jump(){ if (inWorld && zone === 'sp') return spBoost(); if (inWorld && zone === 'mc') return bzJump(); if (inWorld && zone === 'city') return cityJump(); if (inWorld && zone === 'blr' && SW.roof && !EV) return swJump(); if (EV && EV.hero === 'hulk' && grounded && !EV.over) { vy = 9; EV.leapV = V(-Math.sin(yaw) * 10, 0, -Math.cos(yaw) * 10); EV.leapT = 0; grounded = false; tone(200, .3, 'sawtooth', .05, 80); return; } if (inWorld && grounded) { vy = 6.4; grounded = false; tone(420, .08, 'sine', .04, 620); } }
   jumpBtn.addEventListener('pointerdown', e => { e.preventDefault(); jump(); });
   function splitChar(g){
     const d = g.userData, [ch, py, en, c1, c2, story] = HANZI[d.hanzi];
@@ -12413,6 +12416,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       }
     }
     if (zone === 'mc') return bzStep(dt, now);
+    if (zone === 'sp') return spStep(dt, now);
     if (zone === 'lair') { lairMove(dt); return lairIdle(dt, now); }
     // stepping (or being knocked) off the rooftop means falling into Bangalore
     if (zone === 'roof' && (pos.y < .5 || !platformAt(pos.x, pos.z) && pos.y < 1.4)) { zone = 'city'; cityAir = true; cityV.set(0, Math.min(0, vy), 0); cityLast = null; $('#worldBack').textContent = A ? 'Leave the fight' : 'Back to the rooftop'; }
@@ -12456,7 +12460,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function pick(x, y){
     ndc.set(x / innerWidth * 2 - 1, -(y / innerHeight) * 2 + 1);
     ray.setFromCamera(ndc, camera);
-    if (inWorld && zone === 'mc') return null;
+    if (inWorld && (zone === 'mc' || zone === 'sp')) return null;
     const hit = ray.intersectObjects(sceneOf().children, true).find(h => h.object.parent !== stars && h.object.visible && !h.object.userData.noPick);
     if (!hit) return null;
     let o = hit.object;
@@ -12503,7 +12507,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     return null;
   }
   let down = null, hovered = null;
-  canvas.addEventListener('pointerdown', e => { if (inWorld && zone === 'mc' && !EV && !A && BZ.sc && e.pointerType === 'mouse' && fine) { if (document.pointerLockElement === canvas) { if (e.button === 2) bzBlast(); else bzPunch(); } else canvas.requestPointerLock(); return; } if (EV && EV.intro) { dlgNext(); return; } if (EV && !EV.over && e.pointerType === 'mouse' && fine) { if (document.pointerLockElement === canvas) { if (e.button === 2) setEvBlock(true); else { EV.holdAtk = true; evAttack(); } } else canvas.requestPointerLock(); return; } if (A && !A.over && e.pointerType === 'mouse' && fine) { if (e.button === 2) { setBlock(true); return; } if (document.pointerLockElement === canvas) { const p = pick(innerWidth / 2, innerHeight / 2); if (usable(p)) { document.exitPointerLock(); act(p); } else { A.hold = true; attack(); } } else canvas.requestPointerLock(); return; } if (tourI >= 0) endTour(true); down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false }; canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointerdown', e => { if (inWorld && zone === 'sp' && SPF.sc && e.pointerType === 'mouse' && fine) { if (document.pointerLockElement === canvas) { SPF.fireHeld = true; spFire(); } else canvas.requestPointerLock(); return; } if (inWorld && zone === 'mc' && !EV && !A && BZ.sc && e.pointerType === 'mouse' && fine) { if (document.pointerLockElement === canvas) { if (e.button === 2) bzBlast(); else bzPunch(); } else canvas.requestPointerLock(); return; } if (EV && EV.intro) { dlgNext(); return; } if (EV && !EV.over && e.pointerType === 'mouse' && fine) { if (document.pointerLockElement === canvas) { if (e.button === 2) setEvBlock(true); else { EV.holdAtk = true; evAttack(); } } else canvas.requestPointerLock(); return; } if (A && !A.over && e.pointerType === 'mouse' && fine) { if (e.button === 2) { setBlock(true); return; } if (document.pointerLockElement === canvas) { const p = pick(innerWidth / 2, innerHeight / 2); if (usable(p)) { document.exitPointerLock(); act(p); } else { A.hold = true; attack(); } } else canvas.requestPointerLock(); return; } if (tourI >= 0) endTour(true); down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false }; canvas.setPointerCapture(e.pointerId); });
   canvas.addEventListener('pointermove', e => {
     if (document.pointerLockElement === canvas) { yaw -= e.movementX * .0022; pitch = clamp(pitch - e.movementY * .0022, -1.2, 1.2); return; }
     if (A && !down) return;
@@ -12528,6 +12532,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     else tip.classList.remove('on');
   });
   canvas.addEventListener('pointerup', e => {
+    SPF.fireHeld = false;
     canvas.classList.remove('grabbing');
     if (EV) EV.holdAtk = false;
     if (document.pointerLockElement === canvas) { if (A) A.hold = false; return; }
@@ -12538,6 +12543,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (EV) { if (!EV.over) evAttack(); return; }
     if (A) { const p = pick(e.clientX, e.clientY); if (usable(p)) act(p); else attack(); return; }
     if (inWorld && zone === 'mc') { bzPunch(); return; }
+    if (inWorld && zone === 'sp') { spFire(); return; }
     act(pick(e.clientX, e.clientY));
   });
   const usable = p => !!(p && !p.walk && p.egg !== 'pod' && p.egg !== 'seed' && labelFor(p));
@@ -12681,7 +12687,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       t.update(t.linear ? p : ease(p));
       if (p >= 1) { tweens.splice(i, 1); t.done && t.done(); }
     }
-    if (entered && !DRV.on && !DRV.lock && !(inWorld && zone === 'mc') && !(A && A.intro) && !(zone === 'city' && web.p) && !(zone === 'blr' && SW.on) && !(RUN && (RUN.phase === 'watch' || RUN.phase === 'endwatch'))) {
+    if (entered && !DRV.on && !DRV.lock && !(inWorld && (zone === 'mc' || zone === 'sp')) && !(A && A.intro) && !(zone === 'city' && web.p) && !(zone === 'blr' && SW.on) && !(RUN && (RUN.phase === 'watch' || RUN.phase === 'endwatch'))) {
       let f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0);
       let s = (keys.d ? 1 : 0) - (keys.a ? 1 : 0);
       if (Math.hypot(joy.x, joy.y) > .15) { f -= joy.y; s += joy.x; }
@@ -12720,7 +12726,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const showSnap = !!snapState && !A && entered && !(inWorld && zone === 'space'); if (snapBtn.hidden === showSnap) snapBtn.hidden = !showSnap;
     // if anything in a fight ever throws, end the fight instead of freezing the page
     if (A) { try { fightFrame(dt); } catch (err) { console.error(err); try { endFight(true); } catch (e2) { A = null; } say('Something went wrong, so the fight ended.', 3000); } }
-    try { bzIdle(); evStep(dt, now); bossLook(); scarStep(dt, now); areaStep(dt, now); collideStep(dt); voidStep(dt, now); littleStep(dt, now); altStep(dt, now); instabStep(dt, now); } catch (err) { console.error(err); }
+    try { bzIdle(); spIdle(); evStep(dt, now); bossLook(); scarStep(dt, now); areaStep(dt, now); collideStep(dt); voidStep(dt, now); littleStep(dt, now); altStep(dt, now); instabStep(dt, now); } catch (err) { console.error(err); }
     try { meStep(dt, now); camStep(); if (DRV.on) driveCam(dt); bzCam(dt); } catch (err) { console.error(err); }
     gfxRender(sceneOf());
     requestAnimationFrame(frame);
@@ -13335,7 +13341,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 .bzhud small{display:block;margin-top:5px;color:#FFC93C;font-size:11px}.bzhud .cr{color:#FFC93C}
 .bzalert{position:fixed;left:50%;top:34%;transform:translate(-50%,-50%) scale(.96);z-index:8;text-align:center;pointer-events:none;opacity:0;transition:opacity .35s,transform .35s;color:#fff;text-shadow:0 2px 12px rgba(0,0,0,.8)}.bzalert.on{opacity:1;transform:translate(-50%,-50%) scale(1)}.bzalert b{display:block;font:900 clamp(22px,5vw,40px)/1.1 ${DISPLAY};letter-spacing:.04em}.bzalert span{font:600 14px/1.3 system-ui,sans-serif}
 .bzpad{position:fixed;right:14px;bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:7;display:flex;flex-direction:column;gap:8px}.bzpad button{width:62px;height:62px;border-radius:50%;border:0;background:rgba(11,13,20,.7);color:#fff;font:800 12px/1 system-ui,sans-serif}.bzpad button.on{background:#FFC93C;color:#16181D}
-.bzflick{position:fixed;inset:0;z-index:5;pointer-events:none;background:#000;opacity:0}.bzhold{position:absolute;left:0;bottom:0;height:3px;background:#FFC93C;width:0}`;
+.bzpad[hidden],.bzhud[hidden]{display:none!important}.bzflick{position:fixed;inset:0;z-index:5;pointer-events:none;background:#000;opacity:0}.bzhold{position:absolute;left:0;bottom:0;height:3px;background:#FFC93C;width:0}`;
   document.head.appendChild(bzCss);
   BZ.hud = document.createElement('div'); BZ.hud.className = 'bzhud'; BZ.hud.hidden = true; BZ.hud.innerHTML = '<div class="bzt"><b>Tranquility Colony</b><span class="bzst" id="bzSt"></span></div><div class="bzbar"><label>Suit</label><i><em id="bzHp" style="background:#3CE870"></em></i></div><div class="bzbar"><label>Jet</label><i><em id="bzJet" style="background:#35C8F0"></em></i></div><div class="bzbar" id="bzNr"><label>Noise</label><i><em id="bzNoise" style="background:#FF8A2E"></em></i></div><small id="bzObj"></small>'; document.body.appendChild(BZ.hud);
   BZ.alertEl = document.createElement('div'); BZ.alertEl.className = 'bzalert'; document.body.appendChild(BZ.alertEl);
@@ -13398,6 +13404,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (BZ.sun.castShadow) { const s = BZ.sun; s.target.position.set(pos.x, BZ.feet, pos.z); s.position.set(pos.x + 900 / 1121 * 200, BZ.feet + 420 / 1121 * 200, pos.z + 520 / 1121 * 200); s.target.updateMatrixWorld(); }
   }
   function bzCam(dt){
+    if (inWorld && zone === 'sp' && SPF.sc) return spCam(dt);
     if (!BZ.sc || !(inWorld && zone === 'mc')) return;
     if (BZ.bug) { const b = BZ.bug; viewG.visible = false; BZ.cy = BZ.cy == null ? b.yaw : BZ.cy + angDiff(BZ.cy, b.yaw) * Math.min(1, dt * 3.5); const cx = b.x + Math.sin(BZ.cy) * 8.5, cz = b.z + Math.cos(BZ.cy) * 8.5; camera.position.set(cx, Math.max(b.y + 3.6, bzTerr(cx, cz) + 1.2), cz); camera.lookAt(b.x - Math.sin(BZ.cy) * 5, b.y + 1.4, b.z - Math.cos(BZ.cy) * 5); }
     else BZ.cy = null;
@@ -13569,6 +13576,125 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // climbing: hold forward against a leg or the body
     if (!BZ.grounded && !BZ.web && !BZ.bug && !BZ.grab) { const [f] = bzInput(); if (f > .3) { const p = V(pos.x, BZ.feet + .9, pos.z); for (const S of BZ.gi) { if (!S.alive || Math.hypot(S.x - pos.x, S.z - pos.z) > 22) continue; if (S.segs.some(s => { if (s.gone) return false; const [a, b] = segEnds(s); return segPointDist(p, a, b) < s.r + 1.2; })) { BZ.v.y = Math.max(BZ.v.y, 4.5); BZ.v.x *= .5; BZ.v.z *= .5; BZ.climb = .3; if (!BZ.climbTip) { BZ.climbTip = 1; say('Climbing. Keep holding forward. The glowing joints are weak points.', 3000); } break; } } } }
   };
+  // ---------- across space: the star map, the ship, and the fights on the way ----------
+  const BZW = [
+    { id: 'moon', name: 'The Moon', sub: 'Tranquility Colony', x: .17, y: .55, r: 13, col: '#C9C6BE', km: '384,000 km' },
+    { id: 'mars', name: 'Mars', sub: 'Valles mining towns', x: .36, y: .38, r: 17, col: '#C8502A', km: '225 million km' },
+    { id: 'europa', name: 'Europa', sub: 'Ice moon of Jupiter', x: .55, y: .64, r: 15, col: '#D8E4EC', km: '628 million km' },
+    { id: 'saturn', name: 'Cassini Platform', sub: 'Floating station above Saturn', x: .73, y: .34, r: 26, col: '#E0C890', km: '1.2 billion km' },
+    { id: 'forge', name: 'The Forge', sub: 'The berserker homeworld', x: .92, y: .58, r: 20, col: '#5A1A14', km: 'beyond the edge of the map' }
+  ];
+  const BZ_NEXT = { moon: 'mars', mars: 'europa', europa: 'saturn', saturn: 'forge' };
+  function bzWState(id){ const S = BZ.s; if (id === 'moon') return S.clear ? 'clear' : S.out ? 'inf' : 'quiet'; return (S.w && S.w[id]) || 'quiet'; }
+  const bzMapOn = () => { const S = BZ.s; return !!(S.out || S.clear); };
+  // the berserkers spread: clearing a world sends them to the next, and leaving one alone too long lets them spread anyway
+  function bzSpread(dt){ const S = BZ.s; S.w = S.w || {}; S.wt = S.wt || {}; let note = null;
+    for (const [a, b] of Object.entries(BZ_NEXT)) { const sa = bzWState(a), sb = bzWState(b); if (sb !== 'quiet') continue; if (sa === 'clear') { S.w[b] = 'inf'; note = b; } else if (sa === 'inf') { S.wt[a] = (S.wt[a] || 0) + dt; if (S.wt[a] > (a === 'moon' ? 150 : 1200) && b !== 'forge') { S.w[b] = 'inf'; note = b; } } }
+    if (note) { const W = BZW.find(q => q.id === note); bzSave(); setTimeout(() => say(note === 'forge' ? 'The signal has a source now. The star map shows it: the berserker homeworld.' : `The berserkers have spread to ${W.name}. It’s on the star map.`, 4600), 600); } }
+  // the station's star map
+  const smEl = document.createElement('div'); smEl.className = 'smap'; smEl.hidden = true; smEl.innerHTML = '<div class="smbox"><div class="smtop"><b>Star map</b><span id="smSub">Orbital Station Kalpana</span><button type="button" class="phx" data-sm="x" aria-label="Close">✕</button></div><canvas id="smCv" width="960" height="540"></canvas><div class="sminfo" id="smInfo"></div></div>'; document.body.appendChild(smEl);
+  { const s = document.createElement('style'); s.textContent = `.smap{position:fixed;inset:0;z-index:62;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;padding:12px}.smap[hidden]{display:none}.smbox{background:#05060A;color:#EEF1F5;border:1px solid #2A2D33;border-radius:20px;width:min(980px,100%);max-height:100%;overflow:auto;padding:12px;font:500 14px/1.4 system-ui,sans-serif}
+.smtop{display:flex;align-items:center;gap:10px;margin-bottom:8px}.smtop b{font:800 20px/1.2 ${DISPLAY}}.smtop span{flex:1;color:#9AA3AD;font-size:12px}.smbox canvas{width:100%;aspect-ratio:16/9;border-radius:14px;background:#000;display:block;cursor:pointer;touch-action:manipulation}
+.sminfo{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:10px}.sminfo b{font:800 17px/1.2 ${DISPLAY}}.sminfo small{display:block;color:#9AA3AD}.sminfo button{background:#FFC93C;color:#16181D;border:0;border-radius:999px;padding:10px 16px;font:800 13px/1 system-ui,sans-serif;cursor:pointer}.sminfo button:disabled{opacity:.4;cursor:default}`; document.head.appendChild(s); }
+  let smSel = 'moon';
+  function bzStarMap(){ if (document.pointerLockElement) document.exitPointerLock(); Object.keys(keys).forEach(k => keys[k] = false); smEl.hidden = false; smSel = BZW.find(W => bzWState(W.id) === 'inf' && W.id !== 'moon') ? BZW.find(W => bzWState(W.id) === 'inf' && W.id !== 'moon').id : smSel; smDraw(); tone(880, .1, 'sine', .04); }
+  function smDraw(){
+    const cv = smEl.querySelector('#smCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height, t = performance.now() / 1000; g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
+    const r = rng(5); for (let i = 0; i < 260; i++) { g.fillStyle = `rgba(255,255,255,${.2 + r() * .6})`; g.fillRect(r() * W, r() * H, 1.5, 1.5); }
+    const sun = g.createRadialGradient(-40, H * .5, 0, -40, H * .5, 140); sun.addColorStop(0, 'rgba(255,240,200,1)'); sun.addColorStop(1, 'rgba(255,200,120,0)'); g.fillStyle = sun; g.fillRect(0, 0, 200, H);
+    g.strokeStyle = 'rgba(255,255,255,.08)'; g.lineWidth = 1; BZW.forEach(Wd => { g.beginPath(); g.ellipse(-40, H * .5, Wd.x * W + 40, Wd.x * W * .45 + 40, 0, -1.2, 1.2); g.stroke(); });
+    const ex = .06 * W, ey = .46 * H; g.fillStyle = '#2A6AFF'; g.beginPath(); g.arc(ex, ey, 11, 0, 7); g.fill(); g.fillStyle = '#3CE870'; g.beginPath(); g.arc(ex - 3, ey - 2, 4, 0, 7); g.fill(); g.fillStyle = '#9AA3AD'; g.font = '700 13px system-ui'; g.textAlign = 'center'; g.fillText('Earth · station', ex, ey + 28);
+    // the infection, as red lines from world to world
+    const fw = BZW.find(q => q.id === 'forge'); BZW.forEach(Wd => { const st = bzWState(Wd.id); if (st !== 'inf' && st !== 'clear') return; g.strokeStyle = st === 'inf' ? 'rgba(255,40,30,.55)' : 'rgba(255,40,30,.15)'; g.setLineDash([8, 8]); g.lineDashOffset = -t * 30; g.lineWidth = 2; g.beginPath(); g.moveTo(fw.x * W, fw.y * H); g.lineTo(Wd.x * W, Wd.y * H); g.stroke(); g.setLineDash([]); });
+    BZW.forEach(Wd => { const st = bzWState(Wd.id), x = Wd.x * W, y = Wd.y * H, known = Wd.id !== 'forge' || st !== 'quiet' || bzWState('saturn') === 'clear';
+      if (!known) { g.fillStyle = 'rgba(255,40,30,.25)'; g.font = '800 26px system-ui'; g.fillText('?', x, y + 8); return; }
+      if (st === 'inf') { g.fillStyle = `rgba(255,30,20,${.25 + .15 * Math.sin(t * 3)})`; g.beginPath(); g.arc(x, y, Wd.r + 14, 0, 7); g.fill(); }
+      g.fillStyle = Wd.col; g.beginPath(); g.arc(x, y, Wd.r, 0, 7); g.fill(); if (Wd.id === 'saturn') { g.strokeStyle = '#C8B07A'; g.lineWidth = 3; g.beginPath(); g.ellipse(x, y, Wd.r * 1.9, Wd.r * .5, -.3, 0, 7); g.stroke(); }
+      if (smSel === Wd.id) { g.strokeStyle = '#FFC93C'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, Wd.r + 8, 0, 7); g.stroke(); }
+      g.fillStyle = '#fff'; g.font = '800 15px system-ui'; g.fillText(Wd.name, x, y + Wd.r + 22); g.fillStyle = st === 'inf' ? '#FF5A4A' : st === 'clear' ? '#3CE870' : '#9AA3AD'; g.font = '700 12px system-ui'; g.fillText(st === 'inf' ? 'INFECTED' : st === 'clear' ? 'CLEARED' : 'quiet', x, y + Wd.r + 38); });
+    const Wd = BZW.find(q => q.id === smSel), st = bzWState(Wd.id), can = Wd.id === 'moon' || st !== 'quiet';
+    smEl.querySelector('#smInfo').innerHTML = `<div><b>${esc(Wd.name)}</b><small>${esc(Wd.sub)} · ${esc(Wd.km)} · ${st === 'inf' ? 'berserkers are here' : st === 'clear' ? 'you cleared it' : 'no berserkers yet'}</small></div><button type="button" data-sm="go" ${can ? '' : 'disabled'}>${Wd.id === 'moon' ? 'Shuttle down' : can ? `Fly to ${esc(Wd.name)}` : 'Nothing to chase there yet'}</button>`;
+    if (!smEl.hidden) smDraw.raf = requestAnimationFrame(smDraw);
+  }
+  smEl.addEventListener('click', e => { const b = e.target.closest('[data-sm]'); if (b) { if (b.dataset.sm === 'x') { smEl.hidden = true; return; } if (b.dataset.sm === 'go') { smEl.hidden = true; if (smSel === 'moon') bzEnter(); else spStart(smSel); } return; }
+    const cv = e.target.closest('#smCv'); if (!cv) return; const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height; let best = null, bd = .08; BZW.forEach(Wd => { const d = Math.hypot((Wd.x - x) * 16 / 9, Wd.y - y); if (d < bd) { bd = d; best = Wd; } }); if (best) { smSel = best.id; tone(660, .06, 'sine', .03); } });
+  addEventListener('keydown', e => { if (!smEl.hidden && e.key === 'Escape') { e.stopImmediatePropagation(); smEl.hidden = true; } }, true);
+  // the ship, docked outside the station window
+  function bzShipMesh(){ const P = [[new THREE.CylinderGeometry(1.1, 1.6, 9, 6), 0xE8EBF0, 0, 0, 0, Math.PI / 2, 0, 0], [new THREE.ConeGeometry(1.1, 3.2, 6), 0xE8EBF0, 0, 0, -6.1, -Math.PI / 2, 0, 0], [new THREE.SphereGeometry(.9, 12, 8, 0, 6.283, 0, 1.6), 0x35C8F0, 0, .8, -2.6], B3(10, .25, 3, 0xD8DCE2, 0, -.3, 1.6), B3(.25, 2.4, 2.6, 0xD8DCE2, 0, 1.4, 3.2), B3(1.6, .5, 1.2, 0xFFC93C, 4.4, -.3, 1.4), B3(1.6, .5, 1.2, 0xFFC93C, -4.4, -.3, 1.4), [new THREE.CylinderGeometry(.7, .9, 1.6, 10), 0x3A3D48, 1.1, -.2, 4.8, Math.PI / 2, 0, 0], [new THREE.CylinderGeometry(.7, .9, 1.6, 10), 0x3A3D48, -1.1, -.2, 4.8, Math.PI / 2, 0, 0]];
+    const g = new THREE.Group(), body = new THREE.Mesh(bake(P), propM()); g.add(body); const glowG = new THREE.CircleGeometry(.65, 12), glowM2 = new THREE.MeshBasicMaterial({ color: 0x6ACBFF, toneMapped: false }); g.userData.eng = [1.1, -1.1].map(x => { const m = new THREE.Mesh(glowG, glowM2); m.position.set(x, -.2, 5.62); g.add(m); return m; }); return g; }
+  function bzStationShip(){ if (STA.ship || !STA.built || !bzMapOn()) return; const s = STA.ship = bzShipMesh(); s.scale.setScalar(1.6); s.position.set(-4, -1, -26); s.rotation.y = .4; TWR.floors.station.add(s); const sg = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, map: tex(512, 96, (c, w, h) => { c.fillStyle = 'rgba(11,13,20,.88)'; c.fillRect(0, 0, w, h); c.fillStyle = '#FFC93C'; c.font = `800 40px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('STAR MAP · SHIP', w / 2, h / 2 + 3); }) })); sg.scale.set(2.6, .5, 1); sg.position.set(0, 2.2, 6); TWR.floors.station.add(sg); }
+  // ---------- the flight: a short fight through space ----------
+  const SPF = { sc: null, busy: false };
+  const SP_ENEMY = { fighter: { hp: 30, r: 2.2 }, frigate: { hp: 520, r: 9 } };
+  function spBuild(dest){
+    const sc = SPF.sc = new THREE.Scene(); sc.background = new THREE.Color(0x000000); const W = BZW.find(q => q.id === dest);
+    const n = lowFx ? 900 : 2200, sp = new Float32Array(n * 3); for (let i = 0; i < n; i++) sp.set([(Math.random() - .5) * 1600, (Math.random() - .5) * 1000, -Math.random() * 1600], i * 3); const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(sp, 3)); SPF.stars = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xFFFFFF, size: 1.6, sizeAttenuation: false, toneMapped: false })); sc.add(SPF.stars);
+    const neb = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex(256, 256, (c, w, h) => { const r = rng(dest.length * 7); for (let i = 0; i < 9; i++) { const x = 60 + r() * 136, y = 60 + r() * 136, g = c.createRadialGradient(x, y, 0, x, y, 70 + r() * 50); g.addColorStop(0, i % 3 ? 'rgba(120,40,160,.35)' : 'rgba(200,40,30,.3)'); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); } }), transparent: true, depthWrite: false, toneMapped: false, opacity: .8 })); neb.scale.set(1800, 1800, 1); neb.position.set(200, 120, -1500); sc.add(neb);
+    const planet = SPF.planet = new THREE.Mesh(new THREE.SphereGeometry(100, 48, 32), new THREE.MeshStandardMaterial({ color: new THREE.Color(W.col), roughness: .9, emissive: new THREE.Color(W.col), emissiveIntensity: .08 })); planet.position.set(60, -40, -2600); sc.add(planet);
+    if (dest === 'saturn') { const ring = new THREE.Mesh(new THREE.RingGeometry(130, 210, 64), new THREE.MeshBasicMaterial({ color: 0xC8B07A, side: THREE.DoubleSide, transparent: true, opacity: .55, toneMapped: false })); ring.rotation.x = Math.PI / 2.4; planet.add(ring); }
+    sc.add(new THREE.AmbientLight(0x404858, .6)); const sun = new THREE.DirectionalLight(0xFFF4E0, 1.6); sun.position.set(-1, .6, .4); sc.add(sun);
+    const ship = SPF.ship = bzShipMesh(); sc.add(ship);
+    SPF.rockG = new THREE.DodecahedronGeometry(1, 0); SPF.rockM = new THREE.MeshStandardMaterial({ color: 0x7A7068, roughness: 1, flatShading: true });
+    SPF.rocks = []; for (let i = 0; i < (lowFx ? 26 : 50); i++) { const m = new THREE.Mesh(SPF.rockG, SPF.rockM), s = 2 + Math.random() * 7; m.scale.set(s, s * .8, s * 1.1); sc.add(m); const R = { m, s, spin: V(Math.random(), Math.random(), Math.random()).multiplyScalar(.6) }; spRock(R, true); SPF.rocks.push(R); }
+    SPF.hullM = new THREE.MeshStandardMaterial({ color: 0x2A2C31, metalness: .85, roughness: .32 }); SPF.seamM = new THREE.MeshBasicMaterial({ color: 0xFF2A1A, toneMapped: false }); SPF.boltM = new THREE.MeshBasicMaterial({ color: 0xFF3A1A, toneMapped: false }); SPF.lasM = new THREE.MeshBasicMaterial({ color: 0x6AE8FF, toneMapped: false }); SPF.boltG = new THREE.BoxGeometry(.25, .25, 4); SPF.boomG = new THREE.SphereGeometry(1, 12, 8);
+    SPF.ens = []; SPF.shots = []; SPF.fx = [];
+  }
+  function spRock(R, first){ R.m.position.set((Math.random() - .5) * 140, (Math.random() - .5) * 80, first ? -60 - Math.random() * 700 : -700 - Math.random() * 200); }
+  function spEnemyMesh(k){ const g = new THREE.Group(), add = (geo, m, x, y, z, sx = 1, sy = 1, sz = 1) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); g.add(o); return o; };
+    if (k === 'fighter') { add(new THREE.OctahedronGeometry(1.2, 0), SPF.hullM, 0, 0, 0, 1, .5, 2.4); add(new THREE.BoxGeometry(5, .15, 1.4), SPF.hullM, 0, 0, .6); add(new THREE.BoxGeometry(.4, .4, 2.6), SPF.seamM, 0, .3, -.6); add(new THREE.BoxGeometry(5.1, .1, .15), SPF.seamM, 0, .1, 1.3); }
+    else { add(new THREE.OctahedronGeometry(6, 0), SPF.hullM, 0, 0, 0, 1.6, .55, 2.6); add(new THREE.BoxGeometry(26, 1.2, 5), SPF.hullM, 0, 0, 4); [-10, 10].forEach(x => add(new THREE.BoxGeometry(3, 3, 9), SPF.hullM, x, 0, 4)); add(new THREE.BoxGeometry(26.2, .3, .3), SPF.seamM, 0, .7, 1.4); add(new THREE.BoxGeometry(.4, .4, 28), SPF.seamM, 0, 3.3, 0); const core = add(new THREE.OctahedronGeometry(2.2, 0), SPF.seamM, 0, 0, -12); g.userData.core = core; }
+    return g; }
+  function spSpawn(k, x, y, z){ const g = spEnemyMesh(k); g.position.set(x, y, z); SPF.sc.add(g); const D = SP_ENEMY[k]; SPF.ens.push({ k, g, hp: D.hp, max: D.hp, r: D.r, cd: 1 + Math.random() * 2, t: 0, ox: x, oy: y, ph: Math.random() * 6 }); }
+  function spStart(dest){
+    if (SPF.busy || EV || A) return; SPF.busy = true; smEl.hidden = true;
+    fade(() => { try { spBuild(dest); } catch (err) { console.error(err); SPF.busy = false; return; } web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'sp'; STA.btn.hidden = true; pos.set(0, 1.6, 12); yaw = 0; pitch = 0; camera.near = .1; camera.far = 4000; camera.updateProjectionMatrix();
+      Object.assign(SPF, { dest, t: 0, len: 85, hull: 100 + 20 * BZ.s.upg.arm, x: 0, y: 0, vx: 0, vy: 0, boost: 0, fireT: 0, kills: 0, wave: 0, over: false, busy: false, boss: null });
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Turn back'; jumpBtn.hidden = fine; uiZone(); spHud(true); bzMusic('tense'); if (me) me.g.visible = false;
+      say(fine ? `Course set for ${BZW.find(q => q.id === dest).name}. Mouse or WASD to steer, click or F to fire, Space to boost.` : `Course set for ${BZW.find(q => q.id === dest).name}. Steer with the stick, tap to fire.`, 5000); }, '#000000');
+  }
+  const spHudEl = document.createElement('div'); spHudEl.className = 'bzhud'; spHudEl.hidden = true; spHudEl.innerHTML = '<b id="spTo">Deep space</b><span class="bzst" id="spSt"></span><div class="bzbar"><label>Hull</label><i><em id="spHull" style="background:#3CE870"></em></i></div><div class="bzbar"><label>Boost</label><i><em id="spBoost" style="background:#35C8F0"></em></i></div><small id="spObj"></small>'; document.body.appendChild(spHudEl);
+  function spHud(on){ spHudEl.hidden = !on; BZ.padEl.hidden = true; }
+  function spFire(){ if (!SPF.sc || SPF.over || SPF.fireT > 0) return; SPF.fireT = .14; [1.6, -1.6].forEach(o => { const m = new THREE.Mesh(SPF.boltG, SPF.lasM); m.position.set(SPF.x + o, SPF.y - .1, -2); SPF.sc.add(m); SPF.shots.push({ m, v: V(SPF.vx * .2, SPF.vy * .2, -320), mine: true, life: 1.4 }); }); tone(1500, .05, 'square', .02, 900); }
+  function spBoost(){ if (SPF.sc && (SPF.boostE == null || SPF.boostE > 30)) { SPF.boost = 1.2; SPF.boostE = (SPF.boostE == null ? 100 : SPF.boostE) - 30; tone(200, .5, 'sawtooth', .03, 600); } }
+  function spBoom(p, big){ const m = new THREE.Mesh(SPF.boomG, new THREE.MeshBasicMaterial({ color: 0xFFB060, transparent: true, toneMapped: false })); m.position.copy(p); SPF.sc.add(m); SPF.fx.push({ m, t: 0, max: big ? 1 : .45, s: big ? 26 : 6 }); tone(70, big ? 1.4 : .5, 'sawtooth', .06, 30); }
+  function spHurt(d){ if (SPF.over) return; SPF.hull -= d * (1 - .15 * BZ.s.upg.arm); BZ.shake = Math.max(BZ.shake, .25); evHurt.style.opacity = .5; setTimeout(() => evHurt.style.opacity = 0, 160); tone(150, .15, 'square', .05, 80); if (SPF.hull <= 0) spEnd(false); }
+  function spStep(dt, now){
+    if (!SPF.sc) return; const S = SPF; if (S.over) { S.ship.position.z -= dt * 120; return; } S.t += dt; S.fireT -= dt; S.boost = Math.max(0, S.boost - dt); S.boostE = Math.min(100, (S.boostE == null ? 100 : S.boostE) + dt * 12);
+    // steering: keys, the stick, and the mouse (which moves yaw and pitch; we read and reset them)
+    const [f, s] = bzInput(), my = clamp(-angDiff(0, yaw) * 30, -2, 2), mp = clamp(pitch * 30, -2, 2); yaw = 0; pitch = 0;
+    const ax = s + -my, ay = f + mp; S.vx += (ax * 32 - S.vx) * Math.min(1, dt * 3); S.vy += (ay * 24 - S.vy) * Math.min(1, dt * 3); S.x = clamp(S.x + S.vx * dt, -46, 46); S.y = clamp(S.y + S.vy * dt, -26, 26);
+    S.ship.position.set(S.x, S.y, 0); S.ship.rotation.set(-S.vy * .012, 0, -S.vx * .015); const eng = 1 + (S.boost > 0 ? 1.4 : 0) + Math.random() * .2; S.ship.userData.eng.forEach(m => m.scale.setScalar(eng));
+    if (BZ.keys.f || SPF.fireHeld) spFire(); pos.set(S.x, S.y + 1.6, 12);
+    const speed = 70 * (S.boost > 0 ? 2 : 1), k = S.t / S.len;
+    S.stars.position.z = (S.stars.position.z + speed * dt * .5) % 800; S.planet.position.z = -2600 + Math.min(1, k) * 2000; S.planet.rotation.y += dt * .02;
+    for (const R of S.rocks) { R.m.position.z += speed * dt; R.m.rotation.x += R.spin.x * dt; R.m.rotation.y += R.spin.y * dt; if (R.m.position.z > 30) spRock(R); if (Math.abs(R.m.position.z) < R.s + 2 && Math.hypot(R.m.position.x - S.x, R.m.position.y - S.y) < R.s + 2) { spHurt(14); spBoom(R.m.position.clone(), false); spRock(R); } }
+    // waves
+    const want = S.t < 12 ? 0 : S.t < 30 ? 3 : S.t < 48 ? 5 : 4; if (S.t > 52 && !S.boss && S.t < S.len - 10) { spSpawn('frigate', 0, 6, -520); S.boss = S.ens[S.ens.length - 1]; bzAlert('BERSERKER FRIGATE', 'Hit the red core at its nose.', '#FF3C3C'); }
+    if (S.ens.filter(e => e.k === 'fighter').length < want && Math.random() < dt * 1.2) spSpawn('fighter', (Math.random() - .5) * 120, (Math.random() - .5) * 60, -600);
+    for (const e of S.ens) { e.t += dt; e.cd -= dt; const g = e.g;
+      if (e.k === 'fighter') { const tz = -60 - Math.sin(e.ph) * 30; if (e.t < 7) { g.position.z += (tz - g.position.z) * Math.min(1, dt * 1.2); g.position.x += ((S.x + Math.sin(e.t + e.ph) * 30) - g.position.x) * dt * .8; g.position.y += ((S.y + Math.cos(e.t * .7 + e.ph) * 14) - g.position.y) * dt * .8; } else g.position.z += dt * 140; g.lookAt(S.x, S.y, 0); }
+      else { g.position.z += ((-170) - g.position.z) * Math.min(1, dt * .5); g.position.x = Math.sin(e.t * .35) * 34; g.position.y = 6 + Math.sin(e.t * .5) * 8; g.rotation.z = Math.sin(e.t * .35) * .2; }
+      if (e.cd <= 0 && g.position.z < -20) { e.cd = e.k === 'frigate' ? 1.7 : 2.2 + Math.random() * 1.5; const n = e.k === 'frigate' ? 3 : 1; for (let i = 0; i < n; i++) { const m = new THREE.Mesh(SPF.boltG, SPF.boltM), from = g.position.clone().add(V((i - 1) * 8, 0, 0)); m.position.copy(from); const d = V(S.x + S.vx * .6, S.y + S.vy * .6, 0).sub(from).normalize(); m.lookAt(from.clone().add(d)); SPF.sc.add(m); SPF.shots.push({ m, v: d.multiplyScalar(e.k === 'frigate' ? 110 : 130), life: 5 }); } tone(700, .06, 'square', .015, 300); } }
+    S.ens = S.ens.filter(e => { if (e.hp > 0 && e.g.position.z < 40) return true; SPF.sc.remove(e.g); if (e === S.boss && e.hp > 0) S.boss = null; return false; });
+    for (let i = S.shots.length - 1; i >= 0; i--) { const q = S.shots[i]; q.life -= dt; q.m.position.addScaledVector(q.v, dt); let hit = false;
+      if (q.mine) { for (const e of S.ens) { const c = e.k === 'frigate' ? e.g.userData.core.getWorldPosition(new THREE.Vector3()) : e.g.position, r = e.k === 'frigate' ? 3.5 : e.r + 1; if (q.m.position.distanceTo(c) < r) { e.hp -= e.k === 'frigate' ? 14 : 15 * (1 + .3 * BZ.s.upg.blast); hit = true; spBoom(q.m.position.clone(), false); if (e.hp <= 0) { spBoom(e.g.position.clone(), e.k === 'frigate'); S.kills++; BZ.s.cr += e.k === 'frigate' ? 80 : 4; if (e.k === 'frigate') { bzAlert('FRIGATE DOWN', 'The way is clear.', '#3CE870'); S.boss = null; } } break; } else if (e.k === 'frigate' && Math.abs(q.m.position.z - e.g.position.z) < 14 && Math.abs(q.m.position.x - e.g.position.x) < 13 && Math.abs(q.m.position.y - e.g.position.y) < 5) { hit = true; tone(1400, .03, 'square', .015); break; } } }
+      else if (Math.abs(q.m.position.z) < 3 && Math.hypot(q.m.position.x - S.x, q.m.position.y - S.y) < 2.4) { hit = true; spHurt(6); }
+      if (hit || q.life <= 0) { S.sc.remove(q.m); S.shots.splice(i, 1); } }
+    for (let i = S.fx.length - 1; i >= 0; i--) { const F = S.fx[i]; F.t += dt; const kk = F.t / F.max; F.m.scale.setScalar(1 + kk * F.s); F.m.material.opacity = 1 - kk; if (kk >= 1) { S.sc.remove(F.m); F.m.material.dispose(); S.fx.splice(i, 1); } }
+    if (S.t >= S.len && !S.over) spEnd(true);
+    if ((S.hudT = (S.hudT || 0) - dt) <= 0) { S.hudT = .15; const W = BZW.find(q => q.id === S.dest); spHudEl.querySelector('#spTo').textContent = `To ${W.name}`; spHudEl.querySelector('#spSt').textContent = `${Math.max(0, Math.ceil(S.len - S.t))} s out · ${S.kills} kills · ${BZ.s.cr} cr`; spHudEl.querySelector('#spHull').style.width = `${clamp(S.hull / (100 + 20 * BZ.s.upg.arm), 0, 1) * 100}%`; spHudEl.querySelector('#spBoost').style.width = `${S.boostE == null ? 100 : S.boostE}%`; spHudEl.querySelector('#spObj').textContent = S.boss ? `Frigate core ${Math.max(0, Math.round(S.boss.hp / S.boss.max * 100))}%` : S.t < 12 ? 'Asteroids ahead. Steer clear.' : 'Interceptors! Shoot them down.'; }
+  }
+  function spCam(dt){ const S = SPF; viewG.visible = false; camera.position.set(S.x * .7, S.y * .7 + 4.2, 15); camera.lookAt(S.x * .9, S.y * .9 + 1, -40); if (BZ.shake > 0) { BZ.shake = Math.max(0, BZ.shake - dt); if (!reduce && !lowFx) camera.position.x += (Math.random() - .5) * BZ.shake; } camera.updateMatrixWorld(); }
+  function spEnd(ok){ const S = SPF; if (S.over) return; S.over = true; const dest = S.dest; bzSave(); if (ok) { bzAlert('ARRIVING', BZW.find(q => q.id === dest).name, '#3CE870'); tone(523, .4, 'triangle', .05); } else { bzAlert('HULL BREACH', 'The autopilot takes you home.', '#FF3C3C'); }
+    setTimeout(() => fade(() => { spFree(); if (ok && BZP[dest]) bzPlanetEnter(dest); else { enterStation(true); say(ok ? `${BZW.find(q => q.id === dest).name}: the landing zone is still too hot. The ship brings you back to the station.` : 'You limp back to the station. Patch the hull and try again.', 4600); } }, '#000000'), 1600); }
+  function spAbort(){ if (!SPF.sc || SPF.over) return; SPF.over = true; fade(() => { spFree(); enterStation(true); say('You turned back.', 1800); }, '#000000'); }
+  function spFree(){ const sc = SPF.sc; if (!sc) return; [viewG, me && me.g, beacon, web.line].forEach(o => { if (o && o.parent === sc) sc.remove(o); }); const keep = new Set([propM()]); sc.traverse(o => { if (o.geometry) o.geometry.dispose(); const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach(m => { if (keep.has(m)) return; if (m.map) m.map.dispose(); m.dispose(); }); }); SPF.sc = null; spHud(false); bzMusicStop(); if (me) me.g.visible = true; camera.near = .05; camera.far = 500; camera.updateProjectionMatrix(); hotEl.hidden = false; }
+  function spIdle(){ if (SPF.sc && !(inWorld && zone === 'sp') && !SPF.busy) spFree(); }
+  addEventListener('keydown', e => { if (!(inWorld && zone === 'sp') || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; const k = e.key.toLowerCase(); if (k === 'f') BZ.keys.f = true; });
+  addEventListener('keyup', e => { if (e.key.toLowerCase() === 'f') BZ.keys.f = false; });
+  // worlds that have been built (each planet adds itself here)
+  const BZP = {};
+  function bzPlanetEnter(id){ const P = BZP[id]; if (P && P.enter) P.enter(); else enterStation(true); }
   // ---------- the phone, on the Moon ----------
   function bzPhMapBase(){
     const S = 1024, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), k = S / 560, X = x => (x + 280) * k, N = LUNA.N, H = BZ.H, img = g.createImageData(N, N);
