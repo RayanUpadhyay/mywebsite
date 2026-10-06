@@ -2534,10 +2534,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function webSwingStep(dt){
     if (EV || A || BL.lvl || DRV.on || Math.abs(BL.off.y) > .01) { if (SW.on || SW.roof) { swReset(); pos.y = 1.6; } return; }
     if (SW.on) {
-      cityV.y -= 22 * dt; if (web.p) { const f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0); if (f) { cityV.x += -Math.sin(yaw) * f * 12 * dt; cityV.z += -Math.cos(yaw) * f * 12 * dt; } } else { cityV.x *= .996; cityV.z *= .996; }
+      cityV.y -= 22 * dt; if (web.p) { const f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0); if (f) { cityV.x += -Math.sin(yaw) * f * (12 + 4 * UPG2.swing) * dt; cityV.z += -Math.cos(yaw) * f * (12 + 4 * UPG2.swing) * dt; } } else { cityV.x *= .996; cityV.z *= .996; }
       pos.addScaledVector(cityV, dt);
       // the web reels you in as you hold it, so even from the pavement you're pulled up and away
-      if (web.p) { web.L = Math.max(4, web.L - 6 * dt); tmpV.subVectors(web.p, pos).normalize(); cityV.addScaledVector(tmpV, 9 * dt); }
+      if (web.p) { web.L = Math.max(4, web.L - (6 + 2 * UPG2.swing) * dt); tmpV.subVectors(web.p, pos).normalize(); cityV.addScaledVector(tmpV, (9 + 3 * UPG2.swing) * dt); }
       if (web.p) { tmpV.subVectors(pos, web.p); const L = tmpV.length(); if (L > web.L) { tmpV.multiplyScalar(1 / L); pos.copy(web.p).addScaledVector(tmpV, web.L); const vr = cityV.dot(tmpV); if (vr > 0) cityV.addScaledVector(tmpV, -vr); } }
       if (pos.y > 150) { pos.y = 150; cityV.y = Math.min(0, cityV.y); }
       // into a wall: back to where you were
@@ -2563,7 +2563,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const street = inWorld && zone === 'blr' && !EV && !A && !BL.lvl && !DRV.on && !BL.cine && Math.abs(BL.off.y) < .01;
     if (held !== 'web' || dustedWeapon('web') || !inWorld || (zone !== 'roof' && zone !== 'city' && !street) || web.p) return;
     ndc.set(0, 0); ray.setFromCamera(ndc, camera);
-    const hit = ray.intersectObjects(BL.bld ? [...new Set(BL.bld.map(b => b.im))] : [], false).find(h => h.distance < 90);
+    const hit = ray.intersectObjects(BL.bld ? [...new Set(BL.bld.map(b => b.im))] : [], false).find(h => h.distance < 90 + 30 * UPG2.swing);
     if (hit) web.p = hit.point.clone(); else { ray.ray.direction.normalize(); web.p = pos.clone().addScaledVector(ray.ray.direction, 26).add(tmpV.set(0, 16, 0)); }
     web.L = pos.distanceTo(web.p) * .92;
     if (street) { if (!SW.on) { cityV.set(-Math.sin(yaw) * 3, SW.roof ? 3 : 6, -Math.cos(yaw) * 3); SW.on = true; SW.roof = 0; } walkTarget = null; tone(1400, .12, 'triangle', .04, 500); drawWeb(); return; }
@@ -5023,6 +5023,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (!O.final && from === 'me') { const kind = performance.now() - (EV.spAt || 0) < 900 ? EV.improv || 'basic' : 'basic'; O.count[kind] = (O.count[kind] || 0) + 1; if (kind !== 'basic') O.count.basic = Math.max(0, (O.count.basic || 0) - 3);
         if (O.count[kind] > (kind === 'basic' ? 7 : 3)) { d *= .1; if (!O.told[kind]) { O.told[kind] = 1; say(kind === 'basic' ? 'The Overfit has memorised your punch. It barely hurts him now. Press E to improvise something new.' : `He\u2019s learned ${HEROES[kind].sp}. Improvise again for something he hasn\u2019t seen.`, 3200); } } } }
     if (u.boss && EV.k === 'inj') { d *= EV.weak > 0 ? 1.6 : .08; if (EV.weak <= 0 && from === 'me' && !EV.toldImmune) { EV.toldImmune = 1; say('He’s invulnerable! Hold the Kryptonite emitter to weaken him.', 3000); } }
+    if (from === 'me') d *= 1 + .15 * UPG2.punch;
     if (from === 'me') { EV.dmg += d; if (EV.k === 'inj' && u.boss) lbAdd('d', d); }
     numFx(u, d, from === 'me');
     if (u.remote) { if (from === 'me' && mq) mq.pub(`${MP_TOPIC}/ev/${mpId}`, JSON.stringify({ to: u.id, d: Math.round(d) })); return; }
@@ -5047,6 +5048,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (from && from.hero && HEROES[from.hero]) EV.lastMove = { kind: from.boss && from.act ? from.act.k : HEROES[from.hero].kind === 'ranged' ? 'shot' : 'punch', who: nmT(HEROES[from.hero].name) };
     if (EV.k === 'st' && EV.st && EV.st.part === 'd4' && from && from.boss && SG.flags.dl) SG.flags.dl = Math.max(30, SG.flags.dl - 8);
     if (!(from && from.remote)) d *= EV.diffIn;
+    d *= 1 - .1 * UPG2.armour;
     if (from && from.hero === 'copycat' && EV.ccClaws) d *= 1.1;
     if (EV.blocking && EV.st && EV.st.noBlock) { if (!EV.st.toldBlock) { EV.st.toldBlock = 1; say('Blocking doesn\u2019t help. They know exactly where you\u2019ll guard. They learned it from you.', 3400); } }
     else if (EV.blocking) { d *= EV.hero === 'echo18' ? .1 : .25; KIT.stam = Math.max(0, KIT.stam - (EV.hero === 'echo18' ? .06 : .14) * upgReflex()); tone(1200, .05, 'square', .03, 800); if (KIT.stam <= 0) { EV.blocking = false; EV.guardT = 1.2; say('Guard broken!', 1200); } }
@@ -7016,7 +7018,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function sbFight(B){ if (!B || EV || A) return; sbBtn.hidden = true; startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: B.id, site: 'sb' + B.id }); }
   sbBtn.addEventListener('click', e => { e.stopPropagation(); sbFight(sbNear); });
   addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'f' && sbNear) sbFight(sbNear); });
-  function sbWon(part){ if (part === 'g1') return jobRaidWon(); const B = SBOSS.find(q => q.id === part); if (!B) return; SBK[part] = Date.now(); try { localStorage.setItem('ru-sboss', JSON.stringify(SBK)); } catch (e) {} if (SBOSS.every(q => SBK[q.id])) setTimeout(() => secret('streets'), 2500); }
+  function sbWon(part){ if (part === 'g1') return jobRaidWon(); const B = SBOSS.find(q => q.id === part); if (!B) return; SBK[part] = Date.now(); try { localStorage.setItem('ru-sboss', JSON.stringify(SBK)); } catch (e) {} JOB.rep += 20; jobSave(); setTimeout(() => say(`Reputation +20 (now ${JOB.rep}). Spend it on upgrades from your phone (M).`, 4200), 3000); if (SBOSS.every(q => SBK[q.id])) setTimeout(() => secret('streets'), 2500); }
   // ======================= Jobs: people in the city ask for help, and stash houses get raided =======================
   // Some of the people inside the buildings you can walk into have a job for you (they have a yellow ! over their head).
   // Deliveries, a pet or a kite stuck on a roof, a thief to chase down, or a stash house to shut down. One job at a time;
@@ -7038,7 +7040,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const dName = d => d.name[0].toUpperCase() + d.name.slice(1);
   function jobStreet(x, z){ const dir = (z > 0 ? 'north' : 'south') + (Math.abs(x) > 40 ? (x > 0 ? '-east' : '-west') : ''); return `the ${dir} side of the city`; }
   // which kind of job a giver offers depends on who they are
-  function jobKind(d){ const r = lhash(d.seed, 4.2), T = d.type; const opts = T === 'tiffin' || T === 'medicals' ? ['deliver', 'deliver', 'raid', 'thief'] : T === 'kirana' || T === 'tailor' ? ['thief', 'thief', 'deliver', 'raid'] : T === 'home' ? ['roof', 'roof', 'deliver', 'raid'] : T === 'apt' ? ['roof', 'deliver', 'raid', 'thief'] : ['raid', 'deliver', 'thief', 'roof'];
+  function jobKind(d){ const r = (lhash(d.seed, 4.2) + Math.floor(cityHour() / 6) * .37) % 1, T = d.type, H = cityHour();
+    if (H >= 6 && H < 11 && (T === 'tiffin' || T === 'kirana' || T === 'medicals') && DOORS.length > 3) return 'deliver';
+    if (nightNow() && r < .3 && DOORS.some(x => x.type === 'stash' && !JOB.sealed.has(x))) return 'raid'; const opts = T === 'tiffin' || T === 'medicals' ? ['deliver', 'deliver', 'raid', 'thief'] : T === 'kirana' || T === 'tailor' ? ['thief', 'thief', 'deliver', 'raid'] : T === 'home' ? ['roof', 'roof', 'deliver', 'raid'] : T === 'apt' ? ['roof', 'deliver', 'raid', 'thief'] : ['raid', 'deliver', 'thief', 'roof'];
     let k = opts[Math.floor(r * opts.length)]; if (k === 'roof' && !inv.includes('web')) k = 'deliver'; if (k === 'raid' && !DOORS.some(x => x.type === 'stash' && !JOB.sealed.has(x))) k = 'deliver'; return k; }
   const isGiver = d => d.type !== 'stash' && lhash(d.seed, 8.8) < .55;
   function jobOffer(d){
@@ -7058,12 +7062,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     askChoice('job', v => { if (v !== 'yes') return say(`${p.who}: “Okay. If you change your mind, I’ll be here.”`, 3000); jobStart(o); }, { q: `${p.who}: “${o.ask}”`, a: [['yes', 'I’ll do it'], ['no', 'Not right now']] });
   }
   function jobStart(o){
-    JOB.q = Object.assign({ stage: 'go', t0: performance.now() }, o); if (BIN.giverMark) BIN.giverMark.visible = false; tone(660, .12, 'triangle', .04); setTimeout(() => tone(880, .15, 'triangle', .04), 120);
+    JOB.q = Object.assign({ stage: 'go', t0: performance.now() }, o); phContact(o); if (BIN.giverMark) BIN.giverMark.visible = false; tone(660, .12, 'triangle', .04); setTimeout(() => tone(880, .15, 'triangle', .04), 120);
     if (o.k === 'thief') { JOB.q.stage = 'chase'; JOB.q.spawn = true; }
     if (o.k === 'roof') jobItem(o);
     say(`New job: ${o.title}. Follow the yellow beacon.`, 3200);
   }
-  function jobEnd(ok, msg){ const q = JOB.q; JOB.q = null; jobDrop(); if (ok) { JOB.rep += q.rep; JOB.done++; jobSave(); say(`${msg} Job done: reputation +${q.rep} (now ${JOB.rep}).`, 5200); [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, .18, 'triangle', .05), i * 90)); if (JOB.done >= 5) secret('jobs'); } else say(msg, 4200); }
+  function jobEnd(ok, msg){ const q = JOB.q; JOB.q = null; jobDrop(); if (ok) { JOB.rep += q.rep; JOB.done++; jobSave(); heatDown(1); say(`${msg} Job done: reputation +${q.rep} (now ${JOB.rep}).`, 5200); [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, .18, 'triangle', .05), i * 90)); if (JOB.done >= 5) secret('jobs'); } else say(msg, 4200); }
   function jobDrop(){ if (JOB.thief) { if (JOB.thief.a.g.parent) JOB.thief.a.g.parent.remove(JOB.thief.a.g); JOB.thief = null; } if (JOB.item) { if (JOB.item.parent) JOB.item.parent.remove(JOB.item); JOB.item = null; } }
   function jobItem(o){ const b = o.b, g = new THREE.Group(); g.position.set((b.x0 + b.x1) / 2 + (b.x1 - b.x0) * .2, b.h, (b.z0 + b.z1) / 2); BL.mapG.add(g);
     if (o.pet === 'cat') { const fur = mat(0xD8A060); sph(.22, fur, 0, .22, 0, g, 1.5, .9, .9, 10); sph(.14, fur, .32, .38, 0, g, 1, 1, 1, 10); [-1, 1].forEach(s => { const e = new THREE.Mesh(new THREE.ConeGeometry(.05, .1, 4), fur); e.position.set(.34, .52, s * .07); g.add(e); }); const t = cyl(.03, .02, .4, fur, -.38, .35, 0, g, 6); t.rotation.z = .9; }
@@ -7093,7 +7097,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     jobHud.hidden = !show;
     if (!BL.mapG) return;
     if (!JOB.beacon && BLC.built) { const g = JOB.beacon = new THREE.Group(); BL.mapG.add(g); const c = new THREE.Mesh(new THREE.CylinderGeometry(.8, 1.1, 80, 14, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFC93C, transparent: true, opacity: .28, depthWrite: false, side: THREE.DoubleSide })); c.position.y = 40; g.add(c); g.traverse(o => o.userData.noPick = true); g.visible = false; }
-    const tg = jobTarget(); if (JOB.beacon) { JOB.beacon.visible = !!tg && (inB || cityLive()) && !EV; if (tg) JOB.beacon.position.set(tg[0], 0, tg[1]); }
+    const tg = jobTarget() || PH.wp; if (JOB.beacon) { JOB.beacon.visible = !!tg && (inB || cityLive()) && !EV; if (tg) JOB.beacon.position.set(tg[0], 0, tg[1]); }
     if (!q) return;
     if (inB && !EV) {
       const [mx, mz] = toMap(pos.x, pos.z);
@@ -7101,7 +7105,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (q.k === 'roof' && q.stage === 'go' && JOB.item && SW.roof && Math.hypot(JOB.item.position.x - mx, JOB.item.position.z - mz) < 3) { q.stage = 'back'; if (JOB.item.parent) JOB.item.parent.remove(JOB.item); JOB.item = null; tone(990, .2, 'triangle', .05); say(q.pet === 'cat' ? 'You scoop her up. She’s purring. Take her home.' : 'You untangle the kite. Not a scratch on it. Take it back.', 3600); }
     }
     if (show) { const t = jobTarget(); let dist = ''; if (t && inB) { const [mx, mz] = toMap(pos.x, pos.z); dist = ` · ${Math.round(Math.hypot(t[0] - mx, t[1] - mz))} m`; }
-      const step = q.stage === 'back' ? `Go back to ${q.d.name}` : q.k === 'deliver' ? `Take it to ${q.to.name}` : q.k === 'raid' ? 'Go to the stash house and go in' : q.k === 'roof' ? `Get onto the roof with the ${q.pet}` : 'Chase the thief down';
+      const step = q.stage === 'back' ? `Go back to ${q.d.name}` : q.k === 'deliver' ? `Take it to ${q.to.name}` : q.k === 'raid' ? (nightNow() ? 'Go to the stash house and go in' : 'Wait for dark (7 pm), then go in') : q.k === 'roof' ? `Get onto the roof with the ${q.pet}` : 'Chase the thief down';
       jobHud.innerHTML = `<b>Job · reputation ${JOB.rep}</b>${esc(q.title)}<small>${esc(step)}${dist}</small>`; }
   }
   // walking into a building: deliveries arrive, returns finish, stash houses fight back
@@ -7109,12 +7113,206 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const q = JOB.q;
     if (q && q.k === 'deliver' && q.stage === 'go' && d === q.to) { setTimeout(() => jobEnd(true, `${dName(d)}: “Oh, you brought it! Thank you, thank you.”`), 900); return; }
     if (q && q.stage === 'back' && d === q.d) { const line = q.k === 'roof' ? (q.pet === 'cat' ? '“My baby! Come here. Thank you so much.”' : '“My kite! You’re the best.”') : `“You caught him? ${q.what[0].toUpperCase() + q.what.slice(1)} is back! Thank you.”`; setTimeout(() => jobEnd(true, `${dName(d)}: ${line}`), 900); return; }
+    if (d.type === 'stash' && !JOB.sealed.has(d) && !nightNow()) return;
     if (d.type === 'stash' && !JOB.sealed.has(d)) setTimeout(() => { if (!EV && inWorld && zone === 'twr' && TWR.floor === 'bin' && BIN.d === d) startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'g1', twr: true }); }, 1600);
   }
   function jobRaidWon(){ const d = BIN.d; if (d && d.type === 'stash') JOB.sealed.add(d); const q = JOB.q; if (q && q.k === 'raid' && d === q.to) setTimeout(() => jobEnd(true, 'The stash house is shut down for good.'), 2500); else if (d && d.type === 'stash') { JOB.rep += 10; jobSave(); setTimeout(() => say(`The stash house is shut down. Reputation +10 (now ${JOB.rep}).`, 4200), 2500); } }
   function gangSetup(part){ if (part !== 'g1') return; const S = EV.st, W2 = (BIN.W || 12) / 2, D2 = (BIN.D || 10) / 2;
     const b = addUnit({ hero: 'gangBoss', team: 'en' }); b.x = W2 - 1.6; b.z = 0; b.boss = 1; EV.boss = b; S.sb = { B: { name: 'the boss' }, b, t: 99, marks: [] };
     [[W2 - 3.5, -D2 + 1.5, 'gangA'], [W2 - 3.5, D2 - 1.5, 'gangA'], [0, -D2 + 1.4, 'gangA'], [1.5, D2 - 1.4, 'gangB']].forEach(([x, z, h]) => S.add(h, x, z)); pos.set(-W2 + 1.6, 1.6, 0); yaw = -Math.PI / 2; pitch = -.05; }
+  // ======================= Upgrades, police, festivals, random events, and a phone to keep track of it all =======================
+  // ---------- upgrades bought with reputation ----------
+  const UPG2 = { swing: 0, punch: 0, armour: 0 }; try { Object.assign(UPG2, JSON.parse(localStorage.getItem('ru-upg2') || '{}')); } catch (e) {}
+  const UPG2_DEF = { swing: ['Web-shooters', 'Longer webs, a stronger pull, faster swings', [30, 60, 100]], punch: ['Punch', 'Every hit lands 15% harder', [40, 80, 120]], armour: ['Armour', 'Take 10% less damage', [40, 80, 120]] };
+  OUTFITS.r_night = { name: 'Night suit', shop: 1, c1: '#16181D', c2: '#9AA3AD', gloves: 1, mask: 'spider', web: 1 };
+  OUTFITS.r_monsoon = { name: 'Monsoon suit', shop: 1, c1: '#1E5A6A', c2: '#3CB0A8', gloves: 1, mask: 'capcowl', cape: 1 };
+  OUTFITS.r_namma = { name: 'Namma suit', shop: 1, c1: '#C8102E', c2: '#F2C230', gloves: 1, mask: 'spider', emblem: 'star' };
+  const SUITS2 = [['r_night', 50], ['r_monsoon', 50], ['r_namma', 75]];
+  const upgSave = () => { try { localStorage.setItem('ru-upg2', JSON.stringify(UPG2)); } catch (e) {} };
+  // ---------- police heat ----------
+  const HEAT = { lv: 0, cool: 0, cd: 0, cops: [], spawnT: 0, siren: 0, el: null };
+  HEAT.el = document.createElement('div'); HEAT.el.className = 'heathud'; HEAT.el.hidden = true; document.body.appendChild(HEAT.el);
+  { const s = document.createElement('style'); s.textContent = '.heathud{position:fixed;left:50%;top:calc(132px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:6;background:rgba(14,16,22,.85);color:#fff;border-radius:999px;padding:6px 14px;font:700 13px/1.2 system-ui,sans-serif;pointer-events:none;white-space:nowrap}.heathud i{font-style:normal;color:#5AA0FF;letter-spacing:2px;margin-right:6px}.heathud.flash i{color:#FF3C3C}'; document.head.appendChild(s); }
+  function heatAdd(n, why){ if (EV || A || SG.active && !newTL()) return; const now = performance.now(); if (now < HEAT.cd) return; HEAT.cd = now + 3000; const was = HEAT.lv; HEAT.lv = clamp(HEAT.lv + n, 0, 5); HEAT.cool = 0; if (HEAT.lv > was) { say(`${why} The police are on their way.`, 3000); tone(880, .15, 'square', .04); setTimeout(() => tone(660, .15, 'square', .04), 160); } }
+  function heatDown(n){ HEAT.lv = Math.max(0, HEAT.lv - n); HEAT.cool = 0; }
+  function copSpawn(){ if (!VT.police) VT.police = () => [[...carBody(0xF4F4F4, false), [gB(1.84, .2, 4.22), 0x1E3A8A, 0, .62, 0], [gB(1.1, .14, .32), 0x16181D, 0, 1.56, -.3], [gB(.5, .1, .03), 0x1E3A8A, 0, 1.0, 2.12]], carLights, 4.2, 1.8, 15]; const [mx, mz] = toMap(pos.x, pos.z), N = (BLC.nodes || []).filter(n => { const d = Math.hypot(n.x - mx, n.z - mz); return d > 60 && d < 130; }); if (!N.length) return;
+    const n = N[Math.random() * N.length | 0], v = makeVehicle('police', 0, BLC.carG); v.x = n.x; v.z = n.z; v.h = Math.atan2(mx - n.x, mz - n.z); v.node = n; v.tgt = null; v.sp = 0; v.stuck = 0; v.near = 0;
+    const bar = new THREE.Group(); bar.position.set(0, 1.68, -.3); v.g.add(bar); v.red = new THREE.Mesh(new THREE.BoxGeometry(.45, .12, .26), new THREE.MeshBasicMaterial({ color: 0xFF2A2A })); v.red.position.x = -.27; v.blue = new THREE.Mesh(new THREE.BoxGeometry(.45, .12, .26), new THREE.MeshBasicMaterial({ color: 0x2A6AFF })); v.blue.position.x = .27; bar.add(v.red, v.blue);
+    HEAT.cops.push(v); }
+  function copsClear(){ HEAT.cops.forEach(v => { if (v.g.parent) v.g.parent.remove(v.g); }); HEAT.cops = []; }
+  const roadOK = (x, z) => blrValid(...toLocal(x, z)) && !PILLARS.some(q => Math.hypot(toLocal(x, z)[0] - q.x, toLocal(x, z)[1] - q.z) < q.r);
+  function busted(){ const lost = Math.min(JOB.rep, 15); JOB.rep -= lost; jobSave(); HEAT.lv = 0; copsClear(); if (DRV.on) getOut(true);
+    fade(() => say(`Busted. You spend an hour explaining that you’re one of the good guys.${lost ? ` Reputation -${lost}.` : ''}`, 4600), '#0B0D14'); tone(220, .5, 'sawtooth', .05, 110); }
+  function heatStep(dt, now){
+    const inB = inWorld && zone === 'blr' && !EV && !A && !BL.lvl && Math.abs(BL.off.y) < .01;
+    HEAT.el.hidden = !(HEAT.lv > 0 && inWorld && (zone === 'blr' || zone === 'twr') && !EV);
+    if (!HEAT.el.hidden) { HEAT.el.innerHTML = `<i>${'★'.repeat(HEAT.lv)}${'☆'.repeat(5 - HEAT.lv)}</i>${HEAT.cops.length ? 'Police nearby' : 'Wanted'}`; HEAT.el.classList.toggle('flash', Math.floor(now / 350) % 2 === 0); }
+    if (!inB) { if (HEAT.cops.length) copsClear(); if (HEAT.lv && (HEAT.cool += dt * 2) > 14) heatDown(1); return; }
+    if (!HEAT.lv) { if (HEAT.cops.length) copsClear(); return; }
+    const [mx, mz] = toMap(pos.x, pos.z), want = Math.min(3, HEAT.lv);
+    if (HEAT.cops.length < want && (HEAT.spawnT -= dt) <= 0) { HEAT.spawnT = 3; copSpawn(); }
+    let close = false;
+    HEAT.cops.forEach(v => {
+      const tx = DRV.on && DRV.p ? DRV.p.x : mx, tz = DRV.on && DRV.p ? DRV.p.z : mz, d = Math.hypot(tx - v.x, tz - v.z); if (d < 45) close = true;
+      // on the road graph until they're close, then straight at you
+      let gx = tx, gz = tz; if (d > 26 && v.node) { if (!v.tgt) { v.tgt = v.node.out.slice().sort((a, b) => Math.hypot(a.x - tx, a.z - tz) - Math.hypot(b.x - tx, b.z - tz))[0]; } if (v.tgt) { gx = v.tgt.x; gz = v.tgt.z; if (Math.hypot(gx - v.x, gz - v.z) < 3) { v.node = v.tgt; v.tgt = null; } } }
+      const want2 = Math.atan2(gx - v.x, gz - v.z); let best = null; for (const o of [0, .45, -.45, .9, -.9, 1.5, -1.5]) { const h = want2 + o, fx = Math.sin(h), fz = Math.cos(h); if (roadOK(v.x + fx * 3, v.z + fz * 3) && roadOK(v.x + fx * 1.5 + fz * .8, v.z + fz * 1.5 - fx * .8) && roadOK(v.x + fx * 1.5 - fz * .8, v.z + fz * 1.5 + fx * .8)) { best = h; break; } }
+      const top = d < 8 ? 6 : 15; v.sp += ((best == null ? 0 : top) - v.sp) * Math.min(1, dt * 1.5);
+      if (best != null) { let df = Math.atan2(Math.sin(best - v.h), Math.cos(best - v.h)); v.h += clamp(df, -dt * 2.6, dt * 2.6); const nx = v.x + Math.sin(v.h) * v.sp * dt, nz = v.z + Math.cos(v.h) * v.sp * dt; if (roadOK(nx, nz)) { v.x = nx; v.z = nz; v.stuck = 0; } else v.stuck += dt; } else v.stuck += dt;
+      if (v.stuck > 4) { v.stuck = 0; v.tgt = null; const n = (BLC.nodes || []).slice().sort((a, b) => Math.hypot(a.x - v.x, a.z - v.z) - Math.hypot(b.x - v.x, b.z - v.z))[0]; if (n) { v.node = n; v.x = n.x; v.z = n.z; } }
+      v.g.position.set(v.x, 0, v.z); v.g.rotation.y = v.h; v.fx = Math.sin(v.h); v.fz = Math.cos(v.h); v.v = v.sp; const f = Math.floor(now / 180) % 2; v.red.visible = !!f; v.blue.visible = !f;
+      // caught
+      if (DRV.on && d < 4 && Math.abs(DRV.spd) > 2) { DRV.spd *= .4; if (now > (v.ram || 0)) { v.ram = now + 1500; tone(70, .3, 'sawtooth', .05, 40); say('The police ram you!', 1200); } }
+      if (d < 3.6 && (!DRV.on || Math.abs(DRV.spd) < 1.5) && pos.y < 3) { v.near += dt; if (v.near > (DRV.on ? 2 : .6)) return busted(); } else v.near = 0;
+    });
+    if (!close && (HEAT.cool += dt) > 16) heatDown(1);
+    if (close && now > HEAT.siren) { HEAT.siren = now + 900; tone(760, .4, 'sine', .015, 980); setTimeout(() => tone(980, .4, 'sine', .015, 760), 450); }
+  }
+  // ---------- day and night, and festival nights ----------
+  const festNow = () => { try { if (diwaliNow()) return true; } catch (e) {} const d = new Date(), h = cityHour(); return (d.getDay() === 5 || d.getDay() === 6) && h >= 18 && h < 23.5; };
+  const nightNow = () => { const h = cityHour(); return h >= 19 || h < 5; };
+  const FW = { list: [], t: .4, told: false };
+  function fwStep(dt){
+    const on = festNow() && (inWorld && zone === 'blr' || cityLive()) && !EV && GFX.cur && GFX.cur.win > .4 && !lowFx;
+    if (on && !FW.told && inWorld && zone === 'blr') { FW.told = true; setTimeout(() => say('It’s a festival night: the streets are full and there are fireworks over the city.', 4200), 3000); }
+    if (on && (FW.t -= dt) <= 0 && FW.list.length < 4) { FW.t = .8 + Math.random() * 1.6; const [mx, mz] = toMap(pos.x, pos.z), a = Math.atan2(-Math.cos(yaw), -Math.sin(yaw)) + (Math.random() - .5) * 1.4, r = 70 + Math.random() * 80, n = 110, P = new Float32Array(n * 3), V2 = [];
+      for (let i = 0; i < n; i++) { const u = Math.random() * 2 - 1, th = Math.random() * 6.28, s = Math.sqrt(1 - u * u), sp = 18 + Math.random() * 5; V2.push([Math.cos(th) * s * sp, u * sp, Math.sin(th) * s * sp]); }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); if (!FW.tex) FW.tex = tex(64, 64, (c2, w, h) => { const gr = c2.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.3, 'rgba(255,255,255,.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); c2.fillStyle = gr; c2.fillRect(0, 0, w, h); });
+      const m = new THREE.PointsMaterial({ color: new THREE.Color().setHSL([0, .08, .14, .33, .55, .78, .9][Math.random() * 7 | 0], 1, .5).multiplyScalar(2.2), map: FW.tex, size: 4.2, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false, toneMapped: false });
+      const pts = new THREE.Points(g, m); pts.position.set(mx + Math.cos(a) * r, 55 + Math.random() * 35, mz + Math.sin(a) * r); pts.frustumCulled = false; pts.userData.noPick = true; BL.mapG.add(pts); FW.list.push({ pts, V2, t: 0 }); setTimeout(() => tone(90 + Math.random() * 40, .5, 'sawtooth', .02, 40), 400 + r * 2); }
+    FW.list.forEach(f => { f.t += dt; const a = f.pts.geometry.attributes.position.array; f.V2.forEach((v, i) => { const k = 1 - Math.exp(-f.t * 1.6); a[i * 3] = v[0] * k; a[i * 3 + 1] = v[1] * k - 4 * f.t * f.t; a[i * 3 + 2] = v[2] * k; }); f.pts.geometry.attributes.position.needsUpdate = true; f.pts.material.opacity = Math.max(0, 1 - f.t / 2.2); });
+    FW.list = FW.list.filter(f => { if (f.t < 2.2) return true; if (f.pts.parent) f.pts.parent.remove(f.pts); f.pts.geometry.dispose(); f.pts.material.dispose(); return false; });
+  }
+  // ---------- random events: things that happen around you ----------
+  const RE = { cur: null, next: performance.now() + 45000, beacon: null, btn: null, near: false };
+  RE.btn = document.createElement('button'); RE.btn.type = 'button'; RE.btn.className = 'btn alt drvbtn rebtn'; RE.btn.hidden = true; document.body.appendChild(RE.btn);
+  { const s = document.createElement('style'); s.textContent = '.rebtn{bottom:276px;background:#35C8F0;color:#0B0D14}'; document.head.appendChild(s); }
+  function reClear(){ const c = RE.cur; if (!c) return; (c.objs || []).forEach(o => { if (o.parent) o.parent.remove(o); }); RE.cur = null; RE.btn.hidden = true; }
+  function reDone(msg){ const c = RE.cur; JOB.rep += 5; jobSave(); heatDown(1); say(`${msg} Reputation +5 (now ${JOB.rep}).`, 4600); [659, 784, 988].forEach((f, i) => setTimeout(() => tone(f, .15, 'triangle', .04), i * 90)); c.done = true; setTimeout(() => { if (RE.cur === c) reClear(); }, 6000); RE.next = performance.now() + 60000 + Math.random() * 40000; }
+  function reSpawn(){
+    const [mx, mz] = toMap(pos.x, pos.z), N = PED.nodes.filter(n => { const d = Math.hypot(n.x - mx, n.z - mz); return d > 35 && d < 85 && !Object.values(DIST).some(q => Math.hypot(q.x - n.x, q.z - n.z) < 30); }); if (!N.length) return;
+    const n = N[Math.random() * N.length | 0], L = ROADS.slice(1, -1), lx = L[n.i], lz = L[n.j], kinds = ['crash', 'snatch'].concat(inv.includes('web') ? ['ball'] : []), k = kinds[Math.random() * kinds.length | 0], objs = [], c = { k, n, objs, t0: performance.now(), stage: 0 };
+    const person = (x, z, ry, lie, L2) => { const a = avatar(Object.assign(crowdLook((Math.random() * 40) | 0), L2 || {})); a.g.position.set(x, lie ? .25 : 0, z); a.g.rotation.y = ry; if (lie) a.g.rotation.x = -1.4; a.g.userData.noPick = true; BL.mapG.add(a.g); objs.push(a.g); return a; };
+    if (k === 'crash') { const x = lx + n.sx * 15, z = lz + n.sz * 2.4; [[0, Math.PI / 2 + .3, 0xB8322A], [2.6, Math.PI / 2 - .9, 0x2E5A9A]].forEach(([dx, h, col]) => { const v = makeVehicle('car', col, BL.mapG); v.g.position.set(x + dx * n.sx, 0, z + (dx ? 1.2 : 0)); v.g.rotation.y = h; v.g.rotation.z = dx ? .04 : -.03; objs.push(v.g); });
+      const smoke = new THREE.Group(); smoke.position.set(x + 1.3 * n.sx, 1, z + .6); BL.mapG.add(smoke); objs.push(smoke); c.smoke = []; for (let i = 0; i < 6; i++) { const s = new THREE.Mesh(new THREE.SphereGeometry(.5, 8, 6), new THREE.MeshBasicMaterial({ color: 0x8A8F99, transparent: true, opacity: .4, depthWrite: false })); smoke.add(s); c.smoke.push({ s, ph: i / 6 }); }
+      const vx = x + 1.3 * n.sx, vz = lz + n.sz * 6.6; c.victim = person(vx, vz, 0, true); c.at = [vx, vz]; c.box = [x - 2.5, x + 5, z - 2, z + 3.4]; c.title = 'A car crash'; c.cry = 'Two cars have crashed at the junction. Someone’s hurt!'; }
+    if (k === 'snatch') { const v = makeVehicle('scooter', 0x16181D, BL.mapG); const rider = avatar(Object.assign({}, LOOK0, { c1: 3, c2: 3, mask: 0, hair: 'buzz', skin: 3 })); rider.g.position.set(0, .35, -.15); rider.legs.forEach(l => l.rotation.x = -1.2); v.g.add(rider.g); objs.push(v.g);
+      c.sc = { g: v.g, x: n.x, z: n.z, node: n, from: null, tgt: null, sp: 6, t: 0 }; v.g.position.set(n.x, 0, n.z); const w = person(n.x + n.sx * .8, n.z + n.sz * .8, 0, false, { hair: 'long', outfit: 'casual', c1: 1 }); c.title = 'Chain snatcher'; c.cry = 'A man on a scooter just snatched a woman’s gold chain!'; c.at = [n.x, n.z]; }
+    if (k === 'ball') { const bs = BL.bld.filter(b => plainLot(b) && b.h >= 6 && b.h <= 16 && !(SG.wreck || []).includes(b.key) && Math.hypot((b.x0 + b.x1) / 2 - n.x, (b.z0 + b.z1) / 2 - n.z) < 40); const b = bs[Math.random() * bs.length | 0]; if (!b) return;
+      const ball = new THREE.Mesh(new THREE.SphereGeometry(.22, 14, 10), mat(0xE8501E)); ball.position.set((b.x0 + b.x1) / 2, b.h + .22, (b.z0 + b.z1) / 2); BL.mapG.add(ball); objs.push(ball); c.ball = ball; c.b = b;
+      const kid = person(n.x, n.z, 0, false); kid.g.scale.setScalar(.68); c.kid = kid; c.at = [n.x, n.z]; c.title = 'Ball on the roof'; c.cry = 'A kid’s cricket ball went up onto a roof. He’s about to cry.'; }
+    RE.cur = c; tone(988, .1, 'sine', .04); setTimeout(() => tone(988, .1, 'sine', .04), 180); say(`${c.cry} (${Math.round(Math.hypot(n.x - mx, n.z - mz))} m away, follow the blue beacon.)`, 4600);
+  }
+  function rePm(pm){ const c = RE.cur; if (c && c.k === 'crash' && !c.done) pm.push([(c.box[0] + c.box[1]) / 2, (c.box[2] + c.box[3]) / 2, 3.2]); }
+  function reTarget(){ const c = RE.cur; if (!c || c.done) return null; if (c.k === 'snatch') return [c.sc.x, c.sc.z]; if (c.k === 'ball') return c.stage ? c.at : [c.ball.position.x, c.ball.position.z]; return c.at; }
+  function reStep(dt, now){
+    const inB = inWorld && zone === 'blr' && !EV && !A && !BL.lvl && Math.abs(BL.off.y) < .01 && PED.nodes && PED.nodes.length;
+    if (!RE.beacon && BL.mapG && BLC.built) { const g = RE.beacon = new THREE.Group(); BL.mapG.add(g); const col = new THREE.Mesh(new THREE.CylinderGeometry(.7, 1, 70, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0x35C8F0, transparent: true, opacity: .26, depthWrite: false, side: THREE.DoubleSide })); col.position.y = 35; g.add(col); g.traverse(o => o.userData.noPick = true); g.visible = false; }
+    const tg = reTarget(); if (RE.beacon) { RE.beacon.visible = !!tg && (inWorld && zone === 'blr' || cityLive()) && !EV; if (tg) RE.beacon.position.set(tg[0], 0, tg[1]); }
+    RE.near = false; RE.btn.hidden = true;
+    if (!inB) return;
+    const c = RE.cur, [mx, mz] = toMap(pos.x, pos.z);
+    if (!c) { if (now > RE.next && !SG.active && !(JOB.q && JOB.q.k === 'thief')) { RE.next = now + 30000; reSpawn(); } return; }
+    if (c.done) return;
+    if (now - c.t0 > 100000 || Math.hypot(c.at[0] - mx, c.at[1] - mz) > 260) { say('Someone else sorted it out before you got there.', 2400); reClear(); RE.next = now + 40000; return; }
+    if (c.k === 'crash') { c.smoke.forEach(q => { const k = ((now / 2400) + q.ph) % 1; q.s.position.set(Math.sin(q.ph * 9) * .4, k * 3.5, Math.cos(q.ph * 7) * .4); q.s.scale.setScalar(.6 + k * 1.6); q.s.material.opacity = .45 * (1 - k); });
+      if (onGround() && Math.hypot(c.at[0] - mx, c.at[1] - mz) < 2.6) { RE.near = true; if (!c.helping) { RE.btn.hidden = false; RE.btn.textContent = `Help the driver${fine ? ' (E)' : ''}`; } } }
+    if (c.k === 'ball') { if (!c.stage && SW.roof && Math.hypot(c.ball.position.x - mx, c.ball.position.z - mz) < 3) { c.stage = 1; if (c.ball.parent) c.ball.parent.remove(c.ball); tone(990, .15, 'triangle', .05); say('Got the ball. Take it back down to the kid.', 2600); }
+      if (c.stage && onGround() && Math.hypot(c.at[0] - mx, c.at[1] - mz) < 2.6) reDone('The kid grins and runs back to his game.'); c.kid.anim(now / 1000, 0, 0); }
+    if (c.k === 'snatch') { const S = c.sc; S.t += dt; S.sp = Math.max(4.2, 6.4 - S.t * .05);
+      if (!S.tgt) { const o = S.node.e.filter(e => e.to !== S.from), pick = (o.length ? o : S.node.e).map(e => [e, Math.hypot(e.to.x - mx, e.to.z - mz)]).sort((a, b) => b[1] - a[1]); const e = (pick[Math.random() < .8 ? 0 : Math.min(1, pick.length - 1)] || [])[0]; if (e) { S.from = S.node; S.tgt = e.to; } }
+      if (S.tgt) { const dx = S.tgt.x - S.x, dz = S.tgt.z - S.z, d = Math.hypot(dx, dz), st = S.sp * dt; if (d <= st) { S.x = S.tgt.x; S.z = S.tgt.z; S.node = S.tgt; S.tgt = null; } else { S.x += dx / d * st; S.z += dz / d * st; S.g.rotation.y = Math.atan2(dx, dz); } S.g.position.set(S.x, 0, S.z); }
+      const pd = Math.hypot(S.x - mx, S.z - mz), py = pos.y; if (pd < 2.6 && py < 3 || DRV.on && pd < 4.5 || SW.on && pd < 5 && py < 8) { S.g.rotation.z = 1.2; reDone('You knock him off the scooter. The chain goes back to its owner.'); } }
+  }
+  function reAct(){ const c = RE.cur; if (!c || c.done || c.k !== 'crash' || c.helping) return; c.helping = true; say('You check the driver over, keep them still and call an ambulance…', 2600); tone(523, .3, 'sine', .04); setTimeout(() => { if (RE.cur === c) { c.victim.g.rotation.x = 0; c.victim.g.position.y = 0; reDone('The driver sits up. The ambulance is on its way.'); } }, 2800); }
+  RE.btn.addEventListener('click', e => { e.stopPropagation(); reAct(); });
+  addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'e' && RE.near && !doorNear) reAct(); });
+
+  // ---------- the phone ----------
+  const PH = { tab: 'map', zoom: 1.6, cx: null, cz: null, base: null, wp: null, contacts: [] };
+  try { PH.contacts = JSON.parse(localStorage.getItem('ru-contacts') || '[]'); } catch (e) {}
+  const phEl = document.createElement('div'); phEl.className = 'phone'; phEl.setAttribute('role', 'dialog'); phEl.setAttribute('aria-label', 'Your phone');
+  phEl.innerHTML = '<div class="phtop"><span id="phClock"></span><b id="phTitle">Map</b><button type="button" class="phx" id="phClose" aria-label="Close phone">✕</button></div><div class="phbody" id="phBody"></div><nav class="phtabs" id="phTabs"></nav>';
+  document.body.appendChild(phEl);
+  const phBtn = document.createElement('button'); phBtn.type = 'button'; phBtn.className = 'btn phbtn'; phBtn.textContent = '📱 Phone'; phBtn.hidden = true; document.body.appendChild(phBtn);
+  { const s = document.createElement('style'); s.textContent = `.phbtn{position:fixed;left:18px;top:calc(184px + env(safe-area-inset-top,0px));z-index:6}.jobhud{top:calc(238px + env(safe-area-inset-top,0px))!important}
+.phone{position:fixed;right:18px;bottom:18px;z-index:60;width:min(380px,calc(100% - 24px));height:min(680px,calc(100% - 100px));background:#0B0D14;color:#EEF1F5;border:6px solid #2A2D33;border-radius:34px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.55);font:500 14px/1.4 system-ui,sans-serif}.phone.on{display:flex}
+@media (max-width:520px){.phone{right:6px;left:6px;bottom:6px;width:auto;height:calc(100% - 70px)}}
+.phtop{display:flex;align-items:center;gap:8px;padding:12px 16px 8px}.phtop b{flex:1;text-align:center;font:800 16px/1.2 ${DISPLAY}}.phtop span{font-weight:700;font-size:12px;width:48px}.phx{background:#2A2D33;color:#fff;border:0;border-radius:999px;width:32px;height:32px;cursor:pointer}
+.phbody{flex:1;overflow:auto;padding:4px 14px 12px;position:relative}.phtabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px;border-top:1px solid #222}.phtabs button{background:#16181D;border:0;color:#C8CDD6;border-radius:12px;padding:7px 2px;font:700 11px/1.2 system-ui,sans-serif;cursor:pointer}.phtabs button.on{background:#FFC93C;color:#16181D}
+.phone canvas{width:100%;aspect-ratio:1;border-radius:14px;background:#2A2C30;touch-action:none;display:block}.phrow{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}.phrow button,.phcard button{background:#2A2D33;color:#fff;border:0;border-radius:999px;padding:7px 12px;font:700 12px/1.2 system-ui,sans-serif;cursor:pointer}.phrow button.y,.phcard button.y{background:#FFC93C;color:#16181D}.phrow button:disabled,.phcard button:disabled{opacity:.4;cursor:default}
+.phcard{background:#16181D;border-radius:14px;padding:10px 12px;margin:8px 0}.phcard b{display:block}.phcard small{color:#9AA3AD;display:block}.phnews{border-left:3px solid #C8102E;padding:6px 10px;margin:8px 0;font:800 13px/1.3 ${DISPLAY};background:#16181D;border-radius:0 10px 10px 0}.phleg{font-size:11px;color:#9AA3AD;display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px}.phleg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}`; document.head.appendChild(s); }
+  const PH_TABS = [['map', 'Map'], ['jobs', 'Jobs'], ['upg', 'Upgrades'], ['news', 'News'], ['contacts', 'Contacts'], ['rayan', 'Rayan'], ['camera', 'Camera']];
+  phEl.querySelector('#phTabs').innerHTML = PH_TABS.map(([k, n]) => `<button type="button" data-t="${k}">${n}</button>`).join('');
+  phEl.querySelector('#phTabs').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (b) phShow(b.dataset.t); });
+  const phOpen = () => phEl.classList.contains('on');
+  function phoneOpen(t){ if (EV || A || !inWorld) return; if (document.pointerLockElement) document.exitPointerLock(); Object.keys(keys).forEach(k => keys[k] = false); phEl.classList.add('on'); phShow(t || PH.tab); tone(1046, .06, 'sine', .03); }
+  function phoneClose(){ phEl.classList.remove('on'); }
+  phBtn.addEventListener('click', e => { e.stopPropagation(); phOpen() ? phoneClose() : phoneOpen(); });
+  phEl.querySelector('#phClose').onclick = phoneClose;
+  addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; const k = e.key.toLowerCase();
+    if (phOpen()) { if (k === 'escape' || k === 'm') { e.preventDefault(); e.stopImmediatePropagation(); phoneClose(); } else if (!e.metaKey && !e.ctrlKey) e.stopImmediatePropagation(); return; }
+    if (k === 'm' && !e.repeat && !phBtn.hidden) { e.preventDefault(); phoneOpen(); } }, true);
+  function phMapBase(){
+    const S = 1024, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), k = S / 560, X = x => (x + 280) * k;
+    g.fillStyle = '#C9C4B8'; g.fillRect(0, 0, S, S); g.fillStyle = '#5A9AD0'; g.fillRect(X(-275), X(-168), (-126 + 275) * k, (168 - 60) * k);
+    [PARK_B, TEMPLE_B, CRICKET_B].forEach(r => { g.fillStyle = r === TEMPLE_B ? '#D8B070' : '#7FB06A'; g.fillRect(X(r[0]), X(r[2]), (r[1] - r[0]) * k, (r[3] - r[2]) * k); });
+    g.fillStyle = '#4A4D55'; ROADS.forEach(l => { g.fillRect(X(-275), X(l - 5), 550 * k, 10 * k); g.fillRect(X(l - 5), X(-275), 10 * k, 550 * k); });
+    g.fillStyle = '#E8E0CC'; BL.bld.forEach(b => { if (b.hide && !b.keep) return; g.fillStyle = b.keep ? '#E8C890' : '#ECE6D8'; g.fillRect(X(b.x0), X(b.z0), (b.x1 - b.x0) * k, (b.z1 - b.z0) * k); });
+    g.fillStyle = '#9AA3AD'; g.beginPath(); g.arc(X(TW.x), X(TW.z), TW.r * k, 0, 7); g.fill(); g.fillStyle = '#6A3A9A'; g.fillRect(X(-260), X(MZ - 1.5), 520 * k, 3 * k);
+    PH.base = c;
+  }
+  function phMap(){
+    const B = phEl.querySelector('#phBody'); B.innerHTML = '<canvas id="phCv" width="640" height="640"></canvas><div class="phrow"><button type="button" data-z="1">＋ Zoom in</button><button type="button" data-z="-1">－ Zoom out</button><button type="button" data-z="0">Centre on me</button><button type="button" data-z="x">Clear pin</button></div><div class="phleg"><span><i style="background:#FFC93C"></i>You / job</span><span><i style="background:#35C8F0"></i>Pin / help needed</span><span><i style="background:#FF3C3C"></i>Street boss</span><span><i style="background:#7A2A2A"></i>Stash house</span><span><i style="background:#fff"></i>Place found</span><span><i style="background:#2A6AFF"></i>Police</span></div><p style="color:#9AA3AD;font-size:12px">Tap the map to drop a pin. A beacon will show you the way.</p>';
+    if (!PH.base && BL.bld && BLC.built) phMapBase();
+    const cv = B.querySelector('#phCv'), [mx, mz] = BL.sc ? toMap(pos.x, pos.z) : [0, 0]; if (PH.cx == null || zone !== 'blr') { PH.cx = zone === 'blr' ? mx : -20; PH.cz = zone === 'blr' ? mz : -20; }
+    const draw = () => { const g = cv.getContext('2d'), W = cv.width, span = 560 / PH.zoom, sc = W / span, P = (x, z) => [(x - PH.cx) * sc + W / 2, (z - PH.cz) * sc + W / 2];
+      g.fillStyle = '#2A2C30'; g.fillRect(0, 0, W, W); if (PH.base) { const k = 1024 / 560, sx = (PH.cx - span / 2 + 280) * k, sy = (PH.cz - span / 2 + 280) * k; g.drawImage(PH.base, sx, sy, span * k, span * k, 0, 0, W, W); }
+      const dot = (x, z, col, r = 7, ring) => { const [px, py] = P(x, z); if (px < -10 || py < -10 || px > W + 10 || py > W + 10) return; g.fillStyle = col; g.beginPath(); g.arc(px, py, r, 0, 7); g.fill(); if (ring) { g.strokeStyle = ring; g.lineWidth = 3; g.stroke(); } };
+      const lbl = (x, z, t) => { if (PH.zoom < 2.5) return; const [px, py] = P(x, z); g.font = '700 15px system-ui'; g.fillStyle = '#16181D'; g.textAlign = 'center'; g.fillText(t, px, py - 12); };
+      PL.list.forEach(p => { if (!p.view || p.view.lvl) return; const f = PL.found.has(p.id); dot(p.view.x, p.view.z, f ? '#fff' : 'rgba(255,255,255,.35)', 5, '#16181D'); if (f) lbl(p.view.x, p.view.z, p.name); });
+      DOORS.filter(d => d.type === 'stash').forEach(d => dot(d.front[0], d.front[1], JOB.sealed.has(d) ? '#8A8F99' : '#7A2A2A', 7, '#fff'));
+      SBOSS.forEach(Bq => { dot(Bq.at[0], Bq.at[1], SBK[Bq.id] ? '#3CE870' : '#FF3C3C', 9, '#16181D'); lbl(Bq.at[0], Bq.at[1], Bq.name); });
+      dot(HOUSE.door[0], HOUSE.door[1], '#FFC93C', 8, '#16181D'); lbl(HOUSE.door[0], HOUSE.door[1], 'Home');
+      HEAT.cops.forEach(v => dot(v.x, v.z, '#2A6AFF', 6, '#fff'));
+      const rt = reTarget(); if (rt) dot(rt[0], rt[1], '#35C8F0', 9, '#fff'); if (PH.wp) dot(PH.wp[0], PH.wp[1], '#35C8F0', 10, '#16181D'); const jt = jobTarget(); if (jt) { dot(jt[0], jt[1], '#FFC93C', 11, '#16181D'); const [px, py] = P(jt[0], jt[1]); g.fillStyle = '#16181D'; g.font = '900 14px system-ui'; g.textAlign = 'center'; g.fillText('!', px, py + 5); }
+      if (zone === 'blr' && BL.sc) { const [px, py] = P(...toMap(pos.x, pos.z)), a = Math.atan2(-Math.sin(yaw), -Math.cos(yaw)); g.save(); g.translate(px, py); g.rotate(a + Math.PI / 2); g.fillStyle = '#FFC93C'; g.strokeStyle = '#16181D'; g.lineWidth = 3; g.beginPath(); g.moveTo(14, 0); g.lineTo(-9, -9); g.lineTo(-4, 0); g.lineTo(-9, 9); g.closePath(); g.fill(); g.stroke(); g.restore(); } };
+    draw(); PH.draw = draw;
+    cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(), span = 560 / PH.zoom, x = PH.cx + ((e.clientX - r.left) / r.width - .5) * span, z = PH.cz + ((e.clientY - r.top) / r.height - .5) * span; PH.wp = [clamp(x, -262, 262), clamp(z, -262, 262)]; tone(880, .06, 'sine', .03); draw(); });
+    B.querySelector('.phrow').addEventListener('click', e => { const b = e.target.closest('[data-z]'); if (!b) return; const z = b.dataset.z; if (z === '1') PH.zoom = Math.min(8, PH.zoom * 1.6); else if (z === '-1') PH.zoom = Math.max(1, PH.zoom / 1.6); else if (z === '0') { const [mx2, mz2] = zone === 'blr' ? toMap(pos.x, pos.z) : [-20, -20]; PH.cx = mx2; PH.cz = mz2; } else PH.wp = null; draw(); });
+  }
+  function phShow(t){
+    PH.tab = t; PH.draw = null; phEl.querySelectorAll('#phTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t)); phEl.querySelector('#phTitle').textContent = (PH_TABS.find(q => q[0] === t) || [])[1] || '';
+    const B = phEl.querySelector('#phBody'), h = cityHour(); phEl.querySelector('#phClock').textContent = `${String(Math.floor(h)).padStart(2, '0')}:${String(Math.floor(h % 1 * 60)).padStart(2, '0')}`;
+    if (t === 'map') return phMap();
+    if (t === 'jobs') { const q = JOB.q; B.innerHTML = `<div class="phcard"><b>Reputation: ${JOB.rep}</b><small>${JOB.done} job${JOB.done === 1 ? '' : 's'} done · ${JOB.sealed.size} stash house${JOB.sealed.size === 1 ? '' : 's'} shut down · ${Object.keys(SBK).length} of ${SBOSS.length} street bosses beaten</small></div>`
+      + (q ? `<div class="phcard"><b>Now: ${esc(q.title)}</b><small>${esc(jobHud.textContent.replace(/^Job · reputation \d+/, '').replace(q.title, ''))}</small><div class="phrow"><button type="button" data-a="drop">Give up this job</button></div></div>` : '<div class="phcard"><b>No job right now</b><small>Look for people with a yellow ! inside the buildings, or call one of your contacts.</small></div>')
+      + (RE.cur && !RE.cur.done ? `<div class="phcard"><b>Help needed: ${esc(RE.cur.title)}</b><small>Follow the blue beacon.</small></div>` : '')
+      + `<div class="phcard"><b>${nightNow() ? 'Night' : 'Daytime'}${festNow() ? ' · festival!' : ''}</b><small>${nightNow() ? 'Stash houses are open for business. Thieves are out.' : 'Stash houses stay shut until 7 pm. Shops need deliveries.'}</small></div>`
+      + (HEAT.lv ? `<div class="phcard"><b>Wanted: ${'★'.repeat(HEAT.lv)}</b><small>Get away from the police and lie low, or do a good deed to calm things down.</small></div>` : '');
+      const d = B.querySelector('[data-a="drop"]'); if (d) d.onclick = () => { JOB.q = null; jobDrop(); say('Job dropped.', 1600); phShow('jobs'); }; return; }
+    if (t === 'upg') { B.innerHTML = `<div class="phcard"><b>Reputation to spend: ${JOB.rep}</b><small>Earned from jobs, stash houses, street bosses and helping people.</small></div>`
+      + Object.entries(UPG2_DEF).map(([k, [n, d, cost]]) => { const lv = UPG2[k], c = cost[lv]; return `<div class="phcard"><b>${n} · level ${lv}/3</b><small>${d}</small><div class="phrow">${lv < 3 ? `<button type="button" class="y" data-u="${k}" ${JOB.rep < c ? 'disabled' : ''}>Upgrade for ${c}</button>` : '<button type="button" disabled>Maxed out</button>'}</div></div>`; }).join('')
+      + SUITS2.map(([k, c]) => { const got = shopGot.includes(k); return `<div class="phcard"><b>${OUTFITS[k].name}</b><small>${got ? 'Yours. Change into it from the mirror or the Look menu.' : 'A new suit.'}</small><div class="phrow">${got ? '<button type="button" disabled>Owned</button>' : `<button type="button" class="y" data-s="${k}" data-c="${c}" ${JOB.rep < c ? 'disabled' : ''}>Buy for ${c}</button>`}</div></div>`; }).join('');
+      B.querySelectorAll('[data-u]').forEach(b => b.onclick = () => { const k = b.dataset.u, c = UPG2_DEF[k][2][UPG2[k]]; if (JOB.rep < c) return; JOB.rep -= c; UPG2[k]++; jobSave(); upgSave(); tone(784, .15, 'triangle', .05); say(`${UPG2_DEF[k][0]} upgraded to level ${UPG2[k]}.`, 2200); phShow('upg'); });
+      B.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { const k = b.dataset.s, c = +b.dataset.c; if (JOB.rep < c) return; JOB.rep -= c; jobSave(); shopGot.push(k); try { localStorage.setItem('ru-shop', JSON.stringify(shopGot)); } catch (e) {} look.outfit = k; look.cape = OUTFITS[k].cape ? 1 : 0; saveLook(); idleShown = undefined; tone(988, .2, 'triangle', .05); say(`You’re wearing the ${OUTFITS[k].name} now.`, 2400); phShow('upg'); }); return; }
+    if (t === 'news') { const H = []; try { H.push(...storyHeadlines()); } catch (e) {} if (JOB.sealed.size) H.unshift(`${JOB.sealed.size} DRUG DEN${JOB.sealed.size > 1 ? 'S' : ''} SHUT DOWN. POLICE SAY THEY ‘HAD SOME HELP’`); if (Object.keys(SBK).length) H.unshift(`MASKED HERO BEATS ${SBOSS.filter(q => SBK[q.id]).map(q => q.name.toUpperCase()).join(', ')}`); if (HEAT.lv) H.unshift('POLICE HUNT RECKLESS VIGILANTE ACROSS CITY'); if (JOB.done) H.push(`“${heroName().toUpperCase()} FOUND MY CAT,” SAYS GRATEFUL AUNTY`); if (festNow()) H.unshift('FIREWORKS LIGHT UP THE CITY TONIGHT');
+      B.innerHTML = '<div class="phcard"><b>The Daily Bugle · Bangalore edition</b><small>Today’s headlines</small></div>' + (H.length ? H.slice(0, 8) : ['QUIET DAY IN THE GARDEN CITY']).map(x => `<div class="phnews">${esc(nmT(x))}</div>`).join(''); return; }
+    if (t === 'contacts') { B.innerHTML = '<div class="phcard"><b>Contacts</b><small>People you’ve helped. Call them for another job.</small></div>' + (PH.contacts.length ? PH.contacts.map((c, i) => `<div class="phcard"><b>${esc(c.who)}</b><small>${esc(c.where)}</small><div class="phrow"><button type="button" class="y" data-c="${i}" ${JOB.q ? 'disabled' : ''}>Call</button></div></div>`).join('') : '<div class="phcard"><small>No contacts yet. Take a job from someone first.</small></div>');
+      B.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { const c = PH.contacts[+b.dataset.c], d = DOORS.find(x => x.name === c.where); if (!d || JOB.q) return; const keep = BIN.d; BIN.d = d; const o = jobOffer(d); BIN.d = keep; tone(523, .1, 'sine', .04); if (!o) return say(`${c.who}: “Nothing today. Thanks for calling!”`, 2600); phoneClose(); askChoice('job', v => { if (v === 'yes') jobStart(o); }, { q: `${c.who} (on the phone): “${o.ask}”`, a: [['yes', 'On my way'], ['no', 'Not right now']] }); }); return; }
+    if (t === 'rayan') { B.innerHTML = '<div class="phcard"><b>Rayan Upadhyay</b><small>The person who built this city. Student, builder of AI tools, Mandarin learner, record collector.</small></div><div class="phrow">' + [['about', 'About me'], ['projects', 'Projects'], ['research', 'Research'], ['highlights', 'Highlights'], ['contact', 'Contact / hire me']].map(([k, n]) => `<button type="button" class="${k === 'contact' ? 'y' : ''}" data-p="${k}">${n}</button>`).join('') + '</div>';
+      B.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { phoneClose(); openPanel(b.dataset.p); }); return; }
+    if (t === 'camera') { B.innerHTML = '<div class="phcard"><b>Camera</b><small>Switches to third person and photo mode. Use the shutter at the bottom, change filters, and press P or Esc when you’re done.</small><div class="phrow"><button type="button" class="y" data-a="cam">Take a selfie</button></div></div>'; B.querySelector('[data-a="cam"]').onclick = () => { phoneClose(); if (!tpv) setPov(true); setTimeout(() => setPhoto(true), 200); }; return; }
+  }
+  function phStep(){ phBtn.hidden = !(inWorld && (zone === 'blr' || zone === 'twr') && !EV && !A); if (!phBtn.hidden || !phOpen()) {} if (phOpen() && (EV || A || !inWorld)) phoneClose(); if (phOpen() && PH.tab === 'map' && PH.draw && (performance.now() | 0) % 3 === 0) PH.draw();
+    if (PH.wp && inWorld && zone === 'blr') { const [mx, mz] = toMap(pos.x, pos.z); if (Math.hypot(PH.wp[0] - mx, PH.wp[1] - mz) < 8) { PH.wp = null; say('You’ve reached your pin.', 1600); } } }
+  function phContact(o){ const who = (BIN.ppl[0] && BIN.ppl[0].who) || 'Someone', where = o.d.name; if (!PH.contacts.some(c => c.where === where)) { PH.contacts.push({ who, where }); try { localStorage.setItem('ru-contacts', JSON.stringify(PH.contacts)); } catch (e) {} } }
+  // the office's hiring board: a way back to the real Rayan
+  const kioskBtn = document.createElement('button'); kioskBtn.type = 'button'; kioskBtn.className = 'btn alt drvbtn'; kioskBtn.hidden = true; document.body.appendChild(kioskBtn);
+  function kioskAct(){ askChoice('hire', v => { if (v !== 'no') openPanel(v); }, { q: 'A board by the lifts: “HIRING? Rayan Upadhyay is open to internships, research and building things together.”', a: [['projects', 'See his projects'], ['contact', 'Get in touch'], ['about', 'About Rayan'], ['no', 'Not now']] }); }
+  kioskBtn.addEventListener('click', e => { e.stopPropagation(); kioskAct(); });
+  addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'e' && !kioskBtn.hidden) kioskAct(); });
+  function city2Step(dt, now){ try { heatStep(dt, now); fwStep(dt); reStep(dt, now); phStep(); kioskBtn.hidden = !(BIN.kiosk && inWorld && zone === 'twr' && TWR.floor === 'bin' && !EV && Math.hypot(pos.x - BIN.kiosk[0], pos.z - BIN.kiosk[1]) < 1.8); if (!kioskBtn.hidden) kioskBtn.textContent = `Look at the hiring board${fine ? ' (E)' : ''}`; } catch (err) { console.error(err); } }
   const TW = { x: 110, z: -110, r: 28, floor: 6, roof: 18 }, TDOOR = [TW.x - TW.r - 3, TW.z], LIFT = [TW.x + 20, TW.z];
   const HOUSE = { x0: -27, x1: -13, z0: -27, z1: -13, door: [-20, -11.6] }, FIRE_DOWN = [-10, -8], FIRE_ESC = [5, -3];
   const TRUCK_ROUTE = [[-6, 6], [-55, 0], [-55, -55], [-110, -55], [-110, -84]];
@@ -9555,7 +9753,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const fx = Math.sin(p.h), fz = Math.cos(p.h), nx = p.x + fx * DRV.spd * dt, nz = p.z + fz * DRV.spd * dt, lx = fz, lz = -fx;
     const ok = [[1, 1], [1, -1], [-1, 1], [-1, -1], [0, 1], [0, -1]].every(([a, b]) => { const [ax, az] = toLocal(nx + fx * b * p.L / 2 + lx * a * p.W / 2, nz + fz * b * p.L / 2 + lz * a * p.W / 2); return blrValid(ax, az) && !PILLARS.some(q => Math.hypot(ax - q.x, az - q.z) < q.r); });
     const hit = [...BLC.cars, ...BLC.parked].find(o => o !== p && Math.hypot(o.x - nx, o.z - nz) < (o.L + p.L) * .32 + .9);
-    if (ok && !hit) { p.x = nx; p.z = nz; } else if (Math.abs(DRV.spd) > .5) { if (Math.abs(DRV.spd) > 5) { tone(70, .3, 'sawtooth', .05, 40); say(hit ? 'Bump. Sorry!' : 'Crunch.', 900); } DRV.spd *= -.25; }
+    if (ok && !hit) { p.x = nx; p.z = nz; } else if (Math.abs(DRV.spd) > .5) { if (Math.abs(DRV.spd) > 5) { tone(70, .3, 'sawtooth', .05, 40); say(hit ? 'Bump. Sorry!' : 'Crunch.', 900); if (hit && Math.abs(DRV.spd) > 7 && !HEAT.cops.includes(hit)) heatAdd(1, 'You smashed into another car.'); } DRV.spd *= -.25; }
     p.fx = fx; p.fz = fz; if (DRV.spd) p.moved = true; p.g.position.set(p.x, p.y || 0, p.z); p.g.rotation.y = p.h; p.g.rotation.z = -s * clamp(DRV.spd / M.max, 0, 1) * (p.type === 'scooter' ? .25 : .03);
     const [ax, az] = toLocal(p.x, p.z); pos.set(ax, 1.6, az); yaw = p.h + Math.PI; walkTarget = null;
     drvHud.hidden = false; drvHud.textContent = `${Math.round(Math.abs(DRV.spd) * 3.6)} km/h${DRV.spd < -.3 ? ' · R' : ''}`;
@@ -9634,7 +9832,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const busy = !!(EV && EV.inMap), showCars = !busy && mood !== 'burn'; BLC.carG.visible = showCars; if (!showCars) { if (DRV.on) getOut(true); drvBtn.hidden = true; return; }
     const [mx, mz] = toMap(pos.x, pos.z), pm = Math.abs(BL.off.y) > .01 ? [] : [[mx, mz, DRV.on ? DRV.p.W / 2 : .3]];
     BLC.parked.forEach(p => { if (p.moved && p !== DRV.p) pm.push([p.x, p.z, p.W / 2]); });
-    (TLX.walkers || []).forEach(w => { if (w.a.g.visible) pm.push([w.a.g.position.x, w.a.g.position.z, .3]); }); pedPm(pm);
+    (TLX.walkers || []).forEach(w => { if (w.a.g.visible) pm.push([w.a.g.position.x, w.a.g.position.z, .3]); }); pedPm(pm); rePm(pm); HEAT.cops.forEach(v => pm.push([v.x, v.z, 1.2]));
     BLC.cars.forEach(v => carStep(v, dt, T, pm));
     if (roofV) { drvBtn.hidden = true; return; }
     if (DRV.on) { if (!DRV.lock) driveStep(dt); } else if (!BL.cine && !DRV.lock) { if (!BL.lvl) BLC.cars.forEach(carShove); BLC.parked.forEach(carShove); }
@@ -10103,7 +10301,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (BIN.g) { TWR.sc.remove(BIN.g); disposeDeep(BIN.g); }
     const R = rng(d.seed * 9301 + 49297), T = d.type, b = d.b, F = d.F, ri = (a, c) => a + Math.floor(R() * (c - a + 1)), pick = a => a[Math.floor(R() * a.length)];
     const X = BIN.W = clamp(Math.round((F.nx ? b.x1 - b.x0 : b.z1 - b.z0) - 2), 9, 16), Z = BIN.D = clamp(Math.round(F.len - 2), 8, 13), hx = X / 2, hz = Z / 2, H = 3.6;
-    const g = BIN.g = new THREE.Group(); TWR.sc.add(g); TWR.floors.bin = g; BIN.ppl = []; BIN.fan = null; BIN.flick = [];
+    const g = BIN.g = new THREE.Group(); TWR.sc.add(g); TWR.floors.bin = g; BIN.ppl = []; BIN.fan = null; BIN.flick = []; BIN.kiosk = null;
     const Rr = TWR.rects.bin = [[-40, -hx, -40, 40], [hx, 40, -40, 40], [-40, 40, -40, -hz], [-40, 40, hz, 40]], sol = (x0, x1, z0, z1) => Rr.push([x0, x1, z0, z1]);
     const P = [], bx = (w, h, dd, c, x, y, z, ry = 0) => P.push(B3(w, h, dd, c, x, y, z, ry)), cy = (r, h, c, x, y, z, seg = 12, rt) => P.push(C3(r, h, c, x, y, z, seg, rt)), sp = (r, c, x, y, z) => P.push([new THREE.SphereGeometry(r, 10, 8), c, x, y, z]);
     const box2 = (w, h, dd, c, x, y, z) => { bx(w, h, dd, c, x, y, z); sol(x - w / 2, x + w / 2, z - dd / 2, z + dd / 2); };
@@ -10174,6 +10372,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       box2(2, .45, .8, 0x2A2D33, -hx + 1.4, .22, hz - .7); bx(2, .4, .15, 0x2A2D33, -hx + 1.4, .62, hz - .38);
       const wb = textPlane(2, 1, (c, w, h) => { c.fillStyle = '#FAFAFA'; c.fillRect(0, 0, w, h); c.strokeStyle = '#1E5AA8'; c.lineWidth = 4; c.font = `700 ${h * .09}px sans-serif`; c.fillStyle = '#1E5AA8'; c.fillText('SPRINT 42', w * .06, h * .16); c.fillStyle = '#C8102E'; c.fillText('DEADLINE: FRIDAY (WHICH ONE?)', w * .06, h * .34); c.beginPath(); c.moveTo(w * .1, h * .85); c.lineTo(w * .4, h * .55); c.lineTo(w * .6, h * .7); c.lineTo(w * .9, h * .4); c.stroke(); }, .1);
       wb.position.set(hx - .02, 1.7, 1); wb.rotation.y = -Math.PI / 2; g.add(wb);
+      { const kx = -hx + 3.2, kz = hz - 1.2, kb = textPlane(1.1, 1.5, (c, w, h) => { c.fillStyle = '#16181D'; c.fillRect(0, 0, w, h); c.fillStyle = '#FFC93C'; c.font = `900 ${h * .1}px ${DISPLAY}`; c.textAlign = 'center'; c.fillText('HIRING?', w / 2, h * .16); c.fillStyle = '#fff'; c.font = `700 ${h * .055}px sans-serif`; ['Rayan Upadhyay', 'is open to', 'internships,', 'research and', 'building things', 'together.'].forEach((t, i) => c.fillText(t, w / 2, h * (.32 + i * .1))); c.fillStyle = '#35C8F0'; c.fillText('Press E', w / 2, h * .94); }, .5);
+        kb.position.set(kx, 1.35, kz); kb.rotation.y = Math.PI; g.add(kb); bx(1.2, .06, .1, 0x2A2D33, kx, .58, kz + .04); bx(.06, .6, .06, 0x2A2D33, kx - .5, .3, kz + .04); bx(.06, .6, .06, 0x2A2D33, kx + .5, .3, kz + .04); BIN.kiosk = [kx, kz - .6]; }
       person(1, -hx + 2.4, -hz + .6, [0, 1], 'The receptionist', 'Do you have an appointment? No? Then please wait. Everyone waits.');
       desks.slice(0, 4).forEach(([x, z], i) => { chair(x, z + .7, Math.PI); person(2 + i, x, z + .62, [0, -1], 'Someone at a desk', S2(['Standup, then a sync, then a meeting about the sync.', 'Is it Friday yet?', 'It works on my machine.', 'Don’t talk to me, I’m in the zone.', 'Can you see my screen? Can you hear me? Hello?']), 'sit'); });
     } else if (T === 'medicals') {
@@ -10234,6 +10434,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function enterBin(d){
     if (d && d.type === 'stash' && JOB.sealed.has(d)) return say('Police tape across the door. There’s nothing left in there.', 2600);
+    if (d && d.type === 'stash' && !nightNow()) return say('Padlocked, shutters down. They only open for business after dark (7 pm).', 3200);
     if (A || EV || !d || TWR.busy) return; if (!TWR.sc) buildTwr(); doorBtn.hidden = true; TWR.busy = true; setTimeout(() => TWR.busy = false, 1500);
     if (DRV.on) getOut(true); tone(1320, .12, 'sine', .03); setTimeout(() => tone(990, .2, 'sine', .03), 140);
     fade(() => {
@@ -10391,7 +10592,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     Object.values(I).forEach(im => im.visible = show); if (BLC.cartM) BLC.cartM.visible = !(mood === 'burn' || mood === 'scr');
     if (!show) { PED.bub.forEach(b => { b.s.visible = false; b.p = null; }); return; }
     const T = now / 1000, [cx, cz] = toMap(pos.x, pos.z), ground = onGround(), night = !!(GFX.cur && GFX.cur.win > .55), rain = !!(BL.rain && BL.rain.visible), story = SG.active && !newTL();
-    const active = Math.round(PED.N * (night ? .5 : 1) * (story ? .55 : 1) * (rain ? .75 : 1)), R = PED.R, far = PED.list.filter(p => p.k < active && (!p.placed || Math.hypot(p.x - cx, p.z - cz) > R)).length, init = !PED.started || far > active * .6; PED.started = true;
+    const active = Math.round(PED.N * (night && !festNow() ? .5 : 1) * (story ? .55 : 1) * (rain ? .75 : 1)), R = PED.R, far = PED.list.filter(p => p.k < active && (!p.placed || Math.hypot(p.x - cx, p.z - cz) > R)).length, init = !PED.started || far > active * .6; PED.started = true;
     const hero = look.outfit !== 'casual', hr = istHour();
     const greet = p => p.type === 'k' ? pickA(PSAY.kid) : hero && Math.random() < .6 ? pickA(PSAY.hero) : rain && Math.random() < .4 ? pickA(PSAY.rain) : hr >= 5 && hr < 11 && Math.random() < .4 ? pickA(PSAY.morn) : (hr >= 20 || hr < 5) && Math.random() < .4 ? pickA(PSAY.night) : pickA(PSAY.hi);
     const car = DRV.on && DRV.p && Math.abs(DRV.spd) > 4 ? DRV.p : null;
@@ -10401,11 +10602,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (!p.placed || Math.hypot(p.x - cx, p.z - cz) > R) { if (p.cart) { p.cart.v = null; p.cart = null; } if (p.cust) { p.cust.p = null; p.cust = null; } if (p.grp) { p.grp.forEach(q => { if (q !== p && q.mode === 'chat') { q.mode = 'walk'; q.grp = null; } }); p.grp = null; } pedPlace(p, cx, cz, init); if (!p.placed) { if (p.vis !== false) pedHide(p); return; } newOnes.push(p); }
       p.vis = true; let mv = 0;
       let dpx = p.x - cx, dpz = p.z - cz, dp = Math.hypot(dpx, dpz);
-      if (ground && dp < 1.15 && p.mode !== 'vendor' && p.mode !== 'chat') { const k2 = (1.15 - dp) / (dp || 1); p.x += dpx * k2; p.z += dpz * k2; dpx = p.x - cx; dpz = p.z - cz; dp = 1.15; }
+      if (ground && dp < 1.5 && p.mode !== 'vendor' && p.mode !== 'chat') { const k2 = (1.5 - dp) / (dp || 1); p.x += dpx * k2; p.z += dpz * k2; dpx = p.x - cx; dpz = p.z - cz; dp = 1.5; }
       // you: they say hello, get out of your way, and jump clear of your car
       if (ground && !DRV.on && dp < 2.3 && now > p.cool && (p.mode === 'walk' || p.mode === 'idle' || p.mode === 'wait')) { p.back = p.mode; p.backT = p.t; p.mode = 'look'; p.t = 2.6; p.cool = now + 30000; pedSay(p, greet(p)); }
       if (ground && !DRV.on && dp < .7 && p.mode !== 'vendor') { p.lo = clamp(p.lo + (Math.sign(-(dpx * Math.cos(p.h) - dpz * Math.sin(p.h))) || 1) * dt * 1.5, -1.3, 1.3); if (now > p.cool2) { p.cool2 = now + 9000; pedSay(p, pickA(PSAY.bump)); } }
-      if (car && p.mode !== 'vendor' && Math.hypot(p.x - car.x, p.z - car.z) < 6.5) { const fx = Math.sin(car.h), fz = Math.cos(car.h), rx = p.x - car.x, rz = p.z - car.z; if (rx * fx + rz * fz > -1) { p.dside = Math.sign(rx * fz - rz * fx) || 1; if (p.mode !== 'dodge') { p.back = p.mode === 'look' ? 'walk' : p.mode; p.backT = p.t; p.mode = 'dodge'; p.t = .9; if (now > p.cool2) { p.cool2 = now + 6000; pedSay(p, pickA(PSAY.car)); } } } }
+      if (car && p.mode !== 'vendor' && Math.hypot(p.x - car.x, p.z - car.z) < 6.5) { const fx = Math.sin(car.h), fz = Math.cos(car.h), rx = p.x - car.x, rz = p.z - car.z; if (rx * fx + rz * fz > -1) { p.dside = Math.sign(rx * fz - rz * fx) || 1; if (Math.hypot(p.x - car.x, p.z - car.z) < 2.4 && Math.abs(DRV.spd) > 8) heatAdd(1, 'You nearly ran someone over!'); if (p.mode !== 'dodge') { p.back = p.mode === 'look' ? 'walk' : p.mode; p.backT = p.t; p.mode = 'dodge'; p.t = .9; if (now > p.cool2) { p.cool2 = now + 6000; pedSay(p, pickA(PSAY.car)); } } } }
       if (p.mode === 'walk') {
         const tg = p.edge.poly[p.pi], dx = tg[0] - p.x, dz = tg[1] - p.z, d = Math.hypot(dx, dz), st = p.sp * dt; mv = 1;
         if (d <= st) { p.x = tg[0]; p.z = tg[1]; p.pi++; if (p.pi >= p.edge.poly.length) {
@@ -10455,7 +10656,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   // ---------- every frame ----------
   function placeStep(dt, now){
-    binStep(dt, now); pedStep(dt, now); jobStep(dt, now); if (inWorld && dock.classList.contains('on')) dock.classList.remove('on'); if (inWorld && zone === 'blr' || cityLive()) detCull(); if (BLC.flatFan && inWorld && zone === 'twr' && TWR.floor === 'flats') BLC.flatFan.rotation.y += dt * 7; if (inWorld && zone === 'blr') { doorStep(); sbWorld(); } else { if (!sbBtn.hidden) sbBtn.hidden = true; if (EV && EV.inMap && sbBuilt) SBOSS.forEach(B => { if (B.g) B.g.visible = false; }); } if (inWorld && zone === 'blr') {} else if (doorNear || !doorBtn.hidden) { doorNear = null; doorBtn.hidden = true; }
+    binStep(dt, now); pedStep(dt, now); jobStep(dt, now); city2Step(dt, now); if (inWorld && dock.classList.contains('on')) dock.classList.remove('on'); if (inWorld && zone === 'blr' || cityLive()) detCull(); if (BLC.flatFan && inWorld && zone === 'twr' && TWR.floor === 'flats') BLC.flatFan.rotation.y += dt * 7; if (inWorld && zone === 'blr') { doorStep(); sbWorld(); } else { if (!sbBtn.hidden) sbBtn.hidden = true; if (EV && EV.inMap && sbBuilt) SBOSS.forEach(B => { if (B.g) B.g.visible = false; }); } if (inWorld && zone === 'blr') {} else if (doorNear || !doorBtn.hidden) { doorNear = null; doorBtn.hidden = true; }
     if (TWR.sc && TWR.floors.flats && !BLC.twrPl) try { twrPlaces(); } catch (e) { console.error(e); }
     lvStep(now);
     if (PL.ride) rideStep();
