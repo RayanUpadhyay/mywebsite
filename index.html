@@ -13877,6 +13877,33 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   };
   SATURN.weather = dt => { if (BZ.clouds) { BZ.clouds.material.map.offset.x += dt * .004; BZ.clouds.position.x = pos.x; BZ.clouds.position.z = pos.z; BZ.clouds.material.map.offset.y = -pos.z / 4000 * 6; } };
   SATURN.arrive = 'Cassini Platform, a city floating in Saturn’s clouds. There’s nothing under the platforms but weather: swing between them, and don’t fall.';
+  // ---------- The Forge: the berserker homeworld. A planet that is one machine ----------
+  const FORGE = { id: 'forge', name: 'the Forge', title: 'The Forge', seed: 666, half: 280, step: 4, G: 9, instant: true, celH: 1100, celAt: [0, 150], celMode: 'rise', celName: 'Celestial-class “The Seed”', people: 3, noBots: true, noRovers: true, allInfected: true, final: true,
+    domes: [Object.assign({}, MC_DOMES[0], { name: 'Forward Base', doors: [Math.PI / 2, -Math.PI / 2] }), Object.assign({}, MC_DOMES[4], { id: 'habA', name: 'Barracks', x: -40, z: -30, R: 9, doors: [Math.atan2(30, 40)] }), Object.assign({}, MC_DOMES[5], { id: 'habB', name: 'Armoury', x: 40, z: -30, R: 9, doors: [Math.atan2(30, -40)] })],
+    flat: [[0, 0, 70], [134, 30, 40], [-180, 120, 24], [180, 120, 24], [-200, -150, 24], [200, -160, 24], [0, -220, 24]],
+    roads: [[[37, 0], [80, 10], [116, 18]], [[-37, 0], [-120, 0], [-200, 20]], [[0, -37], [0, -120], [0, -200]]], tubes: [['hub', 'habA'], ['hub', 'habB']],
+    towers: [[60, -60, 70], [-60, -60, 70], [-150, 40, 80], [150, 40, 80], [-120, -200, 70], [120, -200, 70]], pads: [[146, 32, 'shuttle']], mines: [], solar: [], facs: [[-180, 120], [180, 120], [-200, -150], [200, -160], [0, -220]], beac: [2, 3, 4], shuttle: [146, 32],
+    rescue: [[-150, 40], [150, 40], [0, -120]], bugs: [[10, 30, 0], [116, 2, Math.PI / 2]],
+    sky: { bg: 0x1A0806, fog: 0x2A0C08, near: 160, far: 1300, sun: 0xFF8A60, sunI: 1.8, hemi: [0xA04030, 0x1A0A08, .7] }
+  };
+  FORGE.height = (x, z) => { let h = Math.floor(bzFbm(x / 110 + 5, z / 110 + 1, 93, 3) * 5) * 7 - 14;
+    const tx = Math.abs(((x + 1000) % 90) - 45), tz = Math.abs(((z + 1000) % 90) - 45); if (tx > 40 || tz > 40) h -= 16;
+    for (const [fx, fz, fr] of FORGE.flat) { const d = Math.hypot(x - fx, z - fz); if (d < fr + 20) { const k = d < fr ? 1 : 1 - (d - fr) / 20, s = k * k * (3 - 2 * k); h *= 1 - s; } }
+    for (const p of FORGE.roads) for (let i = 1; i < p.length; i++) { const d = segDist(x, z, p[i - 1][0], p[i - 1][1], p[i][0], p[i][1]); if (d < 10) h *= clamp((d - 4) / 6, 0, 1); }
+    const e = Math.max(Math.abs(x), Math.abs(z)) - 226; if (e > 0) h += e * e * .02; return h; };
+  FORGE.craters = () => [];
+  FORGE.colors = (x, z, h) => { const seam = (Math.abs((x + 1000) % 12 - 6) < .5 || Math.abs((z + 1000) % 12 - 6) < .5) ? .05 : 0, n = bzHash(Math.floor(x / 12), Math.floor(z / 12), 4) * .06; return h < -12 ? [.3, .06, .04] : [.17 + n + seam, .17 + n + seam, .19 + n + seam]; };
+  FORGE.tex = () => { const t = tex(256, 256, (c, w, h) => { c.fillStyle = '#5A5C62'; c.fillRect(0, 0, w, h); const r = rng(6); for (let i = 0; i < 60; i++) { c.fillStyle = `rgba(20,20,24,${.2 + r() * .3})`; c.fillRect(r() * w, r() * h, 6 + r() * 40, 2 + r() * 6); } c.strokeStyle = 'rgba(20,20,24,.6)'; c.lineWidth = 3; c.strokeRect(2, 2, w - 4, h - 4); for (let i = 0; i < 12; i++) { c.fillStyle = 'rgba(15,15,18,.7)'; c.beginPath(); c.arc(8 + (i % 6) * 48, 8 + Math.floor(i / 6) * 240, 3, 0, 7); c.fill(); } }); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+  FORGE.skyBuild = sc => {
+    const sunS = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex(256, 256, (c, w, h) => { const g = c.createRadialGradient(128, 128, 0, 128, 128, 128); g.addColorStop(0, 'rgba(255,200,160,1)'); g.addColorStop(.25, 'rgba(255,90,40,.9)'); g.addColorStop(.6, 'rgba(160,20,10,.35)'); g.addColorStop(1, 'rgba(60,0,0,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); }), transparent: true, depthWrite: false, toneMapped: false, fog: false })); sunS.scale.set(900, 900, 1); sunS.position.set(900, 300, 520); sc.add(sunS);
+    // a forest of spires, everywhere the ground isn't the base
+    const n = lowFx ? 700 : 1800, sp = new THREE.InstancedMesh(new THREE.ConeGeometry(1, 1, 4), new THREE.MeshStandardMaterial({ color: 0x2A2C31, metalness: .85, roughness: .35, emissive: 0x3A0602, emissiveIntensity: .7 }), n), m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), r = rng(13); let k = 0;
+    for (let i = 0; i < n * 3 && k < n; i++) { const x = (r() - .5) * 520, z = (r() - .5) * 520; if (FORGE.flat.some(([fx, fz, fr]) => Math.hypot(x - fx, z - fz) < fr + 6) || FORGE.roads.some(p => p.some((a, j) => j && segDist(x, z, p[j - 1][0], p[j - 1][1], a[0], a[1]) < 10))) continue; const hgt = 6 + Math.pow(r(), 3) * 70, w = 1 + r() * 3; sp.setMatrixAt(k++, m4.compose(V(x, bzTerr(x, z) + hgt / 2, z), q.setFromEuler(e.set((r() - .5) * .2, r() * 3, (r() - .5) * .2)), V(w, hgt, w))); if (hgt > 40 && k % 3 === 0) bzAdd({ t: 'c', x, z, r: w * .7 }); }
+    sp.count = k; sp.castShadow = !lowFx; sp.userData.noPick = true; sc.add(sp);
+    const n2 = 600, P = new Float32Array(n2 * 3); for (let i = 0; i < n2; i++) P.set([(r() - .5) * 600, 30 + r() * 300, (r() - .5) * 600], i * 3); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); BZ.embers = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xFF5A2A, size: .6, transparent: true, opacity: .7, depthWrite: false, toneMapped: false })); sc.add(BZ.embers);
+  };
+  FORGE.weather = dt => { if (BZ.embers) { BZ.embers.rotation.y += dt * .01; BZ.embers.position.y = Math.sin(BZ.t * .2) * 5; } };
+  FORGE.arrive = 'The Forge. The berserkers’ homeworld: one planet-sized machine, building more of itself. Five factories, three signal pylons, and the Seed somewhere underneath. This is where it ends.';
   const BZ_WORLDS = {
     moon: { id: 'moon', name: 'the Moon', title: 'Tranquility Colony', seed: LUNA.seed, half: LUNA.half, step: LUNA.step, N: LUNA.N, G: LUNA.G, domes: MC_DOMES, flat: MC_FLAT, roads: MC_ROADS, tubes: MC_TUBES, towers: MC_TOWERS, pads: MC_PADS, mines: MC_MINES, solar: MC_SOLAR, facs: MC_FACS, beac: MC_BEAC, shuttle: MC_SHUTTLE, height: mcHeight, craters: mcCraters, celH: 300, celAt: [-112, 196], celMode: 'rise', celName: 'Celestial-class “Selene”' },
     mars: MARS
@@ -13885,6 +13912,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   BZ.P = BZ_WORLDS.moon; BZ.ws = BZ.s;
   function bzWorld(id){ if (id === 'moon') return BZ.s; BZ.s.wd = BZ.s.wd || {}; const W = BZ_WORLDS[id]; return BZ.s.wd[id] || (BZ.s.wd[id] = { t: 0, out: 0, fac: W.facs.map(() => 1), bea: W.beac.map(() => 1), inf: '', breach: [], clear: 0, sen: [0, 0], cel: 0 }); }
   BZP.mars = { enter: () => bzEnter('mars') };
+  BZ_WORLDS.forge = FORGE; FORGE.N = FORGE.half * 2 / FORGE.step + 1; BZP.forge = { enter: () => bzEnter('forge') };
   BZ_WORLDS.saturn = SATURN; SATURN.N = SATURN.half * 2 / SATURN.step + 1; BZP.saturn = { enter: () => bzEnter('saturn') };
   BZ_WORLDS.europa = EUROPA; EUROPA.N = EUROPA.half * 2 / EUROPA.step + 1; BZP.europa = { enter: () => bzEnter('europa') };
   function bzCelSummon(loaded){ if (!BZ.sc || BZ.gi.some(S => S.cel)) return; const P = BZ.P, at = P.celAt || [0, 160];
