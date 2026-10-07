@@ -7254,12 +7254,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 .phbody{flex:1;overflow:auto;padding:4px 14px 12px;position:relative}.cardprev{display:block;font-style:normal;font-size:13px;opacity:.85;margin-top:8px;max-width:520px}.phtabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px;border-top:1px solid #222}.phtabs button{background:#16181D;border:0;color:#C8CDD6;border-radius:12px;padding:7px 2px;font:700 11px/1.2 system-ui,sans-serif;cursor:pointer}.phtabs button.on{background:#FFC93C;color:#16181D}
 .phone canvas{width:100%;aspect-ratio:1;border-radius:14px;background:#2A2C30;touch-action:none;display:block}.phrow{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}.phrow button,.phcard button{background:#2A2D33;color:#fff;border:0;border-radius:999px;padding:7px 12px;font:700 12px/1.2 system-ui,sans-serif;cursor:pointer}.phrow button.y,.phcard button.y{background:#FFC93C;color:#16181D}.phrow button:disabled,.phcard button:disabled{opacity:.4;cursor:default}
 .phcard{background:#16181D;border-radius:14px;padding:10px 12px;margin:8px 0}.phcard b{display:block}.phcard small{color:#9AA3AD;display:block}.phnews{border-left:3px solid #C8102E;padding:6px 10px;margin:8px 0;font:800 13px/1.3 ${DISPLAY};background:#16181D;border-radius:0 10px 10px 0}.phleg{font-size:11px;color:#9AA3AD;display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px}.phleg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}`; document.head.appendChild(s); }
-  const PH_TABS = [['map', 'Map'], ['story', 'Story'], ['jobs', 'Jobs'], ['upg', 'Upgrades'], ['news', 'News'], ['contacts', 'Contacts'], ['rayan', 'Rayan'], ['camera', 'Camera']];
+  const PH_TABS = [['map', 'Map'], ['story', 'Story'], ['jobs', 'Jobs'], ['upg', 'Upgrades'], ['news', 'News'], ['contacts', 'Contacts'], ['rayan', 'Rayan'], ['camera', 'Camera'], ['truth', 'Files']];
   phEl.querySelector('#phTabs').innerHTML = PH_TABS.map(([k, n]) => `<button type="button" data-t="${k}">${n}</button>`).join('');
   phEl.querySelector('#phTabs').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (b) phShow(b.dataset.t); });
   const phOpen = () => phEl.classList.contains('on');
   function phoneOpen(t){ if (EV || A || !inWorld) return; if (zone === 'mc' && BZ.s.out && !BZ.s.clear) { bzNoiseAdd(.45); bzMakeNoise(pos.x, pos.z, 120); } if (document.pointerLockElement) document.exitPointerLock(); Object.keys(keys).forEach(k => keys[k] = false); phEl.classList.add('on'); phShow(t || PH.tab); tone(1046, .06, 'sine', .03); }
   function phoneClose(){ phEl.classList.remove('on'); }
+  phEl.addEventListener('click', e => { if (e.target.closest('[data-st]')) { phoneClose(); if (!EV && !A) enterStation(); } });
   phBtn.addEventListener('click', e => { e.stopPropagation(); phOpen() ? phoneClose() : phoneOpen(); });
   phEl.querySelector('#phClose').onclick = phoneClose;
   addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; const k = e.key.toLowerCase();
@@ -7275,7 +7276,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     PH.base = c;
   }
   function phMap(){
-    const B = phEl.querySelector('#phBody'); B.innerHTML = '<canvas id="phCv" width="640" height="640"></canvas><div class="phrow"><button type="button" data-z="1">＋ Zoom in</button><button type="button" data-z="-1">－ Zoom out</button><button type="button" data-z="0">Centre on me</button><button type="button" data-z="x">Clear pin</button></div><div class="phleg"><span><i style="background:#FFC93C"></i>You / job</span><span><i style="background:#35C8F0"></i>Pin / help needed</span><span><i style="background:#FF3C3C"></i>Street boss</span><span><i style="background:#7A2A2A"></i>Stash house</span><span><i style="background:#fff"></i>Place found</span><span><i style="background:#2A6AFF"></i>Police</span></div><p style="color:#9AA3AD;font-size:12px">Tap the map to drop a pin. A beacon will show you the way.</p>';
+    const B = phEl.querySelector('#phBody'); B.innerHTML = '<canvas id="phCv" width="640" height="640"></canvas><div class="phrow"><button type="button" data-z="1">＋ Zoom in</button><button type="button" data-z="-1">－ Zoom out</button><button type="button" data-z="0">Centre on me</button><button type="button" data-z="x">Clear pin</button></div><div class="phleg"><span><i style="background:#FFC93C"></i>You / job</span><span><i style="background:#35C8F0"></i>Pin / help needed</span><span><i style="background:#FF3C3C"></i>Street boss</span><span><i style="background:#7A2A2A"></i>Stash house</span><span><i style="background:#fff"></i>Place found</span><span><i style="background:#2A6AFF"></i>Police</span></div><p style="color:#9AA3AD;font-size:12px">Tap the map to drop a pin. A beacon will show you the way.</p><div class="phrow"><button type="button" class="y" data-st="1">🚀 Fly up to the space station</button></div>';
     if (!PH.base && BL.bld && BLC.built) phMapBase();
     const cv = B.querySelector('#phCv'), [mx, mz] = BL.sc ? toMap(pos.x, pos.z) : [0, 0]; if (PH.cx == null || zone !== 'blr') { PH.cx = zone === 'blr' ? mx : -20; PH.cz = zone === 'blr' ? mz : -20; }
     const draw = () => { const g = cv.getContext('2d'), W = cv.width, span = 560 / PH.zoom, sc = W / span, P = (x, z) => [(x - PH.cx) * sc + W / 2, (z - PH.cz) * sc + W / 2];
@@ -7296,6 +7297,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function phShow(t){
     PH.tab = t; PH.draw = null; phEl.querySelectorAll('#phTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t)); phEl.querySelector('#phTitle').textContent = (PH_TABS.find(q => q[0] === t) || [])[1] || '';
     const B = phEl.querySelector('#phBody'), h = cityHour(); phEl.querySelector('#phClock').textContent = `${String(Math.floor(h)).padStart(2, '0')}:${String(Math.floor(h % 1 * 60)).padStart(2, '0')}`;
+    if (t === 'truth') return bzTruthTab(B);
     if (bzPhone(t, B)) return;
     if (t === 'map') return phMap();
     if (t === 'story') { const s = curStep(); B.innerHTML = `<div class="phcard"><b>${SG.active ? `Chapter ${SG.ch + 1}: ${esc(nmT(SAGA[SG.ch].title))}` : SG.sagaDone ? 'The story is finished' : 'The story is waiting'}</b><small>${SG.active && s ? esc(nmT(stepText(s))) : 'Open the comic in the story vault, under the lair (a loose brick by the scoreboard).'}</small></div>`
@@ -7483,14 +7485,15 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function spcLaunch(){ if (!SPC.built || SPC.launch || EV || A) return; if (DRV.on) getOut(true); storyFlag('spaceport'); SPC.launch = { t: 0 }; DRV.lock = true; SPC.flame.visible = true; const [lx, lz] = toLocal(SPC.x + 26, SPC.z + 20); pos.set(lx, 1.6, lz); yaw = Math.atan2(-(-26), -(-24)); pitch = .35; say('Three… two… one…', 2200); [0, 700, 1400].forEach((d, i) => setTimeout(() => tone(440, .2, 'sine', .05), d)); setTimeout(() => tone(60, 3, 'sawtooth', .07, 30), 2000); }
   function spcStep(dt){
+    try { staSky(); } catch (e) {}
     if (BLC.built && !SPC.built) { /* built with the places */ }
     SPC.btn.hidden = true;
     if (SPC.launch) { const L = SPC.launch; L.t += dt; if (L.t > 2) { SPC.rocket.position.y = .4 + Math.pow(L.t - 2, 2.2) * 4; SPC.flame.scale.setScalar(1 + Math.random() * .3); pitch = Math.min(1.2, .35 + (L.t - 2) * .25); }
-      if (L.t > 6.5 || EV) { const go = !EV; SPC.launch = null; DRV.lock = false; const fin = () => { SPC.rocket.position.y = .4; SPC.flame.visible = false; if (go && !EV) enterStation(true); }; if (go) fade(fin, '#000000'); else fin(); } return; }
-    if (SPC.built && inWorld && zone === 'blr' && onGround() && !EV && !A) { const [mx, mz] = toMap(pos.x, pos.z); if (Math.hypot(mx - SPC.x, mz - (SPC.z + 6)) < 6) { SPC.btn.hidden = false; SPC.btn.textContent = `Launch to the space station${fine ? ' (E)' : ''}`; } }
+      if (L.t > 6.5 || EV) { const go = !EV; SPC.launch = null; DRV.lock = false; const fin = () => { SPC.rocket.position.y = .4; SPC.flame.visible = false; if (go && !EV) spcArrive(); }; if (go) fade(fin, '#000000'); else fin(); } return; }
+    if (SPC.built && inWorld && zone === 'blr' && onGround() && !EV && !A) { const [mx, mz] = toMap(pos.x, pos.z); if (Math.hypot(mx - SPC.x, mz - (SPC.z + 6)) < 6) { SPC.btn.hidden = false; SPC.btn.textContent = `Launch the rocket${fine ? ' (E)' : ''}`; } }
   }
-  SPC.btn.addEventListener('click', e => { e.stopPropagation(); spcLaunch(); });
-  addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'e' && !SPC.btn.hidden) spcLaunch(); });
+  SPC.btn.addEventListener('click', e => { e.stopPropagation(); spcAsk(); });
+  addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'e' && !SPC.btn.hidden) spcAsk(); });
   // the station: a ring in orbit, the Earth in the window, a shuttle bay for the Moon
   const STA = { built: false, btn: null, ppl: [] };
   STA.btn = document.createElement('button'); STA.btn.type = 'button'; STA.btn.className = 'btn alt drvbtn'; STA.btn.hidden = true; document.body.appendChild(STA.btn);
@@ -12968,8 +12971,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // a beacon for wherever the job is
     BZ.wpM = new THREE.Mesh(new THREE.CylinderGeometry(.9, .9, 60, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFC93C, transparent: true, opacity: .28, depthWrite: false, side: THREE.DoubleSide, toneMapped: false })); BZ.wpM.visible = false; BZ.wpM.userData.noPick = true; sc.add(BZ.wpM);
     sc.updateMatrixWorld(true);
-    bzPeople(); bzVehicles(); bzInfInit();
-    if (BZ.P.instant && !BZ.ws.out) { BZ.ws.out = 1; BZ.ws.outAt = 0; }
+    bzPeople(); bzVehicles(); bzInfInit(); bzAliens(); bzSites();
+    if (BZ.P.instant && !BZ.ws.out && (BZ.P.final || bzWState(BZ.P.id) === 'inf')) { BZ.ws.out = 1; BZ.ws.outAt = 0; }
     if (BZ.ws.out) bzOutbreakSetup(true);
     if (BZ.ws.cel === 1) setTimeout(() => bzCelSummon(true), 500);
   }
@@ -13339,6 +13342,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     for (const p of BZ.ppl) if (p.st === 'down' && at(p.x, p.z, 2.4)) { L.push({ t: `Hold E to get ${p.name} up`, hold: 1.5, go: () => { p.st = 'idle'; p.path = null; p.wait = 0; p.a.g.rotation.set(0, p.face, 0); BZ.s.cr += 10; bzCredit(10); say(`${p.name}: “Thanks. I owe you one.”`, 2200); } }); break; }
     for (const id of BZ.ws.breach) { const d = BZ.domes.find(q => q.id === id), o = d && bzDoorFor(d, pos.x, pos.z)[1]; if (o && at(o[0], o[1], 4)) { L.push({ t: `Hold E to reseal ${d.name}`, hold: 4, go: () => { BZ.ws.breach = BZ.ws.breach.filter(q => q !== id); d.hp = 100; bzBreachFx(); BZ.s.cr += 20; bzCredit(20); bzAlert('DOME RESEALED', `${d.name} holds air again.`, '#3CE870'); bzSave(); } }); break; } }
     const lab = BZ.domes.find(d => d.id === 'lab'); if (lab && BZ.frag && at(lab.jar[0], lab.jar[1], 3)) L.push({ t: 'Look at the specimen', go: () => say('A piece of one of them, in a sealed jar. The red slit follows you around the room. It’s still trying to call home.', 4600) });
+    bzLorePrompts(L);
     if (BZ.P.prompts) BZ.P.prompts(L);
     return L.sort((a, b) => (b.hold ? 1 : 0) - (a.hold ? 1 : 0))[0] || null;
   }
@@ -13396,7 +13400,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if ((BZ.saveT += dt) > 5) { BZ.saveT = 0; bzSave(); }
     if (BZ.flick > 0) { BZ.flick -= dt; const on = Math.random() < .35; BZ.lightM.color.setScalar(on ? .15 : 1); BZ.flickEl.style.opacity = reduce ? 0 : on ? .35 : 0; if (BZ.flick <= 0) { BZ.lightM.color.setScalar(1); BZ.flickEl.style.opacity = 0; } }
     else if (S.out && !S.clear) BZ.lightM.color.setRGB(1, .55 + .35 * Math.sin(now / 400), .55 + .35 * Math.sin(now / 400));
-    bzPeopleStep(dt, now); bzRoverStep(dt);
+    bzPeopleStep(dt, now); bzRoverStep(dt); bzAlienStep(dt, now); bzSiteStep(dt, now);
     for (const e of BZ.ents) bzEntStep(e, dt, now); if (BZ.ents.length > 40 || (BZ.entsClean = (BZ.entsClean || 0) + dt) > 5) { BZ.entsClean = 0; BZ.ents = BZ.ents.filter(e => e.hp > 0); }
     bzShotStep(dt); bzFxStep(dt);
     if (S.out) { BZ.facs.forEach(F => bzFacStep(F, dt, now)); bzBeaconStep(dt); bzRaidStep(dt);
@@ -13442,7 +13446,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const sc = BZ.sc; if (!sc) return; bzSave(); [viewG, me && me.g, beacon, web.line].forEach(o => { if (o && o.parent === sc) sc.remove(o); });
     const keep = new Set([propM()]); sc.traverse(o => { if (o.geometry) o.geometry.dispose(); const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach(m => { if (keep.has(m)) return; if (m.map) m.map.dispose(); m.dispose(); }); });
     Object.values(BZ.g || {}).forEach(g => g.dispose()); Object.values(BZ.m || {}).forEach(m => m.dispose()); if (BZ.u) BZ.u.uInf.value.dispose(); if (BZ.carryM) BZ.carryM = null; BZ.carry = false;
-    if (BZ.job && BZ.job.npc) BZ.job = null; BZ.sc = null; BZ.H = null; BZ.ents = []; BZ.shots = []; BZ.fx = []; BZ.ppl = []; BZ.bots = []; BZ.rovers = []; BZ.bugs = []; BZ.facs = []; BZ.beas = []; BZ.raid = null; BZ.anchors = []; BZ.cols = []; BZ.grid = new Map(); BZ.domes = []; BZ.frag = null; BZ.breachFx = []; BZ.inf = null; BZ.prompt = null; BZ.hold = null; BZ.gi = []; BZ.rings = []; BZ.fall = []; BZ.grab = null; BZ.gPlat = null; BZ.outClock = 0; BZ.dark = 0;
+    if (BZ.job && BZ.job.npc) BZ.job = null; BZ.sc = null; BZ.H = null; BZ.ents = []; BZ.shots = []; BZ.fx = []; BZ.ppl = []; BZ.bots = []; BZ.rovers = []; BZ.bugs = []; BZ.facs = []; BZ.beas = []; BZ.raid = null; BZ.anchors = []; BZ.cols = []; BZ.grid = new Map(); BZ.domes = []; BZ.frag = null; BZ.breachFx = []; BZ.inf = null; BZ.prompt = null; BZ.hold = null; BZ.gi = []; BZ.rings = []; BZ.fall = []; BZ.aliens = []; BZ.sites = []; BZ.knight = null; BZ.grab = null; BZ.gPlat = null; BZ.outClock = 0; BZ.dark = 0;
     camera.near = .05; camera.far = 500; camera.updateProjectionMatrix(); evHurt.style.opacity = 0; BZ.lightM = null;
   }
   // left some other way (a menu, a teleport): tidy up
@@ -13599,7 +13603,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   ];
   const BZ_NEXT = { moon: 'mars', mars: 'europa', europa: 'saturn', saturn: 'forge' };
   function bzWState(id){ const S = BZ.s; if (id === 'moon') return S.clear ? 'clear' : S.out ? 'inf' : 'quiet'; return (S.w && S.w[id]) || 'quiet'; }
-  const bzMapOn = () => { const S = BZ.s; return !!(S.out || S.clear); };
+  const bzMapOn = () => true;
   // the berserkers spread: clearing a world sends them to the next, and leaving one alone too long lets them spread anyway
   function bzSpread(dt){ const S = BZ.s; S.w = S.w || {}; S.wt = S.wt || {}; let note = null;
     for (const [a, b] of Object.entries(BZ_NEXT)) { const sa = bzWState(a), sb = bzWState(b); if (sb !== 'quiet') continue; if (sa === 'clear') { S.w[b] = 'inf'; note = b; } else if (sa === 'inf') { S.wt[a] = (S.wt[a] || 0) + dt; if (S.wt[a] > (a === 'moon' ? 150 : 1200) && b !== 'forge') { S.w[b] = 'inf'; note = b; } } }
@@ -13625,8 +13629,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       g.fillStyle = Wd.col; g.beginPath(); g.arc(x, y, Wd.r, 0, 7); g.fill(); if (Wd.id === 'saturn') { g.strokeStyle = '#C8B07A'; g.lineWidth = 3; g.beginPath(); g.ellipse(x, y, Wd.r * 1.9, Wd.r * .5, -.3, 0, 7); g.stroke(); }
       if (smSel === Wd.id) { g.strokeStyle = '#FFC93C'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, Wd.r + 8, 0, 7); g.stroke(); }
       g.fillStyle = '#fff'; g.font = '800 15px system-ui'; g.fillText(Wd.name, x, y + Wd.r + 22); g.fillStyle = st === 'inf' ? '#FF5A4A' : st === 'clear' ? '#3CE870' : '#9AA3AD'; g.font = '700 12px system-ui'; g.fillText(st === 'inf' ? 'INFECTED' : st === 'clear' ? 'CLEARED' : 'quiet', x, y + Wd.r + 38); });
-    const Wd = BZW.find(q => q.id === smSel), st = bzWState(Wd.id), can = Wd.id === 'moon' || st !== 'quiet';
-    smEl.querySelector('#smInfo').innerHTML = `<div><b>${esc(Wd.name)}</b><small>${esc(Wd.sub)} · ${esc(Wd.km)} · ${st === 'inf' ? 'berserkers are here' : st === 'clear' ? 'you cleared it' : 'no berserkers yet'}</small></div><button type="button" data-sm="go" ${can ? '' : 'disabled'}>${Wd.id === 'moon' ? 'Shuttle down' : can ? `Fly to ${esc(Wd.name)}` : 'Nothing to chase there yet'}</button>`;
+    const Wd = BZW.find(q => q.id === smSel), st = bzWState(Wd.id), can = Wd.id !== 'forge' || st !== 'quiet' || bzWState('saturn') === 'clear';
+    smEl.querySelector('#smInfo').innerHTML = `<div><b>${esc(Wd.name)}</b><small>${esc(Wd.sub)} · ${esc(Wd.km)} · ${st === 'inf' ? 'berserkers are here' : st === 'clear' ? 'you cleared it' : 'no berserkers yet'}</small></div><button type="button" data-sm="go" ${can ? '' : 'disabled'}>${Wd.id === 'moon' ? 'Shuttle down' : can ? `Fly to ${esc(Wd.name)}${st === 'quiet' ? ' (peaceful, for now)' : ''}` : 'Nobody knows where it is yet'}</button>`;
     if (!smEl.hidden) smDraw.raf = requestAnimationFrame(smDraw);
   }
   smEl.addEventListener('click', e => { const b = e.target.closest('[data-sm]'); if (b) { if (b.dataset.sm === 'x') { smEl.hidden = true; return; } if (b.dataset.sm === 'go') { smEl.hidden = true; if (smSel === 'moon') bzEnter(); else spStart(smSel); } return; }
@@ -13920,6 +13924,113 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (P.celGy != null) { S.gy = P.celGy; S.root.position.y = S.gy - P.celH * 1.02; }
     if (loaded) { S.rise = 1; S.root.position.y = S.gy; S.root.updateMatrixWorld(true); } }
   function celBreak(S, w){ w.m.visible = false; w.cage.visible = false; const p = w.m.getWorldPosition(new THREE.Vector3()); bzBoom(p.x, p.y, p.z, true); BZ.s.cr += 60; bzCredit(60); const left = Object.values(S.weak).filter(q => q.hp > 0).length; if (!left) celDie(S); else bzAlert('REACTOR DOWN', `${w.name}. ${left} to go.`, '#FFC93C'); }
+  // ---------- aliens: the people who were here first ----------
+  const ALIEN_LINES = {
+    mars: { name: 'Dustwalker', lines: ['You humans keep photographing our Face. It’s not a face. It’s my grandmother.', 'The pyramids are older than your Moon landing. Which, by the way, we watched. From the studio.', 'Your rover keeps finding “rocks that look like rats”. They are rats. Very slow ones.', 'Before the dust, Mars had oceans. Ask the canyon. It remembers the water.', 'We sing to the storms. That’s why your instruments record “unexplained wind”.', 'The tall machines came before, a long time ago. We hid in the canyon and stayed quiet. Stay quiet.'], fear: ['Quiet! The tall ones hear everything.', 'Get to the canyon. Hide in the rock.', 'Do not make a sound near the factories.'] },
+    europa: { name: 'Lumin', lines: ['We are not jellyfish. Jellyfish are us, a long way from home.', 'Under the ice, the ocean is singing back to your probe. You never listened to the reply.', 'There is a black slab out on the ridges. It was here before the ice. Do not touch it. Or do. We are curious.', 'Your scientists say “no landing on Europa”. They were warned. By us.', 'We count the berserkers by their silence. It is a very loud silence.', 'Glow, glow, glow. That is hello. You are not glowing. Are you sad?'], fear: ['Dim your light. They hunt the bright ones.', 'Down, under the ice, where it is quiet.', 'Shh. Shh. Shh.'] },
+    saturn: { name: 'Driftkin', lines: ['The hexagon storm? We built it. It’s a very large wind sock.', 'Iapetus has a seam around its middle like a walnut. Because it opens.', 'The spokes in the rings are our boats. Your cameras keep calling them “dust”.', 'We have floated here for nine hundred million years. Your platform is very new and very loud.', 'Falling is not scary. Landing is scary. We never land.', 'The black knight in your orbit is not ours. It is THEIRS. It has been counting you.'], fear: ['Fly high, little one. The machines cannot fly as high as us.', 'They are in the clouds. Even here.', 'Hide behind the platforms.'] }
+  };
+  function alienMesh(kind){
+    const g = new THREE.Group(), parts = {};
+    if (kind === 'mars') { const skin = mat(0xC8783A, { roughness: .6 }), robe = mat(0x6A2A1A, { roughness: .9 }), eyeM = new THREE.MeshBasicMaterial({ color: 0x6AE8FF, toneMapped: false });
+      parts.legs = [-.18, .18].map(x => { const hip = new THREE.Group(); hip.position.set(x, 1.45, 0); g.add(hip); const th = new THREE.Mesh(new THREE.CylinderGeometry(.07, .05, .8, 6), skin); th.position.y = -.4; hip.add(th); const kn = new THREE.Group(); kn.position.y = -.8; hip.add(kn); const sh = new THREE.Mesh(new THREE.CylinderGeometry(.05, .04, .7, 6), skin); sh.position.y = -.35; kn.add(sh); return { hip, kn }; });
+      const r = new THREE.Mesh(new THREE.ConeGeometry(.42, 1.3, 9, 1, true), robe); r.position.y = 1.55; r.material.side = THREE.DoubleSide; g.add(r);
+      const t = new THREE.Mesh(new THREE.CylinderGeometry(.16, .22, .9, 8), skin); t.position.y = 2.1; g.add(t); const h = new THREE.Mesh(new THREE.SphereGeometry(.24, 12, 8), skin); h.scale.set(1, 1.6, 1.1); h.position.set(0, 2.85, -.05); g.add(h); parts.head = h;
+      [-.09, 0, .09].forEach((x, i) => { const e = new THREE.Mesh(new THREE.SphereGeometry(.045, 6, 4), eyeM); e.position.set(x, 2.95 + (i === 1 ? .07 : 0), -.26); g.add(e); });
+      parts.arms = [-1, 1, -1, 1].map((s, i) => { const a = new THREE.Group(); a.position.set(s * .2, 2.4 - (i > 1 ? .25 : 0), 0); g.add(a); const m = new THREE.Mesh(new THREE.CylinderGeometry(.04, .03, .9, 5), skin); m.position.y = -.45; a.add(m); a.rotation.z = s * .25; return a; }); }
+    else if (kind === 'europa') { const bell = new THREE.Mesh(new THREE.SphereGeometry(.9, 18, 10, 0, 6.283, 0, 1.7), new THREE.MeshStandardMaterial({ color: 0x9FE8FF, transparent: true, opacity: .5, emissive: 0x35C8F0, emissiveIntensity: .6, roughness: .2, side: THREE.DoubleSide, depthWrite: false })); g.add(bell); parts.bell = bell;
+      const core = new THREE.Mesh(new THREE.SphereGeometry(.32, 12, 8), new THREE.MeshBasicMaterial({ color: 0xC8FFFF, toneMapped: false })); core.position.y = .15; g.add(core); parts.core = core;
+      const tm = new THREE.MeshBasicMaterial({ color: 0x6AE8FF, transparent: true, opacity: .7, toneMapped: false }); parts.tent = []; for (let i = 0; i < 8; i++) { const a = i / 8 * 6.283, p = new THREE.Group(); p.position.set(Math.cos(a) * .6, -.1, Math.sin(a) * .6); g.add(p); const t = new THREE.Mesh(new THREE.CylinderGeometry(.03, .01, 1.8, 4), tm); t.position.y = -.9; p.add(t); parts.tent.push(p); } }
+    else if (kind === 'saturn') { const skin = mat(0xD8C0E8, { roughness: .5, emissive: 0x2A1A3A, emissiveIntensity: .4 }), body = new THREE.Mesh(new THREE.SphereGeometry(1, 16, 10), skin); body.scale.set(1.4, .45, 2.6); g.add(body);
+      parts.wings = [-1, 1].map(s => { const w = new THREE.Group(); w.position.set(s * 1.1, 0, 0); g.add(w); const m = new THREE.Mesh(new THREE.BoxGeometry(4.2, .12, 2.6), skin); m.position.x = s * 2.1; m.rotation.y = s * .2; w.add(m); return w; });
+      const tail = new THREE.Mesh(new THREE.ConeGeometry(.35, 3.4, 6), skin); tail.rotation.x = -Math.PI / 2; tail.position.z = 3.6; g.add(tail); const sm = new THREE.MeshBasicMaterial({ color: 0xFFC93C, toneMapped: false }); for (let i = 0; i < 6; i++) { const d = new THREE.Mesh(new THREE.SphereGeometry(.12, 6, 4), sm); d.position.set((i % 2 ? 1 : -1) * (.6 + Math.floor(i / 2) * .5), .45, -.8 + Math.floor(i / 2) * .7); g.add(d); } }
+    g.traverse(o => { if (o.isMesh) { o.userData.noPick = true; o.castShadow = !lowFx && kind === 'mars'; } }); return { g, parts };
+  }
+  const ALIEN_HOMES = { mars: { at: [200, -40], r: 34, n: 9 }, europa: { at: [80, -140], r: 90, n: 10 }, saturn: { at: [0, 0], r: 210, n: 7 } };
+  function bzAliens(){
+    BZ.aliens = []; const H = ALIEN_HOMES[BZ.P.id]; if (!H) return; const r = rng(BZ.P.seed + 5), n = lowFx ? Math.ceil(H.n * .6) : H.n;
+    if (BZ.P.id === 'mars') { const P = [], L = []; for (let i = 0; i < 6; i++) { const a = i / 6 * 6.283 + .3, x = H.at[0] + Math.cos(a) * 20, z = H.at[1] + Math.sin(a) * 20, y = bzTerr(x, z), h = 7 + r() * 6; P.push([new THREE.ConeGeometry(3.2, h, 7), 0xB86A3A, x, y + h / 2, z], B3(1.3, 2, .3, 0x2A1208, x - Math.cos(a) * 2.6, y + 1, z - Math.sin(a) * 2.6, -a + Math.PI / 2)); L.push(B3(.5, .5, .1, 0x6AE8FF, x - Math.cos(a) * 1.4, y + h * .6, z - Math.sin(a) * 1.4, -a + Math.PI / 2)); bzAdd({ t: 'c', x, z, r: 3 }); }
+      const y0 = bzTerr(...H.at); P.push([new THREE.CylinderGeometry(.6, 1, 9, 6), 0x8A4A2A, H.at[0], y0 + 4.5, H.at[1]]); [-1, 0, 1].forEach(k => L.push(S3(.5, 0x6AE8FF, H.at[0] + k * .9, y0 + 8 + (k ? 0 : .7), H.at[1] - .9, 8))); bzAdd({ t: 'c', x: H.at[0], z: H.at[1], r: 1.2 });
+      const m = new THREE.Mesh(bake(P), propM()); m.castShadow = !lowFx; m.userData.noPick = true; BZ.sc.add(m); const gl = new THREE.Mesh(bake(L), BZ.lightM); gl.userData.noPick = true; BZ.sc.add(gl); const s = bzSign('Old Cydonia', 'DUSTWALKER VILLAGE', '#6AE8FF', 6); s.position.set(H.at[0], y0 + 13, H.at[1]); BZ.sc.add(s); }
+    for (let i = 0; i < n; i++) { const { g, parts } = alienMesh(BZ.P.id), a = r() * 6.283, d = r() * H.r * .8, x = H.at[0] + Math.cos(a) * d, z = H.at[1] + Math.sin(a) * d; BZ.sc.add(g);
+      BZ.aliens.push({ g, parts, x, z, y: 0, tx: x, tz: z, face: r() * 6, wait: r() * 5, ph: r() * 6, i, said: 0, line: Math.floor(r() * 6), alt: BZ.P.id === 'saturn' ? 18 + r() * 30 : BZ.P.id === 'europa' ? 1.6 + r() * 2 : 0 }); }
+  }
+  function bzAlienStep(dt, now){
+    const H = ALIEN_HOMES[BZ.P.id]; if (!H || !BZ.aliens) return; const t = now / 1000, scared = BZ.ws.out && !BZ.ws.clear, fly = BZ.P.id === 'saturn', flt = BZ.P.id === 'europa';
+    for (const A of BZ.aliens) {
+      const dx = A.tx - A.x, dz = A.tz - A.z, d = Math.hypot(dx, dz), sp = fly ? 9 : flt ? 1.2 : scared ? 3 : 1.1;
+      if (d < 1) { if ((A.wait -= dt) <= 0) { const rr = scared ? H.r * .25 : fly ? H.r : H.r * .85, a = Math.random() * 6.283, q = Math.random() * rr; A.tx = H.at[0] + Math.cos(a) * q; A.tz = H.at[1] + Math.sin(a) * q; A.wait = fly ? 0 : 3 + Math.random() * 8; } }
+      else { A.x += dx / d * Math.min(d, sp * dt); A.z += dz / d * Math.min(d, sp * dt); A.face += angDiff(A.face, Math.atan2(-dx, -dz)) * Math.min(1, dt * (fly ? 1 : 4)); }
+      const far = Math.hypot(A.x - pos.x, A.z - pos.z) > 160; A.g.visible = !far; if (far) continue;
+      const gy = fly ? Math.max(0, bzTerr(A.x, A.z)) : bzTerr(A.x, A.z);
+      A.y = gy + A.alt + (fly ? Math.sin(t * .5 + A.ph) * 3 : flt ? Math.sin(t * 1.3 + A.ph) * .4 : 0); A.g.position.set(A.x, A.y, A.z); A.g.rotation.set(fly ? Math.sin(t * .4 + A.ph) * .15 : 0, A.face, fly ? Math.sin(t * .3 + A.ph) * .2 : 0);
+      const P = A.parts, mv = d > 1 ? 1 : 0;
+      if (P.legs) { P.legs.forEach((L, k) => { const s = Math.sin(t * 5 + k * Math.PI + A.ph); L.hip.rotation.x = s * .5 * mv; L.kn.rotation.x = -Math.max(0, Math.cos(t * 5 + k * Math.PI + A.ph)) * .7 * mv; }); P.arms.forEach((a, k) => a.rotation.x = Math.sin(t * 2 + k + A.ph) * .25 + (A.talk > 0 ? -1.1 : 0)); P.head.rotation.y = Math.sin(t * .7 + A.ph) * .4; }
+      if (P.tent) { P.tent.forEach((p, k) => { p.rotation.x = Math.sin(t * 2 + k + A.ph) * .35; p.rotation.z = Math.cos(t * 1.7 + k + A.ph) * .35; }); const pulse = 1 + Math.sin(t * 2.4 + A.ph) * .08; P.bell.scale.set(pulse, 1 / pulse, pulse); P.core.material.color.setHSL(.5 + Math.sin(t + A.ph) * .05, .9, scared ? .35 : .75); }
+      if (P.wings) P.wings.forEach((w, k) => w.rotation.z = (k ? -1 : 1) * Math.sin(t * 1.2 + A.ph) * .35);
+      A.talk = Math.max(0, (A.talk || 0) - dt);
+    }
+  }
+  function bzAlienTalk(A){ const D = ALIEN_LINES[BZ.P.id], scared = BZ.ws.out && !BZ.ws.clear, pool = scared ? D.fear : D.lines, line = pool[(A.line++) % pool.length]; A.talk = 2; A.face = Math.atan2(-(pos.x - A.x), -(pos.z - A.z)); say(`${D.name}: “${line}”`, 5200); tone(BZ.P.id === 'europa' ? 880 : BZ.P.id === 'saturn' ? 140 : 330, .25, 'sine', .04, BZ.P.id === 'europa' ? 1320 : 220);
+    BZ.s.met = BZ.s.met || {}; if (!BZ.s.met[BZ.P.id]) { BZ.s.met[BZ.P.id] = 1; bzAlert(`FIRST CONTACT`, `You met a ${D.name}.`, '#6AE8FF'); BZ.s.cr += 15; bzCredit(15); bzSave(); } }
+  // ---------- Truth Files: conspiracy sites across the system ----------
+  const TRUTH = [
+    { id: 'studio', w: 'moon', at: [-185, -60], name: 'Studio 9', text: 'They say the Moon landing was faked in a film studio. They’re right, sort of: someone built a film studio on the Moon. The call sheet says “Take 4” and is dated 1968. Nobody knows who the crew were.' },
+    { id: 'flag', w: 'moon', at: [60, -150], name: 'The flag that waves', text: 'There’s no wind on the Moon, so why does the flag ripple in the photos? This one hasn’t stopped waving since it was planted. The pole hums when you touch it.' },
+    { id: 'hollow', w: 'moon', at: [150, 200], name: 'The Moon rings like a bell', text: 'When a spent rocket hit the Moon in 1969, the seismometers said it rang for almost an hour, “like a bell”. Hollow Moon theorists loved that. The instrument here is still ringing.' },
+    { id: 'face', w: 'mars', at: [-185, -70], name: 'The Face on Mars', text: 'A 1976 photo of Cydonia showed a mesa that looked like a human face. Later photos said it was just a hill. Up close, the hill blinks. The Dustwalkers say it’s somebody’s grandmother.' },
+    { id: 'pyramids', w: 'mars', at: [-200, 10], name: 'The pyramids of Cydonia', text: 'Theorists point to five-sided “pyramids” near the Face. These three have doorways, sealed from the inside. Something in there is still counting.' },
+    { id: 'rat', w: 'mars', at: [92, -52], name: 'The Mars rat', text: 'In 2008 a rover photographed a rock that looked exactly like a rat, and the internet lost its mind. The rock is still there. It has moved eleven metres since.' },
+    { id: 'monolith', w: 'europa', at: [-110, 130], name: 'The black slab', text: 'A perfectly smooth black slab, standing in the ice. Every science-fiction fan knows what it means. The Lumins say it was here before the ice, and it hums at the same pitch as the berserker signal.' },
+    { id: 'hydro', w: 'europa', at: [36, -178], name: 'The ocean answered', text: 'A hydrophone lowered through the ice in 2041 recorded a reply to its own test tone. The recording was classified. You just played it. Something under the ice is still answering.' },
+    { id: 'probe79', w: 'europa', at: [-205, -125], name: 'The probe nobody launched', text: 'A NASA-style probe, half-buried, stamped “1979”. No agency on Earth claims it. Its camera is pointed at Earth, and its memory is full.' },
+    { id: 'hexagon', w: 'saturn', at: [-110, -140], name: 'The hexagon storm', text: 'Saturn really does have a hexagon-shaped storm at its north pole, 30,000 km across. Theorists say no natural storm keeps corners. From this telescope, you can see the bolts.' },
+    { id: 'iapetus', w: 'saturn', at: [159, 160], name: 'Iapetus, the walnut moon', text: 'Saturn’s moon Iapetus has a ridge around its middle like a walnut seam, and one side is much darker than the other. The “Death Star moon” theory says it’s artificial. Through the telescope, the seam is open.' },
+    { id: 'spokes', w: 'saturn', at: [215, -19], name: 'Spokes in the rings', text: 'Dark “spokes” appear and vanish in Saturn’s rings, and nobody predicted them. The Driftkin say they’re boats. The tracking log says they’re moving against the rotation.' },
+    { id: 'knight', w: 'forge', at: [45, 45], name: 'The Black Knight', text: 'The Black Knight satellite: a “13,000-year-old alien object” in Earth orbit (it was really a lost space blanket). This one is real. It’s a berserker scout, and it’s been relaying everything Earth says to here.' },
+    { id: 'wow', w: 'forge', at: [-45, 45], name: 'The Wow! signal', text: 'In 1977 a radio telescope picked up a 72-second signal so strong the astronomer wrote “Wow!” on the printout. It never repeated. Here it is, on a loop. It was the berserkers, counting.' }
+  ];
+  function bzSites(){
+    BZ.sites = TRUTH.filter(T => T.w === BZ.P.id).map(T => { const [x, z] = T.at, y = bzTerr(x, z), P = [], L = [], g = new THREE.Group(); g.position.set(x, y, z); BZ.sc.add(g); let flag = null;
+      const k = T.id;
+      if (k === 'studio') { P.push(B3(20, 9, .4, 0x0E1018, 0, 4.5, -7), B3(2.6, 2.2, 2.6, 0xD9A93A, 0, 1.6, -1), B3(.15, 1.6, .15, 0x8A8F99, -1.2, .8, -.2), B3(.15, 1.6, .15, 0x8A8F99, 1.2, .8, -.2), B3(1, .8, 1.4, 0x2A2D33, 5, 1.5, 5), B3(.1, 1.4, .1, 0x2A2D33, 5, .7, 5), B3(.9, .1, .9, 0x6A3A1A, -5, .9, 5), B3(.9, .9, .08, 0x6A3A1A, -5, 1.35, 5.45)); [[-8, 4], [8, 4], [-8, -3], [8, -3]].forEach(([lx, lz]) => { P.push(B3(.12, 5, .12, 0x2A2D33, lx, 2.5, lz)); L.push(B3(1.2, .8, .4, 0xFFF4D8, lx, 5, lz, Math.atan2(-lx, -lz))); }); for (let i = 0; i < 40; i++) L.push(S3(.06, 0xFFFFFF, (Math.random() - .5) * 19, .5 + Math.random() * 8, -6.7, 4)); const s = bzSign('MOONSHOT · TAKE 4', 'STUDIO 9 · QUIET ON SET', '#FFC93C', 5); s.position.set(0, 10, -7); g.add(s); }
+      if (k === 'flag') { P.push(C3(.05, 3, 0xD8DCE2, 0, 1.5, 0, 6), B3(1.2, .4, .3, 0x8A8F99, 1.5, .2, 1)); flag = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 1, 8, 1), new THREE.MeshStandardMaterial({ map: tex(128, 80, (c, w, h) => { c.fillStyle = '#F4F4F4'; c.fillRect(0, 0, w, h); for (let i = 0; i < 7; i++) { c.fillStyle = i % 2 ? '#F4F4F4' : '#C8102E'; c.fillRect(0, i * h / 7, w, h / 7); } c.fillStyle = '#1C3F94'; c.fillRect(0, 0, w * .4, h * .55); }), side: THREE.DoubleSide })); flag.position.set(.82, 2.5, 0); g.add(flag); for (let i = 0; i < 14; i++) P.push(B3(.25, .02, .35, 0x6A6862, Math.sin(i) * 3 + i * .3, .02, i * .5 - 3)); }
+      if (k === 'hollow') { P.push(C3(.8, .5, 0xD9A93A, 0, .25, 0, 8), C3(.15, 1.2, 0x8A8F99, 0, 1, 0, 6), B3(1.6, .05, 1.6, 0xC9CFD8, 0, .55, 0)); L.push(S3(.15, 0x3CE870, 0, 1.7, 0, 8)); }
+      if (k === 'face') { const fg = new THREE.Group(); P.push([new THREE.SphereGeometry(18, 22, 10, 0, 6.283, 0, 1.5), 0xA05A30, 0, -4, 0]); void fg; const sy = (fx, fz) => { const r2 = fx * fx + fz * fz; return r2 < 324 ? Math.sqrt(324 - r2) - 4 : 0; }; P.push(B3(5.5, 1.2, 3.4, 0x2A1208, -6, sy(-6, -4) + .2, -4), B3(5.5, 1.2, 3.4, 0x2A1208, 6, sy(6, -4) + .2, -4), B3(2.6, 1.6, 9, 0xC07A48, 0, sy(0, 2) + .5, 2), B3(11, 1, 2.2, 0x2A1208, 0, sy(0, 9) + .2, 9)); bzAdd({ t: 'c', x, z, r: 15, top: y + 12 }); const sgn = bzSign('THE FACE', 'SEEN FROM ORBIT, 1976', '#FFC93C', 5); sgn.position.set(0, 17, 0); g.add(sgn); }
+      if (k === 'pyramids') { [[0, 0, 22], [26, 14, 16], [-20, 20, 13]].forEach(([px, pz, s]) => { P.push([new THREE.ConeGeometry(s * .9, s, 5), 0xB07040, px, s / 2 - 1, pz]); L.push(B3(1.6, 2.4, .2, 0x6AE8FF, px, 1.2, pz - s * .72)); bzAdd({ t: 'c', x: x + px, z: z + pz, r: s * .7 }); }); }
+      if (k === 'rat') { P.push([new THREE.SphereGeometry(.6, 10, 8), 0x7A4A30, 0, .4, 0], [new THREE.SphereGeometry(.3, 8, 6), 0x7A4A30, 0, .5, -.7], [new THREE.CylinderGeometry(.04, .02, 1.4, 4), 0x6A3A20, 0, .3, 1, Math.PI / 2.4], B3(1.8, .8, 2.6, 0xD8DCE2, 4, 1.2, 1), C3(.35, .25, 0x2A2D33, 3.1, .35, 0, 8), C3(.35, .25, 0x2A2D33, 4.9, .35, 0, 8), C3(.35, .25, 0x2A2D33, 3.1, .35, 2, 8), C3(.35, .25, 0x2A2D33, 4.9, .35, 2, 8), B3(.1, 1.2, .1, 0x8A8F99, 4, 2.2, 0), B3(.4, .3, .3, 0x2A2D33, 3.8, 2.8, -.2)); }
+      if (k === 'monolith') { P.push(B3(1, 9, 4, 0x050507, 0, 4.5, 0)); bzAdd({ t: 'c', x, z, r: 2.2 }); }
+      if (k === 'hydro') { P.push(C3(1.4, .3, 0x2A3A4A, 0, .1, 0, 16), B3(.3, 3, .3, 0xFFC93C, 1.6, 1.5, 0), B3(1.6, .2, .2, 0xFFC93C, .8, 3, 0), B3(1, .8, .6, 0xD8DCE2, -2.4, .4, .5)); L.push(C3(1.2, .05, 0x0A2A4A, 0, .28, 0, 16), S3(.12, 0x35C8F0, -2.4, 1, .2, 6)); }
+      if (k === 'probe79') { P.push([new THREE.CylinderGeometry(.9, .9, 1.2, 8), 0xD9A93A, 0, .3, 0, .5, 0, .3], [new THREE.SphereGeometry(1.2, 12, 6, 0, 6.283, 0, 1.1), 0xD8DCE2, -.6, 1.4, -1, -.6], B3(4, .05, 1, 0x1A2A5A, 2, .9, 0, .3, .3)); const s = bzSign('1979', 'ORIGIN: UNKNOWN', '#FFC93C', 3); s.position.set(0, 3.2, 0); g.add(s); }
+      if (k === 'hexagon' || k === 'iapetus' || k === 'spokes') { P.push(C3(.6, .3, 0x8A8F99, 0, .15, 0, 8), B3(.15, 1.6, .15, 0x8A8F99, 0, 1, 0), [new THREE.CylinderGeometry(.35, .5, 2.4, 10), 0xE8EBF0, 0, 2.2, -.4, -.7, 0, 0]); L.push(C3(.34, .05, 0x35C8F0, 0, 2.8, -1.4, 10)); }
+      if (k === 'knight') { P.push(B3(3, 2, 3, 0x0A0A0C, 0, 1.4, 0, .5, .4), B3(4, .2, .8, 0x1A1A1E, 0, 1.5, 0, 1.1)); L.push(B3(.2, .2, 3.2, 0xFF2A1A, 0, 2.3, 0, .5)); }
+      if (k === 'wow') { P.push([new THREE.SphereGeometry(5, 16, 8, 0, 6.283, 0, 1), 0xD8DCE2, 0, 6, 0, -.9], B3(.4, 5, .4, 0x8A8F99, 0, 2.5, 0), B3(3, 2, 2, 0x2A2D33, 3, 1, 3)); const s = bzSign('6EQUJ5', 'WOW!', '#FF5A4A', 3.4); s.position.set(3, 3.6, 3); g.add(s); }
+      if (P.length) { const m = new THREE.Mesh(bake(P), propM()); m.castShadow = !lowFx; m.userData.noPick = true; g.add(m); } if (L.length) { const m2 = new THREE.Mesh(bake(L), BZ.lightM); m2.userData.noPick = true; g.add(m2); }
+      const found = BZ.s.truth && BZ.s.truth[T.id], ring = new THREE.Mesh(new THREE.TorusGeometry(2.2, .08, 4, 24), new THREE.MeshBasicMaterial({ color: 0x9B7BFF, transparent: true, opacity: found ? 0 : .8, toneMapped: false })); ring.rotation.x = Math.PI / 2; ring.position.y = .2; g.add(ring);
+      return { T, g, ring, flag, x, z, r: k === 'face' ? 20 : k === 'pyramids' ? 24 : 5 }; });
+    // things in the sky that the theories are about
+    if (BZ.P.id === 'saturn') { const hex = new THREE.Mesh(new THREE.RingGeometry(240, 270, 6, 1), new THREE.MeshBasicMaterial({ color: 0x8A6A40, transparent: true, opacity: .5, toneMapped: false, side: THREE.DoubleSide })); hex.rotation.x = -Math.PI / 2; hex.position.set(-400, -69, -500); BZ.sc.add(hex); const ia = new THREE.Mesh(new THREE.SphereGeometry(30, 20, 14), new THREE.MeshStandardMaterial({ color: 0x8A8478, roughness: 1, fog: false })); ia.position.set(600, 380, -900); BZ.sc.add(ia); const seam = new THREE.Mesh(new THREE.TorusGeometry(30.5, 1.2, 4, 40), new THREE.MeshBasicMaterial({ color: 0xFF5A3A, toneMapped: false, fog: false })); seam.position.copy(ia.position); seam.rotation.x = Math.PI / 2; BZ.sc.add(seam); }
+    if (BZ.P.id === 'forge') { const k2 = new THREE.Mesh(new THREE.OctahedronGeometry(14, 0), new THREE.MeshStandardMaterial({ color: 0x0A0A0C, metalness: .9, roughness: .3, fog: false })); k2.scale.set(2, .5, 1); k2.position.set(-300, 420, -600); BZ.sc.add(k2); BZ.knight = k2; }
+  }
+  function bzSiteStep(dt, now){ (BZ.sites || []).forEach(S => { if (S.flag) { const p = S.flag.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i); p.setZ(i, Math.sin(now / 160 + x * 4) * .12 * (x + .8)); } p.needsUpdate = true; } if (S.ring.material.opacity > 0) S.ring.scale.setScalar(1 + Math.sin(now / 300) * .1); }); if (BZ.knight) BZ.knight.rotation.y += dt * .05; }
+  function bzLorePrompts(L){
+    (BZ.sites || []).forEach(S => { if (Math.hypot(pos.x - S.x, pos.z - S.z) < S.r) L.push({ t: (BZ.s.truth || {})[S.T.id] ? `Read the file again: ${S.T.name}` : `Hold E to investigate: ${S.T.name}`, hold: (BZ.s.truth || {})[S.T.id] ? 0 : 2, go: () => bzTruth(S) }); });
+    (BZ.aliens || []).forEach(A => { if (Math.hypot(pos.x - A.x, pos.z - A.z) < (BZ.P.id === 'saturn' ? 9 : 3.4) && Math.abs(BZ.feet - A.y) < (BZ.P.id === 'saturn' ? 10 : 4)) L.push({ t: `Talk to the ${ALIEN_LINES[BZ.P.id].name}`, go: () => bzAlienTalk(A) }); });
+  }
+  function bzTruth(S){ BZ.s.truth = BZ.s.truth || {}; const isNew = !BZ.s.truth[S.T.id]; BZ.s.truth[S.T.id] = 1; S.ring.material.opacity = 0; const n = Object.keys(BZ.s.truth).length;
+    if (isNew) { BZ.s.cr += 20; bzCredit(20); bzAlert('TRUTH FILE FOUND', `${S.T.name} · ${n} of ${TRUTH.length}`, '#9B7BFF'); tone(392, .3, 'triangle', .05, 784); bzSave(); }
+    say(`${S.T.name}: ${S.T.text}`, 9000); }
+  // the phone keeps the files
+  function bzTruthTab(B){ const got = BZ.s.truth || {}, n = Object.keys(got).length, W = { moon: 'the Moon', mars: 'Mars', europa: 'Europa', saturn: 'Saturn’s Cassini Platform', forge: 'the berserker homeworld' };
+    B.innerHTML = `<div class="phcard"><b>Truth Files · ${n} of ${TRUTH.length}</b><small>Space conspiracy theories, and what you found when you went to look. Marked with a purple ring on each world. (Played for fun: the real-world theories are just theories.)</small></div>`
+      + TRUTH.map(T => got[T.id] ? `<div class="phcard"><b>${esc(T.name)}</b><small>${esc(W[T.w])}</small><p style="margin:6px 0 0;font-size:13px;line-height:1.45">${esc(T.text)}</p></div>` : `<div class="phcard" style="opacity:.55"><b>??? · ${esc(W[T.w])}</b><small>Not found yet.</small></div>`).join(''); }
+  // ---------- the rocket goes further now ----------
+  function spcAsk(){ if (!SPC.built || SPC.launch || EV || A) return; const fj = bzWState('saturn') === 'clear' || bzWState('forge') !== 'quiet';
+    askChoice('launch', v => { if (v === 'no') return; SPC.dest = v; spcLaunch(); }, { h: 'Launch', q: 'Where is the rocket going? (Anything past the Moon means a flight through space first.)', a: [['station', 'Orbital Station Kalpana'], ['moon', 'The Moon: Tranquility Colony'], ['mars', 'Mars'], ['europa', 'Europa'], ['saturn', 'Saturn: Cassini Platform'], ...(fj ? [['forge', 'The Forge']] : []), ['no', 'Not now']] }); }
+  function spcArrive(){ const d = SPC.dest || 'station'; SPC.dest = null; if (d === 'station') return enterStation(true); if (d === 'moon') { enterStation(true); return setTimeout(() => bzEnter('moon'), 50); } enterStation(true); setTimeout(() => spStart(d), 50); }
+  // the station, as a light crossing Bangalore's sky
+  function staSky(){ if (!BL.sc || !(inWorld && zone === 'blr')) return; if (!STA.sky) { const s = STA.sky = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex(64, 64, (c, w, h) => { const g = c.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.25, 'rgba(255,250,230,.8)'); g.addColorStop(1, 'rgba(255,240,200,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); }), transparent: true, depthWrite: false, toneMapped: false, fog: false })); s.scale.set(14, 14, 1); s.userData.noPick = true; BL.sc.add(s); }
+    if (STA.sky.parent !== BL.sc) BL.sc.add(STA.sky); const t = performance.now() / 1000 / 60 * 6.283 / 6, h = cityHour ? cityHour() : 12, night = h < 6 || h > 18.5; STA.sky.position.set(camera.position.x + Math.cos(t) * 700, camera.position.y + 260 + Math.sin(t * 2) * 60, camera.position.z + Math.sin(t) * 700); STA.sky.material.opacity = night ? 1 : .45; }
   // ---------- the phone, on the Moon ----------
   function bzPhMapBase(){
     const S = 1024, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), k = S / 560, X = x => (x + 280) * k, N = BZ.P.N, H = BZ.H, img = g.createImageData(N, N);
