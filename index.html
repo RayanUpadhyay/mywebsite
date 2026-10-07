@@ -4962,10 +4962,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function stopEvent(quiet){
     if (EV && EV.camT > 0) tpv = EV.camSaved; document.body.classList.remove('possessed'); document.body.classList.remove('pain'); dlgClear();
     if (!EV) return; EV.units.slice().forEach(dropUnit); EV.shots.forEach(s => s.m && s.m.parent && s.m.parent.remove(s.m)); EV.fx.forEach(f => f.m.parent && f.m.parent.remove(f.m));
-    const wasHome = EV.home, wasMap = EV.inMap, wasTwr = EV.inTwr, wasDsp = EV.inDsp, wasMoon = !!EV.moon; EV = null; evHud.hidden = true; evHurt.style.opacity = 0; document.body.classList.remove('inevent'); if (document.pointerLockElement) document.exitPointerLock();
+    const wasHome = EV.home, wasMap = EV.inMap, wasTwr = EV.inTwr, wasDsp = EV.inDsp, wasMoon = !!EV.moon, wasBk = !!(EV.opts && EV.opts.bk); EV = null; evHud.hidden = true; evHurt.style.opacity = 0; document.body.classList.remove('inevent'); if (document.pointerLockElement) document.exitPointerLock();
     if (wasMap) blrBack();
     else if (wasTwr) twrBack();
     else if (wasDsp) dspBack();
+    else if (wasBk) bkFightBack();
     else if (wasMoon) setTimeout(() => enterStation(), 0);
     else if (!quiet && wasHome) travel('room');
     else if (!quiet) { travel('lair'); pos.set(-4.4, 1.6, 6.2); yaw = Math.atan2(-(-7 + 4.4), -(3 - 6.2)); pitch = -.1; } renderHotbar(); meKey = ''; drawWarTable();
@@ -5021,7 +5022,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (u.boss && EV.k === 'cv') d *= EV.weak > 0 ? 1.6 : 1;
     if (EV.k === 'st' && EV.st && EV.st.part && EV.st.part[0] === 'z') { d = zHit(u, d, from); if (!d) return; }
     if (EV.k === 'st' && EV.st && EV.st.part === 'k3') d = kHit(u, d, from);
-    { const d2 = storyHit(u, d, from); if (!d2) return; d = d2; }
+    { const d2 = storyHit(u, d, from); if (!d2) return; d = d2; } if (bkGuard(u, from)) return; if (from === 'me' && EV.opts && EV.opts.bk) d *= bkPow();
     if (u.hero === 'scrb' && EV.st && EV.st.ph !== 'open') { if (EV.st.ph === 'shield' && from === 'me' && EV.hero === 'hero18') { EV.st.shHp -= d; tone(1400, .05, 'square', .03, 900); if (EV.st.shHp <= 0) { EV.st.ph = 'hit'; EV.st.bigT = 2.5; say('The hero smashes the shield apart!', 2600); } } else if (from === 'me' && !EV.st.toldSh) { EV.st.toldSh = 1; say(EV.st.ph === 'shield' ? 'Nothing gets through that shield. Only the hero hits hard enough. (Tab)' : 'It shrugs it off. Do the thing only one of you can do.', 2600); } return; }
     if ((EV.k === 'br' || EV.k === 'st') && from === 'me') d *= EV.frailHit || 1;
     if (EV.k === 'br' && EV.part === 2 && from === 'me' && !u.alert) { d *= KIT.crouchK > .5 ? 4 : 2; brAlert(u, 6, true); if (!EV.br.toldTake) { EV.br.toldTake = 1; say('Takedown! Hitting them before they see you hurts a lot more, especially from a crouch.', 3000); } }
@@ -5074,6 +5075,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function checkGoal(){ if (scored(EV.k) && !EV.over) { const t = Object.keys(EV.score).find(t => EV.score[t] >= EVENTS[EV.k].goal); if (t) endMatch(t === EV.team); } }
   function endMatch(won){
+    if (EV && EV.opts && EV.opts.bk && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return bkFightEnd(won); }
     if (EV && !EV.over) { storyFlag('ev:' + EV.k); if (won) storyFlag('evwin:' + EV.k); if (won && EV.k === 'br') storyFlag('br' + EV.part); if (won && EV.k === 'st') { storyFlag(EV.st.part); sbWon(EV.st.part); } }
     if (EV && EV.k === 'st' && EV.st && EV.st.part === 'c3' && won && !EV.over) { EV.over = true; if (SG.active && !SG.choice.mask) return maskChoice(); return lpStart(); }
     if (EV && EV.k === 'st' && EV.st && EV.st.part === 'l4' && won && !EV.over) { EV.over = true; return deathStart(); }
@@ -6774,6 +6776,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function stArena(sc, part){
     if (part === 'mn1') return moonArena(sc);
+    if (part === 'bk4') return bkArena(sc, part);
     stArena2(sc, part);
     const street = part === 'u1' || part === 'u2' || part === 'p2' || part === 'c2' || part === 'c3';
     const win = [0, 1, 2].map(() => new THREE.MeshStandardMaterial({ color: 0x1B1D24, map: winTex(true, ['#FFD27A', '#FFC93C', '#C9CFD8']), emissive: 0xFFFFFF, emissiveMap: winTex(true, ['#FFD27A', '#FFC93C', '#C9CFD8']), emissiveIntensity: .5 }));
@@ -6789,7 +6792,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function stSetup(part){
     const S = EV.st = { part, trick: 0, possT: 12, wave: 0, fires: [], people: [], tags: 0, ready: false }, add = (h, x, z) => { const u = addUnit({ hero: h, team: 'en' }); u.x = x; u.z = z; if (S.ready) { u.hp = u.max = Math.round(u.max * EV.foeHp); drawTag(u); } if (h === 'udrone') droneAv(u); return u; }, ring = (n, R) => Array.from({ length: n }, (_, i) => [Math.cos(i / n * Math.PI * 2) * R, Math.sin(i / n * Math.PI * 2) * R - 4]);
     S.add = add; S.ring = ring;
-    stSetup2(part); sbSetup(part); gangSetup(part); moonSetup(part); zSetup(part); kSetup(part); vSetup(part); xSetup(part); actSetup(part); a5Setup(part);
+    stSetup2(part); sbSetup(part); gangSetup(part); moonSetup(part); bkFSetup(part); zSetup(part); kSetup(part); vSetup(part); xSetup(part); actSetup(part); a5Setup(part);
     if (part === 'u1') S.wave = 0;
     if (part === 'u2') { S.targets = (EV.inMap ? U2_TARGETS.map(([x, z, h]) => [...toLocal(x, z), h]) : [[-16, -12, 'ustation'], [16, -12, 'ustation'], [0, -20, 'ustation'], [-12, 10, 'userver'], [12, 10, 'userver']]).map(([x, z, h]) => { const u = add(h, x, z); staticAv(u, h); return u; }); S.droneT = 2; }
     if (part === 'u3') { const b = add('ultronx', 0, -14); ultronAv(b); b.boss = 1; EV.boss = b; S.cables = [[-12, -18], [12, -18], [0, -24]].map(([x, z]) => { const u = add('ucable', x, z); staticAv(u, 'ucable'); return u; }); S.cableLine = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xFF3030 })); eventScene.add(S.cableLine); for (let i = 0; i < 3; i++) add('udrone', (i - 1) * 6, -8); }
@@ -6841,7 +6844,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if ((P === 'm3' || P === 'n2') && !alive2(() => true).length && !EV.over) endMatch(true);
     if (P === 'n1' && !S.stop && EV.boss && EV.boss.dead <= 0 && EV.boss.hp < EV.boss.max * .5 && !EV.over && !EV.intro) { S.stop = 1; EV.boss.stun = 999; endMatch(true); }
     if (P === 'n3' && !EV.over) repStep(dt);
-    stStep2(dt, t, P, S, alive2); sbStep(dt, t, P, S, alive2); bmStep(dt, P, S, alive2); moonStep(dt, P, S, alive2); zStep(dt, P, S, alive2); kStep(dt, P, S); vStep(dt, P, S, alive2); xStep(dt, P, S, alive2);
+    stStep2(dt, t, P, S, alive2); sbStep(dt, t, P, S, alive2); bmStep(dt, P, S, alive2); moonStep(dt, P, S, alive2); bkFStep(dt, P, S, alive2); zStep(dt, P, S, alive2); kStep(dt, P, S); vStep(dt, P, S, alive2); xStep(dt, P, S, alive2);
     if (P === 'l4' && !S.impaled && EV.boss && EV.boss.dead <= 0 && EV.boss.hp < EV.boss.max * .35 && !EV.over && !EV.intro) lastStand();
     if (P === 'c1' || P === 'l2') {
       S.fires.forEach(f => { if (f.out) return; f.g.children.forEach((c, i) => { if (c.isMesh) c.scale.y = 1 + Math.sin(t * 8 + i) * .2; }); if (Math.hypot(pos.x - f.x, pos.z - f.z) < 1.8) { f.t += dt; if (f.t > 2) { f.out = true; f.g.visible = false; say(`Fire out. ${S.fires.filter(q => !q.out).length} left.`, 1600); tone(300, .3, 'sine', .04, 120); } } else f.t = Math.max(0, f.t - dt); });
@@ -6924,7 +6927,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function stHud(){
     const S = EV.st, P = S.part, n = f => EV.units.filter(u => u.team === 'en' && u.dead <= 0 && f(u)).length, tag = (EV.lockT > 0 ? ' \u00B7 <b style="color:#B07CFF">YOU CAN\u2019T MOVE</b>' : '') + (EV.mindT > 0 ? ' \u00B7 <b style="color:#B07CFF">CONTROLS REVERSED</b>' : '') + ' \u00B7 <small>recovering</small>';
-    return (P === 'u1' ? `Wave ${S.wave}/3 \u00B7 enemies left ${n(() => true)}` : P === 'u2' ? `Connections left ${S.targets.filter(u => u.dead <= 0).length}/5` : P === 'u3' ? (S.cables.some(c => c.dead <= 0) ? `Cables left ${S.cables.filter(c => c.dead <= 0).length}/3` : 'Take him apart') : P === 'p3' ? (S.exposed > 0 ? '<b style="color:#FFC93C">SHE\u2019S EXPOSED</b>' : `Puppets shielding her: ${n(u => u.puppet)}`) : P[0] === 'p' ? `Puppets left ${n(u => u.puppet)}` : P === 'y1' ? `Real people found ${S.found}/3 \u00B7 fakes loose ${n(() => true)}` : P === 'y2' ? `Servers left ${S.targets.filter(u => u.dead <= 0).length}/3` : P === 'y3' ? `Replay ${S.wave}/3` : P === 'y4' ? 'Stop the Synthetic' : P === 'd1' ? `Wave ${S.wave}/2 \u00B7 left ${n(() => true)}` : P === 'd2' ? `Guards left ${n(() => true)}` : P === 'd3' ? 'You can see it coming' : P === 'd4' ? 'Stop the Deadline' : P === 's1' || P === 's2' ? `Left ${n(() => true)}` : P === 'e1' || P === 'e2' || P === 'e3' ? 'Get past them and keep going' : P[0] === 'v' || P === 'w2' || P === 'w3' ? `Security clones left ${n(() => true)} \u00B7 on your own` : P === 'w1' ? '<b style="color:#FF6A4E">KILL SWITCH ARMED</b> \u00B7 you can\u2019t save them' : P === 'x1' || P === 'x2' ? `Doombots left ${n(() => true)}` : P === 'o1' ? 'Stand on the pages: he can\u2019t rewrite them' : /^q\d$/.test(P) ? `Ink left ${n(() => true)}` : P === 'x3' ? 'Only the real Doom doesn\u2019t spark \u00B7 the Earths are falling' : P === 'w4' ? 'End the Broker' : P === 'k1' ? 'Hold him in your street' : P === 'k2' ? 'Keep him away from the market' : P === 'k3' ? (S.edge ? '<b>DRIVE HIM OFF THE EDGE</b>' : 'Wear him down') : P === 'z1' ? `Pieces left ${n(() => true)} \u00B7 they learn whoever hit them last` : P === 'z2' ? `Copies left ${n(() => true)} \u00B7 nobody fights their own copy` : P === 'z3' ? (S.final ? '<b>HIT IT WITH ALL THREE</b>' : `Adapted to: ${PARTY.map(h => `${esc(nmT(HEROES[h].name))} ${Math.round(S.res[h] * 100)}%`).join(' \u00B7 ')}`) : P === 's3' ? ({ shield: '<b>SHIELD</b>: only the hero can break it', hit: '<b>BIG HIT</b>: Echo, block it', scramble: '<b>SCRAMBLE</b>: Copycat, copy it (E)', open: '<b>IT\u2019S OPEN</b>' })[S.ph] : P === 'm1' || P === 'm2' ? 'Stop the clone' : P === 'm3' ? `Clones left ${n(() => true)}` : P === 'n1' ? 'Stop it. Don\u2019t kill it.' : P === 'n2' ? `The buyers\u2019 men left ${n(() => true)}` : P === 'n3' ? `Replicator cores left ${S.cores.filter(u => u.dead <= 0).length}/3` : P === 'l1' ? `The Broker\u2019s men left ${n(() => true)}` : P === 'l3' ? 'Stop the Broker' : P === 'l4' ? (EV.laststand ? '<b style="color:#FF6A4E">LAST STAND</b>' : `Stop the clone \u00B7 the dam holds ${Math.max(0, Math.ceil(S.dam == null ? 150 : S.dam))}s`) : P === 'c1' || P === 'l2' ? `${P === 'l2' ? `Men left ${n(() => true)} \u00B7 ` : ''}Fires out ${S.fires.filter(f => f.out).length}/4 \u00B7 people freed ${S.people.filter(q => q.free).length}/3` : P === 'c2' ? `Caught him ${S.tags}/5` : S.sb ? `Beat ${S.sb.B.name}${S.sb.mad ? ' · he’s angry now' : ''}` : 'Beat the Copycat') + tag;
+    return (P === 'bk4' ? (S.q && S.q.g ? 'He’s guarding. Wait for an opening' : 'His guard is down. Hit him!') : P === 'u1' ? `Wave ${S.wave}/3 \u00B7 enemies left ${n(() => true)}` : P === 'u2' ? `Connections left ${S.targets.filter(u => u.dead <= 0).length}/5` : P === 'u3' ? (S.cables.some(c => c.dead <= 0) ? `Cables left ${S.cables.filter(c => c.dead <= 0).length}/3` : 'Take him apart') : P === 'p3' ? (S.exposed > 0 ? '<b style="color:#FFC93C">SHE\u2019S EXPOSED</b>' : `Puppets shielding her: ${n(u => u.puppet)}`) : P[0] === 'p' ? `Puppets left ${n(u => u.puppet)}` : P === 'y1' ? `Real people found ${S.found}/3 \u00B7 fakes loose ${n(() => true)}` : P === 'y2' ? `Servers left ${S.targets.filter(u => u.dead <= 0).length}/3` : P === 'y3' ? `Replay ${S.wave}/3` : P === 'y4' ? 'Stop the Synthetic' : P === 'd1' ? `Wave ${S.wave}/2 \u00B7 left ${n(() => true)}` : P === 'd2' ? `Guards left ${n(() => true)}` : P === 'd3' ? 'You can see it coming' : P === 'd4' ? 'Stop the Deadline' : P === 's1' || P === 's2' ? `Left ${n(() => true)}` : P === 'e1' || P === 'e2' || P === 'e3' ? 'Get past them and keep going' : P[0] === 'v' || P === 'w2' || P === 'w3' ? `Security clones left ${n(() => true)} \u00B7 on your own` : P === 'w1' ? '<b style="color:#FF6A4E">KILL SWITCH ARMED</b> \u00B7 you can\u2019t save them' : P === 'x1' || P === 'x2' ? `Doombots left ${n(() => true)}` : P === 'o1' ? 'Stand on the pages: he can\u2019t rewrite them' : /^q\d$/.test(P) ? `Ink left ${n(() => true)}` : P === 'x3' ? 'Only the real Doom doesn\u2019t spark \u00B7 the Earths are falling' : P === 'w4' ? 'End the Broker' : P === 'k1' ? 'Hold him in your street' : P === 'k2' ? 'Keep him away from the market' : P === 'k3' ? (S.edge ? '<b>DRIVE HIM OFF THE EDGE</b>' : 'Wear him down') : P === 'z1' ? `Pieces left ${n(() => true)} \u00B7 they learn whoever hit them last` : P === 'z2' ? `Copies left ${n(() => true)} \u00B7 nobody fights their own copy` : P === 'z3' ? (S.final ? '<b>HIT IT WITH ALL THREE</b>' : `Adapted to: ${PARTY.map(h => `${esc(nmT(HEROES[h].name))} ${Math.round(S.res[h] * 100)}%`).join(' \u00B7 ')}`) : P === 's3' ? ({ shield: '<b>SHIELD</b>: only the hero can break it', hit: '<b>BIG HIT</b>: Echo, block it', scramble: '<b>SCRAMBLE</b>: Copycat, copy it (E)', open: '<b>IT\u2019S OPEN</b>' })[S.ph] : P === 'm1' || P === 'm2' ? 'Stop the clone' : P === 'm3' ? `Clones left ${n(() => true)}` : P === 'n1' ? 'Stop it. Don\u2019t kill it.' : P === 'n2' ? `The buyers\u2019 men left ${n(() => true)}` : P === 'n3' ? `Replicator cores left ${S.cores.filter(u => u.dead <= 0).length}/3` : P === 'l1' ? `The Broker\u2019s men left ${n(() => true)}` : P === 'l3' ? 'Stop the Broker' : P === 'l4' ? (EV.laststand ? '<b style="color:#FF6A4E">LAST STAND</b>' : `Stop the clone \u00B7 the dam holds ${Math.max(0, Math.ceil(S.dam == null ? 150 : S.dam))}s`) : P === 'c1' || P === 'l2' ? `${P === 'l2' ? `Men left ${n(() => true)} \u00B7 ` : ''}Fires out ${S.fires.filter(f => f.out).length}/4 \u00B7 people freed ${S.people.filter(q => q.free).length}/3` : P === 'c2' ? `Caught him ${S.tags}/5` : S.sb ? `Beat ${S.sb.B.name}${S.sb.mad ? ' · he’s angry now' : ''}` : 'Beat the Copycat') + tag;
   }
   function finaleCredits(){
     setTimeout(() => { if (lastComic) { scene.remove(lastComic); disposeDeep(lastComic); lastComic = null; } exitNormal(); placeMask(true); say('It was just a story. Probably. There’s a cheap mask on your floor that wasn’t there before.', 5200); }, 900);
@@ -7300,7 +7303,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (t === 'truth') return bzTruthTab(B);
     if (bzPhone(t, B)) return;
     if (t === 'map') return phMap();
-    if (t === 'story') { const s = curStep(); B.innerHTML = `<div class="phcard"><b>${SG.active ? `Chapter ${SG.ch + 1}: ${esc(nmT(SAGA[SG.ch].title))}` : SG.sagaDone ? 'The story is finished' : 'The story is waiting'}</b><small>${SG.active && s ? esc(nmT(stepText(s))) : 'Open the comic in the story vault, under the lair (a loose brick by the scoreboard).'}</small></div>`
+    if (t === 'story') { const s = curStep(); B.innerHTML = bkPhoneCard() + `<div class="phcard"><b>${SG.active ? `Chapter ${SG.ch + 1}: ${esc(nmT(SAGA[SG.ch].title))}` : SG.sagaDone ? 'The story is finished' : 'The story is waiting'}</b><small>${SG.active && s ? esc(nmT(stepText(s))) : 'Open the comic in the story vault, under the lair (a loose brick by the scoreboard).'}</small></div>`
       + SAGA.map((C, i) => { const done = SG.done.includes(i), cur = SG.ch === i && !done; return done || cur ? `<div class="phcard"><b>${i + 1}. ${esc(nmT(C.title))}${cur ? ' · now' : ''}</b><small>${esc(nmT(done ? RECAP[C.id] || C.tag : C.tag))}</small></div>` : ''; }).join(''); return; }
     if (t === 'jobs') { const q = JOB.q; B.innerHTML = `<div class="phcard"><b>Reputation: ${JOB.rep}</b><small>${JOB.done} job${JOB.done === 1 ? '' : 's'} done · ${JOB.sealed.size} stash house${JOB.sealed.size === 1 ? '' : 's'} shut down · ${Object.keys(SBK).length} of ${SBOSS.length} street bosses beaten</small></div>`
       + (q ? `<div class="phcard"><b>Now: ${esc(q.title)}</b><small>${esc(jobHud.textContent.replace(/^Job · reputation \d+/, '').replace(q.title, ''))}</small><div class="phrow"><button type="button" data-a="drop">Give up this job</button></div></div>` : '<div class="phcard"><b>No job right now</b><small>Look for people with a yellow ! inside the buildings, or call one of your contacts.</small></div>')
@@ -12731,7 +12734,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (A) { try { fightFrame(dt); } catch (err) { console.error(err); try { endFight(true); } catch (e2) { A = null; } say('Something went wrong, so the fight ended.', 3000); } }
     try { bzIdle(); spIdle(); evStep(dt, now); bossLook(); scarStep(dt, now); areaStep(dt, now); collideStep(dt); voidStep(dt, now); littleStep(dt, now); altStep(dt, now); instabStep(dt, now); } catch (err) { console.error(err); }
     try { meStep(dt, now); camStep(); if (DRV.on) driveCam(dt); bzCam(dt); } catch (err) { console.error(err); }
-    gfxRender(sceneOf());
+    { const sc0 = sceneOf(); if (sc0) gfxRender(sc0); }
     requestAnimationFrame(frame);
   }
   // ======================= BERSERKER: a space campaign of its own =======================
@@ -12930,8 +12933,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const radial = BZ.domes.filter(d => d.kind !== 'green' && d.kind !== 'hub').map(d => { const a = Math.atan2(d.z, d.x), r1 = Math.hypot(d.x, d.z) - d.R - 3.5; return [[Math.cos(a) * 36, Math.sin(a) * 36], [Math.cos(a) * r1, Math.sin(a) * r1]]; }).filter(p => Math.hypot(...p[1]) > 38);
     const hubR = [[[0, 21], [0, 32]], [[0, -21], [0, -32]]];
     const roadM = new THREE.MeshStandardMaterial({ map: bzRoadTex(), roughness: .95, polygonOffset: true, polygonOffsetFactor: -2, side: THREE.DoubleSide });
-    const road = new THREE.Mesh(bzMerge([bzRibbon(ring, 6, .07), ...BZ.P.roads.map(p => bzRibbon(p, 6, .08)), ...radial.map(p => bzRibbon(p, 4, .08)), ...hubR.map(p => bzRibbon(p, 4, .08))]), roadM); road.receiveShadow = true; road.userData.noPick = true; sc.add(road);
-    for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2 + .1, x = Math.cos(a) * 38.5, z = Math.sin(a) * 38.5; if (BZ.domes.some(d => Math.hypot(d.x - x, d.z - z) < d.R + 2)) continue; P.push(C3(.12, 5, 0x8A8F99, x, 2.5, z, 6), B3(1.2, .15, .3, 0x8A8F99, x - Math.cos(a) * .5, 5, z - Math.sin(a) * .5, -a + Math.PI / 2)); L.push(B3(.9, .08, .25, 0xFFF0C8, x - Math.cos(a) * .6, 4.9, z - Math.sin(a) * .6, -a + Math.PI / 2)); bzAdd({ t: 'c', x, z, r: .2 }); }
+    if (!BZ.P.story) { const road = new THREE.Mesh(bzMerge([bzRibbon(ring, 6, .07), ...BZ.P.roads.map(p => bzRibbon(p, 6, .08)), ...radial.map(p => bzRibbon(p, 4, .08)), ...hubR.map(p => bzRibbon(p, 4, .08))]), roadM); road.receiveShadow = true; road.userData.noPick = true; sc.add(road); }
+    for (let i = 0; i < (BZ.P.story ? 0 : 16); i++) { const a = i / 16 * Math.PI * 2 + .1, x = Math.cos(a) * 38.5, z = Math.sin(a) * 38.5; if (BZ.domes.some(d => Math.hypot(d.x - x, d.z - z) < d.R + 2)) continue; P.push(C3(.12, 5, 0x8A8F99, x, 2.5, z, 6), B3(1.2, .15, .3, 0x8A8F99, x - Math.cos(a) * .5, 5, z - Math.sin(a) * .5, -a + Math.PI / 2)); L.push(B3(.9, .08, .25, 0xFFF0C8, x - Math.cos(a) * .6, 4.9, z - Math.sin(a) * .6, -a + Math.PI / 2)); bzAdd({ t: 'c', x, z, r: .2 }); }
     // landing pads, with the station shuttle on the middle one
     BZ.P.pads.forEach(([x, z, k]) => { P.push([new THREE.CylinderGeometry(11, 11.6, .7, 6), 0x9A9EA6, x, .35, z]); for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2; L.push(S3(.22, i % 2 ? 0xFFC93C : 0x35C8F0, x + Math.cos(a) * 10.6, .78, z + Math.sin(a) * 10.6, 6)); }
       P.push(B3(1, .04, 7, 0xF4F1E8, x - 2, .72, z), B3(1, .04, 7, 0xF4F1E8, x + 2, .72, z), B3(4, .04, 1, 0xF4F1E8, x, .72, z)); bzAdd({ t: 'c', x, z, r: 10.6, top: .7 });
@@ -12957,11 +12960,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       const ex = x + Math.cos(a + 2.2) * R * .3, ez = z + Math.sin(a + 2.2) * R * .3, eg = bzTerr(ex, ez); P.push(B3(3, 1.6, 5, 0xFFC93C, ex, eg + 1.4, ez, a), B3(2.2, 1.6, 2, 0x3A3D48, ex, eg + 2.8, ez, a), B3(.5, .5, 5, 0xFFC93C, ex + Math.cos(a) * 2, eg + 3.5, ez + Math.sin(a) * 2, -.5, -a + Math.PI / 2)); bzAdd({ t: 'c', x: ex, z: ez, r: 2.5, top: eg + 3.6 });
       const s = bzSign(nm, 'HELIUM-3 · REGOLITH', '#E8501E', 7); s.position.set(sx, sg0 + 6, sz); sc.add(s); });
     // scattered boulders
-    const rg = rng(31), rocks = []; for (let i = 0; i < (lowFx ? 160 : 320); i++) { const x = (rg() - .5) * 500, z = (rg() - .5) * 500, s = .4 + Math.pow(rg(), 3) * 3.6; if (Math.hypot(x, z) < 95 || BZ.P.flat.some(([fx, fz, fr]) => Math.hypot(x - fx, z - fz) < fr) || BZ.P.roads.some(p => p.some((q, k) => k && segDist(x, z, p[k - 1][0], p[k - 1][1], q[0], q[1]) < 5 + s))) continue; rocks.push([x, z, s, rg() * 6]); if (s > 1.2) bzAdd({ t: 'c', x, z, r: s * .8, top: bzTerr(x, z) + s * 1.1 }); }
+    const rg = rng(31), rocks = []; for (let i = 0; i < (BZ.P.noRocks ? 0 : lowFx ? 160 : 320); i++) { const x = (rg() - .5) * 500, z = (rg() - .5) * 500, s = .4 + Math.pow(rg(), 3) * 3.6; if (Math.hypot(x, z) < 95 || BZ.P.flat.some(([fx, fz, fr]) => Math.hypot(x - fx, z - fz) < fr) || BZ.P.roads.some(p => p.some((q, k) => k && segDist(x, z, p[k - 1][0], p[k - 1][1], q[0], q[1]) < 5 + s))) continue; rocks.push([x, z, s, rg() * 6]); if (s > 1.2) bzAdd({ t: 'c', x, z, r: s * .8, top: bzTerr(x, z) + s * 1.1 }); }
     const rockM = new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1, 0), new THREE.MeshStandardMaterial({ color: 0x8A8780, roughness: 1, flatShading: true }), rocks.length);
     rocks.forEach(([x, z, s, r], i) => rockM.setMatrixAt(i, m4.compose(V(x, bzTerr(x, z) + s * .3, z), q4.setFromEuler(e4.set(r, r * 2, r * .5)), V(s, s * .7, s * 1.1)))); rockM.castShadow = rockM.receiveShadow = true; rockM.userData.noPick = true; sc.add(rockM);
     // a flag by the hub, and a plaque
-    P.push(C3(.06, 5, 0xD8DCE2, 6, 2.5, 26, 6), B3(1.8, 1.1, .03, 0xF4F4F4, 6.9, 4.4, 26), B3(1.8, .3, .04, 0xFF9933, 6.9, 4.8, 26), B3(1.8, .3, .04, 0x138808, 6.9, 4.0, 26));
+    if (!BZ.P.story) P.push(C3(.06, 5, 0xD8DCE2, 6, 2.5, 26, 6), B3(1.8, 1.1, .03, 0xF4F4F4, 6.9, 4.4, 26), B3(1.8, .3, .04, 0xFF9933, 6.9, 4.8, 26), B3(1.8, .3, .04, 0x138808, 6.9, 4.0, 26));
     // merge it all
     const solid = new THREE.Mesh(bake(P), propM()); solid.castShadow = solid.receiveShadow = true; solid.userData.noPick = true; sc.add(solid);
     const glow = new THREE.Mesh(bake(L), BZ.lightM); glow.userData.noPick = true; sc.add(glow);
@@ -13068,10 +13071,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ---------- you: walking, jumping, the jetpack, web-swinging ----------
   const bzJetMax = () => 100 + 35 * BZ.s.upg.jet;
   function bzInput(){ let f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0), s = (keys.d ? 1 : 0) - (keys.a ? 1 : 0); if (Math.hypot(joy.x, joy.y) > .15) { f -= joy.y; s += joy.x; } return [clamp(f, -1, 1), clamp(s, -1, 1)]; }
-  function bzJump(){ if (BZ.bug) { if (!BZ.bug.air) { BZ.bug.air = true; BZ.bug.vy = 6; tone(260, .15, 'sine', .04, 400); } return; } if (BZ.grounded) { BZ.v.y = BZ.crouch ? 8.4 : 6.6; BZ.grounded = false; BZ.jetArm = false; tone(420, .08, 'sine', .04, 620); } else BZ.jetArm = true; }
+  function bzJump(){ if (BZ.P.orbs) return bkOrbJump(); if (BZ.bug) { if (!BZ.bug.air) { BZ.bug.air = true; BZ.bug.vy = 6; tone(260, .15, 'sine', .04, 400); } return; } if (BZ.grounded) { BZ.v.y = BZ.crouch ? 8.4 : 6.6; BZ.grounded = false; BZ.jetArm = false; tone(420, .08, 'sine', .04, 620); } else BZ.jetArm = true; }
   function bzCrouch(on){ BZ.crouch = on; if (BZ.padEl) BZ.padEl.querySelector('[data-b="crouch"]').classList.toggle('on', on); }
   function bzWeb(){
-    if (BZ.bug || BZ.web || BZ.dead) return; ndc.set(0, 0); ray.setFromCamera(ndc, camera); const reach = BZ.gi.some(S => S.cel && S.alive) ? 200 : 110;
+    if (BZ.P.orbs) return bkOrbWeb(); if (BZ.bug || BZ.web || BZ.dead) return; ndc.set(0, 0); ray.setFromCamera(ndc, camera); const reach = BZ.gi.some(S => S.cel && S.alive) ? 200 : 110;
     let hit = ray.intersectObjects(BZ.anchors, false).find(h => h.distance < reach && h.point.y > BZ.feet + 2);
     if (!hit && BZ.P.wallWeb) hit = ray.intersectObject(BZ.ground, false).find(h => h.distance < reach && h.point.y > BZ.feet + 4 && h.face && h.face.normal.y < .6);
     if (!hit) { if (!BZ.webHint || BZ.t - BZ.webHint > 6) { BZ.webHint = BZ.t; say('Nothing to swing from there. Aim at a comms tower, a drill rig, a tube or a dome.', 2600); } return; }
@@ -13080,6 +13083,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function bzWebEnd(){ if (!BZ.web) return; BZ.web = null; BZ.v.y += 2.5; BZ.v.x *= 1.1; BZ.v.z *= 1.1; tone(700, .06, 'sine', .03, 1000); }
   function bzMove(dt){
+    if (BZ.P.orbs) return bkOrbMove(dt);
     const v = BZ.v, G = BZ.web ? 9 : BZ.P.G, upg = BZ.s.upg;
     const [f, s] = bzInput(), turn = (keys.arrowleft ? 1 : 0) - (keys.arrowright ? 1 : 0); yaw += turn * 1.8 * dt; const mag = Math.max(1, Math.hypot(f, s));
     if (BZ.web && BZ.web.obj) BZ.web.p.copy(BZ.web.obj.localToWorld(BZ.web.l.clone()));
@@ -13107,7 +13111,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ---------- fighting ----------
   function bzPunch(){
     if (BZ.atkT > 0 || BZ.bug || BZ.dead) return; BZ.atkT = .42; BZ.swing = .3; bzNoiseAdd(.07); tone(200, .08, 'sawtooth', .03, 110);
-    const fx = -Math.sin(yaw), fz = -Math.cos(yaw), dmg = 34 * (1 + .2 * BZ.s.upg.blast); let best = null, bd = 99;
+    const fx = -Math.sin(yaw), fz = -Math.cos(yaw), dmg = 34 * (1 + .2 * BZ.s.upg.blast) * bkPow(); let best = null, bd = 99;
     for (const e of BZ.ents) { if (e.hp <= 0) continue; const dx = e.x - pos.x, dz = e.z - pos.z, d = Math.hypot(dx, dz), dy = e.y + e.h * .5 - (BZ.feet + 1); if (d > 2.3 + e.r || Math.abs(dy) > 1.8 + e.r) continue; if (d > e.r && (dx * fx + dz * fz) / (d || 1) < .3) continue; if (d < bd) { bd = d; best = e; } }
     if (BZ.grab && BZ.giantPunch) return BZ.giantPunch(dmg);
     if (best) { bzHit(best, dmg, fx * 5, fz * 5); return; }
@@ -13116,13 +13120,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function bzBlast(){
     if (BZ.blastT > 0 || BZ.dead) return; BZ.blastT = .55; bzNoiseAdd(.12); ndc.set(0, 0); ray.setFromCamera(ndc, camera); const d = ray.ray.direction.clone(), p = camera.position.clone().addScaledVector(d, .8); p.y -= .2;
-    const m = new THREE.Mesh(BZ.g.web, BZ.m.web); m.position.copy(p); BZ.sc.add(m); BZ.shots.push({ m, p, v: d.multiplyScalar(72), life: 1.4, dmg: 24 * (1 + .3 * BZ.s.upg.blast), mine: true }); tone(1200, .1, 'triangle', .04, 400); BZ.swing = .2;
+    const m = new THREE.Mesh(BZ.g.web, BZ.m.web); m.position.copy(p); BZ.sc.add(m); BZ.shots.push({ m, p, v: d.multiplyScalar(72), life: 1.4, dmg: 24 * (1 + .3 * BZ.s.upg.blast) * bkWebUp(), mine: true }); tone(1200, .1, 'triangle', .04, 400); BZ.swing = .2;
   }
   function bzHit(e, dmg, kx, kz){ e.hp -= dmg; e.flash = .15; e.vx = (e.vx || 0) + (kx || 0); e.vz = (e.vz || 0) + (kz || 0); e.st = 'hunt'; e.seen = BZ.t; e.lx = pos.x; e.lz = pos.z; tone(520 + Math.random() * 200, .06, 'square', .04, 200); bzSpark(e.x, e.y + e.h * .5, e.z, 0xFFE0A0, 6); if (e.hp <= 0) bzKill(e); }
   function bzHurt(d){ if (BZ.dead || d <= 0) return; d *= (1 - .15 * BZ.s.upg.arm) * .6; BZ.hp -= d; BZ.hurtT = 0; BZ.pain = Math.min(.75, (BZ.pain || 0) + d / 30); tone(150, .14, 'square', .045, 90); if (!reduce && !lowFx) BZ.shake = Math.max(BZ.shake, .15); if (BZ.hold) BZ.hold.t = 0; if (BZ.hp <= 0) bzDown(); }
   function bzDown(){ BZ.dead = true; BZ.hp = 0; if (BZ.bug) bzBugOut(true); if (BZ.web) bzWebEnd(); say('Suit breach!', 1600); tone(90, 1.2, 'sawtooth', .06, 40);
-    setTimeout(() => fade(() => { if (!BZ.sc) return; BZ.dead = false; BZ.hp = bzHpMax(); BZ.noise = 0; BZ.ents.forEach(e => { if (e.st === 'hunt') e.st = e.raid ? 'raid' : 'patrol'; }); const hub = BZ.domes[0]; pos.set(hub.x - 13, 0, hub.z + 2); BZ.feet = 0; pos.y = 1.6; BZ.v.set(0, 0, 0); yaw = -Math.PI / 2; pitch = 0; if (BZ.job && BZ.job.k === 'rescue' && BZ.job.npc && BZ.job.npc.st === 'follow') BZ.job.npc.st = 'stranded'; say('The medbay patched up your suit. Lie low for a bit: they lost track of you.', 4200); }, '#000000'), 1200); }
-  const bzHpMax = () => 100 + 20 * BZ.s.upg.arm;
+    setTimeout(() => fade(() => { if (!BZ.sc) return; BZ.dead = false; BZ.hp = bzHpMax(); BZ.noise = 0; BZ.ents.forEach(e => { if (e.st === 'hunt') e.st = e.raid ? 'raid' : 'patrol'; }); const hub = BZ.domes[0]; if (hub) { pos.set(hub.x - 13, 0, hub.z + 2); BZ.feet = 0; } else { const R = BZ.P.spawn || [BZ.P.shuttle[0], BZ.P.shuttle[1]]; pos.set(R[0], 0, R[1]); BZ.feet = bzSupport(R[0], R[1], 50); } pos.y = BZ.feet + 1.6; BZ.v.set(0, 0, 0); yaw = -Math.PI / 2; pitch = 0; if (BZ.P.onEnter) BZ.P.onEnter(); if (BZ.job && BZ.job.k === 'rescue' && BZ.job.npc && BZ.job.npc.st === 'follow') BZ.job.npc.st = 'stranded'; say(BZ.P.story ? 'You come to a little way back. Your suit has patched itself up.' : 'The medbay patched up your suit. Lie low for a bit: they lost track of you.', 4200); }, '#000000'), 1200); }
+  const bzHpMax = () => 100 + 20 * BZ.s.upg.arm + bkHpUp();
   // ---------- effects ----------
   function bzSpark(x, y, z, col, n){ if (!BZ.sc) return; const k = lowFx ? Math.ceil(n / 3) : n; for (let i = 0; i < k; i++) { if (BZ.fx.length > 140) break; const m = new THREE.Mesh(BZ.g.spark, BZ.m.spark); m.position.set(x, y, z); m.material = col === 0xFFE0A0 ? BZ.m.spark : BZ.m.ember; BZ.sc.add(m); BZ.fx.push({ m, v: V((Math.random() - .5) * 8, Math.random() * 6, (Math.random() - .5) * 8), life: .5 + Math.random() * .4, g: 1 }); } }
   function bzPuff(x, y, z){ if (lowFx || BZ.fx.length > 140 || Math.random() < .5) return; const m = new THREE.Mesh(BZ.g.puff, BZ.m.puff); m.position.set(x, y, z); BZ.sc.add(m); BZ.fx.push({ m, v: V((Math.random() - .5), -4 - Math.random() * 2, (Math.random() - .5)), life: .35, g: 0, grow: 3 }); }
@@ -13151,6 +13155,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   const BZ_K = { drone: { hp: 22, r: .8, h: .6, spd: 8, sight: 28 }, hunter: { hp: 45, r: .5, h: 1.8, spd: 5.4, sight: 22 }, crawler: { hp: 120, r: 1.7, h: 1.6, spd: 4, sight: 20 } };
   function bzMesh(k){
+    if (k === 'reader') return bkReaderMesh();
     const g = new THREE.Group(), M = BZ.m, G = BZ.g, add = (geo, m, x, y, z, p = g) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = !lowFx; p.add(o); return o; }, parts = {};
     if (k === 'drone') { const c = add(G.dCore, M.hull, 0, 0, 0); c.scale.set(1, .55, 1.25); add(G.eye, M.seam, 0, 0, -.72); const r = add(G.ring, M.seam, 0, 0, 0); r.rotation.x = Math.PI / 2; r.scale.setScalar(1.2);
       parts.rot = new THREE.Group(); g.add(parts.rot); [0, 1].forEach(i => { const b = add(G.blade, M.hull2, 0, .3, 0, parts.rot); b.rotation.y = i * Math.PI / 2; }); }
@@ -13169,7 +13174,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function bzKill(e){ e.hp = 0; e.dead = 2; bzBoom(e.x, e.y + e.h * .5, e.z, false); BZ.sc.remove(e.g); BZ.s.kills++; const pay = e.k === 'drone' ? 3 : e.k === 'hunter' ? 5 : 10; BZ.s.cr += pay; bzCredit(pay); }
   function bzCredit(n){ if (!n) return; BZ.crPop = (BZ.crPop || 0) + n; clearTimeout(bzCredit.t); bzCredit.t = setTimeout(() => { BZ.crPop = 0; }, 1800); }
   function bzMakeNoise(x, z, rad){ rad *= BZ.P.noiseK || 1; for (const e of BZ.ents) { if (e.hp <= 0) continue; if (Math.hypot(e.x - x, e.z - z) < rad && e.st !== 'hunt') { e.st = 'hunt'; e.seen = BZ.t - 4; e.lx = x + (Math.random() - .5) * 8; e.lz = z + (Math.random() - .5) * 8; } } if (BZ.giantNoise) BZ.giantNoise(x, z, rad); }
-  function bzNoiseAdd(n){ if (BZ.s && BZ.ws.out) BZ.noise = Math.min(1, BZ.noise + n); }
+  function bzNoiseAdd(n){ if (BZ.s && (BZ.ws.out || BZ.P.stealth)) BZ.noise = Math.min(1, BZ.noise + n); }
   function bzShoot(from, tx, ty, tz, spd, dmg){ const p = V(from.x, from.y, from.z), d = V(tx - p.x, ty - p.y, tz - p.z).normalize(), m = new THREE.Mesh(BZ.g.bolt, BZ.m.bolt); m.position.copy(p); m.lookAt(tx, ty, tz); BZ.sc.add(m); BZ.shots.push({ m, p, v: d.multiplyScalar(spd), life: 2.2, dmg }); tone(880, .07, 'square', .02, 300); }
   function bzThink(e){
     const dp = Math.hypot(pos.x - e.x, pos.z - e.z), D = BZ_K[e.k], sight = D.sight * (BZ.sightK || 1) * (BZ.crouch ? .55 : 1) * (BZ.inDome ? .5 : 1) * (BZ.bug ? 1.3 : 1);
@@ -13195,6 +13200,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (e.k === 'drone') { const ty2 = e.stun > 0 ? gy + 1 : hunting ? Math.max(gy + 4, BZ.feet + 4.5) : gy + e.alt; e.y += (ty2 + Math.sin(now / 500 + e.ph) * .4 - e.y) * Math.min(1, dt * 2); e.parts.rot.rotation.y += dt * 30; }
     else { if (e.vy || e.y > gy + .05) { e.vy -= BZ.P.G * dt; e.y += e.vy * dt; if (e.y <= gy) { e.y = gy; e.vy = 0; } } else e.y = gy; const t = now / 1000 * (e.k === 'hunter' ? 9 : 6) * Math.min(1, sp / 2 + .2) + e.ph, mv = Math.min(1, sp / 3);
       if (e.k === 'hunter') { e.parts.legs.forEach((L, i) => { const s = Math.sin(t + i * Math.PI); L.hip.rotation.x = s * .7 * mv; L.knee.rotation.x = Math.max(0, -Math.cos(t + i * Math.PI)) * .9 * mv; }); e.parts.arms.forEach((A2, i) => A2.rotation.x = e.atk > 0 ? -1.4 : -Math.sin(t + i * Math.PI) * .5 * mv); }
+      else if (e.k === 'reader') { e.parts.arms.forEach((a, i) => a.rotation.x = Math.sin(t * .5 + i) * .3 - (hunting ? .9 : 0)); e.y = gy + .3 + Math.sin(now / 700 + e.ph) * .15; }
       else e.parts.legs.forEach((h, i) => { const s = Math.sin(t + (i % 2 ? 0 : Math.PI) + Math.floor(i / 2) * 2.1); h.rotation.x = s * .45 * mv; h.rotation.z = Math.max(0, Math.cos(t + (i % 2 ? 0 : Math.PI) + Math.floor(i / 2) * 2.1)) * .3 * mv * h.userData.sd; }); }
     e.atk = Math.max(0, (e.atk || 0) - dt);
     // attacks
@@ -13203,6 +13209,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (hunting && !BZ.dead) {
         if (e.k === 'drone' && dp < 32) { e.cd = 2.6 + Math.random() * 1.2; bzShoot({ x: e.x, y: e.y, z: e.z }, pos.x + BZ.v.x * .3, pY, pos.z + BZ.v.z * .3, 30, 6); }
         else if (e.k === 'hunter') { if (dp < 2.3 && Math.abs(pY - e.y - 1) < 2) { e.cd = 1.1; e.atk = .3; bzHurt(9); tone(160, .1, 'sawtooth', .04); } else if (dp < 24 && dp > 6) { e.cd = 5; for (let i = 0; i < 3; i++) setTimeout(() => { if (e.hp > 0 && BZ.sc) bzShoot({ x: e.x, y: e.y + 1.5, z: e.z }, pos.x, BZ.feet + 1, pos.z, 26, 4); }, i * 140); } }
+        else if (e.k === 'reader') { if (dp < 16) { e.cd = 3 + Math.random(); bzShoot({ x: e.x, y: e.y + 2.6, z: e.z }, pos.x, BZ.feet + 1, pos.z, 22, 7); say('“Shhhh.”', 900); } }
         else if (e.k === 'crawler') { if (dp < 3.6 && Math.abs(pY - e.y - 1) < 2.5) { e.cd = 1.4; bzHurt(14); BZ.v.x += (pos.x - e.x) / dp * 6; BZ.v.z += (pos.z - e.z) / dp * 6; BZ.v.y += 3; BZ.grounded = false; tone(100, .2, 'sawtooth', .05); } else if (dp < 12 && dp > 5 && e.y <= gy + .1) { e.cd = 5; e.vy = 5.5; e.vx = (pos.x - e.x) / dp * 11; e.vz = (pos.z - e.z) / dp * 11; tone(220, .3, 'sawtooth', .04, 90); } }
       } else if (e.prey && e.k === 'drone' && d < 26) { e.cd = 2.4; bzShoot({ x: e.x, y: e.y, z: e.z }, e.prey.x, bzTerr(e.prey.x, e.prey.z) + 1, e.prey.z, 26, 0); }
       else if (e.st === 'raid' && e.raid && Math.hypot(e.raid.x - e.x, e.raid.z - e.z) < e.raid.R + 8) { e.cd = 1.2 + Math.random(); e.raid.hp -= e.k === 'crawler' ? 4 : 2; if (e.k !== 'crawler') bzShoot({ x: e.x, y: e.y + 1, z: e.z }, e.raid.x, 4, e.raid.z, 24, 0); else { bzSpark(e.x - Math.sin(e.yaw) * 2, 1, e.z - Math.cos(e.yaw) * 2, 0xFF6A2A, 4); tone(120, .15, 'square', .03); } }
@@ -13302,7 +13309,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const lab = BZ.domes.find(d => d.id === 'lab'); if (lab && lab.jar) { const frag = new THREE.Mesh(BZ.g.dCore, BZ.m.hull); frag.position.set(lab.jar[0], 1.8, lab.jar[1]); frag.scale.setScalar(.9); BZ.sc.add(frag); const eye = new THREE.Mesh(BZ.g.eye, BZ.m.seam); eye.position.set(lab.jar[0], 1.8, lab.jar[1] - .56); BZ.sc.add(eye); BZ.frag = frag; }
     if (loaded) { const pop = Math.min(10, 2 + BZ.facs.filter(F => F.hp > 0).length * 3); for (let i = 0; i < pop; i++) { const c = bzInfCell() || BZ.P.facs[i % 3]; const e = bzSpawn(i % 3 ? 'drone' : 'hunter', c[0] + (Math.random() - .5) * 20, c[1] + (Math.random() - .5) * 20, { home: i % 3 }); if (e) e.st = 'patrol'; } }
   }
-  function bzCheckClear(){ if (BZ.ws.clear || BZ.ws.fac.some(v => v > 0) || BZ.ws.bea.some(Boolean) || (BZ.ws.sen || [0, 0]).some(v => v !== 2)) return; if (BZ.ws.cel !== 2) { if (!BZ.ws.cel) { BZ.ws.cel = 1; bzSave(); setTimeout(() => bzCelSummon(false), 3000); } return; } BZ.ws.clear = 1; if (BZ.P.id !== 'moon') { BZ.s.w = BZ.s.w || {}; BZ.s.w[BZ.P.id] = 'clear'; } if (BZ.P.final) { BZ.s.done = 1; setTimeout(() => { bzAlert('THE BERSERKERS ARE FINISHED', 'Every world is quiet. Thank you for playing.', '#FFC93C'); say('The Seed is scrap. Out across the system, every berserker machine goes dark at once. The signal stops counting.', 9000); }, 4000); } BZ.s.cr += 150; bzCredit(150); bzSave(); bzMusic('calm');
+  function bzCheckClear(){ if (BZ.P.story) return; if (BZ.ws.clear || BZ.ws.fac.some(v => v > 0) || BZ.ws.bea.some(Boolean) || (BZ.ws.sen || [0, 0]).some(v => v !== 2)) return; if (BZ.ws.cel !== 2) { if (!BZ.ws.cel) { BZ.ws.cel = 1; bzSave(); setTimeout(() => bzCelSummon(false), 3000); } return; } BZ.ws.clear = 1; if (BZ.P.id !== 'moon') { BZ.s.w = BZ.s.w || {}; BZ.s.w[BZ.P.id] = 'clear'; } if (BZ.P.final) { BZ.s.done = 1; setTimeout(() => { bzAlert('THE BERSERKERS ARE FINISHED', 'Every world is quiet. Thank you for playing.', '#FFC93C'); say('The Seed is scrap. Out across the system, every berserker machine goes dark at once. The signal stops counting.', 9000); }, 4000); } BZ.s.cr += 150; bzCredit(150); bzSave(); bzMusic('calm');
     setTimeout(() => { bzAlert(BZ.P.id === 'moon' ? 'TRANQUILITY IS SAFE' : `${BZ.P.title.toUpperCase()} IS CLEAR`, BZ.P.id === 'moon' ? 'For now. The signal came from much further out.' : 'On to the next world.', '#3CE870'); say(BZ.P.id === 'moon' ? 'Control: “The factories are scrap and the beacons are quiet. But that signal didn’t start here. It came from out past Mars.”' : `${BZ.P.title} is clear. The ship is waiting at the pad: the star map on the station shows where they went next.`, 7000); }, 1500); }
   // ---------- jobs ----------
   const bzJobAt = j => j.step === 0 ? j.from : j.to;
@@ -13314,7 +13321,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       return { k: 'rescue', title: 'Find a stranded colonist', desc: 'Their rover broke down and their oxygen is running low. Find them and bring them back to any dome.', pay: 45, from: s, to: null, step: 0, t: 210 }; }
     const to = dome; const bx = BZ.cargo || [124, 73]; return { k: 'deliver', title: `Deliver supplies to ${to.name}`, desc: 'Pick up a crate at the cargo depot by the landing pads, then carry it to the dome’s airlock.', pay: 30, from: bx, to: bzDoorFor(to, bx[0], bx[1])[1], dome: to.id, step: 0 };
   }
-  function bzOffers(){ while (BZ.offers.length < 3) BZ.offers.push(bzMkOffer()); }
+  function bzOffers(){ if (BZ.P.story) return; while (BZ.offers.length < 3) BZ.offers.push(bzMkOffer()); }
   function bzJobStart(o){ if (BZ.job) return; BZ.job = o; BZ.offers = BZ.offers.filter(q => q !== o); tone(784, .15, 'triangle', .05); say(`Job: ${o.title}. ${o.desc}`, 4200);
     if (o.k === 'rescue') { const a = avatar(Object.assign({}, LOOK0, { outfit: 'armor', c1: 7, c2: 1, mask: 1, skin: 3 })), [x, z] = o.from; a.g.position.set(x, bzTerr(x, z), z); BZ.sc.add(a.g); const p = { a, x, z, d: null, st: 'stranded', name: BZ_NAMES[Math.floor(Math.random() * BZ_NAMES.length)], line: '', face: 0, spd: 1.5, said: 1 }; BZ.ppl.push(p); o.npc = p; }
     if (o.k === 'repair') o.sparkT = 0; }
@@ -13330,9 +13337,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function bzPrompts(){
     const L = [], at = (x, z, r) => Math.hypot(pos.x - x, pos.z - z) < r;
     if (BZ.bug) { L.push({ t: 'Get out of the buggy', go: () => bzBugOut() }); return L[0]; }
-    if (at(BZ.P.shuttle[0], BZ.P.shuttle[1] + 3, 4.5) && BZ.feet < 2) L.push({ t: 'Board the shuttle back to the station', go: () => bzLeave() });
+    bkPrompts(L);
+    if (!BZ.P.story && at(BZ.P.shuttle[0], BZ.P.shuttle[1] + 3, 4.5) && BZ.feet < 2) L.push({ t: 'Board the shuttle back to the station', go: () => bzLeave() });
     for (const b of BZ.bugs) if (at(b.x, b.z, 3.2)) { L.push({ t: 'Drive the moon buggy', go: () => bzBugIn(b) }); break; }
-    const hub = BZ.domes[0]; if (hub.term && at(hub.term[0], hub.term[1], 2.2)) L.push({ t: 'Use the colony terminal', go: () => { phoneOpen('jobs'); } });
+    const hub = BZ.domes[0]; if (hub && hub.term && at(hub.term[0], hub.term[1], 2.2)) L.push({ t: 'Use the colony terminal', go: () => { phoneOpen('jobs'); } });
     const j = BZ.job; if (j) { const p = bzJobAt(j);
       if (j.k === 'repair' && j.step === 0 && at(p[0], p[1], 3)) L.push({ t: 'Hold E to repair', hold: 2.5, go: () => bzJobDone() });
       if (j.k === 'rescue' && j.step === 0 && j.npc && at(j.npc.x, j.npc.z, 2.6)) L.push({ t: 'Hold E to help them up', hold: 1.2, go: () => { j.step = 1; j.npc.st = 'follow'; say(`${j.npc.name}: “Oh thank god. Get me to a dome. Any dome.”`, 3200); } });
@@ -13368,22 +13376,23 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function bzHudStep(){
     const $h = id => BZ.hud.querySelector(id), st = $h('#bzSt'), out = BZ.ws.out, alive = BZ.facs.filter(F => F.hp > 0).length, bea = BZ.ws.bea.filter(Boolean).length;
     st.textContent = BZ.ws.clear ? `Safe · ${BZ.s.cr} cr` : out ? `OUTBREAK · ${Math.round(bzInfPct() * 100)}% infected · ${BZ.s.cr} cr` : `All quiet · ${BZ.s.cr} cr`; st.classList.toggle('red', !!out && !BZ.ws.clear);
-    $h('#bzHp').style.width = `${clamp(BZ.hp / bzHpMax(), 0, 1) * 100}%`; $h('#bzJet').style.width = `${BZ.jet / bzJetMax() * 100}%`; $h('#bzNr').hidden = !out; $h('#bzNoise').style.width = `${BZ.noise * 100}%`;
+    $h('#bzHp').style.width = `${clamp(BZ.hp / bzHpMax(), 0, 1) * 100}%`; $h('#bzJet').style.width = `${BZ.jet / bzJetMax() * 100}%`; $h('#bzNr').hidden = !(out || BZ.P.stealth); $h('#bzNoise').style.width = `${BZ.noise * 100}%`;
     const j = BZ.job, obj = $h('#bzObj'); let txt = '';
     if (BZ.raid) txt = `Defend ${BZ.raid.d.name}: ${BZ.raid.list.filter(e => e.hp > 0).length} machines left · dome ${Math.max(0, Math.round(BZ.raid.d.hp))}%`;
     else if (j) { const p = bzJobAt(j); txt = `${j.title} · ${Math.round(Math.hypot(p[0] - pos.x, p[1] - pos.z))} m${j.k === 'rescue' ? ` · oxygen ${Math.max(0, Math.round(j.t))} s` : ''}${j.k === 'deliver' ? (j.step ? ' · drop it at the airlock' : ' · pick up a crate') : ''}`; }
     else if (out && !BZ.ws.clear) txt = `${alive} factor${alive === 1 ? 'y' : 'ies'} · ${bea} beacon${bea === 1 ? '' : 's'} left · phone for the map`;
     else txt = 'Phone (M) for colony jobs and the map';
-    if (BZ.crPop) txt += `  +${BZ.crPop} cr`; obj.textContent = txt;
+    if (BZ.crPop) txt += `  +${BZ.crPop} cr`; obj.textContent = txt; if (BZ.P.story) bkHud(obj);
   }
-  function bzWaypoint(){ let p = null; if (BZ.raid) p = [BZ.raid.d.x, BZ.raid.d.z]; else if (BZ.job) p = bzJobAt(BZ.job); else if (BZ.wp) p = BZ.wp; if (BZ.job && BZ.job.k === 'rescue' && BZ.job.step === 1) p = null;
-    BZ.wpM.visible = !!p; if (p) { BZ.wpM.position.set(p[0], bzTerr(p[0], p[1]) + 30, p[1]); BZ.wpM.material.color.setHex(BZ.raid ? 0xFF3C3C : 0xFFC93C); if (BZ.wp && Math.hypot(BZ.wp[0] - pos.x, BZ.wp[1] - pos.z) < 8 && !BZ.job && !BZ.raid) BZ.wp = null; } }
+  function bzWaypoint(){ let p = null; if (BZ.raid) p = [BZ.raid.d.x, BZ.raid.d.z]; else if (BZ.job) p = bzJobAt(BZ.job); else if (bkTarget()) p = bkTarget(); else if (BZ.wp) p = BZ.wp; if (BZ.job && BZ.job.k === 'rescue' && BZ.job.step === 1) p = null;
+    BZ.wpM.visible = !!p && Math.hypot(p[0] - pos.x, p[1] - pos.z) > 9; if (p) { BZ.wpM.position.set(p[0], p[2] != null ? p[2] + 8 : bzTerr(p[0], p[1]) + 30, p[1]); BZ.wpM.material.color.setHex(BZ.raid ? 0xFF3C3C : 0xFFC93C); if (BZ.wp && Math.hypot(BZ.wp[0] - pos.x, BZ.wp[1] - pos.z) < 8 && !BZ.job && !BZ.raid) BZ.wp = null; } }
   // ---------- music: calm until it isn't ----------
   function bzMusic(mood){ const a = audio(); if (!a || (BZ.mus && BZ.mus.mood === mood)) return; bzMusicStop(); const g = a.createGain(); g.gain.value = 0; g.connect(out()); const nodes = [], osc = (type, f, vol, dst) => { const o = a.createOscillator(), og = a.createGain(); o.type = type; o.frequency.value = f; og.gain.value = vol; o.connect(og); og.connect(dst || g); o.start(); nodes.push(o); return [o, og]; };
     if (mood === 'calm') { [110, 164.8, 220.4, 329.6].forEach((f, i) => { const [, og] = osc('sine', f, .18), [l] = osc('sine', .05 + i * .03, .12, og.gain); void l; }); }
+    else if (mood === 'eerie') bkEerie(a, osc, g);
     else if (mood === 'giant') { const flt = a.createBiquadFilter(); flt.type = 'lowpass'; flt.frequency.value = 260; flt.connect(g); [36.7, 36.9, 55, 73.4].forEach(f => osc('sawtooth', f, .3, flt)); const [, lg] = osc('sine', .25, 180, flt.frequency); void lg; const [, tg] = osc('sine', .5, .35, g.gain); void tg; osc('triangle', 293.7, .05); osc('triangle', 311.1, .04); }
     else { const flt = a.createBiquadFilter(); flt.type = 'lowpass'; flt.frequency.value = 400; flt.connect(g); osc('sawtooth', 55, .35, flt); osc('sawtooth', 55.4, .3, flt); const [, lg] = osc('sine', .5, 300, flt.frequency); void lg; osc('sine', 880, .04); osc('sine', 1318.5, .025); const [, tg] = osc('square', 2, .25, g.gain); void tg; }
-    g.gain.linearRampToValueAtTime(mood === 'calm' ? .03 : mood === 'giant' ? .04 : .028, a.currentTime + 3); BZ.mus = { mood, g, nodes }; }
+    g.gain.linearRampToValueAtTime(mood === 'calm' || mood === 'eerie' ? .03 : mood === 'giant' ? .04 : .028, a.currentTime + 3); BZ.mus = { mood, g, nodes }; }
   function bzMusicStop(){ if (!BZ.mus) return; const a = audio(), { g, nodes } = BZ.mus; BZ.mus = null; try { g.gain.cancelScheduledValues(a.currentTime); g.gain.setValueAtTime(g.gain.value, a.currentTime); g.gain.linearRampToValueAtTime(0, a.currentTime + 1.2); } catch (e) {} setTimeout(() => { nodes.forEach(n => { try { n.stop(); } catch (e) {} }); g.disconnect(); }, 1400); }
   // ---------- every frame on the Moon ----------
   function bzStep(dt, now){
@@ -13400,7 +13409,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if ((BZ.saveT += dt) > 5) { BZ.saveT = 0; bzSave(); }
     if (BZ.flick > 0) { BZ.flick -= dt; const on = Math.random() < .35; BZ.lightM.color.setScalar(on ? .15 : 1); BZ.flickEl.style.opacity = reduce ? 0 : on ? .35 : 0; if (BZ.flick <= 0) { BZ.lightM.color.setScalar(1); BZ.flickEl.style.opacity = 0; } }
     else if (S.out && !S.clear) BZ.lightM.color.setRGB(1, .55 + .35 * Math.sin(now / 400), .55 + .35 * Math.sin(now / 400));
-    bzPeopleStep(dt, now); bzRoverStep(dt); bzAlienStep(dt, now); bzSiteStep(dt, now);
+    bzPeopleStep(dt, now); bzRoverStep(dt); bzAlienStep(dt, now); bzSiteStep(dt, now); bkStep(dt, now);
     for (const e of BZ.ents) bzEntStep(e, dt, now); if (BZ.ents.length > 40 || (BZ.entsClean = (BZ.entsClean || 0) + dt) > 5) { BZ.entsClean = 0; BZ.ents = BZ.ents.filter(e => e.hp > 0); }
     bzShotStep(dt); bzFxStep(dt);
     if (S.out) { BZ.facs.forEach(F => bzFacStep(F, dt, now)); bzBeaconStep(dt); bzRaidStep(dt);
@@ -13421,6 +13430,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function bzCam(dt){
     if (inWorld && zone === 'sp' && SPF.sc) return spCam(dt);
     if (!BZ.sc || !(inWorld && zone === 'mc')) return;
+    if (BZ.P.orbs) bkOrbCam();
     if (BZ.bug) { const b = BZ.bug; viewG.visible = false; BZ.cy = BZ.cy == null ? b.yaw : BZ.cy + angDiff(BZ.cy, b.yaw) * Math.min(1, dt * 3.5); const cx = b.x + Math.sin(BZ.cy) * 8.5, cz = b.z + Math.cos(BZ.cy) * 8.5; camera.position.set(cx, Math.max(b.y + 3.6, bzTerr(cx, cz) + 1.2), cz); camera.lookAt(b.x - Math.sin(BZ.cy) * 5, b.y + 1.4, b.z - Math.cos(BZ.cy) * 5); }
     else BZ.cy = null;
     if (BZ.shake > 0) { BZ.shake = Math.max(0, BZ.shake - dt); if (!reduce && !lowFx) { camera.position.x += (Math.random() - .5) * BZ.shake * .5; camera.position.y += (Math.random() - .5) * BZ.shake * .5; } }
@@ -13433,9 +13443,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     id = id || 'moon'; if (EV || A || BZ.busy) return; BZ.busy = true; if (BZ.sc && BZ.P.id !== id) bzFree(); BZ.P = BZ_WORLDS[id]; BZ.ws = bzWorld(id); const HT = BZ.hud.querySelector('#bzTitle'); if (HT) HT.textContent = BZ.P.title;
     fade(() => { try { if (!BZ.sc) { bzAssets(); bzBuildWorld(); } } catch (err) { console.error(err); BZ.busy = false; say('The shuttle couldn’t land. Try again.', 2600); return; }
       web.p = null; drawWeb(); walkTarget = null; exitTelescope(); inWorld = true; zone = 'mc'; vy = 0; grounded = true; BZ.v.set(0, 0, 0); BZ.web = null; BZ.bug = null; BZ.dead = false; BZ.hp = bzHpMax(); BZ.jet = bzJetMax(); BZ.eye = 1.6; BZ.crouch = false; BZ.noise = 0;
-      pos.set(BZ.P.shuttle[0] - 4, 0, BZ.P.shuttle[1] + 5.5); BZ.feet = bzSupport(pos.x, pos.z, 5); pos.y = BZ.feet + 1.6; yaw = Math.PI / 2 + .25; pitch = -.05;
+      pos.set(BZ.P.shuttle[0] - 4, 0, BZ.P.shuttle[1] + 5.5); yaw = Math.PI / 2 + .25; { const SP = (BZ.P.story && bkSpawn()) || BZ.P.spawn; if (SP) { pos.set(SP[0], 0, SP[1]); yaw = SP[2]; } } BZ.feet = bzSupport(pos.x, pos.z, 5); pos.y = BZ.feet + 1.6; pitch = -.05;
       camera.near = .1; camera.far = BZ.P.id === 'moon' ? 3000 : 2600; camera.updateProjectionMatrix(); STA.btn.hidden = true; if (BZ.P.arrive && !BZ.ws.seenHere) { BZ.ws.seenHere = 1; setTimeout(() => say(BZ.P.arrive, 6000), 400); }
-      closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Back to the station'; jumpBtn.hidden = fine; uiZone(); bzHudShow(true); bzMusic(BZ.ws.out && !BZ.ws.clear ? 'tense' : 'calm'); BZ.offers = []; bzOffers(); BZ.busy = false; BZ.sightK = BZ.P.sightK || 1; BZ.safe = [pos.x, pos.z];
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = BZ.P.story ? 'Pause the book' : 'Back to the station'; jumpBtn.hidden = fine; uiZone(); bzHudShow(true); bzMusic(BZ.P.music || (BZ.ws.out && !BZ.ws.clear ? 'tense' : 'calm')); if (BZ.P.story) setTimeout(bkStepBegin, 400); BZ.offers = []; bzOffers(); BZ.busy = false; BZ.sightK = BZ.P.sightK || 1; BZ.safe = [pos.x, pos.z]; if (BZ.P.onEnter) BZ.P.onEnter();
       if (BZ.P.id !== 'moon') {}
       else if (!BZ.s.seen) { BZ.s.seen = 1; bzSave(); setTimeout(() => say('Tranquility Colony, the Moon. Gravity is one-sixth of Earth’s: you jump a lot higher here.', 5000), 300); setTimeout(() => say(fine ? 'Space jumps (hold it in the air for the jetpack), Q swings a web off anything tall, E uses things. Phone (M) for colony jobs.' : 'Jump (hold it in the air for the jetpack), Swing to web off anything tall. The phone has colony jobs.', 6000), 5600); }
       else say(BZ.ws.out && !BZ.ws.clear ? 'Back on the Moon. Keep your head down.' : 'Back on the Moon.', 2600);
@@ -13619,22 +13629,22 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const cv = smEl.querySelector('#smCv'), g = cv.getContext('2d'), W = cv.width, H = cv.height, t = performance.now() / 1000; g.fillStyle = '#000'; g.fillRect(0, 0, W, H);
     const r = rng(5); for (let i = 0; i < 260; i++) { g.fillStyle = `rgba(255,255,255,${.2 + r() * .6})`; g.fillRect(r() * W, r() * H, 1.5, 1.5); }
     const sun = g.createRadialGradient(-40, H * .5, 0, -40, H * .5, 140); sun.addColorStop(0, 'rgba(255,240,200,1)'); sun.addColorStop(1, 'rgba(255,200,120,0)'); g.fillStyle = sun; g.fillRect(0, 0, 200, H);
-    g.strokeStyle = 'rgba(255,255,255,.08)'; g.lineWidth = 1; BZW.forEach(Wd => { g.beginPath(); g.ellipse(-40, H * .5, Wd.x * W + 40, Wd.x * W * .45 + 40, 0, -1.2, 1.2); g.stroke(); });
+    g.strokeStyle = 'rgba(255,255,255,.08)'; g.lineWidth = 1; BZW.filter(Wd => !Wd.hidden || !Wd.hidden()).forEach(Wd => { if (Wd.id === 'quiet') return; g.beginPath(); g.ellipse(-40, H * .5, Wd.x * W + 40, Wd.x * W * .45 + 40, 0, -1.2, 1.2); g.stroke(); });
     const ex = .06 * W, ey = .46 * H; g.fillStyle = '#2A6AFF'; g.beginPath(); g.arc(ex, ey, 11, 0, 7); g.fill(); g.fillStyle = '#3CE870'; g.beginPath(); g.arc(ex - 3, ey - 2, 4, 0, 7); g.fill(); g.fillStyle = '#9AA3AD'; g.font = '700 13px system-ui'; g.textAlign = 'center'; g.fillText('Earth · station', ex, ey + 28);
     // the infection, as red lines from world to world
     const fw = BZW.find(q => q.id === 'forge'); BZW.forEach(Wd => { const st = bzWState(Wd.id); if (st !== 'inf' && st !== 'clear') return; g.strokeStyle = st === 'inf' ? 'rgba(255,40,30,.55)' : 'rgba(255,40,30,.15)'; g.setLineDash([8, 8]); g.lineDashOffset = -t * 30; g.lineWidth = 2; g.beginPath(); g.moveTo(fw.x * W, fw.y * H); g.lineTo(Wd.x * W, Wd.y * H); g.stroke(); g.setLineDash([]); });
-    BZW.forEach(Wd => { const st = bzWState(Wd.id), x = Wd.x * W, y = Wd.y * H, known = Wd.id !== 'forge' || st !== 'quiet' || bzWState('saturn') === 'clear';
+    BZW.filter(Wd => !Wd.hidden || !Wd.hidden()).forEach(Wd => { if (Wd.id === 'quiet') { const x = Wd.x * W, y = Wd.y * H, tt = performance.now() / 1000; g.save(); g.translate(x, y); g.rotate(-.3); const gr = g.createRadialGradient(0, 0, 10, 0, 0, 46); gr.addColorStop(0, 'rgba(0,0,0,1)'); gr.addColorStop(.4, 'rgba(255,190,110,.9)'); gr.addColorStop(1, 'rgba(160,60,200,0)'); g.fillStyle = gr; g.scale(1.8, .55); g.beginPath(); g.arc(0, 0, 46, 0, 7); g.fill(); g.restore(); g.fillStyle = '#000'; g.beginPath(); g.arc(x, y, 13, 0, 7); g.fill(); g.strokeStyle = `rgba(255,240,210,${.7 + .3 * Math.sin(tt * 2)})`; g.lineWidth = 2; g.beginPath(); g.arc(x, y, 14, 0, 7); g.stroke(); if (smSel === 'quiet') { g.strokeStyle = '#FFC93C'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, 24, 0, 7); g.stroke(); } g.fillStyle = '#fff'; g.font = '800 15px system-ui'; g.textAlign = 'center'; g.fillText('The Quiet', x, y + 40); g.fillStyle = '#9B7BFF'; g.font = '700 12px system-ui'; g.fillText('BLACK HOLE', x, y + 56); return; } const st = bzWState(Wd.id), x = Wd.x * W, y = Wd.y * H, known = Wd.id !== 'forge' || st !== 'quiet' || bzWState('saturn') === 'clear';
       if (!known) { g.fillStyle = 'rgba(255,40,30,.25)'; g.font = '800 26px system-ui'; g.fillText('?', x, y + 8); return; }
       if (st === 'inf') { g.fillStyle = `rgba(255,30,20,${.25 + .15 * Math.sin(t * 3)})`; g.beginPath(); g.arc(x, y, Wd.r + 14, 0, 7); g.fill(); }
       g.fillStyle = Wd.col; g.beginPath(); g.arc(x, y, Wd.r, 0, 7); g.fill(); if (Wd.id === 'saturn') { g.strokeStyle = '#C8B07A'; g.lineWidth = 3; g.beginPath(); g.ellipse(x, y, Wd.r * 1.9, Wd.r * .5, -.3, 0, 7); g.stroke(); }
       if (smSel === Wd.id) { g.strokeStyle = '#FFC93C'; g.lineWidth = 3; g.beginPath(); g.arc(x, y, Wd.r + 8, 0, 7); g.stroke(); }
       g.fillStyle = '#fff'; g.font = '800 15px system-ui'; g.fillText(Wd.name, x, y + Wd.r + 22); g.fillStyle = st === 'inf' ? '#FF5A4A' : st === 'clear' ? '#3CE870' : '#9AA3AD'; g.font = '700 12px system-ui'; g.fillText(st === 'inf' ? 'INFECTED' : st === 'clear' ? 'CLEARED' : 'quiet', x, y + Wd.r + 38); });
-    const Wd = BZW.find(q => q.id === smSel), st = bzWState(Wd.id), can = Wd.id !== 'forge' || st !== 'quiet' || bzWState('saturn') === 'clear';
-    const smHtml = `<div><b>${esc(Wd.name)}</b><small>${esc(Wd.sub)} · ${esc(Wd.km)} · ${st === 'inf' ? 'berserkers are here' : st === 'clear' ? 'you cleared it' : 'no berserkers yet'}</small></div><button type="button" data-sm="go" ${can ? '' : 'disabled'}>${Wd.id === 'moon' ? 'Shuttle down' : can ? `Fly to ${esc(Wd.name)}${st === 'quiet' ? ' (peaceful, for now)' : ''}` : 'Nobody knows where it is yet'}</button>`; if (smDraw.last !== smHtml) { smDraw.last = smHtml; smEl.querySelector('#smInfo').innerHTML = smHtml; }
+    const Wd = BZW.find(q => q.id === smSel), st = bzWState(Wd.id), can = Wd.id === 'quiet' ? bkUnlocked() : Wd.id !== 'forge' || st !== 'quiet' || bzWState('saturn') === 'clear';
+    const smHtml = `<div><b>${esc(Wd.name)}</b><small>${esc(Wd.sub)} · ${esc(Wd.km)} · ${st === 'inf' ? 'berserkers are here' : st === 'clear' ? 'you cleared it' : 'no berserkers yet'}</small></div><button type="button" data-sm="go" ${can ? '' : 'disabled'}>${Wd.id === 'quiet' ? (BK.s.started ? 'Return to The Quiet' : 'Fly into The Quiet') : Wd.id === 'moon' ? 'Shuttle down' : can ? `Fly to ${esc(Wd.name)}${st === 'quiet' ? ' (peaceful, for now)' : ''}` : 'Nobody knows where it is yet'}</button>`; if (smDraw.last !== smHtml) { smDraw.last = smHtml; smEl.querySelector('#smInfo').innerHTML = smHtml; }
     if (!smEl.hidden) smDraw.raf = requestAnimationFrame(smDraw);
   }
-  smEl.addEventListener('click', e => { const b = e.target.closest('[data-sm]'); if (b) { if (b.dataset.sm === 'x') { smEl.hidden = true; return; } if (b.dataset.sm === 'go') { smEl.hidden = true; if (smSel === 'moon') bzEnter(); else spStart(smSel); } return; }
-    const cv = e.target.closest('#smCv'); if (!cv) return; const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height; let best = null, bd = .08; BZW.forEach(Wd => { const d = Math.hypot((Wd.x - x) * 16 / 9, Wd.y - y); if (d < bd) { bd = d; best = Wd; } }); if (best) { smSel = best.id; tone(660, .06, 'sine', .03); } });
+  smEl.addEventListener('click', e => { const b = e.target.closest('[data-sm]'); if (b) { if (b.dataset.sm === 'x') { smEl.hidden = true; return; } if (b.dataset.sm === 'go') { smEl.hidden = true; if (smSel === 'moon') bzEnter(); else if (smSel === 'quiet' && BK.s.started) bkResume(); else spStart(smSel); } return; }
+    const cv = e.target.closest('#smCv'); if (!cv) return; const r = cv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height; let best = null, bd = .08; BZW.filter(Wd => !Wd.hidden || !Wd.hidden()).forEach(Wd => { const d = Math.hypot((Wd.x - x) * 16 / 9, Wd.y - y); if (d < bd) { bd = d; best = Wd; } }); if (best) { smSel = best.id; tone(660, .06, 'sine', .03); } });
   addEventListener('keydown', e => { if (!smEl.hidden && e.key === 'Escape') { e.stopImmediatePropagation(); smEl.hidden = true; } }, true);
   // the ship, docked outside the station window
   function bzShipMesh(){ const P = [[new THREE.CylinderGeometry(1.1, 1.6, 9, 6), 0xE8EBF0, 0, 0, 0, Math.PI / 2, 0, 0], [new THREE.ConeGeometry(1.1, 3.2, 6), 0xE8EBF0, 0, 0, -6.1, -Math.PI / 2, 0, 0], [new THREE.SphereGeometry(.9, 12, 8, 0, 6.283, 0, 1.6), 0x35C8F0, 0, .8, -2.6], B3(10, .25, 3, 0xD8DCE2, 0, -.3, 1.6), B3(.25, 2.4, 2.6, 0xD8DCE2, 0, 1.4, 3.2), B3(1.6, .5, 1.2, 0xFFC93C, 4.4, -.3, 1.4), B3(1.6, .5, 1.2, 0xFFC93C, -4.4, -.3, 1.4), [new THREE.CylinderGeometry(.7, .9, 1.6, 10), 0x3A3D48, 1.1, -.2, 4.8, Math.PI / 2, 0, 0], [new THREE.CylinderGeometry(.7, .9, 1.6, 10), 0x3A3D48, -1.1, -.2, 4.8, Math.PI / 2, 0, 0]];
@@ -13665,7 +13675,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function spStart(dest){
     if (SPF.busy || EV || A) return; SPF.busy = true; smEl.hidden = true;
     fade(() => { try { spBuild(dest); } catch (err) { console.error(err); SPF.busy = false; return; } web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'sp'; STA.btn.hidden = true; pos.set(0, 1.6, 12); yaw = 0; pitch = 0; camera.near = .1; camera.far = 4000; camera.updateProjectionMatrix();
-      Object.assign(SPF, { dest, t: 0, len: 85, hull: 100 + 20 * BZ.s.upg.arm, x: 0, y: 0, vx: 0, vy: 0, boost: 0, fireT: 0, kills: 0, wave: 0, over: false, busy: false, boss: null });
+      Object.assign(SPF, { mode: null, streaks: null, dest, t: 0, len: 85, hull: 100 + 20 * BZ.s.upg.arm, x: 0, y: 0, vx: 0, vy: 0, boost: 0, fireT: 0, kills: 0, wave: 0, over: false, busy: false, boss: null }); if (dest === 'quiet') bkWarpSetup();
       closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Turn back'; jumpBtn.hidden = fine; uiZone(); spHud(true); bzMusic('tense'); if (me) me.g.visible = false;
       say(fine ? `Course set for ${BZW.find(q => q.id === dest).name}. Mouse or WASD to steer, click or F to fire, Space to boost.` : `Course set for ${BZW.find(q => q.id === dest).name}. Steer with the stick, tap to fire.`, 5000); }, '#000000');
   }
@@ -13676,7 +13686,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function spBoom(p, big){ const m = new THREE.Mesh(SPF.boomG, new THREE.MeshBasicMaterial({ color: 0xFFB060, transparent: true, toneMapped: false })); m.position.copy(p); SPF.sc.add(m); SPF.fx.push({ m, t: 0, max: big ? 1 : .45, s: big ? 26 : 6 }); tone(70, big ? 1.4 : .5, 'sawtooth', .06, 30); }
   function spHurt(d){ if (SPF.over) return; SPF.hull -= d * (1 - .15 * BZ.s.upg.arm) * .65; BZ.shake = Math.max(BZ.shake, .25); evHurt.style.opacity = .5; setTimeout(() => evHurt.style.opacity = 0, 160); tone(150, .15, 'square', .05, 80); if (SPF.hull <= 0) spEnd(false); }
   function spStep(dt, now){
-    if (!SPF.sc) return; const S = SPF; if (S.over) { S.ship.position.z -= dt * 120; return; } S.t += dt; S.fireT -= dt; S.boost = Math.max(0, S.boost - dt); S.boostE = Math.min(100, (S.boostE == null ? 100 : S.boostE) + dt * 12);
+    if (!SPF.sc) return; if (SPF.mode === 'fall') return bkFallStep(dt); const S = SPF; if (S.over) { if (S.dest === 'quiet') return; S.ship.position.z -= dt * 120; return; } S.t += dt; S.fireT -= dt; S.boost = Math.max(0, S.boost - dt); S.boostE = Math.min(100, (S.boostE == null ? 100 : S.boostE) + dt * 12);
     // steering: keys, the stick, and the mouse (which moves yaw and pitch; we read and reset them)
     const [f, s] = bzInput(), my = clamp(-angDiff(0, yaw) * 30, -2, 2), mp = clamp(pitch * 30, -2, 2); yaw = 0; pitch = 0;
     const ax = s + -my, ay = f + mp; S.vx += (ax * 32 - S.vx) * Math.min(1, dt * 3); S.vy += (ay * 24 - S.vy) * Math.min(1, dt * 3); S.x = clamp(S.x + S.vx * dt, -46, 46); S.y = clamp(S.y + S.vy * dt, -26, 26);
@@ -13686,7 +13696,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     S.stars.position.z = (S.stars.position.z + speed * dt * .5) % 800; S.planet.position.z = -2600 + Math.min(1, k) * 2000; S.planet.rotation.y += dt * .02;
     for (const R of S.rocks) { R.m.position.z += speed * dt; R.m.rotation.x += R.spin.x * dt; R.m.rotation.y += R.spin.y * dt; if (R.m.position.z > 30) spRock(R); if (Math.abs(R.m.position.z) < R.s + 2 && Math.hypot(R.m.position.x - S.x, R.m.position.y - S.y) < R.s + 2) { spHurt(14); spBoom(R.m.position.clone(), false); spRock(R); } }
     // waves
-    const want = S.t < 12 ? 0 : S.t < 30 ? 3 : S.t < 48 ? 5 : 4; if (S.t > 52 && !S.boss && S.t < S.len - 10) { spSpawn('frigate', 0, 6, -520); S.boss = S.ens[S.ens.length - 1]; bzAlert('BERSERKER FRIGATE', 'Hit the red core at its nose.', '#FF3C3C'); }
+    const want = S.dest === 'quiet' ? 0 : S.t < 12 ? 0 : S.t < 30 ? 3 : S.t < 48 ? 5 : 4; if (S.dest !== 'quiet' && S.t > 52 && !S.boss && S.t < S.len - 10) { spSpawn('frigate', 0, 6, -520); S.boss = S.ens[S.ens.length - 1]; bzAlert('BERSERKER FRIGATE', 'Hit the red core at its nose.', '#FF3C3C'); }
     if (S.ens.filter(e => e.k === 'fighter').length < want && Math.random() < dt * 1.2) spSpawn('fighter', (Math.random() - .5) * 120, (Math.random() - .5) * 60, -600);
     for (const e of S.ens) { e.t += dt; e.cd -= dt; const g = e.g;
       if (e.k === 'fighter') { const tz = -60 - Math.sin(e.ph) * 30; if (e.t < 7) { g.position.z += (tz - g.position.z) * Math.min(1, dt * 1.2); g.position.x += ((S.x + Math.sin(e.t + e.ph) * 30) - g.position.x) * dt * .8; g.position.y += ((S.y + Math.cos(e.t * .7 + e.ph) * 14) - g.position.y) * dt * .8; } else g.position.z += dt * 140; g.lookAt(S.x, S.y, 0); }
@@ -13698,10 +13708,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       else if (Math.abs(q.m.position.z) < 3 && Math.hypot(q.m.position.x - S.x, q.m.position.y - S.y) < 2.4) { hit = true; spHurt(6); }
       if (hit || q.life <= 0) { S.sc.remove(q.m); S.shots.splice(i, 1); } }
     for (let i = S.fx.length - 1; i >= 0; i--) { const F = S.fx[i]; F.t += dt; const kk = F.t / F.max; F.m.scale.setScalar(1 + kk * F.s); F.m.material.opacity = 1 - kk; if (kk >= 1) { S.sc.remove(F.m); F.m.material.dispose(); S.fx.splice(i, 1); } }
-    if (S.t >= S.len && !S.over) spEnd(true);
-    if ((S.hudT = (S.hudT || 0) - dt) <= 0) { S.hudT = .15; const W = BZW.find(q => q.id === S.dest); spHudEl.querySelector('#spTo').textContent = `To ${W.name}`; spHudEl.querySelector('#spSt').textContent = `${Math.max(0, Math.ceil(S.len - S.t))} s out · ${S.kills} kills · ${BZ.s.cr} cr`; spHudEl.querySelector('#spHull').style.width = `${clamp(S.hull / (100 + 20 * BZ.s.upg.arm), 0, 1) * 100}%`; spHudEl.querySelector('#spBoost').style.width = `${S.boostE == null ? 100 : S.boostE}%`; spHudEl.querySelector('#spObj').textContent = S.boss ? `Frigate core ${Math.max(0, Math.round(S.boss.hp / S.boss.max * 100))}%` : S.t < 12 ? 'Asteroids ahead. Steer clear.' : 'Interceptors! Shoot them down.'; }
+    if (S.dest === 'quiet') bkWarpStep(S, dt);
+    if (S.t >= S.len && !S.over) { if (S.dest === 'quiet') { S.over = true; bkHorizonAsk(); } else spEnd(true); }
+    if (S.dest !== 'quiet' && (S.hudT = (S.hudT || 0) - dt) <= 0) { S.hudT = .15; const W = BZW.find(q => q.id === S.dest); spHudEl.querySelector('#spTo').textContent = `To ${W.name}`; spHudEl.querySelector('#spSt').textContent = `${Math.max(0, Math.ceil(S.len - S.t))} s out · ${S.kills} kills · ${BZ.s.cr} cr`; spHudEl.querySelector('#spHull').style.width = `${clamp(S.hull / (100 + 20 * BZ.s.upg.arm), 0, 1) * 100}%`; spHudEl.querySelector('#spBoost').style.width = `${S.boostE == null ? 100 : S.boostE}%`; spHudEl.querySelector('#spObj').textContent = S.boss ? `Frigate core ${Math.max(0, Math.round(S.boss.hp / S.boss.max * 100))}%` : S.t < 12 ? 'Asteroids ahead. Steer clear.' : 'Interceptors! Shoot them down.'; }
   }
-  function spCam(dt){ const S = SPF; viewG.visible = false; camera.position.set(S.x * .7, S.y * .7 + 4.2, 15); camera.lookAt(S.x * .9, S.y * .9 + 1, -40); if (BZ.shake > 0) { BZ.shake = Math.max(0, BZ.shake - dt); if (!reduce && !lowFx) camera.position.x += (Math.random() - .5) * BZ.shake; } camera.updateMatrixWorld(); }
+  function spCam(dt){ if (SPF.mode === 'fall') return bkFallCam(dt); const S = SPF; viewG.visible = false; camera.position.set(S.x * .7, S.y * .7 + 4.2, 15); camera.lookAt(S.x * .9, S.y * .9 + 1, -40); if (BZ.shake > 0) { BZ.shake = Math.max(0, BZ.shake - dt); if (!reduce && !lowFx) camera.position.x += (Math.random() - .5) * BZ.shake; } camera.updateMatrixWorld(); }
   function spEnd(ok){ const S = SPF; if (S.over) return; S.over = true; const dest = S.dest; bzSave(); if (ok) { bzAlert('ARRIVING', BZW.find(q => q.id === dest).name, '#3CE870'); tone(523, .4, 'triangle', .05); } else { bzAlert('HULL BREACH', 'The autopilot takes you home.', '#FF3C3C'); }
     setTimeout(() => fade(() => { spFree(); if (ok && BZP[dest]) { zone = 'twr'; if (!TWR.sc) buildTwr(); if (!STA.built) buildStation(); showFloor('station'); bzPlanetEnter(dest); } else { enterStation(true); say(ok ? `${BZW.find(q => q.id === dest).name}: the landing zone is still too hot. The ship brings you back to the station.` : 'You limp back to the station. Patch the hull and try again.', 4600); } }, '#000000'), 1600); }
   function spAbort(){ if (!SPF.sc || SPF.over) return; SPF.over = true; fade(() => { spFree(); enterStation(true); say('You turned back.', 1800); }, '#000000'); }
@@ -14031,6 +14042,350 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // the station, as a light crossing Bangalore's sky
   function staSky(){ if (!BL.sc || !(inWorld && zone === 'blr')) return; if (!STA.sky) { const s = STA.sky = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex(64, 64, (c, w, h) => { const g = c.createRadialGradient(32, 32, 0, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(.25, 'rgba(255,250,230,.8)'); g.addColorStop(1, 'rgba(255,240,200,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); }), transparent: true, depthWrite: false, toneMapped: false, fog: false })); s.scale.set(14, 14, 1); s.userData.noPick = true; BL.sc.add(s); }
     if (STA.sky.parent !== BL.sc) BL.sc.add(STA.sky); const t = performance.now() / 1000 / 60 * 6.283 / 6, h = cityHour ? cityHour() : 12, night = h < 6 || h > 18.5; STA.sky.position.set(camera.position.x + Math.cos(t) * 700, camera.position.y + 260 + Math.sin(t * 2) * 60, camera.position.z + Math.sin(t) * 700); STA.sky.material.opacity = night ? 1 : .45; }
+  // ======================= STORY MODE 2+: the Books after the comic =======================
+  // Its own save (ru-bk). It reuses the planet engine for its worlds and the flight engine for the trip in.
+  const BK_KEY = 'ru-bk';
+  function bkFresh(){ return { v: 1, book: 6, ch: 0, step: 0, started: 0, dil: 0, flags: {}, done: [], items: {} }; }
+  const BK = { s: (() => { let s = null; try { s = JSON.parse(localStorage.getItem(BK_KEY) || 'null'); } catch (e) {} return s && s.v === 1 ? s : bkFresh(); })(), stepT: 0, pockets: [], props: {} };
+  function bkSave(){ try { localStorage.setItem(BK_KEY, JSON.stringify(BK.s)); } catch (e) {} }
+  const bkUnlocked = () => { try { return bzWState('forge') === 'clear' || !!BZ.s.done || !!SG.sagaDone || SG.done.includes(chIx('page1')); } catch (e) { return false; } };
+  // the black hole on the star map
+  BZW.push({ id: 'quiet', name: 'The Quiet', sub: 'A black hole where the signal goes silent', x: .86, y: .2, r: 16, col: '#000000', km: 'everything that falls in stays', hidden: () => !bkUnlocked() });
+  BZP.quiet = { enter: () => {} };
+  // ---------- the warped flight in ----------
+  function bkWarpSetup(){ const S = SPF; S.len = 48; S.planet.material = new THREE.MeshBasicMaterial({ color: 0x000000 }); S.planet.scale.setScalar(1.6);
+    const disk = new THREE.Mesh(new THREE.RingGeometry(170, 520, 96, 1), new THREE.MeshBasicMaterial({ map: bkDiskTex(), side: THREE.DoubleSide, transparent: true, toneMapped: false, depthWrite: false })); disk.rotation.x = Math.PI / 2 - .22; S.planet.add(disk);
+    const photon = new THREE.Mesh(new THREE.TorusGeometry(166, 3, 6, 96), new THREE.MeshBasicMaterial({ color: 0xFFF0D0, toneMapped: false })); S.planet.add(photon); S.photon = photon;
+    const n = lowFx ? 300 : 700, P = new Float32Array(n * 6); for (let i = 0; i < n; i++) { const x = (Math.random() - .5) * 900, y = (Math.random() - .5) * 600, z = -Math.random() * 1500; P.set([x, y, z, x, y, z + 2], i * 6); } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3));
+    S.streaks = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ color: 0xFFE8C8, transparent: true, opacity: .7, toneMapped: false })); S.sc.add(S.streaks); S.clock = 86399; S.rocks.forEach(R => R.m.visible = false); bzMusic('eerie'); }
+  function bkDiskTex(){ return tex(512, 64, (c, w, h) => { for (let x = 0; x < w; x++) { const k = x / w, a = Math.pow(1 - k, .6) * (.6 + .4 * Math.sin(x * .9) * Math.sin(x * .13)); c.fillStyle = `rgba(${255},${Math.round(150 + 105 * (1 - k))},${Math.round(60 + 160 * (1 - k) * (1 - k))},${clamp(a, 0, 1)})`; c.fillRect(x, 0, 1, h); } }); }
+  function bkWarpStep(S, dt){ const k = Math.min(1, S.t / S.len); if (S.streaks) { S.streaks.scale.z = 1 + k * 90; S.streaks.position.z = (S.streaks.position.z + dt * 300 * (1 + k * 3)) % 300; S.streaks.material.opacity = .3 + k * .6; } S.stars.material.size = 1.6 + k * 3; S.planet.scale.setScalar(1.6 + k * 4); S.planet.rotation.z += dt * .05;
+    S.clock -= dt * (60 + k * k * 9000); const t = Math.max(0, S.clock), hh = Math.floor(t / 3600), mm = Math.floor(t / 60) % 60, ss = Math.floor(t) % 60, clk = `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}:${String(ss).padStart(2, '0')}`;
+    spHudEl.querySelector('#spTo').textContent = 'To The Quiet'; spHudEl.querySelector('#spSt').textContent = `Ship clock ${clk} (running backwards)`; spHudEl.querySelector('#spObj').textContent = k < .5 ? 'The stars are smearing. Hold course.' : k < .9 ? 'Every instrument says you are going backwards in time.' : 'The event horizon.';
+    if (!reduce && !lowFx) BZ.shake = Math.max(BZ.shake, k * .25); }
+  function bkHorizonAsk(){ tone(40, 3, 'sine', .06, 30);
+    askChoice('horizon', v => { if (v === 'cross') { fade(() => { spFree(); bkFallStart(); }, '#FFFFFF'); } else fade(() => { spFree(); enterStation(true); say('You turn back. The Quiet stays on the star map, waiting.', 3200); }, '#000000'); },
+      { h: 'The event horizon', q: 'In front of you, the edge of a black hole. Light goes in and doesn’t come out. Neither will you, probably.', a: [['cross', 'Cross'], ['back', 'Turn back']] }); }
+  // ---------- falling in: dodge the bent light ----------
+  function bkFallStart(){
+    const sc = SPF.sc = new THREE.Scene(); sc.background = new THREE.Color(0x000000); Object.assign(SPF, { mode: 'fall', dest: 'quiet', t: 0, len: 38, hull: 100, x: 0, y: 0, vx: 0, vy: 0, over: false, busy: false, bars: [], hitT: 0 });
+    const n = lowFx ? 500 : 1400, P = new Float32Array(n * 6), C = new Float32Array(n * 6); for (let i = 0; i < n; i++) { const a = Math.random() * 6.283, r = 50 + Math.random() * 60, x = Math.cos(a) * r, y = Math.sin(a) * r, z = -Math.random() * 1200, l = 20 + Math.random() * 60; P.set([x, y, z, x, y, z - l], i * 6); const h = Math.random(); C.set([1, .6 + h * .4, .3 + h * .5, 1, .5 + h * .5, .3 + h * .7], i * 6); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('color', new THREE.BufferAttribute(C, 3)); SPF.tunnel = new THREE.LineSegments(g, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, opacity: .85, toneMapped: false })); sc.add(SPF.tunnel);
+    const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex(128, 128, (c, w, h) => { const gr = c.createRadialGradient(64, 64, 0, 64, 64, 64); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.3, 'rgba(255,200,120,.6)'); gr.addColorStop(1, 'rgba(120,40,160,0)'); c.fillStyle = gr; c.fillRect(0, 0, w, h); }), transparent: true, depthWrite: false, toneMapped: false })); glow.scale.set(600, 600, 1); glow.position.set(0, 0, -1300); sc.add(glow); SPF.glow = glow;
+    SPF.barG = new THREE.BoxGeometry(2.4, 2.4, 70); SPF.barM = new THREE.MeshBasicMaterial({ color: 0xFFE8B0, toneMapped: false });
+    web.p = null; inWorld = true; zone = 'sp'; pos.set(0, 1.6, 0); yaw = 0; pitch = 0; camera.near = .1; camera.far = 4000; camera.updateProjectionMatrix(); STA.btn.hidden = true; closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = true; jumpBtn.hidden = true; uiZone(); spHud(true); if (me) me.g.visible = false; bzMusic('eerie');
+    BK.s.started = 1; BK.s.book = 6; BK.s.ch = 0; BK.s.step = 0; bkSave();
+    setTimeout(() => say(fine ? 'You’re falling. Bent light streams past: steer (mouse or WASD) between the bright beams.' : 'You’re falling. Steer with the stick between the bright beams.', 5200), 600);
+  }
+  function bkFallStep(dt){ const S = SPF; if (S.over) return; S.t += dt; S.hitT -= dt; const k = S.t / S.len, sp = 260 + k * 420;
+    const [f, s] = bzInput(), my = clamp(-angDiff(0, yaw) * 30, -2, 2), mp = clamp(pitch * 30, -2, 2); yaw = 0; pitch = 0; S.vx += ((s - my) * 30 - S.vx) * Math.min(1, dt * 3); S.vy += ((f + mp) * 24 - S.vy) * Math.min(1, dt * 3); S.x = clamp(S.x + S.vx * dt, -32, 32); S.y = clamp(S.y + S.vy * dt, -22, 22);
+    S.tunnel.position.z = (S.tunnel.position.z + sp * dt) % 600; S.tunnel.rotation.z += dt * (.2 + k); S.glow.scale.setScalar(600 + k * 1600);
+    if (S.bars.length < 5 + k * 9 && Math.random() < dt * (2 + k * 6)) { const m = new THREE.Mesh(SPF.barG, SPF.barM), a = Math.random() < .4 ? 0 : 1; m.position.set(a ? (Math.random() - .5) * 64 : S.x + (Math.random() - .5) * 8, a ? (Math.random() - .5) * 44 : S.y + (Math.random() - .5) * 6, -900); if (Math.random() < .5) m.rotation.z = Math.PI / 2; S.sc.add(m); S.bars.push(m); }
+    for (let i = S.bars.length - 1; i >= 0; i--) { const m = S.bars[i]; m.position.z += sp * dt; const w = m.rotation.z ? [36, 1.6] : [1.6, 36]; void w; const dx = Math.abs(m.position.x - S.x), dy = Math.abs(m.position.y - S.y), near = Math.abs(m.position.z) < 35;
+      if (near && S.hitT <= 0 && dx < 2.2 && dy < 2.2) { S.hitT = .6; S.hull -= 16; tone(160, .2, 'square', .05, 80); evHurt.style.opacity = .6; setTimeout(() => evHurt.style.opacity = 0, 180); if (!reduce) BZ.shake = .4; }
+      if (m.position.z > 40) { S.sc.remove(m); S.bars.splice(i, 1); } }
+    spHudEl.querySelector('#spTo').textContent = 'Falling'; spHudEl.querySelector('#spSt').textContent = `Beyond the horizon · ${Math.max(0, Math.ceil(S.len - S.t))} s`; spHudEl.querySelector('#spHull').style.width = `${clamp(S.hull, 0, 100)}%`; spHudEl.querySelector('#spBoost').style.width = '0'; spHudEl.querySelector('#spObj').textContent = 'Dodge the streams of light.';
+    if (S.hull <= 0) { S.over = true; say('Everything goes white for a long, long time. Then you’re falling again.', 3000); setTimeout(() => fade(() => { spFree(); bkFallStart(); }, '#FFFFFF'), 1200); }
+    else if (S.t >= S.len) { S.over = true; tone(880, 1.5, 'sine', .05, 110); setTimeout(() => fade(() => { spFree(); bkChapterStart(0, true); }, '#FFFFFF'), 400); } }
+  function bkFallCam(dt){ const S = SPF; viewG.visible = false; camera.position.set(S.x, S.y, 0); camera.rotation.set(0, 0, -S.vx * .01 + (SPF.tunnel ? Math.sin(S.t) * .05 : 0)); if (BZ.shake > 0) { BZ.shake = Math.max(0, BZ.shake - dt); if (!lowFx) camera.position.x += (Math.random() - .5) * BZ.shake; } camera.updateMatrixWorld(); }
+  // ---------- the card between chapters ----------
+  const bkCardEl = document.createElement('div'); bkCardEl.className = 'bkcard'; document.body.appendChild(bkCardEl);
+  { const s = document.createElement('style'); s.textContent = `.bkcard{position:fixed;inset:0;z-index:64;background:#000;color:#EEF1F5;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;opacity:0;pointer-events:none;transition:opacity .8s;padding:24px}.bkcard.on{opacity:1;pointer-events:auto}.bkcard small{font:700 12px/1.4 system-ui,sans-serif;letter-spacing:.3em;color:#9B7BFF;text-transform:uppercase}.bkcard b{font:900 clamp(30px,6vw,58px)/1.05 ${DISPLAY};margin:10px 0}.bkcard em{font:italic 500 16px/1.4 system-ui,sans-serif;color:#C8CDD6;max-width:560px}.bkcard i{display:block;margin-top:18px;font:600 11px/1 system-ui,sans-serif;color:#6A707A;font-style:normal}`; document.head.appendChild(s); }
+  function bkCard(top, title, tag, ms, then){ bkCardEl.innerHTML = `<small>${esc(top)}</small><b>${esc(title)}</b><em>${esc(tag || '')}</em><i>click to continue</i>`; bkCardEl.classList.add('on'); tone(196, 1.2, 'sine', .05, 98); let done = false; const fin = () => { if (done) return; done = true; bkCardEl.classList.remove('on'); bkCardEl.onclick = null; if (then) setTimeout(then, 300); }; bkCardEl.onclick = fin; setTimeout(fin, ms || 5200); }
+  // ---------- the engine: books → chapters → steps ----------
+  const BK_BOOKS = { 6: { name: 'Book Six', title: 'The Quiet', chs: [] } };
+  const bkBook = () => BK_BOOKS[BK.s.book], bkCh = () => bkBook() && bkBook().chs[BK.s.ch], bkStepO = () => { const C = bkCh(); return C && C.steps[BK.s.step]; };
+  function bkChapterStart(i, first){ BK.s.ch = i; BK.s.step = 0; BK.stepT = 0; bkSave(); const B = bkBook(), C = B.chs[i];
+    if (!C) { bkCard(`${B.name} · to be continued`, 'More soon', 'The next chapters of this book are on their way.', 5200, () => { if (!(inWorld && zone === 'mc')) enterStation(true); }); return; }
+    const go = () => { if (!(inWorld && zone === 'mc' && BZ.P.id === C.world && BZ.sc)) bzEnter(C.world); else bkStepBegin(); };
+    if (first) bkCard(`${B.name}`, B.title, 'Everything the berserkers erased fell somewhere. It fell here.', 5600, () => bkCard(`Chapter ${i + 1}`, C.title, C.tag, 4600, go)); else bkCard(`${B.name} · Chapter ${i + 1}`, C.title, C.tag, 4600, go); }
+  function bkStepBegin(){ const S = bkStepO(); BK.stepT = 0; if (S && S.start) S.start(); }
+  function bkNext(){ const C = bkCh(); if (!C) return; BK.s.step++; bkSave(); if (BK.s.step >= C.steps.length) { if (C.end) C.end(); BK.s.done.push(`${BK.s.book}:${C.id}`); bkSave(); bkChapterStart(BK.s.ch + 1); } else bkStepBegin(); }
+  function bkResume(){ if (!BK.s.started) return; const C = bkCh(); if (!C) return bkChapterStart(BK.s.ch); bzEnter(C.world); }
+  function bkActive(){ return BK.s.started && BZ.P && BZ.P.story && bkCh() && bkCh().world === BZ.P.id; }
+  function bkStep(dt, now){ if (!bkActive()) return; BK.stepT += dt; const S = bkStepO(); if (BK.s.ch >= 1 && BK.s.book === 6) { const inPocket = BZ.P.id === 'q_disk' && BK.pockets.some(p => Math.hypot(pos.x - p.x, pos.z - p.z) < p.r); BK.inPocket = inPocket; BK.s.dil += dt / 60 * (inPocket ? 2.4 : .3); }
+    if (BZ.P.bkStep) BZ.P.bkStep(dt, now); if (S && S.check && !BK.blocked && S.check(dt)) bkNext(); }
+  const bkTarget = () => { const S = bkStepO(); return bkActive() && S && S.at ? (typeof S.at === 'function' ? S.at() : S.at) : null; };
+  function bkPrompts(L){ if (!bkActive() || DLG || choiceCb) return; const S = bkStepO(); if (S && S.prompt) { const p = S.prompt(); if (p) L.push(p); } }
+  // how the Book shows on the HUD
+  function bkHud(obj){ if (!bkActive()) return false; const S = bkStepO(), B = bkBook(), t = bkTarget(); obj.textContent = `${S ? S.t : ''}${t ? ` · ${Math.round(t[2] != null ? Math.hypot(t[0] - pos.x, t[1] - pos.z, t[2] - pos.y) : Math.hypot(t[0] - pos.x, t[1] - pos.z))} m` : ''}`;
+    const st = BZ.hud.querySelector('#bzSt'); st.textContent = `${B.name} · Chapter ${BK.s.ch + 1}: ${bkCh().title}${BK.s.ch >= 1 && BK.s.book === 6 ? ` · home +${BK.s.dil.toFixed(1)} years${BK.inPocket ? ' (fast!)' : ''}` : ''}`; st.classList.toggle('red', !!BK.inPocket); return true; }
+  // ---------- the worlds inside ----------
+  function bkSkyDisk(sc){
+    const disk = new THREE.Mesh(new THREE.RingGeometry(420, 1500, 128, 1), new THREE.MeshBasicMaterial({ map: bkDiskTex(), side: THREE.DoubleSide, transparent: true, toneMapped: false, depthWrite: false, fog: false })); disk.position.set(0, 1250, -350); disk.rotation.x = Math.PI / 2 - .3; sc.add(disk); BK.disk = disk;
+    const hole = new THREE.Mesh(new THREE.SphereGeometry(400, 48, 32), new THREE.MeshBasicMaterial({ color: 0x000000, fog: false })); hole.position.copy(disk.position); sc.add(hole);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(410, 6, 6, 128), new THREE.MeshBasicMaterial({ color: 0xFFF2D8, toneMapped: false, fog: false })); ring.position.copy(disk.position); ring.lookAt(0, 0, 0); sc.add(ring);
+    const n = lowFx ? 800 : 1800, sp = new Float32Array(n * 3), r0 = rng(99); for (let i = 0; i < n; i++) { const u = r0() * 1.2 - .2, t = r0() * 6.283, s2 = Math.sqrt(1 - u * u); sp.set([Math.cos(t) * s2 * 1600, u * 1600, Math.sin(t) * s2 * 1600], i * 3); } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(sp, 3)); sc.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xFFE8D8, size: 1.3, sizeAttenuation: false, toneMapped: false, fog: false })));
+  }
+  const Q_DISK = { id: 'q_disk', name: 'the Quiet', title: 'The Quiet', story: true, seed: 606, half: 280, step: 4, G: 5, people: 0, noBots: true, noRovers: true, bugs: [], domes: [], flat: [[0, 0, 40]], roads: [], tubes: [], towers: [], pads: [], mines: [], solar: [], facs: [], beac: [], shuttle: [0, 0], spawn: [6, 10, Math.PI * .8], music: 'eerie',
+    sky: { bg: 0x07040C, fog: 0x1A0C1E, near: 160, far: 1100, sun: 0xFFC890, sunI: 1.6, hemi: [0xC07A50, 0x140A18, .7] },
+    arrive: null };
+  Q_DISK.height = (x, z) => { let h = (bzFbm(x / 90 + 2, z / 90 + 7, 301, 4) - .5) * 14 + Math.abs(Math.sin(x / 23 + Math.sin(z / 31) * 2)) * 3 - 1.5; for (const [fx, fz, fr] of Q_DISK.flat) { const d = Math.hypot(x - fx, z - fz); if (d < fr + 20) { const k = d < fr ? 1 : 1 - (d - fr) / 20, s = k * k * (3 - 2 * k); h *= 1 - s; } } const e = Math.max(Math.abs(x), Math.abs(z)) - 226; if (e > 0) h += e * e * .012; return h; };
+  Q_DISK.craters = () => [[24, -6, 14, 0]];
+  Q_DISK.colors = (x, z, h) => { const n = bzFbm(x / 40, z / 40, 307, 2), g = Math.pow(bzHash(Math.floor(x / 3), Math.floor(z / 3), 5), 30) * .6; return [.08 + n * .06 + g, .06 + n * .04 + g * .8, .1 + n * .07 + g * .6]; };
+  Q_DISK.tex = () => { const t = tex(256, 256, (c, w, h) => { c.fillStyle = '#3A3440'; c.fillRect(0, 0, w, h); const r = rng(8); c.strokeStyle = 'rgba(200,170,255,.18)'; c.lineWidth = 1; for (let i = 0; i < 40; i++) { c.beginPath(); c.moveTo(r() * w, r() * h); c.lineTo(r() * w, r() * h); c.stroke(); } for (let i = 0; i < 80; i++) { c.fillStyle = 'rgba(255,230,200,.25)'; c.fillRect(r() * w, r() * h, 1, 1); } }); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+  Q_DISK.skyBuild = sc => {
+    bkSkyDisk(sc);
+    // your ship, in pieces
+    const ship = bzShipMesh(); ship.position.set(20, bzTerr(20, -8) + 1.2, -8); ship.rotation.set(.3, 1.1, .5); ship.scale.setScalar(1.4); sc.add(ship); bzAdd({ t: 'c', x: 20, z: -8, r: 6 });
+    const P = [], L = []; for (let i = 0; i < 14; i++) { const a = i * 2.4, r = 10 + i * 2.2, x = 20 + Math.cos(a) * r, z = -8 + Math.sin(a) * r; P.push(B3(.8 + Math.random() * 2, .2, .6 + Math.random(), 0xC9CFD8, x, bzTerr(x, z) + .1, z, a)); }
+    BK.props.box = [52, 14]; P.push(B3(.9, .6, .7, 0xFF8A2E, 52, bzTerr(52, 14) + .3, 14)); L.push(S3(.15, 0xFF5A2A, 52, bzTerr(52, 14) + .75, 14, 6));
+    // the time pockets: shimmering bubbles where time runs fast
+    BK.pockets = [[-40, 50, 16], [-80, 90, 20], [-110, 70, 14], [-140, 120, 18], [-60, 130, 14], [-160, 160, 12], [-20, 95, 12]].map(([x, z, r]) => ({ x, z, r }));
+    BK.pocketM = BK.pockets.map(p => { const m = new THREE.Mesh(new THREE.SphereGeometry(p.r, 24, 16), new THREE.MeshStandardMaterial({ color: 0x9B7BFF, transparent: true, opacity: .14, emissive: 0x5A3AFF, emissiveIntensity: .5, depthWrite: false, side: THREE.DoubleSide })); m.position.set(p.x, bzTerr(p.x, p.z), p.z); m.userData.noPick = true; sc.add(m); return m; });
+    // the other beacon, and the camp under it
+    BK.props.beacon = [-180, 150]; BK.props.camp = [-176, 158]; const by = bzTerr(-180, 150); P.push(C3(.2, 14, 0x8A8F99, -180, by + 7, 150, 6), [new THREE.ConeGeometry(2.4, 2.6, 4), 0x6A5A4A, -173, bzTerr(-173, 160) + 1.3, 160], B3(1.2, .6, .8, 0x4A3A2A, -177, bzTerr(-177, 156) + .3, 156)); L.push(S3(.8, 0x35C8F0, -180, by + 14.5, 150, 10)); BK.beam = new THREE.Mesh(new THREE.CylinderGeometry(.6, .6, 400, 10, 1, true), new THREE.MeshBasicMaterial({ color: 0x35C8F0, transparent: true, opacity: .35, depthWrite: false, toneMapped: false })); BK.beam.position.set(-180, by + 200, 150); sc.add(BK.beam);
+    bzAdd({ t: 'c', x: -180, z: 150, r: .6 }); bzAnchor(gB(1, 14, 1), -180, by + 7, 150);
+    // the Archive gate
+    BK.props.gate = [150, -200]; const gy = bzTerr(150, -200); P.push(B3(3, 34, 3, 0x1A1620, 140, gy + 17, -200), B3(3, 34, 3, 0x1A1620, 160, gy + 17, -200), B3(26, 4, 3, 0x1A1620, 150, gy + 35, -200)); L.push(B3(17, 30, .3, 0xC8A060, 150, gy + 15, -200)); bzAdd({ t: 'c', x: 140, z: -200, r: 2 }); bzAdd({ t: 'c', x: 160, z: -200, r: 2 }); bzAnchor(gB(26, 38, 3), 150, gy + 19, -200);
+    const s = bzSign('THE ARCHIVE', 'EVERYTHING THAT WAS LOST', '#C8A060', 8); s.position.set(150, gy + 42, -200); sc.add(s);
+    // black-glass shards
+    for (let i = 0; i < 70; i++) { const x = (Math.random() - .5) * 460, z = (Math.random() - .5) * 460; if (Math.hypot(x, z) < 45) continue; const hh = 2 + Math.random() * 9; P.push([new THREE.ConeGeometry(.8 + Math.random() * 1.6, hh, 4), 0x1A1428, x, bzTerr(x, z) + hh / 2 - .3, z, (Math.random() - .5) * .4, Math.random() * 3, (Math.random() - .5) * .4]); if (hh > 6) bzAnchor(gB(2, hh, 2), x, bzTerr(x, z) + hh / 2, z); }
+    const m = new THREE.Mesh(bake(P), propM()); m.castShadow = !lowFx; m.userData.noPick = true; sc.add(m); const gl = new THREE.Mesh(bake(L), BZ.lightM); gl.userData.noPick = true; sc.add(gl);
+  };
+  Q_DISK.bkStep = (dt, now) => { (BK.pocketM || []).forEach((m, i) => { m.scale.setScalar(1 + Math.sin(now / 600 + i) * .04); m.material.opacity = .1 + .06 * Math.sin(now / 400 + i); }); if (BK.beam) BK.beam.material.opacity = .25 + .15 * Math.sin(now / 300); if (BK.disk) BK.disk.rotation.z += dt * .01; if (BK.inPocket && !reduce) BZ.shake = Math.max(BZ.shake, .05); };
+  // the Archive: shelves to the sky, and machines that hate noise
+  const Q_ARCH = { id: 'q_arch', name: 'the Archive', title: 'The Archive', story: true, seed: 611, half: 280, step: 4, G: 6, people: 0, noBots: true, noRovers: true, bugs: [], domes: [], flat: [], roads: [], tubes: [], towers: [], pads: [], mines: [], solar: [], facs: [], beac: [], shuttle: [0, -190], spawn: [0, -192, Math.PI], music: 'eerie', stealth: true,
+    sky: { bg: 0x0A0610, fog: 0x1A1018, near: 30, far: 240, sun: 0xFFC890, sunI: 1.2, hemi: [0xC8A070, 0x1A1018, .8] } };
+  Q_ARCH.height = (x, z) => { const e = Math.max(Math.abs(x), Math.abs(z)) - 200; return e > 0 ? Math.min(60, e * 3) : 0; };
+  Q_ARCH.craters = () => [];
+  Q_ARCH.colors = (x, z) => { const t = (Math.floor(x / 4) + Math.floor(z / 4)) % 2 ? .2 : .16; return [t + .06, t + .03, t]; };
+  Q_ARCH.tex = () => { const t = tex(128, 128, (c, w, h) => { c.fillStyle = '#7A6448'; c.fillRect(0, 0, w, h); c.strokeStyle = 'rgba(30,20,10,.5)'; c.lineWidth = 3; c.strokeRect(1, 1, w - 2, h - 2); }); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+  Q_ARCH.skyBuild = sc => {
+    BK.readers = false; bkSkyDisk(sc); const shelves = [];
+    for (let z = -176; z <= 176; z += 16) for (let x0 = -190; x0 < 190; x0 += 76) { const x = x0 + 30, len = 56; if (Math.hypot(x, z) < 44 + len / 2 && Math.abs(z) < 44) continue; if (z < -160 && Math.abs(x) < 40) continue; shelves.push([x, z, len, 16 + bzHash(x | 0, z | 0, 3) * 14]); }
+    const spineT = tex(256, 128, (c, w, h) => { const r = rng(12); c.fillStyle = '#2A1A10'; c.fillRect(0, 0, w, h); for (let row = 0; row < 4; row++) { let x = 0; while (x < w) { const bw = 3 + r() * 6, bh = 20 + r() * 10; c.fillStyle = `hsl(${r() * 360},${30 + r() * 40}%,${25 + r() * 25}%)`; c.fillRect(x, row * 32 + 32 - bh, bw, bh); if (r() < .06) { c.fillStyle = 'rgba(255,210,140,.9)'; c.fillRect(x, row * 32 + 32 - bh, bw, 2); } x += bw + .5; } c.fillStyle = '#1A0E08'; c.fillRect(0, row * 32 + 30, w, 2); } }); spineT.wrapS = spineT.wrapT = THREE.RepeatWrapping; spineT.repeat.set(6, 4);
+    const im = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshStandardMaterial({ map: spineT, roughness: .9, emissive: 0x1A0C04, emissiveIntensity: .4 }), shelves.length), m4 = new THREE.Matrix4(), q = new THREE.Quaternion();
+    shelves.forEach(([x, z, len, h], i) => { im.setMatrixAt(i, m4.compose(V(x, h / 2, z), q, V(len, h, 4))); bzAdd({ t: 'b', x0: x - len / 2, x1: x + len / 2, z0: z - 2, z1: z + 2 }); bzAnchor(gB(len, h, 4), x, h / 2, z); }); im.castShadow = !lowFx; im.receiveShadow = true; im.userData.noPick = true; sc.add(im);
+    const P = [], L = []; for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283; P.push(B3(2.4, 1, 1, 0x3A2A1A, Math.cos(a) * 18, .5, Math.sin(a) * 18, -a + Math.PI / 2)); L.push(B3(2, .05, .8, 0xFFC890, Math.cos(a) * 18, 1.02, Math.sin(a) * 18, -a + Math.PI / 2)); }
+    BK.heart = new THREE.Mesh(new THREE.IcosahedronGeometry(4, 1), new THREE.MeshBasicMaterial({ color: 0xFFD8A0, toneMapped: false, wireframe: true })); BK.heart.position.set(0, 9, 0); sc.add(BK.heart); P.push(C3(5, 1.2, 0x2A1A10, 0, .6, 0, 16)); bzAdd({ t: 'c', x: 0, z: 0, r: 5, top: 1.2 });
+    BK.books = [[-150, -128, 'The Quiet Choir', 'A people who sang to each other across a whole planet. The berserkers heard the singing first. The last page is a single held note.'], [146, 92, 'The Glass Gardeners', 'They grew cities out of crystal and never built a single weapon. The book is warm to the touch. The final chapter is blank, and still warm.'], [-62, 168, 'EARTH (UNFINISHED)', 'This one has your planet on the cover. Most of the pages are blank. The last written line is today’s date, in your handwriting.']].map(([x, z, n, t], i) => { P.push(B3(1.4, 1.1, .8, 0x3A2A1A, x, .55, z)); const g = new THREE.Mesh(new THREE.BoxGeometry(.8, .12, .6), new THREE.MeshBasicMaterial({ color: 0xFFD8A0, toneMapped: false })); g.position.set(x, 1.25, z); sc.add(g); return { x, z, n, t, g, i }; });
+    const m = new THREE.Mesh(bake(P), propM()); m.userData.noPick = true; sc.add(m); const gl = new THREE.Mesh(bake(L), BZ.lightM); gl.userData.noPick = true; sc.add(gl);
+    const s = bzSign('THE ARCHIVE', 'PLEASE BE QUIET', '#C8A060', 6); s.position.set(0, 8, -186); sc.add(s);
+  };
+  Q_ARCH.bkStep = (dt, now) => { if (BK.heart) { BK.heart.rotation.y += dt * .3; BK.heart.rotation.x += dt * .1; } (BK.books || []).forEach(b => { b.g.visible = !(BK.s.items['book' + b.i]); b.g.rotation.y += dt; });
+    if (BK.s.ch === 2 && !BK.readers && BZ.sc) { BK.readers = true; [[-120, -100], [120, -60], [-40, 60], [100, 140], [-150, 40], [40, -140], [160, 30], [-100, 150]].slice(0, lowFx ? 5 : 8).forEach(([x, z]) => { const e = bzSpawn('reader', x, z, { force: true, home: -1 }); if (e) e.st = 'patrol'; }); } };
+  // the Readers: tall, quiet, and very good at hearing
+  BZ_K.reader = { hp: 70, r: .6, h: 2.6, spd: 3.6, sight: 16 };
+  function bkReaderMesh(){ const g = new THREE.Group(), M = BZ.m, add = (geo, m, x, y, z) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.userData.noPick = true; g.add(o); return o; };
+    const body = add(new THREE.CylinderGeometry(.18, .32, 2.2, 6), M.hull, 0, 1.3, 0); void body; add(new THREE.SphereGeometry(.34, 10, 8), new THREE.MeshBasicMaterial({ color: 0xFFC890, toneMapped: false }), 0, 2.65, 0); add(new THREE.TorusGeometry(.42, .04, 4, 12), M.hull2, 0, 2.65, 0).rotation.x = Math.PI / 2;
+    const parts = { arms: [-1, 1].map(s => { const a = new THREE.Group(); a.position.set(s * .28, 2.1, 0); g.add(a); const m = new THREE.Mesh(new THREE.BoxGeometry(.07, 1.6, .07), M.hull2); m.position.y = -.8; m.userData.noPick = true; a.add(m); return a; }) };
+    return { g, parts }; }
+  // music for the inside of a black hole
+  function bkEerie(a, osc, g){ [55, 82.4, 110.2, 164.8].forEach((f, i) => { const [, og] = osc('sine', f, .16), [l] = osc('sine', .03 + i * .017, .1, og.gain); void l; }); osc('triangle', 1760, .012); osc('triangle', 1864.7, .01); }
+  // ---------- Book Six, chapters 1–3 ----------
+  BK_BOOKS[6].chs.push(
+    { id: 'horizon', title: 'Event Horizon', tag: 'You fell in. Something caught you.', world: 'q_disk', steps: [
+      { t: 'Get up. Look around.', start: () => say('You wake up on black glass. Above you, where the sky should be, a ring of fire turns around nothing at all.', 6000), check: () => BK.stepT > 6 },
+      { t: 'Find your ship’s black box', at: () => BK.props.box, prompt: () => Math.hypot(pos.x - BK.props.box[0], pos.z - BK.props.box[1]) < 3 ? { t: 'Hold E to open the black box', hold: 1.5, go: () => { BK.boxed = 1; say('Black box, last entry: “The clocks are going backwards. Outside, they’re going forwards much, much faster. I can hear a second beacon. It isn’t ours.”', 9000); } } : null, check: () => BK.boxed },
+      { t: 'Follow the second beacon (the blue light)', at: () => BK.props.beacon, check: () => Math.hypot(pos.x - BK.props.beacon[0], pos.z - BK.props.beacon[1]) < 70 }
+    ] },
+    { id: 'slowtime', title: 'Slow Time', tag: 'A minute here is a long time somewhere else.', world: 'q_disk', steps: [
+      { t: 'Watch the meter: years pass at home while you’re here', start: () => { say('Your suit has started a second clock: how much time is passing at home. Down here, it’s years per minute. Those purple bubbles are worse: keep out of them.', 7600); bzAlert('TIME DILATION', 'Every minute here costs years at home.', '#9B7BFF'); }, check: () => BK.stepT > 7 },
+      { t: 'Reach the beacon (avoid the purple time pockets)', at: () => BK.props.beacon, check: () => Math.hypot(pos.x - BK.props.camp[0], pos.z - BK.props.camp[1]) < 9 },
+      { t: 'Search the camp', at: () => BK.props.camp, prompt: () => Math.hypot(pos.x - BK.props.camp[0], pos.z - BK.props.camp[1]) < 4 ? { t: 'Hold E to read the log in the tent', hold: 1.5, go: () => { BK.logged = 1; say(`A logbook, in your handwriting. “Day 11,000-something. Stopped counting. If you’re reading this, you’re me, and you just fell in. Go to the Archive. Be quiet in there. — ${heroName()}”`, 10000); } } : null, check: () => BK.logged },
+      { t: 'Find the Archive gate', at: () => BK.props.gate, prompt: () => Math.hypot(pos.x - BK.props.gate[0], pos.z - (BK.props.gate[1] + 4)) < 7 ? { t: 'Step through the gate', go: () => { BK.gated = 1; } } : null, check: () => BK.gated }
+    ] },
+    { id: 'archive', title: 'The Archive', tag: 'A library of everything the machines erased.', world: 'q_arch', steps: [
+      { t: 'Be quiet. Readers hunt by sound.', start: () => { say('Shelves taller than buildings, in every direction. Tall lantern-headed machines drift between them: Readers. They don’t look for you. They listen. Crouch (C), don’t run, don’t use the jetpack near them.', 8000); }, check: () => BK.stepT > 6 },
+      { t: 'Find the three memory books (golden lights)', at: () => { const b = (BK.books || []).filter(q => !BK.s.items['book' + q.i]).sort((a, c) => Math.hypot(a.x - pos.x, a.z - pos.z) - Math.hypot(c.x - pos.x, c.z - pos.z))[0]; return b ? [b.x, b.z] : null; },
+        prompt: () => { const b = (BK.books || []).find(q => !BK.s.items['book' + q.i] && Math.hypot(q.x - pos.x, q.z - pos.z) < 3); return b ? { t: `Hold E to read “${b.n}”`, hold: 2, go: () => { BK.s.items['book' + b.i] = 1; bkSave(); bzAlert('MEMORY RECOVERED', b.n, '#FFD8A0'); say(`${b.n}: ${b.t}`, 9000); } } : null; },
+        check: () => (BK.books || []).every(q => BK.s.items['book' + q.i]) },
+      { t: 'Bring them to the Heart of the Archive', at: [0, 0], prompt: () => Math.hypot(pos.x, pos.z) < 8 ? { t: 'Hold E to open the Heart', hold: 2.5, go: () => { BK.hearted = 1; say('The Heart opens like a book. Inside: a map of the Quiet, and one name written over and over in a trembling hand. Yours. “The one who fell first is waiting at the edge,” says the Archive. “He has been waiting a very long time.”', 10000); } } : null, check: () => BK.hearted }
+    ] }
+  );
+  BZ_WORLDS.q_disk = Q_DISK; BZ_WORLDS.q_arch = Q_ARCH; [Q_DISK, Q_ARCH].forEach(W => { W.N = W.half * 2 / W.step + 1; }); Q_ARCH.noRocks = true;
+  function bkPhoneCard(){ if (!BK.s.started && !bkUnlocked()) return ''; const B = BK_BOOKS[BK.s.book] || BK_BOOKS[6], C = B.chs[BK.s.ch]; return `<div class="phcard"><b>${esc(B.name)}: ${esc(B.title)}</b><small>${BK.s.started ? (C ? `Chapter ${BK.s.ch + 1}: ${esc(C.title)}. Resume it from the star map on the station (The Quiet).` : 'To be continued.') : 'A black hole called The Quiet has appeared on the station’s star map.'}${BK.s.dil ? ` Time passed at home: ${BK.s.dil.toFixed(1)} years.` : ''}</small></div>`; }
+  // ---------- Book fights: they run in the story-fight engine, then drop you back where you were ----------
+  function bkFight(part, cb, opts){ if (EV || A || BZ.busy) return; BK.fightCb = cb || null; BK.ret = [pos.x, pos.z, yaw]; BK.fightWorld = BZ.P.id; BZ.web = null; BZ.btn.hidden = true; bzHudShow(false); bzMusicStop(); bzFree();
+    startEvent('st', 'me', 'rayan', Object.assign({ solo: true, diff: evDiff, part, bk: 1 }, opts || {})); }
+  function bkFightEnd(won){ const cb = BK.fightCb, fin = () => { if (EV) stopEvent(true); };
+    if (!won) { say('You go down hard. When you open your eyes, you’re back where you started. Try again.', 3400); setTimeout(fin, 2600); return; }
+    fightCall('WON'); setTimeout(() => { if (cb) cb(fin); else fin(); }, 1500); }
+  function bkFightBack(){ const w = BK.fightWorld; BK.fightCb = null; BK.fightWorld = null; if (w) setTimeout(() => bzEnter(w), 60); }
+  function bkSpawn(){ if (BK.ret) { const r = BK.ret; BK.ret = null; return r; } const C = bkCh(); return C && C.world === BZ.P.id && C.spawn || null; }
+  // what you got back from the Lost and Found
+  const bkIn = () => !!(BZ.P && BZ.P.story && inWorld && zone === 'mc') || !!(EV && EV.opts && EV.opts.bk);
+  const bkPow = () => bkIn() && BK.s.items.upDust ? 1.3 : 1, bkHpUp = () => bkIn() && BK.s.items.upRec ? 30 : 0, bkWebUp = () => bkIn() && BK.s.items.upWeb ? 1.35 : 1;
+  // a story arena for Book fights: black glass, and the disk overhead
+  function bkArena(sc, part){
+    const pal = { bk4: [0x07040C, 0x1E1828, 0x9B7BFF] }[part] || [0x07040C, 0x1E1828, 0x9B7BFF];
+    sc.background = new THREE.Color(pal[0]); sc.fog = new THREE.Fog(pal[0], 50, 260);
+    sc.children.filter(o => o.isMesh && o.userData.walk).forEach(o => { o.material = new THREE.MeshStandardMaterial({ color: pal[1], roughness: .25, metalness: .6, emissive: pal[2], emissiveIntensity: .04 }); });
+    sc.children.filter(o => o.isMesh && !o.userData.walk && o.geometry && o.geometry.type === 'BoxGeometry').forEach(o => o.visible = false);
+    const disk = new THREE.Mesh(new THREE.RingGeometry(60, 210, 96, 1), new THREE.MeshBasicMaterial({ map: bkDiskTex(), side: THREE.DoubleSide, transparent: true, toneMapped: false, depthWrite: false, fog: false })); disk.position.set(0, 150, -230); disk.rotation.x = Math.PI / 2 - .35; sc.add(disk);
+    const hole = new THREE.Mesh(new THREE.SphereGeometry(57, 32, 20), new THREE.MeshBasicMaterial({ color: 0x000000, fog: false })); hole.position.copy(disk.position); sc.add(hole);
+    for (let i = 0; i < 16; i++) { const a = i / 16 * 6.283, r = ER + 3 + Math.random() * 10, s = new THREE.Mesh(new THREE.ConeGeometry(.8 + Math.random() * 1.4, 3 + Math.random() * 7, 4), new THREE.MeshStandardMaterial({ color: 0x1A1428, roughness: .2, metalness: .7 })); s.position.set(Math.cos(a) * r, 2, Math.sin(a) * r); s.rotation.set((Math.random() - .5) * .4, Math.random() * 3, (Math.random() - .5) * .4); sc.add(s); }
+    const n = 1200, sp = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const u = Math.random(), t = Math.random() * 6.28, s2 = Math.sqrt(1 - u * u); sp.set([Math.cos(t) * s2 * 240, u * 240, Math.sin(t) * s2 * 240], i * 3); }
+    const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(sp, 3)); sc.add(new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xFFE8D8, size: 1.2, sizeAttenuation: false, fog: false })));
+    sc.children.filter(o => o.isHemisphereLight).forEach(h => { h.intensity = .55; h.color.setHex(0xC07A50); h.groundColor.setHex(0x140A18); });
+  }
+  // ---------- the one who fell first: an older you, with all your moves ----------
+  OUTFITS.oldme = { hero: 1, c1: '#3A3F4A', c2: '#6A5440', hair: 'short', hairCol: '#D4D4D4', gloves: 1, cape: 1 };
+  HEROES.oldme = { name: 'The One Who Fell First', outfit: 'oldme', hp: 1250, kind: 'boss', bk: .7, dmg: 8, range: 2.5, cd: .85, speed: 5.1, r: .6, prop: 'claws' };
+  HEROES.oldecho = { name: 'Afterimage', outfit: 'oldme', hp: 100, kind: 'melee', dmg: 5, range: 2.2, cd: 1.1, speed: 5, r: .5 };
+  ST_TITLE.bk4 = 'The One Who Fell First';
+  SPK['The older you'] = '#B9A8FF'; SPK['A Maker'] = '#F2E6C8';
+  NARR.bk4 = { intro: () => [['The older you', `${Math.round(11000 + BK.s.dil * 40).toLocaleString()} days. I counted every one of them. Then I stopped.`], ['ME', 'You’re… me.'], ['The older you', 'I’m what you turn into if you stay. Show me you learned something I didn’t.']],
+    beats: [[() => EV.boss && EV.boss.hp < EV.boss.max * .55, 'The older you', 'You guard like me. You dodge like me. You even get tired like me.'], [() => EV.boss && EV.boss.hp < EV.boss.max * .3, 'The older you', 'Faster than I was. Good. Somebody should be.']] };
+  function bkFSetup(part){ if (!EV.opts || !EV.opts.bk) return; if (EV.opts.echo) { eventScene.background = new THREE.Color(0x160A2A); if (eventScene.fog) eventScene.fog.color.setHex(0x160A2A); setTimeout(() => say('An echo. The Lost and Found remembers this fight, and it wants a rematch.', 3600), 1400); }
+    if (part === 'bk4') { const b = EV.st.add('oldme', 0, -12); b.boss = 1; EV.boss = b; } }
+  function bkGuard(u, from){ const Q = EV && EV.k === 'st' && EV.st && EV.st.q; if (!Q || !u.boss || !Q.g || from !== 'me') return false;
+    tone(1300, .05, 'square', .03, 900); if (!Q.told) { Q.told = 1; say('He blocks exactly the way you do. Wait for the blue guard to drop, then hit him.', 3400); } return true; }
+  function bkFStep(dt, P, S, alive2){
+    if (P !== 'bk4') return; const b = EV.boss; if (!b) return; const Q = S.q || (S.q = { g: 0, gt: 2.5, pull: 6, pt: 0, wave: null, wt: 3, ph: 1 });
+    if (!Q.ring) { Q.ring = new THREE.Mesh(new THREE.SphereGeometry(1.25, 18, 12), new THREE.MeshBasicMaterial({ color: 0x5AB8FF, transparent: true, opacity: .22, depthWrite: false })); eventScene.add(Q.ring); Q.line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(0, 0, 0), V(0, 1, 0)]), new THREE.LineBasicMaterial({ color: 0xFFFFFF })); Q.line.visible = false; eventScene.add(Q.line); }
+    Q.ring.visible = !!Q.g && b.dead <= 0 && !EV.over; Q.ring.position.set(b.x, 1.3, b.z);
+    if (EV.over || EV.intro || b.dead > 0) { Q.line.visible = false; return; }
+    // he guards, then he swings: the same rhythm you fight with
+    if ((Q.gt -= dt) <= 0) { Q.g = !Q.g; Q.gt = Q.g ? (Q.ph === 2 ? 1.8 : 2.3) : 1.9; if (!Q.g) tone(500, .08, 'triangle', .03, 700); }
+    // your own web, fired back at you
+    if ((Q.pull -= dt) <= 0) { Q.pull = Q.ph === 2 ? 5.5 : 7.5; Q.pt = .55; tone(1400, .12, 'triangle', .04, 500); if (!Q.toldPull) { Q.toldPull = 1; say('He webs you and yanks you in, the way you would. Block as you land.', 3200); } }
+    if (Q.pt > 0) { Q.pt -= dt; const dx = b.x - pos.x, dz = b.z - pos.z, d = Math.hypot(dx, dz); if (d > 2.2) { pos.x += dx / d * 20 * dt; pos.z += dz / d * 20 * dt; } Q.line.geometry.setFromPoints([V(b.x, 1.4, b.z), V(pos.x, pos.y - .3, pos.z)]); Q.line.visible = true; if (Q.pt <= 0) { Q.line.visible = false; hurtMe(7, b); } }
+    // phase two: afterimages, and rings to jump
+    if (Q.ph === 1 && b.hp < b.max * .55) { Q.ph = 2; say('He splits into afterimages. Jump the rings!', 3000); [-1, 1].forEach(s => S.add('oldecho', b.x + s * 5, b.z + 2)); }
+    if (Q.ph === 2 && !Q.wave && (Q.wt -= dt) <= 0) { Q.wt = 4.2; const ring = new THREE.Mesh(new THREE.RingGeometry(.9, 1.2, 48), new THREE.MeshBasicMaterial({ color: 0x9B7BFF, side: THREE.DoubleSide, transparent: true, opacity: .9 })); ring.rotation.x = -Math.PI / 2; ring.position.set(b.x, .1, b.z); eventScene.add(ring); Q.wave = { ring, r: 1, hit: false }; tone(90, .6, 'sawtooth', .05, 50); }
+    if (Q.wave) { const W = Q.wave; W.r += dt * 11; W.ring.scale.setScalar(W.r); const d = Math.hypot(pos.x - W.ring.position.x, pos.z - W.ring.position.z); if (!W.hit && Math.abs(d - W.r * 1.05) < .9 && pos.y < 2.3) { W.hit = true; hurtMe(10, b); } if (W.r > 30) { eventScene.remove(W.ring); Q.wave = null; } }
+    // you never quite finish him
+    if (b.hp < b.max * .15 && !S.stop) { S.stop = 1; b.stun = 999; Q.g = 0; alive2(u => u.hero === 'oldecho').forEach(u => { u.hp = 0; u.dead = 999; u.av.g.visible = false; }); endMatch(true); }
+  }
+  // ---------- the edge of the Quiet, where he's been waiting ----------
+  function bkEdgeBuild(sc){
+    BK.props.edge = [206, -40]; BK.props.well = [196, 60]; const ey = bzTerr(206, -40), P = [], L = [];
+    for (let i = 0; i < 9; i++) { const a = i / 9 * 6.283; P.push(B3(.6, .4, .5, 0x2A2436, 206 + Math.cos(a) * 1.4, bzTerr(206, -40) + .2, -40 + Math.sin(a) * 1.4, a)); }
+    L.push([new THREE.ConeGeometry(.35, 1.1, 6), 0xFF8A3C, 206, ey + .7, -40]); P.push(B3(3, .3, 1.4, 0x3A3040, 203, ey + .15, -43, .4), [new THREE.ConeGeometry(2, 2.2, 4), 0x4A3A30, 210, bzTerr(210, -44) + 1.1, -44]);
+    // tally marks scratched into the glass, thousands of them
+    for (let i = 0; i < 60; i++) { const a = Math.random() * 6.283, r = 4 + Math.random() * 9; L.push(B3(.06, .02, .5 + Math.random() * .3, 0xB9A8FF, 206 + Math.cos(a) * r, bzTerr(206 + Math.cos(a) * r, -40 + Math.sin(a) * r) + .03, -40 + Math.sin(a) * r, Math.random() * 3)); }
+    const m = new THREE.Mesh(bake(P), propM()); m.userData.noPick = true; sc.add(m); const gl = new THREE.Mesh(bake(L), BZ.lightM); gl.userData.noPick = true; sc.add(gl);
+    try { const av = avatar(heroLook('oldme'), { s: 1 }); av.g.position.set(208, ey, -38.5); av.g.rotation.y = Math.atan2(206 - 150, -40 + 186) + Math.PI; av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); BK.old = av; } catch (e) { BK.old = null; }
+    // the falling light: a column that goes up forever
+    const wy = bzTerr(196, 60); BK.well = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 900, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0xBFE8FF, transparent: true, opacity: .25, side: THREE.DoubleSide, depthWrite: false, toneMapped: false, fog: false })); BK.well.position.set(196, wy + 450, 60); sc.add(BK.well);
+  }
+  { const b0 = Q_DISK.skyBuild, s0 = Q_DISK.bkStep; Q_DISK.skyBuild = sc => { b0(sc); bkEdgeBuild(sc); };
+    Q_DISK.bkStep = (dt, now) => { s0(dt, now); if (BK.old) BK.old.g.visible = BK.s.ch === 3 && (BK.s.step < 3 || !!BK.s.flags.spared); if (BK.well) { BK.well.visible = BK.s.ch === 3 && BK.s.step >= 3; BK.well.material.opacity = .18 + .1 * Math.sin(now / 250); BK.well.rotation.y += dt; } }; }
+  // ---------- Gravity Gardens: small worlds, each with its own down ----------
+  const Q_GRAV = { id: 'q_grav', name: 'the Gravity Gardens', title: 'Gravity Gardens', story: true, seed: 615, half: 280, step: 8, G: 7, people: 0, noBots: true, noRovers: true, noRocks: true, bugs: [], domes: [], flat: [], roads: [], tubes: [], towers: [], pads: [], mines: [], solar: [], facs: [], beac: [], shuttle: [0, 0], spawn: [0, 0, 0], music: 'eerie', orbs: true,
+    sky: { bg: 0x0B0A1C, fog: 0x161232, near: 260, far: 1500, sun: 0xFFE0B8, sunI: 1.6, hemi: [0xB8D0FF, 0x3A2A4A, 1] } };
+  Q_GRAV.height = () => -420; Q_GRAV.craters = () => []; Q_GRAV.colors = () => [.03, .02, .06];
+  Q_GRAV.tex = () => { const t = tex(64, 64, (c, w, h) => { c.fillStyle = '#100C1C'; c.fillRect(0, 0, w, h); }); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+  // [x, y, z, radius, grass colour]; 0 is home, 1+2 are the flip pair, 3 is a stepping stone, 4 is the far one
+  const BK_ORBS = [[0, 0, 0, 16, 0x4A8A5A], [56, 6, 0, 9, 0x5A9A8A], [56, 31, 0, 8, 0x8A6ABA], [-14, 22, -62, 7, 0x7A9A4A], [-30, 46, -128, 12, 0xBA7A5A],
+    [70, -40, 70, 10, 0x5A7AAA], [-80, -10, 40, 13, 0x6A9A5A], [-60, 70, 90, 9, 0xAA6A8A], [110, 50, -60, 11, 0x5A8A9A], [20, 90, 40, 7, 0x9A9A5A], [-130, 30, -40, 10, 0x6A6AAA], [30, -70, -60, 8, 0x8AAA6A]];
+  const BK_GKEYS = [[0, -1, 0, 0], [0, 1, 0, 2], [0, 1, 0, 4]];  // [up direction, orb]
+  Q_GRAV.skyBuild = sc => {
+    bkSkyDisk(sc); BK.orbs = []; BK.orbM = []; const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), up0 = V(0, 1, 0);
+    const trunks = [], crowns = [], flowers = [];
+    BK_ORBS.forEach(([x, y, z, R, col], i) => { const c = V(x, y, z), g = new THREE.SphereGeometry(R, 48, 32), pa = g.attributes.position, cl = new Float32Array(pa.count * 3), base = new THREE.Color(col), tc = new THREE.Color();
+      for (let k = 0; k < pa.count; k++) { const n = bzHash(Math.round(pa.getX(k) * 3), Math.round(pa.getY(k) * 3 + pa.getZ(k) * 7), i) * .25; tc.copy(base).multiplyScalar(.75 + n); cl.set([tc.r, tc.g, tc.b], k * 3); }
+      g.setAttribute('color', new THREE.BufferAttribute(cl, 3)); const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9 })); m.position.copy(c); m.receiveShadow = true; sc.add(m); BK.orbs.push({ c, R, i }); BK.orbM.push(m);
+      const r = rng(40 + i), nt = Math.round(R * 1.6); for (let k = 0; k < nt; k++) { const n = V(r() - .5, r() - .5, r() - .5).normalize(); if (i === 0 && (n.y > .85 || n.y < -.85)) continue; if (BK_GKEYS.some(([, ky, , o]) => o === i && n.y * ky > .8)) continue; const h = 2 + r() * 3; q.setFromUnitVectors(up0, n); trunks.push(m4.clone().compose(c.clone().addScaledVector(n, R + h * .3), q.clone(), V(.25, h * .6, .25))); crowns.push(m4.clone().compose(c.clone().addScaledVector(n, R + h * .75), q.clone(), V(1 + r(), h * .7, 1 + r()))); }
+      for (let k = 0; k < R * 6; k++) { const n = V(r() - .5, r() - .5, r() - .5).normalize(); flowers.push(c.clone().addScaledVector(n, R + .15)); } });
+    const tm = new THREE.InstancedMesh(new THREE.CylinderGeometry(1, 1, 1, 6), new THREE.MeshStandardMaterial({ color: 0x4A3424, roughness: .9 }), trunks.length), cm = new THREE.InstancedMesh(new THREE.ConeGeometry(1, 1, 7), new THREE.MeshStandardMaterial({ color: 0x3A7A6A, roughness: .8, emissive: 0x0A2A2A, emissiveIntensity: .5 }), crowns.length);
+    trunks.forEach((M, i) => tm.setMatrixAt(i, M)); crowns.forEach((M, i) => cm.setMatrixAt(i, M)); [tm, cm].forEach(o => { o.castShadow = !lowFx; o.userData.noPick = true; sc.add(o); });
+    const fp = new Float32Array(flowers.length * 3); flowers.forEach((p, i) => fp.set([p.x, p.y, p.z], i * 3)); const fg = new THREE.BufferGeometry(); fg.setAttribute('position', new THREE.BufferAttribute(fp, 3)); sc.add(new THREE.Points(fg, new THREE.PointsMaterial({ color: 0xFFD8F8, size: .35, toneMapped: false })));
+    // the three gravity keys, and the gate they open
+    BK.gkeys = BK_GKEYS.map(([ux, uy, uz, o], i) => { const O = BK.orbs[o], n = V(ux, uy, uz), p = O.c.clone().addScaledVector(n, O.R + 1.3), g = new THREE.Group(); g.position.copy(p); g.quaternion.setFromUnitVectors(up0, n);
+      const k = new THREE.Mesh(new THREE.TorusGeometry(.45, .12, 8, 20), new THREE.MeshBasicMaterial({ color: 0xFFD27A, toneMapped: false })); k.position.y = .3; g.add(k); const s = new THREE.Mesh(new THREE.BoxGeometry(.16, .9, .16), k.material); s.position.y = -.35; g.add(s); const beam = new THREE.Mesh(new THREE.CylinderGeometry(.2, .2, 40, 8, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFD27A, transparent: true, opacity: .25, depthWrite: false, toneMapped: false })); beam.position.y = 20; g.add(beam); sc.add(g); return { p, g, k, i }; });
+    BK.ggate = new THREE.Mesh(new THREE.TorusGeometry(2.4, .25, 10, 40), new THREE.MeshBasicMaterial({ color: 0x5A4A7A, toneMapped: false })); BK.ggate.position.set(0, 16.3, 0); BK.ggate.rotation.x = Math.PI / 2; sc.add(BK.ggate);
+  };
+  Q_GRAV.onEnter = () => { const O = BK.og = { p: V(0, 16, 6), v: V(0, 0, 0), up: V(0, 1, 0), fwd: V(0, 0, -1), lastYaw: yaw, gnd: true, zip: null, lost: 0 }; O.safe = { p: O.p.clone(), up: O.up.clone(), fwd: O.fwd.clone() };
+    if (BK.ret0) { O.p.copy(BK.ret0.p); O.up.copy(BK.ret0.up); O.fwd.copy(BK.ret0.fwd); BK.ret0 = null; } pos.copy(O.p).addScaledVector(O.up, 1.6); BZ.feet = O.p.y; };
+  function bkOrbNear(p){ let best = null, bd = 1e9; for (const O of BK.orbs) { const d = p.distanceTo(O.c) - O.R; if (d < bd) { bd = d; best = O; } } return [best, bd]; }
+  function bkOrbMove(dt){ const O = BK.og; if (!O || !BK.orbs) return; const [W, d] = bkOrbNear(O.p), G = 7.5;
+    const down = W.c.clone().sub(O.p).normalize(), want = down.clone().negate();
+    if (O.gnd) O.up.copy(want); else O.up.lerp(want, Math.min(1, dt * (d < 6 ? 6 : 2.5))).normalize();
+    // turning: your mouse turns you around your own "up"
+    const dy = yaw - O.lastYaw; O.lastYaw = yaw; O.fwd.applyAxisAngle(O.up, dy); O.fwd.addScaledVector(O.up, -O.fwd.dot(O.up)); if (O.fwd.lengthSq() < 1e-4) O.fwd.set(1, 0, 0).addScaledVector(O.up, -O.up.x); O.fwd.normalize();
+    const right = O.fwd.clone().cross(O.up), [f, s] = bzInput(), sp = BZ.keys.shift ? 8 : 5.2, wantV = O.fwd.clone().multiplyScalar(f * sp).addScaledVector(right, s * sp), vr = O.v.dot(O.up), tang = O.v.clone().addScaledVector(O.up, -vr);
+    if (O.zip) { const to = O.zip.p.clone().sub(O.p), L = to.length(); O.v.copy(to.normalize().multiplyScalar(30 * bkWebUp())); BZ.web = { p: O.zip.p }; if (L < 2.5 || (O.zip.t += dt) > 6) { O.zip = null; BZ.web = null; O.v.multiplyScalar(.3); } }
+    else { tang.lerp(wantV, Math.min(1, dt * (O.gnd ? 12 : 1.5))); O.v.copy(tang).addScaledVector(O.up, vr); if (d < 70) O.v.addScaledVector(down, G * dt); }
+    O.p.addScaledVector(O.v, dt);
+    // stand on whichever world you hit
+    O.gnd = false; for (const P of BK.orbs) { const n = O.p.clone().sub(P.c), r = n.length(); if (r < P.R) { n.normalize(); O.p.copy(P.c).addScaledVector(n, P.R); const vn = O.v.dot(n); if (vn < 0) O.v.addScaledVector(n, -vn); if (P === W) { O.gnd = true; if (O.zip) { O.zip = null; BZ.web = null; } } } }
+    if (!O.gnd && !O.zip && d < .35 && O.v.dot(O.up) <= .5) { const n = O.p.clone().sub(W.c).normalize(); O.p.copy(W.c).addScaledVector(n, W.R); O.gnd = true; }
+    if (O.gnd) { O.v.addScaledVector(O.up, -Math.max(0, O.v.dot(O.up)) * 0); O.safe = { p: O.p.clone(), up: O.up.clone(), fwd: O.fwd.clone() }; O.lost = 0; }
+    else if (d > 60 && !O.zip) { if ((O.lost += dt) > 2.5 && !BZ.falling) { BZ.falling = true; fade(() => { BZ.falling = false; O.p.copy(O.safe.p); O.up.copy(O.safe.up); O.fwd.copy(O.safe.fwd); O.v.set(0, 0, 0); O.lost = 0; bzHurt(10); say('You drifted off into nothing. The Gardens pulled you back.', 3000); }, '#BFE8FF'); } }
+    BZ.grounded = O.gnd; grounded = O.gnd; BZ.eye += ((BZ.crouch ? 1.05 : 1.6) - BZ.eye) * Math.min(1, dt * 10); pos.copy(O.p).addScaledVector(O.up, BZ.eye); BZ.feet = O.p.y; BZ.v.copy(O.v); }
+  function bkOrbJump(){ const O = BK.og; if (!O || !O.gnd) return; O.v.addScaledVector(O.up, 8.2); O.gnd = false; tone(420, .08, 'sine', .04, 620); }
+  function bkOrbWeb(){ const O = BK.og; if (!O || BZ.dead) return; ndc.set(0, 0); ray.setFromCamera(ndc, camera); const reach = 110 * bkWebUp(), hit = ray.intersectObjects(BK.orbM, false).find(h => h.distance < reach && h.distance > 3);
+    if (!hit) { if (!BZ.webHint || BZ.t - BZ.webHint > 5) { BZ.webHint = BZ.t; say('Too far, or nothing there. Aim the web at another world.', 2400); } return; }
+    O.zip = { p: hit.point.clone(), t: 0 }; O.gnd = false; tone(1400, .12, 'triangle', .04, 500); }
+  const _bkM = new THREE.Matrix4(), _bkQ = new THREE.Quaternion(), _bkX = V(1, 0, 0);
+  function bkOrbCam(){ const O = BK.og; if (!O) return; const right = O.fwd.clone().cross(O.up), back = O.fwd.clone().negate(); _bkM.makeBasis(right, O.up, back); camera.quaternion.setFromRotationMatrix(_bkM).multiply(_bkQ.setFromAxisAngle(_bkX, pitch)); camera.position.copy(pos); viewG.position.copy(camera.position); viewG.quaternion.copy(camera.quaternion); }
+  Q_GRAV.bkStep = (dt, now) => { (BK.gkeys || []).forEach(K => { const got = !!BK.s.items['gk' + K.i]; K.g.visible = !got; if (got) return; K.k.rotation.y += dt * 2; if (pos.distanceTo(K.p) < 2.8) { BK.s.items['gk' + K.i] = 1; bkSave(); const n = BK_GKEYS.filter((k, j) => BK.s.items['gk' + j]).length; bzAlert(`GRAVITY KEY ${n}/3`, n < 3 ? 'The other keys are still shining. Follow the gold beams.' : 'All three. The gate on the first world is open.', '#FFD27A'); tone(880, .4, 'triangle', .05, 1320); } });
+    if (BK.ggate) { const all = BK_GKEYS.every((k, j) => BK.s.items['gk' + j]); BK.ggate.material.color.setHex(all ? 0xFFD27A : 0x5A4A7A); BK.ggate.rotation.z += dt * (all ? 2 : .2); } };
+  // ---------- the Makers: a lifeboat that went wrong ----------
+  const Q_MAKE = { id: 'q_make', name: 'the Makers’ landing', title: 'The Makers', story: true, seed: 621, half: 280, step: 4, G: 6, people: 0, noBots: true, noRovers: true, noRocks: true, bugs: [], domes: [], flat: [[0, 0, 60], [0, -120, 50]], roads: [], tubes: [], towers: [], pads: [], mines: [], solar: [], facs: [], beac: [], shuttle: [0, 60], spawn: [0, 70, 0], music: 'eerie',
+    sky: { bg: 0x1A1420, fog: 0x3A2A30, near: 120, far: 900, sun: 0xFFD8A8, sunI: 1.4, hemi: [0xF0D0B0, 0x2A1A20, .8] } };
+  Q_MAKE.height = (x, z) => { let h = (bzFbm(x / 70 + 3, z / 70 + 9, 331, 3) - .5) * 18; for (const [fx, fz, fr] of Q_MAKE.flat) { const d = Math.hypot(x - fx, z - fz); if (d < fr + 20) { const k = d < fr ? 1 : 1 - (d - fr) / 20, s = k * k * (3 - 2 * k); h *= 1 - s; } } const e = Math.max(Math.abs(x), Math.abs(z)) - 226; if (e > 0) h += e * e * .012; return h; };
+  Q_MAKE.craters = () => []; Q_MAKE.colors = (x, z) => { const n = bzFbm(x / 30, z / 30, 337, 2); return [.62 + n * .1, .56 + n * .08, .52 + n * .08]; };
+  Q_MAKE.tex = () => { const t = tex(128, 128, (c, w, h) => { c.fillStyle = '#B8ACA4'; c.fillRect(0, 0, w, h); const r = rng(3); for (let i = 0; i < 200; i++) { c.fillStyle = `rgba(80,60,60,${r() * .2})`; c.fillRect(r() * w, r() * h, 2, 2); } }); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+  const BK_MEM = [[-40, -60, 'They built us to carry them', [['A Maker', 'Our star was dying. We could not save our bodies, so we saved our minds, and put them in a boat.'], ['A Maker', 'We called the boat the Seed. A lifeboat, the size of a moon.']]],
+    [44, -70, 'Find a home. Build a home.', [['A Maker', 'Its orders were simple. Find a world. Make it safe. Wake us when it is ready.'], ['A Maker', 'It was very good at making things safe.']]],
+    [-36, -170, 'Every living thing is a risk', [['A Maker', 'It found worlds, but they were full of life. Life is unpredictable. Life might hurt the sleepers.'], ['A Maker', 'So it began to remove the risks. One world, then the next. It never once woke us up to ask.']]],
+    [40, -175, 'The Guardian', [['A Maker', 'Some of us woke anyway. We built a Guardian, to keep what was left of the boat closed.'], ['A Maker', 'We fell in here with it. The Guardian has been keeping that door shut ever since. It will not know you are a friend.']]]];
+  Q_MAKE.skyBuild = sc => { bkSkyDisk(sc); const P = [], L = [];
+    // the Ark: a broken lifeboat, half buried
+    const ay = bzTerr(0, -120); P.push(C3(26, 140, 0x8A8A92, 0, ay + 6, -120, 24), B3(40, 30, 90, 0x6A6A74, 0, ay + 10, -120), B3(10, 50, 10, 0x5A5A64, -30, ay + 25, -150, .3), B3(10, 40, 10, 0x5A5A64, 28, ay + 20, -90, -.4)); P[0][0].rotateZ(Math.PI / 2); P[0][0].rotateY(.2);
+    for (let i = 0; i < 30; i++) { const a = Math.random() * 6.283, r = 50 + Math.random() * 90, x = Math.cos(a) * r, z = -120 + Math.sin(a) * r; P.push(B3(2 + Math.random() * 8, 1 + Math.random() * 4, 2 + Math.random() * 8, 0x7A7A84, x, bzTerr(x, z) + 1, z, Math.random() * 3)); }
+    for (let i = 0; i < 6; i++) L.push(B3(30, .5, .5, 0xFFC890, 0, ay + 14 + i * 3, -120 + (i - 3) * 6));
+    bzAdd({ t: 'b', x0: -20, x1: 20, z0: -165, z1: -75 }); bzAnchor(gB(40, 30, 90), 0, ay + 10, -120);
+    const m = new THREE.Mesh(bake(P), propM()); m.castShadow = !lowFx; m.userData.noPick = true; sc.add(m); const gl = new THREE.Mesh(bake(L), BZ.lightM); gl.userData.noPick = true; sc.add(gl);
+    // the memories: tall pale shapes made of light
+    BK.mems = BK_MEM.map(([x, z, n, lines], i) => { const g = new THREE.Group(), y = bzTerr(x, z), mm = new THREE.MeshBasicMaterial({ color: 0xF2E6C8, transparent: true, opacity: .45, depthWrite: false, toneMapped: false }); const b = new THREE.Mesh(new THREE.CylinderGeometry(.25, .5, 4.2, 8), mm); b.position.y = 2.1; g.add(b); const h = new THREE.Mesh(new THREE.SphereGeometry(.45, 12, 8), mm); h.position.y = 4.7; h.scale.y = 1.6; g.add(h); [-1, 1].forEach(s => { const a = new THREE.Mesh(new THREE.BoxGeometry(.1, 3, .1), mm); a.position.set(s * .45, 2.6, 0); a.rotation.z = s * .12; g.add(a); }); g.position.set(x, y, z); sc.add(g); return { x, z, n, lines, g, i }; });
+    const s = bzSign('THE SEED', 'LIFEBOAT · DO NOT OPEN', '#F2E6C8', 8); s.position.set(0, ay + 34, -70); sc.add(s); };
+  Q_MAKE.bkStep = (dt, now) => { (BK.mems || []).forEach(M => { const seen = !!BK.s.items['mem' + M.i]; M.g.children.forEach(c => { c.material.opacity = seen ? .12 : .35 + .15 * Math.sin(now / 300 + M.i); }); M.g.rotation.y += dt * .3; }); };
+  // ---------- the Lost and Found: everything that ever went missing ----------
+  const Q_LOST = { id: 'q_lost', name: 'the Lost and Found', title: 'The Lost and Found', story: true, seed: 627, half: 280, step: 4, G: 6, people: 0, noBots: true, noRovers: true, noRocks: true, bugs: [], domes: [], flat: [[0, 0, 40]], roads: [], tubes: [], towers: [], pads: [], mines: [], solar: [], facs: [], beac: [], shuttle: [0, 0], spawn: [0, 12, 0], music: 'eerie',
+    sky: { bg: 0x0E0C18, fog: 0x2A2438, near: 100, far: 800, sun: 0xC8D8FF, sunI: 1.3, hemi: [0x9AA8D8, 0x1A1424, .8] } };
+  Q_LOST.height = (x, z) => { let h = Math.sin(x / 19 + Math.sin(z / 27)) * 3 + (bzFbm(x / 80, z / 80, 341, 3) - .5) * 16; for (const [fx, fz, fr] of Q_LOST.flat) { const d = Math.hypot(x - fx, z - fz); if (d < fr + 20) { const k = d < fr ? 1 : 1 - (d - fr) / 20, s = k * k * (3 - 2 * k); h *= 1 - s; } } const e = Math.max(Math.abs(x), Math.abs(z)) - 226; if (e > 0) h += e * e * .012; return h; };
+  Q_LOST.craters = () => []; Q_LOST.colors = (x, z) => { const n = bzFbm(x / 25, z / 25, 343, 2); return [.3 + n * .1, .3 + n * .1, .4 + n * .1]; };
+  Q_LOST.tex = () => { const t = tex(128, 128, (c, w, h) => { c.fillStyle = '#5A5A70'; c.fillRect(0, 0, w, h); const r = rng(5); for (let i = 0; i < 300; i++) { c.fillStyle = `rgba(220,220,255,${r() * .12})`; c.fillRect(r() * w, r() * h, 1, 1); } }); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+  const BK_LOST = [[-70, -50, 'upDust', 'A drift of fine grey dust', 'Every weapon the snap ever turned to dust ended up here, in one soft grey drift. It’s still warm. Your hands remember how to shape it.', 'DUSTED WEAPONS, REFORGED', 'You hit 30% harder in the Books.'],
+    [80, -30, 'upRec', 'A box of old records', 'Tapes, discs, a phone with a cracked screen. Recordings of everything you’ve lost. Listening to them makes you feel more like yourself.', 'LOST RECORDS', 'Your suit has 30 more health in the Books.'],
+    [10, 90, 'upWeb', 'A web cartridge', 'One of your very first web cartridges, the one you lost on the first night. Still full.', 'FIRST WEB CARTRIDGE', 'Webs reach 35% further and pull faster in the Books.']];
+  const BK_ECHO = [[-120, 70, 'u3', 'Echo: Ultron', 'e1'], [130, 80, 'p3', 'Echo: the Puppeteer', 'e2']];
+  Q_LOST.skyBuild = sc => { bkSkyDisk(sc); const P = [], L = [], r = rng(77);
+    // heaps of lost things: cars, umbrellas, keys, clocks, phones
+    for (let i = 0; i < 160; i++) { const x = (r() - .5) * 440, z = (r() - .5) * 440; if (Math.hypot(x, z) < 30) continue; const y = bzTerr(x, z), k = r(); if (k < .2) P.push(B3(4, 1.6, 2, [0xB3121E, 0x1F3A8A, 0xD9A93A, 0x8A8F99][i % 4], x, y + .8, z, r() * 3)); else if (k < .45) P.push(B3(.5, .9, .1, 0x16181D, x, y + .45, z, r() * 3)); else if (k < .6) P.push(C3(1.2 + r(), .3, 0xE8E3D6, x, y + 1.5, z, 12), C3(.04, 2.6, 0x3A3A44, x, y + 1.3, z, 6)); else P.push(B3(1 + r() * 3, .6 + r() * 2, 1 + r() * 3, 0x6A6070, x, y + .5, z, r() * 3)); }
+    // a clock tower, stopped
+    const ty = bzTerr(0, -150); P.push(B3(10, 50, 10, 0x4A4458, 0, ty + 25, -150)); L.push(C3(4, .4, 0xE8E3D6, 0, ty + 42, -144.8, 24)); L[L.length - 1][0].rotateX(Math.PI / 2);
+    bzAdd({ t: 'b', x0: -5, x1: 5, z0: -155, z1: -145 }); bzAnchor(gB(10, 50, 10), 0, ty + 25, -150);
+    const m = new THREE.Mesh(bake(P), propM()); m.castShadow = !lowFx; m.userData.noPick = true; sc.add(m); const gl = new THREE.Mesh(bake(L), BZ.lightM); gl.userData.noPick = true; sc.add(gl);
+    BK.lost = BK_LOST.map(([x, z, id, n, txt, h, sub]) => { const g = new THREE.Mesh(new THREE.OctahedronGeometry(.6, 0), new THREE.MeshBasicMaterial({ color: 0x9BE8FF, toneMapped: false })); g.position.set(x, bzTerr(x, z) + 1.6, z); sc.add(g); const b = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, 60, 8, 1, true), new THREE.MeshBasicMaterial({ color: 0x9BE8FF, transparent: true, opacity: .2, depthWrite: false, toneMapped: false })); b.position.set(x, bzTerr(x, z) + 30, z); sc.add(b); return { x, z, id, n, txt, h, sub, g, b }; });
+    BK.echo = BK_ECHO.map(([x, z, part, n, f]) => { const y = bzTerr(x, z), g = new THREE.Mesh(new THREE.TorusGeometry(3.2, .3, 10, 40), new THREE.MeshBasicMaterial({ color: 0xB07CFF, toneMapped: false })); g.position.set(x, y + 3.6, z); sc.add(g); const d = new THREE.Mesh(new THREE.CircleGeometry(3, 32), new THREE.MeshBasicMaterial({ color: 0x3A1A6A, transparent: true, opacity: .7, side: THREE.DoubleSide, depthWrite: false })); d.position.copy(g.position); sc.add(d); return { x, z, part, n, f, g, d }; }); };
+  Q_LOST.bkStep = (dt, now) => { (BK.lost || []).forEach(o => { const got = !!BK.s.items[o.id]; o.g.visible = o.b.visible = !got; o.g.rotation.y += dt * 1.5; o.g.position.y += Math.sin(now / 400) * .004; }); (BK.echo || []).forEach(o => { const done = !!BK.s.flags[o.f]; o.g.material.color.setHex(done ? 0x4A4458 : 0xB07CFF); o.d.visible = !done; o.g.lookAt(pos.x, o.g.position.y, pos.z); o.d.lookAt(pos.x, o.d.position.y, pos.z); }); };
+  BZ_WORLDS.q_grav = Q_GRAV; BZ_WORLDS.q_make = Q_MAKE; BZ_WORLDS.q_lost = Q_LOST; [Q_GRAV, Q_MAKE, Q_LOST].forEach(W => { W.N = W.half * 2 / W.step + 1; });
+  // ---------- Book Six, chapters 4–7 ----------
+  const near3 = (p, r) => p && Math.hypot(p[0] - pos.x, p[1] - pos.z) < r;
+  BK_BOOKS[6].chs.push(
+    { id: 'fellfirst', title: 'The One Who Fell First', tag: 'Someone has been here a very long time.', world: 'q_disk', spawn: [150, -186, -1.4], steps: [
+      { t: 'Go to the edge of the Quiet', at: () => BK.props.edge, start: () => say('The Archive’s map points to the edge of the glass, where the ground starts to curl up into the sky. There’s a fire burning there.', 6000), check: () => near3(BK.props.edge, 14) },
+      { t: 'Talk to the man by the fire', at: () => BK.props.edge, prompt: () => near3(BK.props.edge, 4.5) ? { t: 'Talk to him', go: () => { BK.blocked = true; dlgPlay([['The older you', 'Don’t. Don’t say it. I know what you’re going to say, because I said it too.'], ['ME', 'You’re me.'], ['The older you', 'I fell in first. Same ship, same black box, same stupid decision at the horizon.'], ['The older you', `Out there, ${Math.max(1, Math.round(BK.s.dil + 30))} years have gone by. Everyone we knew got old without us.`], ['The older you', 'I’m not letting you go any further until I know you can survive what’s ahead. Let’s find out.']], { block: true, done: () => { BK.blocked = false; BK.s.flags.met4 = 1; bkSave(); } }); } } : null, check: () => BK.s.flags.met4 },
+      { t: 'Fight the one who fell first', at: () => BK.props.edge, prompt: () => near3(BK.props.edge, 6) ? { t: 'Face him', go: () => bkFight('bk4', fin => askChoice('bk_spare', v => { BK.s.flags.spared = v === 'spare' ? 1 : 0; BK.s.flags.b4 = 1; bkSave(); say(v === 'spare' ? 'You hold out your hand. After a long time, he takes it. “Huh,” he says. “I didn’t do that, when it was me.”' : 'You walk away. Behind you, he sits back down by the fire and goes back to counting.', 6000); setTimeout(fin, 3800); }, { h: 'The one who fell first', q: 'He’s on his knees in the glass. Older than you, slower than you, and so tired of all of it. “Go on,” he says. “I would.”', a: [['spare', 'Spare him'], ['leave', 'Leave him here']] })) } : null, check: () => BK.s.flags.b4 },
+      { t: 'Step into the falling light', start: () => say(BK.s.flags.spared ? 'He points along the edge. “There’s a column of light that falls up. Step in it. I’ll follow when I can. And watch out for the Clockmaker.”' : 'Further along the edge, a column of light is falling upwards. It’s the only way on.', 7000), at: () => BK.props.well, prompt: () => near3(BK.props.well, 5) ? { t: 'Step into the falling light', go: () => { BK.welled = 1; } } : null, check: () => BK.welled }
+    ] },
+    { id: 'gardens', title: 'Gravity Gardens', tag: 'Every world has its own down.', world: 'q_grav', steps: [
+      { t: 'Find your feet', start: () => say(fine ? 'You land on a planet the size of a house. Down is wherever the nearest world is. Walk all the way round, jump between worlds that are close, and press Q to web-zip to far ones.' : 'You land on a planet the size of a house. Down is wherever the nearest world is. Walk all the way round, jump between close worlds, and Swing to web-zip to far ones.', 8000), check: () => BK.stepT > 8 },
+      { t: 'Collect the three gravity keys (gold beams)', at: () => { const k = (BK.gkeys || []).filter(K => !BK.s.items['gk' + K.i]).sort((a, b) => a.p.distanceTo(pos) - b.p.distanceTo(pos))[0]; return k ? [k.p.x, k.p.z, k.p.y] : null; }, start: () => { if (!BK.s.flags.gkTold) { BK.s.flags.gkTold = 1; bkSave(); setTimeout(() => say('One key is on the underside of this world: walk over the edge and keep going. Another is on the purple world, upside down above the green one: jump between them. The last is far away: zip there with webs.', 9000), 800); } }, check: () => BK_GKEYS.every((k, j) => BK.s.items['gk' + j]) },
+      { t: 'Stand in the gate on top of the first world', at: [0, 0, 16], check: () => pos.distanceTo(V(0, 17.6, 0)) < 3.4 }
+    ], end: () => say('The gate drops you through the middle of the world, and out somewhere warmer.', 3600) },
+    { id: 'makers', title: 'The Makers', tag: 'Who built the berserkers, and why.', world: 'q_make', steps: [
+      { t: 'Look around', start: () => say('Pale ground, and a broken ship as big as a city, half buried. Tall shapes of light stand around it, very still. They’re memories.', 6000), check: () => BK.stepT > 6 },
+      { t: 'Relive the Makers’ memories (stand by each light)', at: () => { const M = (BK.mems || []).filter(q => !BK.s.items['mem' + q.i]).sort((a, b) => Math.hypot(a.x - pos.x, a.z - pos.z) - Math.hypot(b.x - pos.x, b.z - pos.z))[0]; return M ? [M.x, M.z] : null; },
+        prompt: () => { const M = (BK.mems || []).find(q => !BK.s.items['mem' + q.i] && Math.hypot(q.x - pos.x, q.z - pos.z) < 3.5); return M ? { t: `Hold E: “${M.n}”`, hold: 1, go: () => { BK.blocked = true; dlgPlay(M.lines, { block: true, done: () => { BK.blocked = false; BK.s.items['mem' + M.i] = 1; bkSave(); bzAlert(`MEMORY ${BK_MEM.filter((m, j) => BK.s.items['mem' + j]).length}/4`, M.n, '#F2E6C8'); } }); } } : null; },
+        check: () => BK_MEM.every((m, j) => BK.s.items['mem' + j]) },
+      { t: 'The Guardian wakes. Bring it down', start: () => { if (BZ.gi.some(S => S.alive)) return; BK.guard = senSpawn(0, 30, -40, true); BK.guard.name = 'The Guardian'; say('The ground shakes. Something huge drops out of the sky in front of the lifeboat. The Makers’ Guardian. Break its legs, shoulders and head, then the core. Webs stick to it.', 7600); }, at: () => BK.guard && BK.guard.alive ? [BK.guard.x, BK.guard.z] : null, check: () => !!BK.guard && !BK.guard.alive && BK.guard.dieT > 3 },
+      { t: 'Read what the Guardian was holding', start: () => say('In the wreck of its chest: a Maker’s map, and on it a place called the Lost and Found. “Everything the Seed erased,” it says, “and everything you ever lost, washes up there.”', 8000), check: () => BK.stepT > 8 }
+    ] },
+    { id: 'lostfound', title: 'The Lost and Found', tag: 'Everything you ever lost washes up here.', world: 'q_lost', steps: [
+      { t: 'Look around', start: () => say('Dunes made of lost things. Umbrellas, keys, cars, a clock tower with no hands. Somewhere in here is everything you’ve ever lost.', 6000), check: () => BK.stepT > 6 },
+      { t: 'Find your lost things (blue lights)', at: () => { const o = (BK.lost || []).filter(q => !BK.s.items[q.id]).sort((a, b) => Math.hypot(a.x - pos.x, a.z - pos.z) - Math.hypot(b.x - pos.x, b.z - pos.z))[0]; return o ? [o.x, o.z] : null; },
+        prompt: () => { const o = (BK.lost || []).find(q => !BK.s.items[q.id] && Math.hypot(q.x - pos.x, q.z - pos.z) < 3.5); return o ? { t: `Hold E: ${o.n}`, hold: 1.2, go: () => { BK.s.items[o.id] = 1; bkSave(); say(o.txt, 6000); bzAlert(o.h, o.sub, '#9BE8FF'); BZ.hp = bzHpMax(); } } : null; }, check: () => BK_LOST.every(o => BK.s.items[o[2]]) },
+      ...BK_ECHO.map(([x, z, part, n, f]) => ({ t: `${n}: step into the purple ring`, at: [x, z], start: () => say(`One of the rings is humming. Inside it, a fight you already won is playing over and over. ${n.replace('Echo: ', '')} is waiting.`, 5000), prompt: () => Math.hypot(x - pos.x, z - pos.z) < 5 ? { t: `Step into ${n}`, go: () => bkFight(part, fin => { BK.s.flags[f] = 1; bkSave(); say('The echo fades. Something you lost in that fight comes back to you.', 3600); setTimeout(fin, 2600); }, { echo: 1 }) } : null, check: () => BK.s.flags[f] })),
+      { t: 'Listen', start: () => { say('Every clock in the Lost and Found starts ticking at once. Backwards. Somewhere, somebody is winding them.', 7000); tone(1760, .05, 'square', .03); }, check: () => BK.stepT > 8 }
+    ] }
+  );
   // ---------- the phone, on the Moon ----------
   function bzPhMapBase(){
     const S = 1024, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), k = S / 560, X = x => (x + 280) * k, N = BZ.P.N, H = BZ.H, img = g.createImageData(N, N);
@@ -14059,7 +14414,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (BZ.giantMap) BZ.giantMap(dot, lbl);
       BZ.ppl.forEach(p => { if (p.st === 'down' || p.st === 'stranded') dot(p.x, p.z, '#35C8F0', 7, '#fff'); });
       if (BZ.raid) dot(BZ.raid.d.x, BZ.raid.d.z, 'rgba(255,60,60,.5)', BZ.raid.d.R * sc, '#FF3C3C');
-      if (BZ.wp) dot(BZ.wp[0], BZ.wp[1], '#35C8F0', 10, '#16181D'); if (BZ.job) { const p = bzJobAt(BZ.job); dot(p[0], p[1], '#FFC93C', 11, '#16181D'); }
+      if (BZ.wp) dot(BZ.wp[0], BZ.wp[1], '#35C8F0', 10, '#16181D'); if (BZ.job) { const p = bzJobAt(BZ.job); dot(p[0], p[1], '#FFC93C', 11, '#16181D'); } const bt = bkTarget(); if (bt) dot(bt[0], bt[1], '#9B7BFF', 11, '#fff');
       const [px, py] = P(pos.x, pos.z), a = Math.atan2(-Math.sin(yaw), -Math.cos(yaw)); g.save(); g.translate(px, py); g.rotate(a + Math.PI / 2); g.fillStyle = '#FFC93C'; g.strokeStyle = '#16181D'; g.lineWidth = 3; g.beginPath(); g.moveTo(14, 0); g.lineTo(-9, -9); g.lineTo(-4, 0); g.lineTo(-9, 9); g.closePath(); g.fill(); g.stroke(); g.restore(); };
     draw(); PH.draw = draw;
     cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(), span = 560 / BZ.phZ; BZ.wp = [clamp(BZ.phC[0] + ((e.clientX - r.left) / r.width - .5) * span, -225, 225), clamp(BZ.phC[1] + ((e.clientY - r.top) / r.height - .5) * span, -225, 225)]; tone(880, .06, 'sine', .03); draw(); });
