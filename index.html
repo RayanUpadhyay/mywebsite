@@ -7267,7 +7267,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const phOpen = () => phEl.classList.contains('on');
   function phoneOpen(t){ if (EV || A || !inWorld) return; if (zone === 'mc' && BZ.s.out && !BZ.s.clear) { bzNoiseAdd(.45); bzMakeNoise(pos.x, pos.z, 120); } if (document.pointerLockElement) document.exitPointerLock(); Object.keys(keys).forEach(k => keys[k] = false); phEl.classList.add('on'); phShow(t || PH.tab); tone(1046, .06, 'sine', .03); }
   function phoneClose(){ phEl.classList.remove('on'); }
-  phEl.addEventListener('click', e => { if (e.target.closest('[data-bkres]')) { phoneClose(); if (!EV && !A) bkResume(); return; } if (e.target.closest('[data-st]')) { phoneClose(); if (!EV && !A) enterStation(); } });
+  phEl.addEventListener('click', e => { if (e.target.closest('[data-bkskip]')) { phoneClose(); if (!EV && !A) setTimeout(bkSkipAsk, 200); return; } if (e.target.closest('[data-bkres]')) { phoneClose(); if (!EV && !A) bkResume(); return; } if (e.target.closest('[data-st]')) { phoneClose(); if (!EV && !A) enterStation(); } });
   phBtn.addEventListener('click', e => { e.stopPropagation(); phOpen() ? phoneClose() : phoneOpen(); });
   phEl.querySelector('#phClose').onclick = phoneClose;
   addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; const k = e.key.toLowerCase();
@@ -14204,7 +14204,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     ] }
   );
   BZ_WORLDS.q_disk = Q_DISK; BZ_WORLDS.q_arch = Q_ARCH; [Q_DISK, Q_ARCH].forEach(W => { W.N = W.half * 2 / W.step + 1; }); Q_ARCH.noRocks = true;
-  function bkPhoneCard(){ if (!BK.s.started && !bkUnlocked()) return ''; const B = BK_BOOKS[BK.s.book] || BK_BOOKS[6], C = B.chs[BK.s.ch]; return `<div class="phcard"><b>${esc(B.name)}: ${esc(B.title)}</b><small>${BK.s.started ? (C ? `Chapter ${BK.s.ch + 1}: ${esc(C.title)}. ${BK.s.book >= 7 ? '' : 'Resume it from the star map on the station (The Quiet).'}` : 'To be continued.') : 'A black hole called The Quiet has appeared on the station’s star map.'}${BK.s.dil ? ` Time passed at home: ${BK.s.dil.toFixed(1)} years.` : ''}</small>${BK.s.book >= 7 && C ? '<button type="button" class="btn alt" data-bkres="1" style="margin-top:8px">Resume the book</button>' : ''}</div>`; }
+  function bkPhoneCard(){ if (!BK.s.started && !bkUnlocked()) return ''; const B = BK_BOOKS[BK.s.book] || BK_BOOKS[6], C = B.chs[BK.s.ch]; return `<div class="phcard"><b>${esc(B.name)}: ${esc(B.title)}</b><small>${BK.s.started ? (C ? `Chapter ${BK.s.ch + 1}: ${esc(C.title)}. ${BK.s.book >= 7 ? '' : 'Resume it from the star map on the station (The Quiet).'}` : 'To be continued.') : 'A black hole called The Quiet has appeared on the station’s star map.'}${BK.s.dil ? ` Time passed at home: ${BK.s.dil.toFixed(1)} years.` : ''}</small>${BK.s.book >= 7 && C ? '<button type="button" class="btn alt" data-bkres="1" style="margin-top:8px">Resume the book</button>' : ''}${BK.s.started && C ? '<button type="button" class="btn alt" data-bkskip="1" style="margin-top:8px;margin-left:6px">Skip chapter</button>' : ''}</div>`; }
   // ---------- Book fights: they run in the story-fight engine, then drop you back where you were ----------
   function bkFight(part, cb, opts){ if (EV || A || BZ.busy) return; BK.fightCb = cb || null; BK.fightAfter = opts && opts.after || null; if (BK.dis) bkDisguise(false); BK.ret = [pos.x, pos.z, yaw]; BK.fightWorld = BZ.P.id; BZ.web = null; BZ.btn.hidden = true; bzHudShow(false); bzMusicStop(); bzFree();
     startEvent('st', 'me', 'rayan', Object.assign({ solo: true, diff: evDiff, part, bk: 1 }, opts || {})); }
@@ -15276,6 +15276,44 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   );
   BZW.push({ id: 'b9ink', name: 'The Ink War', sub: 'Every ally, one fleet', x: .5, y: .5, r: 10, col: '#F4ECD8', km: '', hidden: () => true, big: 1 });
   BZP.b9ink = { enter: () => { BK.s.flags.inkwar = 1; bkSave(); bkNext(); } };
+  // ======================= Skipping, in the Books only =======================
+  // Skips never hand out secrets or Truth Files, so they can't help unlock the True Last Page.
+  const bkConfirm = (q, yes) => askChoice('bk_sure', v => { if (v === 'yes') yes(); }, { h: 'Are you sure?', q, a: [['yes', 'Yes, skip it'], ['no', 'No, keep playing']] });
+  const bkAsk = (h, q, a, then) => askChoice('bk_skipc', then, { h, q, a });
+  const bkSet = (o, keys) => keys.forEach(k => { o[k] = 1; });
+  // what each chapter would have left you with
+  const BK_SKIP = {
+    horizon: d => d(), slowtime: d => { BK.s.dil = Math.max(BK.s.dil, 1); d(); }, archive: d => { bkSet(BK.s.items, ['book0', 'book1', 'book2']); d(); },
+    fellfirst: d => bkAsk('The one who fell first', 'He’s on his knees in the glass, older and slower than you. “Go on,” he says. “I would.”', [['spare', 'Spare him'], ['leave', 'Leave him here']], v => { BK.s.flags.spared = v === 'spare' ? 1 : 0; bkSet(BK.s.flags, ['met4', 'b4']); d(); }),
+    gardens: d => { bkSet(BK.s.items, ['gk0', 'gk1', 'gk2']); d(); }, makers: d => { bkSet(BK.s.items, ['mem0', 'mem1', 'mem2', 'mem3']); d(); },
+    lostfound: d => { bkSet(BK.s.items, ['upDust', 'upRec', 'upWeb']); bkSet(BK.s.flags, ['e1', 'e2']); d(); },
+    clockmaker: d => { BK.s.items.rewind = 1; d(); }, whitehole: d => d(), 'return': d => { bkSet(BK.s.flags, ['cast', 'res']); d(); },
+    ashes: d => { bkSet(BK.s.flags, ['met7', 'bench']); if (!BK.s.flags.scrap0) { BK.s.flags.scrap0 = 1; BK.s.scrap = (BK.s.scrap || 0) + 40; } d(); },
+    broadcast: d => { BK.s.items.skin = 1; bkSet(BK.s.flags, ['top', 'tv']); d(); }, oldfriends: d => { BK.s.flags.b7f = 1; d(); }, engine: d => { bkSet(BK.s.flags, ['scars', 'charge']); d(); },
+    spacecentre: d => { BK.s.flags.b7s = 1; d(); }, allies: d => { bkSet(BK.s.flags, ['ally_mars', 'ally_europa', 'ally_saturn', 'allyMet']); d(); }, hollow: d => { bkSet(BK.s.items, ['pod0', 'pod1', 'pod2']); d(); },
+    rewindwar: d => d(), queen: d => { BK.s.items.clock = 1; BK.s.flags.b7q = 1; d(); },
+    restore: d => bkAsk('The Clockmaker’s clock', 'It would wind the city back to before the Council: no ruins, no rule, no resistance. Or you could smash it, and keep the future you fought for.', [['undo', 'Undo everything'], ['keep', 'Keep the new future']], v => { BK.s.flags.ending7 = v; BK.s.flags.end7done = 1; BK.s.flags.scars = 0; d(); }),
+    abducted: d => { BK.s.flags.caught1 = 1; d(); },
+    exam: d => { const M = bkMemList(); let i = 0; const next = () => { const m = M[i]; if (!m) { BK.s.flags.scanned = 1; return d(); } bkAsk('The memory scan', m.q, m.a, v => { if (v !== m.truth) BK.s.flags.lies = (BK.s.flags.lies || 0) + 1; BK.s.flags['mem' + i] = v; i++; next(); }); }; next(); },
+    nordics: d => bkAsk('The Nordics', 'They are calm, and patient, and very hard to read. Do you trust them?', [['trust', 'I’ll trust you, for now'], ['doubt', 'I don’t trust anyone who abducts people']], v => { BK.s.flags.nordic = v; d(); }),
+    pact: d => { bkSet(BK.s.items, ['skin', 'robe', 'pact']); BK.s.flags.pactTold = 1; d(); }, tribunal: d => { BK.s.flags.trial = 1; BK.s.flags.court = BK.s.flags.court || 0; d(); },
+    witnesses: d => { BK.s.flags.wit = 1; d(); }, zoo: d => { BK.s.items.beam = 1; for (let i = 0; i < 6; i++) BK.s.items['lock' + i] = 1; d(); }, fleet: d => { BK.s.flags.fleet = 1; d(); }, hidden: d => { BK.s.flags.hidden = 1; d(); },
+    verdict: d => { bkSet(BK.s.flags, ['verdict', 'pushers', 'impact']); bkSet(BK.s.items, ['eng0', 'eng1', 'eng2', 'core']); BK.rockD = null; bkMeterEl.style.display = 'none'; d(); },
+    blank: d => { bkSet(BK.s.flags, ['talk0', 'talk1', 'talk2', 'edge', 'page1']); d(); }, lair: d => { BK.s.flags.comic = 1; d(); },
+    versions: d => { ['copy', 'echo', 'hero'].concat(BK.s.flags.spared ? ['older'] : []).forEach(k => { BK.s.flags['ver_' + k] = 1; }); d(); }, council: d => { BK.s.flags.council = 1; d(); },
+    margins: d => { bkSet(BK.s.items, ['word0', 'word1', 'word2']); d(); }, draft: d => { bkSet(BK.s.flags, ['dr1', 'dr2']); d(); }, inkwar: d => { BK.s.flags.inkwar = 1; d(); }, editor: d => { BK.s.flags.editor = 1; d(); }, author: d => { BK.s.flags.author = 1; d(); }
+  };
+  function bkSkipChapter(){ const C = bkCh(); if (!C || EV || A) return;
+    // the last page is the ending itself, so it's asked, not skipped
+    if (C.id === 'lastpage') { const a = [['out', 'Write yourself out: everything resets, only you remember'], ['in', 'Write everyone in: keep it all, and Earth joins the stars'], ['close', 'Close the book: nobody writes anybody, ever again']]; if (bkTrueOk()) a.push(['true', 'Write the true last page']); return bkAsk('The Last Page', 'The page is blank. The pen is heavier than it looks. What do you write?', a, v => { BK.s.flags.skips = (BK.s.flags.skips || 0) + 1; bkSave(); bkEnding9(v); }); }
+    const f = BK_SKIP[C.id] || (d => d());
+    f(() => { BK.s.flags.skips = (BK.s.flags.skips || 0) + 1; BK.blocked = false; BK.greysCatch = false; if (BK.dis) bkDisguise(false); if (canvas.style.filter === BK_SEPIA || canvas.style.filter === BK_MEMF) canvas.style.filter = ''; BK.memory = false; BZ.grab = null;
+      try { if (C.end) C.end(); } catch (e) {} if (!BK.s.done.includes(`${BK.s.book}:${C.id}`)) BK.s.done.push(`${BK.s.book}:${C.id}`); bkSave(); bkChapterStart(BK.s.ch + 1); }); }
+  function bkSkipAsk(){ const C = bkCh(); if (!C) return; bkConfirm(`Skip “${C.title}”? You’ll keep everything the chapter would have given you${C.id === 'fellfirst' || C.id === 'nordics' || C.id === 'restore' || C.id === 'exam' || C.id === 'lastpage' ? ', and you’ll still make its choice' : ''}. Skipping never counts towards the hidden ending.`, bkSkipChapter); }
+  // the skip button in a Book fight
+  const bkSkipFightBtn = document.createElement('button'); bkSkipFightBtn.type = 'button'; bkSkipFightBtn.className = 'btn alt'; bkSkipFightBtn.textContent = 'Skip fight'; bkSkipFightBtn.hidden = true; bkSkipFightBtn.style.cssText = 'position:fixed;top:170px;left:50%;transform:translateX(-50%);z-index:40;padding:8px 16px;font-size:14px'; document.body.appendChild(bkSkipFightBtn);
+  bkSkipFightBtn.addEventListener('click', e => { e.stopPropagation(); if (!EV || !EV.opts || !EV.opts.bk || EV.over) return; const E0 = EV; bkConfirm('Skip this fight? It counts as a win, and you keep whatever it would have given you. Skipping never counts towards the hidden ending.', () => { if (EV !== E0 || EV.over) return; BK.s.flags.skips = (BK.s.flags.skips || 0) + 1; bkSave(); EV.slowMe = 0; if (canvas.style.filter === BK_SEPIA) canvas.style.filter = ''; endMatch(true); }); });
+  setInterval(() => { const on = !!(EV && EV.opts && EV.opts.bk && !EV.over && !EV.intro); if (bkSkipFightBtn.hidden === on) bkSkipFightBtn.hidden = !on; }, 300);
   // ---------- the phone, on the Moon ----------
   function bzPhMapBase(){
     const S = 1024, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), k = S / 560, X = x => (x + 280) * k, N = BZ.P.N, H = BZ.H, img = g.createImageData(N, N);
