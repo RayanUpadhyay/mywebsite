@@ -13125,8 +13125,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (BZ.blastT > 0 || BZ.dead) return; if (BK.dis) bkDisguise(false, 'Webs are a dead giveaway. The disguise is blown.'); BZ.blastT = .55; bzNoiseAdd(.12); ndc.set(0, 0); ray.setFromCamera(ndc, camera); const d = ray.ray.direction.clone(), p = camera.position.clone().addScaledVector(d, .8); p.y -= .2;
     const m = new THREE.Mesh(BZ.g.web, BZ.m.web); m.position.copy(p); BZ.sc.add(m); BZ.shots.push({ m, p, v: d.multiplyScalar(72), life: 1.4, dmg: 24 * (1 + .3 * BZ.s.upg.blast) * bkWebUp(), mine: true }); tone(1200, .1, 'triangle', .04, 400); BZ.swing = .2;
   }
-  function bzHit(e, dmg, kx, kz){ e.hp -= dmg; e.flash = .15; e.vx = (e.vx || 0) + (kx || 0); e.vz = (e.vz || 0) + (kz || 0); e.st = 'hunt'; e.seen = BZ.t; e.lx = pos.x; e.lz = pos.z; tone(520 + Math.random() * 200, .06, 'square', .04, 200); bzSpark(e.x, e.y + e.h * .5, e.z, 0xFFE0A0, 6); if (e.hp <= 0) bzKill(e); }
-  function bzHurt(d){ if (BZ.dead || d <= 0) return; d *= (1 - .15 * BZ.s.upg.arm) * .6; BZ.hp -= d; BZ.hurtT = 0; BZ.pain = Math.min(.75, (BZ.pain || 0) + d / 30); tone(150, .14, 'square', .045, 90); if (!reduce && !lowFx) BZ.shake = Math.max(BZ.shake, .15); if (BZ.hold) BZ.hold.t = 0; if (BZ.hp <= 0) bzDown(); }
+  function bzHit(e, dmg, kx, kz){ if (e.k === 'grey') { if (!BK.greyTold) { BK.greyTold = 1; say('Your fist stops a finger’s width from its face. You can’t make it go any further.', 3000); } return; } e.hp -= dmg; e.flash = .15; e.vx = (e.vx || 0) + (kx || 0); e.vz = (e.vz || 0) + (kz || 0); e.st = 'hunt'; e.seen = BZ.t; e.lx = pos.x; e.lz = pos.z; tone(520 + Math.random() * 200, .06, 'square', .04, 200); bzSpark(e.x, e.y + e.h * .5, e.z, 0xFFE0A0, 6); if (e.hp <= 0) bzKill(e); }
+  function bzHurt(d){ if (BZ.dead || d <= 0 || BK.memory) return; d *= (1 - .15 * BZ.s.upg.arm) * .6; BZ.hp -= d; BZ.hurtT = 0; BZ.pain = Math.min(.75, (BZ.pain || 0) + d / 30); tone(150, .14, 'square', .045, 90); if (!reduce && !lowFx) BZ.shake = Math.max(BZ.shake, .15); if (BZ.hold) BZ.hold.t = 0; if (BZ.hp <= 0) bzDown(); }
   function bzDown(){ BZ.dead = true; BZ.hp = 0; if (BZ.bug) bzBugOut(true); if (BZ.web) bzWebEnd(); say('Suit breach!', 1600); tone(90, 1.2, 'sawtooth', .06, 40);
     setTimeout(() => fade(() => { if (!BZ.sc) return; BZ.dead = false; BZ.hp = bzHpMax(); BZ.noise = 0; BZ.ents.forEach(e => { if (e.st === 'hunt') e.st = e.raid ? 'raid' : 'patrol'; }); const hub = BZ.domes[0]; if (hub) { pos.set(hub.x - 13, 0, hub.z + 2); BZ.feet = 0; } else { const R = BZ.P.spawn || [BZ.P.shuttle[0], BZ.P.shuttle[1]]; pos.set(R[0], 0, R[1]); BZ.feet = bzSupport(R[0], R[1], 50); } pos.y = BZ.feet + 1.6; BZ.v.set(0, 0, 0); yaw = -Math.PI / 2; pitch = 0; if (BZ.P.onEnter) BZ.P.onEnter(); if (BZ.job && BZ.job.k === 'rescue' && BZ.job.npc && BZ.job.npc.st === 'follow') BZ.job.npc.st = 'stranded'; say(BZ.P.story ? 'You come to a little way back. Your suit has patched itself up.' : 'The medbay patched up your suit. Lie low for a bit: they lost track of you.', 4200); }, '#000000'), 1200); }
   const bzHpMax = () => 100 + 20 * BZ.s.upg.arm + bkHpUp();
@@ -13161,6 +13161,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (k === 'reader') return bkReaderMesh();
     if (k === 'lizard') return bkLizardMesh();
     if (k === 'coil') return bkCoilMesh();
+    if (k === 'grey') return bkGreyMesh();
     const g = new THREE.Group(), M = BZ.m, G = BZ.g, add = (geo, m, x, y, z, p = g) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = !lowFx; p.add(o); return o; }, parts = {};
     if (k === 'drone') { const c = add(G.dCore, M.hull, 0, 0, 0); c.scale.set(1, .55, 1.25); add(G.eye, M.seam, 0, 0, -.72); const r = add(G.ring, M.seam, 0, 0, 0); r.rotation.x = Math.PI / 2; r.scale.setScalar(1.2);
       parts.rot = new THREE.Group(); g.add(parts.rot); [0, 1].forEach(i => { const b = add(G.blade, M.hull2, 0, .3, 0, parts.rot); b.rotation.y = i * Math.PI / 2; }); }
@@ -13204,7 +13205,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const gy = bzTerr(e.x, e.z);
     if (e.k === 'drone') { const ty2 = e.stun > 0 ? gy + 1 : hunting ? Math.max(gy + 4, BZ.feet + 4.5) : gy + e.alt; e.y += (ty2 + Math.sin(now / 500 + e.ph) * .4 - e.y) * Math.min(1, dt * 2); e.parts.rot.rotation.y += dt * 30; }
     else { if (e.vy || e.y > gy + .05) { e.vy -= BZ.P.G * dt; e.y += e.vy * dt; if (e.y <= gy) { e.y = gy; e.vy = 0; } } else e.y = gy; const t = now / 1000 * (e.k === 'hunter' ? 9 : 6) * Math.min(1, sp / 2 + .2) + e.ph, mv = Math.min(1, sp / 3);
-      if (e.k === 'hunter' || e.k === 'lizard') { e.parts.legs.forEach((L, i) => { const s = Math.sin(t + i * Math.PI); L.hip.rotation.x = s * .7 * mv; L.knee.rotation.x = Math.max(0, -Math.cos(t + i * Math.PI)) * .9 * mv; }); e.parts.arms.forEach((A2, i) => A2.rotation.x = e.atk > 0 ? -1.4 : -Math.sin(t + i * Math.PI) * .5 * mv); }
+      if (e.k === 'hunter' || e.k === 'lizard' || e.k === 'grey') { e.parts.legs.forEach((L, i) => { const s = Math.sin(t + i * Math.PI); L.hip.rotation.x = s * .7 * mv; L.knee.rotation.x = Math.max(0, -Math.cos(t + i * Math.PI)) * .9 * mv; }); e.parts.arms.forEach((A2, i) => A2.rotation.x = e.atk > 0 ? -1.4 : -Math.sin(t + i * Math.PI) * .5 * mv); }
       else if (e.k === 'reader') { e.parts.arms.forEach((a, i) => a.rotation.x = Math.sin(t * .5 + i) * .3 - (hunting ? .9 : 0)); e.y = gy + .3 + Math.sin(now / 700 + e.ph) * .15; }
       else e.parts.legs.forEach((h, i) => { const s = Math.sin(t + (i % 2 ? 0 : Math.PI) + Math.floor(i / 2) * 2.1); h.rotation.x = s * .45 * mv; h.rotation.z = Math.max(0, Math.cos(t + (i % 2 ? 0 : Math.PI) + Math.floor(i / 2) * 2.1)) * .3 * mv * h.userData.sd; }); }
     e.atk = Math.max(0, (e.atk || 0) - dt);
@@ -14269,7 +14270,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const wy = bzTerr(196, 60); BK.well = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 900, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0xBFE8FF, transparent: true, opacity: .25, side: THREE.DoubleSide, depthWrite: false, toneMapped: false, fog: false })); BK.well.position.set(196, wy + 450, 60); sc.add(BK.well);
   }
   { const b0 = Q_DISK.skyBuild, s0 = Q_DISK.bkStep; Q_DISK.skyBuild = sc => { b0(sc); bkEdgeBuild(sc); };
-    Q_DISK.bkStep = (dt, now) => { s0(dt, now); if (BK.old) BK.old.g.visible = BK.s.ch === 3 && (BK.s.step < 3 || !!BK.s.flags.spared); if (BK.well) { BK.well.visible = BK.s.ch === 3 && BK.s.step >= 3; BK.well.material.opacity = .18 + .1 * Math.sin(now / 250); BK.well.rotation.y += dt; } }; }
+    Q_DISK.bkStep = (dt, now) => { s0(dt, now); if (BK.old) BK.old.g.visible = !!BK.memory || BK.s.ch === 3 && (BK.s.step < 3 || !!BK.s.flags.spared); if (BK.well) { BK.well.visible = BK.s.ch === 3 && BK.s.step >= 3; BK.well.material.opacity = .18 + .1 * Math.sin(now / 250); BK.well.rotation.y += dt; } }; }
   // ---------- Gravity Gardens: small worlds, each with its own down ----------
   const Q_GRAV = { id: 'q_grav', name: 'the Gravity Gardens', title: 'Gravity Gardens', story: true, seed: 615, half: 280, step: 8, G: 7, people: 0, noBots: true, noRovers: true, noRocks: true, bugs: [], domes: [], flat: [], roads: [], tubes: [], towers: [], pads: [], mines: [], solar: [], facs: [], beac: [], shuttle: [0, 0], spawn: [0, 0, 0], music: 'eerie', orbs: true,
     sky: { bg: 0x0B0A1C, fog: 0x161232, near: 260, far: 1500, sun: 0xFFE0B8, sunI: 1.6, hemi: [0xB8D0FF, 0x3A2A4A, 1] } };
@@ -14804,6 +14805,141 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const p0 = Q_METRO.prompts; Q_METRO.prompts = L => { p0(L); const D = BK.props.deep; if (D && bkActive() && BK.s.book === 7 && BK.s.ch >= 6 && Math.hypot(pos.x - D[0], pos.z - D[1]) < 5) L.push({ t: 'Ride the Driftkin down the shaft', go: () => { BK.ret = [0, 186, 0]; bzEnter('q_hollow'); } }); }; }
   { const b0 = Q_RUIN.skyBuild; Q_RUIN.skyBuild = sc => { b0(sc); if (BK.s.flags.ending7 === 'keep' && !BZ.P.past) { sc.background = new THREE.Color(0xB8A890); if (sc.fog) sc.fog.color.setHex(0xC0B0A0); [[6, 178], [-8, 182], [14, 186], [-2, 170]].forEach(([x, z], i) => { try { const av = avatar(Object.assign({}, look, { outfit: 'casual', c1: (i * 3) % 9, c2: (i * 5 + 2) % 9 }), { s: 1 }); av.g.position.set(x, 0, z); av.g.rotation.y = i; av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); } catch (e) {} }); } }; }
   BZ_WORLDS.q_hollow = Q_HOLLOW; Q_HOLLOW.N = Q_HOLLOW.half * 2 / Q_HOLLOW.step + 1;
+  // ======================= Book Eight: The Tribunal =======================
+  // Greys and Nordics. Quiet, polite, and not on your side. Nothing here is a joke.
+  BK_BOOKS[8] = { name: 'Book Eight', title: 'The Tribunal', tag: 'Somebody has been watching all of it. Now they want to talk.', outro: 'The Tribunal has spoken.', chs: [] };
+  BK_BOOKS[7].next = 8; BK_BOOKS[7].outro = 'Bangalore is yours again. That night, you go up to the roof to look at the stars. The stars look back.';
+  // ---------- your roof, one night ----------
+  const Q_ROOF = { id: 'q_roof', name: 'your roof', title: 'Your roof', story: true, seed: 701, half: 280, step: 4, G: 9.8, people: 0, noBots: true, noRovers: true, noRocks: true, bugs: [], domes: [], flat: [], roads: [], tubes: [], towers: [], pads: [], mines: [], solar: [], facs: [], beac: [], shuttle: [0, 8], spawn: [0, 9, 0], music: 'eerie',
+    sky: { bg: 0x04060C, fog: 0x0A0E18, near: 120, far: 900, sun: 0x8090C0, sunI: .35, hemi: [0x6A7AB0, 0x14121A, .55] } };
+  Q_ROOF.height = (x, z) => Math.max(Math.abs(x), Math.abs(z)) < 13 ? 0 : -80; Q_ROOF.craters = () => []; Q_ROOF.colors = (x, z) => Math.max(Math.abs(x), Math.abs(z)) < 13 ? [.32, .3, .3] : [.02, .02, .03];
+  Q_ROOF.tex = () => { const t = tex(128, 128, (c, w, h) => { c.fillStyle = '#6A6460'; c.fillRect(0, 0, w, h); c.strokeStyle = 'rgba(30,25,20,.4)'; for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(0, i * 22); c.lineTo(w, i * 22 + 4); c.stroke(); } }); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+  Q_ROOF.fallY = -20;
+  Q_ROOF.skyBuild = sc => { const P = [], L = [], r = rng(23);
+    // the parapet, a water tank, the stair hut, washing lines
+    [[0, -12.5, 25, .3], [0, 12.5, 25, .3], [-12.5, 0, .3, 25], [12.5, 0, .3, 25]].forEach(([x, z, w, d]) => { P.push(B3(w, 1, d, 0x7A746E, x, .5, z)); bzAdd({ t: 'b', x0: x - w / 2 - .1, x1: x + w / 2 + .1, z0: z - d / 2 - .1, z1: z + d / 2 + .1 }); });
+    P.push(C3(1.4, 2.4, 0x2A2A32, -8, 2.6, -8, 14), B3(.2, 1.4, .2, 0x5A5A62, -9, .7, -9), B3(.2, 1.4, .2, 0x5A5A62, -7, .7, -7), B3(3, 3, 3, 0x8A8078, 7, 1.5, 9)); bzAdd({ t: 'c', x: -8, z: -8, r: 1.6 }); bzAdd({ t: 'b', x0: 5.5, x1: 8.5, z0: 7.5, z1: 10.5 });
+    for (let i = 0; i < 5; i++) P.push(B3(.6, .5, .02, [0xE8428C, 0xFFC93C, 0x3C7CFF, 0xF4F4F4, 0x3CE870][i], -4 + i * 1.6, 1.6, 4));
+    // the city around you, at night
+    for (let i = 0; i < 160; i++) { const a = r() * 6.283, d = 40 + r() * 260, x = Math.cos(a) * d, z = Math.sin(a) * d, h = 10 + r() * 60, w = 8 + r() * 14; P.push(B3(w, h, w, 0x1A1C22, x, -80 + h / 2 + 70, z)); for (let k = 0; k < 4; k++) if (r() < .6) L.push(B3(w * .8, .6, .1, r() < .7 ? 0xFFC890 : 0x9AC8FF, x, -10 + h - 4 - k * 4, z + w / 2 + .06)); }
+    const m = new THREE.Mesh(bake(P), propM()); m.userData.noPick = true; sc.add(m); const gl = new THREE.Mesh(bake(L), BZ.lightM); gl.userData.noPick = true; sc.add(gl);
+    const n = 1400, sp = new Float32Array(n * 3); for (let i = 0; i < n; i++) { const u = .1 + r() * .9, t = r() * 6.283, s2 = Math.sqrt(1 - u * u); sp.set([Math.cos(t) * s2 * 800, u * 800, Math.sin(t) * s2 * 800], i * 3); } const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(sp, 3)); sc.add(new THREE.Points(g, new THREE.PointsMaterial({ color: 0xFFFFFF, size: 1.2, sizeAttenuation: false, fog: false })));
+    // what comes down
+    const sh = new THREE.Group(), hull = new THREE.Mesh(new THREE.SphereGeometry(14, 32, 12), new THREE.MeshStandardMaterial({ color: 0x3A3E48, metalness: .9, roughness: .3 })); hull.scale.y = .22; sh.add(hull); for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283, l = new THREE.Mesh(new THREE.SphereGeometry(.5, 8, 6), new THREE.MeshBasicMaterial({ color: 0xBFE8FF, toneMapped: false })); l.position.set(Math.cos(a) * 12, -1.6, Math.sin(a) * 12); sh.add(l); }
+    BK.beam = new THREE.Mesh(new THREE.CylinderGeometry(3, 6, 60, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0xDDF2FF, transparent: true, opacity: 0, side: THREE.DoubleSide, depthWrite: false, toneMapped: false })); BK.beam.position.y = -31; sh.add(BK.beam); sh.position.set(0, 400, 0); sc.add(sh); BK.saucer = sh; };
+  Q_ROOF.bkStep = (dt, now) => { const S = BK.saucer; if (!S) return; S.rotation.y += dt * .2; if (BK.saucerOn) { S.position.y += (60 - S.position.y) * Math.min(1, dt * .8); } if (BK.lifting) { BK.beam.material.opacity = Math.min(.45, BK.beam.material.opacity + dt * .3); BZ.feet += dt * 6; pos.y = BZ.feet + 1.6; pitch += (1.1 - pitch) * Math.min(1, dt); if (!reduce) BZ.shake = Math.max(BZ.shake, .08); } };
+  // ---------- the Grey ship ----------
+  BZ_K.grey = { hp: 9999, r: .4, h: 1.5, spd: 1.8, sight: 13 };
+  function bkGreyMesh(){ const g = new THREE.Group(), skin = new THREE.MeshStandardMaterial({ color: 0x9A9EA6, roughness: .55 }), eye = new THREE.MeshStandardMaterial({ color: 0x050507, roughness: .05, metalness: .2 }), add = (geo, m, x, y, z, p = g) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = !lowFx; o.userData.noPick = true; p.add(o); return o; }, parts = {};
+    add(new THREE.CylinderGeometry(.13, .1, .7, 8), skin, 0, 1.05, 0); const hd = add(new THREE.SphereGeometry(.3, 14, 12), skin, 0, 1.65, 0); hd.scale.set(1, 1.15, 1); add(new THREE.ConeGeometry(.13, .3, 10), skin, 0, 1.42, -.04).rotation.x = Math.PI;
+    [-1, 1].forEach(s => { const e = add(new THREE.SphereGeometry(.1, 10, 8), eye, s * .12, 1.68, -.24); e.scale.set(1, .55, .5); e.rotation.z = s * .5; });
+    parts.legs = [-.08, .08].map(x => { const hip = new THREE.Group(); hip.position.set(x, .72, 0); g.add(hip); add(new THREE.BoxGeometry(.06, .38, .06), skin, 0, -.18, 0, hip); const knee = new THREE.Group(); knee.position.y = -.36; hip.add(knee); add(new THREE.BoxGeometry(.05, .36, .05), skin, 0, -.17, 0, knee); return { hip, knee }; });
+    parts.arms = [-.18, .18].map(x => { const s = new THREE.Group(); s.position.set(x, 1.32, 0); g.add(s); add(new THREE.BoxGeometry(.04, .7, .04), skin, 0, -.35, 0, s); return s; }); return { g, parts }; }
+  const Q_SHIP = { id: 'q_ship', name: 'the Grey ship', title: 'Aboard the Grey ship', story: true, stealth: true, seed: 711, half: 280, step: 4, G: 9.8, ceil: 7, people: 0, noBots: true, noRovers: true, noRocks: true, bugs: [], domes: [], flat: [], roads: [], tubes: [], towers: [], pads: [], mines: [], solar: [], facs: [], beac: [], shuttle: [-100, 0], spawn: [-112, -12, Math.PI / 2], music: 'eerie',
+    sky: { bg: 0x000000, fog: 0x0A0E14, near: 30, far: 260, sun: 0xC8D8FF, sunI: .3, hemi: [0xDCE8FF, 0x20242C, 1] } };
+  Q_SHIP.height = () => 0; Q_SHIP.craters = () => []; Q_SHIP.colors = (x, z) => { const n = (Math.floor(x / 3) + Math.floor(z / 3)) % 2 ? .02 : 0; return [.2 + n, .21 + n, .24 + n]; };
+  Q_SHIP.tex = () => { const t = tex(128, 128, (c, w, h) => { c.fillStyle = '#4A4E58'; c.fillRect(0, 0, w, h); c.strokeStyle = 'rgba(200,220,255,.12)'; c.lineWidth = 2; c.beginPath(); c.arc(64, 64, 50, 0, 7); c.stroke(); }); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+  // rooms are rectangles; gaps are door openings on a side: [side, from, to]
+  function bkRooms(P, L, H, rooms){ const wall = (x0, x1, z0, z1) => { if (x1 - x0 < .05 || z1 - z0 < .05) return; P.push(B3(x1 - x0, H, z1 - z0, 0xC8CCD4, (x0 + x1) / 2, H / 2, (z0 + z1) / 2)); bzAdd({ t: 'b', x0, x1, z0, z1 }); };
+    const side = (a0, a1, gaps, f) => { let a = a0; gaps.slice().sort((p, q) => p[0] - q[0]).forEach(([g0, g1]) => { f(a, g0); a = g1; }); f(a, a1); };
+    rooms.forEach(([x0, x1, z0, z1, gaps]) => { const G = s => (gaps || []).filter(g => g[0] === s).map(g => [g[1], g[2]]);
+      side(x0, x1, G('n'), (a, b) => wall(a, b, z1, z1 + .6)); side(x0, x1, G('s'), (a, b) => wall(a, b, z0 - .6, z0)); side(z0, z1, G('w'), (a, b) => wall(x0 - .6, x0, a, b)); side(z0, z1, G('e'), (a, b) => wall(x1, x1 + .6, a, b));
+      for (let x = x0 + 4; x < x1; x += 8) L.push(B3(3, .08, .3, 0xDCE8FF, x, H - .05, (z0 + z1) / 2)); }); }
+  const BK_CELL = [-118, -106, -16, -8];
+  Q_SHIP.skyBuild = sc => { const P = [], L = [], H = 7;
+    bkRooms(P, L, H, [
+      [-124, -80, -24, 24, [['e', -3, 3]]],                                    // the cell block
+      [-80, -20, -3, 3, [['w', -3, 3], ['e', -3, 3]]],                         // corridor to the middle
+      [-20, 40, -30, 30, [['w', -3, 3], ['e', -3, 3], ['n', 6, 14], ['s', 6, 14]]],  // the round room: exam, then court
+      [40, 120, -3, 3, [['w', -3, 3], ['e', -3, 3]]],                          // corridor to the hangar
+      [120, 190, -40, 40, [['w', -3, 3]]],                                     // the hangar
+      [6, 14, 30, 70, [['s', 6, 14], ['n', 6, 14]]], [-20, 40, 70, 110, [['s', 6, 14]]],      // to the observation deck
+      [6, 14, -70, -30, [['n', 6, 14], ['s', 6, 14]]], [-20, 40, -110, -70, [['n', 6, 14]]]   // to the archive
+    ]);
+    // cells: glass fronts. Yours has a door
+    for (let i = 0; i < 4; i++) { const z0 = -16 + i * 9; if (i) { P.push(B3(.3, H, 8.4, 0xC8CCD4, -105.7, H / 2, z0 + 4)); bzAdd({ t: 'b', x0: -106, x1: -105.4, z0, z1: z0 + 8.4 }); } P.push(B3(12, H, .3, 0xC8CCD4, -112, H / 2, z0 + 8.6)); bzAdd({ t: 'b', x0: -118, x1: -106, z0: z0 + 8.45, z1: z0 + 8.75 }); }
+    BK.cellDoor = new THREE.Mesh(new THREE.BoxGeometry(.2, H, 8), new THREE.MeshStandardMaterial({ color: 0x9AD8FF, transparent: true, opacity: .25, emissive: 0x3A88FF, emissiveIntensity: .3 })); BK.cellDoor.position.set(-105.5, H / 2, -12); sc.add(BK.cellDoor); BK.cellCol = { t: 'b', x0: -105.8, x1: -105.2, z0: -16, z1: -8 }; bzAdd(BK.cellCol);
+    // the exam table, the scanner over it
+    P.push(B3(2.2, 1, 5, 0xE8ECF0, 10, .5, 0)); L.push(C3(2.4, .2, 0xBFE8FF, 10, 6.6, 0, 24)); bzAdd({ t: 'b', x0: 8.9, x1: 11.1, z0: -2.5, z1: 2.5, top: 1 }); BK.props.table = [10, 3.4];
+    // the court: tiers, a bench up high, the judges
+    BK.court = new THREE.Group(); sc.add(BK.court); const CP = []; for (let k = 0; k < 3; k++) for (let i = 0; i < 16; i++) { const a = i / 16 * 6.283, R = 20 + k * 3; CP.push(B3(5, 1 + k, 2.4, 0x8A90A0, 10 + Math.cos(a) * R, (1 + k) / 2, Math.sin(a) * R, -a + Math.PI / 2)); }
+    CP.push(B3(16, 5, 4, 0x6A7080, 10, 2.5, -24)); const cm = new THREE.Mesh(bake(CP), propM()); cm.userData.noPick = true; BK.court.add(cm);
+    BK.judges = [-4, 0, 4].map(dx => { try { const av = avatar(heroLook('nordic'), { s: 1.25 }); av.g.position.set(10 + dx, 5, -24); av.g.traverse(o => { o.userData.noPick = true; }); BK.court.add(av.g); return av; } catch (e) { return null; } });
+    // the observation deck: a window on the Earth
+    const earth = new THREE.Mesh(new THREE.SphereGeometry(160, 48, 32), new THREE.MeshStandardMaterial({ map: earthTex(), roughness: .8, emissive: 0x1A2A4A, emissiveIntensity: .45, fog: false })); earth.position.set(10, -60, 420); sc.add(earth); BK.earthM = earth;
+    BK.window = new THREE.Mesh(new THREE.PlaneGeometry(56, 6), new THREE.MeshBasicMaterial({ color: 0x9AC8FF, transparent: true, opacity: .08, depthWrite: false })); BK.window.position.set(10, 3.5, 110.7); sc.add(BK.window);
+    BK.nordics = [[2, 96], [10, 100], [18, 96]].map(([x, z]) => { try { const av = avatar(heroLook('nordic'), { s: 1.25 }); av.g.position.set(x, 0, z); av.g.rotation.y = Math.PI; av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); return av; } catch (e) { return null; } });
+    // the archive: shelves of crystal, and the Pact
+    for (let i = 0; i < 6; i++) { P.push(B3(1, 5, 30, 0x3A3E48, -14 + i * 9, 2.5, -90)); bzAdd({ t: 'b', x0: -14.5 + i * 9, x1: -13.5 + i * 9, z0: -105, z1: -75 }); for (let k = 0; k < 10; k++) L.push(B3(1.1, .3, .3, k % 3 ? 0x6AC8FF : 0xB07CFF, -14 + i * 9, 1 + (k % 4), -103 + k * 3)); }
+    BK.pact = new THREE.Mesh(new THREE.OctahedronGeometry(.5, 0), new THREE.MeshBasicMaterial({ color: 0xFFD27A, toneMapped: false })); BK.pact.position.set(35, 1.6, -106); sc.add(BK.pact); P.push(B3(1.4, 1, 1.4, 0x3A3E48, 35, .5, -106)); BK.props.pact = [35, -103];
+    // the hangar: little ships, and the door that doesn't open
+    [[150, -20], [160, 15], [175, -5]].forEach(([x, z]) => { P.push([new THREE.SphereGeometry(6, 20, 8), 0x5A5E68, x, 1.4, z]); bzAdd({ t: 'c', x, z, r: 6 }); }); P.push(B3(.6, H, 30, 0x8A90A0, 189.5, H / 2, 0)); BK.props.hangar = [185, 0];
+    const ceil = new THREE.Mesh(new THREE.PlaneGeometry(360, 260), new THREE.MeshStandardMaterial({ color: 0xA8ACB6, roughness: .9, side: THREE.DoubleSide })); ceil.rotation.x = Math.PI / 2; ceil.position.set(30, H, 0); ceil.userData.noPick = true; sc.add(ceil);
+    const m = new THREE.Mesh(bake(P), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .35, metalness: .2, emissive: 0x1A2230, emissiveIntensity: .35 })); m.receiveShadow = true; m.userData.noPick = true; sc.add(m); const gl = new THREE.Mesh(bake(L), BZ.lightM); gl.userData.noPick = true; sc.add(gl);
+    BK.greysOn = false; };
+  Q_SHIP.bkStep = (dt, now) => { const ch = BK.s.book === 8 ? BK.s.ch : 9;
+    if (BK.court) BK.court.visible = ch >= 4; (BK.nordics || []).forEach(n => { if (n) n.g.visible = ch >= 2 && ch < 4; }); if (BK.pact) { BK.pact.visible = !BK.s.items.pact; BK.pact.rotation.y += dt; }
+    if (BK.cellDoor) { const open = !!BK.cellOpen; BK.cellDoor.visible = !open; BK.cellCol.bot = open ? 99 : -99; }
+    if (!BK.greysOn && BZ.sc) { BK.greysOn = true; [[-60, 0], [10, 20], [10, -20], [80, 0], [140, 30], [150, -30], [10, -90], [25, -80]].forEach(([x, z]) => { const e = bzSpawn('grey', x, z, { force: true }); if (e) { e.st = 'patrol'; e.tx = x; e.tz = z; } }); }
+    // they don't fight. They look at you, and you stop
+    if (BK.greysCatch && !BK.held) { const seer = BZ.ents.find(e => e.k === 'grey' && e.hp > 0 && e.st === 'hunt' && Math.hypot(e.x - pos.x, e.z - pos.z) < 9); BK.stareT = seer ? (BK.stareT || 0) + dt : 0; if (BK.stareT > 1.4) bkCaught('They look at you, and your legs stop working. They carry you back. Gently. That’s the worst part.'); } };
+  function bkCaught(msg){ BK.held = true; BZ.grab = {}; tone(110, 1.5, 'sine', .05, 55); say(msg, 5000); setTimeout(() => fade(() => { BZ.grab = null; BK.held = false; BK.stareT = 0; pos.set(-112, 0, -12); BZ.feet = 0; pos.y = 1.6; yaw = Math.PI / 2; BZ.v.set(0, 0, 0); BK.cellOpen = false; BK.cellT = 0; BZ.ents.forEach(e => { if (e.k === 'grey') e.st = 'patrol'; }); if (BK.dis) bkDisguise(false); }, '#000000'), 1800); }
+  // ---------- the Nordics ----------
+  OUTFITS.nordic = { hero: 1, c1: '#F2F2EE', c2: '#D8D8D0', hair: 'long', hairCol: '#F0E2B0', skin: '#F2DCCB', cape: 1 };
+  HEROES.nordic = { name: 'Nordic', outfit: 'nordic', hp: 200, kind: 'melee', dmg: 0, range: 1, cd: 9, speed: 3, r: .5, scale: 1.25 };
+  SPK['The Nordic'] = '#E8E4D8'; SPK['A Grey voice'] = '#9AA0AA'; SPK['The Tribunal'] = '#F2E6C8';
+  // ---------- the memory scan ----------
+  const BK_MEMF = 'grayscale(.7) sepia(.25) hue-rotate(170deg) brightness(1.08)';
+  function bkMemList(){ return [
+    { w: 'q_disk', at: [204, -36, -1.6], line: 'The scan opens a memory: the edge of the Quiet, and an older you by a fire.', q: 'The scan asks: what did you do to the one who fell first?', a: [['spare', 'I spared him'], ['leave', 'I left him there']], truth: BK.s.flags.spared ? 'spare' : 'leave' },
+    { w: 'q_lost', at: [0, -118, 0], line: 'The scan opens another: the Lost and Found, and a clock tower ticking backwards.', q: 'The scan asks: how did you get the power to rewind?', a: [['took', 'I took it from the Clockmaker'], ['given', 'He gave it to me']], truth: 'took' },
+    { w: 'q_ruin', at: [0, 120, 0], line: 'The last one: Bangalore under the Council, their face on every screen.', q: 'The scan asks: what did you do with the stolen clock?', a: [['undo', 'I undid everything'], ['keep', 'I kept the new future']], truth: BK.s.flags.ending7 || 'keep' } ]; }
+  function bkMemScan(i){ const M = bkMemList()[i]; if (!M) { canvas.style.filter = ''; BK.memory = false; BK.ret = [10, 4, 0]; bzEnter('q_ship'); BK.s.flags.scanned = 1; bkSave(); return; }
+    BK.memory = true; BK.ret = M.at; bkRwEl.style.opacity = 1; setTimeout(() => bkRwEl.style.opacity = 0, 600); bzEnter(M.w); setTimeout(() => { canvas.style.filter = BK_MEMF; say(M.line, 6000); }, 1400);
+    setTimeout(() => askChoice('bk_mem' + i, v => { if (v !== M.truth) { BK.s.flags.lies = (BK.s.flags.lies || 0) + 1; say('The scanner hums, very quietly. It knows.', 2400); } BK.s.flags['mem' + i] = v; bkSave(); setTimeout(() => bkMemScan(i + 1), 1400); }, { h: 'The memory scan', q: M.q, a: M.a }), 8000); }
+  // ---------- the trial ----------
+  function bkTrial(){ const F = BK.s.flags, charges = [
+      ['You took violence into the Quiet. A man who wore your face is on his knees because of you.', [['spare', 'I spared him. He’s alive because of me.'], ['again', 'He attacked me. I’d do it again.']], v => v === 'spare' ? (F.spared ? 2 : -1) : 0],
+      ['You stole time from its maker, and used it.', [['need', 'I needed it to get home.'], ['mine', 'He owed it to us.']], v => v === 'need' ? 1 : 0],
+      ['You changed the history of a world.', [['yes', F.ending7 === 'undo' ? 'I gave them back their years.' : 'I let them keep the future they fought for.'], ['who', 'Who gave you the right to judge that?']], v => v === 'yes' ? 1 : 0]];
+    if (F.lies) charges.push(['You lied to the scan.', [['sorry', 'I was scared. I’m sorry.'], ['wrong', 'Your machine was wrong.']], v => v === 'sorry' ? 1 : -1]);
+    if (BK.s.items.pact) charges.push(['You stole from the archive.', [['read', 'I did. Here it is. Read it out loud.'], ['keep', 'I’ll keep it, thanks.']], v => v === 'read' ? 3 : 0]);
+    let k = 0; F.court = 0; const next = () => { const C = charges[k++]; if (!C) { bkSave(); dlgPlay([['The Tribunal', F.court >= 4 ? 'The prisoner has been honest. That is noted, and it is rare.' : 'The prisoner has been… interesting.'], ['The Tribunal', 'Before we decide what happens to your world, we will hear witnesses. Bring them.']], { block: true, done: () => { F.trial = 1; bkSave(); } }); return; }
+      dlgPlay([['A Grey voice', C[0]]], { block: true, done: () => askChoice('bk_trial' + k, v => { F.court += C[2](v); bkSave(); tone(v === C[1][0][0] ? 520 : 260, .2, 'triangle', .04); setTimeout(next, 600); }, { h: 'The Tribunal', q: C[0], a: C[1] }) }); };
+    next(); }
+  BZ_WORLDS.q_roof = Q_ROOF; BZ_WORLDS.q_ship = Q_SHIP; [Q_ROOF, Q_SHIP].forEach(W => { W.N = W.half * 2 / W.step + 1; });
+  // ---------- Book Eight, chapters 1–5 ----------
+  BK_BOOKS[8].chs.push(
+    { id: 'abducted', title: 'Abducted', tag: 'That night, a light comes down.', world: 'q_roof', also: ['q_ship'], steps: [
+      { t: 'Go up to the roof', at: [0, 0], start: () => { BK.saucerOn = false; BK.lifting = false; say('Bangalore is quiet tonight. You can’t sleep. You go up to the roof, like you used to, to look at the stars.', 6000); }, check: () => BZ.P.id === 'q_roof' && Math.hypot(pos.x, pos.z) < 4 },
+      { t: 'Look up', start: () => { BK.saucerOn = true; tone(60, 4, 'sine', .05, 58); say('The stars over the city go out, one after another, in a perfect circle.', 6000); }, check: () => BK.stepT > 6 },
+      { t: '…', start: () => { BK.lifting = true; BZ.grab = {}; say('No sound. Just light, and then you aren’t standing on anything.', 5000); setTimeout(() => { BK.lifting = false; BZ.grab = null; BK.ret = [-112, -12, Math.PI / 2]; bkRwEl.style.opacity = 1; setTimeout(() => bkRwEl.style.opacity = 0, 900); bzEnter('q_ship'); }, 6000); }, check: () => BZ.P.id === 'q_ship' },
+      { t: 'Wake up', start: () => { BK.cellOpen = false; BK.cellT = 0; BK.greysCatch = false; say('You wake on a cold, smooth floor. No corners. No door handle. On the other side of the glass, something tall and thin is standing very still, looking at you.', 8000); }, check: () => BK.stepT > 8 },
+      { t: 'Get out of the cell', start: () => { BK.cellT = 0; }, check: () => { if (!BK.cellOpen && BK.stepT > 8) { BK.cellOpen = true; say('The glass slides open on its own. Nobody is there.', 4000); } return pos.x > -104 && BZ.P.id === 'q_ship'; } },
+      { t: 'Find a way off the ship: the hangar (don’t let them look at you)', at: () => BK.props.hangar, start: () => { BK.greysCatch = true; BK.cellOpen = true; }, check: () => BZ.P.id === 'q_ship' && pos.x > 172 },
+      { t: '…', start: () => { BK.greysCatch = false; bkCaught('The hangar door is right there. Then the air goes thick, and you can’t move at all. One of them is standing right behind you. It has been the whole time.'); BK.s.flags.caught1 = 1; bkSave(); }, check: () => BK.stepT > 7 }
+    ], end: () => { BK.greysCatch = false; } },
+    { id: 'exam', title: 'The Exam Room', tag: 'They want to see everything you remember.', world: 'q_ship', also: ['q_disk', 'q_lost', 'q_ruin'], steps: [
+      { t: 'They walk you to a white room', start: () => { BK.cellOpen = true; fade(() => { pos.set(10, 0, 6); BZ.feet = 0; pos.y = 1.6; yaw = 0; }, '#FFFFFF'); say('Two of them walk you down a curved corridor. They never touch you. They don’t need to.', 6000); }, check: () => BK.stepT > 6 },
+      { t: 'Lie on the table', at: () => BK.props.table, prompt: () => BZ.P.id === 'q_ship' && near3(BK.props.table, 3) && !BK.memory ? { t: 'Lie down on the table', go: () => { BK.memory = true; say('Light comes down from the ring above you. Your memories start to play, like they’re somebody else’s.', 5000); setTimeout(() => bkMemScan(0), 3000); } } : null, check: () => !!BK.s.flags.scanned && BZ.P.id === 'q_ship' },
+      { t: 'Get up', start: () => say(BK.s.flags.lies ? 'The scan is over. On a screen you can’t read, something has been marked in red.' : 'The scan is over. Whatever it was looking for, it found.', 5000), check: () => BK.stepT > 6 }
+    ] },
+    { id: 'nordics', title: 'The Nordics', tag: 'They look like us. That doesn’t mean they are.', world: 'q_ship', steps: [
+      { t: 'Follow the light to the observation deck', at: [10, 80], start: () => say('A line of soft light appears on the floor, leading north. The Greys step aside to let you follow it.', 5000), check: () => BZ.P.id === 'q_ship' && pos.z > 74 },
+      { t: 'Talk to the tall ones by the window', at: [10, 96], prompt: () => BZ.P.id === 'q_ship' && Math.hypot(pos.x - 10, pos.z - 96) < 6 ? { t: 'Talk to them', go: () => { BK.blocked = true; dlgPlay([['The Nordic', 'Sit, if you like. Nobody here will hurt you. That is not how this works.'], ['ME', 'Then how does it work?'], ['The Nordic', 'You are on trial. Not you alone: your world. You were the most interesting thing it did in a long time, so you will speak for it.'], ['ME', 'And you’re the judges.'], ['The Nordic', 'We are the ones who were asked to listen. Whether that makes us judges, you can decide.']], { block: true, done: () => askChoice('bk_nordic', v => { BK.s.flags.nordic = v; BK.blocked = false; bkSave(); say(v === 'trust' ? 'The Nordic inclines its head, very slightly. You can’t tell if it’s pleased.' : 'The Nordic looks at you for a long time. “Good,” it says. “Keep doing that.”', 5000); }, { h: 'The Nordics', q: 'They are calm, and patient, and very hard to read. Do you trust them?', a: [['trust', 'I’ll trust you, for now'], ['doubt', 'I don’t trust anyone who abducts people']] }) }); } } : null, check: () => !!BK.s.flags.nordic },
+      { t: 'Look at the Earth', at: [10, 108], check: () => BZ.P.id === 'q_ship' && pos.z > 104 }
+    ], end: () => say('From up here you can see the whole of India at once, and the lights of Bangalore. It looks very small, and very far away.', 6000) },
+    { id: 'pact', title: 'The Pact', tag: 'An old agreement about who gets to own your world.', world: 'q_ship', steps: [
+      { t: 'Hear the Nordic out', at: [10, 96], prompt: () => BZ.P.id === 'q_ship' && Math.hypot(pos.x - 10, pos.z - 96) < 6 ? { t: 'Listen', go: () => { BK.blocked = true; dlgPlay([['The Nordic', 'Long before your cities, three peoples made an agreement about your world. A Pact.'], ['The Nordic', 'The Council of Scales was given the ground. The Greys were given your nights. And we were given the right to judge.'], ['ME', 'Who gave it to you?'], ['The Nordic', '…No one remembers. It was already written when we arrived. That has never troubled anyone but me.'], ['The Nordic', 'A copy of it is kept in the Greys’ archive. If you want it heard as evidence, you will have to take it. Wear this. They see shapes, not faces.']], { block: true, done: () => { BK.blocked = false; BK.s.items.skin = 1; BK.s.items.robe = 1; BK.s.flags.pactTold = 1; bkSave(); bzAlert('GREY ROBE', fine ? 'Press Z to put it on or take it off.' : 'Tap Disguise to put it on or take it off.', '#9AA0AA'); } }); } } : null, check: () => !!BK.s.flags.pactTold },
+      { t: fine ? 'Put the Grey robe on (Z) and go to the archive' : 'Put the Grey robe on and go to the archive', at: [10, -80], start: () => { BK.greysCatch = true; }, check: () => BZ.P.id === 'q_ship' && pos.z < -72 },
+      { t: 'Take the Pact (the gold crystal)', at: () => BK.props.pact, prompt: () => BZ.P.id === 'q_ship' && near3(BK.props.pact, 3.2) && !BK.s.items.pact ? { t: 'Hold E to take the Pact', hold: 3, go: () => { BK.s.items.pact = 1; bkSave(); bzAlert('THE PACT', 'An agreement older than your cities.', '#FFD27A'); say('Every Grey in the archive turns its head to look at you. None of them moves. They let you take it. You don’t know why that’s worse.', 7000); } } : null, check: () => !!BK.s.items.pact },
+      { t: 'Get back to your cell', at: [-112, -12], check: () => BZ.P.id === 'q_ship' && pos.x < -106 && pos.z > -16 && pos.z < -8 }
+    ], end: () => { BK.greysCatch = false; if (BK.dis) bkDisguise(false); } },
+    { id: 'tribunal', title: 'The Tribunal', tag: 'Your choices are the evidence.', world: 'q_ship', steps: [
+      { t: 'You are summoned', start: () => { fade(() => { pos.set(10, 0, 4); BZ.feet = 0; pos.y = 1.6; yaw = 0; pitch = .15; }, '#FFFFFF'); say('The white room has changed. Tiers of seats rise all round it, and they are full: shapes you have no names for, all of them watching. High above, three Nordics.', 8000); }, check: () => BK.stepT > 8 },
+      { t: 'Stand in the light and answer', at: [10, 0], prompt: () => BZ.P.id === 'q_ship' && Math.hypot(pos.x - 10, pos.z) < 5 && !BK.trialOn ? { t: 'Step into the light', go: () => { BK.trialOn = true; bkTrial(); } } : null, check: () => !!BK.s.flags.trial }
+    ], end: () => { BK.trialOn = false; } }
+  );
   // ---------- the phone, on the Moon ----------
   function bzPhMapBase(){
     const S = 1024, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), k = S / 560, X = x => (x + 280) * k, N = BZ.P.N, H = BZ.H, img = g.createImageData(N, N);
