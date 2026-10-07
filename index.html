@@ -13162,6 +13162,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (k === 'lizard') return bkLizardMesh();
     if (k === 'coil') return bkCoilMesh();
     if (k === 'grey') return bkGreyMesh();
+    if (k === 'eraser') return bkEraserMesh();
     const g = new THREE.Group(), M = BZ.m, G = BZ.g, add = (geo, m, x, y, z, p = g) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = !lowFx; p.add(o); return o; }, parts = {};
     if (k === 'drone') { const c = add(G.dCore, M.hull, 0, 0, 0); c.scale.set(1, .55, 1.25); add(G.eye, M.seam, 0, 0, -.72); const r = add(G.ring, M.seam, 0, 0, 0); r.rotation.x = Math.PI / 2; r.scale.setScalar(1.2);
       parts.rot = new THREE.Group(); g.add(parts.rot); [0, 1].forEach(i => { const b = add(G.blade, M.hull2, 0, .3, 0, parts.rot); b.rotation.y = i * Math.PI / 2; }); }
@@ -13205,7 +13206,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const gy = bzTerr(e.x, e.z);
     if (e.k === 'drone') { const ty2 = e.stun > 0 ? gy + 1 : hunting ? Math.max(gy + 4, BZ.feet + 4.5) : gy + e.alt; e.y += (ty2 + Math.sin(now / 500 + e.ph) * .4 - e.y) * Math.min(1, dt * 2); e.parts.rot.rotation.y += dt * 30; }
     else { if (e.vy || e.y > gy + .05) { e.vy -= BZ.P.G * dt; e.y += e.vy * dt; if (e.y <= gy) { e.y = gy; e.vy = 0; } } else e.y = gy; const t = now / 1000 * (e.k === 'hunter' ? 9 : 6) * Math.min(1, sp / 2 + .2) + e.ph, mv = Math.min(1, sp / 3);
-      if (e.k === 'hunter' || e.k === 'lizard' || e.k === 'grey') { e.parts.legs.forEach((L, i) => { const s = Math.sin(t + i * Math.PI); L.hip.rotation.x = s * .7 * mv; L.knee.rotation.x = Math.max(0, -Math.cos(t + i * Math.PI)) * .9 * mv; }); e.parts.arms.forEach((A2, i) => A2.rotation.x = e.atk > 0 ? -1.4 : -Math.sin(t + i * Math.PI) * .5 * mv); }
+      if (e.k === 'hunter' || e.k === 'lizard' || e.k === 'grey' || e.k === 'eraser') { e.parts.legs.forEach((L, i) => { const s = Math.sin(t + i * Math.PI); L.hip.rotation.x = s * .7 * mv; L.knee.rotation.x = Math.max(0, -Math.cos(t + i * Math.PI)) * .9 * mv; }); e.parts.arms.forEach((A2, i) => A2.rotation.x = e.atk > 0 ? -1.4 : -Math.sin(t + i * Math.PI) * .5 * mv); }
       else if (e.k === 'reader') { e.parts.arms.forEach((a, i) => a.rotation.x = Math.sin(t * .5 + i) * .3 - (hunting ? .9 : 0)); e.y = gy + .3 + Math.sin(now / 700 + e.ph) * .15; }
       else e.parts.legs.forEach((h, i) => { const s = Math.sin(t + (i % 2 ? 0 : Math.PI) + Math.floor(i / 2) * 2.1); h.rotation.x = s * .45 * mv; h.rotation.z = Math.max(0, Math.cos(t + (i % 2 ? 0 : Math.PI) + Math.floor(i / 2) * 2.1)) * .3 * mv * h.userData.sd; }); }
     e.atk = Math.max(0, (e.atk || 0) - dt);
@@ -13214,7 +13215,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       const pY = BZ.feet + 1;
       if (hunting && !BZ.dead) {
         if (e.k === 'drone' && dp < 32) { e.cd = 2.6 + Math.random() * 1.2; bzShoot({ x: e.x, y: e.y, z: e.z }, pos.x + BZ.v.x * .3, pY, pos.z + BZ.v.z * .3, 30, 6); }
-        else if (e.k === 'hunter' || e.k === 'lizard') { if (dp < 2.3 && Math.abs(pY - e.y - 1) < 2) { e.cd = 1.1; e.atk = .3; bzHurt(9); tone(160, .1, 'sawtooth', .04); } else if (dp < 24 && dp > 6) { e.cd = 5; for (let i = 0; i < 3; i++) setTimeout(() => { if (e.hp > 0 && BZ.sc) bzShoot({ x: e.x, y: e.y + 1.5, z: e.z }, pos.x, BZ.feet + 1, pos.z, 26, 4); }, i * 140); } }
+        else if (e.k === 'hunter' || e.k === 'lizard' || e.k === 'eraser') { if (dp < 2.3 && Math.abs(pY - e.y - 1) < 2) { e.cd = 1.1; e.atk = .3; bzHurt(9); tone(160, .1, 'sawtooth', .04); } else if (dp < 24 && dp > 6) { e.cd = 5; for (let i = 0; i < 3; i++) setTimeout(() => { if (e.hp > 0 && BZ.sc) bzShoot({ x: e.x, y: e.y + 1.5, z: e.z }, pos.x, BZ.feet + 1, pos.z, 26, 4); }, i * 140); } }
         else if (e.k === 'reader') { if (dp < 16) { e.cd = 3 + Math.random(); bzShoot({ x: e.x, y: e.y + 2.6, z: e.z }, pos.x, BZ.feet + 1, pos.z, 22, 7); say('“Shhhh.”', 900); } }
         else if (e.k === 'crawler') { if (dp < 3.6 && Math.abs(pY - e.y - 1) < 2.5) { e.cd = 1.4; bzHurt(14); BZ.v.x += (pos.x - e.x) / dp * 6; BZ.v.z += (pos.z - e.z) / dp * 6; BZ.v.y += 3; BZ.grounded = false; tone(100, .2, 'sawtooth', .05); } else if (dp < 12 && dp > 5 && e.y <= gy + .1) { e.cd = 5; e.vy = 5.5; e.vx = (pos.x - e.x) / dp * 11; e.vz = (pos.z - e.z) / dp * 11; tone(220, .3, 'sawtooth', .04, 90); } }
       } else if (e.prey && e.k === 'drone' && d < 26) { e.cd = 2.4; bzShoot({ x: e.x, y: e.y, z: e.z }, e.prey.x, bzTerr(e.prey.x, e.prey.z) + 1, e.prey.z, 26, 0); }
@@ -14115,7 +14116,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const bkTarget = () => { const S = bkStepO(); return bkActive() && S && S.at ? (typeof S.at === 'function' ? S.at() : S.at) : null; };
   function bkPrompts(L){ if (!bkActive() || DLG || choiceCb) return; const S = bkStepO(); if (S && S.prompt) { const p = S.prompt(); if (p) L.push(p); } }
   // how the Book shows on the HUD
-  function bkHud(obj){ if (!bkActive()) return false; const S = bkStepO(), B = bkBook(), t = bkTarget(); obj.textContent = `${S ? S.t : ''}${t ? ` · ${Math.round(t[2] != null ? Math.hypot(t[0] - pos.x, t[1] - pos.z, t[2] - pos.y) : Math.hypot(t[0] - pos.x, t[1] - pos.z))} m` : ''}`;
+  function bkHud(obj){ if (!bkActive()) return false; const S = bkStepO(), B = bkBook(), t = bkTarget(); obj.textContent = `${S ? (typeof S.t === 'function' ? S.t() : S.t) : ''}${t ? ` · ${Math.round(t[2] != null ? Math.hypot(t[0] - pos.x, t[1] - pos.z, t[2] - pos.y) : Math.hypot(t[0] - pos.x, t[1] - pos.z))} m` : ''}`;
     const st = BZ.hud.querySelector('#bzSt'); st.textContent = `${B.name} · Chapter ${BK.s.ch + 1}: ${bkCh().title}${BK.s.ch >= 1 && BK.s.book === 6 ? ` · home +${BK.s.dil.toFixed(1)} years${BK.inPocket ? ' (fast!)' : ''}` : ''}${bkHasRw() ? ` · Rewind ${BK.rwT > 0 ? Math.ceil(BK.rwT) + ' s' : 'ready'}` : ''}`; st.classList.toggle('red', !!BK.inPocket); return true; }
   // ---------- the worlds inside ----------
   function bkSkyDisk(sc){
@@ -15044,6 +15045,121 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const t0 = performance.now(), T = 6000, to = V(0, 0, -72), from = m.position.clone(), step = () => { const k = Math.min(1, (performance.now() - t0) / T); m.position.lerpVectors(from, to, k * k); trail.position.copy(m.position).addScaledVector(from.clone().sub(to).normalize(), 100); trail.lookAt(from); trail.rotateX(Math.PI / 2); BZ.shake = k * 1.5;
       if (k < 1 && BZ.sc) requestAnimationFrame(step); else { bkRwEl.style.background = '#FFFFFF'; bkRwEl.style.transition = 'opacity .2s'; bkRwEl.style.opacity = 1; tone(30, 4, 'sawtooth', .08, 20); setTimeout(() => { BK.s.flags.impact = 1; bkSave(); setTimeout(() => { bkRwEl.style.transition = 'opacity 2.5s'; bkRwEl.style.opacity = 0; setTimeout(() => { bkRwEl.style.background = 'radial-gradient(circle at 50% 50%,rgba(190,230,255,.05),rgba(120,180,255,.55))'; bkRwEl.style.transition = 'opacity .5s'; }, 2600); }, 2500); }, 1500); } };
     requestAnimationFrame(step); }
+  // ======================= Book Nine: The Last Page =======================
+  // After the impact, every version of the world got written on the same page.
+  BK_BOOKS[9] = { name: 'Book Nine', title: 'The Last Page', tag: 'Every version of the world, written over each other. Only you remember all of them.', chs: [] };
+  BK_BOOKS[8].outro = 'White. Then nothing. Then, very faintly, the sound of a page turning.';
+  // what survived depends on what you did
+  const bkLive = () => { const F = BK.s.flags, I = BK.s.items; return { older: !!F.spared, asha: !F.spared, friends: BK_PODS.every((q, j) => I['pod' + j]), allies: bkAllies() >= 3, nordics: F.nordic === 'trust', lizards: F.ending7 === 'keep', base: F.ending7 === 'keep', shops: F.ending7 === 'undo' }; };
+  // ---------- the warped Earth ----------
+  const Q_WARP = { id: 'q_warp', name: 'Bangalore, sort of', title: 'Bangalore (all of them)', story: true, seed: 901, half: 280, step: 4, G: 9.8, people: 0, noBots: true, noRovers: true, noRocks: true, bugs: [], domes: [], flat: [], roads: [], tubes: [], towers: [], pads: [], mines: [], solar: [], facs: [], beac: [], shuttle: [0, 30], spawn: [0, 28, 0], music: 'eerie',
+    sky: { bg: 0xC8B8A8, fog: 0xE8E4DC, near: 60, far: 420, sun: 0xFFE8C8, sunI: 1.3, hemi: [0xD8D0E8, 0x3A3028, .85] } };
+  Q_WARP.height = (x, z) => { const r = Math.hypot(x, z); let h = (bzFbm(x / 25, z / 25, 905, 2) - .5) * 1.2; if (r < 16) h -= (16 - r) * .4; const e = Math.max(Math.abs(x), Math.abs(z)) - 226; if (e > 0) h += e * e * .015; return h; };
+  Q_WARP.craters = () => []; Q_WARP.colors = (x, z) => { const r = Math.hypot(x, z); if (r > (BK.edgeR || 190) - 6) return [.95, .94, .9]; const road = [-180, -120, -60, 0, 60, 120, 180].some(q => Math.abs(x - q) < 6 || Math.abs(z - q) < 6), n = bzFbm(x / 15, z / 15, 907, 2) * .08;
+    if (road) return [.2 + n, .2 + n, .21 + n]; return x < 0 && z > 0 ? [.3 + n, .45 + n, .26 + n] : x > 0 && z > 0 ? [.45 + n, .36 + n, .28 + n] : x < 0 ? [.4 + n, .44 + n, .5 + n] : [.24 + n, .32 + n, .2 + n]; };
+  Q_WARP.tex = Q_RUIN.tex;
+  // who's here, and what they remember
+  const BK_TALK = [[-40, 70, 'A shopkeeper', 'Asteroid? What asteroid? I’ve been selling idlis on this corner for thirty years. Before that it was… a ruin? No. Was it?'],
+    [70, 60, 'A woman in green scales', 'The Council kept the trains running. Don’t look at me like that. You didn’t live through it. Or did you?'],
+    [-70, -60, 'A man in silver', 'The Nordics landed in 2031 and fixed everything. We have flying autos now. You haven’t heard of 2031?'],
+    [60, -70, 'A kid with a comic', 'You’re the one from the comic! The one who fell into the black hole! My dad says that never happened. My dad says a lot of things.']];
+  function bkWarpCity(sc, P, L){ const r = rng(77), roads = [-180, -120, -60, 0, 60, 120, 180];
+    for (let i = 0; i < roads.length - 1; i++) for (let j = 0; j < roads.length - 1; j++) { const cx = (roads[i] + roads[i + 1]) / 2, cz = (roads[j] + roads[j + 1]) / 2; if (Math.hypot(cx, cz) < 40 || Math.hypot(cx, cz) > 175) continue; if (Math.hypot(cx + 30, cz + 150) < 30 || Math.hypot(cx - 150, cz - 150) < 30) continue;
+      const w = 16 + r() * 16, d = 16 + r() * 16, x = cx + (r() - .5) * 6, z = cz + (r() - .5) * 6, q = cx < 0 && cz > 0 ? 'old' : cx > 0 && cz > 0 ? 'ruin' : cx < 0 ? 'future' : 'scale';
+      if (q === 'old') { const h = 10 + r() * 18; P.push(B3(w, h, d, [0xD8C8A8, 0xE8D0B0, 0xC8B8A0][Math.floor(r() * 3)], x, h / 2, z), B3(w + 1, .3, 3, [0xC8102E, 0x3C7CFF, 0xFFC93C][Math.floor(r() * 3)], x, 3.4, z + d / 2 + 1.3)); bzAdd({ t: 'b', x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2, top: h }); bzAnchor(gB(w, h, d), x, h / 2, z); }
+      if (q === 'ruin') { const h = 6 + r() * 22; P.push(B3(w, h, d, 0x8A8078, x, h / 2, z), B3(w * .5, 3, .6, 0x8A8078, x, h + 1.4, z, 0, 0, .4)); bzAdd({ t: 'b', x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2, top: h }); bzAnchor(gB(w, h, d), x, h / 2, z); }
+      if (q === 'future') { const h = 40 + r() * 60; P.push(B3(w * .7, h, d * .7, 0x9AB0C8, x, h / 2, z)); for (let k = 8; k < h; k += 8) L.push(B3(w * .72, .3, d * .72, 0x6AE8FF, x, k, z)); bzAdd({ t: 'b', x0: x - w * .35, x1: x + w * .35, z0: z - d * .35, z1: z + d * .35, top: h }); bzAnchor(gB(w * .7, h, d * .7), x, h / 2, z); }
+      if (q === 'scale') { const s = Math.min(w, d); for (let k = 0; k < 4; k++) P.push(B3(s * (1 - k * .22), 4, s * (1 - k * .22), 0x4A5A3A, x, 2 + k * 4, z)); L.push(B3(3, 6, .2, 0x2A9A4A, x, 8, z + s / 2 + .1)); bzAdd({ t: 'b', x0: x - s / 2, x1: x + s / 2, z0: z - s / 2, z1: z + s / 2, top: 16 }); bzAnchor(gB(s, 16, s), x, 8, z); } } }
+  Q_WARP.skyBuild = sc => { const P = [], L = [], live = bkLive(); BK.edgeR = BK.s.ch >= 4 ? 160 : BK.s.ch >= 2 ? 175 : 190;
+    bkWarpCity(sc, P, L);
+    // Grey ships, stuck in the air
+    [[-90, 60, 40], [80, 90, -30], [20, 70, -120]].forEach(([x, y, z]) => { const g = new THREE.Group(), h = new THREE.Mesh(new THREE.SphereGeometry(12, 24, 10), new THREE.MeshStandardMaterial({ color: 0x3A3E48, metalness: .9, roughness: .3 })); h.scale.y = .25; g.add(h); const b = new THREE.Mesh(new THREE.CylinderGeometry(2, 5, y, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xDDF2FF, transparent: true, opacity: .3, toneMapped: false, depthWrite: false })); b.position.y = -y / 2; g.add(b); g.position.set(x, y, z); g.rotation.z = .2; sc.add(g); });
+    // the crater where it hit, and a page lying in it
+    BK.page = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 2), new THREE.MeshBasicMaterial({ color: 0xFFF8E8, side: THREE.DoubleSide, toneMapped: false })); BK.page.position.set(0, bzTerr(0, 0) + 1.2, 0); sc.add(BK.page);
+    // story 1 places, in the wrong spots: the lair, under a petrol pump; the Broker's tower in the ruins
+    P.push(B3(20, 8, 14, 0x3A3A40, -30, 4, -150), B3(6, 5, .4, 0x0A0A0C, -30, 2.5, -142.8)); const ls = bzSign('THE LAIR', 'IT SHOULDN’T BE HERE', '#C8102E', 6); ls.position.set(-30, 10, -142); sc.add(ls); bzAdd({ t: 'b', x0: -40, x1: -20, z0: -157, z1: -143 }); BK.props.lair = [-30, -140];
+    P.push(B3(18, 120, 18, 0x16181D, 150, 60, 150)); for (let k = 10; k < 120; k += 6) L.push(B3(18.2, .4, 18.2, 0xD9A93A, 150, k, 150)); const bs = bzSign('BROKER TOWER', 'NOW IN A WASTELAND', '#D9A93A', 6); bs.position.set(150, 14, 140); sc.add(bs); bzAdd({ t: 'b', x0: 141, x1: 159, z0: 141, z1: 159, top: 120 }); bzAnchor(gB(18, 120, 18), 150, 60, 150);
+    if (live.base) { const ms = bzSign('THE RESISTANCE', 'WE REMEMBER', '#3CE870', 5); ms.position.set(-90, 6, 30); sc.add(ms); }
+    // the white edge
+    BK.edge = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 120, 96, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide, transparent: true, opacity: .92, toneMapped: false, fog: false })); BK.edge.position.y = 50; BK.edge.scale.set(BK.edgeR, 1, BK.edgeR); sc.add(BK.edge);
+    const m = new THREE.Mesh(bake(P), propM()); m.castShadow = !lowFx; m.userData.noPick = true; sc.add(m); const gl = new THREE.Mesh(bake(L), BZ.lightM); gl.userData.noPick = true; sc.add(gl);
+    // people
+    BK.npcs = BK_TALK.map(([x, z, n, line], i) => { let av = null; try { av = n.includes('scales') ? { g: bkLizardMesh().g } : avatar(Object.assign({}, look, { outfit: 'casual', c1: i * 2 % 9, c2: i * 5 % 9, hair: i % 2 ? 'long' : 'short' }), { s: i === 3 ? .7 : 1 }); av.g.position.set(x, 0, z); av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); } catch (e) {} return { x, z, n, line, av, i }; });
+    // every version of you, wherever they ended up
+    const V9 = [['older', 120, 100, 'oldme', live.older], ['copy', -120, 110, 'copyhero', true], ['echo', -110, -90, 'rayan', true], ['hero', 100, -110, 'hero18', true]];
+    BK.vers = V9.filter(v => v[4]).map(([k, x, z, h]) => { let av = null; try { av = avatar(heroLook(h), { s: 1 }); if (k === 'echo') av.g.traverse(o => { if (o.isMesh && o.material && o.material.color) { o.material = o.material.clone(); o.material.color.lerp(new THREE.Color(0xFFC890), .6); o.material.transparent = true; o.material.opacity = .7; } }); av.g.position.set(x, 0, z); av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); } catch (e) {} return { k, x, z, av }; });
+    // the council, gathered at the crater
+    BK.council = new THREE.Group(); sc.add(BK.council); let a = 0; const seat = g => { const ang = a++ * .55; g.position.set(Math.cos(ang) * 12, 0, Math.sin(ang) * 12 + 2); BK.council.add(g); };
+    if (live.allies) ['mars', 'europa', 'saturn'].forEach(k => seat(bkAllyMesh(k))); if (live.nordics) [0, 1].forEach(() => { try { seat(avatar(heroLook('nordic'), { s: 1.25 }).g); } catch (e) {} }); if (live.lizards) [0, 1].forEach(() => seat(bkLizardMesh().g));
+    if (live.friends) ['gwen', 'carter', 'jay'].forEach(h => { try { seat(avatar(heroLook(h), { s: 1 }).g); } catch (e) {} }); BK.council.traverse(o => { o.userData.noPick = true; }); };
+  Q_WARP.bkStep = (dt, now) => { if (BK.page) { BK.page.visible = !BK.s.flags.page1; BK.page.rotation.y += dt; }
+    if (BK.edge) { BK.edge.scale.set(BK.edgeR, 1, BK.edgeR); const r = Math.hypot(pos.x, pos.z); if (r > BK.edgeR - 2) { const k = (BK.edgeR - 4) / r; pos.x *= k; pos.z *= k; if ((BK.edgeHurt = (BK.edgeHurt || 0) - dt) <= 0) { BK.edgeHurt = 1; bzHurt(8); BK.s.flags.edge = 1; say('Where you touched the white, your hand goes faint, like a pencil sketch. It comes back. Slowly.', 3600); } } }
+    const ch = BK.s.book === 9 ? BK.s.ch : -1; (BK.vers || []).forEach(v => { if (v.av) v.av.g.visible = ch >= 2 && !BK.s.flags['ver_' + v.k]; }); if (BK.council) BK.council.visible = ch >= 3; };
+  Q_WARP.prompts = L => { if (!bkActive()) return; (BK.npcs || []).forEach(n => { if (Math.hypot(n.x - pos.x, n.z - pos.z) < 3.5) L.push({ t: `Talk to ${n.n.toLowerCase()}`, go: () => { say(`${n.n}: “${n.line}”`, 7000); BK.s.flags['talk' + n.i] = 1; bkSave(); } }); }); };
+  // ---------- the comic, writing itself ----------
+  const bkComicEl = document.createElement('div'); bkComicEl.style.cssText = 'position:fixed;inset:0;z-index:63;background:rgba(10,8,6,.92);display:none;align-items:center;justify-content:center;flex-direction:column;padding:16px'; document.body.appendChild(bkComicEl);
+  function bkComicPage(cb){ const cv = document.createElement('canvas'); cv.width = 560; cv.height = 760; cv.style.cssText = 'width:min(86vw,420px);height:auto;background:#F4ECD8;box-shadow:0 10px 40px rgba(0,0,0,.6)'; const c = cv.getContext('2d');
+    const panels = [[20, 20, 250, 230, 'You wake up in a city that can’t decide what it is.'], [290, 20, 250, 230, 'Every version of everyone you ever met.'], [20, 270, 520, 220, 'And somewhere above it all, a hand, holding a pen.'], [20, 510, 520, 230, 'PAGE 25. THE HERO FALLS, AND DOES NOT GET UP.']];
+    let k = 0; const draw = () => { if (k >= panels.length) { const i = document.createElement('div'); i.textContent = 'click to close the comic'; i.style.cssText = 'color:#E8E3D6;margin-top:12px;font:13px system-ui;opacity:.7'; bkComicEl.appendChild(i); bkComicEl.onclick = () => { bkComicEl.style.display = 'none'; bkComicEl.onclick = null; if (cb) cb(); }; return; }
+      const [x, y, w, h, t] = panels[k]; c.strokeStyle = '#16181D'; c.lineWidth = 5; c.strokeRect(x, y, w, h); c.fillStyle = k === 3 ? '#3A0A0A' : ['#C8D8E8', '#E8D8C8', '#D8D0E8'][k]; c.fillRect(x + 3, y + 3, w - 6, h - 6);
+      c.fillStyle = '#16181D'; if (k === 2) { c.beginPath(); c.ellipse(x + w * .6, y + h * .45, 70, 34, -.4, 0, 7); c.fill(); c.fillRect(x + w * .6 - 4, y + h * .45, 8, 110); } if (k === 3) { c.fillStyle = '#E8E3D6'; c.beginPath(); c.arc(x + w / 2, y + h * .55, 22, 0, 7); c.fill(); c.fillRect(x + w / 2 - 50, y + h * .7, 100, 12); }
+      c.fillStyle = '#FFF8E0'; c.fillRect(x + 10, y + 10, w - 20, 46); c.fillStyle = '#16181D'; c.font = 'bold 15px "Comic Sans MS", system-ui'; const words = t.split(' '); let line = '', ly = y + 28; words.forEach(wd => { if (c.measureText(line + wd).width > w - 36) { c.fillText(line, x + 18, ly); line = ''; ly += 18; } line += wd + ' '; }); c.fillText(line, x + 18, ly);
+      tone(300 + k * 80, .15, 'triangle', .04); k++; setTimeout(draw, 1500); };
+    bkComicEl.innerHTML = ''; bkComicEl.appendChild(cv); bkComicEl.style.display = 'flex'; if (document.pointerLockElement) document.exitPointerLock(); setTimeout(draw, 600); }
+  // ---------- the Margins: between the pages, where the cut things go ----------
+  const Q_MARGIN = { id: 'q_margin', name: 'the Margins', title: 'The Margins', story: true, stealth: true, seed: 911, half: 280, step: 4, G: 9.8, people: 0, noBots: true, noRovers: true, noRocks: true, bugs: [], domes: [], flat: [], roads: [], tubes: [], towers: [], pads: [], mines: [], solar: [], facs: [], beac: [], shuttle: [0, 190], spawn: [0, 196, 0], music: 'eerie',
+    sky: { bg: 0xF4F0E6, fog: 0xF4F0E6, near: 30, far: 220, sun: 0xFFFFFF, sunI: 1.2, hemi: [0xFFFFFF, 0xD8D0C0, 1] } };
+  Q_MARGIN.height = (x, z) => { const e = Math.max(Math.abs(x), Math.abs(z)) - 226; return e > 0 ? e * e * .015 : 0; }; Q_MARGIN.craters = () => [];
+  Q_MARGIN.colors = (x, z) => { const line = Math.abs(((z + 1000) % 8) - 4) < .15; return line ? [.62, .7, .86] : [.96, .94, .89]; };
+  Q_MARGIN.tex = () => { const t = tex(64, 64, (c, w, h) => { c.fillStyle = '#F4F0E6'; c.fillRect(0, 0, w, h); }); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+  const BK_WORDS = [[-90, 60, 'brave'], [80, -20, 'home'], [-30, -140, 'again']];
+  Q_MARGIN.skyBuild = sc => { const P = [], r = rng(41);
+    // deleted chapters: walls of crossed-out text, laid out like a maze
+    for (let i = 0; i < 46; i++) { const horiz = r() < .5, len = 20 + r() * 50, x = (r() - .5) * 360, z = (r() - .5) * 340; if (Math.hypot(x, z - 190) < 25 || BK_WORDS.some(([wx, wz]) => Math.hypot(wx - x, wz - z) < 14)) continue; const w = horiz ? len : 1.4, d = horiz ? 1.4 : len; P.push(B3(w, 7, d, 0x16181D, x, 3.5, z)); bzAdd({ t: 'b', x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2 }); }
+    for (let i = 0; i < 14; i++) { const x = (r() - .5) * 300, z = (r() - .5) * 300, s = bzSign(['CHAPTER 13', 'DELETED SCENE', 'CUT: TOO SAD', 'DRAFT 2', 'NOT CANON', 'REWRITE THIS'][i % 6], '— struck out —', '#C8102E', 6); s.position.set(x, 9, z); sc.add(s); }
+    // cut characters: half-drawn, never finished
+    for (let i = 0; i < 16; i++) { const x = (r() - .5) * 320, z = (r() - .5) * 320; try { const av = avatar(Object.assign({}, look, { outfit: 'casual' }), { s: 1 }); av.g.traverse(o => { if (o.isMesh) { o.material = new THREE.MeshBasicMaterial({ color: 0x16181D, wireframe: true }); o.userData.noPick = true; } }); av.g.position.set(x, 0, z); av.g.rotation.y = r() * 6; sc.add(av.g); } catch (e) {} }
+    BK.words = BK_WORDS.map(([x, z, w], i) => { const s = bzSign(w.toUpperCase(), 'a loose word', '#B07CFF', 4); s.position.set(x, 2.5, z); sc.add(s); return { x, z, w, s, i }; });
+    P.push(B3(30, .3, 6, 0x16181D, 0, .15, -200)); BK.props.gutter = [0, -200]; const gs = bzSign('THE GUTTER', 'BETWEEN THIS PAGE AND THE NEXT', '#16181D', 6); gs.position.set(0, 8, -200); sc.add(gs);
+    const m = new THREE.Mesh(bake(P), propM()); m.castShadow = !lowFx; m.userData.noPick = true; sc.add(m); BK.erSpawned = false; };
+  Q_MARGIN.bkStep = (dt, now) => { (BK.words || []).forEach(w => { w.s.visible = !BK.s.items['word' + w.i]; w.s.position.y = 2.5 + Math.sin(now / 400 + w.i) * .3; if (!BK.s.items['word' + w.i] && Math.hypot(w.x - pos.x, w.z - pos.z) < 3) { BK.s.items['word' + w.i] = 1; bkSave(); bzAlert(`“${w.w.toUpperCase()}”`, `A loose word. ${BK_WORDS.filter((q, j) => BK.s.items['word' + j]).length}/3`, '#B07CFF'); tone(784, .3, 'triangle', .05, 1046); } });
+    if (!BK.erSpawned && BZ.sc) { BK.erSpawned = true; [[-60, 100], [60, 80], [-100, 0], [40, -60], [-60, -100], [100, -140], [0, 40]].forEach(([x, z]) => { const e = bzSpawn('eraser', x, z, { force: true }); if (e) { e.st = 'patrol'; e.tx = x; e.tz = z; } }); } };
+  // the Erasers: pink, patient, and they take bits of you away
+  BZ_K.eraser = { hp: 90, r: .7, h: 1.6, spd: 4.2, sight: 18 };
+  function bkEraserMesh(){ const g = new THREE.Group(), pink = new THREE.MeshStandardMaterial({ color: 0xF0A0B0, roughness: .9 }), blue = new THREE.MeshStandardMaterial({ color: 0x5A7AC8, roughness: .7 }), add = (geo, m, x, y, z, p = g) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = !lowFx; o.userData.noPick = true; p.add(o); return o; }, parts = {};
+    add(new THREE.BoxGeometry(1.1, .9, .7), pink, 0, 1.4, 0); add(new THREE.BoxGeometry(1.12, .5, .72), blue, 0, 1.95, 0); add(new THREE.BoxGeometry(.5, .1, .05), new THREE.MeshBasicMaterial({ color: 0x16181D }), 0, 1.55, -.37);
+    parts.legs = [-.25, .25].map(x => { const hip = new THREE.Group(); hip.position.set(x, .95, 0); g.add(hip); add(new THREE.BoxGeometry(.2, .5, .2), pink, 0, -.22, 0, hip); const knee = new THREE.Group(); knee.position.y = -.45; hip.add(knee); add(new THREE.BoxGeometry(.18, .45, .18), pink, 0, -.2, 0, knee); return { hip, knee }; });
+    parts.arms = [-.65, .65].map(x => { const s = new THREE.Group(); s.position.set(x, 1.6, 0); g.add(s); add(new THREE.BoxGeometry(.16, .6, .16), pink, 0, -.3, 0, s); return s; }); return { g, parts }; }
+  BZ_WORLDS.q_warp = Q_WARP; BZ_WORLDS.q_margin = Q_MARGIN; [Q_WARP, Q_MARGIN].forEach(W => { W.N = W.half * 2 / W.step + 1; });
+  // ---------- Book Nine, chapters 1–5 ----------
+  const bkTalked = () => BK_TALK.filter((q, i) => BK.s.flags['talk' + i]).length;
+  BK_BOOKS[9].chs.push(
+    { id: 'blank', title: 'The Blank Page', tag: 'The edges of the world have gone white.', world: 'q_warp', steps: [
+      { t: 'Wake up', start: () => say('You wake up in a crater. Around you: a city that is three cities at once. Grey ships hang in the air, not moving. Somewhere a temple bell rings, then rings again, a second late.', 8000), check: () => BK.stepT > 7 },
+      { t: () => `Talk to people. They each remember a different history (${bkTalked()}/3)`, at: () => { const n = (BK.npcs || []).find(q => !BK.s.flags['talk' + q.i]); return n ? [n.x, n.z] : null; }, check: () => bkTalked() >= 3 },
+      { t: 'Walk to the white edge of the world', at: () => [BK.edgeR || 190, 0], start: () => say('Nobody else remembers any of it. All of it happened. Only you remember all of it. And out past the last street, the world just… stops.', 7000), check: () => !!BK.s.flags.edge },
+      { t: 'Find the page in the crater', at: [0, 0], prompt: () => BZ.P.id === 'q_warp' && Math.hypot(pos.x, pos.z) < 4 && !BK.s.flags.page1 ? { t: 'Pick up the page', go: () => { BK.s.flags.page1 = 1; bkSave(); say('A comic page, torn at the edge. Page 24. The last panel is you, standing in this crater, picking up this page.', 7000); } } : null, check: () => !!BK.s.flags.page1 }
+    ] },
+    { id: 'lair', title: 'Return to the Lair', tag: 'The comic is writing itself.', world: 'q_warp', spawn: [-30, -110, 0], steps: [
+      { t: 'Find the lair (it moved)', at: () => BK.props.lair, start: () => { BK.edgeR = 175; say('The lair, your old lair, is under a petrol pump now. Of course it is.', 5000); }, check: () => near3(BK.props.lair, 6) },
+      { t: 'Open the comic on the table', at: () => BK.props.lair, prompt: () => near3(BK.props.lair, 6) ? { t: 'Open the comic', go: () => { BK.blocked = true; bkComicPage(() => { BK.blocked = false; BK.s.flags.comic = 1; bkSave(); say('The comic is writing itself. The ink is still wet on the last page. And on the last page, you die.', 7000); }); } } : null, check: () => !!BK.s.flags.comic }
+    ] },
+    { id: 'versions', title: 'Every Version of You', tag: 'If somebody is writing your ending, you’ll need help.', world: 'q_warp', steps: [
+      { t: () => `Find every version of you (${(BK.vers || []).filter(v => BK.s.flags['ver_' + v.k]).length}/${(BK.vers || []).length})`, at: () => { const v = (BK.vers || []).find(q => !BK.s.flags['ver_' + q.k]); return v ? [v.x, v.z] : null; }, start: () => say(BK.s.flags.spared ? 'Out there somewhere: the older you, the Copycat, the echo the Archive made, and the hero from the comic. All of them are you, more or less.' : 'Out there somewhere: the Copycat, the echo the Archive made, and the hero from the comic. The older you isn’t in this world. You left him by a fire.', 8000),
+        prompt: () => { const v = (BK.vers || []).find(q => !BK.s.flags['ver_' + q.k] && Math.hypot(q.x - pos.x, q.z - pos.z) < 4); return v ? { t: 'Talk', go: () => { const L = { older: [['The older you', 'Took you long enough. Again.']], copy: [['The Copycat', 'I wore your face for years. Least I can do is help you keep it.']], echo: [[heroName() + '?', 'The Archive made me out of what you forgot. I remember all of it for you.']], hero: [[heroName() + ' (the comic)', 'I’m the one they drew. You’re the one who got away. Let’s go and find whoever’s holding the pen.']] }[v.k]; BK.blocked = true; dlgPlay(L, { block: true, done: () => { BK.blocked = false; BK.s.flags['ver_' + v.k] = 1; bkSave(); } }); } } : null; },
+        check: () => !!BK.vers && BK.vers.every(v => BK.s.flags['ver_' + v.k]) }
+    ] },
+    { id: 'council', title: 'The Council of Everyone', tag: 'Everyone who ever helped you, in one place.', world: 'q_warp', also: ['q_margin'], spawn: [0, 24, 0], steps: [
+      { t: 'Meet everyone at the crater', at: [0, 0], start: () => { BK.edgeR = 160; }, prompt: () => BZ.P.id === 'q_warp' && Math.hypot(pos.x, pos.z) < 10 ? { t: 'Speak to the council', go: () => { const live = bkLive(), L = []; if (live.allies) L.push(['Dustwalker', 'We came the long way. Through a page.']); else L.push(['ME', 'The Dustwalkers, the Lumins, the Driftkin… I never asked them. They’re not here.']); if (live.nordics) L.push(['The Nordic', 'You trusted us. So we are here.']); else L.push(['ME', 'No Nordics. I didn’t trust them, and they remembered.']);
+          if (live.lizards) L.push(['A woman in green scales', 'What’s left of the Council will fight with you. Don’t make it weird.']); if (live.friends) L.push(['Gwen', 'You pulled us out of amber. We’re not letting you get written out.']);
+          L.push(['ME', 'Somebody is writing all of this. Our worlds, our lives, my death on page 25. I’m going to find them.']); BK.blocked = true; dlgPlay(L, { block: true, done: () => { BK.blocked = false; BK.s.flags.council = 1; bkSave(); } }); } } : null, check: () => !!BK.s.flags.council },
+      { t: 'Step off the edge of the page', at: () => [BK.edgeR || 160, 0], start: () => say('The echo points at the white. “The margins,” it says. “That’s where they put everything they cut. The way to the writer is through there.”', 6000), prompt: () => BZ.P.id === 'q_warp' && Math.hypot(pos.x, pos.z) > (BK.edgeR || 160) - 8 ? { t: 'Step into the white', go: () => { BK.ret = [0, 196, 0]; bzEnter('q_margin'); } } : null, check: () => BZ.P.id === 'q_margin' }
+    ] },
+    { id: 'margins', title: 'The Margins', tag: 'Where the deleted chapters go.', world: 'q_margin', also: ['q_warp'], steps: [
+      { t: 'Find the three loose words. Stay out of the Erasers’ sight', at: () => { const w = (BK.words || []).find(q => !BK.s.items['word' + q.i]); return w ? [w.x, w.z] : null; }, start: () => say('White paper, forever. Walls made of crossed-out sentences. Half-drawn people standing very still. And pink, blocky things wandering about, rubbing things out. Don’t let them see you.', 8000), check: () => BK_WORDS.every((q, j) => BK.s.items['word' + j]) },
+      { t: 'Get to the gutter, between this page and the next', at: () => BK.props.gutter, check: () => BZ.P.id === 'q_margin' && near3(BK.props.gutter, 8) }
+    ], end: () => say('Brave. Home. Again. You put the loose words in your pocket, and step down into the gutter.', 5000) }
+  );
   // ---------- the phone, on the Moon ----------
   function bzPhMapBase(){
     const S = 1024, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), k = S / 560, X = x => (x + 280) * k, N = BZ.P.N, H = BZ.H, img = g.createImageData(N, N);
