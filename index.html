@@ -13107,7 +13107,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ---------- fighting ----------
   function bzPunch(){
     if (BZ.atkT > 0 || BZ.bug || BZ.dead) return; BZ.atkT = .42; BZ.swing = .3; bzNoiseAdd(.07); tone(200, .08, 'sawtooth', .03, 110);
-    const fx = -Math.sin(yaw), fz = -Math.cos(yaw), dmg = 28 * (1 + .2 * BZ.s.upg.blast); let best = null, bd = 99;
+    const fx = -Math.sin(yaw), fz = -Math.cos(yaw), dmg = 34 * (1 + .2 * BZ.s.upg.blast); let best = null, bd = 99;
     for (const e of BZ.ents) { if (e.hp <= 0) continue; const dx = e.x - pos.x, dz = e.z - pos.z, d = Math.hypot(dx, dz), dy = e.y + e.h * .5 - (BZ.feet + 1); if (d > 2.3 + e.r || Math.abs(dy) > 1.8 + e.r) continue; if (d > e.r && (dx * fx + dz * fz) / (d || 1) < .3) continue; if (d < bd) { bd = d; best = e; } }
     if (BZ.grab && BZ.giantPunch) return BZ.giantPunch(dmg);
     if (best) { bzHit(best, dmg, fx * 5, fz * 5); return; }
@@ -13116,10 +13116,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function bzBlast(){
     if (BZ.blastT > 0 || BZ.dead) return; BZ.blastT = .55; bzNoiseAdd(.12); ndc.set(0, 0); ray.setFromCamera(ndc, camera); const d = ray.ray.direction.clone(), p = camera.position.clone().addScaledVector(d, .8); p.y -= .2;
-    const m = new THREE.Mesh(BZ.g.web, BZ.m.web); m.position.copy(p); BZ.sc.add(m); BZ.shots.push({ m, p, v: d.multiplyScalar(72), life: 1.4, dmg: 18 * (1 + .3 * BZ.s.upg.blast), mine: true }); tone(1200, .1, 'triangle', .04, 400); BZ.swing = .2;
+    const m = new THREE.Mesh(BZ.g.web, BZ.m.web); m.position.copy(p); BZ.sc.add(m); BZ.shots.push({ m, p, v: d.multiplyScalar(72), life: 1.4, dmg: 24 * (1 + .3 * BZ.s.upg.blast), mine: true }); tone(1200, .1, 'triangle', .04, 400); BZ.swing = .2;
   }
   function bzHit(e, dmg, kx, kz){ e.hp -= dmg; e.flash = .15; e.vx = (e.vx || 0) + (kx || 0); e.vz = (e.vz || 0) + (kz || 0); e.st = 'hunt'; e.seen = BZ.t; e.lx = pos.x; e.lz = pos.z; tone(520 + Math.random() * 200, .06, 'square', .04, 200); bzSpark(e.x, e.y + e.h * .5, e.z, 0xFFE0A0, 6); if (e.hp <= 0) bzKill(e); }
-  function bzHurt(d){ if (BZ.dead || d <= 0) return; d *= 1 - .15 * BZ.s.upg.arm; BZ.hp -= d; BZ.hurtT = 0; BZ.pain = Math.min(.75, (BZ.pain || 0) + d / 30); tone(150, .14, 'square', .045, 90); if (!reduce && !lowFx) BZ.shake = Math.max(BZ.shake, .15); if (BZ.hold) BZ.hold.t = 0; if (BZ.hp <= 0) bzDown(); }
+  function bzHurt(d){ if (BZ.dead || d <= 0) return; d *= (1 - .15 * BZ.s.upg.arm) * .6; BZ.hp -= d; BZ.hurtT = 0; BZ.pain = Math.min(.75, (BZ.pain || 0) + d / 30); tone(150, .14, 'square', .045, 90); if (!reduce && !lowFx) BZ.shake = Math.max(BZ.shake, .15); if (BZ.hold) BZ.hold.t = 0; if (BZ.hp <= 0) bzDown(); }
   function bzDown(){ BZ.dead = true; BZ.hp = 0; if (BZ.bug) bzBugOut(true); if (BZ.web) bzWebEnd(); say('Suit breach!', 1600); tone(90, 1.2, 'sawtooth', .06, 40);
     setTimeout(() => fade(() => { if (!BZ.sc) return; BZ.dead = false; BZ.hp = bzHpMax(); BZ.noise = 0; BZ.ents.forEach(e => { if (e.st === 'hunt') e.st = e.raid ? 'raid' : 'patrol'; }); const hub = BZ.domes[0]; pos.set(hub.x - 13, 0, hub.z + 2); BZ.feet = 0; pos.y = 1.6; BZ.v.set(0, 0, 0); yaw = -Math.PI / 2; pitch = 0; if (BZ.job && BZ.job.k === 'rescue' && BZ.job.npc && BZ.job.npc.st === 'follow') BZ.job.npc.st = 'stranded'; say('The medbay patched up your suit. Lie low for a bit: they lost track of you.', 4200); }, '#000000'), 1200); }
   const bzHpMax = () => 100 + 20 * BZ.s.upg.arm;
@@ -13149,7 +13149,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     G.cBody = new THREE.OctahedronGeometry(1, 0); G.cLeg = new THREE.BoxGeometry(.2, 1.5, .2); G.cHead = new THREE.ConeGeometry(.6, 1.1, 4);
     G.spike = new THREE.ConeGeometry(.7, 4, 4); G.ping = new THREE.TorusGeometry(1, .15, 4, 32);
   }
-  const BZ_K = { drone: { hp: 30, r: .8, h: .6, spd: 9, sight: 34 }, hunter: { hp: 60, r: .5, h: 1.8, spd: 6.2, sight: 26 }, crawler: { hp: 170, r: 1.7, h: 1.6, spd: 4.6, sight: 24 } };
+  const BZ_K = { drone: { hp: 22, r: .8, h: .6, spd: 8, sight: 28 }, hunter: { hp: 45, r: .5, h: 1.8, spd: 5.4, sight: 22 }, crawler: { hp: 120, r: 1.7, h: 1.6, spd: 4, sight: 20 } };
   function bzMesh(k){
     const g = new THREE.Group(), M = BZ.m, G = BZ.g, add = (geo, m, x, y, z, p = g) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = !lowFx; p.add(o); return o; }, parts = {};
     if (k === 'drone') { const c = add(G.dCore, M.hull, 0, 0, 0); c.scale.set(1, .55, 1.25); add(G.eye, M.seam, 0, 0, -.72); const r = add(G.ring, M.seam, 0, 0, 0); r.rotation.x = Math.PI / 2; r.scale.setScalar(1.2);
@@ -13163,7 +13163,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     g.traverse(o => { if (o.isMesh) o.userData.noPick = true; }); return { g, parts };
   }
   function bzSpawn(k, x, z, o = {}){
-    if (!BZ.sc) return null; const cap = lowFx ? 16 : 24; if (BZ.ents.filter(e => e.hp > 0).length >= cap && !o.force) return null; const D = BZ_K[k], { g, parts } = bzMesh(k), y = bzTerr(x, z) + (k === 'drone' ? 6 : 0);
+    if (!BZ.sc) return null; const cap = lowFx ? 12 : 16; if (BZ.ents.filter(e => e.hp > 0).length >= cap && !o.force) return null; const D = BZ_K[k], { g, parts } = bzMesh(k), y = bzTerr(x, z) + (k === 'drone' ? 6 : 0);
     g.position.set(x, y, z); BZ.sc.add(g); const e = Object.assign({ k, g, parts, x, y, z, yaw: Math.random() * 6, hp: D.hp, max: D.hp, r: D.r, h: D.h, st: 'patrol', tx: x, tz: z, cd: 1 + Math.random() * 2, think: Math.random() * .3, seen: -99, lx: x, lz: z, vx: 0, vz: 0, vy: 0, stun: 0, flash: 0, ph: Math.random() * 6, alt: 5 + Math.random() * 4 }, o); BZ.ents.push(e); return e;
   }
   function bzKill(e){ e.hp = 0; e.dead = 2; bzBoom(e.x, e.y + e.h * .5, e.z, false); BZ.sc.remove(e.g); BZ.s.kills++; const pay = e.k === 'drone' ? 3 : e.k === 'hunter' ? 5 : 10; BZ.s.cr += pay; bzCredit(pay); }
@@ -13201,8 +13201,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (e.stun <= 0 && e.cd <= 0) {
       const pY = BZ.feet + 1;
       if (hunting && !BZ.dead) {
-        if (e.k === 'drone' && dp < 32) { e.cd = 1.7 + Math.random() * .9; bzShoot({ x: e.x, y: e.y, z: e.z }, pos.x + BZ.v.x * .3, pY, pos.z + BZ.v.z * .3, 30, 6); }
-        else if (e.k === 'hunter') { if (dp < 2.3 && Math.abs(pY - e.y - 1) < 2) { e.cd = 1.1; e.atk = .3; bzHurt(9); tone(160, .1, 'sawtooth', .04); } else if (dp < 24 && dp > 6) { e.cd = 3.6; for (let i = 0; i < 3; i++) setTimeout(() => { if (e.hp > 0 && BZ.sc) bzShoot({ x: e.x, y: e.y + 1.5, z: e.z }, pos.x, BZ.feet + 1, pos.z, 26, 4); }, i * 140); } }
+        if (e.k === 'drone' && dp < 32) { e.cd = 2.6 + Math.random() * 1.2; bzShoot({ x: e.x, y: e.y, z: e.z }, pos.x + BZ.v.x * .3, pY, pos.z + BZ.v.z * .3, 30, 6); }
+        else if (e.k === 'hunter') { if (dp < 2.3 && Math.abs(pY - e.y - 1) < 2) { e.cd = 1.1; e.atk = .3; bzHurt(9); tone(160, .1, 'sawtooth', .04); } else if (dp < 24 && dp > 6) { e.cd = 5; for (let i = 0; i < 3; i++) setTimeout(() => { if (e.hp > 0 && BZ.sc) bzShoot({ x: e.x, y: e.y + 1.5, z: e.z }, pos.x, BZ.feet + 1, pos.z, 26, 4); }, i * 140); } }
         else if (e.k === 'crawler') { if (dp < 3.6 && Math.abs(pY - e.y - 1) < 2.5) { e.cd = 1.4; bzHurt(14); BZ.v.x += (pos.x - e.x) / dp * 6; BZ.v.z += (pos.z - e.z) / dp * 6; BZ.v.y += 3; BZ.grounded = false; tone(100, .2, 'sawtooth', .05); } else if (dp < 12 && dp > 5 && e.y <= gy + .1) { e.cd = 5; e.vy = 5.5; e.vx = (pos.x - e.x) / dp * 11; e.vz = (pos.z - e.z) / dp * 11; tone(220, .3, 'sawtooth', .04, 90); } }
       } else if (e.prey && e.k === 'drone' && d < 26) { e.cd = 2.4; bzShoot({ x: e.x, y: e.y, z: e.z }, e.prey.x, bzTerr(e.prey.x, e.prey.z) + 1, e.prey.z, 26, 0); }
       else if (e.st === 'raid' && e.raid && Math.hypot(e.raid.x - e.x, e.raid.z - e.z) < e.raid.R + 8) { e.cd = 1.2 + Math.random(); e.raid.hp -= e.k === 'crawler' ? 4 : 2; if (e.k !== 'crawler') bzShoot({ x: e.x, y: e.y + 1, z: e.z }, e.raid.x, 4, e.raid.z, 24, 0); else { bzSpark(e.x - Math.sin(e.yaw) * 2, 1, e.z - Math.cos(e.yaw) * 2, 0xFF6A2A, 4); tone(120, .15, 'square', .03); } }
@@ -13242,8 +13242,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function bzFacStep(F, dt, now){
     if (F.up < 1) { F.up = Math.min(1, F.up + dt / 8); F.g.position.y = F.gy - 26 * (1 - F.up); if (Math.hypot(F.x - pos.x, F.z - pos.z) < 260 && !reduce) BZ.shake = Math.max(BZ.shake, .25); if (F.up < 1) return; }
     if (F.hp <= 0) return; F.core.rotation.y += dt * 2; F.core.scale.setScalar(1 + Math.sin(now / 200) * .08); F.cage.rotation.z += dt;
-    const near = Math.hypot(F.x - pos.x, F.z - pos.z) < 45; if ((F.spawnT -= dt * (near ? 2.5 : 1)) > 0) return; F.spawnT = 26;
-    const mine = BZ.ents.filter(e => e.hp > 0 && e.home === F.i).length; if (mine >= 5) return; const r = Math.random(), k = r < .55 ? 'drone' : r < .82 ? 'hunter' : 'crawler'; const e = bzSpawn(k, F.door[0], F.door[1], { home: F.i }); if (e && near) { e.st = 'hunt'; e.seen = BZ.t; e.lx = pos.x; e.lz = pos.z; }
+    const near = Math.hypot(F.x - pos.x, F.z - pos.z) < 45; if ((F.spawnT -= dt * (near ? 2.5 : 1)) > 0) return; F.spawnT = 36;
+    const mine = BZ.ents.filter(e => e.hp > 0 && e.home === F.i).length; if (mine >= 4) return; const r = Math.random(), k = r < .55 ? 'drone' : r < .82 ? 'hunter' : 'crawler'; const e = bzSpawn(k, F.door[0], F.door[1], { home: F.i }); if (e && near) { e.st = 'hunt'; e.seen = BZ.t; e.lx = pos.x; e.lz = pos.z; }
   }
   // ---------- the infection: a 28 × 28 grid of 20 m cells that spreads out from the factories ----------
   const ICELL = 20, IN = 28;
@@ -13277,7 +13277,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function bzRaid(){
     const D = BZ.domes.filter(d => d.id !== 'hub' && !BZ.ws.breach.includes(d.id)); if (!D.length) return; const alive = BZ.facs.filter(F => F.hp > 0);
     const d = D.sort((a, b) => { const sa = BZ.inf[iIdx(a.x, a.z)] || 0, sb = BZ.inf[iIdx(b.x, b.z)] || 0; return sb - sa + (Math.random() - .5) * .6; })[0]; d.hp = 100;
-    const F = alive.length ? alive[Math.floor(Math.random() * alive.length)] : null, a = F ? Math.atan2(F.z - d.z, F.x - d.x) : Math.random() * 6.28, n = 4 + alive.length + ((BZ.ws.raids || 0) > 3 ? 1 : 0), list = [];
+    const F = alive.length ? alive[Math.floor(Math.random() * alive.length)] : null, a = F ? Math.atan2(F.z - d.z, F.x - d.x) : Math.random() * 6.28, n = 3 + Math.ceil(alive.length / 2) + ((BZ.ws.raids || 0) > 3 ? 1 : 0), list = [];
     for (let i = 0; i < n; i++) { const r = 95 + Math.random() * 25, b = a + (Math.random() - .5) * .6, k = i % 4 === 3 ? 'crawler' : i % 2 ? 'hunter' : 'drone', e = bzSpawn(k, clamp(d.x + Math.cos(b) * r, -225, 225), clamp(d.z + Math.sin(b) * r, -225, 225), { st: 'raid', raid: d, force: true, home: F ? F.i : -1 }); if (e) list.push(e); }
     BZ.raid = { d, list, t: 0 }; BZ.ws.raids = (BZ.ws.raids || 0) + 1; bzAlert(`RAID ON ${d.name.toUpperCase()}`, 'Machines are heading for the dome. Stop them before they break in.', '#FF3C3C'); tone(440, .4, 'square', .04); setTimeout(() => tone(330, .4, 'square', .04), 450);
   }
@@ -13390,7 +13390,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!BZ.sc) return; BZ.t += dt; BZ.u.uT.value = now / 1000; const S = BZ.ws;
     BZ.atkT -= dt; BZ.blastT -= dt; BZ.swing = Math.max(0, BZ.swing - dt);
     if (!BZ.dead && !BZ.grab) { if (BZ.bug) { BZ.bugs.forEach(b => bzBugStep(b, dt)); } else { bzMove(dt); BZ.bugs.forEach(b => { if (b.spd || b.air) bzBugStep(b, dt); }); } }
-    if ((BZ.hurtT += dt) > 6 && BZ.hp < bzHpMax() && !BZ.dead) BZ.hp = Math.min(bzHpMax(), BZ.hp + 5 * dt);
+    if ((BZ.hurtT += dt) > 4 && BZ.hp < bzHpMax() && !BZ.dead) BZ.hp = Math.min(bzHpMax(), BZ.hp + 9 * dt);
     BZ.pain = Math.max(0, (BZ.pain || 0) - dt * .8); evHurt.style.opacity = BZ.pain;
     BZ.noise = Math.max(0, BZ.noise - .22 * dt * (BZ.crouch ? 1.6 : 1)); if ((BZ.noiseT = (BZ.noiseT || 0) - dt) <= 0) { BZ.noiseT = 1; if (BZ.noise > .12) bzMakeNoise(pos.x, pos.z, BZ.noise * 170); }
     // time on the Moon (saved): stay long enough and the signal arrives
@@ -13405,7 +13405,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     bzShotStep(dt); bzFxStep(dt);
     if (S.out) { BZ.facs.forEach(F => bzFacStep(F, dt, now)); bzBeaconStep(dt); bzRaidStep(dt);
       if ((BZ.infT += dt) > 6) { BZ.infT = 0; bzInfTick(); }
-      if (!S.clear && !BZ.raid && BZ.facs.some(F => F.hp > 0 && F.up >= 1) && (BZ.raidT -= dt * (1 + .35 * S.bea.filter(Boolean).length)) <= 0) { BZ.raidT = 150 + Math.random() * 60; bzRaid(); }
+      if (!S.clear && !BZ.raid && BZ.facs.some(F => F.hp > 0 && F.up >= 1) && (BZ.raidT -= dt * (1 + .35 * S.bea.filter(Boolean).length)) <= 0) { BZ.raidT = 210 + Math.random() * 90; bzRaid(); }
       if (BZ.frag) BZ.frag.rotation.y += dt * .3; }
     if (BZ.giantStep) BZ.giantStep(dt, now);
     bzJobStep(dt); bzOffers();
@@ -13459,7 +13459,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   jumpBtn.addEventListener('pointerdown', () => { if (inWorld && zone === 'mc') { BZ.keys[' '] = true; bzJump(); } }); ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => jumpBtn.addEventListener(ev, () => { BZ.keys[' '] = false; }));
   // ---------- Sentinel-class: 36 m hunter machines. Swing up them, break the glowing joints ----------
   BZ.gi = [];
-  const SEN_WEAK = { kneeL: ['Left knee', 220, 1.7], kneeR: ['Right knee', 220, 1.7], shL: ['Left shoulder', 200, 1.8], shR: ['Right shoulder', 200, 1.8], head: ['Head', 260, 1.9], core: ['Chest core', 520, 2.4] };
+  const SEN_WEAK = { kneeL: ['Left knee', 150, 1.7], kneeR: ['Right knee', 150, 1.7], shL: ['Left shoulder', 140, 1.8], shR: ['Right shoulder', 140, 1.8], head: ['Head', 180, 1.9], core: ['Chest core', 360, 2.4] };
   function senBuild(){
     const M = BZ.m, root = new THREE.Group(), add = (geo, m, x, y, z, p, cast = true) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.castShadow = cast && !lowFx; o.userData.noPick = true; p.add(o); return o; }, grp = (p, x, y, z) => { const g = new THREE.Group(); g.position.set(x, y, z); p.add(g); return g; };
     const box = (w, h, d) => new THREE.BoxGeometry(w, h, d), wedge = (rt, rb, h) => new THREE.CylinderGeometry(rt, rb, h, 4, 1), weakG = new THREE.OctahedronGeometry(1, 0);
@@ -13501,7 +13501,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   BZ.giantBlock = (x, z, feet, rad) => { for (const S of BZ.gi) { if (!S.alive && !S.wreck) continue; if (Math.hypot(S.x - x, S.z - z) > (S.rad || 30)) continue; const p = V(x, feet + .9, z); for (const s of S.segs) { if (s.gone) continue; const [a, b] = segEnds(s); if (segPointDist(p, a, b) < s.r + rad) return true; } } return false; };
   BZ.giantSupport = (x, z, feet) => { let g = -1e9; BZ.gPlat = null; for (const S of BZ.gi) { if (Math.hypot(S.x - x, S.z - z) > (S.rad || 30)) continue; for (const m of S.plats) { if (!m.parent || !m.visible) continue; const l = m.worldToLocal(_w1.set(x, feet, z)), bb = m.geometry.boundingBox; if (l.x < bb.min.x - .3 || l.x > bb.max.x + .3 || l.z < bb.min.z - .3 || l.z > bb.max.z + .3) continue; const top = m.localToWorld(_w2.set(l.x, bb.max.y, l.z)).y; if (feet >= top - .9 && top > g) { g = top; BZ.gPlat = m; } } } return g; };
   function senWeakAt(p, rad){ let best = null, bd = 1e9; for (const S of BZ.gi) { if (!S.alive || S.y > S.gy + 2 || S.cel && S.rise < 1) continue; for (const w of Object.values(S.weak)) { if (w.hp <= 0) continue; w.m.getWorldPosition(_w1); const d = _w1.distanceTo(p); if (d < w.r + rad && d < bd) { bd = d; best = [S, w]; } } } return best; }
-  BZ.giantPunch = dmg => { if (BZ.grab) { BZ.grab.hits++; tone(300, .08, 'square', .05); if (BZ.grab.hits >= 4) senRelease(true); return; } const p = V(pos.x - Math.sin(yaw) * 1.2, BZ.feet + 1.2, pos.z - Math.cos(yaw) * 1.2), h = senWeakAt(p, 1.6); if (h) return senHit(h[0], h[1], dmg * 1.2); if (celHitTurret(p, dmg)) return; for (const S of BZ.gi) if (S.alive && S.segs.some(s => { const [a, b] = segEnds(s); return segPointDist(p, a, b) < s.r + 1; })) { tone(900, .05, 'square', .03, 1400); bzSpark(p.x, p.y, p.z, 0xFFE0A0, 3); if (!BZ.armorTip) { BZ.armorTip = 1; say('Solid armour. Hit the glowing red joints: knees, shoulders, head, chest.', 3200); } return; } };
+  BZ.giantPunch = dmg => { if (BZ.grab) { BZ.grab.hits++; tone(300, .08, 'square', .05); if (BZ.grab.hits >= 3) senRelease(true); return; } const p = V(pos.x - Math.sin(yaw) * 1.2, BZ.feet + 1.2, pos.z - Math.cos(yaw) * 1.2), h = senWeakAt(p, 1.6); if (h) return senHit(h[0], h[1], dmg * 1.2); if (celHitTurret(p, dmg)) return; for (const S of BZ.gi) if (S.alive && S.segs.some(s => { const [a, b] = segEnds(s); return segPointDist(p, a, b) < s.r + 1; })) { tone(900, .05, 'square', .03, 1400); bzSpark(p.x, p.y, p.z, 0xFFE0A0, 3); if (!BZ.armorTip) { BZ.armorTip = 1; say('Solid armour. Hit the glowing red joints: knees, shoulders, head, chest.', 3200); } return; } };
   BZ.giantShot = s => { const h = senWeakAt(s.p, .6); if (h) { senHit(h[0], h[1], s.dmg * 1.4); return true; } if (celHitTurret(s.p, s.dmg)) return true; for (const S of BZ.gi) if (S.alive && Math.hypot(S.x - s.p.x, S.z - s.p.z) < 14 && S.segs.some(q => { if (q.gone) return false; const [a, b] = segEnds(q); return segPointDist(s.p, a, b) < q.r; })) { bzSpark(s.p.x, s.p.y, s.p.z, 0xFFE0A0, 2); tone(1400, .04, 'square', .02); return true; } return false; };
   BZ.giantNoise = (x, z, rad) => { for (const S of BZ.gi) if (S.alive && S.st !== 'hunt' && Math.hypot(S.x - x, S.z - z) < rad * 1.6) { S.tx = x; S.tz = z; S.st = 'investigate'; S.seen = BZ.t - 6; } };
   BZ.giantMap = (dot, lbl) => { for (const S of BZ.gi) if (S.alive) { dot(S.x, S.z, '#FF3C3C', S.cel ? 22 : 14, '#fff'); lbl(S.x, S.z, S.cel ? S.name : 'Sentinel'); } };
@@ -13567,12 +13567,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const arms = S.hands.filter(A2 => !A2.gone), near = arms.map(A2 => [A2, A2.hand.getWorldPosition(new THREE.Vector3()).distanceTo(V(pos.x, BZ.feet + 1, pos.z))]).sort((a, b) => a[1] - b[1])[0];
     if (S.reach) { S.reach.t += dt; if (S.reach.t > 1.6) { const A2 = S.reach.A2, hp = A2.hand.getWorldPosition(new THREE.Vector3()); if (S.reach.who === 'me' && !BZ.dead && (hp.distanceTo(V(pos.x, BZ.feet + 1, pos.z)) < 9 || Math.hypot(pos.x - S.x, pos.z - S.z) < 16 && BZ.feet < S.gy + 4)) senGrab(S, A2, 'me'); else if (S.reach.who !== 'me' && S.reach.who.st !== 'down' && hp.distanceTo(V(S.reach.who.x, bzTerr(S.reach.who.x, S.reach.who.z) + 1, S.reach.who.z)) < 6) senGrab(S, A2, S.reach.who); S.reach = null; } }
     else if (att && !S.beam && !S.held && near && (near[1] < 20 || dp < 15) && S.cd.grab <= 0 && !ride) { S.reach = { A2: near[0], t: 0, who: 'me' }; S.cd.grab = 10; tone(110, 1, 'sawtooth', .04, 60); }
-    else if (att && !S.beam && !S.held && arms.length && S.cd.beam <= 0 && dp > 12) { S.cd.beam = S.blind ? 9 : 6.5; senBeamStart(S, arms[Math.floor(Math.random() * arms.length)]); }
+    else if (att && !S.beam && !S.held && arms.length && S.cd.beam <= 0 && dp > 12) { S.cd.beam = S.blind ? 12 : 9; senBeamStart(S, arms[Math.floor(Math.random() * arms.length)]); }
     if (!att && !S.reach && !S.held && arms.length && S.cd.grab <= 0) { const p = BZ.ppl.find(q => !q.d && (q.st === 'idle' || q.st === 'flee') && Math.hypot(q.x - S.x, q.z - S.z) < 16); if (p) { S.reach = { A2: arms[0], t: 0, who: p }; S.cd.grab = 14; } }
     if (S.beam) senBeamStep(S, dt);
-    if (att && S.cd.swarm <= 0 && dp < 140) { S.cd.swarm = 24; S.hatch.position.z = -4.6; setTimeout(() => S.hatch && (S.hatch.position.z = -3.6), 1500); const hp = S.hatch.getWorldPosition(new THREE.Vector3()); for (let i = 0; i < 4; i++) { const e = bzSpawn('drone', hp.x + (Math.random() - .5) * 4, hp.z + (Math.random() - .5) * 4, { force: i < 2, home: -1 }); if (e) { e.y = hp.y; e.st = 'hunt'; e.seen = BZ.t; e.lx = pos.x; e.lz = pos.z; } } tone(800, .4, 'square', .03, 1600); say('It’s launching drones!', 1600); }
+    if (att && S.cd.swarm <= 0 && dp < 140) { S.cd.swarm = 34; S.hatch.position.z = -4.6; setTimeout(() => S.hatch && (S.hatch.position.z = -3.6), 1500); const hp = S.hatch.getWorldPosition(new THREE.Vector3()); for (let i = 0; i < 4; i++) { const e = bzSpawn('drone', hp.x + (Math.random() - .5) * 4, hp.z + (Math.random() - .5) * 4, { force: i < 2, home: -1 }); if (e) { e.y = hp.y; e.st = 'hunt'; e.seen = BZ.t; e.lx = pos.x; e.lz = pos.z; } } tone(800, .4, 'square', .03, 1600); say('It’s launching drones!', 1600); }
     if (att && S.cd.stomp <= 0 && dp < 12 && BZ.feet < S.gy + 2 && !S.kneel) { S.cd.stomp = 7; senStomp(S); }
-    if (S.held) { S.held.t += dt; const hp = S.held.arm.hand.getWorldPosition(new THREE.Vector3()); if (S.held.me) { pos.set(hp.x, hp.y - .4, hp.z); BZ.feet = hp.y - 2; BZ.v.set(0, 0, 0); bzHurt(6 * dt); if (S.held.t > 7) { senRelease(false); BZ.v.set(-Math.sin(S.yaw) * 14, 7, -Math.cos(S.yaw) * 14); bzHurt(18); say('It threw you!', 1500); } } else { const p = S.held.p; p.x = hp.x; p.z = hp.z; p.a.g.position.set(hp.x, hp.y - 1.6, hp.z); if (S.held.t > 22) senRelease(false); } }
+    if (S.held) { S.held.t += dt; const hp = S.held.arm.hand.getWorldPosition(new THREE.Vector3()); if (S.held.me) { pos.set(hp.x, hp.y - .4, hp.z); BZ.feet = hp.y - 2; BZ.v.set(0, 0, 0); bzHurt(4 * dt); if (S.held.t > 6) { senRelease(false); BZ.v.set(-Math.sin(S.yaw) * 14, 7, -Math.cos(S.yaw) * 14); bzHurt(18); say('It threw you!', 1500); } } else { const p = S.held.p; p.x = hp.x; p.z = hp.z; p.a.g.position.set(hp.x, hp.y - 1.6, hp.z); if (S.held.t > 22) senRelease(false); } }
     S.weak.core.m.scale.setScalar(2.4 + Math.sin(now / 180) * .15); Object.values(S.weak).forEach(w => { if (w.hp > 0) w.m.rotation.y += dt * 2; });
     if (S.flash > 0) S.flash -= dt;
   }
@@ -13674,7 +13674,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function spFire(){ if (!SPF.sc || SPF.over || SPF.fireT > 0) return; SPF.fireT = .14; [1.6, -1.6].forEach(o => { const m = new THREE.Mesh(SPF.boltG, SPF.lasM); m.position.set(SPF.x + o, SPF.y - .1, -2); SPF.sc.add(m); SPF.shots.push({ m, v: V(SPF.vx * .2, SPF.vy * .2, -320), mine: true, life: 1.4 }); }); tone(1500, .05, 'square', .02, 900); }
   function spBoost(){ if (SPF.sc && (SPF.boostE == null || SPF.boostE > 30)) { SPF.boost = 1.2; SPF.boostE = (SPF.boostE == null ? 100 : SPF.boostE) - 30; tone(200, .5, 'sawtooth', .03, 600); } }
   function spBoom(p, big){ const m = new THREE.Mesh(SPF.boomG, new THREE.MeshBasicMaterial({ color: 0xFFB060, transparent: true, toneMapped: false })); m.position.copy(p); SPF.sc.add(m); SPF.fx.push({ m, t: 0, max: big ? 1 : .45, s: big ? 26 : 6 }); tone(70, big ? 1.4 : .5, 'sawtooth', .06, 30); }
-  function spHurt(d){ if (SPF.over) return; SPF.hull -= d * (1 - .15 * BZ.s.upg.arm); BZ.shake = Math.max(BZ.shake, .25); evHurt.style.opacity = .5; setTimeout(() => evHurt.style.opacity = 0, 160); tone(150, .15, 'square', .05, 80); if (SPF.hull <= 0) spEnd(false); }
+  function spHurt(d){ if (SPF.over) return; SPF.hull -= d * (1 - .15 * BZ.s.upg.arm) * .65; BZ.shake = Math.max(BZ.shake, .25); evHurt.style.opacity = .5; setTimeout(() => evHurt.style.opacity = 0, 160); tone(150, .15, 'square', .05, 80); if (SPF.hull <= 0) spEnd(false); }
   function spStep(dt, now){
     if (!SPF.sc) return; const S = SPF; if (S.over) { S.ship.position.z -= dt * 120; return; } S.t += dt; S.fireT -= dt; S.boost = Math.max(0, S.boost - dt); S.boostE = Math.min(100, (S.boostE == null ? 100 : S.boostE) + dt * 12);
     // steering: keys, the stick, and the mouse (which moves yaw and pitch; we read and reset them)
@@ -13762,7 +13762,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       const f = new THREE.Mesh(new THREE.BoxGeometry(w * u, h * u, d * u), M.hull); f.position.set(p.position.x, 0, 0); void f;
       const prox = new THREE.Mesh(new THREE.BoxGeometry(w * u, h * u, d * u), BZ.anchorM); prox.position.y = cy * u; p.add(prox); S.proxies.push(prox); BZ.anchors.push(prox); return m; };
     const plat = (p, w, d, y, x = 0, z = 0) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w * u, .1, d * u), M.hull2); m.position.set(x * u, y * u, z * u); m.userData.noPick = true; p.add(m); m.geometry.computeBoundingBox(); S.plats.push(m); return m; };
-    const weak = (k, p, x, y, z, name) => { const m = new THREE.Mesh(new THREE.OctahedronGeometry(1, 0), glowM2); m.scale.setScalar(2.2 + .012 * H); m.position.set(x * u, y * u, z * u); m.userData.noPick = true; p.add(m); const cage = new THREE.Mesh(new THREE.TorusGeometry(3 + .016 * H, .3 + .002 * H, 4, 6), M.hull2); cage.position.copy(m.position); p.add(cage); S.weak[k] = { k, name, m, cage, hp: 420 + H * .5, max: 420 + H * .5, r: 4 + .014 * H, part: null }; };
+    const weak = (k, p, x, y, z, name) => { const m = new THREE.Mesh(new THREE.OctahedronGeometry(1, 0), glowM2); m.scale.setScalar(2.2 + .012 * H); m.position.set(x * u, y * u, z * u); m.userData.noPick = true; p.add(m); const cage = new THREE.Mesh(new THREE.TorusGeometry(3 + .016 * H, .3 + .002 * H, 4, 6), M.hull2); cage.position.copy(m.position); p.add(cage); S.weak[k] = { k, name, m, cage, hp: 300 + H * .3, max: 300 + H * .3, r: 4 + .014 * H, part: null }; };
     // legs and hips
     const hips = S.parts.hips = grp(S.near, 0, 46, 0); part(hips, 34, 9, 20, 0); plat(hips, 34, 20, 4.6);
     S.legs = [-1, 1].map(sd => { const leg = grp(hips, sd * 11, -4, 0); part(leg, 11, 20, 12, -10, { v: 1 }); const knee = grp(leg, 0, -20, 0); part(knee, 12, 5, 13, 0); plat(knee, 12, 13, 2.6); part(knee, 9.5, 18, 10.5, -11, { v: 1 }); const foot = grp(knee, 0, -22, 0); part(foot, 14, 4, 22, 0); plat(foot, 14, 22, 2.1, 0, 0);
@@ -13801,9 +13801,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (ride) { const w = ride.m.localToWorld(ride.l.clone()); pos.x = w.x; pos.z = w.z; BZ.feet = w.y; pos.y = BZ.feet + BZ.eye; }
     if (near && !lowFx) S.turrets.forEach((T, i) => { if (T.hp > 0) T.g.children[1].rotation.z += dt * (1 + i * .1); });
     // the free hand hurts if it hits you
-    if (near && S.handR) { const hp = S.handR.getWorldPosition(_w1); if (hp.distanceTo(V(pos.x, BZ.feet + 1, pos.z)) < 6 * S.u) { if (!S.hitT || BZ.t - S.hitT > 2) { S.hitT = BZ.t; bzHurt(22); BZ.v.add(V((pos.x - hp.x), 4, (pos.z - hp.z)).normalize().multiplyScalar(14)); BZ.grounded = false; say('The arm swatted you!', 1400); } } }
+    if (near && S.handR) { const hp = S.handR.getWorldPosition(_w1); if (hp.distanceTo(V(pos.x, BZ.feet + 1, pos.z)) < 6 * S.u) { if (!S.hitT || BZ.t - S.hitT > 2) { S.hitT = BZ.t; bzHurt(14); BZ.v.add(V((pos.x - hp.x), 4, (pos.z - hp.z)).normalize().multiplyScalar(14)); BZ.grounded = false; say('The arm swatted you!', 1400); } } }
     // turrets fire at you when you're on or near it
-    if (d < S.H * 1.3) S.turrets.forEach(T => { if (T.hp <= 0) return; T.cd -= dt; if (T.cd > 0) return; const tp = T.g.getWorldPosition(_w1); if (tp.distanceTo(V(pos.x, BZ.feet + 1, pos.z)) < 90) { T.cd = 2.6 + Math.random() * 1.5; bzShoot({ x: tp.x, y: tp.y + 1, z: tp.z }, pos.x, BZ.feet + 1, pos.z, 34, 6); } else T.cd = 1; });
+    if (d < S.H * 1.3) S.turrets.forEach(T => { if (T.hp <= 0) return; T.cd -= dt; if (T.cd > 0) return; const tp = T.g.getWorldPosition(_w1); if (tp.distanceTo(V(pos.x, BZ.feet + 1, pos.z)) < 90) { T.cd = 3.6 + Math.random() * 2; bzShoot({ x: tp.x, y: tp.y + 1, z: tp.z }, pos.x, BZ.feet + 1, pos.z, 30, 4); } else T.cd = 1; });
     // drones pour out while you're climbing
     if ((S.cd.sweep -= dt) <= 0 && d < S.H * 1.6) { S.cd.sweep = 18; const hp = S.parts.body.localToWorld(V(0, 20 * S.u, -9 * S.u)); for (let i = 0; i < 3; i++) { const e = bzSpawn('drone', hp.x + (Math.random() - .5) * 10, hp.z + (Math.random() - .5) * 10, { home: -1 }); if (e) { e.y = hp.y; e.st = 'hunt'; e.seen = BZ.t; e.lx = pos.x; e.lz = pos.z; } } }
     Object.values(S.weak).forEach(w => { if (w.hp > 0) { w.m.rotation.y += dt; w.cage.rotation.z += dt * .4; } });
