@@ -1815,74 +1815,32 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const bulb = new THREE.Mesh(new THREE.SphereGeometry(.07, 16, 12), new THREE.MeshBasicMaterial({ color: 0xFFE7B8 })); bulb.position.set(0, H - .8, .2); scene.add(bulb);
   const pend = new THREE.PointLight(0xffd9a0, .6, 7, 2); pend.position.set(0, H - .9, .2); scene.add(pend);
 
-  // ---------- the room behind the bookshelf: two doors out of it ----------
-  // South wall: a red moon gate into Mandalink world. East wall: glass doors into Meridian General.
-  // North wall: the research table under its lamp.
-  const VX0 = W / 2 + .05, VX1 = 10.6, VZ0 = -3.6, VZ1 = 2.05, vcz = (VZ0 + VZ1) / 2, vcx = (VX0 + VX1) / 2;
-  const vStone = tex(512, 512, (g, w, h) => { g.fillStyle = '#2A2E36'; g.fillRect(0, 0, w, h); g.strokeStyle = '#353A44'; g.lineWidth = 4; for (let i = 0; i <= w; i += 128) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.stroke(); g.beginPath(); g.moveTo(0, i); g.lineTo(w, i); g.stroke(); } });
-  vStone.wrapS = vStone.wrapT = THREE.RepeatWrapping; vStone.repeat.set(3, 3);
-  const vFloor = new THREE.Mesh(new THREE.PlaneGeometry(VX1 - VX0, VZ1 - VZ0), mat(0xffffff, { map: vStone, roughness: .35, metalness: .1 }));
-  vFloor.rotation.x = -Math.PI / 2; vFloor.position.set(vcx, 0, vcz); vFloor.receiveShadow = true; vFloor.userData.walk = true; scene.add(vFloor);
-  const vWall = mat(0x3A3F4A, { roughness: .85 });
-  box(.1, H, VZ1 - VZ0, vWall, VX1, H / 2, vcz);
-  box(VX1 - VX0, H, .1, vWall, vcx, H / 2, VZ0);
-  box(VX1 - VX0, H, .1, vWall, vcx, H / 2, VZ1);
-  const vCeil = new THREE.Mesh(new THREE.PlaneGeometry(VX1 - VX0, VZ1 - VZ0), mat(0x22252C)); vCeil.rotation.x = Math.PI / 2; vCeil.position.set(vcx, H, vcz); scene.add(vCeil);
-  const vaultLight = new THREE.PointLight(0xFFF1DE, 0, 9, 2); vaultLight.position.set(vcx, 2.9, vcz); scene.add(vaultLight);
-  const boardLight = new THREE.PointLight(0xFFFFFF, 0, 4, 2); boardLight.position.set(7.6, 2.3, 1.2); scene.add(boardLight);
-  // a strip of warm light down the middle of the ceiling
-  box(VX1 - VX0 - 1, .03, .12, new THREE.MeshStandardMaterial({ color: 0xFFE7C2, emissive: 0xFFE7C2, emissiveIntensity: .9 }), vcx, H - .02, vcz);
-
-  // --- the moon gate (月亮门): Mandalink world ---
-  const mgX = 7.8, mgZ = VZ0 + .08;
-  const moonWall = new THREE.Mesh((() => { const s = new THREE.Shape(); s.moveTo(-1.9, 0); s.lineTo(1.9, 0); s.lineTo(1.9, 2.9); s.lineTo(-1.9, 2.9); s.lineTo(-1.9, 0); const hole = new THREE.Path(); hole.absarc(0, 1.3, 1.05, 0, Math.PI * 2, true); s.holes.push(hole); return new THREE.ExtrudeGeometry(s, { depth: .18, bevelEnabled: false, curveSegments: 48 }); })(), mat(0xF4EFE6, { roughness: .9 }));
-  moonWall.position.set(mgX, 0, mgZ); scene.add(moonWall);
-  const moonRim = new THREE.Mesh(new THREE.TorusGeometry(1.08, .07, 12, 64), mat(0xB8322A, { roughness: .4 })); moonRim.position.set(mgX, 1.3, mgZ + .19); scene.add(moonRim);
-  const moonCap = box(4.1, .16, .5, mat(0x4A5568, { roughness: .7 }), mgX, 2.98, mgZ + .1);
-  for (let k = -9; k <= 9; k++) cyl(.07, .07, .5, mat(0x5A6578, { roughness: .7 }), mgX + k * .21, 3.0, mgZ + .1, null, 8).rotation.x = Math.PI / 2;
-  const moonSign = new THREE.Mesh(new THREE.PlaneGeometry(1.1, .34), new THREE.MeshBasicMaterial({ transparent: true, map: tex(440, 136, (g, w, h) => { g.fillStyle = '#B8322A'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, h, 18) : g.rect(0, 0, w, h); g.fill(); g.strokeStyle = '#E8B930'; g.lineWidth = 6; g.strokeRect(10, 10, w - 20, h - 20); g.fillStyle = '#FFE7A8'; g.font = `700 64px ${ZH}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('月 亮 门', w / 2, h / 2 + 2); }) }));
-  moonSign.position.set(mgX, 2.6, mgZ + .2); scene.add(moonSign);
-  // stone lanterns and bamboo either side
-  [-1, 1].forEach(s => { const lx = mgX + s * 2.35, lz = mgZ + .6;
-    cyl(.18, .24, .7, mat(0x8A8F99, { roughness: .9 }), lx, .35, lz, null, 6); box(.42, .34, .42, mat(0x9AA0AA, { roughness: .9 }), lx, .87, lz);
-    const glowBox = box(.26, .2, .26, new THREE.MeshStandardMaterial({ color: 0xFFD27A, emissive: 0xFFB84A, emissiveIntensity: 1 }), lx, .87, lz); glowBox.raycast = () => {};
-    const roofL = new THREE.Mesh(new THREE.ConeGeometry(.38, .26, 4), mat(0x6B7280, { roughness: .9 })); roofL.rotation.y = Math.PI / 4; roofL.position.set(lx, 1.17, lz); scene.add(roofL);
-    for (let k = 0; k < 3; k++) cyl(.035, .04, 2.2 + k * .3, mat(0x7DB36F), lx + s * (.35 + k * .12), 1.1 + k * .15, mgZ + .3 + k * .1, null, 8); });
-  const mgLamp = new THREE.PointLight(0xFFC27A, 0, 4, 2); mgLamp.position.set(mgX, 1.8, mgZ + 1.2); scene.add(mgLamp);
-
-  // --- the hospital doors: Meridian General ---
-  const hdZ = -.9, hdX = VX1 - .06;
-  const hdFrame = mat(0x9AA3AE, { metalness: .7, roughness: .3 });
-  box(.14, 2.6, .12, hdFrame, hdX, 1.3, hdZ - 1.05); box(.14, 2.6, .12, hdFrame, hdX, 1.3, hdZ + 1.05); box(.14, .12, 2.22, hdFrame, hdX, 2.62, hdZ);
-  const hdGlass = new THREE.MeshStandardMaterial({ color: 0xBFE8F0, emissive: 0x3FA8B8, emissiveIntensity: .35, transparent: true, opacity: .55, roughness: .1, metalness: .2 });
-  const hdL = box(.04, 2.5, 1.0, hdGlass, hdX - .02, 1.25, hdZ - .5), hdR = box(.04, 2.5, 1.0, hdGlass, hdX - .02, 1.25, hdZ + .5);
-  [hdL, hdR].forEach(d => { d.userData.egg = 'meddoor'; });
-  const hdBar = box(.02, .05, 1.9, new THREE.MeshStandardMaterial({ color: 0xE8F7FA, emissive: 0xE8F7FA, emissiveIntensity: .8 }), hdX - .06, 1.25, hdZ); hdBar.userData.egg = 'meddoor';
-  // the red cross that never quite stays on
-  const crossM = new THREE.MeshStandardMaterial({ color: 0xE4322A, emissive: 0xE4322A, emissiveIntensity: 1.2 });
-  const cross = new THREE.Group(); cross.position.set(hdX - .05, 2.95, hdZ); scene.add(cross);
-  box(.04, .12, .4, crossM, 0, 0, 0, cross); box(.04, .4, .12, crossM, 0, 0, 0, cross);
-  const crossLight = new THREE.PointLight(0xFF4A3A, 0, 3.2, 2); crossLight.position.set(hdX - .6, 2.8, hdZ); scene.add(crossLight);
-  const mgSign = new THREE.Mesh(new THREE.PlaneGeometry(1.7, .3), new THREE.MeshBasicMaterial({ transparent: true, map: tex(680, 120, (g, w, h) => { g.fillStyle = 'rgba(14,18,26,.92)'; g.fillRect(0, 0, w, h); g.fillStyle = '#E8F7FA'; g.font = `700 50px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('MERIDIAN GENERAL', w / 2, 52); g.fillStyle = '#7FE0E8'; g.font = `600 22px "Instrument Sans", sans-serif`; g.fillText('EMERGENCY · OPEN ALL NIGHT', w / 2, 96); }) }));
-  mgSign.rotation.y = -Math.PI / 2; mgSign.position.set(hdX - .07, 2.95, hdZ + .02); scene.add(mgSign);
-  cross.position.set(hdX - .06, 2.95, hdZ - 1.05);
-  // a crayon note taped beside the doors
-  const crayon = new THREE.Mesh(new THREE.PlaneGeometry(.42, .32), new THREE.MeshBasicMaterial({ map: tex(420, 320, (g, w, h) => {
-    g.fillStyle = '#FBF7EC'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(140,170,220,.5)'; g.lineWidth = 2; for (let y = 60; y < h; y += 44) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
-    const scrawl = (t, x, y, sz, col) => { g.font = `700 ${sz}px "Comic Sans MS", "Chalkboard SE", "Marker Felt", cursive`; g.fillStyle = col; for (let k = 0; k < 3; k++) { g.globalAlpha = .45; g.fillText(t, x + (Math.random() - .5) * 2.5, y + (Math.random() - .5) * 2.5); } g.globalAlpha = 1; };
-    g.save(); g.translate(w / 2, h / 2); g.rotate(-.06); g.textAlign = 'center'; scrawl('Dr. Rayan', 0, -20, 58, '#2E5FD1'); scrawl('age 12', 0, 46, 44, '#E4572E'); g.restore();
-    g.strokeStyle = '#E4572E'; g.lineWidth = 5; g.beginPath(); g.arc(360, 260, 16, 0, 7); g.stroke(); g.beginPath(); g.moveTo(344, 260); g.quadraticCurveTo(300, 230, 320, 190); g.stroke();
-    g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(150, -6, 120, 26); }) }));
-  crayon.rotation.y = -Math.PI / 2; crayon.rotation.x = .04; crayon.position.set(hdX - .07, 1.45, hdZ + 1.45); crayon.userData.egg = 'crayon'; scene.add(crayon);
-  // a pale floor line that leads you to the doors
-  const guide = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .1), new THREE.MeshBasicMaterial({ color: 0x7FE0E8, transparent: true, opacity: .55 })); guide.rotation.x = -Math.PI / 2; guide.position.set(hdX - 1.4, .005, hdZ); guide.raycast = () => {}; scene.add(guide);
-  addMarker(V(hdX - .3, 2.2, hdZ), 0x7FE0E8, { egg: 'meddoor', vaultOnly: true });
-  views.meddoor = { pos: V(hdX - 1.6, 1.6, hdZ), look: V(hdX, 1.3, hdZ) };
-
-  // --- the research table and its board, on the north wall ---
-  const board = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.3), new THREE.MeshBasicMaterial({ map: tex(960, 520, (g, w, h) => {
+  // ---------- the passage behind the bookshelf: a short corridor that forks ----------
+  // Left (south): a warm courtyard with the moon gate into Mandalink world.
+  // Right (straight on): a cool hospital entrance into Meridian General.
+  // The research table sits in a small lamp-lit alcove off the corridor.
+  const VX0 = W / 2 + .05;
+  const VR = {   // walkable pieces (with a little margin from the walls)
+    corr: { x0: 5.4, x1: 9.3, z0: -.42, z1: 1.0 }, junc: { x0: 9.1, x1: 11.3, z0: -2.5, z1: 1.0 },
+    left: { x0: 8.8, x1: 12.4, z0: -5.85, z1: -2.3 }, right: { x0: 11.2, x1: 14.75, z0: -1.0, z1: 1.65 }
+  };
+  const inRect = (r, x, z) => x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1;
+  const darkWall = mat(0x1C1F25, { roughness: .95 }), darkCeil = mat(0x121418, { roughness: 1 });
+  const vslab = (x0, x1, z0, z1, h, m) => { const f = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0), m); f.rotation.x = h ? Math.PI / 2 : -Math.PI / 2; f.position.set((x0 + x1) / 2, h || 0, (z0 + z1) / 2); if (!h) { f.receiveShadow = true; f.userData.walk = true; } scene.add(f); return f; };
+  const wallX = (x, z0, z1, h, m) => box(.1, h, z1 - z0, m || darkWall, x, h / 2, (z0 + z1) / 2);
+  const wallZ = (z, x0, x1, h, m) => box(x1 - x0, h, .1, m || darkWall, (x0 + x1) / 2, h / 2, z);
+  // --- the corridor ---
+  const cFloorT = tex(256, 256, (g, w, h) => { g.fillStyle = '#25282E'; g.fillRect(0, 0, w, h); g.strokeStyle = '#2E323A'; g.lineWidth = 3; for (let i = 0; i <= w; i += 64) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.stroke(); } }); cFloorT.wrapS = cFloorT.wrapT = THREE.RepeatWrapping; cFloorT.repeat.set(4, 2);
+  vslab(VX0, 9.2, -.6, 1.2, 0, mat(0xffffff, { map: cFloorT, roughness: .9 })); vslab(VX0, 9.2, -.6, 1.2, 2.7, darkCeil);
+  wallZ(-.6, VX0, 9.2, 2.7); wallZ(1.2, VX0, 6.2, 2.7); wallZ(1.2, 8.0, 9.2, 2.7);
+  // little sconces down the corridor: warm on the left, cool on the right
+  [6.0, 7.6].forEach(x => { box(.18, .06, .04, new THREE.MeshStandardMaterial({ color: 0xFFC27A, emissive: 0xFFB060, emissiveIntensity: 1.1 }), x, 1.9, -.56); box(.18, .06, .04, new THREE.MeshStandardMaterial({ color: 0x9FF0F5, emissive: 0x5FE0E8, emissiveIntensity: 1.1 }), x + .8, 1.9, 1.16); });
+  const vaultLight = new THREE.PointLight(0xFFE2C0, 0, 5, 2); vaultLight.position.set(7.2, 2.3, .3); scene.add(vaultLight);
+  // --- the alcove with the research table ---
+  vslab(6.2, 8.0, 1.2, 2.05, 0, mat(0x2A2420, { roughness: .8 })); vslab(6.2, 8.0, 1.2, 2.05, 2.4, darkCeil);
+  wallX(6.2, 1.2, 2.05, 2.7); wallX(8.0, 1.2, 2.05, 2.7); wallZ(2.05, 6.2, 8.0, 2.7, mat(0x2A2D35, { roughness: .9 })); box(1.8, .3, .1, darkWall, 7.1, 2.55, 1.2);
+  const board = new THREE.Mesh(new THREE.PlaneGeometry(1.5, .82), new THREE.MeshBasicMaterial({ map: tex(960, 520, (g, w, h) => {
     g.fillStyle = '#12171F'; g.fillRect(0, 0, w, h);
-    g.strokeStyle = 'rgba(255,255,255,.06)'; g.lineWidth = 1; for (let i = 0; i < w; i += 40) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.stroke(); } for (let i = 0; i < h; i += 40) { g.beginPath(); g.moveTo(0, i); g.lineTo(w, i); g.stroke(); }
     g.fillStyle = '#FFFFFF'; g.font = `800 64px ${DISPLAY}`; g.textBaseline = 'top'; g.fillText('On the table', 44, 36);
     g.fillStyle = '#7FE0C8'; g.font = `600 28px "Instrument Sans", sans-serif`; g.fillText('Ideas that need a quiet room first', 48, 116);
     g.fillStyle = 'rgba(255,255,255,.08)'; g.fillRect(44, 200, 420, 200); g.fillRect(496, 200, 420, 200);
@@ -1890,10 +1848,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     g.fillStyle = '#C9E8E1'; g.font = `500 22px "Instrument Sans", sans-serif`; g.fillText('Research in progress', 66, 274); g.fillText('Classified', 518, 274);
     g.fillStyle = '#FFC93C'; g.font = `700 20px "Instrument Sans", sans-serif`; g.fillText('ON THE TABLE', 66, 340); g.fillText('SOON', 518, 340);
   }) }));
-  board.rotation.y = Math.PI; board.position.set(6.6, 1.75, VZ1 - .06); board.userData.section = 'vault'; scene.add(board);
-  views.vault = { pos: V(6.6, 1.6, -.8), look: V(6.6, 1.6, VZ1) };
-  const tz = 1.05;
-  const table = new THREE.Group(); table.position.set(8.6, 0, tz); table.userData.egg = 'optable'; scene.add(table);
+  board.rotation.y = Math.PI; board.position.set(7.1, 1.75, 1.96); board.userData.section = 'vault'; scene.add(board);
+  const boardLight = new THREE.PointLight(0xFFE7C2, 0, 2.6, 2); boardLight.position.set(7.1, 2.2, 1.5); scene.add(boardLight);
+  views.vault = { pos: V(7.1, 1.6, .1), look: V(7.1, 1.55, 2.05) };
+  const tz = 1.58;
+  const table = new THREE.Group(); table.position.set(7.1, 0, tz); table.scale.setScalar(.85); table.userData.egg = 'optable'; scene.add(table);
   cyl(.12, .2, .74, mat(0xB8BEC8, { metalness: .6, roughness: .35 }), 0, .37, 0, table);
   box(1.6, .08, .6, mat(0xB8BEC8, { metalness: .5, roughness: .35 }), 0, .78, 0, table);
   box(1.56, .05, .56, mat(0x3E6E8C, { roughness: .8 }), 0, .845, 0, table);
@@ -1908,12 +1867,103 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   paperOp.rotation.x = -Math.PI / 2; paperOp.rotation.z = Math.PI / 2; paperOp.position.set(0, .873, 0); table.add(paperOp);
   const sheet = box(1.5, .1, .54, new THREE.MeshStandardMaterial({ color: 0x5FA89B, roughness: 1, transparent: true, opacity: 1 }), 0, .92, 0, table);
   sheet.userData.cloth = true; let sheetOff = false;
-  cyl(.03, .03, .5, mat(0xB8BEC8, { metalness: .6 }), 8.6, H - .25, tz, null, 12);
-  cyl(.34, .24, .12, mat(0xF4F7F8, { roughness: .4 }), 8.6, 2.4, tz, null, 32);
-  const lampFace = new THREE.Mesh(new THREE.CircleGeometry(.23, 32), new THREE.MeshBasicMaterial({ color: 0xFFFFFF })); lampFace.rotation.x = Math.PI / 2; lampFace.position.set(8.6, 2.335, tz); scene.add(lampFace);
-  const surg = new THREE.SpotLight(0xFFFFFF, 0, 5, .5, .5, 1.5); surg.position.set(8.6, 2.3, tz); surg.target.position.set(8.6, .8, tz); scene.add(surg); scene.add(surg.target);
-  addMarker(V(8.6, 1.35, tz - .45), 0x7C8CFF, { egg: 'optable', vaultOnly: true });
-  views.optable = { pos: V(8.6, 1.75, tz - 1.2), look: V(8.6, .85, tz) };
+  cyl(.2, .14, .08, mat(0x2A2D35), 7.1, 2.36, tz, null, 24);
+  const lampFace = new THREE.Mesh(new THREE.CircleGeometry(.13, 24), new THREE.MeshBasicMaterial({ color: 0xFFF1D6 })); lampFace.rotation.x = Math.PI / 2; lampFace.position.set(7.1, 2.315, tz); scene.add(lampFace);
+  const surg = new THREE.SpotLight(0xFFF1D6, 0, 3.5, .6, .6, 1.5); surg.position.set(7.1, 2.3, tz); surg.target.position.set(7.1, .7, tz); scene.add(surg); scene.add(surg.target);
+  addMarker(V(7.1, 1.3, tz - .5), 0x7C8CFF, { egg: 'optable', vaultOnly: true });
+  views.optable = { pos: V(7.1, 1.65, .15), look: V(7.1, .8, tz) };
+  // --- the junction where it forks ---
+  vslab(9.2, 11.2, -2.6, 1.2, 0, mat(0xffffff, { map: cFloorT, roughness: .9 })); vslab(9.2, 11.2, -2.6, 1.2, 3.0, darkCeil);
+  wallZ(1.2, 9.2, 11.2, 3.0); wallX(9.2, -2.6, -.6, 3.0);
+  // a dividing pillar between the two halves
+  box(.5, 3.2, .5, mat(0x2A2D35, { roughness: .9 }), 11.3, 1.6, -1.45); wallZ(-1.35, 11.2, 12.6, 3.0); wallX(11.2, -2.6, -1.35, 3.0); wallZ(-2.6, 11.2, 12.6, 3.2); wallZ(-2.6, 8.6, 9.2, 3.2); wallX(11.2, 1.2, 2.0, 3.0);
+  box(2.0, .2, .1, darkWall, 10.2, 3.1, -2.6); box(.1, .3, 1.8, darkWall, 9.2, 2.85, .3);
+
+  // --- LEFT: the courtyard and the moon gate (月亮门) ---
+  const woodT = tex(256, 256, (g, w, h) => { for (let i = 0; i < 8; i++) { g.fillStyle = ['#6B4A32', '#73503A', '#644430', '#7A5640'][i % 4]; g.fillRect(0, i * 32, w, 32); g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(0, i * 32 + 30, w, 2); for (let k = 0; k < 3; k++) g.fillRect((i * 97 + k * 83) % w, i * 32, 2, 32); } });
+  woodT.wrapS = woodT.wrapT = THREE.RepeatWrapping; woodT.repeat.set(2, 2);
+  vslab(8.6, 12.6, -6.2, -2.6, 0, mat(0xffffff, { map: woodT, roughness: .75 })); vslab(8.6, 12.6, -6.2, -2.6, 3.2, mat(0x1A1612, { roughness: 1 }));
+  wallX(8.6, -6.2, -2.6, 3.2, mat(0x2A221C, { roughness: .95 })); wallX(12.6, -6.2, -2.6, 3.2, mat(0x2A221C, { roughness: .95 }));
+  const mgX = 10.6, mgZ = -6.2;
+  const moonWall = new THREE.Mesh((() => { const s = new THREE.Shape(); s.moveTo(-2, 0); s.lineTo(2, 0); s.lineTo(2, 2.75); s.lineTo(-2, 2.75); s.lineTo(-2, 0); const hole = new THREE.Path(); hole.absarc(0, 1.3, 1.05, 0, Math.PI * 2, true); s.holes.push(hole); return new THREE.ExtrudeGeometry(s, { depth: .22, bevelEnabled: false, curveSegments: 56 }); })(), mat(0xF2EDE4, { roughness: .95 }));
+  moonWall.position.set(mgX, 0, mgZ); moonWall.userData.egg = 'portal'; scene.add(moonWall);
+  box(4.0, .45, .22, mat(0xF2EDE4, { roughness: .95 }), mgX, 2.98, mgZ + .11);
+  const moonRim = new THREE.Mesh(new THREE.TorusGeometry(1.08, .06, 12, 72), mat(0x6B4A32, { roughness: .6 })); moonRim.position.set(mgX, 1.3, mgZ + .23); moonRim.userData.egg = 'portal'; scene.add(moonRim);
+  // a grey tiled roof edge along the top of the wall
+  const roofEdge = new THREE.Group(); roofEdge.position.set(mgX, 3.2, mgZ + .2); scene.add(roofEdge);
+  box(4.5, .1, .7, mat(0x4A5260, { roughness: .8 }), 0, 0, .1, roofEdge);
+  for (let k = -11; k <= 11; k++) { const t = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, .72, 8, 1, false, 0, Math.PI), mat(0x5A6372, { roughness: .7 })); t.rotation.set(Math.PI / 2, 0, Math.PI / 2); t.position.set(k * .2, .08, .1); roofEdge.add(t); const cap = new THREE.Mesh(new THREE.CircleGeometry(.09, 10), mat(0x6A7385)); cap.position.set(k * .2, .1, .47); roofEdge.add(cap); }
+  const moonSign = new THREE.Mesh(new THREE.PlaneGeometry(.9, .26), new THREE.MeshBasicMaterial({ transparent: true, map: tex(440, 128, (g, w, h) => { g.fillStyle = '#3A2A20'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, h, 14) : g.rect(0, 0, w, h); g.fill(); g.strokeStyle = '#C9A44A'; g.lineWidth = 5; g.strokeRect(9, 9, w - 18, h - 18); g.fillStyle = '#F2D58A'; g.font = `700 60px ${ZH}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('月 亮 门', w / 2, h / 2 + 2); }) }));
+  moonSign.position.set(mgX, 2.62, mgZ + .24); scene.add(moonSign);
+  const mlPlaque = new THREE.Mesh(new THREE.PlaneGeometry(.62, .3), new THREE.MeshBasicMaterial({ transparent: true, map: tex(310, 150, (g, w, h) => { g.fillStyle = 'rgba(58,42,32,.92)'; g.fillRect(0, 0, w, h); g.fillStyle = '#F2D58A'; g.font = `800 34px ${DISPLAY}`; g.textAlign = 'center'; g.fillText('Mandalink', w / 2, 58); g.fillStyle = '#FFFFFF'; g.font = `700 40px ${ZH}`; g.fillText('部首', w / 2, 112); }) }));
+  mlPlaque.position.set(mgX + 1.55, 1.45, mgZ + .24); mlPlaque.userData.egg = 'portal'; scene.add(mlPlaque);
+  // through the circle: the sky and the floating islands, with real depth
+  const vista = new THREE.Group(); vista.position.set(mgX, 0, mgZ - .2); scene.add(vista);
+  const skyBack = new THREE.Mesh(new THREE.PlaneGeometry(14, 9), new THREE.MeshBasicMaterial({ map: tex(16, 256, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#7DB9F2'); gr.addColorStop(.45, '#A9D6FA'); gr.addColorStop(.7, '#CDEFE6'); gr.addColorStop(1, '#FFF0D4'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }) }));
+  skyBack.position.set(0, 2, -6); vista.add(skyBack);
+  const vIsle = (x, y, z, r, col, tree) => { const g = new THREE.Group(); g.position.set(x, y, z); const top = new THREE.Mesh(new THREE.CylinderGeometry(r, r * .95, .25, 20), new THREE.MeshBasicMaterial({ color: col })); g.add(top); const bot = new THREE.Mesh(new THREE.ConeGeometry(r * .95, r * 1.5, 20), new THREE.MeshBasicMaterial({ color: 0xC9B49A })); bot.rotation.x = Math.PI; bot.position.y = -.12 - r * .75; g.add(bot);
+    if (tree) { const t = new THREE.Mesh(new THREE.SphereGeometry(r * .35, 10, 8), new THREE.MeshBasicMaterial({ color: 0x8FD8A0 })); t.position.y = r * .45; g.add(t); } vista.add(g); return g; };
+  const vIsles = [vIsle(-1.2, 1.1, -3.2, .7, 0xBFE8C8, 1), vIsle(1.4, 1.7, -4.4, .9, 0xF2E2B0, 0), vIsle(.2, .6, -2.2, .45, 0xC9E8F5, 1), vIsle(-2.6, 2.4, -5.2, 1.1, 0xBFE8C8, 1), vIsle(2.8, .9, -5.4, .8, 0xE8D8F0, 1)];
+  for (let k = 0; k < 5; k++) { const c = new THREE.Mesh(new THREE.SphereGeometry(.35 + (k % 2) * .2, 12, 8), new THREE.MeshBasicMaterial({ color: 0xFFFFFF })); c.scale.set(2, .55, 1); c.position.set(-3 + k * 1.5, 2.8 + (k % 3) * .4, -4.8 + (k % 2)); vista.add(c); }
+  vista.traverse(o => { o.userData.egg = 'portal'; });
+  // the vista box is closed in so nothing leaks into the rest of the house
+  [[-7, 2, -3, .1, 9, 6], [7, 2, -3, .1, 9, 6], [0, 6.5, -3, 14, .1, 6], [0, -2.5, -3, 14, .1, 6]].forEach(([x, y, z, w, h, d]) => box(w, h, d, new THREE.MeshBasicMaterial({ color: 0xA9D6FA }), x, y, z, vista));
+  // lanterns, bamboo and warm light
+  [-1, 1].forEach(s => { const lx = mgX + s * 1.6, lz = mgZ + .75;
+    const lan = new THREE.Group(); lan.position.set(lx, 2.35, lz); scene.add(lan);
+    const body = new THREE.Mesh(new THREE.SphereGeometry(.22, 16, 12), new THREE.MeshStandardMaterial({ color: 0xE4572E, emissive: 0xFF6A3C, emissiveIntensity: .9 })); body.scale.y = 1.2; lan.add(body);
+    box(.24, .05, .24, mat(0x3A2A20), 0, .27, 0, lan); box(.24, .05, .24, mat(0x3A2A20), 0, -.27, 0, lan); cyl(.008, .008, .5, mat(0x3A2A20), 0, .55, 0, lan, 4);
+    for (let k = 0; k < 4; k++) cyl(.03, .04, 2.4 + k * .25, mat(0x6FA860), mgX + s * (1.85 + k * .1), 1.2 + k * .12, mgZ + .45 + k * .08, null, 8);
+    box(.5, .35, .5, mat(0x4A3A30, { roughness: .9 }), mgX + s * 1.95, .17, mgZ + .55); });
+  const mgLamp = new THREE.PointLight(0xFFB070, 0, 6, 2); mgLamp.position.set(mgX, 2.2, mgZ + 1.6); scene.add(mgLamp);
+  const mgView = new THREE.PointLight(0xDDF0FF, 0, 5, 2); mgView.position.set(mgX, 2, mgZ - 2); scene.add(mgView);
+  addMarker(V(mgX, 2.25, mgZ + .45), 0xFFC27A, { egg: 'portal', vaultOnly: true });
+
+  // --- RIGHT: the hospital entrance ---
+  const polishT = tex(256, 256, (g, w, h) => { g.fillStyle = '#1C232C'; g.fillRect(0, 0, w, h); g.strokeStyle = '#26303B'; g.lineWidth = 2; for (let i = 0; i <= w; i += 128) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.stroke(); g.beginPath(); g.moveTo(0, i); g.lineTo(w, i); g.stroke(); } });
+  polishT.wrapS = polishT.wrapT = THREE.RepeatWrapping; polishT.repeat.set(2, 2);
+  vslab(11.2, 15.0, -1.35, 2.0, 0, mat(0xffffff, { map: polishT, roughness: .12, metalness: .35 })); vslab(11.2, 15.0, -1.35, 2.0, 3.0, mat(0x10151B, { roughness: 1 }));
+  wallZ(2.0, 11.2, 15.0, 3.0, mat(0x1A2028, { roughness: .9 })); wallZ(-1.35, 12.6, 15.0, 3.0, mat(0x1A2028, { roughness: .9 }));
+  const hdX = 15.0, hdZ = .33;
+  const hdWall = mat(0x232A33, { roughness: .8 });
+  box(.12, 3.0, 1.25, hdWall, hdX, 1.5, hdZ - 1.07); box(.12, 3.0, 1.0, hdWall, hdX, 1.5, hdZ + 1.17); box(.12, .5, 1.6, hdWall, hdX, 2.75, hdZ);
+  const hdFrame = mat(0x9AA3AE, { metalness: .7, roughness: .25 });
+  box(.14, 2.5, .08, hdFrame, hdX - .02, 1.25, hdZ - .8); box(.14, 2.5, .08, hdFrame, hdX - .02, 1.25, hdZ + .8); box(.14, .08, 1.68, hdFrame, hdX - .02, 2.5, hdZ);
+  // teal light from inside, seen through the doors
+  const inside = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 2.5), new THREE.MeshBasicMaterial({ map: tex(170, 250, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#E8FBFF'); gr.addColorStop(.5, '#9FE8F0'); gr.addColorStop(1, '#3FA8B8'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(255,255,255,.6)'; g.fillRect(0, 30, w, 8); g.fillRect(0, 70, w, 6); }) }));
+  inside.rotation.y = -Math.PI / 2; inside.position.set(hdX + .35, 1.25, hdZ); inside.userData.egg = 'meddoor'; scene.add(inside);
+  const hdGlass = new THREE.MeshStandardMaterial({ color: 0xCFF4F8, emissive: 0x3FA8B8, emissiveIntensity: .25, transparent: true, opacity: .35, roughness: .05, metalness: .3 });
+  const hdL = box(.03, 2.42, .78, hdGlass, hdX - .05, 1.22, hdZ - .39), hdR = box(.03, 2.42, .78, hdGlass, hdX - .05, 1.22, hdZ + .39);
+  [hdL, hdR].forEach(d => { d.userData.egg = 'meddoor'; const st = box(.01, .05, .7, new THREE.MeshStandardMaterial({ color: 0xFFFFFF, emissive: 0xFFFFFF, emissiveIntensity: .5 }), -.02, 0, 0, d); st.userData.egg = 'meddoor'; });
+  const hdSpill = new THREE.PointLight(0x5FE0E8, 0, 6, 2); hdSpill.position.set(hdX - .8, 1.6, hdZ); scene.add(hdSpill);
+  const hdCool = new THREE.PointLight(0x7FD8F0, 0, 6, 2); hdCool.position.set(12.6, 2.6, .4); scene.add(hdCool);
+  // the canopy, with EMERGENCY glowing along its front edge
+  const canopy = new THREE.Group(); canopy.position.set(hdX - .7, 2.72, hdZ); scene.add(canopy);
+  box(1.4, .14, 2.2, mat(0x2A323C, { metalness: .5, roughness: .4 }), 0, 0, 0, canopy);
+  [-.8, 0, .8].forEach(z => box(.9, .02, .12, new THREE.MeshStandardMaterial({ color: 0xBFF4FA, emissive: 0x7FE0E8, emissiveIntensity: .9 }), .1, -.08, z, canopy));
+  const emerg = new THREE.Mesh(new THREE.PlaneGeometry(2.4, .26), new THREE.MeshBasicMaterial({ transparent: true, map: tex(720, 80, (g, w, h) => { g.fillStyle = '#16050A'; g.fillRect(0, 0, w, h); g.fillStyle = '#FF4A3A'; g.shadowColor = '#FF4A3A'; g.shadowBlur = 16; g.font = `800 56px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('E M E R G E N C Y', w / 2, h / 2 + 3); }) }));
+  emerg.rotation.y = -Math.PI / 2; emerg.position.set(-.71, .04, 0); canopy.add(emerg);
+  const mgSign = new THREE.Mesh(new THREE.PlaneGeometry(1.5, .26), new THREE.MeshBasicMaterial({ transparent: true, map: tex(600, 104, (g, w, h) => { g.fillStyle = '#E8F7FA'; g.font = `700 48px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('MERIDIAN GENERAL', w / 2, h / 2 + 2); }) }));
+  mgSign.rotation.y = -Math.PI / 2; mgSign.position.set(hdX - .08, 2.75, hdZ); scene.add(mgSign);
+  // the red cross that never quite stays on
+  const crossM = new THREE.MeshStandardMaterial({ color: 0xE4322A, emissive: 0xE4322A, emissiveIntensity: 1.2 });
+  const cross = new THREE.Group(); cross.position.set(hdX - .07, 1.9, hdZ + 1.25); scene.add(cross);
+  box(.04, .1, .34, crossM, 0, 0, 0, cross); box(.04, .34, .1, crossM, 0, 0, 0, cross);
+  const crossLight = new THREE.PointLight(0xFF4A3A, 0, 2.6, 2); crossLight.position.set(hdX - .5, 1.9, hdZ + 1.2); scene.add(crossLight);
+  // a guide line on the polished floor, from the fork to the doors
+  const guide = new THREE.Mesh(new THREE.PlaneGeometry(4.2, .08), new THREE.MeshBasicMaterial({ color: 0x5FE0E8, transparent: true, opacity: .8 })); guide.rotation.x = -Math.PI / 2; guide.position.set(12.9, .006, hdZ); guide.raycast = () => {}; scene.add(guide);
+  const guideTurn = new THREE.Mesh(new THREE.PlaneGeometry(.08, 1.1), guide.material); guideTurn.rotation.x = -Math.PI / 2; guideTurn.position.set(10.8, .006, hdZ - .5); guideTurn.raycast = () => {}; scene.add(guideTurn);
+  addMarker(V(hdX - .4, 2.25, hdZ), 0x7FE0E8, { egg: 'meddoor', vaultOnly: true });
+  views.meddoor = { pos: V(hdX - 1.7, 1.6, hdZ), look: V(hdX, 1.35, hdZ) };
+  // the doors part as you walk up
+  let hdOpen = 0;
+  function vaultDoorsStep(dt){
+    const near = vaultOpen && !inWorld && Math.hypot(pos.x - hdX, pos.z - hdZ) < 3.2;
+    hdOpen += ((near ? 1 : 0) - hdOpen) * Math.min(1, dt * (reduce ? 30 : 3));
+    hdL.position.z = hdZ - .39 - hdOpen * .3; hdR.position.z = hdZ + .39 + hdOpen * .3;
+    const k = Math.min(1, dt * 3), on = vaultOpen ? 1 : 0;
+    mgView.intensity += (on * 1.2 - mgView.intensity) * k; hdSpill.intensity += (on * (1.1 + hdOpen * .8) - hdSpill.intensity) * k; hdCool.intensity += (on * .7 - hdCool.intensity) * k;
+  }
 
   interactive.forEach(g => g.traverse(o => { if (o.isMesh && o.material.emissive) o.userData.em = o.material.emissive.getHex(); }));
 
@@ -1937,7 +1987,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const inRoom = (x, z) => x >= -4.2 && x <= 4.2 && z >= -3.6 && z <= 4.3;
   const inDoor = (x, z) => vaultOpen && x > 4.2 && x <= 5.7 && z >= -.25 && z <= .85;
-  const inVault = (x, z) => vaultOpen && x > 5.4 && x <= 10.2 && z >= -3.05 && z <= 1.65 && !(x > 7.75 && x < 9.45 && z > .6);
+  const inVault = (x, z) => vaultOpen && Object.values(VR).some(r => inRect(r, x, z));
   const inHall = (x, z) => entered && ((Math.abs(x) < .45 && z > 4.2 && z <= 5.5) || (Math.abs(x) < 1.2 && z > 5.5 && z < 10.3));
   const valid = (x, z) => inWorld ? zone === 'med' ? medValid(x, z) : zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) || inDeep(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? (SW.roof ? swRoofOK(x, z) : blrValid(x, z)) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
   const region = x => x > 4.9 ? 'vault' : 'room';
@@ -2021,7 +2071,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     toast.classList.remove('on'); sc.classList.add('on'); clearTimeout(sc._t); sc._t = setTimeout(() => sc.classList.remove('on'), 6000);
     [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, .22, 'square', .05), i * 90));
   }
-  const LABELS = { logbook: 'Rayan\u2019s logbook', batfig: 'Tilt the Batman figure', seed: 'A strange golden seed', lairexit: 'Back upstairs', lairboard: 'The lair scoreboard', rackinfo: 'The weapon rack', telescope: 'Look through the telescope', hatch: 'Back downstairs', ladder: 'Climb to the rooftop', lift: 'Take the lift', window: 'The sky outside', counter: 'Visitors so far', speakers: 'Play lo-fi', portal: 'Through the moon gate: Mandalink world', meddoor: 'Meridian General', crayon: 'A note taped to the wall', medkiosk: 'Lobby kiosk', medexit: 'Back to the room', optable: 'Lift the sheet', whiteboard: 'The whiteboard', swim: 'Swim corner', photos: 'Photo folder', reviews: 'My album reviews', shelfvinyl: 'On the shelf', alexa: 'Alexa', scratch: 'Scratch it', map: 'AgriBridge across India', builder: 'Play: block builder', switch: 'Light switch', radicals: 'Play: find the radical', screen: 'Use the laptop: Mandalink', crate: 'Dig through the crate', vaultbook: 'Pull the red book' };
+  const LABELS = { logbook: 'Rayan\u2019s logbook', batfig: 'Tilt the Batman figure', seed: 'A strange golden seed', lairexit: 'Back upstairs', lairboard: 'The lair scoreboard', rackinfo: 'The weapon rack', telescope: 'Look through the telescope', hatch: 'Back downstairs', ladder: 'Climb to the rooftop', lift: 'Take the lift', window: 'The sky outside', counter: 'Visitors so far', speakers: 'Play lo-fi', portal: 'Through the moon gate: Mandalink world', meddoor: 'Meridian General',  medkiosk: 'Lobby kiosk', medexit: 'Back to the room', optable: 'Lift the sheet', whiteboard: 'The whiteboard', swim: 'Swim corner', photos: 'Photo folder', reviews: 'My album reviews', shelfvinyl: 'On the shelf', alexa: 'Alexa', scratch: 'Scratch it', map: 'AgriBridge across India', builder: 'Play: block builder', switch: 'Light switch', radicals: 'Play: find the radical', screen: 'Use the laptop: Mandalink', crate: 'Dig through the crate', vaultbook: 'Pull the red book' };
   const bookLabel = () => vaultOpen ? 'Close the bookshelf' : 'Pull the red book';
 
   let night = false;
@@ -12183,15 +12233,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     g.userData.disc = disc; g.userData.glow = glow; return g;
   }
   const portal = makePortal(0xFFC93C, '#7C8CFF', '#2B45E0');
-  portal.position.set(7.8, .05, -3.42); portal.scale.setScalar(1.3); portal.userData.egg = 'portal'; scene.add(portal);
-  portal.children[0].visible = false; portal.children[2].visible = false;  // the moon gate is the frame now
+  portal.position.set(10.6, .05, -6.0); portal.userData.egg = 'portal'; portal.visible = false; scene.add(portal);  // the moon gate and its view stand in for the old portal
   const portalLabel = new THREE.Mesh(new THREE.PlaneGeometry(.9, .3), new THREE.MeshBasicMaterial({ transparent: true, map: tex(360, 120, (g, w, h) => {
     g.fillStyle = '#FFC93C'; g.font = `800 44px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('Mandalink world', w / 2, 44);
     g.fillStyle = '#FFFFFF'; g.font = `700 40px ${ZH}`; g.fillText('部首', w / 2, 96);
   }) }));
-  portalLabel.position.set(1.12, 1.2, .16); portalLabel.scale.setScalar(.55); portal.add(portalLabel);
-  addMarker(V(7.8, 2.45, -3.1), 0x7C8CFF, { egg: 'portal', vaultOnly: true });
-  views.portal = { pos: V(7.8, 1.6, -1.6), look: V(7.8, 1.5, -3.5) };
+  portal.add(portalLabel);
+  views.portal = { pos: V(10.6, 1.6, -4.2), look: V(10.6, 1.45, -6.2) };
 
   // the worlds are only built the first time someone steps through
   const HANZI = [
@@ -12590,9 +12638,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function enterWorld(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(220, .8, 'sine', .08, 880);
-    moveCam(V(7.8, 1.45, -2.9), 0, 0, .9, () => fade(() => {
+    moveCam(V(10.6, 1.45, -5.4), 0, 0, .9, () => fade(() => {
       if (!world) buildWorld();
-      saved = { pos: V(7.8, 1.6, -1.6), yaw: Math.PI, pitch: 0 }; secret('portal');
+      saved = { pos: V(10.6, 1.6, -4.2), yaw: Math.PI, pitch: 0 }; secret('portal');
       inWorld = true; toHub(); uiZone(); renderTray();
       dock.classList.remove('on'); $('#worldBack').hidden = false; if (!fine) jumpBtn.hidden = false;
       say((fine ? 'Press Space to jump between islands. ' : 'Use the jump button to hop between islands. ') + 'Collect radicals and combine them at the shrine.', 5500);
@@ -14188,7 +14236,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.egg === 'batfig') return vaultOpen ? tiltBat() : flyTo(V(3.4, 1.75, -.5), V(4.62, 2.05, -.5), tiltBat);
     if (p.egg === 'portal') return flyTo(views.portal.pos.clone(), views.portal.look, enterWorld);
     if (p.egg === 'meddoor') return flyTo(views.meddoor.pos.clone(), views.meddoor.look, enterMed);
-    if (p.egg === 'crayon') return say('Some career plans start early.', 2600);
     if (p.egg !== 'crate' && p.egg !== 'shelfvinyl') putBackRecord();
     if (p.egg === 'scratch') return scratch();
     if (p.egg === 'speakers') return toggleLofi();
@@ -14221,7 +14268,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.section) return goTo(p.section);
     if (p.walk) {
       let x = p.walk.x, z = p.walk.z;
-      if (region(x) === 'vault') { if (!vaultOpen) return; x = clamp(x, 5.8, 10.1); z = clamp(z, -3.0, .5); }
+      if (region(x) === 'vault') { if (!vaultOpen || !inVault(x, z)) return; }
       else if (z > 4.7) { x = clamp(x, -1.1, 1.1); z = clamp(z, 5.6, 10.2); }
       else { x = clamp(x, -4.2, 4.2); z = clamp(z, -3.6, 4.3); }
       closePanel();
@@ -14307,7 +14354,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!reduce) {
       vinyl.rotation.y -= dt * 3.5 * spin; portal.userData.disc.rotation.z -= dt * 1.2;
     }
-    portal.userData.glow.intensity = vaultOpen ? .9 : 0; medCrossStep(now);
+    portal.userData.glow.intensity = 0; medCrossStep(now); vaultDoorsStep(dt);
     if (inWorld) worldStep(dt, now);
     pageMeshes.forEach((m, i) => { m.rotation.y += dt * 1.2; m.position.y = m.userData.base + Math.sin(now / 600 + i) * .05; });
     const tsec = now / 1000;
