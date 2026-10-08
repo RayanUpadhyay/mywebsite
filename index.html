@@ -12511,7 +12511,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { x0: -40, x1: -26, z0: -6.6, z1: 6.6 }      // operating theatre
   ];
   const medBlocks = [];  // furniture you can't walk through: { x0, x1, z0, z1 }
-  const medValid = (x, z) => MED_RECTS.some(r => x > r.x0 + .3 && x < r.x1 - .3 && z > r.z0 + .3 && z < r.z1 - .3) && !medBlocks.some(b => x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1);
+  // you can stand anywhere at least 30 cm from a wall; doorways between rooms stay open
+  const medIn = (x, z) => MED_RECTS.some(r => x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1);
+  const medValid = (x, z) => medIn(x, z) && medIn(x + .3, z) && medIn(x - .3, z) && medIn(x, z + .3) && medIn(x, z - .3) && !medBlocks.some(b => x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1);
   function medTex(w, h, f){ const t = tex(w, h, f); t.anisotropy = 4; return t; }
   function buildMed(){
     if (MED.built) return; MED.built = true;
