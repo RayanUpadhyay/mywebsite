@@ -12337,7 +12337,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       l.position.set(Math.cos(an) * r, 3 + Math.random() * 3, Math.sin(an) * r); l.userData.base = l.position.y; world.add(l); worldAnim.lanterns.push(l);
     }
     discovered.forEach(ri => spawnDiscovery(ri, false));
-    questBoard(); buildHallOfFame(); mkBuild();
+    questBoard(); buildHallOfFame(); buildOuter(); mkBuild();
+    try { if (!localStorage.getItem('ml-outer')) { localStorage.setItem('ml-outer', '1'); setTimeout(() => say('新地方！ Xīn dìfang! Follow the golden paths out to 云路, the Cloud Road: six new islands and 12 hidden 字宝石.', 6500), 9000); } } catch (e) {}
     addPagesFor('hub', world);
   }
 
@@ -12750,7 +12751,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     kawaiiWorld();
   }
   function mkStep(dt, now){
-    kawaiiStep(dt, now); mkwStep(dt); mkLookStep(); mkPetStep(dt, now);
+    kawaiiStep(dt, now); mkwStep(dt); mkLookStep(); mkPetStep(dt, now); mloStep(dt, now);
     if (!MK.wk) return;
     MK.wk.position.y = Math.sin(now / 450) * .12 + .1;
     MK.wk.rotation.y = Math.atan2(pos.x - MK.wk.position.x, pos.z - MK.wk.position.z) + Math.sin(now / 900) * .15;
@@ -13471,7 +13472,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       { id: 'sash', zh: '混天绫', py: 'hùntiān líng', en: 'Nezha’s flying sash', at: 6 },
       { id: 'cap', zh: '凤翅紫金冠', py: 'fèngchì zǐjīn guān', en: 'phoenix-feather crown', at: 7 },
       { id: 'robe', zh: '袈裟', py: 'jiāshā', en: 'monk’s robe', at: 8 },
-      { id: 'horns', zh: '牛角', py: 'niújiǎo', en: 'bull horns', at: 10 }
+      { id: 'horns', zh: '牛角', py: 'niújiǎo', en: 'bull horns', at: 10 },
+      { id: 'jade', zh: '玉佩', py: 'yùpèi', en: 'jade pendant (find all 12 字宝石)', at: 99, gems: 12 }
     ],
     pets: [
       { id: 'monkey', zh: '小猴', py: 'xiǎo hóu', en: 'little monkey', at: 1 },
@@ -13485,7 +13487,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       { id: 'fan', zh: '芭蕉扇', py: 'bājiāoshàn', en: 'the palm-leaf fan: blows away everything flying at you', at: 9 }
     ]
   };
-  const mkHas = it => MK.ch >= it.at;
+  const mkHas = it => it.gems ? mlGems.length >= it.gems : MK.ch >= it.at;
   const mkGear = id => mkHas(MKT.gear.find(g => g.id === id));
   try { const s = JSON.parse(localStorage.getItem('ml-story') || '{}'); MK.look = s.look || ''; MK.pet = s.pet || ''; } catch (e) {}
 
@@ -13519,6 +13521,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const g = new THREE.Group();
     if (id === 'band') { const b = m3mesh(new THREE.TorusGeometry(.162, .02, 8, 28), 0xE8B930); b.rotation.x = Math.PI / 2; b.position.y = 1.79; g.add(b); }
     if (id === 'cap') { const c = m3mesh(new THREE.CylinderGeometry(.08, .1, .1, 12), 0xE8B930); c.position.y = 1.92; g.add(c); [-1, 1].forEach(s => { const f = m3mesh(new THREE.CylinderGeometry(.012, .02, .9, 6), 0xE8A040); f.position.set(s * .2, 2.25, .15); f.rotation.set(.5, 0, -s * .5); g.add(f); }); }
+    if (id === 'jade') { const c = m3mesh(new THREE.TorusGeometry(.12, .008, 6, 24), 0xE4572E); c.position.set(0, 1.42, -.16); c.rotation.x = .25; g.add(c); const d = m3mesh(new THREE.CylinderGeometry(.06, .06, .02, 20), 0x7FD3B0); d.rotation.x = Math.PI / 2; d.position.set(0, 1.3, -.2); g.add(d); }
     if (id === 'horns') [-1, 1].forEach(s => { const h = m3mesh(new THREE.ConeGeometry(.04, .2, 8), 0xFFF6E6); h.position.set(s * .13, 1.88, 0); h.rotation.z = -s * .8; g.add(h); });
     if (id === 'kilt') { const k = new THREE.Mesh(new THREE.CylinderGeometry(.23, .3, .28, 16, 1, true), new THREE.MeshToonMaterial({ gradientMap: kwGrad(), side: THREE.DoubleSide, map: tex(128, 32, (c, w, h) => { c.fillStyle = '#F0A040'; c.fillRect(0, 0, w, h); c.fillStyle = '#4A3424'; for (let x = 0; x < w; x += 16) { c.beginPath(); c.moveTo(x, 0); c.lineTo(x + 6, h * .7); c.lineTo(x + 10, 0); c.fill(); } }) })); k.material.userData.kw = true; k.position.y = .86; g.add(k); }
     if (id === 'sash') { const r = m3mesh(new THREE.TorusGeometry(.32, .03, 6, 28), 0xE4572E); r.rotation.set(Math.PI / 2 - .3, 0, 0); r.position.y = 1.3; g.add(r); const t = m3mesh(new THREE.BoxGeometry(.06, .7, .02), 0xE4572E); t.position.set(.25, 1.0, .25); t.rotation.z = .3; g.add(t); }
@@ -13545,11 +13548,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   document.body.insertAdjacentHTML('beforeend', '<button class="mkfly mkbag" id="mkBag" type="button" hidden aria-label="Your treasures">\u{1F392}<small class="zh">宝贝</small></button>');
   const mkBagBtn = $('#mkBag');
   function mkBagOpen(){
-    const row = (kind, it, cur) => { const ok = mkHas(it); return `<button class="open" type="button" ${ok ? `data-mk${kind}="${it.id}"` : 'disabled'} aria-pressed="${cur === it.id}" style="display:block;margin-bottom:8px;${cur === it.id ? 'outline:3px solid #FFC93C;' : ''}${ok ? '' : 'opacity:.5;'}"><span class="zh">${it.zh}</span> ${it.py} · ${it.en}${ok ? (cur === it.id ? ' ✓' : '') : ` · 🔒 ${MKCH[it.at - 1] ? MKCH[it.at - 1].n : ''}`}</button>`; };
+    const row = (kind, it, cur) => { const ok = mkHas(it); return `<button class="open" type="button" ${ok ? `data-mk${kind}="${it.id}"` : 'disabled'} aria-pressed="${cur === it.id}" style="display:block;margin-bottom:8px;${cur === it.id ? 'outline:3px solid #FFC93C;' : ''}${ok ? '' : 'opacity:.5;'}"><span class="zh">${it.zh}</span> ${it.py} · ${it.en}${ok ? (cur === it.id ? ' ✓' : '') : ` · 🔒 ${it.gems ? `${mlGems.length} / ${it.gems} 字宝石` : MKCH[it.at - 1] ? MKCH[it.at - 1].n : ''}`}</button>`; };
     const off = (kind, cur) => `<button class="open" type="button" data-mk${kind}="" style="display:block;margin-bottom:8px;${!cur ? 'outline:3px solid #FFC93C;' : ''}">不要 bú yào · none${!cur ? ' ✓' : ''}</button>`;
     panelBody.innerHTML = `<div class="sec"><p class="meta">猴王闹海岛 · 宝贝 bǎobèi · treasures</p><h2 class="display zh">我的宝贝</h2><p class="sub">Wǒ de bǎobèi. Finish chapters with Wukong to unlock more.</p>
       <h3 class="zh">衣服 yīfu · looks</h3>${off('look', MK.look)}${MKT.looks.map(l => row('look', l, MK.look)).join('')}
       <h3 class="zh">宠物 chǒngwù · pets</h3>${off('pet', MK.pet)}${MKT.pets.map(p => row('pet', p, MK.pet)).join('')}
+      <h3 class="zh">字宝石 zì bǎoshí · character gems</h3><p class="sub">${mlGems.length} / ${ALL_GEMS.length} found on the Cloud Road islands. ${ALL_GEMS.map(c => mlGems.includes(c) ? `<b class="zh">${c}</b>` : '？').join(' ')}</p>
       <h3 class="zh">法宝 fǎbǎo · magic weapons</h3><p class="sub">These show up as buttons in boss fights once you have them.</p>${MKT.gear.map(g => `<p style="${mkHas(g) ? '' : 'opacity:.5'}"><b class="zh">${g.zh}</b> ${g.py} · ${g.en}${mkHas(g) ? '' : ` · 🔒 ${MKCH[g.at - 1] ? MKCH[g.at - 1].n : ''}`}</p>`).join('')}
       ${MK.ch > 0 ? `<h3 class="zh">重玩 chóng wán · replay</h3>${MKCH.slice(0, Math.min(MK.ch, MKCH.length)).map((C, i) => `<button class="open" type="button" data-mkre="${i}" style="display:block;margin-bottom:8px"><span class="zh">${C.n} ${C.t}</span> · ${C.en}</button>`).join('')}` : ''}</div>`;
     panel.scrollTop = 0; panel.classList.add('on');
@@ -13564,6 +13568,162 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // what a finished chapter just unlocked
   function mkNewStuff(was){ const all = [...MKT.looks.map(x => ['新衣服', x]), ...MKT.pets.map(x => ['新宠物', x]), ...MKT.gear.map(x => ['新法宝', x])].filter(([, x]) => x.at > was && x.at <= MK.ch);
     return all.map(([k, x]) => `${k}：${x.zh}！`).join(' '); }
+
+  // ======================= 云路: the outer ring of Mandalink world =======================
+  // A road all the way round the world, golden paths out to it, six new islands with someone to talk to,
+  // and 12 hidden 字宝石 (character gems). Gems are saved in this browser as ml-gems.
+  const MLO = { D: 38, ring: [32.2, 33.8], isles: [], npcs: [], gems: [], kites: [], koi: [], talkedAt: null, built: false };
+  const OUTER = [
+    { id: 'tea', an: -60, zh: '茶园', py: 'Cháyuán', en: 'The Tea Garden', col: 0xA6D98E, who: ['\u{1F475}', '茶农'],
+      talk: [['请喝茶！', 'Qǐng hē chá!', 'Please have some tea!'], ['茶：草字头，下面有人和木。', 'Chá: cǎo zì tóu, xiàmiàn yǒu rén hé mù.', '茶 (tea): the grass radical on top, with a person and a tree underneath.'], ['春天的茶最香。', 'Chūntiān de chá zuì xiāng.', 'Spring tea smells the best.']],
+      gems: [['茶', 'chá', 'tea'], ['叶', 'yè', 'leaf']] },
+    { id: 'bamboo', an: 0, zh: '竹林', py: 'Zhúlín', en: 'The Bamboo Grove', col: 0x9ED68A, who: ['\u{1F43C}', '熊猫'],
+      talk: [['你好！我是熊猫。', 'Nǐ hǎo! Wǒ shì xióngmāo.', 'Hello! I’m a panda.'], ['我喜欢吃竹子。', 'Wǒ xǐhuan chī zhúzi.', 'I like eating bamboo.'], ['竹子长得很快！', 'Zhúzi zhǎng de hěn kuài!', 'Bamboo grows really fast!']],
+      gems: [['竹', 'zhú', 'bamboo'], ['熊', 'xióng', 'bear']] },
+    { id: 'market', an: 60, zh: '灯笼市场', py: 'Dēnglong shìchǎng', en: 'The Lantern Market', col: 0xF2D9A8, who: ['\u{1F9D1}‍\u{1F373}', '小贩'],
+      talk: [['欢迎光临！', 'Huānyíng guānglín!', 'Welcome!'], ['包子多少钱？', 'Bāozi duōshao qián?', 'How much are the steamed buns?'], ['一块钱一个。', 'Yí kuài qián yí ge.', 'One yuan each.']],
+      gems: [['灯', 'dēng', 'lamp'], ['市', 'shì', 'market']] },
+    { id: 'gate', an: 120, zh: '龙门', py: 'Lóngmén', en: 'The Dragon Gate', col: 0x9FD8D0, who: ['\u{1F41F}', '老鲤鱼'],
+      talk: [['鲤鱼跳龙门！', 'Lǐyú tiào lóngmén!', 'The carp leaps the Dragon Gate!'], ['跳过去，就变成龙。', 'Tiào guòqu, jiù biànchéng lóng.', 'Jump over it and you turn into a dragon.'], ['学中文也一样：多练习！', 'Xué Zhōngwén yě yíyàng: duō liànxí!', 'Learning Chinese is the same: practise a lot!']],
+      gems: [['鱼', 'yú', 'fish'], ['龙', 'lóng', 'dragon']] },
+    { id: 'kites', an: 180, zh: '风筝草地', py: 'Fēngzheng cǎodì', en: 'The Kite Meadow', col: 0xB8E3A0, who: ['\u{1F467}', '小朋友'],
+      talk: [['我的风筝飞得好高！', 'Wǒ de fēngzheng fēi de hǎo gāo!', 'My kite flies so high!'], ['今天风很大。', 'Jīntiān fēng hěn dà.', 'It’s really windy today.'], ['你也来放风筝吧！', 'Nǐ yě lái fàng fēngzheng ba!', 'Come and fly a kite too!']],
+      gems: [['风', 'fēng', 'wind'], ['高', 'gāo', 'tall, high']] },
+    { id: 'study', an: 240, zh: '书院', py: 'Shūyuàn', en: 'The Study Hall', col: 0xE6E0D0, who: ['\u{1F9D1}‍\u{1F3EB}', '老师'],
+      talk: [['学而时习之。', 'Xué ér shí xí zhī.', 'Learn, and keep practising what you learn. (Confucius)'], ['墙上是你学会的词。', 'Qiáng shang shì nǐ xuéhuì de cí.', 'The wall shows the words you’ve learned.'], ['点一个字，听一听。', 'Diǎn yí ge zì, tīng yi tīng.', 'Tap a word to hear it.']],
+      gems: [['书', 'shū', 'book'], ['学', 'xué', 'to learn']] }
+  ];
+  const ALL_GEMS = OUTER.flatMap(o => o.gems.map(g => g[0]));
+  let mlGems = []; try { const a = JSON.parse(localStorage.getItem('ml-gems') || '[]'); if (Array.isArray(a)) mlGems = a.filter(c => ALL_GEMS.includes(c)); } catch (e) {}
+  const mloAt = (an, d) => { const a = an * Math.PI / 180; return [Math.cos(a) * d, Math.sin(a) * d]; };
+  function mloSign(zh, py, en, w = 2.4){ return new THREE.Mesh(new THREE.PlaneGeometry(w, w * .34), new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, map: tex(560, 190, (g, W, H) => { g.fillStyle = 'rgba(242,248,255,.95)'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, W, H, 40) : g.rect(0, 0, W, H); g.fill(); g.fillStyle = '#2E7DD1'; g.textAlign = 'center'; g.font = `700 76px ${ZH}`; g.fillText(zh, W / 2, 92); g.fillStyle = '#24425E'; g.font = `600 26px "Instrument Sans", sans-serif`; g.fillText(`${py} · ${en}`, W / 2, 150); }) })); }
+  function mloGemMesh(ch){ const g = new THREE.Group(), c = new THREE.Mesh(new THREE.OctahedronGeometry(.32, 0), new THREE.MeshStandardMaterial({ color: 0x8FE3D6, emissive: 0x3FB8A8, emissiveIntensity: .45, transparent: true, opacity: .8, roughness: .2 })); c.scale.y = 1.4; g.add(c);
+    const t = new THREE.Mesh(new THREE.PlaneGeometry(.42, .42), new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, depthTest: false, map: tex(128, 128, (x, w, h) => { x.fillStyle = '#24425E'; x.font = `700 96px ${ZH}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(ch, w / 2, h / 2 + 4); }) })); t.renderOrder = 3; g.add(t); g.userData.label = t; return g; }
+
+  function buildOuter(){
+    if (MLO.built || !world) return; MLO.built = true;
+    // the ring road, with little floating lanterns along it
+    const [r0, r1] = MLO.ring;
+    const road = new THREE.Mesh(new THREE.RingGeometry(r0, r1, 160), mat(0xF4ECD8, { roughness: 1 })); road.rotation.x = -Math.PI / 2; road.position.y = -.02; road.userData.walk = true; world.add(road);
+    const edge = new THREE.Mesh(new THREE.RingGeometry(r1, r1 + .14, 160), mat(0xFFC93C, { emissive: 0xFFC93C, emissiveIntensity: .3 })); edge.rotation.x = -Math.PI / 2; edge.position.y = -.015; world.add(edge);
+    plats.hub.push({ x: 0, z: 0, r: r1 + .1, hole: r0 });
+    for (let k = 0; k < 36; k++) { const [x, z] = mloAt(k * 10 + 5, r1 + .35), l = new THREE.Mesh(new THREE.SphereGeometry(.16, 10, 8), mat(0xFFD27A, { emissive: 0xFFB84A, emissiveIntensity: .6 })); l.position.set(x, .9, z); l.userData.base = .9; l.raycast = () => {}; world.add(l); worldAnim.lanterns.push(l); }
+    // golden paths out from the radical islands (the 氵 side already has the Hall of Fame bridge)
+    [-30, 30, 90, 150, 210].forEach(an => { const a = an * Math.PI / 180, ca = Math.cos(a), sa = Math.sin(a), a0 = 14.3, a1 = r0 + .2, L = a1 - a0, mid = (a0 + a1) / 2;
+      const p = new THREE.Mesh(new THREE.BoxGeometry(L, .08, 1.1), new THREE.MeshStandardMaterial({ color: 0xFFE7A8, emissive: 0xFFC93C, emissiveIntensity: .45, transparent: true, opacity: .9 })); p.position.set(ca * mid, -.035, sa * mid); p.rotation.y = -a; p.userData.walk = true; world.add(p);
+      plats.hub.push({ ax: ca * a0, az: sa * a0, bx: ca * a1, bz: sa * a1, w: 1.1 }); });
+    // the six islands
+    OUTER.forEach(O => {
+      const [ix, iz] = mloAt(O.an, MLO.D), r = 4.6, g = new THREE.Group(); world.add(g);
+      island(g, ix, iz, r, O.col); const out = O.an * Math.PI / 180, ux = Math.cos(out), uz = Math.sin(out), vx = -uz, vz = ux;
+      const P = (a, b) => [ix + ux * a + vx * b, iz + uz * a + vz * b];
+      const sign = mloSign(O.zh, O.py, O.en); const [sx, sz] = P(-3.4, 2.6); sign.position.set(sx, 2.3, sz); sign.lookAt(sx - ux * 5, 2.3, sz - uz * 5); g.add(sign);
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 2.2, 8), mat(0x8A5A2B)); post.position.set(sx, 1.1, sz); g.add(post);
+      mloScene(O, g, P, ux, uz);
+      // someone to talk to
+      const npc = mloNpc(O); const [nx, nz] = P(-1.4, -1.6); npc.position.set(nx, 0, nz); npc.lookAt(nx - ux * 3, 0, nz - uz * 3); npc.userData.mlnpc = O.id; g.add(npc);
+      const bub = new THREE.Mesh(new THREE.PlaneGeometry(.6, .6), new THREE.MeshBasicMaterial({ transparent: true, depthTest: false, map: tex(96, 96, (x, w, h) => { x.fillStyle = '#FFFFFF'; x.beginPath(); x.arc(w / 2, h / 2 - 6, 36, 0, 7); x.fill(); x.beginPath(); x.moveTo(w / 2 - 10, h - 24); x.lineTo(w / 2, h - 6); x.lineTo(w / 2 + 8, h - 26); x.fill(); x.fillStyle = '#2E7DD1'; x.font = `700 40px ${ZH}`; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('说', w / 2, h / 2 - 6); }) })); bub.renderOrder = 3; bub.position.set(nx, 2.2, nz); bub.userData.mlnpc = O.id; g.add(bub);
+      MLO.npcs.push({ O, g: npc, bub, x: nx, z: nz, near: false });
+      // two gems hidden around the island
+      O.gems.forEach((gm, k) => { const [gx, gz] = P(k ? 2.6 : 1.2, k ? -2.4 : 3.3); const m = mloGemMesh(gm[0]); m.position.set(gx, 1, gz); m.userData.mlgem = gm[0]; g.add(m); MLO.gems.push({ m, gm, x: gx, z: gz }); });
+      MLO.isles.push({ O, g, x: ix, z: iz });
+    });
+    // far-off floating islands, just for the view
+    for (let k = 0; k < 10; k++) { const a = k / 10 * Math.PI * 2 + .3, d = 54 + (k % 3) * 4, y = -3 + (k % 4) * 2.2, s = 2.5 + (k % 3); const f = new THREE.Group(); f.position.set(Math.cos(a) * d, y, Math.sin(a) * d);
+      const top = new THREE.Mesh(new THREE.CylinderGeometry(s, s * .9, .6, 18), mat([0xA6D98E, 0x9FD8D0, 0xF2D9A8][k % 3], { roughness: 1 })); f.add(top); const bot = new THREE.Mesh(new THREE.ConeGeometry(s * .9, s * 1.6, 18), mat(0x8A7560, { roughness: 1 })); bot.rotation.x = Math.PI; bot.position.y = -.3 - s * .8; f.add(bot);
+      if (k % 2) { const t = new THREE.Mesh(new THREE.ConeGeometry(s * .4, s * 1.1, 10), mat(0x5FB87A)); t.position.y = .3 + s * .55; f.add(t); } else { const w = new THREE.Mesh(new THREE.PlaneGeometry(s * .5, 6), new THREE.MeshBasicMaterial({ color: 0xDDF3FF, transparent: true, opacity: .55, side: THREE.DoubleSide, depthWrite: false })); w.position.set(0, -3.2, s * .92); f.add(w); }
+      f.traverse(o => { o.raycast = () => {}; o.userData.noPick = true; }); world.add(f); }
+    // the map board on the hub
+    const mb = new THREE.Group(); mb.position.set(-3.3, 0, .9); world.add(mb); mb.lookAt(0, 0, 2.4); mb.userData.mlmap = true;
+    const board = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: mloMapTex() })); board.position.y = 1.35; mb.add(board);
+    [-.6, .6].forEach(x => { const l = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 1.3, 8), mat(0x8A5A2B)); l.position.set(x, .65, -.02); mb.add(l); });
+  }
+  function mloMapTex(){ return tex(512, 512, (g, w, h) => { g.fillStyle = '#F2F8FF'; g.fillRect(0, 0, w, h); g.strokeStyle = '#8EC5F0'; g.lineWidth = 10; g.strokeRect(5, 5, w - 10, h - 10);
+    const c = w / 2, k = 5.4, dot = (x, z, r, col) => { g.fillStyle = col; g.beginPath(); g.arc(c + x * k, c + z * k, r, 0, 7); g.fill(); };
+    g.strokeStyle = '#F2D9A8'; g.lineWidth = 8; g.beginPath(); g.arc(c, c, 33 * k, 0, 7); g.stroke();
+    dot(0, 0, 26, '#9ED68A'); g.fillStyle = '#24425E'; g.font = `700 22px ${ZH}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('你', c, c);
+    ISLANDS.forEach((I, i) => { const [x, z] = isleAt(i); dot(x, z, 15, '#BFE3FF'); g.fillStyle = '#2E7DD1'; g.font = `700 18px ${ZH}`; g.fillText(I.rad, c + x * k, c + z * k); });
+    OUTER.forEach(O => { const [x, z] = mloAt(O.an, MLO.D); dot(x, z, 24, '#FFE29A'); g.fillStyle = '#24425E'; g.font = `700 ${O.zh.length > 2 ? 15 : 19}px ${ZH}`; g.fillText(O.zh, c + x * k, c + z * k); });
+    g.fillStyle = '#2E7DD1'; g.font = `700 30px ${ZH}`; g.fillText('地图', c, 34); g.font = `600 15px "Instrument Sans", sans-serif`; g.fillText('dìtú · map: follow the golden paths to 云路', c, 60); }); }
+  function mloNpc(O){
+    if (O.id === 'bamboo') { const g = new THREE.Group(), w = 0xFFFFFF, b = 0x2A2D35; const body = new THREE.Mesh(new THREE.SphereGeometry(.55, 16, 12), mat(w)); body.scale.set(1, 1.1, .95); body.position.y = .6; g.add(body); const h = new THREE.Mesh(new THREE.SphereGeometry(.42, 16, 12), mat(w)); h.position.y = 1.35; g.add(h);
+      [-1, 1].forEach(s => { const e = new THREE.Mesh(new THREE.SphereGeometry(.14, 10, 8), mat(b)); e.position.set(s * .32, 1.68, 0); g.add(e); const p = new THREE.Mesh(new THREE.SphereGeometry(.1, 10, 8), mat(b)); p.scale.set(1, 1.2, .5); p.position.set(s * .15, 1.4, .36); g.add(p); const a = new THREE.Mesh(new THREE.SphereGeometry(.18, 10, 8), mat(b)); a.position.set(s * .5, .8, .15); g.add(a); });
+      const st = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 1, 8), mat(0x7DB36F)); st.position.set(.45, 1, .3); st.rotation.z = .4; g.add(st); return g; }
+    if (O.id === 'gate') { const g = new THREE.Group(), f = new THREE.Mesh(new THREE.SphereGeometry(.4, 16, 12), mat(0xFF9F43)); f.scale.set(.7, 1, 1.4); f.position.y = .9; g.add(f); const t = new THREE.Mesh(new THREE.ConeGeometry(.3, .5, 10), mat(0xFFC93C)); t.rotation.x = -Math.PI / 2; t.position.set(0, .9, -.7); g.add(t);
+      [-1, 1].forEach(s => { const e = new THREE.Mesh(new THREE.SphereGeometry(.06, 8, 6), mat(0x16181D)); e.position.set(s * .2, 1, .45); g.add(e); }); const wh = new THREE.Mesh(new THREE.CylinderGeometry(.02, .02, .6, 6), mat(0xFFFFFF)); wh.position.set(.25, .8, .5); wh.rotation.z = .8; g.add(wh); return g; }
+    // people: a little round villager in the island's colours
+    const g = new THREE.Group(), cols = { tea: [0x5FB87A, 0xD8D8E0], market: [0xFF9F43, 0x2A2D35], kites: [0x3E9BD6, 0x2A2D35], study: [0x5A7AC8, 0xE8E8EE] }[O.id];
+    const body = new THREE.Mesh(new THREE.CylinderGeometry(.3, .4, .9, 14), mat(cols[0])); body.position.y = .45; g.add(body); const h = new THREE.Mesh(new THREE.SphereGeometry(.3, 16, 12), mat(0xFFD9B8)); h.position.y = 1.15; g.add(h);
+    const hair = new THREE.Mesh(new THREE.SphereGeometry(.32, 16, 10, 0, 6.283, 0, 1.4), mat(cols[1])); hair.position.y = 1.18; g.add(hair);
+    [-1, 1].forEach(s => { const e = new THREE.Mesh(new THREE.SphereGeometry(.04, 8, 6), mat(0x16181D)); e.position.set(s * .1, 1.17, .27); g.add(e); });
+    if (O.id === 'tea' || O.id === 'kites') { const hat = new THREE.Mesh(new THREE.ConeGeometry(.5, .25, 18), mat(0xE8C870)); hat.position.y = 1.5; g.add(hat); }
+    return g;
+  }
+  // what's on each island
+  function mloScene(O, g, P, ux, uz){
+    const add = (m, a, b, y = 0) => { const [x, z] = P(a, b); m.position.set(x, y, z); g.add(m); return m; };
+    if (O.id === 'bamboo') { const n = 70, geo = new THREE.CylinderGeometry(.07, .08, 3.4, 6), im = new THREE.InstancedMesh(geo, mat(0x8FCF7A), n), M = new THREE.Matrix4();
+      for (let k = 0; k < n; k++) { let a, b; do { a = (Math.random() - .5) * 8; b = (Math.random() - .5) * 8; } while (Math.hypot(a, b) > 4.2 || Math.hypot(a + 1.4, b + 1.6) < 1.3 || (a < -1 && Math.abs(b) < 1.6)); const [x, z] = P(a, b), hgt = .7 + Math.random() * .6; M.makeScale(1, hgt, 1).setPosition(x, 1.7 * hgt, z); im.setMatrixAt(k, M); }
+      im.raycast = () => {}; g.add(im);
+      for (let k = 0; k < 14; k++) { const lf = new THREE.Mesh(new THREE.SphereGeometry(.35, 8, 6), mat(0x7DC46A)); lf.scale.set(1.4, .4, .8); add(lf, (Math.random() - .3) * 6, (Math.random() - .5) * 6, 3 + Math.random()); lf.raycast = () => {}; } }
+    if (O.id === 'tea') { for (let row = 0; row < 4; row++) for (let k = 0; k < 5; k++) { const b = new THREE.Mesh(new THREE.SphereGeometry(.42, 12, 10), mat(0x6FBF6A)); b.scale.y = .7; add(b, -1 + row * 1.15, -2.6 + k * 1.3, .3); }
+      const pav = new THREE.Group(); [[-.8, -.8], [.8, -.8], [-.8, .8], [.8, .8]].forEach(([x, z]) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(.07, .07, 1.8, 8), mat(0xC0571C)); p.position.set(x, .9, z); pav.add(p); }); const roof = new THREE.Mesh(new THREE.ConeGeometry(1.6, .8, 4), mat(0x3E9BD6)); roof.rotation.y = Math.PI / 4; roof.position.y = 2.2; pav.add(roof); const tb = new THREE.Mesh(new THREE.CylinderGeometry(.5, .5, .08, 16), mat(0x8A5A2B)); tb.position.y = .7; pav.add(tb); const pot = new THREE.Mesh(new THREE.SphereGeometry(.16, 12, 10), mat(0xF2F2F2)); pot.position.y = .86; pav.add(pot); add(pav, -2.6, 2.4); }
+    if (O.id === 'market') { [[-1.8, -2], [-1.8, 2], [1, -2.6], [1, 2.6], [2.6, 0]].forEach(([a, b], k) => { const st = new THREE.Group(), t = new THREE.Mesh(new THREE.BoxGeometry(1.4, .7, .7), mat(0xC08A50)); t.position.y = .35; st.add(t); const aw = new THREE.Mesh(new THREE.BoxGeometry(1.6, .08, 1), mat([0x3E9BD6, 0xFF9F43, 0x3FB8A8][k % 3])); aw.position.y = 1.7; aw.rotation.x = .15; st.add(aw); [-.7, .7].forEach(x => { const p = new THREE.Mesh(new THREE.CylinderGeometry(.04, .04, 1.7, 6), mat(0x8A5A2B)); p.position.set(x, .85, -.3); st.add(p); });
+        for (let i = 0; i < 3; i++) { const it = new THREE.Mesh(new THREE.SphereGeometry(.12, 10, 8), mat([0xFFF6E6, 0xFF9F43, 0x8FCF7A][(k + i) % 3])); it.position.set(-.4 + i * .4, .8, 0); st.add(it); } add(st, a, b); st.lookAt(st.position.x - ux, 0, st.position.z - uz); });
+      for (let k = 0; k < 9; k++) { const l = new THREE.Mesh(new THREE.CylinderGeometry(.18, .18, .32, 12), mat(0xFF8A3C, { emissive: 0xFF8A3C, emissiveIntensity: .5 })); add(l, -2 + (k % 3) * 2, -3 + Math.floor(k / 3) * 3, 2.6 + (k % 2) * .3); l.userData.base = l.position.y; worldAnim.lanterns.push(l); } }
+    if (O.id === 'gate') { const pond = new THREE.Mesh(new THREE.CircleGeometry(2.2, 32), new THREE.MeshStandardMaterial({ color: 0x5FC8F0, roughness: .2 })); pond.rotation.x = -Math.PI / 2; add(pond, 1, 0, .02);
+      const arch = new THREE.Group(); [-1.6, 1.6].forEach(x => { const p = new THREE.Mesh(new THREE.CylinderGeometry(.22, .26, 3.2, 12), mat(0xE4572E)); p.position.set(x, 1.6, 0); arch.add(p); }); const beam = new THREE.Mesh(new THREE.BoxGeometry(4.2, .35, .5), mat(0x3E9BD6)); beam.position.y = 3.3; arch.add(beam); const beam2 = new THREE.Mesh(new THREE.BoxGeometry(3.6, .2, .4), mat(0xE8B930)); beam2.position.y = 2.8; arch.add(beam2);
+      add(arch, 2.6, 0); arch.lookAt(arch.position.x - ux, 0, arch.position.z - uz);
+      const fall = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 8), new THREE.MeshBasicMaterial({ color: 0xDDF3FF, transparent: true, opacity: .6, side: THREE.DoubleSide, depthWrite: false })); add(fall, 4.7, 0, -3); fall.lookAt(fall.position.x - ux, -3, fall.position.z - uz); fall.raycast = () => {};
+      for (let k = 0; k < 4; k++) { const f = new THREE.Mesh(new THREE.SphereGeometry(.22, 10, 8), mat([0xFF9F43, 0xFFFFFF, 0xFFC93C, 0xFF8A3C][k])); f.scale.set(.6, .6, 1.3); add(f, 1, 0, .05); f.raycast = () => {}; MLO.koi.push({ m: f, c: P(1, 0), k }); } }
+    if (O.id === 'kites') { for (let k = 0; k < 4; k++) { const kite = new THREE.Mesh(new THREE.PlaneGeometry(.9, .9), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: tex(64, 64, (x, w, h) => { x.fillStyle = ['#3E9BD6', '#FF9F43', '#3FB8A8', '#FFC93C'][k]; x.beginPath(); x.moveTo(w / 2, 0); x.lineTo(w, h / 2); x.lineTo(w / 2, h); x.lineTo(0, h / 2); x.fill(); x.strokeStyle = '#FFFFFF'; x.lineWidth = 3; x.beginPath(); x.moveTo(w / 2, 0); x.lineTo(w / 2, h); x.moveTo(0, h / 2); x.lineTo(w, h / 2); x.stroke(); }) }));
+        kite.rotation.z = Math.PI / 4; const [ax, az] = P(-1 + k, -2 + k * 1.3); kite.position.set(ax, 5 + k, az); kite.raycast = () => {}; g.add(kite); const str = new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(ax, .6, az), new THREE.Vector3(ax, 5 + k, az)]), new THREE.LineBasicMaterial({ color: 0xFFFFFF })); g.add(str); MLO.kites.push({ m: kite, str, ax, az, k }); }
+      for (let k = 0; k < 18; k++) { const fl = new THREE.Mesh(new THREE.SphereGeometry(.09, 8, 6), mat([0xFFC93C, 0xFFFFFF, 0x8EC5F0][k % 3])); add(fl, (Math.random() - .5) * 7, (Math.random() - .5) * 7, .12); fl.raycast = () => {}; } }
+    if (O.id === 'study') { const hall = new THREE.Group(), base = new THREE.Mesh(new THREE.BoxGeometry(3.4, .3, 2.2), mat(0xE8DCC4)); base.position.y = .15; hall.add(base); [[-1.5, -.9], [1.5, -.9], [-1.5, .9], [1.5, .9]].forEach(([x, z]) => { const p = new THREE.Mesh(new THREE.CylinderGeometry(.09, .09, 2, 8), mat(0xC0571C)); p.position.set(x, 1.2, z); hall.add(p); }); const roof = new THREE.Mesh(new THREE.BoxGeometry(4, .25, 2.8), mat(0x3E9BD6)); roof.position.y = 2.3; hall.add(roof);
+      add(hall, 2.4, 0); hall.lookAt(hall.position.x - ux, 0, hall.position.z - uz);
+      const wall = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 1.6), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: mloWallTex() })); add(wall, 1.2, 0, 1.25); wall.lookAt(wall.position.x - ux * 3, 1.25, wall.position.z - uz * 3); wall.userData.mlwall = true; MLO.wall = wall; }
+  }
+  // every word from the chapters you've finished, on the study hall wall
+  function mloWords(){ return MKCH.slice(0, Math.min(MK.ch, MKCH.length)).flatMap(C => C.words); }
+  function mloWallTex(){ const W = mloWords(); return tex(640, 320, (g, w, h) => { g.fillStyle = '#FFF8EC'; g.fillRect(0, 0, w, h); g.strokeStyle = '#C0571C'; g.lineWidth = 8; g.strokeRect(4, 4, w - 8, h - 8); g.fillStyle = '#C0571C'; g.font = `700 30px ${ZH}`; g.textAlign = 'center'; g.fillText(`学会的词 · ${W.length}`, w / 2, 40);
+    if (!W.length) { g.fillStyle = '#505764'; g.font = `500 20px "Instrument Sans", sans-serif`; g.fillText('Finish chapters with Wukong to fill this wall.', w / 2, 170); return; }
+    const per = Math.min(W.length, 40), cols = 8, cw = (w - 40) / cols; W.slice(-per).forEach(([zh], i) => { g.fillStyle = '#24425E'; g.font = `700 ${zh.length > 1 ? 24 : 32}px ${ZH}`; g.fillText(zh, 20 + cw * (i % cols) + cw / 2, 90 + Math.floor(i / cols) * 46); }); }); }
+  function mloRefreshWall(){ if (!MLO.wall) return; const m = MLO.wall.material; if (m.map) m.map.dispose(); m.map = mloWallTex(); m.needsUpdate = true; }
+
+  function mloTalk(id){
+    if (MK.busy || MKW.g || mkEl.classList.contains('on')) return;
+    const O = OUTER.find(o => o.id === id); if (!O) return;
+    let lines = O.talk.map(([zh, py, en]) => L(O.who[0], O.who[1], zh, py, en));
+    if (id === 'study') { const n = mloWords().length; lines.push(L(O.who[0], O.who[1], n ? `你已经学会了${n}个词！` : '跟孙悟空去冒险吧！', n ? `Nǐ yǐjīng xuéhuì le ${n} ge cí!` : 'Gēn Sūn Wùkōng qù màoxiǎn ba!', n ? `You’ve already learned ${n} words!` : 'Go on an adventure with Sun Wukong!')); }
+    if (id === 'gate') setTimeout(mloKoiJump, 300);
+    MK.busy = true; mkTalk(lines).then(() => { mkClose(); MK.busy = false; mkHud(); });
+  }
+  function mloGem(ch){
+    if (mlGems.includes(ch)) return; const it = MLO.gems.find(g => g.gm[0] === ch); if (!it) return;
+    mlGems.push(ch); try { localStorage.setItem('ml-gems', JSON.stringify(mlGems)); } catch (e) {}
+    it.m.visible = false; [784, 988, 1175].forEach((f, k) => setTimeout(() => tone(f, .18, 'triangle', .05), k * 90)); speak(ch);
+    say(`字宝石：${ch} ${it.gm[1]} · ${it.gm[2]} (${mlGems.length} / ${ALL_GEMS.length})${mlGems.length === ALL_GEMS.length ? ' 全部找到了！ You unlocked the 玉佩 jade pendant look in 🎒' : ''}`, 4200);
+  }
+  function mloKoiJump(){ MLO.koiT = 1.6; tone(520, .3, 'sine', .05, 990); }
+  function mloStep(dt, now){
+    if (!MLO.built) return;
+    const t = now / 1000;
+    MLO.gems.forEach(g => { g.m.visible = !mlGems.includes(g.gm[0]); if (!g.m.visible) return; g.m.rotation.y += dt * 1.4; g.m.position.y = 1 + Math.sin(t * 2 + g.x) * .12; if (g.m.userData.label) g.m.userData.label.lookAt(camera.position);
+      if (!MKW.g && Math.hypot(g.x - pos.x, g.z - pos.z) < 1.1 && Math.abs(pos.y - 1.6 - (g.m.position.y - 1)) < 1.6) mloGem(g.gm[0]); });
+    MLO.npcs.forEach(n => { n.bub.lookAt(camera.position); n.bub.position.y = 2.2 + Math.sin(t * 3) * .06; n.g.rotation.y += Math.sin(t * 1.5 + n.x) * .002;
+      const d = Math.hypot(n.x - pos.x, n.z - pos.z); n.bub.visible = d > 3; if (d < 1.9 && !n.near) { n.near = true; mloTalk(n.O.id); } else if (d > 4) n.near = false; });
+    if (reduce) return;
+    MLO.kites.forEach(k => { const x = k.ax + Math.sin(t * .7 + k.k) * .8, y = 5 + k.k + Math.sin(t * 1.1 + k.k) * .4; k.m.position.set(x, y, k.az + Math.cos(t * .6 + k.k) * .5); k.m.rotation.z = Math.PI / 4 + Math.sin(t * 2 + k.k) * .15; const p = k.str.geometry.attributes.position; p.setXYZ(1, k.m.position.x, y, k.m.position.z); p.needsUpdate = true; });
+    if (MLO.koiT > 0) MLO.koiT -= dt;
+    MLO.koi.forEach(f => { const a = t * (.6 + f.k * .1) + f.k * 1.6, [cx, cz] = f.c; let y = .05; if (MLO.koiT > 0 && f.k === 0) y = Math.sin((1.6 - MLO.koiT) / 1.6 * Math.PI) * 3; f.m.position.set(cx + Math.cos(a) * 1.3, y, cz + Math.sin(a) * 1.3); f.m.rotation.y = -a; });
+  }
+
+  function mloWallPanel(){
+    const W = mloWords();
+    panelBody.innerHTML = `<div class="sec"><p class="meta">书院 Shūyuàn · the Study Hall</p><h2 class="display zh">学会的词</h2><p class="sub">Xuéhuì de cí · ${W.length} words you’ve learned with Wukong. Tap one to hear it.</p>${W.length ? `<div class="mkwl" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px">${W.map(([zh, py, en]) => `<button class="mkw" type="button" data-mlsay="${zh}"><b class="zh">${zh}</b><span>${py}</span><small>${en}</small></button>`).join('')}</div>` : '<p>Finish a chapter of the Monkey King story to start your word wall.</p>'}</div>`;
+    panel.scrollTop = 0; panel.classList.add('on');
+  }
+  panelBody.addEventListener('click', e => { const b = e.target.closest('[data-mlsay]'); if (b) speak(b.dataset.mlsay); });
 
   // ---------- running a chapter ----------
   async function mkRunChapter(i, replay){
@@ -13582,7 +13742,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     await mkWords(C);
     mkClose(); mkwShut();
     if (!replay && MK.ch === i) {
-      const was = MK.ch; MK.ch = i + 1;
+      const was = MK.ch; MK.ch = i + 1; mloRefreshWall();
       const got = mkNewStuff(was); if (got) setTimeout(() => say(`${got} Open 🎒 宝贝 to try it.`, 5200), MK.ch === MK_P1 || MK.ch === 6 || C.unlock ? 7000 : 600);
       if (C.unlock === 'cloud') { MK.cloud = true; setTimeout(() => say('解锁：筋斗云！ Jiěsuǒ: jīndǒu yún! Unlocked the cloud: press ☁ (or C) to fly.', 5200), 600); }
       if (C.unlock === 'eyes') MK.eyes = true;
@@ -13705,6 +13865,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (u.shrine) return { shrine: true };
       if (u.mlsign) return { mlsign: true };
       if (u.mk) return { mk: u.mk };
+      if (u.mlnpc) return { mlnpc: u.mlnpc };
+      if (u.mlgem) return { mlgem: u.mlgem };
+      if (u.mlmap) return { mlmap: true };
+      if (u.mlwall) return { mlwall: true };
       if (u.mldoor) return { mldoor: true };
       if (u.questboard) return { questboard: true };
       if (u.hof) return { hof: true };
@@ -13730,6 +13894,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.mk) return p.mk === 'start' ? '齐天大圣到此一游 · Start the Monkey King story' : (MK.ch >= MKCH.length ? '孙悟空 · 再来！ Rematch' : '孙悟空 · 抓我呀！ Catch me!');
     if (p.mldoor) return '\u95E8: a door to Mandalink';
     if (p.questboard) return 'Quest board: earn Mandalink badges';
+    if (p.mlnpc) { const O = OUTER.find(o => o.id === p.mlnpc); return O ? `${O.who[1]} · Talk` : 'Talk'; }
+    if (p.mlgem) return '字宝石 · a character gem';
+    if (p.mlmap) return '地图 · Map';
+    if (p.mlwall) return '学会的词 · Words you’ve learned';
     if (p.hof) return 'Mandalink Hall of Fame';
     if (p.egg === 'vaultbook') return bookLabel();
     if (p.egg === 'speakers') return lofi ? 'Stop the lo-fi' : 'Play lo-fi';
@@ -13819,6 +13987,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (p.home) return exitWorld();
       if (p.mlsign) return openPC();
       if (p.mk) return mkClick(p.mk);
+      if (p.mlnpc) return mloTalk(p.mlnpc);
+      if (p.mlgem) { const g = MLO.gems.find(g => g.gm[0] === p.mlgem); if (g && Math.hypot(g.x - pos.x, g.z - pos.z) < 5) return mloGem(p.mlgem); return say('走近一点！ Zǒu jìn yì diǎn! Walk up to the gem to pick it up.', 2400); }
+      if (p.mlmap) return say(`地图 dìtú · map: the golden paths lead out to 云路, the Cloud Road. ${mlGems.length} / ${ALL_GEMS.length} 字宝石 found.`, 4200);
+      if (p.mlwall) return mloWallPanel();
       if (p.mldoor) { tone(330, .3, 'triangle', .06, 660); window.open('https://mandalink.org', '_blank', 'noopener'); return; }
       if (p.questboard) return openQuests();
       if (p.hof) { window.open('https://mandalink.org', '_blank', 'noopener'); return; }
