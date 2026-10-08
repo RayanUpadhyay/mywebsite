@@ -149,3 +149,20 @@ Each word a player *needs* (to open a gate, cast a move or read a clue) appears 
 - **Replay:** any chapter you've finished
 
 Your choices are saved in `ml-story` as `look` and `pet`.
+
+---
+
+## 9. Update: a bigger Mandalink world (云路, the Cloud Road)
+
+- **The ring road:** 云路 runs all the way around the world, past the recipe islands. Golden paths lead out to it from five of the radical islands, and the Hall of Fame bridge joins it on the 氵 side. Everything is walkable, so you don't need the cloud.
+- **Six new islands on the ring.** Each has someone to talk to: walk up to them or tap them for Chinese, pinyin, and English on tap.
+  - 茶园 the Tea Garden: a tea farmer explains 茶 (the grass radical, with a person and a tree underneath)
+  - 竹林 the Bamboo Grove: a panda
+  - 灯笼市场 the Lantern Market: a stallholder and "多少钱？"
+  - 龙门 the Dragon Gate: an old carp, a koi pond and a waterfall
+  - 风筝草地 the Kite Meadow: a child flying kites
+  - 书院 the Study Hall: a teacher, and a word wall of every word you've learned with Wukong (tap it to hear them)
+- **12 字宝石 character gems,** two hidden on each new island. They're saved in this browser as `ml-gems`, and finding all 12 unlocks the 玉佩 jade pendant look in 🎒.
+- **A 地图 map board** on the hub, next to the tablet.
+- **Far-off floating islands and waterfalls** for depth.
+- **No clashes:** the chapter arenas, recipe islands and the Hall of Fame keep their places; the new ring sits outside all of them.
