@@ -121,3 +121,31 @@ Each word a player *needs* (to open a gate, cast a move or read a clue) appears 
 1. **Wukong's look:** a cute chibi monkey with a golden headband and red cape (my default), or taller and cooler?
 2. **The 女 island** doesn't have a chapter. Want a bonus 第八回 there later (for example, the shape-shifting 白骨精 White Bone Demon from the novel), or leave it as a peaceful spot?
 3. **Boss difficulty:** easier than the screening room (story first), or about the same?
+
+---
+
+## 8. Update: everything happens in the world, and Part Two
+
+**In the world, not in a pop-up.** When a chapter starts, an arena rises out of the sea next to that chapter's island (第一回 and 第十回 use one west of the hub, 第七回 uses the cloud island). You walk onto it and play every mini-game and boss as yourself, in third person, with the normal controls (WASD or the joystick, jump, the cloud). The dialogue and word cards still use the overlay between rounds. When the chapter ends, the arena sinks again.
+
+- 抓小猴: monkeys pop out of holes in the arena. Run into them, or tap them.
+- 接桃子 / 接水滴: things fall from the sky with a shadow underneath, and you stand under them with a basket on your head.
+- 坐云去追 / 云上赛跑: you're on the cloud, flying through bubble rings or racing Wukong to the stars.
+- 你是谁？: eight props in a circle. The monkey tail points into the middle, so you have to go in and look around.
+- 听声调: four gates with the four tones. Walk through the right one.
+- Bosses stand on the far side of the arena. Your peaches fly by themselves. You dodge in 3D (you can jump some attacks), and the move buttons (变大, 分身, 火眼) sit at the bottom.
+
+**第二部 · 西天路上 (Part Two, chapters 8–10).** It starts after the Cloud Duel. The quest badge still unlocks after chapter 7, so nobody loses theirs.
+
+- **第八回 三打白骨精** (女 island): spot the White Bone Demon in disguise with 火眼, then fight her. She turns invisible and sends bone bats.
+- **第九回 火焰山** (日月 island): fan out spreading fires with the Earth God's little fan, then fight Princess Iron Fan. Hide behind rocks when she blows.
+- **第十回 牛魔王** (west of the hub): grab the characters with the 牛/牜 radical while calves charge you, then fight the Bull Demon King. Make him ram a rock so he gets dizzy, and jump his stomp rings.
+
+**宝贝 treasures** (the 🎒 button in Mandalink world). These unlock as you finish chapters, and old saves get theirs straight away.
+
+- **Looks:** 金箍, 虎皮裙, 混天绫, 凤翅紫金冠, 袈裟, 牛角
+- **Pets that follow you:** 小猴, 小白龙, 哮天犬, 小牛
+- **Magic weapons (extra boss buttons):** 乾坤圈 (stuns), 芭蕉扇 (blows away everything flying at you)
+- **Replay:** any chapter you've finished
+
+Your choices are saved in `ml-story` as `look` and `pet`.
