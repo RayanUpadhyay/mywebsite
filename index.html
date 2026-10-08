@@ -5104,7 +5104,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const H = HEROES[o.hero], u = Object.assign({ x: 0, z: 0, yaw: 0, hp: H.hp, max: H.hp, cd: Math.random(), spCd: 2 + Math.random() * 4, stun: 0, dead: 0, kx: 0, kz: 0, swing: 0, mv: 0, rage: 0, y: 0, bot: true }, o);
     if (H.kind === 'static') { const g = new THREE.Group(); cyl(.9, 1.2, .5, mat(0x3A3D44, { metalness: .6 }), 0, .25, 0, g, 16); cyl(.25, .35, 3.2, mat(0x5A5E68, { metalness: .7 }), 0, 1.9, 0, g, 12); const core = new THREE.Mesh(new THREE.OctahedronGeometry(.5, 0), glowM(0xFFC93C, { emissiveIntensity: 1.3 })); core.position.y = 3.9; g.add(core); u.av = { g, hold(){}, anim(t){ core.rotation.y = t * 1.5; core.position.y = 3.9 + Math.sin(t * 2) * .1; } }; eventScene.add(g); }
     else { const L = o.remote && o.look ? Object.assign({}, cleanLook(o.look), { outfit: H.outfit, mask: 1, cape: 1 }) : heroLook(o.hero);
-      u.av = avatar(L, { s: H.scale || 1 }); u.av.hold(H.prop || null); eventScene.add(u.av.g); }
+      let bd = null; if (!o.remote) try { bd = bodyAv(o.hero, H.scale || 1); } catch (e) { console.warn('body', o.hero, e); }
+      u.av = bd || avatar(L, { s: H.scale || 1 }); u.av.hold(H.prop || null); eventScene.add(u.av.g); }
     u.tag = hpTag(u); u.tag.position.y = H.kind === 'static' ? 4.8 : 2.2 * (H.scale || 1) + .2; u.av.g.add(u.tag); u.tag.scale.set(1.6 / (H.scale || 1), .4 / (H.scale || 1), 1); drawTag(u);
     EV.units.push(u); return u;
   }
@@ -7622,7 +7623,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   ];
   function deepRefresh(){
     if (!DEEP.built) return;
-    DEEP.statues.forEach(S => { const w = S.T.won(); if (S.s && S.won === w) return; if (S.s) { S.p.remove(S.s); disposeDeep(S.s); } S.won = w; let a; try { a = avatar(heroLook(S.T.hero), { s: .55 }); } catch (e) { a = avatar(LOOK0, { s: .55 }); } S.s = a.g; S.s.position.y = .9; S.p.add(S.s);
+    DEEP.statues.forEach(S => { const w = S.T.won(); if (S.s && S.won === w) return; if (S.s) { S.p.remove(S.s); disposeDeep(S.s); } S.won = w; let a; try { a = charAv(S.T.hero, .55); } catch (e) { a = avatar(LOOK0, { s: .55 }); } S.s = a.g; S.s.position.y = .9; S.p.add(S.s);
       if (w) bossDress({ av: a, hero: S.T.hero, boss: 1 }, true); else S.s.traverse(o => { if (o.isMesh) o.material = new THREE.MeshStandardMaterial({ color: 0x0E0F14, roughness: 1 }); }); });
     const key = SG.done.join(',') + '|' + SG.ch + '|' + SG.active; if (key === DEEP.wallKey) return; DEEP.wallKey = key; const c = DEEP.wall.c.getContext('2d'), W = 1400, H = 700;
     c.fillStyle = '#0E0F14'; c.fillRect(0, 0, W, H); c.fillStyle = '#FFC93C'; c.font = `900 46px ${DISPLAY}`; c.textAlign = 'left'; c.fillText('THE STORY SO FAR', 36, 64); c.font = '600 22px system-ui'; c.fillStyle = '#9AA3AD'; c.fillText('Every chapter you’ve lived through. Open the comic to keep going.', 36, 98);
@@ -7805,9 +7806,260 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   const moonShield = u => EV && EV.st && EV.st.mn && EV.st.mn.ph === 2 && u === EV.st.mn.b;
 
+  // ======================= bodies: every named character is built as themselves, not as a recoloured you =======================
+  // bdRig makes a skeleton (legs, torso, arms, head) with the proportions asked for; each BODY then adds the parts that make
+  // them who they are. The result works anywhere an avatar does: g, head, hold() and anim().
+  function bdRig(o){
+    o = Object.assign({ legL: .86, legR: .08, hipW: .1, tH: .62, bw: .25, bd: .2, armL: .64, armR: .065, handR: .065, headY: .22, legM: 0x2A2D33, torM: 0x3A3D44, armM: null, handM: null, footM: 0x16181D }, o);
+    const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+    const M = (c, x) => (c && c.isMaterial) ? c : new THREE.MeshStandardMaterial(Object.assign({ color: c, roughness: .6, metalness: 0 }, x || {}));
+    const R = { g, body, o, M, legs: [], arms: [], fx: [], hip: o.legL, sh: o.legL + o.tH };
+    R.add = (geo, m, x, y, z, par) => { const p = new THREE.Mesh(geo, M(m)); p.position.set(x, y, z); p.castShadow = true; (par || body).add(p); return p; };
+    R.glow = (c, k) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: k || 1.2 });
+    if (!o.noLegs) [-1, 1].forEach(sd => { const l = new THREE.Group(); l.position.set(sd * o.hipW, o.legL, 0); body.add(l); R.add(new THREE.CylinderGeometry(o.legR, o.legR * .85, o.legL - .06, 10), o.legM, 0, -(o.legL - .06) / 2, 0, l); R.add(new THREE.BoxGeometry(o.legR * 1.8, .1, .28), o.footM, 0, -o.legL + .05, -.05, l); R.legs.push(l); });
+    if (!o.noTorso) R.torso = R.add(new THREE.CylinderGeometry(o.bw, o.bw * .82, o.tH, 14), o.torM, 0, o.legL + o.tH / 2, 0);
+    [-1, 1].forEach(sd => { const a = new THREE.Group(); a.position.set(sd * (o.bw + o.armR + .02), R.sh - .04, 0); body.add(a); const up = R.add(new THREE.CylinderGeometry(o.armR, o.armR * .85, o.armL, 10), o.armM || o.torM, 0, -o.armL / 2, 0, a); const hand = new THREE.Group(); hand.position.y = -o.armL - .03; a.add(hand); R.add(new THREE.SphereGeometry(o.handR, 10, 8), o.handM || o.armM || o.torM, 0, 0, 0, hand); R.arms.push({ a, hand, up }); });
+    R.head = new THREE.Group(); R.head.position.y = R.sh + o.headY; body.add(R.head); R.head0 = R.head.position.y;
+    return R;
+  }
+  // eyes on the front of a head (the front is -z)
+  function bdEyes(R, par, col, w, y, z, sep){ [-1, 1].forEach(sd => R.add(new THREE.BoxGeometry(w || .045, .02, .01), col === undefined ? 0x16181D : R.glow(col, 1.6), sd * (sep || .05), y || .02, z || -.145, par || R.head)); }
+  function bdFace(R, skin, hair, hairC){ const sk = R.add(new THREE.SphereGeometry(.15, 16, 12), skin, 0, 0, 0, R.head); sk.scale.set(.95, 1.1, .95); bdEyes(R); if (hair) R.add(new THREE.SphereGeometry(.157, 16, 10, 0, Math.PI * 2, 0, Math.PI / (hair === 'buzz' ? 2.4 : 2.1)), hairC || 0x1A1410, 0, .02, .01, R.head); return sk; }
+  function bodyAv(id, s){
+    const make = BODY[id]; if (!make) return null; const R = make();
+    R.g.scale.multiplyScalar(s || 1); R.g.traverse(q => { if (q.isMesh) q.userData.noPick = true; });
+    let held = null;
+    return { g: R.g, head: R.head, custom: 1, arms: R.arms, legs: R.legs,
+      hold(id2){ const hnd = R.arms[1] && R.arms[1].hand; if (!hnd) return; if (held) { hnd.remove(held); disposeDeep(held); held = null; } if (!id2 || id2 === 'fists') return; try { held = mkWeapon(id2); held.scale.setScalar(.75); held.rotation.x = -.5; hnd.add(held); } catch (e) { held = null; } },
+      anim(t, mv, atk){
+        const o = R.o, k = o.stride || 1;
+        R.legs.forEach((l, i) => l.rotation.x = Math.sin(t * 9 * k + i * Math.PI) * .6 * mv);
+        R.arms.forEach((q, i) => { q.a.rotation.x = Math.sin(t * 9 * k + i * Math.PI + Math.PI) * .45 * mv + (o.armX || 0); q.a.rotation.z = (i ? -1 : 1) * (o.armZ || .06); });
+        if (atk > 0 && R.arms[1]) R.arms[1].a.rotation.x = -2.2 * Math.sin(atk * Math.PI);
+        if (o.float) R.body.position.y = o.float + Math.sin(t * 2) * .08; R.head.position.y = R.head0 + Math.sin(t * 2) * .006;
+        if (o.hunch) R.body.rotation.x = o.hunch;
+        R.fx.forEach(f => f(t, mv, atk));
+      } };
+  }
+  const BODY = {
+    // the Broker's exo-suit: a man in a black suit and top hat inside a gold frame that does his fighting for him
+    broker(){ const R = bdRig({ legL: .95, legR: .11, hipW: .14, tH: .7, bw: .3, armL: .7, armR: .09, handR: .1, legM: 0x16181D, torM: 0x1B1D22, handM: 0xB8903A }), gold = R.M(0xC9A04A, { metalness: .85, roughness: .25 });
+      bdFace(R, 0xD8B48C); R.add(new THREE.CylinderGeometry(.13, .13, .28, 16), 0x0B0B0E, 0, .27, 0, R.head); R.add(new THREE.CylinderGeometry(.22, .22, .02, 18), 0x0B0B0E, 0, .13, 0, R.head); R.add(new THREE.TorusGeometry(.028, .006, 6, 12), gold, .055, .02, -.146, R.head);
+      [-1, 1].forEach(sd => { R.add(new THREE.BoxGeometry(.06, .9, .06), gold, sd * .2, .5, -.08); R.add(new THREE.CylinderGeometry(.05, .05, .5, 10), gold, sd * .2, .55, .1); const p = R.add(new THREE.SphereGeometry(.2, 14, 10), gold, sd * .42, R.sh + .02, 0); p.scale.set(1.1, .7, 1); });
+      R.add(new THREE.BoxGeometry(.66, .08, .3), gold, 0, R.sh - .05, 0); R.add(new THREE.BoxGeometry(.5, .06, .26), gold, 0, R.hip + .1, 0);
+      const pack = R.add(new THREE.BoxGeometry(.42, .5, .2), gold, 0, R.hip + .45, .28); const core = R.add(new THREE.CylinderGeometry(.08, .08, .05, 16), R.glow(0xFFC93C), 0, R.hip + .45, .39); core.rotation.x = Math.PI / 2;
+      R.add(new THREE.BoxGeometry(.06, .14, .02), 0xEEF1F5, 0, R.hip + .55, -.27); R.add(new THREE.BoxGeometry(.04, .12, .02), 0x8A1A1A, 0, R.hip + .5, -.28);
+      R.fx.push(t => core.material.emissiveIntensity = 1 + Math.sin(t * 4) * .4); return R; },
+    // the Broker after Patient Zero got into the suit: the same frame, swallowed by something violet and alive
+    brk23(){ const R = BODY.broker(), goo = R.M(0x2A1036, { roughness: .25, metalness: .2 }), eye = R.glow(0xC03CFF, 2);
+      for (let i = 0; i < 22; i++) { const b = R.add(new THREE.SphereGeometry(.09 + Math.random() * .12, 10, 8), goo, (Math.random() - .5) * .7, .4 + Math.random() * 1.4, (Math.random() - .5) * .45); b.userData.p = b.position.clone(); }
+      bdEyes(R, R.head, 0xC03CFF, .05, .03, -.152);
+      const tents = []; for (let i = 0; i < 4; i++) { const tn = new THREE.Group(); tn.position.set((i - 1.5) * .18, R.hip + .55, .25); R.body.add(tn); for (let k = 0; k < 5; k++) R.add(new THREE.SphereGeometry(.07 - k * .01, 8, 6), goo, 0, k * .14, k * .05, tn); tents.push(tn); }
+      R.fx.push(t => tents.forEach((tn, i) => { tn.rotation.x = .6 + Math.sin(t * 2 + i) * .4; tn.rotation.z = Math.sin(t * 1.6 + i * 2) * .5; })); void eye; return R; },
+    // the Puppeteer: far too tall, porcelain face, a crossbar floating over her with strings down to her own wrists
+    puppeteer(){ const R = bdRig({ legL: 1.2, legR: .05, hipW: .07, tH: .78, bw: .16, armL: 1, armR: .04, handR: .045, legM: 0x2A1838, torM: 0x3A1E4E, handM: 0xF2EEF5, headY: .26, stride: .7 });
+      const face = R.add(new THREE.SphereGeometry(.15, 18, 14), 0xF2EEF5, 0, 0, 0, R.head); face.scale.set(.85, 1.2, .9); bdEyes(R, R.head, 0x16181D, .04, .04, -.135, .045);
+      [-1, 1].forEach(sd => R.add(new THREE.CircleGeometry(.025, 10), 0xE8768A, sd * .07, -.04, -.136, R.head).rotation.y = Math.PI);
+      R.add(new THREE.TorusGeometry(.05, .008, 6, 14, Math.PI), 0x16181D, 0, -.08, -.13, R.head).rotation.z = Math.PI;
+      const skirt = R.add(new THREE.ConeGeometry(.42, 1.3, 18, 1, true), R.M(0x3A1E4E, { side: THREE.DoubleSide }), 0, R.hip - .2, 0);
+      R.add(new THREE.TorusGeometry(.2, .03, 8, 18), 0xB07CFF, 0, R.sh, 0).rotation.x = Math.PI / 2;
+      const bar = new THREE.Group(); bar.position.y = R.sh + 1.1; R.body.add(bar); const wood = R.M(0x6B4A2B);
+      R.add(new THREE.BoxGeometry(.9, .05, .05), wood, 0, 0, 0, bar); R.add(new THREE.BoxGeometry(.05, .05, .6), wood, 0, 0, 0, bar);
+      const strings = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xEEE6FF, transparent: true, opacity: .8 })); R.g.add(strings);
+      const wp = new THREE.Vector3(), a = new THREE.Vector3(), b2 = new THREE.Vector3();
+      R.fx.push(t => { bar.rotation.y = Math.sin(t * .8) * .4; bar.rotation.z = Math.sin(t * 1.3) * .15; skirt.rotation.y = t * .3; R.g.updateMatrixWorld(true); const pts = []; R.arms.forEach((q, i) => { q.hand.getWorldPosition(wp); R.g.worldToLocal(a.copy(wp)); b2.set(i ? .45 : -.45, 0, 0); bar.localToWorld(b2); R.g.worldToLocal(b2); pts.push(a.clone(), b2.clone()); }); R.head.getWorldPosition(wp); R.g.worldToLocal(a.copy(wp)); b2.set(0, 0, 0); bar.localToWorld(b2); R.g.worldToLocal(b2); pts.push(a.clone(), b2.clone()); strings.geometry.dispose(); strings.geometry = new THREE.BufferGeometry().setFromPoints(pts); });
+      return R; },
+    // the Copycat: a chrome mannequin with a mirror for a face; it shows you yourself
+    copycat(){ const chrome = new THREE.MeshStandardMaterial({ color: 0xC8D2DE, metalness: .95, roughness: .12 }), R = bdRig({ legL: .9, legR: .07, tH: .64, bw: .22, armL: .7, armR: .055, handR: .05, legM: chrome, torM: chrome, footM: chrome });
+      const hd = R.add(new THREE.SphereGeometry(.15, 20, 14), chrome, 0, 0, 0, R.head); hd.scale.set(.9, 1.2, .95);
+      const mirror = R.add(new THREE.SphereGeometry(.152, 20, 14, Math.PI * .65, Math.PI * .7, Math.PI * .25, Math.PI * .5), new THREE.MeshStandardMaterial({ color: 0x9FD8FF, metalness: 1, roughness: 0, emissive: 0x24506A, emissiveIntensity: .6 }), 0, 0, 0, R.head); mirror.scale.copy(hd.scale);
+      for (let i = 0; i < 6; i++) R.add(new THREE.BoxGeometry(.46, .012, .4), 0x16181D, 0, R.hip + .08 + i * .1, 0);
+      const stripe = R.add(new THREE.BoxGeometry(.03, .62, .02), R.glow(0x7FD6FF), 0, R.hip + .32, -.2);
+      [-1, 1].forEach(sd => { for (let k = 0; k < 3; k++) { const f = R.add(new THREE.ConeGeometry(.012, .16, 6), chrome, (k - 1) * .025, -.1, 0, R.arms[sd > 0 ? 1 : 0].hand); f.rotation.x = Math.PI; } });
+      R.fx.push(t => { stripe.material.color.setHSL((t * .1) % 1, .7, .6); stripe.material.emissive.copy(stripe.material.color); }); return R; },
+    // Gridlock: a wall of a man in a hazard vest, with a traffic light for a head
+    sb_gridlock(){ const R = bdRig({ legL: .8, legR: .13, hipW: .16, tH: .75, bw: .38, bd: .3, armL: .7, armR: .12, handR: .13, legM: 0x2A3A5A, torM: 0xFF7A1E, handM: 0x16181D, headY: .3, stride: .8 });
+      [0, 1, 2].forEach(i => R.add(new THREE.CylinderGeometry(.385, .37, .05, 14), i === 1 ? 0xEEF1F5 : 0xF2C230, 0, R.hip + .2 + i * .18, 0));
+      R.add(new THREE.BoxGeometry(.24, .5, .22), 0x16181D, 0, 0, 0, R.head); const lights = [0xE8303C, 0xFFC93C, 0x3CE870].map((c, i) => R.add(new THREE.CircleGeometry(.065, 16), R.glow(c, .3), 0, .15 - i * .15, -.115, R.head)); lights.forEach(l => l.rotation.y = Math.PI);
+      [-1, 1].forEach(sd => { const c = R.add(new THREE.ConeGeometry(.17, .4, 16), 0xFF7A1E, sd * .5, R.sh + .14, 0); R.add(new THREE.CylinderGeometry(.18, .18, .04, 16), 0xEEF1F5, sd * .5, R.sh + .02, 0); void c; });
+      const bar = R.add(new THREE.BoxGeometry(1.4, .14, .06), 0xEEF1F5, 0, R.sh - .1, .32); [0, 1, 2, 3].forEach(i => R.add(new THREE.BoxGeometry(.2, .14, .065), 0xE8303C, -.5 + i * .34, R.sh - .1, .32)); void bar;
+      R.fx.push(t => { const k = Math.floor(t * 1.2) % 3; lights.forEach((l, i) => l.material.emissiveIntensity = i === k ? 2 : .15); }); return R; },
+    // Monsoon: a storm from the waist down, a hood like a folded umbrella, and it's always raining on him
+    sb_monsoon(){ const R = bdRig({ noLegs: 1, float: .7, legL: .3, tH: .7, bw: .22, armL: .7, torM: 0x2A5A8A, handM: 0x8FC7FF });
+      for (let i = 0; i < 9; i++) R.add(new THREE.SphereGeometry(.22 + (i % 3) * .06, 12, 10), R.M(0x6A7A8E, { transparent: true, opacity: .9 }), Math.cos(i * .7) * .28, .05 - (i % 3) * .14, Math.sin(i * .7) * .28);
+      bdFace(R, 0x7A9AB8); const hood = R.add(new THREE.ConeGeometry(.3, .32, 8, 1, true), R.M(0x1E3A5A, { side: THREE.DoubleSide }), 0, .14, 0, R.head); void hood; R.add(new THREE.CylinderGeometry(.008, .008, .3, 6), 0x16181D, 0, .4, 0, R.head);
+      const rain = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x9FD8FF, transparent: true, opacity: .6 })); R.g.add(rain); const drops = Array.from({ length: 30 }, () => [(Math.random() - .5) * 1.4, Math.random() * 2.2, (Math.random() - .5) * 1.4]);
+      R.fx.push((t, mv, atk) => { drops.forEach(d => { d[1] -= .05; if (d[1] < 0) d[1] = 2.2; }); rain.geometry.dispose(); rain.geometry = new THREE.BufferGeometry().setFromPoints(drops.flatMap(d => [V(d[0], d[1], d[2]), V(d[0], d[1] - .18, d[2])])); }); return R; },
+    // Static: no legs, a coil for a body, a ball of lightning for a head
+    sb_static(){ const R = bdRig({ noLegs: 1, noTorso: 1, float: .55, legL: .5, tH: .8, bw: .2, armL: .66, armR: .03, handR: .07, torM: 0x16181D, handM: 0x3CE8E8 }), arc = R.glow(0x3CE8E8, 1.6);
+      R.arms.forEach(q => { q.up.material = R.M(0x16181D, { metalness: .7 }); q.hand.children[0].material = arc; });
+      for (let i = 0; i < 8; i++) { const c = R.add(new THREE.TorusGeometry(.22 - i * .012, .025, 8, 22), i % 2 ? 0x16181D : 0x3A3D44, 0, R.hip + .05 + i * .1, 0); c.rotation.x = Math.PI / 2; c.material.metalness = .8; }
+      const core = R.add(new THREE.SphereGeometry(.17, 18, 14), arc, 0, 0, 0, R.head); const rings = [0, 1].map(i => { const r = R.add(new THREE.TorusGeometry(.26, .012, 6, 30), arc, 0, 0, 0, R.head); return r; });
+      const tail = R.add(new THREE.ConeGeometry(.12, .6, 10), arc, 0, R.hip - .25, 0); tail.rotation.x = Math.PI;
+      R.fx.push(t => { rings[0].rotation.set(t * 3, t * 2, 0); rings[1].rotation.set(-t * 2, 0, t * 3); core.scale.setScalar(1 + Math.sin(t * 20) * .06); tail.scale.y = 1 + Math.sin(t * 13) * .15; }); void core; return R; },
+    // the Smog: a body of soot clouds, a gas mask, and a chimney stack between his shoulders
+    sb_smog(){ const R = bdRig({ noTorso: 1, legL: .8, legR: .09, tH: .7, bw: .26, armL: .66, armR: .1, legM: 0x3A3A36, torM: 0x4A4A44, handM: 0x2A2A26 }), soot = R.M(0x3E3E3A, { roughness: 1 });
+      const puffs = []; for (let i = 0; i < 12; i++) puffs.push(R.add(new THREE.SphereGeometry(.17 + (i % 4) * .04, 10, 8), soot, Math.cos(i * 1.7) * .2, R.hip + .1 + (i % 5) * .13, Math.sin(i * 1.7) * .14));
+      R.add(new THREE.SphereGeometry(.15, 14, 10), 0x2A2D33, 0, 0, 0, R.head); [-1, 1].forEach(sd => { R.add(new THREE.CircleGeometry(.04, 14), R.glow(0xC8E860, .9), sd * .06, .03, -.15, R.head).rotation.y = Math.PI; const f = R.add(new THREE.CylinderGeometry(.05, .06, .1, 12), 0x5A6A3A, sd * .08, -.08, -.14, R.head); f.rotation.x = Math.PI / 2 + .3; f.rotation.z = sd * .4; });
+      const stack = R.add(new THREE.CylinderGeometry(.08, .1, .5, 12), 0x5A3A2A, .14, R.sh + .2, .2); const smoke = [0, 1, 2].map(i => R.add(new THREE.SphereGeometry(.1, 8, 6), R.M(0x6A6A62, { transparent: true, opacity: .6 }), .14, R.sh + .5 + i * .2, .2)); void stack;
+      R.fx.push(t => { puffs.forEach((p, i) => p.scale.setScalar(1 + Math.sin(t * 2 + i) * .1)); smoke.forEach((s, i) => { const k = (t * .6 + i / 3) % 1; s.position.y = R.sh + .45 + k * .9; s.scale.setScalar(.6 + k * 1.6); s.material.opacity = .6 * (1 - k); }); }); return R; },
+    // Pothole: a slab of road that stood up, with a yellow line across his chest and arms like bollards
+    sb_pothole(){ const R = bdRig({ noTorso: 1, legL: .6, legR: .15, hipW: .2, tH: .9, bw: .42, armL: .8, armR: .16, handR: .22, legM: 0x2E2C2A, torM: 0x3A3632, handM: 0x2E2C2A, headY: .16, stride: .6, armZ: .25 }), rock = R.M(0x3A3632, { roughness: 1, flatShading: true });
+      const tor = R.add(new THREE.DodecahedronGeometry(.5, 0), rock, 0, R.hip + .45, 0); tor.scale.set(1.1, 1, .8);
+      R.add(new THREE.BoxGeometry(.9, .06, .02), 0xF2C230, 0, R.hip + .5, -.37); R.add(new THREE.BoxGeometry(.2, .06, .02), 0xEEF1F5, -.3, R.hip + .3, -.36);
+      R.add(new THREE.DodecahedronGeometry(.2, 0), rock, 0, 0, 0, R.head); bdEyes(R, R.head, 0xFFC93C, .05, .02, -.17, .07);
+      for (let i = 0; i < 5; i++) R.add(new THREE.DodecahedronGeometry(.09 + i % 2 * .04, 0), rock, (i - 2) * .17, R.sh + .1 + (i % 2) * .08, .1);
+      return R; },
+    // Rustbolt: a boiler on legs, all pipes and rivets, one arm ending in a big claw
+    sb_rust(){ const rust = new THREE.MeshStandardMaterial({ color: 0x8A4A1E, metalness: .6, roughness: .8 }), R = bdRig({ legL: .82, legR: .09, tH: .7, bw: .3, armL: .62, armR: .08, handR: .08, legM: 0x5A5E68, torM: rust, armM: 0x5A5E68, footM: 0x3A3D44, headY: .2 });
+      R.add(new THREE.BoxGeometry(.26, .22, .24), rust, 0, 0, 0, R.head); R.add(new THREE.BoxGeometry(.18, .04, .02), R.glow(0xFF8A2E), 0, .02, -.125, R.head);
+      for (let i = 0; i < 8; i++) R.add(new THREE.SphereGeometry(.02, 6, 4), 0x5A5E68, Math.cos(i * .8) * .3, R.hip + .3 + (i % 2) * .2, Math.sin(i * .8) * .3);
+      [-1, 1].forEach(sd => R.add(new THREE.CylinderGeometry(.05, .05, .7, 8), 0x5A5E68, sd * .12, R.sh + .05, .25));
+      const tank = R.add(new THREE.CylinderGeometry(.16, .16, .55, 14), 0x6A3A1A, 0, R.hip + .4, .32); void tank;
+      const claw = R.arms[1].hand; [-1, 1].forEach(sd => { const c = R.add(new THREE.BoxGeometry(.04, .24, .08), 0x3A3D44, sd * .07, -.12, 0, claw); c.rotation.z = sd * .3; });
+      const puff = R.add(new THREE.SphereGeometry(.08, 8, 6), R.M(0xEEEEEE, { transparent: true, opacity: .5 }), .12, R.sh + .45, .25);
+      R.fx.push(t => { const k = (t * 1.2) % 1; puff.position.y = R.sh + .42 + k * .5; puff.material.opacity = .5 * (1 - k); puff.scale.setScalar(.5 + k * 1.5); }); return R; },
+    // the man who runs the stash house: heavy, a gold chain, a cap turned back
+    gangBoss(){ const R = bdRig({ legL: .82, legR: .1, hipW: .12, tH: .66, bw: .33, armL: .64, armR: .09, handR: .08, legM: 0x2A2D3A, torM: 0x2A1E16, armM: 0x2A1E16, handM: 0x8A5A3A });
+      bdFace(R, 0x8A5A3A); R.add(new THREE.SphereGeometry(.16, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), 0xC8102E, 0, .03, 0, R.head); R.add(new THREE.BoxGeometry(.18, .02, .14), 0xC8102E, 0, .05, .16, R.head);
+      R.add(new THREE.BoxGeometry(.24, .05, .03), 0x0B0D14, 0, .02, -.15, R.head);
+      R.add(new THREE.TorusGeometry(.2, .025, 8, 22), R.M(0xD9A93A, { metalness: .9, roughness: .2 }), 0, R.sh - .12, -.04).rotation.x = Math.PI / 2.4;
+      R.add(new THREE.BoxGeometry(.5, .5, .04), 0xEEF1F5, 0, R.hip + .35, -.2); return R; },
+    gangA(){ const R = bdRig({ legL: .84, tH: .6, bw: .23, legM: 0x2A2D3A, torM: 0x4A5A3A, handM: 0xA87A54 }); bdFace(R, 0xA87A54); const hood = R.add(new THREE.SphereGeometry(.18, 14, 10, 0, Math.PI * 2, 0, Math.PI * .6), 0x4A5A3A, 0, .02, .03, R.head); void hood; return R; },
+    gangB(){ const R = bdRig({ legL: .86, tH: .6, bw: .22, legM: 0x3A2A1E, torM: 0x16181D, handM: 0xC08A64 }); bdFace(R, 0xC08A64, 'short'); R.add(new THREE.BoxGeometry(.24, .1, .05), 0xC8102E, 0, -.06, -.14, R.head); return R; },
+    // the clones of you: your face, but each one made for a job
+    rclone(){ const L = lookCols(look), R = bdRig({ legM: 0x8A9098, torM: 0xC9CFD8, handM: L.skin }); bdFace(R, L.skin, 'buzz', L.hairC); R.add(new THREE.BoxGeometry(.12, .04, .01), 0x16181D, 0, -.2, -.1, R.head); for (let i = 0; i < 6; i++) R.add(new THREE.BoxGeometry(.008, .04, .005), 0x16181D, -.04 + i * .016, -.2, -.106, R.head); R.add(new THREE.BoxGeometry(.18, .06, .02), 0xE8303C, 0, R.sh - .2, -.22); return R; },
+    clone2(){ const L = lookCols(look), R = bdRig({ legL: .92, legR: .06, tH: .58, bw: .19, armR: .05, legM: 0x16181D, torM: 0x16181D, handM: L.skin, stride: 1.4, hunch: .25 }); bdFace(R, L.skin, 'buzz', L.hairC); [-1, 1].forEach(sd => { R.add(new THREE.BoxGeometry(.02, .5, .02), R.glow(0xFFC93C), sd * .19, R.hip + .3, -.05); const fin = R.add(new THREE.ConeGeometry(.04, .2, 4), 0xFFC93C, sd * .1, -.7, .1, R.legs[sd > 0 ? 1 : 0]); fin.rotation.x = -1.2; }); R.add(new THREE.BoxGeometry(.3, .04, .03), R.glow(0xFFC93C), 0, .03, -.15, R.head); return R; },
+    clone3(){ const L = lookCols(look), R = bdRig({ legR: .11, hipW: .13, tH: .66, bw: .31, armR: .09, handR: .09, legM: 0x4A5058, torM: 0x5A6068, armM: 0x4A5058, handM: 0x3A3D44, stride: .8 }), steel = R.M(0x7A828C, { metalness: .8, roughness: .3 });
+      bdFace(R, L.skin, 'buzz', L.hairC); R.add(new THREE.SphereGeometry(.17, 14, 10, 0, Math.PI * 2, 0, Math.PI * .55), steel, 0, .01, 0, R.head); [-1, 1].forEach(sd => { const p = R.add(new THREE.BoxGeometry(.3, .12, .32), steel, sd * .42, R.sh + .05, 0); p.rotation.z = sd * -.3; R.add(new THREE.BoxGeometry(.16, .3, .18), steel, 0, -.25, -.02, R.legs[sd > 0 ? 1 : 0]); }); R.add(new THREE.BoxGeometry(.56, .44, .08), steel, 0, R.hip + .38, -.24); return R; },
+    clone4(){ const L = lookCols(look), R = bdRig({ legM: 0x2A4A6A, torM: 0x2A4A6A, handM: L.skin }); bdFace(R, L.skin, 'buzz', L.hairC); R.add(new THREE.PlaneGeometry(.2, .2), new THREE.MeshBasicMaterial({ map: tex(64, 64, (c, w, h) => { c.fillStyle = '#EEF1F5'; c.fillRect(0, 0, w, h); c.fillStyle = '#16181D'; c.font = '800 48px sans-serif'; c.textAlign = 'center'; c.fillText('4', 32, 48); }) }), 0, R.hip + .4, -.26).rotation.y = Math.PI; return R; },
+    clone5(){ const L = lookCols(look), R = bdRig({ legM: 0x6A2A2A, torM: 0x6A2A2A, handM: L.skin }); bdFace(R, L.skin, 'buzz', L.hairC); R.add(new THREE.PlaneGeometry(.2, .2), new THREE.MeshBasicMaterial({ map: tex(64, 64, (c, w, h) => { c.fillStyle = '#EEF1F5'; c.fillRect(0, 0, w, h); c.fillStyle = '#16181D'; c.font = '800 48px sans-serif'; c.textAlign = 'center'; c.fillText('5', 32, 48); }) }), 0, R.hip + .4, -.26).rotation.y = Math.PI; return R; },
+    // the knock-off Avengers the Broker hired
+    kguard(){ const R = bdRig({ legM: 0x3A3D44, torM: 0x5A2A2A, armM: 0x5A2A2A, handM: 0xB8BEC8 }); R.add(new THREE.SphereGeometry(.16, 14, 10), R.M(0x5A2A2A, { metalness: .5 }), 0, 0, 0, R.head); R.add(new THREE.BoxGeometry(.2, .03, .02), R.glow(0xFFE08A), 0, .02, -.15, R.head); R.add(new THREE.CylinderGeometry(.05, .05, .02, 14), R.glow(0x9FD8FF, .8), 0, R.sh - .2, -.24).rotation.x = Math.PI / 2; R.add(new THREE.CylinderGeometry(.04, .04, .02, 10), R.glow(0x9FD8FF, .8), 0, -.02, -.05, R.arms[1].hand).rotation.x = Math.PI / 2; return R; },
+    kthor(){ const R = bdRig({ legM: 0x3A3D44, torM: 0x2A3A5A, armM: 0x9AA3AE, handM: 0x9AA3AE }); bdFace(R, 0xC08A64); R.add(new THREE.SphereGeometry(.16, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2.2), R.M(0x9AA3AE, { metalness: .6 }), 0, .02, 0, R.head); [-1, 1].forEach(sd => R.add(new THREE.BoxGeometry(.02, .08, .1), 0xEEF1F5, sd * .16, .08, 0, R.head)); const cape = R.add(new THREE.PlaneGeometry(.5, 1), R.M(0x8A1A1A, { side: THREE.DoubleSide }), 0, R.sh - .5, .22); void cape; return R; },
+    // the Ultron scrap bot: a bin on legs with a single red eye
+    uscrap(){ const scrap = new THREE.MeshStandardMaterial({ color: 0x6A6E78, metalness: .7, roughness: .6 }), R = bdRig({ legL: .6, legR: .05, tH: .5, bw: .26, armL: .5, armR: .04, legM: scrap, torM: scrap, handM: 0x3A3D44, headY: .14 }); R.add(new THREE.SphereGeometry(.13, 12, 10), scrap, 0, 0, 0, R.head); R.add(new THREE.CircleGeometry(.04, 12), R.glow(0xFF3030, 2), 0, 0, -.131, R.head).rotation.y = Math.PI; for (let i = 0; i < 4; i++) R.add(new THREE.BoxGeometry(.1, .04, .06), 0x3A3D44, (Math.random() - .5) * .4, R.hip + Math.random() * .5, -.2); return R; },
+    // Doom's last backup on the Moon: a battered robot skeleton in what's left of the cloak
+    moondoom(){ const steel = new THREE.MeshStandardMaterial({ color: 0x5A6A5A, metalness: .85, roughness: .35 }), R = bdRig({ legR: .06, tH: .7, bw: .22, armR: .05, legM: steel, torM: steel, handM: steel, headY: .24 });
+      for (let i = 0; i < 5; i++) R.add(new THREE.BoxGeometry(.5 - i * .03, .03, .2), steel, 0, R.hip + .15 + i * .11, 0);
+      const mask = R.add(new THREE.BoxGeometry(.24, .3, .24), steel, 0, 0, 0, R.head); void mask; R.add(new THREE.BoxGeometry(.05, .03, .01), R.glow(0x3CE870, 2), -.05, .04, -.125, R.head); R.add(new THREE.BoxGeometry(.05, .03, .01), 0x16181D, .05, .04, -.125, R.head);
+      const cloak = R.add(new THREE.PlaneGeometry(.7, 1.3, 4, 4), R.M(0x2E5A2E, { side: THREE.DoubleSide }), 0, R.sh - .6, .2); const p = cloak.geometry.attributes.position; for (let i = 0; i < p.count; i++) if (p.getY(i) < -.3) p.setX(i, p.getX(i) + (Math.random() - .5) * .15); for (let i = 0; i < 3; i++) R.add(new THREE.CylinderGeometry(.01, .01, .3, 4), R.glow(0x3CE870, 1), .1 - i * .08, R.hip + .1, -.15).rotation.z = .4 * (i - 1);
+      R.fx.push(t => cloak.rotation.x = .1 + Math.sin(t * 1.4) * .05); return R; },
+    // Doombots: grey steel, a cold face plate and a green hood
+    dbot(){ const steel = new THREE.MeshStandardMaterial({ color: 0x8A949E, metalness: .8, roughness: .3 }), R = bdRig({ legR: .085, tH: .66, bw: .26, armR: .075, legM: steel, torM: steel, handM: steel }); R.add(new THREE.SphereGeometry(.16, 14, 12), steel, 0, 0, 0, R.head); R.add(new THREE.BoxGeometry(.2, .22, .03), steel, 0, -.01, -.14, R.head); bdEyes(R, R.head, 0x3CE870, .05, .03, -.157); R.add(new THREE.SphereGeometry(.2, 14, 10, 0, Math.PI * 2, 0, Math.PI * .55), 0x2E5A2E, 0, .03, .03, R.head); R.add(new THREE.BoxGeometry(.5, .44, .02), 0x2E5A2E, 0, R.hip + .35, -.22); return R; },
+    dbotm(){ const R = BODY.dbot(); R.arms.forEach(q => { const bl = R.add(new THREE.BoxGeometry(.03, .5, .1), R.M(0xB8C0CA, { metalness: .9, roughness: .2 }), 0, -.25, 0, q.hand); void bl; }); return R; },
+    // Victor von Doom, the one at the end of the saga: armour, a full cloak and a hood, and the mask
+    doom24(){ const steel = new THREE.MeshStandardMaterial({ color: 0x8A949E, metalness: .85, roughness: .3 }), R = bdRig({ legR: .095, tH: .7, bw: .29, armR: .08, handR: .08, legM: steel, torM: 0x2E5A2E, armM: steel, handM: steel, headY: .24 });
+      const mask = R.add(new THREE.SphereGeometry(.16, 16, 12), steel, 0, 0, 0, R.head); mask.scale.set(.95, 1.12, .95); R.add(new THREE.BoxGeometry(.2, .03, .02), 0x16181D, 0, .04, -.155, R.head); R.add(new THREE.BoxGeometry(.1, .02, .02), 0x16181D, 0, -.07, -.155, R.head); [-1, 1].forEach(sd => R.add(new THREE.BoxGeometry(.012, .1, .02), 0x16181D, sd * .03, -.03, -.155, R.head));
+      R.add(new THREE.SphereGeometry(.22, 16, 12, 0, Math.PI * 2, 0, Math.PI * .6), 0x1E4A1E, 0, .04, .04, R.head);
+      const cloak = R.add(new THREE.CylinderGeometry(.34, .6, 1.5, 16, 1, true, Math.PI * .25, Math.PI * 1.5), R.M(0x1E4A1E, { side: THREE.DoubleSide }), 0, R.sh - .7, .02); cloak.rotation.y = Math.PI;
+      R.add(new THREE.CylinderGeometry(.3, .3, .08, 14), 0x6A4A1E, 0, R.hip + .02, 0); R.add(new THREE.CylinderGeometry(.05, .05, .02, 12), R.M(0xC9A04A, { metalness: .9 }), 0, R.hip + .02, -.3).rotation.x = Math.PI / 2;
+      R.fx.push(t => cloak.rotation.x = Math.sin(t * 1.2) * .03); return R; },
+    // Doom piloting a giant Doombot: the face is his, projected on the plate
+    dbot24(){ const R = BODY.dbot(); const face = R.add(new THREE.PlaneGeometry(.16, .18), new THREE.MeshBasicMaterial({ color: 0x3CE870, transparent: true, opacity: .55 }), 0, -.01, -.158, R.head); face.rotation.y = Math.PI; [-1, 1].forEach(sd => R.add(new THREE.CylinderGeometry(.06, .06, .5, 10), R.glow(0x3CE870, .7), sd * .2, R.hip + .35, .26)); R.fx.push(t => face.material.opacity = .4 + Math.sin(t * 9) * .15); return R; },
+    // Doom written in ink: the same armour, but black and glossy, dripping as he moves
+    inkdoom(){ const R = BODY.doom24(), ink = new THREE.MeshStandardMaterial({ color: 0x0A0A12, metalness: .2, roughness: .08 }); R.g.traverse(o => { if (o.isMesh && o.material.color) { const c = o.material.color; if (!(c.g > .7 && c.r < .3)) o.material = ink; } });
+      const drips = []; for (let i = 0; i < 10; i++) { const d = R.add(new THREE.SphereGeometry(.04, 8, 6), ink, (Math.random() - .5) * .6, 1 + Math.random() * .6, (Math.random() - .5) * .4); d.scale.y = 2; d.userData.y0 = d.position.y; drips.push(d); }
+      R.fx.push(t => drips.forEach((d, i) => { const k = (t * .4 + i / 10) % 1; d.position.y = d.userData.y0 - k * 1; d.scale.setScalar(1 - k * .7); })); return R; }
+  };
+
+  Object.assign(BODY, {
+    // Code Black. Adrenal: wiry, hunched forward, veins lit up yellow, two auto-injectors in his chest
+    cb_adrenal(){ const R = bdRig({ legL: .92, legR: .06, tH: .6, bw: .19, armL: .72, armR: .05, handR: .055, legM: 0x1A1D22, torM: 0x2A2D22, armM: 0xC8A88A, handM: 0xC8A88A, hunch: .3, stride: 1.4 }), vein = R.glow(0xD8F23C, 1.4);
+      const sk = bdFace(R, 0xC8A88A); bdEyes(R, R.head, 0xD8F23C, .04, .025, -.15); void sk;
+      R.arms.forEach(q => { for (let i = 0; i < 3; i++) R.add(new THREE.BoxGeometry(.012, .2, .012), vein, (i - 1) * .02, -.2 - i * .12, -.05, q.a); });
+      [-1, 1].forEach(sd => { const inj = R.add(new THREE.CylinderGeometry(.035, .035, .26, 10), 0xEEF1F5, sd * .1, R.hip + .45, -.2); inj.rotation.x = .7; R.add(new THREE.CylinderGeometry(.03, .03, .1, 10), vein, sd * .1, R.hip + .52, -.26).rotation.x = .7; });
+      R.add(new THREE.BoxGeometry(.4, .04, .02), 0xD8F23C, 0, R.hip + .1, -.19); return R; },
+    // Fever: a hospital gown on fire, her hair standing up like flame
+    cb_fever(){ const R = bdRig({ legL: .86, legR: .07, tH: .64, bw: .21, legM: 0xFFB08A, torM: 0xBFE6F0, armM: 0xFFB08A, handM: 0xFFB08A }), fire = R.glow(0xFF6A2E, 1.6), hot = R.glow(0xFFC93C, 1.8);
+      bdFace(R, 0xFFB08A); bdEyes(R, R.head, 0xFFC93C, .04, .025, -.15);
+      const gown = R.add(new THREE.CylinderGeometry(.24, .34, .7, 14, 1, true), R.M(0xBFE6F0, { side: THREE.DoubleSide }), 0, R.hip - .1, 0); void gown;
+      const flames = []; for (let i = 0; i < 9; i++) flames.push(R.add(new THREE.ConeGeometry(.05, .3, 6), i % 2 ? fire : hot, Math.cos(i * .7) * .1, .2, Math.sin(i * .7) * .1 + .02, R.head));
+      for (let i = 0; i < 6; i++) flames.push(R.add(new THREE.ConeGeometry(.05, .22, 6), fire, (i - 2.5) * .1, R.hip - .45, -.3));
+      R.fx.push(t => flames.forEach((f, i) => { f.scale.y = 1 + Math.sin(t * 12 + i * 1.7) * .3; })); return R; },
+    // the Plague Doctor: wide hat, long beak, a leather coat to the floor, a cane
+    cb_plague(){ const R = bdRig({ legL: .9, legR: .06, tH: .7, bw: .21, armL: .7, legM: 0x16181D, torM: 0x1A1D22, handM: 0x2A1E16, headY: .25 }), leather = R.M(0x1A1D22, { roughness: .4 });
+      R.add(new THREE.SphereGeometry(.15, 14, 12), leather, 0, 0, 0, R.head); const beak = R.add(new THREE.ConeGeometry(.07, .4, 12), 0xE8E2D0, 0, -.04, -.3, R.head); beak.rotation.x = -Math.PI / 2;
+      [-1, 1].forEach(sd => R.add(new THREE.CircleGeometry(.04, 14), R.glow(0x5E9A3A, 1.4), sd * .06, .04, -.14, R.head).rotation.y = Math.PI);
+      R.add(new THREE.CylinderGeometry(.34, .34, .02, 20), leather, 0, .14, 0, R.head); R.add(new THREE.CylinderGeometry(.15, .17, .2, 16), leather, 0, .24, 0, R.head);
+      R.add(new THREE.CylinderGeometry(.25, .42, 1.3, 16, 1, true), R.M(0x1A1D22, { side: THREE.DoubleSide, roughness: .4 }), 0, R.hip - .05, 0);
+      const cane = R.add(new THREE.CylinderGeometry(.015, .015, 1, 6), 0x6B4A2B, 0, -.4, 0, R.arms[0].hand); void cane; return R; },
+    // the Anaesthetist: she floats, with her feet off the floor; a mask over her mouth and two gas tanks on her back
+    cb_anaes(){ const R = bdRig({ noLegs: 1, float: .45, legL: .55, tH: .66, bw: .2, armL: .7, torM: 0x6B5FB8, handM: 0xE8E2F2 }), lav = R.M(0x6B5FB8);
+      bdFace(R, 0xE8E2F2, 'long', 0x2A2238); R.add(new THREE.BoxGeometry(.3, .4, .08), 0x2A2238, 0, -.14, .12, R.head);
+      const mask = R.add(new THREE.SphereGeometry(.08, 12, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0xC9C2F0, 0, -.06, -.12, R.head); mask.rotation.x = -Math.PI / 2;
+      const robe = R.add(new THREE.ConeGeometry(.38, 1, 16, 1, true), R.M(0x6B5FB8, { side: THREE.DoubleSide }), 0, R.hip - .2, 0); void lav;
+      [-1, 1].forEach(sd => { R.add(new THREE.CylinderGeometry(.08, .08, .55, 12), 0x9B8BFF, sd * .11, R.hip + .35, .24); R.add(new THREE.CylinderGeometry(.03, .03, .08, 8), 0x5A5E68, sd * .11, R.hip + .66, .24); });
+      const hose = R.add(new THREE.TorusGeometry(.16, .015, 6, 18, Math.PI), 0xC9C2F0, 0, R.sh + .02, .08); hose.rotation.y = Math.PI / 2;
+      const motes = []; for (let i = 0; i < 6; i++) motes.push(R.add(new THREE.SphereGeometry(.04, 8, 6), R.glow(0xC9C2F0, 1), 0, 0, 0));
+      R.fx.push(t => { robe.rotation.y = t * .4; motes.forEach((m, i) => { const a = t * .8 + i; m.position.set(Math.cos(a) * .55, R.hip + .2 + Math.sin(t * 1.2 + i) * .4, Math.sin(a) * .55); }); }); return R; },
+    // Dr. Suture: scrubs, cap and mask, steady hands, and two robotic arms of her own folded over her shoulders
+    cb_suture(){ const R = bdRig({ legL: .9, legR: .075, tH: .66, bw: .23, armL: .68, legM: 0x3E6E8C, torM: 0x3E6E8C, armM: 0x3E6E8C, handM: 0xE8EEF2 }), steel = R.M(0xB8BEC8, { metalness: .8, roughness: .25 });
+      bdFace(R, 0xC8A07A); R.add(new THREE.SphereGeometry(.158, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), 0x6A9AB8, 0, .02, 0, R.head); R.add(new THREE.BoxGeometry(.2, .1, .03), 0xBFE6F0, 0, -.07, -.14, R.head);
+      const backArms = [-1, 1].map(sd => { const a = new THREE.Group(); a.position.set(sd * .18, R.sh, .18); R.body.add(a); R.add(new THREE.CylinderGeometry(.05, .05, .5, 10), steel, 0, .25, 0, a); const j = new THREE.Group(); j.position.y = .5; a.add(j); R.add(new THREE.CylinderGeometry(.04, .04, .5, 10), steel, 0, .25, 0, j); R.add(new THREE.ConeGeometry(.04, .14, 8), R.glow(0x5FE0E8, 1.2), 0, .55, 0, j); a.rotation.z = -sd * .9; j.rotation.z = sd * 1.6; return { a, j }; });
+      R.fx.push((t, mv, atk) => backArms.forEach((q, i) => { q.j.rotation.z = (i ? 1 : -1) * (1.6 - atk * 1.2) + Math.sin(t * 2 + i) * .15; })); return R; },
+    // the hospital's own people
+    cb_hale(){ const R = bdRig({ legL: .9, tH: .66, bw: .24, legM: 0x2A3A4A, torM: 0xEEF1F5, armM: 0xEEF1F5, handM: 0x8A6A4A }); bdFace(R, 0x8A6A4A, 'buzz', 0x9A9A9A); R.add(new THREE.CylinderGeometry(.25, .3, .75, 14, 1, true), R.M(0xEEF1F5, { side: THREE.DoubleSide }), 0, R.hip + .02, 0); R.add(new THREE.TorusGeometry(.09, .012, 6, 16, Math.PI), 0x2A2D33, 0, R.sh - .15, -.2); R.add(new THREE.BoxGeometry(.12, .02, .01), 0x16181D, 0, -.06, -.145, R.head); return R; },
+    cb_ama(){ const R = bdRig({ legL: .84, legR: .07, tH: .6, bw: .21, legM: 0x2E8A7A, torM: 0x2E8A7A, armM: 0x2E8A7A, handM: 0x5A3A2A }); bdFace(R, 0x5A3A2A); for (let i = 0; i < 7; i++) R.add(new THREE.SphereGeometry(.05, 8, 6), 0x16181D, Math.cos(i * .9) * .12, .1 + (i % 2) * .04, Math.sin(i * .9) * .12 + .03, R.head); R.add(new THREE.SphereGeometry(.09, 10, 8), 0x16181D, 0, .1, .14, R.head); R.add(new THREE.BoxGeometry(.08, .1, .01), 0xEEF1F5, .1, R.sh - .2, -.2); return R; },
+    cb_reyes(){ const R = bdRig({ legL: .9, legR: .075, tH: .64, bw: .23, legM: 0x5A3A6A, torM: 0x5A3A6A, armM: 0x5A3A6A, handM: 0xB88A64 }); bdFace(R, 0xB88A64, 'short', 0x1A1410); R.add(new THREE.BoxGeometry(.14, .03, .01), 0x2A1E16, 0, .07, -.146, R.head); R.add(new THREE.TorusGeometry(.06, .008, 6, 14), 0x2A2D33, 0, .01, -.15, R.head); R.add(new THREE.BoxGeometry(.1, .01, .03), 0xFFC93C, -.1, R.sh - .15, -.22); return R; },
+    cb_kai(){ const R = bdRig({ legL: .8, legR: .085, tH: .58, bw: .22, legM: 0x8FC7E8, torM: 0x8FC7E8, armM: 0xA87A54, handM: 0xA87A54, headY: .25 }); const sk = bdFace(R, 0xA87A54, 'short', 0x16181D); sk.scale.multiplyScalar(1.15); for (let i = 0; i < 5; i++) R.add(new THREE.ConeGeometry(.04, .1, 6), 0x16181D, (i - 2) * .05, .17, -.02, R.head); R.add(new THREE.TorusGeometry(.07, .015, 6, 14), 0xEEF1F5, 0, -.38, 0, R.arms[0].a).rotation.x = Math.PI / 2; return R; },
+    // Book Six: the one who fell first is you, grown old in a timeline that never got fixed
+    oldme(){ const L = lookCols(look), R = bdRig({ legL: .86, tH: .62, bw: .24, legM: 0x3A3F4A, torM: 0x3A3F4A, armM: 0x3A3F4A, handM: L.skin, hunch: .18, stride: .8 }); const sk = bdFace(R, L.skin, 'short', 0xD4D4D4); void sk;
+      R.add(new THREE.BoxGeometry(.2, .1, .08), 0xD4D4D4, 0, -.1, -.11, R.head); R.add(new THREE.BoxGeometry(.012, .1, .01), 0x8A3A3A, .05, .04, -.15, R.head);
+      const coat = R.add(new THREE.CylinderGeometry(.26, .36, 1.05, 14, 1, true, Math.PI * .15, Math.PI * 1.7), R.M(0x6A5440, { side: THREE.DoubleSide }), 0, R.hip + .05, 0); coat.rotation.y = Math.PI;
+      R.arms.forEach(q => { const bl = q.hand; for (let k = 0; k < 3; k++) { const c = R.add(new THREE.BoxGeometry(.012, .26, .025), 0xE3D2A6, (k - 1) * .025, -.15, 0, bl); void c; } }); return R; },
+    oldecho(){ const R = BODY.oldme(); R.g.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.transparent = true; o.material.opacity = .45; o.material.emissive = new THREE.Color(0x6A7AFF); o.material.emissiveIntensity = .5; } }); return R; },
+    // the Clockmaker: a clock face for a head, a pendulum swinging in his chest, gears turning on his back
+    clockmaker(){ const brass = new THREE.MeshStandardMaterial({ color: 0xC8A060, metalness: .85, roughness: .3 }), R = bdRig({ legL: .9, legR: .06, tH: .74, bw: .22, armL: .72, legM: 0x2A2018, torM: 0x2A2018, armM: 0x2A2018, handM: brass, headY: .27 });
+      const face = R.add(new THREE.CylinderGeometry(.2, .2, .08, 28), brass, 0, 0, 0, R.head); face.rotation.x = Math.PI / 2;
+      const dial = R.add(new THREE.CircleGeometry(.17, 28), new THREE.MeshBasicMaterial({ map: tex(128, 128, (c, w) => { c.fillStyle = '#F4ECD8'; c.beginPath(); c.arc(64, 64, 62, 0, 7); c.fill(); c.fillStyle = '#2A2018'; c.font = '700 16px serif'; c.textAlign = 'center'; c.textBaseline = 'middle'; ['XII', 'III', 'VI', 'IX'].forEach((n, i) => c.fillText(n, 64 + Math.sin(i * Math.PI / 2) * 46, 64 - Math.cos(i * Math.PI / 2) * 46)); }) }), 0, 0, -.045, R.head); dial.rotation.y = Math.PI;
+      const hands = [.12, .08].map((l, i) => { const h = new THREE.Group(); h.position.z = -.05; R.head.add(h); R.add(new THREE.BoxGeometry(.012, l, .005), 0x16181D, 0, l / 2, 0, h); return h; });
+      const win = R.add(new THREE.CircleGeometry(.13, 20), R.M(0x9FD8FF, { transparent: true, opacity: .35 }), 0, R.hip + .4, -.225); win.rotation.y = Math.PI;
+      const pend = new THREE.Group(); pend.position.set(0, R.hip + .55, -.18); R.body.add(pend); R.add(new THREE.BoxGeometry(.01, .2, .01), brass, 0, -.1, 0, pend); R.add(new THREE.CylinderGeometry(.04, .04, .01, 16), brass, 0, -.22, 0, pend).rotation.x = Math.PI / 2;
+      const gears = [[-.12, .1, .12], [.1, -.05, .09], [0, .22, .07]].map(([x, y, r]) => { const gg = R.add(new THREE.CylinderGeometry(r, r, .03, 12), brass, x, R.hip + .45 + y, .24); gg.rotation.x = Math.PI / 2; return gg; });
+      const coatT = R.add(new THREE.CylinderGeometry(.24, .34, .8, 14, 1, true, Math.PI * .2, Math.PI * 1.6), R.M(0x2A2018, { side: THREE.DoubleSide }), 0, R.hip - .05, 0); coatT.rotation.y = Math.PI;
+      R.fx.push(t => { hands[0].rotation.z = -t * .5; hands[1].rotation.z = -t * .05; pend.rotation.z = Math.sin(t * 3) * .5; gears.forEach((gg, i) => gg.rotation.y = (i % 2 ? -1 : 1) * t * (1 + i * .4)); }); return R; },
+    // Book Seven: the reptilians. The Overseer has a frill, robes and a long tail
+    overseer(){ const scale = new THREE.MeshStandardMaterial({ color: 0x3A7A3A, roughness: .45, metalness: .1 }), R = bdRig({ legL: .88, legR: .08, tH: .7, bw: .24, armL: .72, legM: scale, torM: 0x1E3A1E, armM: scale, handM: scale, headY: .2, hunch: .08 }), gold = R.M(0xC8A060, { metalness: .85, roughness: .3 });
+      const hd = R.add(new THREE.SphereGeometry(.15, 14, 12), scale, 0, 0, 0, R.head); hd.scale.set(.9, 1, 1.2); const snout = R.add(new THREE.BoxGeometry(.14, .1, .18), scale, 0, -.04, -.16, R.head); void snout; void hd;
+      [-1, 1].forEach(sd => { R.add(new THREE.SphereGeometry(.03, 10, 8), R.glow(0xFFC93C, 1.4), sd * .08, .04, -.12, R.head); R.add(new THREE.BoxGeometry(.006, .04, .005), 0x16181D, sd * .08, .04, -.15, R.head); });
+      for (let i = 0; i < 7; i++) { const sp = R.add(new THREE.ConeGeometry(.05, .26, 4), 0xC8A060, Math.cos(-Math.PI * .1 + i * Math.PI * .2) * .2, .05 + Math.sin(i * Math.PI / 6) * .1, .08, R.head); sp.rotation.z = (i - 3) * -.35; }
+      R.add(new THREE.CylinderGeometry(.25, .4, .9, 14, 1, true), R.M(0x1E3A1E, { side: THREE.DoubleSide }), 0, R.hip, 0); R.add(new THREE.TorusGeometry(.2, .03, 8, 20), gold, 0, R.sh - .02, 0).rotation.x = Math.PI / 2;
+      const tail = new THREE.Group(); tail.position.set(0, R.hip - .1, .2); R.body.add(tail); for (let k = 0; k < 6; k++) R.add(new THREE.SphereGeometry(.1 - k * .013, 10, 8), scale, 0, -k * .06, .14 * k, tail);
+      R.fx.push(t => tail.rotation.y = Math.sin(t * 2) * .35); return R; },
+    liztroop(){ const scale = new THREE.MeshStandardMaterial({ color: 0x4A8A3A, roughness: .5 }), R = bdRig({ legM: 0x2A2D33, torM: 0x3A4A2A, armM: scale, handM: scale, hunch: .12 }); const hd = R.add(new THREE.SphereGeometry(.14, 12, 10), scale, 0, 0, 0, R.head); hd.scale.set(.9, 1, 1.25); R.add(new THREE.BoxGeometry(.12, .08, .15), scale, 0, -.04, -.15, R.head); [-1, 1].forEach(sd => R.add(new THREE.SphereGeometry(.025, 8, 6), R.glow(0xFFC93C, 1.2), sd * .07, .04, -.11, R.head)); R.add(new THREE.BoxGeometry(.46, .4, .06), R.M(0x5A6A4A, { metalness: .5 }), 0, R.hip + .35, -.22); const tail = R.add(new THREE.ConeGeometry(.08, .6, 8), scale, 0, R.hip - .1, .35); tail.rotation.x = -1.2; return R; },
+    hatch(){ const scale = new THREE.MeshStandardMaterial({ color: 0x6AAA4A, roughness: .5 }), R = bdRig({ legL: .5, legR: .07, tH: .4, bw: .2, armL: .35, armR: .04, legM: scale, torM: scale, armM: scale, handM: scale, headY: .2, hunch: .5, stride: 1.6 }); const hd = R.add(new THREE.SphereGeometry(.17, 12, 10), scale, 0, 0, 0, R.head); hd.scale.set(1, .9, 1.3); [-1, 1].forEach(sd => R.add(new THREE.SphereGeometry(.05, 10, 8), R.glow(0xFFE08A, 1.2), sd * .09, .04, -.15, R.head)); const tail = R.add(new THREE.ConeGeometry(.08, .5, 8), scale, 0, R.hip, .3); tail.rotation.x = -1.3; return R; },
+    // the Queen Beneath: no legs at all, a coiled serpent body, four arms, and a crown grown out of her own skull
+    queen(){ const scale = new THREE.MeshStandardMaterial({ color: 0x2E6A2E, roughness: .4, metalness: .15 }), R = bdRig({ noLegs: 1, legL: .7, tH: .8, bw: .26, armL: .75, armR: .07, legM: scale, torM: scale, armM: scale, handM: scale, headY: .22 }), gold = R.M(0xD9A93A, { metalness: .9, roughness: .2 });
+      const coil = []; for (let k = 0; k < 16; k++) { const a = k * .55, r = .45 - k * .015, s2 = R.add(new THREE.SphereGeometry(.3 - k * .012, 12, 10), k % 2 ? scale : R.M(0xC8B878), Math.cos(a) * r, .2 + k * .03, Math.sin(a) * r); coil.push(s2); }
+      [-1, 1].forEach(sd => { const a = new THREE.Group(); a.position.set(sd * .3, R.sh - .35, 0); R.body.add(a); R.add(new THREE.CylinderGeometry(.06, .05, .6, 10), scale, 0, -.3, 0, a); R.add(new THREE.SphereGeometry(.07, 10, 8), scale, 0, -.62, 0, a); a.rotation.z = sd * .6; });
+      const hd = R.add(new THREE.SphereGeometry(.16, 14, 12), scale, 0, 0, 0, R.head); hd.scale.set(.9, 1.05, 1.25); R.add(new THREE.BoxGeometry(.14, .09, .16), scale, 0, -.05, -.16, R.head);
+      [-1, 1].forEach(sd => R.add(new THREE.SphereGeometry(.035, 10, 8), R.glow(0xFF8A2E, 1.6), sd * .08, .04, -.12, R.head));
+      for (let i = 0; i < 7; i++) { const sp = R.add(new THREE.ConeGeometry(.03, .22 + (i === 3 ? .12 : 0), 5), gold, (i - 3) * .045, .2, 0, R.head); sp.rotation.z = (i - 3) * -.12; }
+      R.fx.push(t => coil.forEach((s2, k) => s2.position.y = .2 + k * .03 + Math.sin(t * 2 - k * .5) * .03)); return R; },
+    // the Nordics: very tall, very calm, pale robes and a glow in their hands
+    nordic(){ const R = bdRig({ legL: 1.05, legR: .06, tH: .74, bw: .2, armL: .78, armR: .05, legM: 0xF2F2EE, torM: 0xF2F2EE, armM: 0xF2F2EE, handM: 0xF2DCCB, headY: .25, stride: .7 }); const sk = bdFace(R, 0xF2DCCB, 'short', 0xF0E2B0); sk.scale.set(.85, 1.25, .9); R.add(new THREE.BoxGeometry(.3, .5, .06), 0xF0E2B0, 0, -.2, .12, R.head); R.add(new THREE.CylinderGeometry(.22, .36, 1.2, 14, 1, true), R.M(0xF2F2EE, { side: THREE.DoubleSide }), 0, R.hip - .2, 0); R.arms.forEach(q => R.add(new THREE.SphereGeometry(.05, 10, 8), R.glow(0xBFE6FF, 1.4), 0, -.05, 0, q.hand)); return R; },
+    asha(){ const R = bdRig({ legL: .88, legR: .075, tH: .62, bw: .22, legM: 0x3A4A2A, torM: 0x3A4A2A, armM: 0x8A6A3A, handM: 0x6A4A34 }); bdFace(R, 0x6A4A34, 'long', 0x16181D); R.add(new THREE.BoxGeometry(.28, .5, .06), 0x16181D, 0, -.2, .12, R.head); R.add(new THREE.BoxGeometry(.5, .3, .08), R.M(0x5A6A3A, { metalness: .3 }), 0, R.hip + .42, -.22); [-1, 1].forEach(sd => R.add(new THREE.BoxGeometry(.2, .06, .26), 0x8A6A3A, sd * .32, R.sh + .02, 0)); R.add(new THREE.BoxGeometry(.06, .06, .01), 0xFFC93C, -.1, R.sh - .1, -.27); return R; },
+    // Book Nine. The Editor: a body of stacked paper, a red pen for an arm, corrections floating round her
+    editor(){ const paper = new THREE.MeshStandardMaterial({ color: 0xF4F0E6, roughness: .9 }), R = bdRig({ noTorso: 1, legL: .86, legR: .07, tH: .72, bw: .24, armL: .7, legM: paper, armM: paper, handM: paper, headY: .24 });
+      for (let i = 0; i < 9; i++) { const s2 = R.add(new THREE.BoxGeometry(.5 - Math.abs(i - 4) * .03, .07, .32), paper, (Math.random() - .5) * .04, R.hip + .04 + i * .08, 0); s2.rotation.y = (Math.random() - .5) * .3; }
+      const hd = R.add(new THREE.BoxGeometry(.26, .3, .04), paper, 0, 0, 0, R.head); void hd; R.add(new THREE.BoxGeometry(.2, .012, .01), 0xF0A0B0, 0, .05, -.025, R.head); R.add(new THREE.BoxGeometry(.012, .2, .01), 0xF0A0B0, 0, -.02, -.025, R.head).rotation.z = .8;
+      const pen = R.add(new THREE.CylinderGeometry(.04, .04, .5, 10), 0xC8102E, 0, -.25, 0, R.arms[1].hand); R.add(new THREE.ConeGeometry(.04, .12, 10), 0x16181D, 0, -.56, 0, R.arms[1].hand).rotation.x = Math.PI; void pen;
+      const marks = []; for (let i = 0; i < 5; i++) { const m = R.add(new THREE.PlaneGeometry(.25, .06), new THREE.MeshBasicMaterial({ color: 0xE8303C, side: THREE.DoubleSide, transparent: true, opacity: .85 }), 0, 0, 0); marks.push(m); }
+      R.fx.push(t => marks.forEach((m, i) => { const a = t * .7 + i * 1.26; m.position.set(Math.cos(a) * .6, R.hip + .3 + i * .15, Math.sin(a) * .6); m.rotation.y = -a; })); return R; },
+    // the Author: a figure made of ink, a hood of shadow, the pen held like a sword, and pages that write themselves around him
+    author(){ const ink = new THREE.MeshStandardMaterial({ color: 0x0E0F14, roughness: .15, metalness: .3 }), R = bdRig({ noLegs: 1, float: .35, legL: .6, tH: .8, bw: .26, armL: .76, legM: ink, torM: ink, armM: ink, handM: ink, headY: .26 });
+      R.add(new THREE.ConeGeometry(.45, 1.2, 18, 1, true), R.M(0x0E0F14, { side: THREE.DoubleSide, roughness: .15 }), 0, R.hip - .25, 0);
+      R.add(new THREE.SphereGeometry(.2, 16, 12, 0, Math.PI * 2, 0, Math.PI * .7), ink, 0, .02, .02, R.head); R.add(new THREE.SphereGeometry(.14, 14, 10), 0x000000, 0, -.01, -.03, R.head); bdEyes(R, R.head, 0xF4ECD8, .05, .01, -.165, .055);
+      const nib = R.add(new THREE.ConeGeometry(.05, .5, 4), R.M(0xD9A93A, { metalness: .9, roughness: .2 }), 0, -.4, 0, R.arms[1].hand); nib.rotation.x = Math.PI; R.add(new THREE.CylinderGeometry(.035, .035, .4, 10), 0xF4ECD8, 0, .05, 0, R.arms[1].hand);
+      const pages = []; for (let i = 0; i < 7; i++) pages.push(R.add(new THREE.PlaneGeometry(.22, .3), new THREE.MeshBasicMaterial({ map: tex(64, 88, c => { c.fillStyle = '#F4ECD8'; c.fillRect(0, 0, 64, 88); c.fillStyle = '#16181D'; for (let y = 10; y < 80; y += 8) c.fillRect(6, y, 30 + Math.random() * 22, 2); }), side: THREE.DoubleSide }), 0, 0, 0));
+      R.fx.push(t => pages.forEach((p, i) => { const a = t * .5 + i * .9; p.position.set(Math.cos(a) * .85, R.hip + Math.sin(t + i) * .3 + .4, Math.sin(a) * .85); p.rotation.set(Math.sin(t + i) * .3, -a, 0); })); return R; }
+  });
+  const charAv = (h, s) => { try { const b = bodyAv(h, s); if (b) return b; } catch (e) { console.warn('body', h, e); } return avatar(heroLook(h), { s }); };
+
   // ======================= Bosses: every one looks like themselves, and fights a bit differently =======================
   function bossDress(u, statue){
-    if (!u || !u.av || !u.av.head || u.dressed) return; u.dressed = true; const H = u.hero, g = u.av.g, head = u.av.head, add = (geo, col, x, y, z, parent, o) => { const m = new THREE.Mesh(geo, o && o.glow ? glowM(col, { emissiveIntensity: 1.2 }) : mat(col, Object.assign({ roughness: .5 }, o || {}))); m.position.set(x, y, z); m.castShadow = true; m.userData.noPick = true; (parent || g).add(m); return m; };
+    if (!u || !u.av || !u.av.head || u.dressed) return; u.dressed = true; if (u.av.custom) return; const H = u.hero, g = u.av.g, head = u.av.head, add = (geo, col, x, y, z, parent, o) => { const m = new THREE.Mesh(geo, o && o.glow ? glowM(col, { emissiveIntensity: 1.2 }) : mat(col, Object.assign({ roughness: .5 }, o || {}))); m.position.set(x, y, z); m.castShadow = true; m.userData.noPick = true; (parent || g).add(m); return m; };
     const shoulders = (col, s = 1, spike) => [-1, 1].forEach(sd => { add(new THREE.SphereGeometry(.15 * s, 10, 8), col, sd * .34, 1.55, 0, g, { metalness: .4 }); if (spike) { const c = add(new THREE.ConeGeometry(.05, .22, 6), spike, sd * .38, 1.72, 0, g, { metalness: .6 }); c.rotation.z = -sd * .5; } });
     const crown = (col, n = 5) => { for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2, c = add(new THREE.ConeGeometry(.035, .14, 5), col, Math.cos(a) * .12, .2, Math.sin(a) * .12, head, { metalness: .8, roughness: .2 }); } add(new THREE.TorusGeometry(.13, .02, 6, 18), col, 0, .14, 0, head, { metalness: .8, roughness: .2 }).rotation.x = Math.PI / 2; };
     const halo = (col) => { const r = add(new THREE.TorusGeometry(.22, .02, 6, 24), col, 0, .32, 0, head, { glow: 1 }); r.rotation.x = Math.PI / 2; return r; };
@@ -12787,9 +13039,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const CB_FIGHT = { h1: { me: [29, 3], boss: [36, -3], hero: 'cb_adrenal' }, h2: { me: [-28, 0], boss: [-37, 2.5], hero: 'cb_fever' }, h3: { me: [0, 5], boss: [0, -5], hero: 'cb_plague' } };
   function cbDress(u, P){
     const g = u.av.g, head = u.av.head, add = (geo, col, x, y, z, par, glow) => { const m = new THREE.Mesh(geo, glow ? new THREE.MeshStandardMaterial({ color: col, emissive: col, emissiveIntensity: 1.1 }) : mat(col, { roughness: .5 })); m.position.set(x, y, z); (par || g).add(m); return m; };
-    if (P === 'h1') { [-1, 1].forEach(s => { const v = add(new THREE.CylinderGeometry(.04, .04, .32, 8), 0xD8F23C, s * .22, 1.35, .18, g, 1); v.rotation.x = .6; }); add(new THREE.BoxGeometry(.3, .05, .02), 0xD8F23C, 0, .03, -.15, head, 1); }
+    if (P === 'h1' && !u.av.custom) { [-1, 1].forEach(s => { const v = add(new THREE.CylinderGeometry(.04, .04, .32, 8), 0xD8F23C, s * .22, 1.35, .18, g, 1); v.rotation.x = .6; }); add(new THREE.BoxGeometry(.3, .05, .02), 0xD8F23C, 0, .03, -.15, head, 1); }
     if (P === 'h2') { u.heat = add(new THREE.SphereGeometry(1.1, 18, 12), 0xFF6A2E, 0, 1.1, 0, g, 1); u.heat.material.transparent = true; u.heat.material.opacity = .22; u.heat.material.depthWrite = false; for (let k = 0; k < 5; k++) { const f = add(new THREE.ConeGeometry(.07, .3, 6), 0xFFC93C, Math.cos(k * 1.26) * .12, .22, Math.sin(k * 1.26) * .12, head, 1); } }
-    if (P === 'h3') { const beak = add(new THREE.ConeGeometry(.07, .34, 10), 0xE8E2D0, 0, -.02, -.24, head); beak.rotation.x = -Math.PI / 2; [-1, 1].forEach(s => add(new THREE.SphereGeometry(.045, 10, 8), 0x5E9A3A, s * .06, .04, -.13, head, 1)); add(new THREE.CylinderGeometry(.2, .24, .12, 14), 0x16181D, 0, .2, 0, head); }
+    if (P === 'h3' && !u.av.custom) { const beak = add(new THREE.ConeGeometry(.07, .34, 10), 0xE8E2D0, 0, -.02, -.24, head); beak.rotation.x = -Math.PI / 2; [-1, 1].forEach(s => add(new THREE.SphereGeometry(.045, 10, 8), 0x5E9A3A, s * .06, .04, -.13, head, 1)); add(new THREE.CylinderGeometry(.2, .24, .12, 14), 0x16181D, 0, .2, 0, head); }
     // the visor's weak-point reticle
     const ret = new THREE.Mesh(new THREE.RingGeometry(.2, .26, 28), new THREE.MeshBasicMaterial({ color: 0x5FE0E8, transparent: true, opacity: .85, depthTest: false, side: THREE.DoubleSide })); ret.renderOrder = 5; ret.position.set(0, 1.25, 0); g.add(ret); u.ret = ret;
   }
@@ -12875,7 +13127,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const CB_CAST = { hale: { L: { skin: 1, hair: 'buzz', hairC: 7, outfit: 'casual', c1: 7, c2: 9, mask: 0, cape: 0 }, s: 1.05 }, ama: { L: { skin: 4, hair: 'long', hairC: 0, outfit: 'casual', c1: 5, c2: 5, mask: 0, cape: 0 }, s: 1 }, reyes: { L: { skin: 2, hair: 'short', hairC: 0, outfit: 'casual', c1: 2, c2: 2, mask: 0, cape: 0 }, s: 1 }, kai: { L: { skin: 3, hair: 'spiky', hairC: 1, outfit: 'casual', c1: 0, c2: 8, mask: 0, cape: 0 }, s: .68 } };
   function cbPlace(spots){
     CB.npcs.forEach(n => { if (n.g.parent) n.g.parent.remove(n.g); disposeDeep(n.g); }); CB.npcs = [];
-    Object.entries(spots || {}).forEach(([k, [x, z, ry]]) => { const C = CB_CAST[k === 'kaiTable' ? 'kai' : k]; const a = avatar(Object.assign({}, LOOK0, C.L), { s: C.s }); a.g.position.set(x, 0, z); a.g.rotation.y = ry || 0; if (k === 'kaiTable') { const w = new THREE.Group(); w.position.set(x - .6, 1.14, z); w.rotation.z = -Math.PI / 2; a.g.position.set(0, 0, 0); a.g.rotation.y = Math.PI / 2; w.add(a.g); a.g.traverse(o => o.raycast = () => {}); MED.sc.add(w); CB.npcs.push({ k, g: w, a }); return; } a.g.traverse(o => o.raycast = () => {}); MED.sc.add(a.g); CB.npcs.push({ k, g: a.g, a }); });
+    Object.entries(spots || {}).forEach(([k, [x, z, ry]]) => { const C = CB_CAST[k === 'kaiTable' ? 'kai' : k]; let a = null; try { a = bodyAv('cb_' + (k === 'kaiTable' ? 'kai' : k), C.s); } catch (e) {} a = a || avatar(Object.assign({}, LOOK0, C.L), { s: C.s }); a.g.position.set(x, 0, z); a.g.rotation.y = ry || 0; if (k === 'kaiTable') { const w = new THREE.Group(); w.position.set(x - .6, 1.14, z); w.rotation.z = -Math.PI / 2; a.g.position.set(0, 0, 0); a.g.rotation.y = Math.PI / 2; w.add(a.g); a.g.traverse(o => o.raycast = () => {}); MED.sc.add(w); CB.npcs.push({ k, g: w, a }); return; } a.g.traverse(o => o.raycast = () => {}); MED.sc.add(a.g); CB.npcs.push({ k, g: a.g, a }); });
   }
   // power cuts and quarantine haze
   function cbMood(m){
@@ -16324,7 +16576,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // tally marks scratched into the glass, thousands of them
     for (let i = 0; i < 60; i++) { const a = Math.random() * 6.283, r = 4 + Math.random() * 9; L.push(B3(.06, .02, .5 + Math.random() * .3, 0xB9A8FF, 206 + Math.cos(a) * r, bzTerr(206 + Math.cos(a) * r, -40 + Math.sin(a) * r) + .03, -40 + Math.sin(a) * r, Math.random() * 3)); }
     const m = new THREE.Mesh(bake(P), propM()); m.userData.noPick = true; sc.add(m); const gl = new THREE.Mesh(bake(L), BZ.lightM); gl.userData.noPick = true; sc.add(gl);
-    try { const av = avatar(heroLook('oldme'), { s: 1 }); av.g.position.set(208, ey, -38.5); av.g.rotation.y = Math.atan2(206 - 150, -40 + 186) + Math.PI; av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); BK.old = av; } catch (e) { BK.old = null; }
+    try { const av = charAv('oldme', 1); av.g.position.set(208, ey, -38.5); av.g.rotation.y = Math.atan2(206 - 150, -40 + 186) + Math.PI; av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); BK.old = av; } catch (e) { BK.old = null; }
     // the falling light: a column that goes up forever
     const wy = bzTerr(196, 60); BK.well = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 900, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0xBFE8FF, transparent: true, opacity: .25, side: THREE.DoubleSide, depthWrite: false, toneMapped: false, fog: false })); BK.well.position.set(196, wy + 450, 60); sc.add(BK.well);
   }
@@ -16558,7 +16810,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const m = new THREE.Mesh(bake(P), propM()); m.castShadow = !lowFx; m.receiveShadow = true; m.userData.noPick = true; sc.add(m); const gl = new THREE.Mesh(bake(L), BZ.lightM); gl.userData.noPick = true; sc.add(gl);
     // dust, always
     const n = lowFx ? 400 : 1100, pp = new Float32Array(n * 3); for (let i = 0; i < n; i++) pp.set([(r() - .5) * 200, r() * 60, (r() - .5) * 200], i * 3); const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pp, 3)); BK.dust = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xC8A080, size: .25, transparent: true, opacity: .6 })); sc.add(BK.dust);
-    try { const av = avatar(heroLook(BK.s.flags.spared ? 'oldme' : 'asha'), { s: 1 }); av.g.position.set(60, 0, 21.2); av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); BK.leader = av; } catch (e) { BK.leader = null; }
+    try { const av = charAv(BK.s.flags.spared ? 'oldme' : 'asha', 1); av.g.position.set(60, 0, 21.2); av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); BK.leader = av; } catch (e) { BK.leader = null; }
     BK.lizSpawned = false; };
   Q_RUIN.bkStep = (dt, now) => { if (BK.dust) { BK.dust.position.set(pos.x, 0, pos.z); BK.dust.rotation.y += dt * .05; } if (BK.flare) { BK.flare.position.y = 26 + Math.sin(now / 500) * 3; BK.flare.visible = BK.s.book === 6 && BK.s.ch === 9 && BK.s.step === 2; }
     (BK.screens || []).forEach((s, i) => { s.material.color.setScalar(.75 + .25 * Math.sin(now / 90 + i * 2)); }); if (BK.leader) BK.leader.g.visible = BK.s.book > 6 || BK.s.ch === 9 && BK.s.step >= 2;
@@ -16744,7 +16996,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     ], end: () => { bkScrap(40, 'The resistance is growing'); say('Back at the base, people are cheering. Upstairs, the Council will be trying to rewind that broadcast. They can’t rewind what everyone already saw.', 6000); } },
     { id: 'oldfriends', title: 'Old Friends, New Scales', tag: 'Some faces you know. Some you shouldn’t trust.', world: 'q_ruin', also: ['q_metro'], steps: [
       { t: 'Answer the call: meet Gwen at the old junction', at: [-120, 120], start: () => say('Your phone buzzes. A number you haven’t seen in years: Gwen. “You’re back? Meet me at the junction by the old market. Come alone.”', 7000), check: () => BZ.P.id === 'q_ruin' && Math.hypot(pos.x + 120, pos.z - 120) < 12 },
-      { t: 'Talk to Gwen', at: [-120, 120], start: () => { if (BK.gwenNpc || !BZ.sc) return; try { const av = avatar(heroLook('gwen'), { s: 1 }); av.g.position.set(-120, 0, 116); av.g.traverse(o => { o.userData.noPick = true; }); BZ.sc.add(av.g); BK.gwenNpc = av; } catch (e) {} }, prompt: () => BZ.P.id === 'q_ruin' && Math.hypot(pos.x + 120, pos.z - 117) < 5 ? { t: 'Talk to Gwen', go: () => bkFight('b7f', fin => { dlgPlay([['ME', 'They’ve been wearing my friends.'], ['ME', 'There’s a ledger in this one’s pocket. “Replaced, year two of the Council. Originals: stored, the Hollow Earth.” Stored. So they could still be alive.']], { block: true, done: () => { BK.s.flags.b7f = 1; bkSave(); fin(); } }); }) } : null, check: () => BK.s.flags.b7f }
+      { t: 'Talk to Gwen', at: [-120, 120], start: () => { if (BK.gwenNpc || !BZ.sc) return; try { const av = charAv('gwen', 1); av.g.position.set(-120, 0, 116); av.g.traverse(o => { o.userData.noPick = true; }); BZ.sc.add(av.g); BK.gwenNpc = av; } catch (e) {} }, prompt: () => BZ.P.id === 'q_ruin' && Math.hypot(pos.x + 120, pos.z - 117) < 5 ? { t: 'Talk to Gwen', go: () => bkFight('b7f', fin => { dlgPlay([['ME', 'They’ve been wearing my friends.'], ['ME', 'There’s a ledger in this one’s pocket. “Replaced, year two of the Council. Originals: stored, the Hollow Earth.” Stored. So they could still be alive.']], { block: true, done: () => { BK.s.flags.b7f = 1; bkSave(); fin(); } }); }) } : null, check: () => BK.s.flags.b7f }
     ], end: () => { BK.gwenNpc = null; bkScrap(30, 'From the copies’ pockets'); } },
     { id: 'engine', title: 'The Time Engine', tag: 'Break the machine that keeps rewinding you.', world: 'q_ruin', also: ['q_past', 'q_metro'], steps: [
       { t: 'Find the Time Engine, under the old government building', at: [0, -72], start: () => say('Every rewind starts in the same place: the old government building, under the green flags. The resistance calls what’s under it the Time Engine.', 6000), check: () => BZ.P.id === 'q_ruin' && Math.hypot(pos.x, pos.z + 72) < 30 },
@@ -16800,7 +17052,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     for (let i = 0; i < 18; i++) { const x = 40 + r() * 80, z = -40 + r() * 80; L.push([new THREE.SphereGeometry(.9, 10, 8), 0x6AE86A, x, .8, z]); }
     // the vault where they keep the people they replaced
     P.push(B3(34, 12, 18, 0x3A4A30, -60, 6, -96)); bzAdd({ t: 'b', x0: -77, x1: -43, z0: -105, z1: -96 }); const vs = bzSign('THE VAULT', 'ORIGINALS · KEEP COLD', '#6AE86A', 6); vs.position.set(-60, 14, -86); sc.add(vs);
-    BK.pods = BK_PODS.map(([x, z, h], i) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 2.8, 14), new THREE.MeshStandardMaterial({ color: 0xFFB040, transparent: true, opacity: .55, emissive: 0x6A3A00, emissiveIntensity: .6 })); m.position.set(x, 1.4, z); sc.add(m); let av = null; try { av = avatar(heroLook(h), { s: 1 }); av.g.position.set(x, 0, z); av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); } catch (e) {} return { x, z, h, m, av, i }; });
+    BK.pods = BK_PODS.map(([x, z, h], i) => { const m = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.1, 2.8, 14), new THREE.MeshStandardMaterial({ color: 0xFFB040, transparent: true, opacity: .55, emissive: 0x6A3A00, emissiveIntensity: .6 })); m.position.set(x, 1.4, z); sc.add(m); let av = null; try { av = charAv(h, 1); av.g.position.set(x, 0, z); av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); } catch (e) {} return { x, z, h, m, av, i }; });
     // the Queen's gate
     P.push(B3(10, 50, 10, 0x2A3A26, -24, 25, -200), B3(10, 50, 10, 0x2A3A26, 24, 25, -200), B3(58, 10, 10, 0x2A3A26, 0, 55, -200)); BK.qgate = new THREE.Mesh(new THREE.BoxGeometry(38, 48, 2), new THREE.MeshStandardMaterial({ color: 0x1A2A18, metalness: .6, roughness: .4, emissive: 0x0A3A0A, emissiveIntensity: .5 })); BK.qgate.position.set(0, 24, -199); sc.add(BK.qgate); bzAdd({ t: 'b', x0: -29, x1: 29, z0: -205, z1: -195 });
     // the shaft back up
@@ -16928,11 +17180,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // the court: tiers, a bench up high, the judges
     BK.court = new THREE.Group(); sc.add(BK.court); const CP = []; for (let k = 0; k < 3; k++) for (let i = 0; i < 16; i++) { const a = i / 16 * 6.283, R = 20 + k * 3; CP.push(B3(5, 1 + k, 2.4, 0x8A90A0, 10 + Math.cos(a) * R, (1 + k) / 2, Math.sin(a) * R, -a + Math.PI / 2)); }
     CP.push(B3(16, 5, 4, 0x6A7080, 10, 2.5, -24)); const cm = new THREE.Mesh(bake(CP), propM()); cm.userData.noPick = true; BK.court.add(cm);
-    BK.judges = [-4, 0, 4].map(dx => { try { const av = avatar(heroLook('nordic'), { s: 1.25 }); av.g.position.set(10 + dx, 5, -24); av.g.traverse(o => { o.userData.noPick = true; }); BK.court.add(av.g); return av; } catch (e) { return null; } });
+    BK.judges = [-4, 0, 4].map(dx => { try { const av = charAv('nordic', 1.25); av.g.position.set(10 + dx, 5, -24); av.g.traverse(o => { o.userData.noPick = true; }); BK.court.add(av.g); return av; } catch (e) { return null; } });
     // the observation deck: a window on the Earth
     const earth = new THREE.Mesh(new THREE.SphereGeometry(160, 48, 32), new THREE.MeshStandardMaterial({ map: earthTex(), roughness: .8, emissive: 0x1A2A4A, emissiveIntensity: .45, fog: false })); earth.position.set(10, -60, 420); sc.add(earth); BK.earthM = earth;
     BK.window = new THREE.Mesh(new THREE.PlaneGeometry(56, 6), new THREE.MeshBasicMaterial({ color: 0x9AC8FF, transparent: true, opacity: .08, depthWrite: false })); BK.window.position.set(10, 3.5, 110.7); sc.add(BK.window);
-    BK.nordics = [[2, 96], [10, 100], [18, 96]].map(([x, z]) => { try { const av = avatar(heroLook('nordic'), { s: 1.25 }); av.g.position.set(x, 0, z); av.g.rotation.y = Math.PI; av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); return av; } catch (e) { return null; } });
+    BK.nordics = [[2, 96], [10, 100], [18, 96]].map(([x, z]) => { try { const av = charAv('nordic', 1.25); av.g.position.set(x, 0, z); av.g.rotation.y = Math.PI; av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); return av; } catch (e) { return null; } });
     // the archive: shelves of crystal, and the Pact
     for (let i = 0; i < 6; i++) { P.push(B3(1, 5, 30, 0x3A3E48, -14 + i * 9, 2.5, -90)); bzAdd({ t: 'b', x0: -14.5 + i * 9, x1: -13.5 + i * 9, z0: -105, z1: -75 }); for (let k = 0; k < 10; k++) L.push(B3(1.1, .3, .3, k % 3 ? 0x6AC8FF : 0xB07CFF, -14 + i * 9, 1 + (k % 4), -103 + k * 3)); }
     BK.pact = new THREE.Mesh(new THREE.OctahedronGeometry(.5, 0), new THREE.MeshBasicMaterial({ color: 0xFFD27A, toneMapped: false })); BK.pact.position.set(35, 1.6, -106); sc.add(BK.pact); P.push(B3(1.4, 1, 1.4, 0x3A3E48, 35, .5, -106)); BK.props.pact = [35, -103];
@@ -17149,11 +17401,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     BK.npcs = BK_TALK.map(([x, z, n, line], i) => { let av = null; try { av = n.includes('scales') ? { g: bkLizardMesh().g } : avatar(Object.assign({}, look, { outfit: 'casual', c1: i * 2 % 9, c2: i * 5 % 9, hair: i % 2 ? 'long' : 'short' }), { s: i === 3 ? .7 : 1 }); av.g.position.set(x, 0, z); av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); } catch (e) {} return { x, z, n, line, av, i }; });
     // every version of you, wherever they ended up
     const V9 = [['older', 120, 100, 'oldme', live.older], ['copy', -120, 110, 'copyhero', true], ['echo', -110, -90, 'rayan', true], ['hero', 100, -110, 'hero18', true]];
-    BK.vers = V9.filter(v => v[4]).map(([k, x, z, h]) => { let av = null; try { av = avatar(heroLook(h), { s: 1 }); if (k === 'echo') av.g.traverse(o => { if (o.isMesh && o.material && o.material.color) { o.material = o.material.clone(); o.material.color.lerp(new THREE.Color(0xFFC890), .6); o.material.transparent = true; o.material.opacity = .7; } }); av.g.position.set(x, 0, z); av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); } catch (e) {} return { k, x, z, av }; });
+    BK.vers = V9.filter(v => v[4]).map(([k, x, z, h]) => { let av = null; try { av = charAv(h, 1); if (k === 'echo') av.g.traverse(o => { if (o.isMesh && o.material && o.material.color) { o.material = o.material.clone(); o.material.color.lerp(new THREE.Color(0xFFC890), .6); o.material.transparent = true; o.material.opacity = .7; } }); av.g.position.set(x, 0, z); av.g.traverse(o => { o.userData.noPick = true; }); sc.add(av.g); } catch (e) {} return { k, x, z, av }; });
     // the council, gathered at the crater
     BK.council = new THREE.Group(); sc.add(BK.council); let a = 0; const seat = g => { const ang = a++ * .55; g.position.set(Math.cos(ang) * 12, 0, Math.sin(ang) * 12 + 2); BK.council.add(g); };
-    if (live.allies) ['mars', 'europa', 'saturn'].forEach(k => seat(bkAllyMesh(k))); if (live.nordics) [0, 1].forEach(() => { try { seat(avatar(heroLook('nordic'), { s: 1.25 }).g); } catch (e) {} }); if (live.lizards) [0, 1].forEach(() => seat(bkLizardMesh().g));
-    if (live.friends) ['gwen', 'carter', 'jay'].forEach(h => { try { seat(avatar(heroLook(h), { s: 1 }).g); } catch (e) {} }); BK.council.traverse(o => { o.userData.noPick = true; }); };
+    if (live.allies) ['mars', 'europa', 'saturn'].forEach(k => seat(bkAllyMesh(k))); if (live.nordics) [0, 1].forEach(() => { try { seat(charAv('nordic', 1.25).g); } catch (e) {} }); if (live.lizards) [0, 1].forEach(() => seat(bkLizardMesh().g));
+    if (live.friends) ['gwen', 'carter', 'jay'].forEach(h => { try { seat(charAv(h, 1).g); } catch (e) {} }); BK.council.traverse(o => { o.userData.noPick = true; }); };
   Q_WARP.bkStep = (dt, now) => { if (BK.page) { BK.page.visible = !BK.s.flags.page1; BK.page.rotation.y += dt; }
     if (BK.edge) { BK.edge.scale.set(BK.edgeR, 1, BK.edgeR); const r = Math.hypot(pos.x, pos.z); if (r > BK.edgeR - 2) { const k = (BK.edgeR - 4) / r; pos.x *= k; pos.z *= k; if ((BK.edgeHurt = (BK.edgeHurt || 0) - dt) <= 0) { BK.edgeHurt = 1; bzHurt(8); BK.s.flags.edge = 1; say('Where you touched the white, your hand goes faint, like a pencil sketch. It comes back. Slowly.', 3600); } } }
     const ch = BK.s.book === 9 ? BK.s.ch : -1; (BK.vers || []).forEach(v => { if (v.av) v.av.g.visible = ch >= 2 && !BK.s.flags['ver_' + v.k]; }); if (BK.council) BK.council.visible = ch >= 3; };
