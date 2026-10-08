@@ -289,6 +289,12 @@ body.mkwon .toast{top:calc(160px + env(safe-area-inset-top,0px))}
 .links{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
 .links a{height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);display:inline-flex;align-items:center;text-decoration:none;font-weight:500}
 .mail{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:22px;text-decoration:none;border-bottom:2px solid var(--accent);word-break:break-all}
+.chatbox{position:fixed;inset:auto 16px 16px auto;z-index:60;width:min(380px,calc(100% - 32px));height:min(560px,calc(100% - 32px));display:flex;flex-direction:column;background:#101318;color:#E8ECF2;border:1px solid #2A3038;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);overflow:hidden;font-size:14px}.chatbox[hidden],.chatbox [hidden]{display:none !important}
+.chathead{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid #2A3038}.chathead b{flex:1}.chathead button{background:#1C2129;color:#E8ECF2;border:0;border-radius:999px;padding:6px 12px;cursor:pointer}
+.chatgate{display:flex;flex-direction:column;gap:10px;padding:18px 16px}.chatgate p{margin:0;opacity:.85}.chatgate input,.chatsend input{background:#1A1E25;color:#E8ECF2;border:1px solid #2F3640;border-radius:10px;padding:11px 12px;font:inherit;min-width:0}.chatgate button,.chatsend button{background:#7CF29A;color:#0B0D10;border:0;border-radius:10px;padding:11px 14px;font-weight:700;cursor:pointer}.chatgate small{min-height:1.2em;color:#FFB4A8}
+.chatlog{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px}.chatrow{max-width:85%;align-self:flex-start;background:#1C2129;border-radius:12px;padding:8px 10px}.chatrow.me{align-self:flex-end;background:#1F3A2A}.chatrow b{display:block;font-size:12px;opacity:.8}.chatrow p{margin:2px 0;white-space:pre-wrap;overflow-wrap:anywhere}.chatrow small{font-size:10.5px;opacity:.55}.chatnote{opacity:.6;text-align:center;font-size:13px}
+.chatsend{display:flex;gap:8px;padding:10px;border-top:1px solid #2A3038}.chatsend input{flex:1}
+@media (max-width:560px){.chatbox{inset:12px;width:auto;height:auto}}
 .apkdl{display:inline-flex;align-items:center;text-decoration:none}.apkmeta{font-size:13px;line-height:1.5;opacity:.85;margin:10px 0 0}.apkfacts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:12px 0 0;font-size:13px}.apkfacts dt{font-weight:700}.apkfacts dd{margin:0;min-width:0}.apkfacts code{word-break:break-all;font-size:11.5px}
 .open{margin-top:14px;height:44px;padding:0 18px;border-radius:999px;border:0;background:var(--ink);color:var(--bg);font-weight:600;cursor:pointer}
 .vinyls{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px}
@@ -1809,6 +1815,69 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const APK = { href: 'downloads/agribridge-1.0.apk', ver: '1.0 (build 1)', size: '11.9 MB', sha: '4ac652b602568175be0f2a5a6cf16b4e2d352da14af330e6f9da1b4f4e646560' };
   const apkPlate = new THREE.Mesh(new THREE.PlaneGeometry(1.1, .2), new THREE.MeshBasicMaterial({ map: tex(660, 120, (g, w, h) => { g.fillStyle = '#3F9E5B'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, h, 26) : g.rect(0, 0, w, h); g.fill(); g.fillStyle = '#FFFFFF'; g.font = `800 40px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('⬇ Download AgriBridge (Android)', w / 2, h / 2 + 2); }), transparent: true }));
   apkPlate.rotation.y = Math.PI / 2; apkPlate.position.set(-4.9, .86, 2.3); apkPlate.userData.egg = 'apk'; scene.add(apkPlate);
+  // ---------- a private chat, hidden in a walkie-talkie on the desk ----------
+  // Messages are encrypted in the browser with a key made from the password (PBKDF2 + AES-GCM), so the database only
+  // ever holds scrambled text. The room is also named after the password, so a wrong password just finds an empty room.
+  // To connect it: create a free Supabase project, run the SQL in CHAT_SETUP.md, and paste its URL and anon key here.
+  const CHAT_CFG = { url: '', key: '' };
+  const walkie = new THREE.Group(); walkie.position.set(-3.78, .8, -4.08); walkie.rotation.y = .5; walkie.userData.egg = 'chat'; scene.add(walkie);
+  box(.07, .16, .035, mat(0x2A2D33, { roughness: .6 }), 0, .08, 0, walkie); box(.012, .1, .012, mat(0x16181D), .022, .2, 0, walkie);
+  box(.05, .03, .005, new THREE.MeshBasicMaterial({ color: 0x7CF29A }), 0, .125, .019, walkie); box(.05, .05, .005, mat(0x16181D), 0, .06, .019, walkie);
+  const CH = { key: null, room: '', last: 0, timer: null, busy: false, seen: new Set() };
+  document.body.insertAdjacentHTML('beforeend', `<div class="chatbox" id="chatBox" hidden role="dialog" aria-modal="true" aria-labelledby="chatTitle">
+    <div class="chathead"><b id="chatTitle">📻 Private channel</b><button type="button" id="chatLock" hidden>Lock</button><button type="button" id="chatX" aria-label="Close">✕</button></div>
+    <form class="chatgate" id="chatGate"><p>This channel is private. Enter the password.</p><input type="password" id="chatPw" autocomplete="current-password" placeholder="Password" required><input type="text" id="chatName" maxlength="24" placeholder="Your name" required><button type="submit">Open channel</button><small id="chatErr"></small></form>
+    <div class="chatlog" id="chatLog" hidden aria-live="polite"></div>
+    <form class="chatsend" id="chatSend" hidden><input type="text" id="chatMsg" maxlength="1000" placeholder="Message" autocomplete="off"><button type="submit">Send</button></form></div>`);
+  const chatEl = $('#chatBox'), chatLog = $('#chatLog'), chatErr = $('#chatErr');
+  try { $('#chatName').value = localStorage.getItem('ru-chatname') || ''; } catch (e) {}
+  const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf))), unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+  async function chatKeys(pw){
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveBits']);
+    const bits = new Uint8Array(await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: new TextEncoder().encode('rayanupadhyay.com/chat/v1'), iterations: 250000, hash: 'SHA-256' }, base, 512));
+    const key = await crypto.subtle.importKey('raw', bits.slice(0, 32), 'AES-GCM', false, ['encrypt', 'decrypt']);
+    const room = Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bits.slice(32)))).map(x => x.toString(16).padStart(2, '0')).join('').slice(0, 32);
+    return { key, room };
+  }
+  const chatApi = (path, opts = {}) => fetch(CHAT_CFG.url.replace(/\/$/, '') + '/rest/v1/' + path, Object.assign({ headers: { apikey: CHAT_CFG.key, Authorization: 'Bearer ' + CHAT_CFG.key, 'Content-Type': 'application/json', Prefer: 'return=minimal' } }, opts));
+  function chatShow(m){
+    if (CH.seen.has(m.id)) return; CH.seen.add(m.id); CH.last = Math.max(CH.last, m.id);
+    const row = document.createElement('div'), me = m.n === $('#chatName').value.trim(); row.className = 'chatrow' + (me ? ' me' : '');
+    const who = document.createElement('b'), txt = document.createElement('p'), when = document.createElement('small');
+    who.textContent = m.n || '?'; txt.textContent = m.t; when.textContent = new Date(m.at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    row.append(who, txt, when); const atEnd = chatLog.scrollHeight - chatLog.scrollTop - chatLog.clientHeight < 60; chatLog.appendChild(row); if (atEnd || me) chatLog.scrollTop = chatLog.scrollHeight;
+  }
+  async function chatPull(){
+    if (!CH.key || CH.busy) return; CH.busy = true;
+    try { const r = await chatApi(`messages?room=eq.${CH.room}&id=gt.${CH.last}&order=id.asc&limit=200&select=id,iv,ct,created_at`); if (r.ok) { const rows = await r.json();
+      for (const row of rows) { try { const plain = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: unb64(row.iv) }, CH.key, unb64(row.ct)); const m = JSON.parse(new TextDecoder().decode(plain)); chatShow({ id: row.id, n: String(m.n || '').slice(0, 24), t: String(m.t || '').slice(0, 1000), at: row.created_at }); } catch (e) { CH.last = Math.max(CH.last, row.id); } }
+      if (!chatLog.children.length && !CH.toldEmpty) { CH.toldEmpty = true; const p = document.createElement('p'); p.className = 'chatnote'; p.textContent = 'No messages yet. If you expected some, the password may be different.'; chatLog.appendChild(p); } } }
+    catch (e) {} finally { CH.busy = false; }
+  }
+  $('#chatGate').addEventListener('submit', async e => {
+    e.preventDefault(); chatErr.textContent = '';
+    if (!CHAT_CFG.url || !CHAT_CFG.key) { chatErr.textContent = 'The channel isn’t connected yet.'; return; }
+    if (!(window.crypto && crypto.subtle)) { chatErr.textContent = 'This browser can’t encrypt messages, so the channel won’t open here.'; return; }
+    const pw = $('#chatPw').value, name = $('#chatName').value.trim(); if (pw.length < 6 || !name) { chatErr.textContent = 'Enter the password and a name.'; return; }
+    chatErr.textContent = 'Opening…'; try { localStorage.setItem('ru-chatname', name); } catch (er) {}
+    try { const k = await chatKeys(pw); CH.key = k.key; CH.room = k.room; } catch (er) { chatErr.textContent = 'Couldn’t open the channel.'; return; }
+    $('#chatPw').value = ''; chatErr.textContent = ''; $('#chatGate').hidden = true; chatLog.hidden = false; $('#chatSend').hidden = false; $('#chatLock').hidden = false; chatLog.textContent = ''; CH.last = 0; CH.seen.clear(); CH.toldEmpty = false;
+    await chatPull(); clearInterval(CH.timer); CH.timer = setInterval(chatPull, 3000); $('#chatMsg').focus();
+  });
+  $('#chatSend').addEventListener('submit', async e => {
+    e.preventDefault(); const t = $('#chatMsg').value.trim(); if (!t || !CH.key) return; $('#chatMsg').value = '';
+    try { const iv = crypto.getRandomValues(new Uint8Array(12)), ct = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, CH.key, new TextEncoder().encode(JSON.stringify({ n: $('#chatName').value.trim(), t })));
+      const r = await chatApi('messages', { method: 'POST', body: JSON.stringify({ room: CH.room, iv: b64(iv), ct: b64(ct) }) }); if (!r.ok) throw 0; chatPull(); }
+    catch (er) { $('#chatMsg').value = t; chatErr.textContent = 'Message didn’t send. Try again.'; }
+  });
+  function chatLock(){ CH.key = null; CH.room = ''; clearInterval(CH.timer); chatLog.textContent = ''; chatLog.hidden = true; $('#chatSend').hidden = true; $('#chatLock').hidden = true; $('#chatGate').hidden = false; }
+  function chatOpen(){ closePanel(); Object.keys(keys).forEach(k => keys[k] = false); chatEl.hidden = false; if (document.pointerLockElement) document.exitPointerLock(); setTimeout(() => (CH.key ? $('#chatMsg') : $('#chatPw')).focus(), 50); tone(1400, .05, 'square', .03, 900); }
+  function chatClose(){ chatEl.hidden = true; }
+  $('#chatX').onclick = chatClose; $('#chatLock').onclick = chatLock;
+  chatEl.addEventListener('keydown', e => { e.stopPropagation(); if (e.key === 'Escape') chatClose(); });
+  chatEl.addEventListener('keyup', e => e.stopPropagation());
+  addEventListener('hashchange', () => { if (location.hash === '#chat') chatOpen(); });
+  if (location.hash === '#chat') setTimeout(chatOpen, 600);
   function apkPanel(){
     const android = /Android/i.test(navigator.userAgent);
     panelBody.innerHTML = `<div class="sec"><p class="meta">AgriBridge · Android app</p><h2 class="display">AgriBridge</h2><p class="sub">Markets, government schemes and credit information for farmers, in their own language. Live in every state in India.</p>
@@ -2098,7 +2167,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     toast.classList.remove('on'); sc.classList.add('on'); clearTimeout(sc._t); sc._t = setTimeout(() => sc.classList.remove('on'), 6000);
     [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, .22, 'square', .05), i * 90));
   }
-  const LABELS = { logbook: 'Rayan\u2019s logbook', batfig: 'Tilt the Batman figure', seed: 'A strange golden seed', lairexit: 'Back upstairs', lairboard: 'The lair scoreboard', rackinfo: 'The weapon rack', telescope: 'Look through the telescope', hatch: 'Back downstairs', ladder: 'Climb to the rooftop', lift: 'Take the lift', window: 'The sky outside', counter: 'Visitors so far', speakers: 'Play lo-fi', portal: 'Through the moon gate: Mandalink world', meddoor: 'Meridian General',  medkiosk: 'Lobby kiosk', cbstart: 'The pager: Code Black', medlift: 'Take the lift', halePlaque: 'A plaque in the lobby', sfClock: 'The Clockmaker’s clock', medexit: 'Back to the room', optable: 'Lift the sheet', whiteboard: 'The whiteboard', swim: 'Swim corner', photos: 'Photo folder', reviews: 'My album reviews', shelfvinyl: 'On the shelf', alexa: 'Alexa', scratch: 'Scratch it', map: 'AgriBridge across India', apk: 'Download AgriBridge (Android)', builder: 'Play: block builder', switch: 'Light switch', radicals: 'Play: find the radical', screen: 'Use the laptop: Mandalink', crate: 'Dig through the crate', vaultbook: 'Pull the red book' };
+  const LABELS = { logbook: 'Rayan\u2019s logbook', batfig: 'Tilt the Batman figure', seed: 'A strange golden seed', lairexit: 'Back upstairs', lairboard: 'The lair scoreboard', rackinfo: 'The weapon rack', telescope: 'Look through the telescope', hatch: 'Back downstairs', ladder: 'Climb to the rooftop', lift: 'Take the lift', window: 'The sky outside', counter: 'Visitors so far', speakers: 'Play lo-fi', portal: 'Through the moon gate: Mandalink world', meddoor: 'Meridian General',  medkiosk: 'Lobby kiosk', cbstart: 'The pager: Code Black', medlift: 'Take the lift', halePlaque: 'A plaque in the lobby', sfClock: 'The Clockmaker’s clock', medexit: 'Back to the room', optable: 'Lift the sheet', whiteboard: 'The whiteboard', swim: 'Swim corner', photos: 'Photo folder', reviews: 'My album reviews', shelfvinyl: 'On the shelf', alexa: 'Alexa', scratch: 'Scratch it', map: 'AgriBridge across India', apk: 'Download AgriBridge (Android)', chat: 'A walkie-talkie', builder: 'Play: block builder', switch: 'Light switch', radicals: 'Play: find the radical', screen: 'Use the laptop: Mandalink', crate: 'Dig through the crate', vaultbook: 'Pull the red book' };
   const bookLabel = () => vaultOpen ? 'Close the bookshelf' : 'Pull the red book';
 
   let night = false;
@@ -15207,6 +15276,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.egg === 'window') return say(`It\u2019s ${istClock()} where Rayan is. The sky outside matches.`, 3200);
     if (p.egg === 'counter') return say(visitors ? `You\u2019re one of ${visitors.toLocaleString()} visitors so far. Welcome!` : 'The visitor counter is warming up.', 3000);
     if (p.egg === 'map') return playMap();
+    if (p.egg === 'chat') return chatOpen();
     if (p.egg === 'apk') return flyTo(views.map.pos.clone(), views.map.look, apkPanel);
     if (p.egg === 'builder') return flyTo(views.builder.pos.clone(), views.builder.look, openBuilder);
     if (p.egg === 'switch') return flipLights();
