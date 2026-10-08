@@ -904,9 +904,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     </section>
 
     <section class="sec" data-s="vault">
-      <h2 class="display">TISB MedCon 2026</h2>
-      <p class="sub">You found the surgical zone. Here's what's on the table.</p>
-      <div class="card"><span class="pill">Designing</span><h3 class="display">TISB MedCon 2026</h3><p>I'm designing the TISB MedCon 2026 website. More when it launches.</p></div>
+      <h2 class="display">Behind the bookshelf</h2>
+      <p class="sub">Two doors out of here: the moon gate to Mandalink world, and the hospital doors to Meridian General. And here's what's on the table.</p>
       <div class="card"><span class="pill">In progress</span><h3 class="display">Emotions at the Gate</h3><p>New research on how AI models process emotion. Details after publication.</p></div>
       <div class="card"><span class="pill">Classified</span><h3 class="display">Project <span class="redact">████████</span></h3><p>Something new. Check back soon.</p></div>
     </section>
@@ -1816,43 +1815,85 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const bulb = new THREE.Mesh(new THREE.SphereGeometry(.07, 16, 12), new THREE.MeshBasicMaterial({ color: 0xFFE7B8 })); bulb.position.set(0, H - .8, .2); scene.add(bulb);
   const pend = new THREE.PointLight(0xffd9a0, .6, 7, 2); pend.position.set(0, H - .9, .2); scene.add(pend);
 
-  // ---------- the hidden room: TISB MedCon 2026 surgical zone ----------
-  const VX0 = W / 2 + .05, VX1 = 8.5, VZ0 = -1.4, VZ1 = 2.0, vcz = (VZ0 + VZ1) / 2;
-  const vTiles = tex(512, 512, (g, w, h) => { g.fillStyle = '#E3E8EA'; g.fillRect(0, 0, w, h); g.strokeStyle = '#C3CCD0'; g.lineWidth = 3; for (let i = 0; i <= w; i += 64) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.moveTo(0, i); g.lineTo(w, i); g.stroke(); } });
-  vTiles.wrapS = vTiles.wrapT = THREE.RepeatWrapping; vTiles.repeat.set(2, 2);
-  const vFloor = new THREE.Mesh(new THREE.PlaneGeometry(VX1 - VX0, VZ1 - VZ0), mat(0xffffff, { map: vTiles, roughness: .4 }));
-  vFloor.rotation.x = -Math.PI / 2; vFloor.position.set((VX0 + VX1) / 2, 0, vcz); vFloor.receiveShadow = true; vFloor.userData.walk = true; scene.add(vFloor);
-  const vWall = mat(0xCFE8E2, { roughness: .8 });
+  // ---------- the room behind the bookshelf: two doors out of it ----------
+  // South wall: a red moon gate into Mandalink world. East wall: glass doors into Meridian General.
+  // North wall: the research table under its lamp.
+  const VX0 = W / 2 + .05, VX1 = 10.6, VZ0 = -3.6, VZ1 = 2.05, vcz = (VZ0 + VZ1) / 2, vcx = (VX0 + VX1) / 2;
+  const vStone = tex(512, 512, (g, w, h) => { g.fillStyle = '#2A2E36'; g.fillRect(0, 0, w, h); g.strokeStyle = '#353A44'; g.lineWidth = 4; for (let i = 0; i <= w; i += 128) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.stroke(); g.beginPath(); g.moveTo(0, i); g.lineTo(w, i); g.stroke(); } });
+  vStone.wrapS = vStone.wrapT = THREE.RepeatWrapping; vStone.repeat.set(3, 3);
+  const vFloor = new THREE.Mesh(new THREE.PlaneGeometry(VX1 - VX0, VZ1 - VZ0), mat(0xffffff, { map: vStone, roughness: .35, metalness: .1 }));
+  vFloor.rotation.x = -Math.PI / 2; vFloor.position.set(vcx, 0, vcz); vFloor.receiveShadow = true; vFloor.userData.walk = true; scene.add(vFloor);
+  const vWall = mat(0x3A3F4A, { roughness: .85 });
   box(.1, H, VZ1 - VZ0, vWall, VX1, H / 2, vcz);
-  box(VX1 - VX0, H, .1, vWall, (VX0 + VX1) / 2, H / 2, VZ0);
-  box(VX1 - VX0, H, .1, vWall, (VX0 + VX1) / 2, H / 2, VZ1);
-  const vCeil = new THREE.Mesh(new THREE.PlaneGeometry(VX1 - VX0, VZ1 - VZ0), mat(0xF4F7F8)); vCeil.rotation.x = Math.PI / 2; vCeil.position.set((VX0 + VX1) / 2, H, vcz); scene.add(vCeil);
-  const vaultLight = new THREE.PointLight(0xE8FFF8, 0, 7, 2); vaultLight.position.set(6.4, 2.8, vcz); scene.add(vaultLight);
-  const boardLight = new THREE.PointLight(0xFFFFFF, 0, 4, 2); boardLight.position.set(7.7, 2.3, vcz); scene.add(boardLight);
-  // sign above the entrance
-  const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.4, .36), new THREE.MeshBasicMaterial({ map: tex(700, 180, (g, w, h) => {
-    g.fillStyle = '#FFFFFF'; g.fillRect(0, 0, w, h); g.fillStyle = '#C0271C'; g.fillRect(0, 0, w, 70);
-    g.fillStyle = '#FFFFFF'; g.font = `800 46px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('SURGICAL ZONE', w / 2, 37);
-    g.fillStyle = '#16181D'; g.font = `700 34px "Instrument Sans", sans-serif`; g.fillText('Authorised personnel only', w / 2, 124);
+  box(VX1 - VX0, H, .1, vWall, vcx, H / 2, VZ0);
+  box(VX1 - VX0, H, .1, vWall, vcx, H / 2, VZ1);
+  const vCeil = new THREE.Mesh(new THREE.PlaneGeometry(VX1 - VX0, VZ1 - VZ0), mat(0x22252C)); vCeil.rotation.x = Math.PI / 2; vCeil.position.set(vcx, H, vcz); scene.add(vCeil);
+  const vaultLight = new THREE.PointLight(0xFFF1DE, 0, 9, 2); vaultLight.position.set(vcx, 2.9, vcz); scene.add(vaultLight);
+  const boardLight = new THREE.PointLight(0xFFFFFF, 0, 4, 2); boardLight.position.set(7.6, 2.3, 1.2); scene.add(boardLight);
+  // a strip of warm light down the middle of the ceiling
+  box(VX1 - VX0 - 1, .03, .12, new THREE.MeshStandardMaterial({ color: 0xFFE7C2, emissive: 0xFFE7C2, emissiveIntensity: .9 }), vcx, H - .02, vcz);
+
+  // --- the moon gate (月亮门): Mandalink world ---
+  const mgX = 7.8, mgZ = VZ0 + .08;
+  const moonWall = new THREE.Mesh((() => { const s = new THREE.Shape(); s.moveTo(-1.9, 0); s.lineTo(1.9, 0); s.lineTo(1.9, 2.9); s.lineTo(-1.9, 2.9); s.lineTo(-1.9, 0); const hole = new THREE.Path(); hole.absarc(0, 1.3, 1.05, 0, Math.PI * 2, true); s.holes.push(hole); return new THREE.ExtrudeGeometry(s, { depth: .18, bevelEnabled: false, curveSegments: 48 }); })(), mat(0xF4EFE6, { roughness: .9 }));
+  moonWall.position.set(mgX, 0, mgZ); scene.add(moonWall);
+  const moonRim = new THREE.Mesh(new THREE.TorusGeometry(1.08, .07, 12, 64), mat(0xB8322A, { roughness: .4 })); moonRim.position.set(mgX, 1.3, mgZ + .19); scene.add(moonRim);
+  const moonCap = box(4.1, .16, .5, mat(0x4A5568, { roughness: .7 }), mgX, 2.98, mgZ + .1);
+  for (let k = -9; k <= 9; k++) cyl(.07, .07, .5, mat(0x5A6578, { roughness: .7 }), mgX + k * .21, 3.0, mgZ + .1, null, 8).rotation.x = Math.PI / 2;
+  const moonSign = new THREE.Mesh(new THREE.PlaneGeometry(1.1, .34), new THREE.MeshBasicMaterial({ transparent: true, map: tex(440, 136, (g, w, h) => { g.fillStyle = '#B8322A'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, h, 18) : g.rect(0, 0, w, h); g.fill(); g.strokeStyle = '#E8B930'; g.lineWidth = 6; g.strokeRect(10, 10, w - 20, h - 20); g.fillStyle = '#FFE7A8'; g.font = `700 64px ${ZH}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('月 亮 门', w / 2, h / 2 + 2); }) }));
+  moonSign.position.set(mgX, 2.6, mgZ + .2); scene.add(moonSign);
+  // stone lanterns and bamboo either side
+  [-1, 1].forEach(s => { const lx = mgX + s * 2.35, lz = mgZ + .6;
+    cyl(.18, .24, .7, mat(0x8A8F99, { roughness: .9 }), lx, .35, lz, null, 6); box(.42, .34, .42, mat(0x9AA0AA, { roughness: .9 }), lx, .87, lz);
+    const glowBox = box(.26, .2, .26, new THREE.MeshStandardMaterial({ color: 0xFFD27A, emissive: 0xFFB84A, emissiveIntensity: 1 }), lx, .87, lz); glowBox.raycast = () => {};
+    const roofL = new THREE.Mesh(new THREE.ConeGeometry(.38, .26, 4), mat(0x6B7280, { roughness: .9 })); roofL.rotation.y = Math.PI / 4; roofL.position.set(lx, 1.17, lz); scene.add(roofL);
+    for (let k = 0; k < 3; k++) cyl(.035, .04, 2.2 + k * .3, mat(0x7DB36F), lx + s * (.35 + k * .12), 1.1 + k * .15, mgZ + .3 + k * .1, null, 8); });
+  const mgLamp = new THREE.PointLight(0xFFC27A, 0, 4, 2); mgLamp.position.set(mgX, 1.8, mgZ + 1.2); scene.add(mgLamp);
+
+  // --- the hospital doors: Meridian General ---
+  const hdZ = -.9, hdX = VX1 - .06;
+  const hdFrame = mat(0x9AA3AE, { metalness: .7, roughness: .3 });
+  box(.14, 2.6, .12, hdFrame, hdX, 1.3, hdZ - 1.05); box(.14, 2.6, .12, hdFrame, hdX, 1.3, hdZ + 1.05); box(.14, .12, 2.22, hdFrame, hdX, 2.62, hdZ);
+  const hdGlass = new THREE.MeshStandardMaterial({ color: 0xBFE8F0, emissive: 0x3FA8B8, emissiveIntensity: .35, transparent: true, opacity: .55, roughness: .1, metalness: .2 });
+  const hdL = box(.04, 2.5, 1.0, hdGlass, hdX - .02, 1.25, hdZ - .5), hdR = box(.04, 2.5, 1.0, hdGlass, hdX - .02, 1.25, hdZ + .5);
+  [hdL, hdR].forEach(d => { d.userData.egg = 'meddoor'; });
+  const hdBar = box(.02, .05, 1.9, new THREE.MeshStandardMaterial({ color: 0xE8F7FA, emissive: 0xE8F7FA, emissiveIntensity: .8 }), hdX - .06, 1.25, hdZ); hdBar.userData.egg = 'meddoor';
+  // the red cross that never quite stays on
+  const crossM = new THREE.MeshStandardMaterial({ color: 0xE4322A, emissive: 0xE4322A, emissiveIntensity: 1.2 });
+  const cross = new THREE.Group(); cross.position.set(hdX - .05, 2.95, hdZ); scene.add(cross);
+  box(.04, .12, .4, crossM, 0, 0, 0, cross); box(.04, .4, .12, crossM, 0, 0, 0, cross);
+  const crossLight = new THREE.PointLight(0xFF4A3A, 0, 3.2, 2); crossLight.position.set(hdX - .6, 2.8, hdZ); scene.add(crossLight);
+  const mgSign = new THREE.Mesh(new THREE.PlaneGeometry(1.7, .3), new THREE.MeshBasicMaterial({ transparent: true, map: tex(680, 120, (g, w, h) => { g.fillStyle = 'rgba(14,18,26,.92)'; g.fillRect(0, 0, w, h); g.fillStyle = '#E8F7FA'; g.font = `700 50px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('MERIDIAN GENERAL', w / 2, 52); g.fillStyle = '#7FE0E8'; g.font = `600 22px "Instrument Sans", sans-serif`; g.fillText('EMERGENCY · OPEN ALL NIGHT', w / 2, 96); }) }));
+  mgSign.rotation.y = -Math.PI / 2; mgSign.position.set(hdX - .07, 2.95, hdZ + .02); scene.add(mgSign);
+  cross.position.set(hdX - .06, 2.95, hdZ - 1.05);
+  // a crayon note taped beside the doors
+  const crayon = new THREE.Mesh(new THREE.PlaneGeometry(.42, .32), new THREE.MeshBasicMaterial({ map: tex(420, 320, (g, w, h) => {
+    g.fillStyle = '#FBF7EC'; g.fillRect(0, 0, w, h); g.strokeStyle = 'rgba(140,170,220,.5)'; g.lineWidth = 2; for (let y = 60; y < h; y += 44) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); }
+    const scrawl = (t, x, y, sz, col) => { g.font = `700 ${sz}px "Comic Sans MS", "Chalkboard SE", "Marker Felt", cursive`; g.fillStyle = col; for (let k = 0; k < 3; k++) { g.globalAlpha = .45; g.fillText(t, x + (Math.random() - .5) * 2.5, y + (Math.random() - .5) * 2.5); } g.globalAlpha = 1; };
+    g.save(); g.translate(w / 2, h / 2); g.rotate(-.06); g.textAlign = 'center'; scrawl('Dr. Rayan', 0, -20, 58, '#2E5FD1'); scrawl('age 12', 0, 46, 44, '#E4572E'); g.restore();
+    g.strokeStyle = '#E4572E'; g.lineWidth = 5; g.beginPath(); g.arc(360, 260, 16, 0, 7); g.stroke(); g.beginPath(); g.moveTo(344, 260); g.quadraticCurveTo(300, 230, 320, 190); g.stroke();
+    g.fillStyle = 'rgba(255,255,255,.7)'; g.fillRect(150, -6, 120, 26); }) }));
+  crayon.rotation.y = -Math.PI / 2; crayon.rotation.x = .04; crayon.position.set(hdX - .07, 1.45, hdZ + 1.45); crayon.userData.egg = 'crayon'; scene.add(crayon);
+  // a pale floor line that leads you to the doors
+  const guide = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .1), new THREE.MeshBasicMaterial({ color: 0x7FE0E8, transparent: true, opacity: .55 })); guide.rotation.x = -Math.PI / 2; guide.position.set(hdX - 1.4, .005, hdZ); guide.raycast = () => {}; scene.add(guide);
+  addMarker(V(hdX - .3, 2.2, hdZ), 0x7FE0E8, { egg: 'meddoor', vaultOnly: true });
+  views.meddoor = { pos: V(hdX - 1.6, 1.6, hdZ), look: V(hdX, 1.3, hdZ) };
+
+  // --- the research table and its board, on the north wall ---
+  const board = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.3), new THREE.MeshBasicMaterial({ map: tex(960, 520, (g, w, h) => {
+    g.fillStyle = '#12171F'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = 'rgba(255,255,255,.06)'; g.lineWidth = 1; for (let i = 0; i < w; i += 40) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.stroke(); } for (let i = 0; i < h; i += 40) { g.beginPath(); g.moveTo(0, i); g.lineTo(w, i); g.stroke(); }
+    g.fillStyle = '#FFFFFF'; g.font = `800 64px ${DISPLAY}`; g.textBaseline = 'top'; g.fillText('On the table', 44, 36);
+    g.fillStyle = '#7FE0C8'; g.font = `600 28px "Instrument Sans", sans-serif`; g.fillText('Ideas that need a quiet room first', 48, 116);
+    g.fillStyle = 'rgba(255,255,255,.08)'; g.fillRect(44, 200, 420, 200); g.fillRect(496, 200, 420, 200);
+    g.fillStyle = '#FFFFFF'; g.font = `800 32px ${DISPLAY}`; g.fillText('Emotions at the Gate', 66, 226); g.fillText('Project ██████', 518, 226);
+    g.fillStyle = '#C9E8E1'; g.font = `500 22px "Instrument Sans", sans-serif`; g.fillText('Research in progress', 66, 274); g.fillText('Classified', 518, 274);
+    g.fillStyle = '#FFC93C'; g.font = `700 20px "Instrument Sans", sans-serif`; g.fillText('ON THE TABLE', 66, 340); g.fillText('SOON', 518, 340);
   }) }));
-  sign.rotation.y = Math.PI / 2; sign.position.set(VX0 + .01, 2.55, .3); scene.add(sign);
-  // MedCon board
-  const board = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.5), new THREE.MeshBasicMaterial({ map: tex(1040, 600, (g, w, h) => {
-    g.fillStyle = '#0F3D3A'; g.fillRect(0, 0, w, h);
-    g.strokeStyle = 'rgba(255,255,255,.08)'; g.lineWidth = 1; for (let i = 0; i < w; i += 40) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.stroke(); } for (let i = 0; i < h; i += 40) { g.beginPath(); g.moveTo(0, i); g.lineTo(w, i); g.stroke(); }
-    g.fillStyle = '#FFFFFF'; g.font = `800 72px ${DISPLAY}`; g.textBaseline = 'top'; g.fillText('TISB MedCon 2026', 44, 40);
-    g.fillStyle = '#7FE0C8'; g.font = `600 30px "Instrument Sans", sans-serif`; g.fillText('Designing the website now', 48, 124);
-    g.strokeStyle = '#7FE0C8'; g.lineWidth = 4; g.beginPath(); g.moveTo(44, 230);
-    [[200, 230], [230, 180], [260, 290], [290, 150], [320, 230], [996, 230]].forEach(([x, y]) => g.lineTo(x, y)); g.stroke();
-    g.fillStyle = 'rgba(255,255,255,.08)'; g.fillRect(44, 330, 460, 200); g.fillRect(536, 330, 460, 200);
-    g.fillStyle = '#FFFFFF'; g.font = `800 34px ${DISPLAY}`; g.fillText('Emotions at the Gate', 66, 356); g.fillText('Project \u2588\u2588\u2588\u2588\u2588\u2588', 558, 356);
-    g.fillStyle = '#C9E8E1'; g.font = `500 24px "Instrument Sans", sans-serif`; g.fillText('Research in progress', 66, 404); g.fillText('Classified', 558, 404);
-    g.fillStyle = '#FFC93C'; g.font = `700 20px "Instrument Sans", sans-serif`; g.fillText('ON THE TABLE', 66, 472); g.fillText('SOON', 558, 472);
-  }) }));
-  board.rotation.y = -Math.PI / 2; board.position.set(VX1 - .06, 1.7, vcz); board.userData.section = 'vault'; scene.add(board);
-  views.vault = { pos: V(5.9, 1.6, vcz), look: V(8.4, 1.6, vcz) };
-  // operating table with the research under a sheet
-  const table = new THREE.Group(); table.position.set(6.9, 0, vcz); table.userData.egg = 'optable'; scene.add(table);
+  board.rotation.y = Math.PI; board.position.set(6.6, 1.75, VZ1 - .06); board.userData.section = 'vault'; scene.add(board);
+  views.vault = { pos: V(6.6, 1.6, -.8), look: V(6.6, 1.6, VZ1) };
+  const tz = 1.05;
+  const table = new THREE.Group(); table.position.set(8.6, 0, tz); table.userData.egg = 'optable'; scene.add(table);
   cyl(.12, .2, .74, mat(0xB8BEC8, { metalness: .6, roughness: .35 }), 0, .37, 0, table);
   box(1.6, .08, .6, mat(0xB8BEC8, { metalness: .5, roughness: .35 }), 0, .78, 0, table);
   box(1.56, .05, .56, mat(0x3E6E8C, { roughness: .8 }), 0, .845, 0, table);
@@ -1867,25 +1908,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   paperOp.rotation.x = -Math.PI / 2; paperOp.rotation.z = Math.PI / 2; paperOp.position.set(0, .873, 0); table.add(paperOp);
   const sheet = box(1.5, .1, .54, new THREE.MeshStandardMaterial({ color: 0x5FA89B, roughness: 1, transparent: true, opacity: 1 }), 0, .92, 0, table);
   sheet.userData.cloth = true; let sheetOff = false;
-  // surgical lamp
-  cyl(.03, .03, .5, mat(0xB8BEC8, { metalness: .6 }), 6.9, H - .25, vcz, null, 12);
-  cyl(.34, .24, .12, mat(0xF4F7F8, { roughness: .4 }), 6.9, 2.4, vcz, null, 32);
-  const lampFace = new THREE.Mesh(new THREE.CircleGeometry(.23, 32), new THREE.MeshBasicMaterial({ color: 0xFFFFFF })); lampFace.rotation.x = Math.PI / 2; lampFace.position.set(6.9, 2.335, vcz); scene.add(lampFace);
-  const surg = new THREE.SpotLight(0xFFFFFF, 0, 5, .5, .5, 1.5); surg.position.set(6.9, 2.3, vcz); surg.target.position.set(6.9, .8, vcz); scene.add(surg); scene.add(surg.target);
-  // IV stand + heart monitor
-  cyl(.012, .012, 1.8, mat(0xB8BEC8, { metalness: .6 }), 6.0, .9, -1.0, null, 8);
-  cyl(.18, .18, .02, mat(0xB8BEC8, { metalness: .6 }), 6.0, .01, -1.0);
-  box(.12, .18, .05, new THREE.MeshStandardMaterial({ color: 0xDDF3FF, transparent: true, opacity: .8 }), 6.0, 1.66, -1.0);
-  cyl(.015, .015, 1.1, mat(0x505764), 7.9, .55, -1.0, null, 8);
-  box(.06, .3, .4, mat(0x2A2D33), 7.9, 1.25, -1.0);
-  const ecg = faceOut(.36, .26, tex(360, 260, (g, w, h) => {
-    g.fillStyle = '#071512'; g.fillRect(0, 0, w, h); g.strokeStyle = '#3CFFA8'; g.lineWidth = 4; g.beginPath(); g.moveTo(0, 150);
-    for (let x = 0; x < w; x += 90) { g.lineTo(x + 30, 150); g.lineTo(x + 40, 120); g.lineTo(x + 50, 200); g.lineTo(x + 60, 60); g.lineTo(x + 70, 160); g.lineTo(x + 90, 150); } g.stroke();
-    g.fillStyle = '#3CFFA8'; g.font = `800 40px ${DISPLAY}`; g.fillText('72', 270, 50);
-  })); ecg.rotation.y = Math.PI / 2; ecg.position.set(7.9 - .035, 1.25, -1.0);
-  ecg.rotation.y = -Math.PI / 2; scene.add(ecg);
-  addMarker(V(6.9, 1.35, vcz - .45), 0x7C8CFF, { egg: 'optable', vaultOnly: true });
-  views.optable = { pos: V(6.0, 1.75, vcz + 1.1), look: V(6.9, .85, vcz) };
+  cyl(.03, .03, .5, mat(0xB8BEC8, { metalness: .6 }), 8.6, H - .25, tz, null, 12);
+  cyl(.34, .24, .12, mat(0xF4F7F8, { roughness: .4 }), 8.6, 2.4, tz, null, 32);
+  const lampFace = new THREE.Mesh(new THREE.CircleGeometry(.23, 32), new THREE.MeshBasicMaterial({ color: 0xFFFFFF })); lampFace.rotation.x = Math.PI / 2; lampFace.position.set(8.6, 2.335, tz); scene.add(lampFace);
+  const surg = new THREE.SpotLight(0xFFFFFF, 0, 5, .5, .5, 1.5); surg.position.set(8.6, 2.3, tz); surg.target.position.set(8.6, .8, tz); scene.add(surg); scene.add(surg.target);
+  addMarker(V(8.6, 1.35, tz - .45), 0x7C8CFF, { egg: 'optable', vaultOnly: true });
+  views.optable = { pos: V(8.6, 1.75, tz - 1.2), look: V(8.6, .85, tz) };
 
   interactive.forEach(g => g.traverse(o => { if (o.isMesh && o.material.emissive) o.userData.em = o.material.emissive.getHex(); }));
 
@@ -1909,9 +1937,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
   const inRoom = (x, z) => x >= -4.2 && x <= 4.2 && z >= -3.6 && z <= 4.3;
   const inDoor = (x, z) => vaultOpen && x > 4.2 && x <= 5.7 && z >= -.25 && z <= .85;
-  const inVault = (x, z) => vaultOpen && x > 5.7 && x <= 8.0 && z >= -1.0 && z <= 1.6;
+  const inVault = (x, z) => vaultOpen && x > 5.4 && x <= 10.2 && z >= -3.05 && z <= 1.65 && !(x > 7.75 && x < 9.45 && z > .6);
   const inHall = (x, z) => entered && ((Math.abs(x) < .45 && z > 4.2 && z <= 5.5) || (Math.abs(x) < 1.2 && z > 5.5 && z < 10.3));
-  const valid = (x, z) => inWorld ? zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) || inDeep(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? (SW.roof ? swRoofOK(x, z) : blrValid(x, z)) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
+  const valid = (x, z) => inWorld ? zone === 'med' ? medValid(x, z) : zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) || inDeep(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? (SW.roof ? swRoofOK(x, z) : blrValid(x, z)) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
   const region = x => x > 4.9 ? 'vault' : 'room';
   function flyTo(target, dir, done){
     if (inWorld) { const a = dir ? lookAngles(target, dir) : null; return moveCam(target, a ? a.yaw : null, a ? a.pitch : null, 1, done); }
@@ -1951,7 +1979,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const SECRETS = {
     radicals: ['Radical master', 'Inspired by Mandalink, the app I built after seven years of learning Chinese taught me that radicals are the key to everything.'],
     crate: ['Crate digger', 'Inspired by my vinyl collection, and the fun of flipping through records to pick what to play next.'],
-    vault: ['The surgical zone', 'Inspired by the TISB MedCon 2026 website, which I\u2019m designing, and the idea that the best work happens behind closed doors.'],
+    vault: ['The room behind the bookshelf', 'Two doors to two worlds, and the idea that the best work happens behind closed doors.'],
     scratch: ['Record scratch', 'Inspired by the music I have on repeat.'],
     portal: ['Mandalink world', 'Inspired by Chinese, which has always felt like its own world to me.'],
     ai: ['The fall', 'Inspired by what fascinates me most: how AI systems make sense of human language.'],
@@ -1993,7 +2021,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     toast.classList.remove('on'); sc.classList.add('on'); clearTimeout(sc._t); sc._t = setTimeout(() => sc.classList.remove('on'), 6000);
     [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, .22, 'square', .05), i * 90));
   }
-  const LABELS = { logbook: 'Rayan\u2019s logbook', batfig: 'Tilt the Batman figure', seed: 'A strange golden seed', lairexit: 'Back upstairs', lairboard: 'The lair scoreboard', rackinfo: 'The weapon rack', telescope: 'Look through the telescope', hatch: 'Back downstairs', ladder: 'Climb to the rooftop', lift: 'Take the lift', window: 'The sky outside', counter: 'Visitors so far', speakers: 'Play lo-fi', portal: 'Step into Mandalink world', optable: 'Lift the sheet', whiteboard: 'The whiteboard', swim: 'Swim corner', photos: 'Photo folder', reviews: 'My album reviews', shelfvinyl: 'On the shelf', alexa: 'Alexa', scratch: 'Scratch it', map: 'AgriBridge across India', builder: 'Play: block builder', switch: 'Light switch', radicals: 'Play: find the radical', screen: 'Use the laptop: Mandalink', crate: 'Dig through the crate', vaultbook: 'Pull the red book' };
+  const LABELS = { logbook: 'Rayan\u2019s logbook', batfig: 'Tilt the Batman figure', seed: 'A strange golden seed', lairexit: 'Back upstairs', lairboard: 'The lair scoreboard', rackinfo: 'The weapon rack', telescope: 'Look through the telescope', hatch: 'Back downstairs', ladder: 'Climb to the rooftop', lift: 'Take the lift', window: 'The sky outside', counter: 'Visitors so far', speakers: 'Play lo-fi', portal: 'Through the moon gate: Mandalink world', meddoor: 'Meridian General', crayon: 'A note taped to the wall', medkiosk: 'Lobby kiosk', medexit: 'Back to the room', optable: 'Lift the sheet', whiteboard: 'The whiteboard', swim: 'Swim corner', photos: 'Photo folder', reviews: 'My album reviews', shelfvinyl: 'On the shelf', alexa: 'Alexa', scratch: 'Scratch it', map: 'AgriBridge across India', builder: 'Play: block builder', switch: 'Light switch', radicals: 'Play: find the radical', screen: 'Use the laptop: Mandalink', crate: 'Dig through the crate', vaultbook: 'Pull the red book' };
   const bookLabel = () => vaultOpen ? 'Close the bookshelf' : 'Pull the red book';
 
   let night = false;
@@ -2041,7 +2069,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const shut = () => {
       shelfMoving = true; vaultOpen = false; tone(70, 1.2, 'sawtooth', .05, 110);
       const r0 = shelfPivot.rotation.y, l0 = vaultLight.intensity;
-      tween(.8, e => { vaultLight.intensity = l0 * (1 - e); boardLight.intensity = .8 * (1 - e); surg.intensity = 2.2 * (1 - e); });
+      tween(.8, e => { vaultLight.intensity = l0 * (1 - e); boardLight.intensity = .8 * (1 - e); surg.intensity = 2.2 * (1 - e); mgLamp.intensity = 1.1 * (1 - e); crossLight.intensity = 0; });
       tween(1.6, e => shelfPivot.rotation.y = r0 * (1 - e), () => { shelfMoving = false; say('The bookshelf is closed. The red notebook opens it again.'); });
     };
     closePanel();
@@ -2057,8 +2085,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     tween(.35, e => secretBook.rotation.z = b0 + .35 * Math.sin(e * Math.PI), () => {
       tween(1.8, e => shelfPivot.rotation.y = -1.35 * e, () => {
         vaultOpen = true; shelfMoving = false;
-        tween(1, e => { vaultLight.intensity = 1.5 * e; boardLight.intensity = .8 * e; surg.intensity = 2.2 * e; });
-        moveCam(V(4.0, 1.6, .3), -Math.PI / 2, 0, 1.2, () => say('Surgical zone: TISB MedCon 2026. Step inside.'));
+        tween(1, e => { vaultLight.intensity = 1.6 * e; boardLight.intensity = .8 * e; surg.intensity = 2.2 * e; mgLamp.intensity = 1.1 * e; });
+        moveCam(V(4.0, 1.6, .3), -Math.PI / 2, 0, 1.2, () => say('A room behind the bookshelf, with two doors: the moon gate to Mandalink world, and the hospital doors to Meridian General.', 5200));
       });
     });
   }
@@ -2359,7 +2387,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // Draft entries. Edit the text to make it sound like you.
   const JOURNAL = [
     ['room', 'Everyone thinks this is just my room. It\u2019s Room 0: the one place that stays the same in every world. This is where I first noticed the cracks.'],
-    ['vault', 'Found a door behind my own bookshelf and turned it into an operating theatre. Some ideas need a sterile room before they\u2019re ready for the world.'],
+    ['vault', 'Found a room behind my own bookshelf, with a door to a world on either side. Some ideas need a quiet room before they\u2019re ready for the world.'],
     ['hub', 'The portal opened onto islands made of Chinese. Seven years of learning radicals, and it turns out they\u2019re load-bearing.'],
     ['island', 'Two trees make a forest. A person leaning on a tree is resting. Every character is a tiny story someone left for me to find.'],
     ['ai', 'Fell off the 木 island again. Landed inside a neural network. Didn\u2019t hate it. Watched it decide which words mattered.'],
@@ -2525,7 +2553,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       win: 'No more skips. The needle’s back in the groove.' },
     { id: 'overfit', name: 'The Overfit', tag: 'A golem that studies your every move, then lands exactly where you were going. Be unpredictable.', from: 'Machine learning', col: '#35C8F0', hp: 400,
       win: 'It memorised your moves. You generalised.' },
-    { id: 'deadline', name: 'The Deadline', tag: 'An alarm clock with legs and scythes for hands. The final boss of every IB student. It only gets faster.', from: 'IB life (and MedCon launch week)', col: '#FFC93C', hp: 480,
+    { id: 'deadline', name: 'The Deadline', tag: 'An alarm clock with legs and scythes for hands. The final boss of every IB student. It only gets faster.', from: 'IB life', col: '#FFC93C', hp: 480,
       win: 'Submitted at 11:59 PM. Roll credits.' },
     // MCU villains, because I love the MCU
     { id: 'loki', name: 'Loki', mcu: 1, tag: 'The God of Mischief. Throwing knives, illusions everywhere, and only one of them is the real Loki.', from: 'My love of the MCU', col: '#2FA36B', hp: 420,
@@ -12155,14 +12183,15 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     g.userData.disc = disc; g.userData.glow = glow; return g;
   }
   const portal = makePortal(0xFFC93C, '#7C8CFF', '#2B45E0');
-  portal.position.set(6.9, 0, 1.55); portal.rotation.y = Math.PI; portal.userData.egg = 'portal'; scene.add(portal);
+  portal.position.set(7.8, .05, -3.42); portal.scale.setScalar(1.3); portal.userData.egg = 'portal'; scene.add(portal);
+  portal.children[0].visible = false; portal.children[2].visible = false;  // the moon gate is the frame now
   const portalLabel = new THREE.Mesh(new THREE.PlaneGeometry(.9, .3), new THREE.MeshBasicMaterial({ transparent: true, map: tex(360, 120, (g, w, h) => {
     g.fillStyle = '#FFC93C'; g.font = `800 44px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('Mandalink world', w / 2, 44);
     g.fillStyle = '#FFFFFF'; g.font = `700 40px ${ZH}`; g.fillText('部首', w / 2, 96);
   }) }));
-  portalLabel.position.set(0, 2.35, 0); portal.add(portalLabel);
-  addMarker(V(6.9, 2.75, 1.55), 0x7C8CFF, { egg: 'portal', vaultOnly: true });
-  views.portal = { pos: V(6.9, 1.6, .6), look: V(6.9, 1.3, 1.55) };
+  portalLabel.position.set(1.12, 1.2, .16); portalLabel.scale.setScalar(.55); portal.add(portalLabel);
+  addMarker(V(7.8, 2.45, -3.1), 0x7C8CFF, { egg: 'portal', vaultOnly: true });
+  views.portal = { pos: V(7.8, 1.6, -1.6), look: V(7.8, 1.5, -3.5) };
 
   // the worlds are only built the first time someone steps through
   const HANZI = [
@@ -12202,7 +12231,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     ['力', '口', ['加', 'jiā', 'to add', ['力', 'strength'], ['口', 'mouth'], 'Memory trick: strength (力) plus mouth (口), to add or increase.']]
   ];
   const RECIPE_BASE = HANZI.length; RECIPES.forEach(r => HANZI.push(r[2]));
-  const plats = { hub: [], ai: [], code: [], chip: [], sea: [] };
+  const plats = { hub: [], ai: [], code: [], chip: [], sea: [], med: [] };
   const onPlat = (x, z, p) => {
     if (p.x0 !== undefined) return x > p.x0 && x < p.x1 && z > p.z0 && z < p.z1;
     if (p.ax !== undefined) { const dx = p.bx - p.ax, dz = p.bz - p.az, t = Math.max(0, Math.min(1, ((x - p.ax) * dx + (z - p.az) * dz) / (dx * dx + dz * dz))); return Math.hypot(x - (p.ax + dx * t), z - (p.az + dz * t)) < p.w / 2; }
@@ -12211,7 +12240,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const platformAt = (x, z) => plats[zone].find(p => onPlat(x, z, p)) || null;
   let codeScene = null, chipScene = null, seaScene = null, falling = false;
   let spaceScene = null, eventScene = null; const areaScenes = {};
-  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene, event: eventScene, void: voidScene, blr: BL && BL.sc, twr: TWR && TWR.sc, dsp: DSP && DSP.sc, mc: BZ.sc, sp: SPF.sc })[zone] || areaScenes[zone] : scene;
+  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene, event: eventScene, void: voidScene, blr: BL && BL.sc, twr: TWR && TWR.sc, dsp: DSP && DSP.sc, mc: BZ.sc, sp: SPF.sc, med: MED.sc })[zone] || areaScenes[zone] : scene;
   function radTile(parent, ch, x, y, z){
     const m = new THREE.Mesh(new THREE.PlaneGeometry(.55, .55), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: tex(160, 160, (g, w, h) => { g.fillStyle = '#FFE29A'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, h, 34) : g.rect(0, 0, w, h); g.fill(); g.fillStyle = '#24425E'; g.font = `700 110px ${ZH}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, w / 2, h / 2 + 6); }) }));
     m.position.set(x, y, z); m.userData.collect = ch; m.userData.base = y; parent.add(m); worldAnim.tiles.push(m); return m;
@@ -12409,12 +12438,161 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function fade(fn, color){ fadeEl.style.background = color || '#FFF8EC'; fadeEl.classList.add('on'); setTimeout(() => { fn(); setTimeout(() => fadeEl.classList.remove('on'), 60); }, reduce ? 0 : 480); }
   const jumpBtn = $('#jumpBtn');
   function toHub(){ zone = 'hub'; pos.set(0, 1.6, 2.4); yaw = 0; pitch = -.05; vy = 0; walkTarget = null; }
+  // ======================= Meridian General: a hospital at night =======================
+  // Its own scene and zone ('med'). Walk it like any other world. The lobby kiosk credits a site Rayan built.
+  const MED = { sc: null, built: false, mons: [], rain: [], flick: [], strips: [], t: 0 };
+  const MED_SITE = 'https://medcon-india-2026.vercel.app/';
+  const MED_RECTS = [
+    { x0: -11, x1: 11, z0: -8.6, z1: 7.6 },     // lobby
+    { x0: 10.5, x1: 26.5, z0: -1.5, z1: 1.5 },   // east corridor
+    { x0: 26, x1: 40, z0: -7.6, z1: 7.6 },       // ER
+    { x0: -26.5, x1: -10.5, z0: -1.5, z1: 1.5 }, // west corridor
+    { x0: -40, x1: -26, z0: -6.6, z1: 6.6 }      // operating theatre
+  ];
+  const medBlocks = [];  // furniture you can't walk through: { x0, x1, z0, z1 }
+  const medValid = (x, z) => MED_RECTS.some(r => x > r.x0 + .3 && x < r.x1 - .3 && z > r.z0 + .3 && z < r.z1 - .3) && !medBlocks.some(b => x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1);
+  function medTex(w, h, f){ const t = tex(w, h, f); t.anisotropy = 4; return t; }
+  function buildMed(){
+    if (MED.built) return; MED.built = true;
+    const sc = new THREE.Scene(); MED.sc = sc; sc.background = new THREE.Color(0x060A11); sc.fog = new THREE.Fog(0x060A11, 24, 70);
+    sc.add(new THREE.HemisphereLight(0x8FB8D8, 0x0A0D12, .55));
+    const key = new THREE.DirectionalLight(0x9FC8FF, .35); key.position.set(-10, 20, 12); sc.add(key);
+    const B = (w, h, d, m, x, y, z, solid) => { const o = box(w, h, d, m, x, y, z, sc); if (solid) medBlocks.push({ x0: x - w / 2 - .25, x1: x + w / 2 + .25, z0: z - d / 2 - .25, z1: z + d / 2 + .25 }); return o; };
+    const C = (rt, rb, h, m, x, y, z, seg) => cyl(rt, rb, h, m, x, y, z, sc, seg);
+    const floorT = medTex(512, 512, (g, w, h) => { g.fillStyle = '#1B222C'; g.fillRect(0, 0, w, h); g.strokeStyle = '#232B37'; g.lineWidth = 3; for (let i = 0; i <= w; i += 128) { g.beginPath(); g.moveTo(i, 0); g.lineTo(i, h); g.stroke(); g.beginPath(); g.moveTo(0, i); g.lineTo(w, i); g.stroke(); } });
+    floorT.wrapS = floorT.wrapT = THREE.RepeatWrapping;
+    const wallM = mat(0x2A313C, { roughness: .8 }), darkM = mat(0x161B23, { roughness: .6 }), steel = mat(0x9AA3AE, { metalness: .7, roughness: .3 }), white = mat(0xE8EEF2, { roughness: .5 });
+    const glow = (c, i = 1) => new THREE.MeshStandardMaterial({ color: c, emissive: c, emissiveIntensity: i });
+    // floors, ceilings and walls for each room
+    MED_RECTS.forEach((r, i) => { const w = r.x1 - r.x0, d = r.z1 - r.z0, cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2, hgt = i === 0 ? 8 : i === 2 || i === 4 ? 4.4 : 3.4;
+      const ft = floorT.clone(); ft.needsUpdate = true; ft.repeat.set(w / 3, d / 3);
+      const f = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat(0xffffff, { map: ft, roughness: .22, metalness: .25 })); f.rotation.x = -Math.PI / 2; f.position.set(cx, 0, cz); f.userData.walk = true; sc.add(f);
+      const c = new THREE.Mesh(new THREE.PlaneGeometry(w, d), darkM); c.rotation.x = Math.PI / 2; c.position.set(cx, hgt, cz); sc.add(c);
+      // light strips in the ceiling
+      for (let k = 0; k < Math.floor(w / 4); k++) { const s = B(.18, .04, d * .7, glow(0xCFEFFF, .9), r.x0 + 2 + k * 4, hgt - .03, cz); MED.strips.push(s); }
+      plats.med.push({ x0: r.x0, x1: r.x1, z0: r.z0, z1: r.z1 });
+    });
+    // lobby walls (the north wall is glass, looking out on the rain)
+    const glass = new THREE.MeshStandardMaterial({ color: 0x9FD8E8, emissive: 0x0B2A38, emissiveIntensity: .4, transparent: true, opacity: .22, roughness: .05, metalness: .3 });
+    B(22, 8, .06, glass, 0, 4, -8.6); for (let k = -5; k <= 5; k++) B(.12, 8, .12, steel, k * 2.2, 4, -8.6);
+    B(22, .12, .2, steel, 0, 4, -8.6);
+    B(.2, 8, 7, wallM, -11, 4, -5.1); B(.2, 8, 6.1, wallM, -11, 4, 4.55); B(.2, 4.6, 3, wallM, -11, 5.7, 0);
+    B(.2, 8, 7, wallM, 11, 4, -5.1); B(.2, 8, 6.1, wallM, 11, 4, 4.55); B(.2, 4.6, 3, wallM, 11, 5.7, 0);
+    B(9, 8, .2, wallM, -6.5, 4, 7.6); B(9, 8, .2, wallM, 6.5, 4, 7.6); B(4, 5.3, .2, wallM, 0, 5.35, 7.6);
+    // the city outside, in the rain
+    const city = new THREE.Group(); sc.add(city);
+    for (let k = 0; k < 26; k++) { const w = 3 + Math.random() * 4, hgt = 8 + Math.random() * 26, x = -40 + k * 3.2, z = -26 - Math.random() * 16;
+      const b = box(w, hgt, 3, mat(0x0E141D, { roughness: .9 }), x, hgt / 2 - 2, z, city);
+      const win = new THREE.Mesh(new THREE.PlaneGeometry(w * .8, hgt * .8), new THREE.MeshBasicMaterial({ transparent: true, map: medTex(64, 128, (g, W, H) => { for (let y = 4; y < H; y += 8) for (let xx = 4; xx < W; xx += 8) { if (Math.random() < .35) { g.fillStyle = Math.random() < .8 ? 'rgba(255,214,150,.85)' : 'rgba(150,220,255,.85)'; g.fillRect(xx, y, 4, 4); } } }) })); win.position.set(x, hgt / 2 - 2, z + 1.52); city.add(win); }
+    for (let k = 0; k < 3; k++) { const rt = medTex(128, 256, (g, w, h) => { g.strokeStyle = 'rgba(190,220,255,.35)'; g.lineWidth = 1.2; for (let i = 0; i < 160; i++) { const x = Math.random() * w, y = Math.random() * h, l = 10 + Math.random() * 18; g.beginPath(); g.moveTo(x, y); g.lineTo(x - 2, y + l); g.stroke(); } });
+      rt.wrapS = rt.wrapT = THREE.RepeatWrapping; rt.repeat.set(4, 2); const rain = new THREE.Mesh(new THREE.PlaneGeometry(60, 30), new THREE.MeshBasicMaterial({ map: rt, transparent: true, depthWrite: false })); rain.position.set(0, 10, -10 - k * 5); rain.raycast = () => {}; sc.add(rain); MED.rain.push({ t: rt, sp: .5 + k * .25 }); }
+    // reception: a curved desk with a glowing edge
+    const desk = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 1.1, 40, 1, true, Math.PI * .75, Math.PI * .5), mat(0xE8EEF2, { roughness: .3, side: THREE.DoubleSide })); desk.position.set(0, .55, -1); sc.add(desk);
+    const edge = new THREE.Mesh(new THREE.TorusGeometry(3, .03, 8, 40, Math.PI * .5), glow(0x5FE0E8, 1.2)); edge.rotation.x = Math.PI / 2; edge.rotation.z = Math.PI * .25; edge.position.set(0, 1.1, -1); sc.add(edge);
+    medBlocks.push({ x0: -2.4, x1: 2.4, z0: -4.4, z1: -1.6 });
+    const logo = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 1.1), new THREE.MeshBasicMaterial({ transparent: true, map: medTex(1080, 220, (g, w, h) => { g.fillStyle = '#E8F7FA'; g.font = `800 110px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('MERIDIAN GENERAL', w / 2, 90); g.fillStyle = '#5FE0E8'; g.font = `600 36px "Instrument Sans", sans-serif`; g.fillText('TRAUMA · SURGERY · CRITICAL CARE', w / 2, 180); }) }));
+    logo.position.set(0, 5.6, -8.4); sc.add(logo);
+    // seating, planters and wayfinding totems
+    [-7, 7].forEach(x => { for (let k = 0; k < 3; k++) { B(1.8, .45, .6, mat(0x3E5468, { roughness: .7 }), x, .45, 1 + k * 1.6, true); B(1.8, .5, .12, mat(0x3E5468, { roughness: .7 }), x, .8, 1.3 + k * 1.6); } });
+    [[-9.5, -7], [9.5, -7], [-9.5, 6], [9.5, 6]].forEach(([x, z]) => { C(.5, .4, .9, mat(0x2A313C), x, .45, z); const p = new THREE.Mesh(new THREE.SphereGeometry(.7, 12, 10), mat(0x2F6B4A)); p.position.set(x, 1.4, z); sc.add(p); medBlocks.push({ x0: x - .8, x1: x + .8, z0: z - .8, z1: z + .8 }); });
+    const way = (x, z, ry, lines) => { const t = new THREE.Mesh(new THREE.PlaneGeometry(1.1, 2.2), new THREE.MeshBasicMaterial({ map: medTex(220, 440, (g, w, h) => { g.fillStyle = '#0D141C'; g.fillRect(0, 0, w, h); lines.forEach(([a, b, c], i) => { g.fillStyle = c; g.fillRect(16, 30 + i * 100, 8, 64); g.fillStyle = '#E8F7FA'; g.font = `700 30px ${DISPLAY}`; g.fillText(a, 36, 64 + i * 100); g.fillStyle = '#8FA3B8'; g.font = `500 20px "Instrument Sans", sans-serif`; g.fillText(b, 36, 92 + i * 100); }); }) }));
+      t.position.set(x, 1.7, z); t.rotation.y = ry; sc.add(t); B(1.2, .1, .2, darkM, x, .6, z); };
+    way(-4.5, 4, 0, [['ER', 'East wing  →', '#E4572E'], ['Surgery', '←  West wing', '#5FE0E8'], ['Sleep ward', 'Level 4 · closed', '#8FA3B8'], ['Server core', 'B2 · staff only', '#8FA3B8']]);
+    // the lobby kiosk: the site credit
+    const kiosk = new THREE.Group(); kiosk.position.set(4.4, 0, 3.6); kiosk.rotation.y = -.5; kiosk.userData.egg = 'medkiosk'; sc.add(kiosk);
+    box(.5, 1.1, .4, darkM, 0, .55, 0, kiosk);
+    const ks = new THREE.Mesh(new THREE.PlaneGeometry(.9, 1.3), new THREE.MeshBasicMaterial({ map: medTex(360, 520, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#0F2A38'); gr.addColorStop(1, '#0A141E'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.strokeStyle = '#5FE0E8'; g.lineWidth = 6; g.strokeRect(6, 6, w - 12, h - 12);
+      g.fillStyle = '#5FE0E8'; g.font = `700 22px "Instrument Sans", sans-serif`; g.fillText('LOBBY KIOSK', 30, 50); g.fillStyle = '#E8F7FA'; g.font = `800 44px ${DISPLAY}`; g.fillText('Website', 30, 130); g.fillText('design', 30, 180);
+      g.fillStyle = '#C9D8E4'; g.font = `500 24px "Instrument Sans", sans-serif`; g.fillText('Designed and built', 30, 240); g.fillText('by Rayan Upadhyay', 30, 272);
+      g.fillStyle = '#5FE0E8'; g.beginPath(); g.roundRect ? g.roundRect(30, 400, 300, 64, 32) : g.rect(30, 400, 300, 64); g.fill(); g.fillStyle = '#06222A'; g.font = `700 28px "Instrument Sans", sans-serif`; g.textAlign = 'center'; g.fillText('Tap to visit  ↗', w / 2, 442); }) }));
+    ks.position.set(0, 1.55, .21); ks.rotation.x = -.15; kiosk.add(ks); medBlocks.push({ x0: 3.9, x1: 4.9, z0: 3.1, z1: 4.1 });
+    // the entrance: frosted sliding doors back to the room
+    const exitG = new THREE.Group(); exitG.position.set(0, 0, 7.55); exitG.userData.egg = 'medexit'; sc.add(exitG);
+    [-.75, .75].forEach(x => box(1.45, 2.6, .05, new THREE.MeshStandardMaterial({ color: 0xBFE8F0, emissive: 0x3FA8B8, emissiveIntensity: .3, transparent: true, opacity: .5 }), x, 1.3, 0, exitG));
+    const exitSign = new THREE.Mesh(new THREE.PlaneGeometry(1.4, .3), new THREE.MeshBasicMaterial({ map: medTex(420, 90, (g, w, h) => { g.fillStyle = '#0D2A1E'; g.fillRect(0, 0, w, h); g.fillStyle = '#4DFFA0'; g.font = `800 52px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('EXIT', w / 2, h / 2 + 2); }) })); exitSign.position.set(0, 2.9, -.05); exitSign.rotation.y = Math.PI; exitG.add(exitSign);
+    // ER wing: bays with curtains, beds and monitors
+    const erLight = new THREE.PointLight(0xFF5A48, .8, 18, 2); erLight.position.set(33, 3.6, 0); sc.add(erLight); MED.flick.push({ l: erLight, base: .8 });
+    B(.2, 4.4, 6.1, wallM, 26, 2.2, -4.55); B(.2, 4.4, 6.1, wallM, 26, 2.2, 4.55); B(.2, 4.4, 15.2, wallM, 40, 2.2, 0); B(14, 4.4, .2, wallM, 33, 2.2, -7.6); B(14, 4.4, .2, wallM, 33, 2.2, 7.6);
+    B(14, .06, .1, glow(0xE4572E, 1.2), 33, 3.9, -7.45); B(14, .06, .1, glow(0xE4572E, 1.2), 33, 3.9, 7.45);
+    for (let k = 0; k < 4; k++) [-1, 1].forEach(s => { const x = 28.5 + k * 3.2, z = s * 5.6;
+      B(1, .55, 2, white, x, .55, z, true); B(1, .12, .5, mat(0xF4F7F8), x, .9, z + s * .7);
+      const cur = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 2.4), new THREE.MeshStandardMaterial({ color: 0x3FA8A0, transparent: true, opacity: .75, side: THREE.DoubleSide, roughness: .9 })); cur.position.set(x + 1.5, 1.5, z); cur.rotation.y = Math.PI / 2; sc.add(cur);
+      const mon = medMonitor(); mon.position.set(x - .7, 1.7, z + s * .6); mon.rotation.y = s > 0 ? Math.PI : 0; sc.add(mon); });
+    const triage = B(3.2, 1.1, .8, white, 33, .55, 0, true); B(3.2, .05, .1, glow(0x5FE0E8, 1), 33, 1.12, -.42);
+    const erSign = new THREE.Mesh(new THREE.PlaneGeometry(3.2, .7), new THREE.MeshBasicMaterial({ map: medTex(640, 140, (g, w, h) => { g.fillStyle = '#2A0B0B'; g.fillRect(0, 0, w, h); g.fillStyle = '#FF6A55'; g.font = `800 92px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('EMERGENCY', w / 2, h / 2 + 4); }) })); erSign.position.set(26.15, 3.6, 0); erSign.rotation.y = Math.PI / 2; sc.add(erSign); MED.flick.push({ m: erSign.material, base: 1 });
+    // operating theatre: glass walls, the big lamp, a robot arm that's switched off (for now)
+    B(.2, 4.4, 5.1, wallM, -26, 2.2, -4.05); B(.2, 4.4, 5.1, wallM, -26, 2.2, 4.05); B(.2, 4.4, 13.2, wallM, -40, 2.2, 0); B(14, 4.4, .2, wallM, -33, 2.2, -6.6); B(14, 4.4, .2, wallM, -33, 2.2, 6.6);
+    B(.06, 3, 9, glass, -29, 1.5, 0); B(.1, 3.2, .1, steel, -29, 1.6, -4.5); B(.1, 3.2, .1, steel, -29, 1.6, 4.5);
+    const tbl = B(2.2, .9, .9, white, -34, .45, 0, true); B(2.1, .1, .8, mat(0x3E6E8C), -34, .95, 0);
+    C(.06, .06, 1.2, steel, -34, 3.8, 0, 10); const lamp = C(.9, .6, .25, mat(0xF4F7F8, { roughness: .3 }), -34, 3.1, 0, 32);
+    const lampF = new THREE.Mesh(new THREE.CircleGeometry(.7, 32), glow(0xFFFFFF, 1.4)); lampF.rotation.x = Math.PI / 2; lampF.position.set(-34, 2.97, 0); sc.add(lampF);
+    const orSpot = new THREE.SpotLight(0xF2FBFF, 1.6, 9, .55, .5, 1.5); orSpot.position.set(-34, 2.9, 0); orSpot.target.position.set(-34, 0, 0); sc.add(orSpot); sc.add(orSpot.target);
+    const arm = new THREE.Group(); arm.position.set(-36.5, 0, -2.4); sc.add(arm); MED.arm = arm;
+    const seg = (len, y, rz) => { const s = new THREE.Mesh(new THREE.CylinderGeometry(.1, .12, len, 12), steel); s.position.y = y; s.rotation.z = rz; return s; };
+    cyl(.32, .42, .3, steel, 0, .15, 0, arm); const a1 = seg(1.6, 1, 0); arm.add(a1); const a2 = seg(1.2, 1.9, -.9); a2.position.x = .45; arm.add(a2); const tip = new THREE.Mesh(new THREE.ConeGeometry(.08, .3, 10), glow(0x5FE0E8, .8)); tip.position.set(1, 1.5, 0); tip.rotation.z = Math.PI; arm.add(tip);
+    medBlocks.push({ x0: -37, x1: -36, z0: -2.9, z1: -1.9 });
+    for (let k = 0; k < 3; k++) { const mon = medMonitor(true); mon.scale.setScalar(1.6); mon.position.set(-39.85, 2.2, -3 + k * 3); mon.rotation.y = Math.PI / 2; sc.add(mon); }
+    const orSign = new THREE.Mesh(new THREE.PlaneGeometry(3.2, .7), new THREE.MeshBasicMaterial({ map: medTex(640, 140, (g, w, h) => { g.fillStyle = '#071C22'; g.fillRect(0, 0, w, h); g.fillStyle = '#5FE0E8'; g.font = `800 84px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('SURGERY', w / 2, h / 2 + 4); }) })); orSign.position.set(-26.15, 3.6, 0); orSign.rotation.y = -Math.PI / 2; sc.add(orSign);
+    // the corridors: dim, with a guide line on the floor
+    [[18.5, '#E4572E'], [-18.5, '#5FE0E8']].forEach(([x, c]) => { B(16, 3.4, .2, wallM, x, 1.7, -1.6); B(16, 3.4, .2, wallM, x, 1.7, 1.6); const ln = new THREE.Mesh(new THREE.PlaneGeometry(16, .12), new THREE.MeshBasicMaterial({ color: c })); ln.rotation.x = -Math.PI / 2; ln.position.set(x, .01, 0); ln.raycast = () => {}; sc.add(ln);
+      for (let k = 0; k < 4; k++) { const d = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.2), mat(0x3A4350)); d.position.set(x - 6 + k * 4, 1.1, k % 2 ? 1.49 : -1.49); d.rotation.y = k % 2 ? Math.PI : 0; sc.add(d); } });
+    const lobbyL = new THREE.PointLight(0xBFE6FF, .9, 30, 2); lobbyL.position.set(0, 6, 0); sc.add(lobbyL);
+    const cornerL = new THREE.PointLight(0x5FE0E8, .5, 14, 2); cornerL.position.set(-18, 2.8, 0); sc.add(cornerL);
+  }
+  // a bedside monitor with a moving heart trace
+  function medMonitor(big){
+    const g = new THREE.Group(); box(.5, .36, .06, mat(0x1A1F27), 0, 0, -.03, g);
+    const cv = document.createElement('canvas'); cv.width = 256; cv.height = 160; const t = new THREE.CanvasTexture(cv);
+    const scr = new THREE.Mesh(new THREE.PlaneGeometry(.44, .3), new THREE.MeshBasicMaterial({ map: t })); scr.position.z = .005; g.add(scr);
+    MED.mons.push({ cv, t, ph: Math.random() * 10, hr: 60 + Math.random() * 40 | 0, big }); return g;
+  }
+  function medDrawMon(m, time){
+    const g = m.cv.getContext('2d'), w = m.cv.width, h = m.cv.height; g.fillStyle = '#05100D'; g.fillRect(0, 0, w, h);
+    g.strokeStyle = '#3CFFA8'; g.lineWidth = 3; g.beginPath(); const sp = reduce ? 0 : time * 90;
+    for (let x = 0; x <= w; x += 2) { const p = ((x + sp + m.ph * 30) % 120) / 120; const y = p > .4 && p < .45 ? 40 : p >= .45 && p < .5 ? 130 : p >= .5 && p < .55 ? 70 : 90; x ? g.lineTo(x, y) : g.moveTo(x, y); } g.stroke();
+    g.fillStyle = '#3CFFA8'; g.font = '700 40px sans-serif'; g.fillText(m.hr + (reduce ? 0 : Math.round(Math.sin(time + m.ph) * 2)), w - 90, 44); g.fillStyle = '#5FE0E8'; g.font = '700 22px sans-serif'; g.fillText('SpO₂ 98', 10, h - 14);
+    m.t.needsUpdate = true;
+  }
+  function medStep(dt, now){
+    if (!MED.built) return; const t = now / 1000; MED.t += dt;
+    if (!reduce) MED.rain.forEach(r => { r.t.offset.y += dt * r.sp; r.t.offset.x += dt * r.sp * .05; });
+    if (MED.t > .1) { MED.t = 0; MED.mons.forEach(m => { if (Math.hypot(pos.x, pos.z) < 60) medDrawMon(m, t); }); }
+    MED.flick.forEach(f => { const on = reduce || Math.sin(t * 7.3) + Math.sin(t * 13.1) > -1.4; if (f.l) f.l.intensity = on ? f.base : f.base * .2; if (f.m) f.m.opacity = on ? 1 : .55; if (f.m) f.m.transparent = true; });
+    if (MED.arm && !reduce) MED.arm.rotation.y = Math.sin(t * .2) * .15;
+  }
+  // the red cross over the doors in the room behind the bookshelf: it never quite stays on
+  function medCrossStep(now){
+    if (!vaultOpen) { crossLight.intensity = 0; return; }
+    const t = now / 1000, on = reduce || !(Math.sin(t * 3.1) > .93 || (Math.sin(t * 17) > .97 && Math.sin(t * .7) > 0));
+    crossM.emissiveIntensity = on ? 1.3 : .15; crossLight.intensity = on ? .9 : .05;
+  }
+  function enterMed(){
+    if (inWorld) return;
+    closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
+    moveCam(views.meddoor.pos.clone().setX(views.meddoor.pos.x + .9), -Math.PI / 2, 0, .8, () => fade(() => {
+      buildMed();
+      saved = { pos: views.meddoor.pos.clone(), yaw: Math.PI / 2, pitch: 0 };
+      inWorld = true; zone = 'med'; vy = 0; walkTarget = null; pos.set(0, 1.6, 5.6); yaw = 0; pitch = 0; uiZone();
+      dock.classList.remove('on'); $('#worldBack').hidden = false; $('#worldBack').textContent = 'Back to the room'; if (!fine) jumpBtn.hidden = false;
+      say('Meridian General. Night shift. The ER is east, surgery is west.', 4600);
+    }, '#05080D'));
+  }
+  function leaveMed(){
+    if (!inWorld || zone !== 'med') return;
+    closePanel(); tone(990, .25, 'sine', .05, 660);
+    fade(() => { inWorld = false; zone = 'hub'; walkTarget = null; vy = 0; pos.copy(saved.pos); yaw = saved.yaw; pitch = saved.pitch; if (region(pos.x) === 'vault' && !vaultOpen) { pos.set(3.2, 1.6, .3); yaw = Math.PI / 2; pitch = 0; } uiZone(); dock.classList.add('on'); $('#worldBack').hidden = true; jumpBtn.hidden = true; }, '#05080D');
+  }
+  function medKiosk(){
+    panelBody.innerHTML = `<div class="sec"><p class="meta">Meridian General · lobby kiosk</p><h2 class="display">Website design</h2><p class="sub">A site I designed and built. Have a look.</p><p><a class="open" href="${MED_SITE}" target="_blank" rel="noopener">Visit the site ↗</a></p></div>`;
+    panel.scrollTop = 0; panel.classList.add('on'); tone(880, .08, 'sine', .04);
+  }
+
   function enterWorld(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(220, .8, 'sine', .08, 880);
-    moveCam(V(6.9, 1.3, 1.35), Math.PI, 0, .9, () => fade(() => {
+    moveCam(V(7.8, 1.45, -2.9), 0, 0, .9, () => fade(() => {
       if (!world) buildWorld();
-      saved = { pos: V(6.9, 1.6, .6), yaw: 0, pitch: 0 }; secret('portal');
+      saved = { pos: V(7.8, 1.6, -1.6), yaw: Math.PI, pitch: 0 }; secret('portal');
       inWorld = true; toHub(); uiZone(); renderTray();
       dock.classList.remove('on'); $('#worldBack').hidden = false; if (!fine) jumpBtn.hidden = false;
       say((fine ? 'Press Space to jump between islands. ' : 'Use the jump button to hop between islands. ') + 'Collect radicals and combine them at the shrine.', 5500);
@@ -12426,7 +12604,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // if the bookshelf is closed, the vault (and the operating table) is sealed off, so come back into the room instead
     fade(() => { inWorld = false; zone = 'hub'; uiZone(); walkTarget = null; vy = 0; pos.copy(saved.pos); yaw = saved.yaw; pitch = saved.pitch; if (region(pos.x) === 'vault' && !vaultOpen) { pos.set(3.2, 1.6, .3); yaw = Math.PI / 2; pitch = 0; } dock.classList.add('on'); $('#worldBack').hidden = true; jumpBtn.hidden = true; $('#worldBack').textContent = 'Back to the room'; });
   }
-  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : inWorld && zone === 'mc' ? bzLeave() : inWorld && zone === 'sp' ? spAbort() : inWorld && zone === 'blr' ? leaveBlr() : inWorld && (zone === 'twr' || zone === 'dsp') ? fade(() => travel('room'), '#06070B') : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
+  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : inWorld && zone === 'med' ? leaveMed() : inWorld && zone === 'mc' ? bzLeave() : inWorld && zone === 'sp' ? spAbort() : inWorld && zone === 'blr' ? leaveBlr() : inWorld && (zone === 'twr' || zone === 'dsp') ? fade(() => travel('room'), '#06070B') : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
   function enterAI(){
     fade(() => {
       if (!aiScene) buildAI();
@@ -13800,7 +13978,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         const ux = dx / d, uz = dz / d, st = Math.min(d, (grounded ? 2.8 : 1.9) * dt);
         yaw += angDiff(yaw, Math.atan2(-ux, -uz)) * Math.min(1, dt * 6);
         if (grounded && !platformAt(pos.x + ux * .4, pos.z + uz * .4) && platformAt(walkTarget.x, walkTarget.z)) jump();
-        pos.x += ux * st; pos.z += uz * st;
+        if (zone === 'med' && inWorld && !medValid(pos.x + ux * st, pos.z + uz * st)) walkTarget = null; else { pos.x += ux * st; pos.z += uz * st; }
       }
     }
     if (zone === 'mc') return bzStep(dt, now);
@@ -13816,6 +13994,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     else if (plat && vy <= 0 && feet <= .02 && feet > -.7) { if (!grounded && vy < -3) tone(140, .06, 'sine', .05); pos.y = 1.6; vy = 0; grounded = true; }
     else { grounded = false; vy = Math.max(vy - (zone === 'space' ? 8 : zone === 'void' ? 10 : zone === 'event' && EV && EV.moon ? 5 : 18) * dt, -30); pos.y += vy * dt; }
     if (zone === 'space') spaceStep(dt, now);
+    if (zone === 'med') medStep(dt, now);
     if (pos.y < -28 && !falling && NEXT[zone]) { falling = true; enterLevel(NEXT[zone]); }
     if (zone === 'hub') mkStep(dt, now);
     if (reduce) return;
@@ -13977,6 +14156,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (p.egg === 'bdrone') return shootDrone(p.o);
       if (AREAS[zone] && p.egg) return areaEgg(p);
       if (p.egg === 'evpanel') return openLobby(p.o.userData.ev);
+      if (p.egg === 'medkiosk') return medKiosk();
+      if (p.egg === 'medexit') return leaveMed();
       if (p.egg === 'loose') { const l = breach && breach.loose[p.o.userData.li]; if (l && !A && !EV && !RUN) { startFight(l.def, l.i, l.x * 40, l.z * 40, 'lair'); if (A) say(`You stepped in. Beat ${l.def.name} to lock it back up.`, 3200); } return; }
       if (p.egg === 'wartable') return say('Pick an event on one of the screens around the war table.', 2600);
       if (p.egg === 'pod') return startBoss(p.o.userData.bi);
@@ -13998,7 +14179,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (p.collect) return collect(p.collect);
       if (p.shrine) return combine();
       if (p.terminal) return openAIBox();
-      if (p.walk) { closePanel(); walkTarget = zone === 'roof' ? { x: clamp(p.walk.x, -5.4, 5.4), z: clamp(p.walk.z, -3.4, 3.4) } : zone === 'lair' ? (valid(p.walk.x, p.walk.z) ? { x: p.walk.x, z: p.walk.z } : { x: clamp(p.walk.x, -16.7, 8.2), z: clamp(p.walk.z, -8, 10.2) }) : { x: p.walk.x, z: p.walk.z }; }
+      if (p.walk) { closePanel(); walkTarget = zone === 'roof' ? { x: clamp(p.walk.x, -5.4, 5.4), z: clamp(p.walk.z, -3.4, 3.4) } : zone === 'lair' ? (valid(p.walk.x, p.walk.z) ? { x: p.walk.x, z: p.walk.z } : { x: clamp(p.walk.x, -16.7, 8.2), z: clamp(p.walk.z, -8, 10.2) }) : zone === 'med' ? (medValid(p.walk.x, p.walk.z) ? { x: p.walk.x, z: p.walk.z } : null) : { x: p.walk.x, z: p.walk.z }; }
       return;
     }
     if (p.page) return collectPage(p.page);
@@ -14006,6 +14187,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.egg === 'lift') return flyTo(views.lift.pos.clone(), views.lift.look, takeLift);
     if (p.egg === 'batfig') return vaultOpen ? tiltBat() : flyTo(V(3.4, 1.75, -.5), V(4.62, 2.05, -.5), tiltBat);
     if (p.egg === 'portal') return flyTo(views.portal.pos.clone(), views.portal.look, enterWorld);
+    if (p.egg === 'meddoor') return flyTo(views.meddoor.pos.clone(), views.meddoor.look, enterMed);
+    if (p.egg === 'crayon') return say('Some career plans start early.', 2600);
     if (p.egg !== 'crate' && p.egg !== 'shelfvinyl') putBackRecord();
     if (p.egg === 'scratch') return scratch();
     if (p.egg === 'speakers') return toggleLofi();
@@ -14038,7 +14221,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.section) return goTo(p.section);
     if (p.walk) {
       let x = p.walk.x, z = p.walk.z;
-      if (region(x) === 'vault') { if (!vaultOpen) return; x = clamp(x, 5.8, 8.0); z = clamp(z, -1.0, 1.6); }
+      if (region(x) === 'vault') { if (!vaultOpen) return; x = clamp(x, 5.8, 10.1); z = clamp(z, -3.0, .5); }
       else if (z > 4.7) { x = clamp(x, -1.1, 1.1); z = clamp(z, 5.6, 10.2); }
       else { x = clamp(x, -4.2, 4.2); z = clamp(z, -3.6, 4.3); }
       closePanel();
@@ -14124,7 +14307,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!reduce) {
       vinyl.rotation.y -= dt * 3.5 * spin; portal.userData.disc.rotation.z -= dt * 1.2;
     }
-    portal.userData.glow.intensity = vaultOpen ? .9 : 0;
+    portal.userData.glow.intensity = vaultOpen ? .9 : 0; medCrossStep(now);
     if (inWorld) worldStep(dt, now);
     pageMeshes.forEach((m, i) => { m.rotation.y += dt * 1.2; m.position.y = m.userData.base + Math.sin(now / 600 + i) * .05; });
     const tsec = now / 1000;
