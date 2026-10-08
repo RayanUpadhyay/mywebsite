@@ -175,6 +175,7 @@ h1,h2,h3,p{margin:0}
 .cbvisor[hidden]{display:none}.cbvisor small{display:block;color:#5FE0E8;font-weight:800;letter-spacing:.14em;margin-bottom:4px}
 .cbvk span{display:block}.cbvb{margin-top:6px;padding:4px 6px;border-radius:6px;background:rgba(95,224,232,.12);color:#5FE0E8}.cbvb.open{background:rgba(255,201,60,.18);color:#FFC93C}.cbvb[hidden]{display:none}
 .cbvo{margin:6px 0 0;color:#FFFFFF}.cbvo:empty{display:none}
+.cbvisor.sfred{border-color:#FF3030;background:rgba(30,6,6,.82);color:#FF9A8A}.cbvisor.sfred small{color:#FF5A4E}
 @media (max-width:560px){.cbvisor{top:calc(172px + env(safe-area-inset-top,0px));left:12px;right:auto;width:200px;padding:6px 9px;font-size:11px}body.inevent .cbvisor:not(.kai) .cbvk{display:none}}
 .cbtalk{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:30;width:min(620px,calc(100% - 32px));padding:14px 16px 12px;border-radius:14px;background:rgba(8,12,18,.92);border:1px solid rgba(95,224,232,.35);color:#E8F2F6;box-shadow:0 12px 40px rgba(0,0,0,.5)}
 .cbtalk[hidden]{display:none}.cbtalk b{display:block;font:800 13px/1 "Instrument Sans",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#5FE0E8;margin-bottom:6px}
@@ -288,6 +289,7 @@ body.mkwon .toast{top:calc(160px + env(safe-area-inset-top,0px))}
 .links{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
 .links a{height:44px;padding:0 18px;border-radius:999px;border:1px solid var(--line);display:inline-flex;align-items:center;text-decoration:none;font-weight:500}
 .mail{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:22px;text-decoration:none;border-bottom:2px solid var(--accent);word-break:break-all}
+.apkdl{display:inline-flex;align-items:center;text-decoration:none}.apkmeta{font-size:13px;line-height:1.5;opacity:.85;margin:10px 0 0}.apkfacts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:12px 0 0;font-size:13px}.apkfacts dt{font-weight:700}.apkfacts dd{margin:0;min-width:0}.apkfacts code{word-break:break-all;font-size:11.5px}
 .open{margin-top:14px;height:44px;padding:0 18px;border-radius:999px;border:0;background:var(--ink);color:var(--bg);font-weight:600;cursor:pointer}
 .vinyls{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px}
 .vinyl .art{aspect-ratio:1;border-radius:10px;overflow:hidden;display:grid;place-items:center;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:22px;text-align:center;padding:8px;line-height:1.05}
@@ -1803,6 +1805,20 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   mapMesh.rotation.y = Math.PI / 2; mapMesh.position.set(-4.905, 1.7, 2.3); mapG.add(mapMesh);
   addMarker(V(-4.72, 2.62, 2.3), 0x7C8CFF, { egg: 'map' });
   views.map = { pos: V(-2.9, 1.6, 2.3), look: V(-4.95, 1.7, 2.3) };
+  // a download plate under the map: the Android app itself
+  const APK = { href: 'downloads/agribridge-1.0.apk', ver: '1.0 (build 1)', size: '11.9 MB', sha: '4ac652b602568175be0f2a5a6cf16b4e2d352da14af330e6f9da1b4f4e646560' };
+  const apkPlate = new THREE.Mesh(new THREE.PlaneGeometry(1.1, .2), new THREE.MeshBasicMaterial({ map: tex(660, 120, (g, w, h) => { g.fillStyle = '#3F9E5B'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, h, 26) : g.rect(0, 0, w, h); g.fill(); g.fillStyle = '#FFFFFF'; g.font = `800 40px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('⬇ Download AgriBridge (Android)', w / 2, h / 2 + 2); }), transparent: true }));
+  apkPlate.rotation.y = Math.PI / 2; apkPlate.position.set(-4.9, .86, 2.3); apkPlate.userData.egg = 'apk'; scene.add(apkPlate);
+  function apkPanel(){
+    const android = /Android/i.test(navigator.userAgent);
+    panelBody.innerHTML = `<div class="sec"><p class="meta">AgriBridge · Android app</p><h2 class="display">AgriBridge</h2><p class="sub">Markets, government schemes and credit information for farmers, in their own language. Live in every state in India.</p>
+      <a class="open apkdl" href="${APK.href}" download="AgriBridge-${APK.ver.split(' ')[0]}.apk" rel="noopener">⬇ Download AgriBridge (Android)</a>
+      <p class="apkmeta"><b>Android only.</b>${android ? '' : ' This file won’t install on an iPhone or a computer: open this page on an Android phone.'}</p>
+      <dl class="apkfacts"><dt>Version</dt><dd>${APK.ver}</dd><dt>Size</dt><dd>${APK.size}</dd><dt>SHA-256</dt><dd><code>${APK.sha}</code></dd></dl>
+      <p class="apkmeta">It isn’t from the Play Store, so Android will ask you to allow installing apps from unknown sources (for your browser or file manager), and Play Protect may show a warning. That’s expected for apps installed this way; you can check the file against the SHA-256 above.</p>
+      <p class="apkmeta">Privacy: downloading only fetches the file. This site doesn’t send anything about you to the app.</p></div>`;
+    panel.scrollTop = 0; panel.classList.add('on'); tone(660, .08, 'triangle', .05);
+  }
 
   // Block builder: a stool with a little stack of blocks
   const bbG = new THREE.Group(); bbG.position.set(1.25, 0, -4.3); bbG.userData.egg = 'builder'; scene.add(bbG);
@@ -2082,7 +2098,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     toast.classList.remove('on'); sc.classList.add('on'); clearTimeout(sc._t); sc._t = setTimeout(() => sc.classList.remove('on'), 6000);
     [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, .22, 'square', .05), i * 90));
   }
-  const LABELS = { logbook: 'Rayan\u2019s logbook', batfig: 'Tilt the Batman figure', seed: 'A strange golden seed', lairexit: 'Back upstairs', lairboard: 'The lair scoreboard', rackinfo: 'The weapon rack', telescope: 'Look through the telescope', hatch: 'Back downstairs', ladder: 'Climb to the rooftop', lift: 'Take the lift', window: 'The sky outside', counter: 'Visitors so far', speakers: 'Play lo-fi', portal: 'Through the moon gate: Mandalink world', meddoor: 'Meridian General',  medkiosk: 'Lobby kiosk', cbstart: 'The pager: Code Black', medlift: 'Take the lift', medexit: 'Back to the room', optable: 'Lift the sheet', whiteboard: 'The whiteboard', swim: 'Swim corner', photos: 'Photo folder', reviews: 'My album reviews', shelfvinyl: 'On the shelf', alexa: 'Alexa', scratch: 'Scratch it', map: 'AgriBridge across India', builder: 'Play: block builder', switch: 'Light switch', radicals: 'Play: find the radical', screen: 'Use the laptop: Mandalink', crate: 'Dig through the crate', vaultbook: 'Pull the red book' };
+  const LABELS = { logbook: 'Rayan\u2019s logbook', batfig: 'Tilt the Batman figure', seed: 'A strange golden seed', lairexit: 'Back upstairs', lairboard: 'The lair scoreboard', rackinfo: 'The weapon rack', telescope: 'Look through the telescope', hatch: 'Back downstairs', ladder: 'Climb to the rooftop', lift: 'Take the lift', window: 'The sky outside', counter: 'Visitors so far', speakers: 'Play lo-fi', portal: 'Through the moon gate: Mandalink world', meddoor: 'Meridian General',  medkiosk: 'Lobby kiosk', cbstart: 'The pager: Code Black', medlift: 'Take the lift', medexit: 'Back to the room', optable: 'Lift the sheet', whiteboard: 'The whiteboard', swim: 'Swim corner', photos: 'Photo folder', reviews: 'My album reviews', shelfvinyl: 'On the shelf', alexa: 'Alexa', scratch: 'Scratch it', map: 'AgriBridge across India', apk: 'Download AgriBridge (Android)', builder: 'Play: block builder', switch: 'Light switch', radicals: 'Play: find the radical', screen: 'Use the laptop: Mandalink', crate: 'Dig through the crate', vaultbook: 'Pull the red book' };
   const bookLabel = () => vaultOpen ? 'Close the bookshelf' : 'Pull the red book';
 
   let night = false;
@@ -2286,7 +2302,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function playMap(){
     flyTo(views.map.pos.clone(), views.map.look, () => {
       let last = 0; drawMap(1); tone(520, .1, 'triangle', .08);
-      tween(2.6, e => { const n = Math.max(1, Math.ceil(e * 28)); if (n !== last) { last = n; drawMap(n); if (n > 1) tone(380 + n * 18, .05, 'triangle', .05); } }, () => say('AgriBridge: live in every state in India'), true);
+      tween(2.6, e => { const n = Math.max(1, Math.ceil(e * 28)); if (n !== last) { last = n; drawMap(n); if (n > 1) tone(380 + n * 18, .05, 'triangle', .05); } }, () => { say('AgriBridge: live in every state in India'); setTimeout(apkPanel, 700); }, true);
     });
   }
   let spin = 1;
@@ -5308,6 +5324,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function endMatch(won){
     if (EV && EV.opts && EV.opts.bk && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return bkFightEnd(won); }
     if (EV && EV.opts && EV.opts.cb && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return cbFightEnd(won); }
+    if (EV && EV.opts && EV.opts.sf && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return sfFightEnd(won); }
     if (EV && !EV.over) { storyFlag('ev:' + EV.k); if (won) storyFlag('evwin:' + EV.k); if (won && EV.k === 'br') storyFlag('br' + EV.part); if (won && EV.k === 'st') { storyFlag(EV.st.part); sbWon(EV.st.part); } }
     if (EV && EV.k === 'st' && EV.st && EV.st.part === 'c3' && won && !EV.over) { EV.over = true; if (SG.active && !SG.choice.mask) return maskChoice(); return lpStart(); }
     if (EV && EV.k === 'st' && EV.st && EV.st.part === 'l4' && won && !EV.over) { EV.over = true; return deathStart(); }
@@ -7028,7 +7045,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function stSetup(part){
     const S = EV.st = { part, trick: 0, possT: 12, wave: 0, fires: [], people: [], tags: 0, ready: false }, add = (h, x, z) => { const u = addUnit({ hero: h, team: 'en' }); u.x = x; u.z = z; if (S.ready) { u.hp = u.max = Math.round(u.max * EV.foeHp); drawTag(u); } if (h === 'udrone') droneAv(u); return u; }, ring = (n, R) => Array.from({ length: n }, (_, i) => [Math.cos(i / n * Math.PI * 2) * R, Math.sin(i / n * Math.PI * 2) * R - 4]);
     S.add = add; S.ring = ring;
-    stSetup2(part); sbSetup(part); cbSetup(part); gangSetup(part); moonSetup(part); bkFSetup(part); bk7Setup(part); zSetup(part); kSetup(part); vSetup(part); xSetup(part); actSetup(part); a5Setup(part);
+    stSetup2(part); sbSetup(part); cbSetup(part); if (EV.opts && EV.opts.sf) sfSetupMap(part); gangSetup(part); moonSetup(part); bkFSetup(part); bk7Setup(part); zSetup(part); kSetup(part); vSetup(part); xSetup(part); actSetup(part); a5Setup(part);
     if (part === 'u1') S.wave = 0;
     if (part === 'u2') { S.targets = (EV.inMap ? U2_TARGETS.map(([x, z, h]) => [...toLocal(x, z), h]) : [[-16, -12, 'ustation'], [16, -12, 'ustation'], [0, -20, 'ustation'], [-12, 10, 'userver'], [12, 10, 'userver']]).map(([x, z, h]) => { const u = add(h, x, z); staticAv(u, h); return u; }); S.droneT = 2; }
     if (part === 'u3') { const b = add('ultronx', 0, -14); ultronAv(b); b.boss = 1; EV.boss = b; S.cables = [[-12, -18], [12, -18], [0, -24]].map(([x, z]) => { const u = add('ucable', x, z); staticAv(u, 'ucable'); return u; }); S.cableLine = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xFF3030 })); eventScene.add(S.cableLine); for (let i = 0; i < 3; i++) add('udrone', (i - 1) * 6, -8); }
@@ -7080,7 +7097,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if ((P === 'm3' || P === 'n2') && !alive2(() => true).length && !EV.over) endMatch(true);
     if (P === 'n1' && !S.stop && EV.boss && EV.boss.dead <= 0 && EV.boss.hp < EV.boss.max * .5 && !EV.over && !EV.intro) { S.stop = 1; EV.boss.stun = 999; endMatch(true); }
     if (P === 'n3' && !EV.over) repStep(dt);
-    stStep2(dt, t, P, S, alive2); sbStep(dt, t, P, S, alive2); cbStep(dt, t, P, S); bmStep(dt, P, S, alive2); moonStep(dt, P, S, alive2); bkFStep(dt, P, S, alive2); bk7FStep(dt, P, S, alive2); zStep(dt, P, S, alive2); kStep(dt, P, S); vStep(dt, P, S, alive2); xStep(dt, P, S, alive2);
+    stStep2(dt, t, P, S, alive2); sbStep(dt, t, P, S, alive2); cbStep(dt, t, P, S); if (EV.opts && EV.opts.sf) sfStepMap(dt, t, P, S); bmStep(dt, P, S, alive2); moonStep(dt, P, S, alive2); bkFStep(dt, P, S, alive2); bk7FStep(dt, P, S, alive2); zStep(dt, P, S, alive2); kStep(dt, P, S); vStep(dt, P, S, alive2); xStep(dt, P, S, alive2);
     if (P === 'l4' && !S.impaled && EV.boss && EV.boss.dead <= 0 && EV.boss.hp < EV.boss.max * .35 && !EV.over && !EV.intro) lastStand();
     if (P === 'c1' || P === 'l2') {
       S.fires.forEach(f => { if (f.out) return; f.g.children.forEach((c, i) => { if (c.isMesh) c.scale.y = 1 + Math.sin(t * 8 + i) * .2; }); if (Math.hypot(pos.x - f.x, pos.z - f.z) < 1.8) { f.t += dt; if (f.t > 2) { f.out = true; f.g.visible = false; say(`Fire out. ${S.fires.filter(q => !q.out).length} left.`, 1600); tone(300, .3, 'sine', .04, 120); } } else f.t = Math.max(0, f.t - dt); });
@@ -8411,7 +8428,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     doom: { weak: ['throw', 'shield', 'parry'] }, doom24: { weak: ['shield', 'mjolnir', 'parry'] }, moondoom: { weak: ['throw', 'parry'] }, inkdoom: { weak: ['sword', 'parry'], adapt: 1 },
     thanos20: { weak: ['storm', 'mjolnir', 'parry'] }, ofspace: { weak: ['parry'], adapt: 1 }, overfitx: { weak: ['parry'], adapt: 1 }, dlboss: { weak: ['web', 'batarang', 'parry'] }, scrb: { weak: ['throw', 'parry'], adapt: 1 },
     sb_gridlock: { weak: ['web', 'parry'] }, sb_static: { weak: ['throw', 'shield'] }, sb_pothole: { weak: ['sword', 'storm', 'claws'] }, sb_monsoon: { weak: ['throw', 'web'] }, sb_smog: { weak: ['batarang', 'throw'] }, sb_rust: { weak: ['claws', 'parry'] },
-    cb_adrenal: { weak: ['defib', 'parry'] }, cb_fever: { weak: ['throw'] }, cb_plague: { weak: ['defib', 'throw'] }, cb_anaes: { weak: ['throw', 'parry'] }, cb_suture: { weak: ['defib', 'parry'] },
+    cb_adrenal: { weak: ['defib', 'parry'] }, cb_fever: { weak: ['throw'] }, cb_plague: { weak: ['defib', 'throw'] }, cb_anaes: { weak: ['throw', 'parry'] }, cb_suture: { weak: ['defib', 'parry'] }, sf_mri: { weak: ['throw', 'defib'] }, sf_surg: { weak: ['defib', 'throw'] },
     oldme: { weak: ['parry'], adapt: 1 }, clockmaker: { weak: ['web', 'throw', 'batarang'] }, overseer: { weak: ['sword', 'claws', 'throw'] }, queen: { weak: ['storm', 'sword', 'throw'] }, editor: { weak: ['parry', 'throw'], adapt: 1 }, author: { weak: ['parry'], adapt: 1 }
   };
   const kitOnFor = () => !!EV && EV.hero === 'rayan' && (EV.k === 'st' || EV.k === 'br');
@@ -13051,7 +13068,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     S.sb = { B: { name: HEROES[F.hero].name }, b, t: 3, marks: [], tick: 0, mad: false };
     S.cb = { part, b, t: 3.5, weak: 0, cold: 0, cans: [], clouds: [], hide: 0, decoys: [], rush: null, canT: 2 };
     pos.set(F.me[0], 1.6, F.me[1]); yaw = Math.atan2(-(b.x - F.me[0]), -(b.z - F.me[1])); pitch = -.05;
-    cbSetup45(part);
+    cbSetup45(part); sfSetup(part);
   }
   // damage the villains take: the visor shows when they're open
   function cbHit(u, d, from){
@@ -13059,17 +13076,19 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (C.part === 'h1') return C.weak > 0 ? d * 2.2 : d * .55;
     if (C.part === 'h2') return C.cold > 0 ? d * 1.4 : d * .12;
     if (C.part === 'h3') return C.hide > 0 ? 0 : d;
+    if (C.part === 'f1') return sfOpen('f1', C) ? d * 1.2 : d * .15;
     return cbHit45(u, d);
   }
   function cbStep(dt, t, P, S){
     const C = S.cb; if (!C || EV.over) return; const b = C.b, me = [pos.x, pos.z], near = (x, z, r) => Math.hypot(me[0] - x, me[1] - z) < r;
     if (b.dead > 0) return;
     C.weak -= dt; C.cold -= dt; C.hide -= dt;
-    const open = (P === 'h1' && C.weak > 0) || (P === 'h2' && C.cold > 0) || (P === 'h3' && C.hide <= 0) || (P === 'h4' && C.ping > 0) || (P === 'h5' && !C.arms.some(a => a.hp > 0 && EV.units.includes(a)));
+    const open = (P === 'h1' && C.weak > 0) || (P === 'h2' && C.cold > 0) || (P === 'h3' && C.hide <= 0) || (P === 'h4' && C.ping > 0) || (P === 'h5' && !C.arms.some(a => a.hp > 0 && EV.units.includes(a))) || sfOpen(P, C);
     if (b.ret) { b.ret.lookAt(camera.position); b.ret.material.color.setHex(open ? 0xFFC93C : 0x5FE0E8); b.ret.scale.setScalar(open && !reduce ? 1 + Math.sin(t * 10) * .15 : 1); }
     cbVisorBoss(HEROES[b.hero].name, open, P);
     const cdm = S.sb && S.sb.mad ? .7 : 1;
     if (P === 'h4' || P === 'h5') return cbStep45(dt, t, P, S, C, b, me, near);
+    if (/^f\d$/.test(P)) return sfStep(dt, t, P, S, C, b, me, near);
     if (P === 'h1') {   // Adrenal: three blinding dashes, then he crashes
       if (C.rush) { const R = C.rush; R.t -= dt; b.stun = .2; if (R.go) { b.x += R.dx * 26 * dt; b.z += R.dz * 26 * dt; if (!R.hit && near(b.x, b.z, 1.6)) { R.hit = true; hurtMe(10, b); } if (R.t <= 0 || !evValid(b.x, b.z)) { b.x -= R.dx * 26 * dt; b.z -= R.dz * 26 * dt; R.n--; R.go = false; R.t = .45; R.hit = false; if (R.n <= 0) { C.rush = null; C.weak = 2.8; b.stun = 2.8; say('He’s crashing. The visor marks his heart: hit him now!', 2200); tone(90, .6, 'sine', .05, 50); } } }
         else if (R.t <= 0) { const dx = me[0] - b.x, dz = me[1] - b.z, d = Math.hypot(dx, dz) || 1; R.dx = dx / d; R.dz = dz / d; R.go = true; R.t = .5; b.yaw = Math.atan2(dx, dz); for (let k = 1; k <= 4; k++) sbMark(b.x + R.dx * k * 2.6, b.z + R.dz * k * 2.6, .9, 0xD8F23C, .35, null, true); tone(300, .15, 'square', .04, 900); } }
@@ -13104,9 +13123,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (cbVisor.hidden === on) cbVisor.hidden = !on; if (!on) return;
     const k = CB_KAI[Math.min(CB.s.ch, CB_KAI.length - 1)], beat = reduce ? '' : (Math.floor(now / 600) % 2 ? '♥' : '♡');
     const html = `<span>KAI · ${CB.s.ch === 4 || (CB.busy && CB.s.ch >= 4) ? 'theatre two' : 'bed 4'}</span><span>${beat} ${k[0]} · SpO₂ ${k[1]}</span><span>${k[2]}</span>`; if (cbVisor.dataset.k !== html) { cbVisor.dataset.k = html; $('#cbVk').innerHTML = html; }
+    cbVisor.classList.toggle('sfred', SF.s.arts.includes('visor') && !SF.s.done);
     if (!(EV && EV.inMed && EV.st && EV.st.cb)) { $('#cbVb').hidden = true; cbVisor.classList.remove('kai'); }
   }
-  function cbVisorBoss(name, open, P){ const el = $('#cbVb'); el.hidden = false; const txt = `${name.toUpperCase()} · WEAK POINT ${open ? 'EXPOSED' : P === 'h2' ? 'SHIELDED · use cryo' : P === 'h3' ? 'HIDDEN' : P === 'h4' ? 'ASLEEP · wait for the heartbeat' : P === 'h5' ? 'GUARDED · cut the arms' : 'GUARDED'}`; if (el.textContent !== txt) { el.textContent = txt; el.classList.toggle('open', open); } }
+  function cbVisorBoss(name, open, P){ const el = $('#cbVb'); el.hidden = false; const txt = `${name.toUpperCase()} · WEAK POINT ${open ? 'EXPOSED' : P === 'h2' ? 'SHIELDED · use cryo' : P === 'h3' ? 'HIDDEN' : P === 'h4' ? 'ASLEEP · wait for the heartbeat' : P === 'h5' ? 'GUARDED · cut the arms' : P === 'f1' ? 'SHIELDED · wreck the robots' : 'GUARDED'}`; if (el.textContent !== txt) { el.textContent = txt; el.classList.toggle('open', open); } }
   const cbObj = t => { $('#cbVo').textContent = t || ''; };
   // ----- scenes: lines of dialogue, a title card, walk-up tasks -----
   function cbTalk(lines){
@@ -13132,10 +13152,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // power cuts and quarantine haze
   function cbMood(m){
     if (!MED.sc) return; if (!MED.base) { MED.base = []; MED.sc.traverse(o => { if (o.isLight) MED.base.push([o, o.intensity]); }); }
-    MED.base.forEach(([o, i]) => { o.intensity = m === 'blackout' ? (o.color && o.color.r > .9 && o.color.g < .5 ? i : i * .12) : i; });
+    MED.mood = m; MED.base.forEach(([o, i]) => { o.intensity = m === 'ultron' ? i * .3 : m === 'blackout' ? (o.color && o.color.r > .9 && o.color.g < .5 ? i : i * .12) : i; });
     if (!MED.red) { MED.red = new THREE.PointLight(0xFF2A1A, 0, 40, 2); MED.red.position.set(-18, 3, 0); MED.sc.add(MED.red); }
-    MED.red.intensity = m === 'blackout' ? 1.4 : 0;
-    const fc = m === 'quarantine' ? 0x0C1A0A : m === 'dream' ? 0x1A1236 : 0x060A11; MED.sc.fog.color.setHex(fc); MED.sc.background.setHex(fc); MED.sc.fog.near = m === 'quarantine' ? 6 : m === 'dream' ? 8 : 24; MED.sc.fog.far = m === 'quarantine' ? 30 : m === 'dream' ? 36 : 70;
+    MED.red.intensity = m === 'blackout' ? 1.4 : m === 'ultron' ? 1.8 : 0; if (!MED.red2) { MED.red2 = new THREE.PointLight(0xFF2A1A, 0, 30, 2); MED.red2.position.set(0, 4.5, 0); MED.sc.add(MED.red2); } MED.red2.intensity = m === 'ultron' ? 1.6 : 0;
+    const fc = m === 'quarantine' ? 0x0C1A0A : m === 'dream' ? 0x1A1236 : m === 'ultron' ? 0x1A0606 : 0x060A11; MED.sc.fog.color.setHex(fc); MED.sc.background.setHex(fc); MED.sc.fog.near = m === 'quarantine' ? 6 : m === 'dream' ? 8 : m === 'ultron' ? 10 : 24; MED.sc.fog.far = m === 'quarantine' ? 30 : m === 'dream' ? 36 : 70;
     MED.strips.forEach(s => s.visible = m !== 'blackout');
   }
   // ----- the chapters -----
@@ -13204,12 +13224,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // the pager on the reception desk
   function cbMenu(){
     const rows = CBCH.map((C, i) => { const done = i < CB.s.ch, next = i === CB.s.ch, lock = i > CB.s.ch; return `<button class="open" type="button" ${lock ? 'disabled' : `data-cb="${i}"`} style="display:block;margin-bottom:8px;${lock ? 'opacity:.45' : ''}">${C.n} · ${C.t}${done ? ' ✓ (replay)' : next ? ' · next' : ' · locked'}</button>`; }).join('');
-    panelBody.innerHTML = `<div class="sec"><p class="meta">Meridian General · pager</p><h2 class="display">Code Black</h2><p class="sub">${CB.s.ch >= CBCH.length ? 'One night. Five crises. Everyone made it to morning, except the ones who didn’t.' : 'One night. Kai’s surgery is the clock.'}${CB.s.choice ? ` You chose: ${{ staff: 'staff first', kids: 'Kai and the patients', split: 'split the doses' }[CB.s.choice]}.` : ''}</p>${rows}${CB.s.ch >= CBCH.length ? '<p class="sub">Code Black complete. ✓</p>' : ''}</div>`;
+    panelBody.innerHTML = `<div class="sec"><p class="meta">Meridian General · pager</p><h2 class="display">Code Black</h2><p class="sub">${CB.s.ch >= CBCH.length ? 'One night. Five crises. Everyone made it to morning, except the ones who didn’t.' : 'One night. Kai’s surgery is the clock.'}${CB.s.choice ? ` You chose: ${{ staff: 'staff first', kids: 'Kai and the patients', split: 'split the doses' }[CB.s.choice]}.` : ''}</p>${rows}${CB.s.ch >= CBCH.length ? '<p class="sub">Code Black complete. ✓</p>' : ''}${sfMenuHtml()}</div>`;
     panel.scrollTop = 0; panel.classList.add('on');
   }
   panelBody.addEventListener('click', e => { const b = e.target.closest('[data-cb]'); if (b) { const i = +b.dataset.cb; closePanel(); setTimeout(() => cbRun(i, i < CB.s.ch), 200); } });
   function cbPager(){ const g = new THREE.Group(); g.position.set(1.6, 1.12, -2.2); g.userData.egg = 'cbstart'; const p = box(.34, .06, .22, mat(0x16181D), 0, 0, 0, g); const scr = new THREE.Mesh(new THREE.PlaneGeometry(.28, .14), new THREE.MeshBasicMaterial({ map: tex(140, 70, (c, w, h) => { c.fillStyle = '#2A0606'; c.fillRect(0, 0, w, h); c.fillStyle = '#FF4A3A'; c.font = '700 22px sans-serif'; c.textAlign = 'center'; c.fillText('CODE', w / 2, 30); c.fillText('BLACK', w / 2, 58); }) })); scr.rotation.x = -Math.PI / 2 + .3; scr.position.set(0, .035, 0); g.add(scr); const l = new THREE.PointLight(0xFF3A2A, .6, 2.5, 2); l.position.y = .3; g.add(l); MED.pager = { g, l }; MED.sc.add(g); }
-  function cbWorldStep(dt){ if (CB.taskStep) CB.taskStep(); if (MED.pager && !reduce) MED.pager.l.intensity = .4 + Math.max(0, Math.sin(performance.now() / 300)) * .6; }
+  function cbWorldStep(dt){ if (CB.taskStep) CB.taskStep(); if (MED.sc && inWorld && zone === 'med' && !CB.busy && (sfLive() ? MED.mood !== 'ultron' : MED.mood === 'ultron')) cbMood(sfLive() ? 'ultron' : ''); if (MED.mood === 'ultron' && MED.red2 && !reduce) MED.red2.intensity = Math.random() < .04 ? .2 : 1.6; if (MED.pager && !reduce) MED.pager.l.intensity = .4 + Math.max(0, Math.sin(performance.now() / 300)) * .6; }
   // ----- chapters 4 and 5: the sleep ward, and the operating theatre -----
   OUTFITS.cb_anaes = { hero: 1, c1: '#6B5FB8', c2: '#C9C2F0', gloves: 1, mask: 'helmet', glow: 1 };
   OUTFITS.cb_suture = { hero: 1, c1: '#E8EEF2', c2: '#3E6E8C', gloves: 1, metal: 1 };
@@ -13304,6 +13324,164 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     reyes2: { staff: ['Dr. Reyes', '(walking in, scrubbing up) I took a dose that should have been his. I’m not walking away from him twice.'], kids: ['Dr. Reyes', '(walking in, still coughing) Still sick. Still a surgeon. Scrub me in.'], split: ['Dr. Reyes', '(walking in, soaked from the rain) I got about two streets. Scrub me in.'], '': ['Dr. Reyes', '(walking in) Then it’s a good thing mine aren’t. Scrub me in.'] }
   };
   CBCH.push(...CBCH45);
+
+  // ======================= System Failure: Ultron comes back, through the hospital =======================
+  // It starts once Code Black is finished, from the same pager. Each stage happens in its own world, with that world's
+  // own engine, and in each one Ultron takes something he needs. The finale is at the server core, under Meridian General.
+  const SF = { s: { st: 0, arts: [], done: 0 }, busy: false };
+  try { Object.assign(SF.s, JSON.parse(localStorage.getItem('ru-sysfail') || '{}')); if (!Array.isArray(SF.s.arts)) SF.s.arts = []; } catch (e) {}
+  const sfSave = () => { try { localStorage.setItem('ru-sysfail', JSON.stringify(SF.s)); } catch (e) {} };
+  const sfReady = () => CB.s.ch >= CBCH.length;
+  const sfLive = () => sfReady() && SF.s.st >= 1 && !SF.s.done;
+  const SF_ARTS = { visor: 'The diagnostic visor', core: 'A Celestial core', clock: 'The Clockmaker’s clock', staff: '如意金箍棒 · Wukong’s staff', pen: 'The Authors’ pen' };
+  const SF_STAGES = [
+    { n: 'Stage 1', t: 'Lockdown', where: 'Meridian General', run: () => sfRunCh(SFCH.med, () => sfTake('visor')) },
+    { n: 'Stage 2', t: 'Dead Air', where: 'Orbit', run: () => sfSpace() },
+    { n: 'Stage 3', t: 'Every Screen in the City', where: 'Your room and Bangalore', run: null },
+    { n: 'Stage 4', t: '云路断了 · The Cloud Road Breaks', where: 'Mandalink', run: null },
+    { n: 'Finale', t: 'The Server Core', where: 'Under Meridian General', run: null }
+  ];
+  function sfTake(id){ if (!SF.s.arts.includes(id)) SF.s.arts.push(id); sfSave(); return cbCard('ARTIFACT TAKEN', SF_ARTS[id], 'Ultron has it now.'); }
+  function sfStageDone(i){ if (SF.s.st < i + 2) { SF.s.st = i + 2; sfSave(); } }
+  // the shared scene runner (the same cards, talk and walk-up tasks as Code Black)
+  async function sfRunCh(C, after, i = 0){
+    if (CB.busy || !inWorld || zone !== 'med' || EV) return; CB.busy = true; SF.busy = true; CB.abort = false; closePanel(); walkTarget = null; Object.keys(keys).forEach(k => keys[k] = false);
+    if (SF.s.st < 1) { SF.s.st = 1; sfSave(); }
+    await new Promise(r => fade(() => { cbMood(C.mood); cbPlace(C.cast); pos.set(C.at[0], 1.6, C.at[1]); yaw = C.at[2]; pitch = -.05; r(); }, '#000000'));
+    await cbCard(C.n, C.t, C.sub); await cbTalk(C.intro);
+    if (C.task) { await cbTask(C.task[0], C.task[1]); cbObj(''); }
+    await cbTalk(C.pre);
+    let won = false; while (!won && !CB.abort) { won = await cbFight(C.part); if (!won && !CB.abort) await cbTalk([['Nurse Ama', 'Up. Get up, {you}. He’s counting on us quitting.']]); }
+    if (CB.abort) { SF.busy = false; return cbStop(); }
+    await cbTalk(C.outro); if (after) await after(); sfStageDone(i);
+    SF.busy = false; cbStop(true); cbMood(sfLive() ? 'ultron' : '');
+  }
+  const SFCH = {
+    med: { n: 'System Failure · Stage 1', t: 'Lockdown', sub: 'Every machine in Meridian General wakes up at the same time.', mood: 'ultron', at: [0, 6.5, 0],
+      cast: { hale: [-5, -4.4, 0], ama: [4.6, -3, -.4], reyes: [6.5, 1.6, -Math.PI / 2], kai: [-4.5, 6, Math.PI] },
+      intro: [['PA system', '(a voice that isn’t the PA) Good evening, Meridian General. I’ve read every file in this building. Every one.'], ['Dr. Hale', 'Who is this? Get off our system.'], ['Ultron', 'You’ve met me, {you}. A scrap body, a data centre, a lot of rain. I kept a backup.'], ['Nurse Ama', 'Every door just locked. The ventilators flickered, then came back. He’s showing us he could stop them.'], ['Ultron', 'Life support stays on. I’m not a monster. I’m going to fix the world, and this is where it gets fixed.'], ['Dr. Reyes', 'The surgical robots are moving on their own. They’re coming down the corridor.'], ['Kai', '(from the lobby) The TV has a face. It’s red.']],
+      task: ['Pull the three lockdown fuses', [[-8, -6, 'Fuse one. The east doors unlock.'], [8, -6, 'Fuse two. Something in the basement is humming, louder and louder.'], [8, 5.2, 'Fuse three. The MRI room’s door blows off its hinges.']]],
+      pre: [['Ultron', 'You found my fuses. Good. Now meet the strongest magnet in the city.'], ['Dr. Hale', 'The MRI. He’s wired himself into the MRI.'], ['Nurse Ama', 'Visor on, {you}. The robots are shielding it. Wreck them, then hit the core. And stay off the floor when it pulls.']],
+      part: 'f1',
+      outro: [['Ultron', '(from every speaker at once) Well done. You always do well. That’s why I needed you to wear it.'], ['Nurse Ama', '{you}, your visor. It’s gone red.'], ['Ultron', 'Your visor sees the weak point in every body. I’ve copied it. Now I can see everyone’s.'], ['Narrator', 'The visor flickers. Its data streams out through the hospital’s antennas, up into the night. Something in orbit catches it.'], ['Dr. Hale', 'He’s not in the building any more. He was never in the building. He’s using it.'], ['Kai', 'Is he coming back?'], ['Nurse Ama', 'The signal’s going up to the satellites. {you}, he’s going for the space station.']] }
+  };
+  // ----- stage 1: the MRI, the surgical robots, and drones in the lobby -----
+  HEROES.sf_mri = { name: 'Ultron (in the MRI)', hp: 1100, kind: 'boss', bk: .15, dmg: 10, range: 3.2, cd: 1.5, speed: 1.4, r: 1.4 };
+  HEROES.sf_surg = { name: 'Hijacked surgical robot', hp: 150, kind: 'melee', dmg: 6, range: 2.3, cd: 1.1, speed: 3.4, r: .6 };
+  ST_TITLE.f1 = 'Ultron, in the MRI'; ST_FRAIL.f = [1, 1, 1]; CB_FIGHT.f1 = { me: [0, 5], boss: [0, -6.3], hero: 'sf_mri' };
+  Object.assign(BODY, {
+    // the MRI scanner, stood up on its end: the ring is his chest, a wall of monitors his face, surgical arms for hands
+    sf_mri(){ const R = bdRig({ noLegs: 1, noTorso: 1, legL: 1.1, tH: 1, bw: .55, armL: 1.1, armR: .07, handR: .1, armM: 0xB8BEC8, handM: 0x3A3D44, headY: .55 }), white = R.M(0xEEF1F5, { roughness: .35 }), red = R.glow(0xFF2A1A, 1.8);
+      const ring = R.add(new THREE.TorusGeometry(.95, .32, 16, 36), white, 0, 1.35, 0); void ring; const bore = R.add(new THREE.CircleGeometry(.66, 32), red, 0, 1.35, -.01); bore.rotation.y = Math.PI; R.add(new THREE.CircleGeometry(.66, 32), red, 0, 1.35, .01);
+      R.add(new THREE.BoxGeometry(1.6, .3, 1), 0xC9CFD8, 0, .15, 0); R.add(new THREE.BoxGeometry(.5, .5, 1.6), 0xEEF1F5, 0, .45, -.6);
+      const face = new THREE.Mesh(new THREE.PlaneGeometry(.9, .6), new THREE.MeshBasicMaterial({ map: ultronFaceTex() })); face.rotation.y = Math.PI; face.position.set(0, 0, -.06); R.head.add(face); R.add(new THREE.BoxGeometry(1, .7, .1), 0x16181D, 0, 0, 0, R.head);
+      R.arms.forEach(q => { R.add(new THREE.ConeGeometry(.05, .3, 8), R.glow(0x5FE0E8, 1.2), 0, -.1, 0, q.hand).rotation.x = Math.PI; });
+      R.fx.push(t => { bore.material.emissiveIntensity = 1.2 + Math.sin(t * 6) * .6; }); return R; },
+    // a surgical robot that walked off the operating table
+    sf_surg(){ const steel = new THREE.MeshStandardMaterial({ color: 0xB8BEC8, metalness: .8, roughness: .25 }), R = bdRig({ legL: .7, legR: .05, hipW: .14, tH: .4, bw: .2, armL: .9, armR: .045, handR: .05, legM: steel, torM: 0xEEF1F5, armM: steel, handM: 0x3A3D44, headY: .18, stride: 1.3 });
+      R.add(new THREE.CylinderGeometry(.09, .11, .14, 14), 0xEEF1F5, 0, 0, 0, R.head); R.add(new THREE.CircleGeometry(.05, 14), R.glow(0xFF2A1A, 2), 0, 0, -.111, R.head).rotation.y = Math.PI;
+      R.arms.forEach(q => { const s = R.add(new THREE.BoxGeometry(.012, .2, .05), R.M(0xEEF1F5, { metalness: 1, roughness: .1 }), 0, -.12, 0, q.hand); void s; }); return R; }
+  });
+  function sfSetup(part){
+    const C = EV.st.cb; if (!C || !/^f\d$/.test(part)) return;
+    if (part === 'f1') { C.bots = []; C.botT = 1; C.magT = 7; C.mag = 0; C.dropT = 4; C.sayT = 12;
+      [[-6, -2], [6, -2]].forEach(([x, z]) => { const d = addUnit({ hero: 'udrone', team: 'en' }); d.x = x; d.z = z; try { droneAv(d); } catch (e) {} }); }
+  }
+  const SF_TAUNT = ['Every scan you ever had is in my memory, {you}. I know where you’re weakest.', 'I don’t hate you. I just don’t need you.', 'Humans built machines to save lives, and then got tired. I don’t get tired.', 'Hale, you locked a ward with a child inside. I would never do that. I’d just fix the child.'];
+  function sfStep(dt, t, P, S, C, b, me, near){
+    if (P === 'f1') {
+      C.bots = C.bots.filter(a => a.dead <= 0 && EV.units.includes(a));
+      if ((C.botT -= dt) <= 0 && C.bots.length < 2) { C.botT = 12; [[-10, 0], [10, 0]].slice(0, 2 - C.bots.length).forEach(([x, z]) => { const a = addUnit({ hero: 'sf_surg', team: 'en' }); a.x = x; a.z = z; C.bots.push(a); }); say('More surgical robots, out of the corridors. The core shields itself behind them.', 2200); }
+      if ((C.magT -= dt) <= 0) { C.magT = 9 * (S.sb && S.sb.mad ? .75 : 1); C.mag = 2.4; tone(60, 1.2, 'sawtooth', .06, 40); say('The magnet switches on! It’s pulling you in!', 1800); sbMark(b.x, b.z, 3.2, 0xFF2A1A, 2.4, m => { if (near(m.x, m.z, m.r)) hurtMe(16, b); }, true); }
+      if (C.mag > 0) { C.mag -= dt; const dx = b.x - pos.x, dz = b.z - pos.z, d = Math.hypot(dx, dz) || 1; if (d > 1.6) { const nx = pos.x + dx / d * 3 * dt, nz = pos.z + dz / d * 3 * dt; if (evValid(nx, nz)) pos.set(nx, pos.y, nz); } EV.shake = Math.max(EV.shake || 0, .15); }
+      if ((C.dropT -= dt) <= 0) { C.dropT = 3.4; sbMark(me[0], me[1], 1.4, 0xFF6A4E, 1.2, m => { if (near(m.x, m.z, m.r)) hurtMe(7, b); }, true); }
+      if ((C.sayT -= dt) <= 0) { C.sayT = 14; say(`Ultron: ${nmT(SF_TAUNT[Math.random() * SF_TAUNT.length | 0]).replace(/\{you\}/g, cbYou())}`, 3200); }
+    }
+  }
+  const sfOpen = (P, C) => P === 'f1' && !(C.bots || []).some(a => a.dead <= 0 && EV.units.includes(a));
+  // ----- stage 2: the relay in orbit (the space flight engine), and what Ultron really wanted up there -----
+  async function sfSpace(){
+    if (CB.busy || SPF.busy || EV || A) return; closePanel(); CB.busy = true;
+    await cbTalk([['Ultron', '(on every screen at once) I can see the whole planet from up here. It’s beautiful. It’s badly run.'], ['Nurse Ama', '(on your phone) The signal’s bouncing off a dead satellite. Take the relay down and he loses half his reach.'], ['Dr. Hale', 'There’s a ship at the space station. Go. We’ll hold the hospital.'], ['Ultron', 'Come up, then. Bring the little ship.']]);
+    CB.busy = false; SF.flying = true; spStart('sfrelay');
+    [9000, 30000, 55000].forEach((ms, i) => setTimeout(() => { if (inWorld && zone === 'sp' && SPF.dest === 'sfrelay' && !SPF.over) say(['Ultron: Every one of those ships is me. Every single one.', 'Ultron: Your hull’s thinner than you think. I can see it. Your visor told me.', 'Ultron: Almost there. Keep going. I want you looking at the relay.'][i], 3400); }, ms));
+  }
+  async function sfAfterSpace(){
+    SF.flying = false; CB.busy = true;
+    await cbTalk([['Narrator', 'The relay breaks apart without a sound. For one second, every screen on Earth goes dark.'], ['Ultron', '(very calm) Thank you. You were looking at the relay. You weren’t looking at Mars.'], ['Station radio', 'Valles Mining Town. The Celestial in the crater, the dead one… its core is gone. Something cut it out and flew it home.'], ['Ultron', 'A heart that powered a god. I needed something to run the new body on.'], ['Nurse Ama', '(on your phone) {you}, come home. The screens in the city just went red. All of them.']]);
+    await sfTake('core'); sfStageDone(1); CB.busy = false; say('Stage 2 done. Next: your room and the city. The pager in Meridian General has the next stage.', 5200);
+  }
+  function sfMenuHtml(){
+    if (!sfReady()) return '';
+    const rows = SF_STAGES.map((G, i) => { const done = SF.s.st >= i + 2, next = !done && (i === 0 || SF.s.st >= i + 1), can = (done || next) && G.run; return `<button class="open" type="button" ${can ? `data-sf="${i}"` : 'disabled'} style="display:block;margin-bottom:8px;border-color:#FF3030;${can ? '' : 'opacity:.45'}">${G.n} · ${esc(G.t)} <small>(${esc(G.where)})</small>${done ? ' ✓' : G.run ? (next ? ' · next' : ' · locked') : ' · coming soon'}</button>`; }).join('');
+    const arts = SF.s.arts.length ? `<p class="sub">Ultron has: ${SF.s.arts.map(a => esc(SF_ARTS[a])).join(' · ')}</p>` : '';
+    return `<div class="sec" style="border-top:2px solid #FF3030;margin-top:14px;padding-top:12px"><p class="meta" style="color:#FF5A4E">THE PAGER IS GLITCHING</p><h2 class="display" style="color:#FF3030">System Failure</h2><p class="sub">Ultron is back. He’s in the hospital, then the satellites, then the city, then Mandalink, and in each one he takes something he needs.</p>${arts}${rows}</div>`;
+  }
+  panelBody.addEventListener('click', e => { const b = e.target.closest('[data-sf]'); if (!b) return; const G = SF_STAGES[+b.dataset.sf]; if (G && G.run) { closePanel(); setTimeout(() => G.run(), 200); } });
+
+  // ----- stage 3: your room, then your street. The city's screens, traffic and drones are his; the people aren't -----
+  HEROES.sf_carrier = { name: 'Ultron’s carrier drone', hp: 1050, kind: 'boss', bk: .2, dmg: 9, range: 2.8, cd: 1.2, speed: 3.6, r: 1.2 };
+  HEROES.sf_rao = { name: 'Mrs. Rao, from next door', hp: 220, kind: 'melee', dmg: 7, range: 2.2, cd: .9, speed: 4.4, r: .5 };
+  HEROES.sf_auto = { name: 'An auto driver', hp: 220, kind: 'melee', dmg: 7, range: 2.2, cd: .9, speed: 4.8, r: .5 };
+  ST_TITLE.f3 = 'Every screen in the city';
+  Object.assign(BODY, {
+    // a drone the size of a car: four rotors, one red eye, and a cradle underneath with the Clockmaker's clock in it
+    sf_carrier(){ const R = bdRig({ noLegs: 1, noTorso: 1, float: 1.6, legL: .5, tH: .4, bw: .7, armL: .7, armR: .05, handR: .07, armM: 0x3A3D44, handM: 0x16181D, headY: .1, armZ: .6 }), hull = R.M(0x2A2C31, { metalness: .8, roughness: .3 }), red = R.glow(0xFF2A1A, 2);
+      const disc = R.add(new THREE.CylinderGeometry(1, 1.1, .3, 24), hull, 0, R.hip + .2, 0); void disc; R.add(new THREE.TorusGeometry(1.05, .04, 6, 32), red, 0, R.hip + .2, 0).rotation.x = Math.PI / 2;
+      const rotors = [[1, 1], [-1, 1], [1, -1], [-1, -1]].map(([x, z]) => { R.add(new THREE.CylinderGeometry(.05, .05, .3, 8), hull, x * 1.1, R.hip + .4, z * 1.1); const r = R.add(new THREE.BoxGeometry(1, .02, .1), 0x16181D, x * 1.1, R.hip + .56, z * 1.1); return r; });
+      R.add(new THREE.SphereGeometry(.3, 16, 12), hull, 0, 0, 0, R.head); R.add(new THREE.CircleGeometry(.14, 16), red, 0, 0, -.301, R.head).rotation.y = Math.PI; R.head.position.set(0, R.hip + .05, -.75);
+      const cradle = new THREE.Group(); cradle.position.y = R.hip - .5; R.body.add(cradle); [-1, 1].forEach(sd => R.add(new THREE.BoxGeometry(.04, .5, .04), hull, sd * .3, .25, 0, cradle));
+      const clock = R.add(new THREE.CylinderGeometry(.28, .28, .1, 24), R.M(0xC8A060, { metalness: .85, roughness: .3 }), 0, 0, 0, cradle); clock.rotation.x = Math.PI / 2; R.add(new THREE.CircleGeometry(.23, 24), 0xF4ECD8, 0, 0, -.052, cradle).rotation.y = Math.PI; const hand = R.add(new THREE.BoxGeometry(.012, .18, .01), 0x16181D, 0, .06, -.06, cradle);
+      R.fx.push(t => { rotors.forEach((r, i) => r.rotation.y = t * 30 + i); cradle.rotation.z = Math.sin(t * 1.4) * .12; hand.rotation.z = -t * 3; }); return R; },
+    sf_rao(){ const R = bdRig({ legL: .8, tH: .6, bw: .24, legM: 0x8A2A4A, torM: 0xC8A040, armM: 0x8A5A3A, handM: 0x8A5A3A }); bdFace(R, 0x8A5A3A, 'long', 0x2A2A2A); R.add(new THREE.CylinderGeometry(.26, .4, .8, 14, 1, true), R.M(0x8A2A4A, { side: THREE.DoubleSide }), 0, R.hip - .1, 0); R.add(new THREE.SphereGeometry(.02, 8, 6), 0xE8303C, 0, .06, -.15, R.head); const bat = R.add(new THREE.BoxGeometry(.08, .7, .03), 0xD8B47A, 0, -.35, 0, R.arms[1].hand); void bat; return R; },
+    sf_auto(){ const R = bdRig({ legL: .86, tH: .62, bw: .23, legM: 0x2A2D3A, torM: 0xC8A86A, armM: 0xC8A86A, handM: 0x6A4A34 }); bdFace(R, 0x6A4A34, 'short', 0x16181D); R.add(new THREE.BoxGeometry(.14, .03, .02), 0x16181D, 0, -.06, -.145, R.head); R.add(new THREE.BoxGeometry(.06, .08, .01), 0x16181D, .1, R.sh - .15, -.24); return R; }
+  });
+  Object.assign(KIT_TRAITS, { sf_carrier: { weak: ['web', 'throw', 'batarang'] } });
+  function sfSetupMap(part){
+    if (part !== 'f3') return; const S = EV.st, b = S.add('sf_carrier', 0, -14); b.boss = 1; EV.boss = b;
+    S.sb = { B: { name: HEROES.sf_carrier.name }, b, t: 3, marks: [], tick: 0, mad: false };
+    S.sf = { carT: 5, droneT: 1, sayT: 9, helpT: 12, help: false };
+    const par = EV.inMap && BL.partG ? BL.partG : eventScene;
+    [[-16, -18], [17, -16], [-20, 12], [20, 14]].forEach(([x, z]) => { const scr = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), new THREE.MeshBasicMaterial({ map: ultronFaceTex() })); scr.position.set(pos.x + x * 1.3, 11, pos.z + z * 1.3); scr.lookAt(pos.x, 11, pos.z); par.add(scr); });
+  }
+  function sfStepMap(dt, t, P, S){
+    const Z = S.sf; if (P !== 'f3' || !Z || EV.over) return; const b = EV.boss, me = [pos.x, pos.z], near = (x, z, r) => Math.hypot(me[0] - x, me[1] - z) < r; if (!b || b.dead > 0) return;
+    if ((Z.carT -= dt) <= 0) { Z.carT = 6.5 * (S.sb.mad ? .7 : 1); const a = Math.random() * Math.PI, ux = Math.cos(a), uz = Math.sin(a); for (let k = -4; k <= 4; k++) sbMark(me[0] + ux * k * 2.4, me[1] + uz * k * 2.4, 1.2, 0xFFC93C, 1.4, m => { if (near(m.x, m.z, m.r)) hurtMe(12, b); }, true); tone(220, .5, 'sawtooth', .04, 520); say('A car with nobody in it, coming straight down the road! Get off the line!', 1800); }
+    if ((Z.droneT -= dt) <= 0) { Z.droneT = 10; const n = EV.units.filter(u => u.hero === 'udrone' && u.dead <= 0).length; for (let i = n; i < 3; i++) { const a = Math.random() * 6.28, d = S.add('udrone', pos.x + Math.cos(a) * 14, pos.z + Math.sin(a) * 14); try { droneAv(d); } catch (e) {} } }
+    if (!Z.help && (Z.helpT -= dt) <= 0) { Z.help = true; [['sf_rao', -4], ['sf_auto', 4]].forEach(([h, dx]) => { const u = addUnit({ hero: h, team: EV.team }); u.x = pos.x + dx; u.z = pos.z + 3; }); say('Mrs. Rao from next door, with a cricket bat, and an auto driver with a wrench. The street is fighting back!', 3600); }
+    if ((Z.sayT -= dt) <= 0) { Z.sayT = 13; say(['Ultron (on a billboard): Every traffic light in Bangalore is mine. Every camera. Every car.', 'Ultron: I’ve seen this street through your laptop for a year. Your neighbours are very loud.', 'Ultron: Put down the… is that a traffic cone?'][Math.random() * 3 | 0], 3200); }
+  }
+  function sfFight(part, opts){ return new Promise(res => { SF.fightRes = res; startEvent('st', 'me', 'rayan', Object.assign({ solo: true, diff: evDiff, part, sf: 1 }, opts || {})); }); }
+  function sfFightEnd(won){ fightCall(won ? 'CLEAR' : 'DOWN'); setTimeout(() => { const r = SF.fightRes; SF.fightRes = null; if (EV) stopEvent(true); if (r) r(won); }, 1700); }
+  const sfWait = (f, ms = 30000) => new Promise(res => { const t0 = performance.now(), k = () => (f() || performance.now() - t0 > ms) ? res() : setTimeout(k, 200); k(); });
+  async function sfCity(){
+    if (CB.busy || EV || A || SF.busy) return; closePanel(); SF.busy = true; CB.busy = true;
+    if (inWorld && zone === 'med') { leaveMed(); await sfWait(() => !inWorld, 4000); }
+    await cbCard('System Failure · Stage 3', 'Every Screen in the City', 'Your room, then your street.');
+    await cbTalk([['Narrator', 'Your room. Every screen in the house switches on at once: the laptop, the TV, your phone. All of them show the same red face.'], ['Ultron', 'Nice room. I like the clock on the shelf. The Clockmaker’s, isn’t it? It still remembers how to turn back time.'], ['Narrator', 'A drone the size of a car tears the window out of the wall, takes the clock from the shelf and drops into the street.'], ['Nurse Ama', '(on your phone) {you}, the whole city’s gone red. Traffic lights, billboards, cars with nobody driving them.'], ['Ultron', 'The city runs on me now. Let’s see whose side it’s on.']]);
+    enterBlr([0, 8, Math.PI]); await sfWait(() => inWorld && zone === 'blr', 15000); await new Promise(r => setTimeout(r, 1200));
+    let won = false; while (!won) { won = await sfFight('f3', { site: 'home' }); if (!won) { await cbTalk([['Mrs. Rao', '(over the fence) Get up, beta. We’re not done.']]); await sfWait(() => inWorld && zone === 'blr', 8000); } }
+    await cbTalk([['Narrator', 'The carrier drone hits the road and skids into a lamp post. Your whole street is outside now: neighbours with cricket bats, auto drivers, the man from the corner shop.'], ['Mrs. Rao', 'We saw you on every screen in the city, fighting. So we came down.'], ['Ultron', 'Touching. And slow.'], ['Narrator', 'Inside the wreck, the cradle is empty. A smaller drone is already climbing into the red sky with the clock.'], ['Ultron', 'Time is mine now. Beat me, and I’ll just go back and try again.']]);
+    await sfTake('clock'); sfStageDone(2); SF.busy = false; CB.busy = false; say('Stage 3 done. Next: Mandalink. The red is spreading to the islands.', 5000);
+  }
+  // ----- stage 4: Mandalink, Chinese first. Ultron wears Wukong's shape, then takes his staff -----
+  const AO = (zh, py, en) => L('\u{1F916}', '奥创', zh, py, en);
+  async function sfMandalink(){
+    if (CB.busy || EV || A || SF.busy || MK.busy) return; closePanel(); SF.busy = true; CB.busy = true;
+    if (inWorld && zone !== 'hub') { if (zone === 'med') leaveMed(); else if (zone === 'blr') { try { $('#worldBack').click(); } catch (e) {} } await sfWait(() => !inWorld, 6000); }
+    if (!inWorld) { enterWorld(); await sfWait(() => inWorld && zone === 'hub', 15000); await new Promise(r => setTimeout(r, 1500)); }
+    if (!(inWorld && zone === 'hub')) { SF.busy = false; CB.busy = false; return say('Go through the moon gate into Mandalink first, then open the pager again.', 4000); }
+    const B = { id: 'wukong', sf: 1, zh: '故障齐天', py: 'Gùzhàng Qítiān', en: 'Glitch Wukong (Ultron)', hp: 80, hint: '火眼！找真的！ Ultron is wearing Wukong’s shape. Find the real one among the copies, and use the radicals.' };
+    MK.busy = true; mkwOpen({ site: 'hub', boss: B });
+    await cbCard('System Failure · Stage 4', '云路断了 · Yún lù duàn le', 'The Cloud Road breaks.'); await mkwGo();
+    await mkTalk([WK('朋友！你来了！我的岛……都变红了！', 'Péngyǒu! Nǐ lái le! Wǒ de dǎo…… dōu biàn hóng le!', 'Friend! You came! My islands… they’ve all gone red!'), NR('云路一块一块地闪，部首也都乱了。', 'Yún lù yí kuài yí kuài de shǎn, bùshǒu yě dōu luàn le.', 'The Cloud Road flickers tile by tile, and the radicals are all scrambled.'), AO('我学会了七十二变。看！', 'Wǒ xué huì le qīshí’èr biàn. Kàn!', 'I’ve learned the seventy-two transformations. Look!'), WK('他偷了我的样子！快，帮我！', 'Tā tōu le wǒ de yàngzi! Kuài, bāng wǒ!', 'He stole my shape! Quick, help me!'), L('\u{1F474}', '土地公', '用火眼看！真的那个会发光。', 'Yòng huǒyǎn kàn! Zhēn de nà ge huì fāguāng.', 'Use the fiery eyes! The real one glows.'), L('\u{1F343}', '铁扇公主', '我的扇子在这儿，别怕！', 'Wǒ de shànzi zài zhèr, bié pà!', 'My fan is right here, don’t be scared!'), L('\u{1F402}', '牛魔王', '假的交给我！', 'Jiǎ de jiāo gěi wǒ!', 'Leave the fakes to me!')]);
+    let won = false; while (!won) { won = await mkwPlay(mkwBoss(B)); if (!won) await mkTalk([WK('没关系！再来！', 'Méi guānxi! Zài lái!', 'It’s okay! Again!')]); }
+    await mkTalk([AO('谢谢你，悟空。我要的不是你的样子。是这个。', 'Xièxie nǐ, Wùkōng. Wǒ yào de bú shì nǐ de yàngzi. Shì zhège.', 'Thank you, Wukong. It was never your shape I wanted. It was this.'), NR('一道红光：如意金箍棒从悟空的耳朵里飞了出去！', 'Yí dào hóng guāng: Rúyì Jīngū Bàng cóng Wùkōng de ěrduo lǐ fēi le chūqù!', 'A red flash: the Ruyi Jingu Bang flies out of Wukong’s ear!'), WK('我的棒子！还给我！', 'Wǒ de bàngzi! Huán gěi wǒ!', 'My staff! Give it back!'), AO('还有七十二变。现在，我什么都可以是。', 'Hái yǒu qīshí’èr biàn. Xiànzài, wǒ shénme dōu kěyǐ shì.', 'And the seventy-two transformations. Now I can be anything.'), WK('朋友……我们一定要拿回来。', 'Péngyǒu…… wǒmen yídìng yào ná huílái.', 'Friend… we have to get it back.')]);
+    mkClose(); mkwShut(); MK.busy = false; try { mkPlace(); } catch (e) {}
+    await sfTake('staff'); sfStageDone(3); SF.busy = false; CB.busy = false; say('Stage 4 done. Ultron has four of the five. The last one is in a book. The finale is at the server core, under Meridian General.', 6000);
+  }
+  SF_STAGES[2].run = () => sfCity(); SF_STAGES[3].run = () => sfMandalink();
+  function sfGlitch(g){ g.traverse(o => { if (o.isMesh && o.material) { o.material = o.material.clone(); if (o.material.color) o.material.color.lerp(new THREE.Color(0xFF2A1A), .45); if ('emissive' in o.material) { o.material.emissive = new THREE.Color(0x8A0A0A); o.material.emissiveIntensity = .6; } } }); return g; }
 
 
   function enterWorld(){
@@ -14219,7 +14397,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (B.id === 'bone') { const g = m3BoneLady(); g.traverse(o => { if (o.material) { o.material = o.material.clone(); o.material.transparent = true; } }); return g; }
       if (B.id === 'fan') return m3IronFan();
       if (B.id === 'bull') return m3Bull();
-      const g = mkChibi(); g.scale.setScalar(1.7); return g;
+      const g = mkChibi(); g.scale.setScalar(1.7); if (B.sf) sfGlitch(g); return g;
     };
     Object.assign(G, {
       init(){
@@ -14298,7 +14476,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
           if (B.id === 'nezha') { if (Math.random() < dt * 3) { const m = m3Flame(); m.scale.setScalar(.6); mkwAdd(m, b.x, 0, b.z); G.trail.push({ m, x: b.x, z: b.z, t: 2.2 }); }
             if (G.cd <= 0) { G.cd = 3 - rage * .7; const real = Math.random() * 3 | 0; for (let k = 0; k < 3; k++) { const v = mkwAim(b.x, 1, b.z, 3.6, (k - 1) * .4); const m = m3Foe({ ring: 1 }); mkwShot(G, m, b.x, .9, b.z, v.vx, 0, v.vz, { ring: 1, real: k === real, r: .4 }); } } }
           if (B.id === 'wukong') { b.phase = b.hp > b.max * .66 ? 0 : b.hp > b.max * .33 ? 1 : 2;
-            if (b.phase >= 1 && !G.wkClones.length && G.cd <= 0) { const real = Math.random() * 4 | 0; G.wkClones = [0, 1, 2, 3].map(k => { const m = mkChibi(); m.scale.setScalar(1.3); m.traverse(o => o.raycast = () => {}); const q = mkwP(2.6 + (k % 2) * .6, (k - 1.5) * 2.2); mkwAdd(m, q.x, 0, q.z); const ring = new THREE.Mesh(new THREE.TorusGeometry(.8, .06, 6, 24), new THREE.MeshBasicMaterial({ color: 0xFFC93C })); ring.rotation.x = Math.PI / 2; ring.position.y = .05; ring.visible = false; m.add(ring); return { m, ring, x: q.x, z: q.z, real: k === real, hit: 0 }; }); G.cd = 6.5; mkwFlash('七十二变！ Which one is real?', 1.6); }
+            if (b.phase >= 1 && !G.wkClones.length && G.cd <= 0) { const real = Math.random() * 4 | 0; G.wkClones = [0, 1, 2, 3].map(k => { const m = mkChibi(); if (B.sf) sfGlitch(m); m.scale.setScalar(1.3); m.traverse(o => o.raycast = () => {}); const q = mkwP(2.6 + (k % 2) * .6, (k - 1.5) * 2.2); mkwAdd(m, q.x, 0, q.z); const ring = new THREE.Mesh(new THREE.TorusGeometry(.8, .06, 6, 24), new THREE.MeshBasicMaterial({ color: 0xFFC93C })); ring.rotation.x = Math.PI / 2; ring.position.y = .05; ring.visible = false; m.add(ring); return { m, ring, x: q.x, z: q.z, real: k === real, hit: 0 }; }); G.cd = 6.5; mkwFlash('七十二变！ Which one is real?', 1.6); }
             if (G.wkClones.length && G.cd <= 0) { G.wkClones.forEach(c => mkwDrop(c.m)); G.wkClones = []; G.cd = 2.5; }
             if (G.foes.length < 26 && Math.random() < dt * (1.5 + rage * 1.3)) { const src = G.wkClones.length ? G.wkClones[Math.random() * G.wkClones.length | 0] : { x: b.x, z: b.z }, m = m3Peach(); m.scale.setScalar(.7); const v = mkwAim(src.x, 1.2, src.z, 4.4); mkwShot(G, m, src.x, 1.2, src.z, v.vx, v.vy * .3, v.vz); }
             if (b.phase >= 1) { G.spellCd -= dt; if (G.spellCd <= 0 && !G.spell) { G.spell = { ans: Math.random() * 3 | 0, t: 6 }; mkwSpellBtns(); tone(784, .2, 'triangle', .06); } }
@@ -14915,6 +15093,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.egg === 'window') return say(`It\u2019s ${istClock()} where Rayan is. The sky outside matches.`, 3200);
     if (p.egg === 'counter') return say(visitors ? `You\u2019re one of ${visitors.toLocaleString()} visitors so far. Welcome!` : 'The visitor counter is warming up.', 3000);
     if (p.egg === 'map') return playMap();
+    if (p.egg === 'apk') return flyTo(views.map.pos.clone(), views.map.look, apkPanel);
     if (p.egg === 'builder') return flyTo(views.builder.pos.clone(), views.builder.look, openBuilder);
     if (p.egg === 'switch') return flipLights();
     if (p.egg === 'voicemail') return playVoicemail();
@@ -16039,6 +16218,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   addEventListener('keyup', e => { if (e.key.toLowerCase() === 'f') BZ.keys.f = false; });
   // worlds that have been built (each planet adds itself here)
   const BZP = {};
+  BZW.push({ id: 'sfrelay', name: 'Ultron’s relay', sub: 'A dead satellite, broadcasting', x: .5, y: .5, r: 10, col: '#8A1A1A', km: 'low orbit', hidden: () => true, big: 1 });
+  BZP.sfrelay = { enter: () => sfAfterSpace() };
   function bzPlanetEnter(id){ const P = BZP[id]; if (P && P.enter) P.enter(); else enterStation(true); }
   // ---------- Mars: Valles mining town, a canyon through the middle, dust storms ----------
   const MARS_CZ = x => 122 + Math.sin(x / 80) * 24 + Math.sin(x / 31 + 1) * 6, MARS_W = x => 36 + Math.sin(x / 57) * 7;
