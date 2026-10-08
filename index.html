@@ -3291,6 +3291,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const BAT_PTS = [[0, -5], [3, -9], [4, -5], [9, -8], [14, -6], [11, -2], [12, 3], [7, 1], [4, 4], [0, 2], [-4, 4], [-7, 1], [-12, 3], [-11, -2], [-14, -6], [-9, -8], [-4, -5], [-3, -9]];
   function starShape(r){ const s = new THREE.Shape(); for (let k = 0; k < 10; k++) { const an = Math.PI / 2 + k * Math.PI / 5, rr = k % 2 ? r * .42 : r; k ? s.lineTo(Math.cos(an) * rr, Math.sin(an) * rr) : s.moveTo(Math.cos(an) * rr, Math.sin(an) * rr); } return s; }
   function mkWeapon(id){
+    if (id === 'defib' || String(id).startsWith('thr_')) return kitMesh(id);
     const g = new THREE.Group(), metal = (c) => mat(c, { metalness: .75, roughness: .3 });
     if (id === 'mjolnir') {
       const h = cyl(.035, .04, .5, mat(0x6B4A2B), 0, .1, 0, g, 10); h.castShadow = true;
@@ -5187,7 +5188,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function place(u){ const [x, z] = spawnOf(u.team); u.x = x; u.z = z; u.yaw = z > 0 ? 0 : Math.PI; return u; }
   function stopEvent(quiet){
     if (EV && EV.camT > 0) tpv = EV.camSaved; document.body.classList.remove('possessed'); document.body.classList.remove('pain'); dlgClear();
-    if (!EV) return; EV.units.slice().forEach(dropUnit); EV.shots.forEach(s => s.m && s.m.parent && s.m.parent.remove(s.m)); EV.fx.forEach(f => f.m.parent && f.m.parent.remove(f.m));
+    if (!EV) return; kitClear(); EV.units.slice().forEach(dropUnit); EV.shots.forEach(s => s.m && s.m.parent && s.m.parent.remove(s.m)); EV.fx.forEach(f => f.m.parent && f.m.parent.remove(f.m));
     const wasHome = EV.home, wasMap = EV.inMap, wasTwr = EV.inTwr, wasDsp = EV.inDsp, wasMed = EV.inMed, wasMoon = !!EV.moon, wasBk = !!(EV.opts && EV.opts.bk); EV = null; evHud.hidden = true; evHurt.style.opacity = 0; document.body.classList.remove('inevent'); if (document.pointerLockElement) document.exitPointerLock();
     if (wasMed) medBack();
     else if (wasMap) blrBack();
@@ -5205,6 +5206,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const bodies = () => [EV.me].concat(EV.units);
   function evAttack(){
     if (!EV || EV.over || EV.dead > 0 || EV.cd > 0 || EV.lockT > 0 || EV.intro || EV.blocking || EV.flinch > 0) return; const H = HEROES[EV.hero];
+    EV.hitTool = EV.wpn; if (kitAttack()) return;
     EV.cd = H.cd * (EV.rage > 0 ? .6 : 1) * (EV.wpn === 'claws' ? .85 : 1) * (EV.slowMe > 0 ? 2 : 1); EV.swing = .3; EV.punchSide = -(EV.punchSide || -1);
     const dm = H.dmg * armFactor() * (EV.rage > 0 ? 1.6 : 1) * (EV.wpn === 'claws' ? 1.4 : 1) * (EV.pain ? .9 : 1) * (EV.laststand ? 2.5 : 1) * upgEdge();
     if (H.kind === 'melee') { const f = evFwd(); let hit = 0;
@@ -5249,7 +5251,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (u.boss && EV.k === 'cv') d *= EV.weak > 0 ? 1.6 : 1;
     if (EV.k === 'st' && EV.st && EV.st.part && EV.st.part[0] === 'z') { d = zHit(u, d, from); if (!d) return; }
     if (EV.k === 'st' && EV.st && EV.st.part === 'k3') d = kHit(u, d, from);
-    { const d2 = storyHit(u, d, from); if (!d2) return; d = d2; } { const d3 = cbHit(u, d, from); if (!d3) return; d = d3; } if (bkGuard(u, from) || bkQGuard(u, from)) return; if (from === 'me' && EV.opts && EV.opts.bk) d *= bkPow();
+    { const d2 = storyHit(u, d, from); if (!d2) return; d = d2; } { const d3 = cbHit(u, d, from); if (!d3) return; d = d3; } d = kitHit(u, d, from); if (bkGuard(u, from) || bkQGuard(u, from)) return; if (from === 'me' && EV.opts && EV.opts.bk) d *= bkPow();
     if (u.hero === 'scrb' && EV.st && EV.st.ph !== 'open') { if (EV.st.ph === 'shield' && from === 'me' && EV.hero === 'hero18') { EV.st.shHp -= d; tone(1400, .05, 'square', .03, 900); if (EV.st.shHp <= 0) { EV.st.ph = 'hit'; EV.st.bigT = 2.5; say('The hero smashes the shield apart!', 2600); } } else if (from === 'me' && !EV.st.toldSh) { EV.st.toldSh = 1; say(EV.st.ph === 'shield' ? 'Nothing gets through that shield. Only the hero hits hard enough. (Tab)' : 'It shrugs it off. Do the thing only one of you can do.', 2600); } return; }
     if ((EV.k === 'br' || EV.k === 'st') && from === 'me') d *= EV.frailHit || 1;
     if (EV.k === 'br' && EV.part === 2 && from === 'me' && !u.alert) { d *= KIT.crouchK > .5 ? 4 : 2; brAlert(u, 6, true); if (!EV.br.toldTake) { EV.br.toldTake = 1; say('Takedown! Hitting them before they see you hurts a lot more, especially from a crouch.', 3000); } }
@@ -5290,6 +5292,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     d *= 1 - .1 * UPG2.armour;
     if (from && from.hero === 'copycat' && EV.ccClaws) d *= 1.1;
     if (EV.blocking && EV.st && EV.st.noBlock) { if (!EV.st.toldBlock) { EV.st.toldBlock = 1; say('Blocking doesn\u2019t help. They know exactly where you\u2019ll guard. They learned it from you.', 3400); } }
+    else if (EV.blocking && kitParry(from)) return;
     else if (EV.blocking) { d *= EV.hero === 'echo18' ? .1 : .25; KIT.stam = Math.max(0, KIT.stam - (EV.hero === 'echo18' ? .06 : .14) * upgReflex()); tone(1200, .05, 'square', .03, 800); if (KIT.stam <= 0) { EV.blocking = false; EV.guardT = 1.2; say('Guard broken!', 1200); } }
     if (EV.k === 'st') d *= EV.frailTake || 1;
     d *= upgIron(); d = storyHurt(d, from);
@@ -8059,9 +8062,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (e.key === 'Shift' && !A) KIT.sprint = true;
     if (k === 'c' && !e.repeat && kitOn()) { KIT.crouch = !KIT.crouch; }
     if (EV && !EV.over && (k === 'q' || k === 'x')) setEvBlock(true);
-    if (canClaws() && !EV.over && (k === '1' || k === '2')) evSetWpn(k === '2' ? 'claws' : 'fists'); });
+    if (EV && EV.kit && !EV.over && /^[1-8]$/.test(k)) { const L = kitList(); if (L[+k - 1]) kitSet(L[+k - 1]); }
+    else if (canClaws() && !EV.over && (k === '1' || k === '2')) evSetWpn(k === '2' ? 'claws' : 'fists'); });
   addEventListener('keyup', e => { const k = e.key.toLowerCase(); if (e.key === 'Shift') KIT.sprint = false; if (k === 'q' || k === 'x') setEvBlock(false); });
-  function setEvBlock(on){ if (!EV) return; if (on && (EV.over || EV.intro || EV.dead > 0 || EV.guardT > 0 || EV.lockT > 0)) on = false; EV.blocking = on; }
+  function setEvBlock(on){ if (!EV) return; if (on && (EV.over || EV.intro || EV.dead > 0 || EV.guardT > 0 || EV.lockT > 0)) on = false; if (on && !EV.blocking) EV.blockAt = performance.now(); EV.blocking = on; }
   function evSetWpn(id){ if (!EV || (id === 'claws' && !canClaws()) || EV.wpn === id) return; EV.wpn = id; EV.prop = id === 'claws' ? 'claws' : HEROES[EV.hero].prop || null; tone(id === 'claws' ? 900 : 400, .08, 'triangle', .04, id === 'claws' ? 1300 : 300); say(id === 'claws' ? 'Claws out.' : 'Fists.', 1000); }
   function kitStep(dt){
     const on = kitOn(), moving = keys.w || keys.a || keys.s || keys.d || keys.arrowup || keys.arrowdown || Math.hypot(joy.x, joy.y) > .15;
@@ -8126,13 +8130,123 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // block and switch buttons for touch screens, and what's in your hands
   const evBlockBtn = $('#evBlockBtn'), evSwBtn = $('#evSwBtn'), evWpnEl = $('#evWpn');
   evBlockBtn.addEventListener('pointerdown', e => { e.preventDefault(); setEvBlock(true); }); ['pointerup', 'pointercancel', 'pointerleave'].forEach(k => evBlockBtn.addEventListener(k, () => setEvBlock(false)));
-  evSwBtn.addEventListener('click', () => { if (EV) evSetWpn(EV.wpn === 'claws' ? 'fists' : 'claws'); });
-  let wheelT = 0; canvas.addEventListener('wheel', e => { if (!canClaws() || EV.over || performance.now() < wheelT) return; wheelT = performance.now() + 350; evSetWpn(EV.wpn === 'claws' ? 'fists' : 'claws'); }, { passive: true });
+  evSwBtn.addEventListener('click', () => { if (EV && EV.kit) kitCycle(1); else if (EV) evSetWpn(EV.wpn === 'claws' ? 'fists' : 'claws'); });
+  let wheelT = 0; canvas.addEventListener('wheel', e => { if (!EV || EV.over || performance.now() < wheelT) return; if (EV.kit) { wheelT = performance.now() + 250; return kitCycle(e.deltaY > 0 ? 1 : -1); } if (!canClaws()) return; wheelT = performance.now() + 350; evSetWpn(EV.wpn === 'claws' ? 'fists' : 'claws'); }, { passive: true });
   function evKitHud(){
     if (!EV) return; const rayan = EV.hero === 'rayan';
+    if (EV.kit) { const K = EV.kit, L = kitList(), b = EV.boss, T = b && KIT_TRAITS[b.hero], weak = T ? T.weak.filter(kitHas).map(w => KITW[w].s.toLowerCase()) : [];
+      const txt = `${K.hold ? `Holding: ${KIT_THROW[K.hold].n} (attack to throw)` : KITW[EV.wpn] ? KITW[EV.wpn].n : 'Fists'}${fine && L.length > 1 ? ` · 1–${L.length} or wheel to switch` : ''}${fine ? ' · Q to block, right on the hit to parry' : ''}${K.counter > 0 ? ' · COUNTER!' : ''}${EV.pain ? ' · CRIPPLING PAIN' : ''}${weak.length ? ` · weak to: ${weak.join(', ')}` : ''}`;
+      if (evWpnEl.textContent !== txt) evWpnEl.textContent = txt; const nx = L[(L.indexOf(EV.wpn) + 1) % L.length]; evSwBtn.hidden = fine || L.length < 2; if (!evSwBtn.hidden && evSwBtn.textContent !== '⇄ ' + KITW[nx].s) evSwBtn.textContent = '⇄ ' + KITW[nx].s; evBlockBtn.hidden = fine; evBlockBtn.classList.toggle('on', !!EV.blocking); return; }
     evWpnEl.textContent = rayan ? `${EV.clawsTorn ? 'No claws. Just your fists.' : EV.wpn === 'claws' ? 'Adamantium claws' : 'Fists'}${canClaws() && fine ? ' · 1 / 2 to switch' : ''}${fine ? ' · Q or right-click to block' : ''}${EV.pain ? ' · CRIPPLING PAIN' : ''}` : (fine ? 'Q or right-click to block' : '');
     evSwBtn.hidden = fine || !canClaws(); evBlockBtn.hidden = fine; evBlockBtn.classList.toggle('on', !!EV.blocking);
   }
+
+  // ======================= the fight kit: what's in your hands depends on where you are in the story =======================
+  // While the weapons are dust (the Broker to Page One) you have your fists, the claws until Copycat tears them off, whatever
+  // you can pick up and throw, and a well-timed block. Once the weapons are back, every one you own comes with you.
+  // In Meridian General you have the hospital's own kit. Every boss is weak to something, and some learn your habits.
+  const KITW = {
+    fists: { n: 'Fists', s: 'Fists' }, claws: { n: 'Adamantium claws', s: 'Claws' },
+    mjolnir: { n: 'Mjölnir', s: 'Mjölnir' }, storm: { n: 'Stormbreaker', s: 'Storm' }, batarang: { n: 'Batarangs', s: 'Batarangs' },
+    sword: { n: 'Diamond sword', s: 'Sword' }, shield: { n: 'Vibranium shield', s: 'Shield' }, necro: { n: 'Necrosword', s: 'Necro' },
+    web: { n: 'Web-shooters', s: 'Webs' }, defib: { n: 'Defib paddles', s: 'Defib' }, throw: { n: 'Something to throw', s: 'Throw' }, parry: { n: 'A perfect block', s: 'Parry' }
+  };
+  // who is weak to what (always something you have in that part of the story), and who adapts to repetition
+  const KIT_TRAITS = {
+    ultronx: { weak: ['throw', 'mjolnir', 'storm'] }, udrone: { weak: ['web', 'batarang', 'throw'] }, synth: { weak: ['throw', 'mjolnir', 'storm'], adapt: 1 }, dbot24: { weak: ['throw', 'mjolnir', 'storm'] },
+    puppeteer: { weak: ['claws', 'sword', 'storm', 'parry'] }, copycat: { weak: ['parry', 'throw'], adapt: 1 }, rclone: { weak: ['parry'], adapt: 1 }, clone2: { weak: ['throw', 'web'], adapt: 1 }, clone3: { weak: ['parry', 'sword'], adapt: 1 },
+    broker: { weak: ['throw', 'batarang', 'web'] }, brk23: { weak: ['throw', 'batarang'] }, gangBoss: { weak: ['throw', 'parry'] }, pzman: { weak: ['batarang', 'web', 'throw'] }, pzero: { weak: ['claws', 'necro', 'parry'] },
+    doom: { weak: ['throw', 'shield', 'parry'] }, doom24: { weak: ['shield', 'mjolnir', 'parry'] }, moondoom: { weak: ['throw', 'parry'] }, inkdoom: { weak: ['sword', 'parry'], adapt: 1 },
+    thanos20: { weak: ['storm', 'mjolnir', 'parry'] }, ofspace: { weak: ['parry'], adapt: 1 }, overfitx: { weak: ['parry'], adapt: 1 }, dlboss: { weak: ['web', 'batarang', 'parry'] }, scrb: { weak: ['throw', 'parry'], adapt: 1 },
+    sb_gridlock: { weak: ['web', 'parry'] }, sb_static: { weak: ['throw', 'shield'] }, sb_pothole: { weak: ['sword', 'storm', 'claws'] }, sb_monsoon: { weak: ['throw', 'web'] }, sb_smog: { weak: ['batarang', 'throw'] }, sb_rust: { weak: ['claws', 'parry'] },
+    cb_adrenal: { weak: ['defib', 'parry'] }, cb_fever: { weak: ['throw'] }, cb_plague: { weak: ['defib', 'throw'] }, cb_anaes: { weak: ['throw', 'parry'] }, cb_suture: { weak: ['defib', 'parry'] },
+    oldme: { weak: ['parry'], adapt: 1 }, clockmaker: { weak: ['web', 'throw', 'batarang'] }, overseer: { weak: ['sword', 'claws', 'throw'] }, queen: { weak: ['storm', 'sword', 'throw'] }, editor: { weak: ['parry', 'throw'], adapt: 1 }, author: { weak: ['parry'], adapt: 1 }
+  };
+  const kitOnFor = () => !!EV && EV.hero === 'rayan' && (EV.k === 'st' || EV.k === 'br');
+  function kitList(){
+    if (!kitOnFor()) return null; const L = ['fists']; if (canClaws()) L.push('claws');
+    if (EV.opts && EV.opts.cb) { L.push('defib'); return L; }
+    ['mjolnir', 'storm', 'batarang', 'sword', 'shield', 'necro', 'web'].forEach(id => { try { if (inv.includes(id) && !dustedWeapon(id)) L.push(id); } catch (e) {} });
+    return L;
+  }
+  const kitHas = id => id === 'throw' || id === 'parry' || (kitList() || []).includes(id);
+  function kitMesh(id){
+    const g = new THREE.Group();
+    if (id === 'defib') { [-1, 1].forEach(s => { const p = box(.12, .05, .2, mat(0xEEF1F5), s * .02, 0, 0, g); box(.11, .015, .18, mat(0xC9CFD8, { metalness: .8, roughness: .2 }), s * .02, -.03, 0, g); box(.05, .12, .05, mat(0xE8303C), s * .02, .07, .02, g); }); }
+    else if (id === 'thr_crate') box(.34, .34, .34, mat(0x9A6B3A, { roughness: .9 }), 0, 0, 0, g);
+    else if (id === 'thr_tank') { cyl(.1, .1, .5, mat(0xD8462E, { metalness: .4 }), 0, 0, 0, g, 12); cyl(.04, .05, .08, mat(0x5A5E68, { metalness: .7 }), 0, .29, 0, g, 8); }
+    else if (id === 'thr_cone') { const c = new THREE.Mesh(new THREE.ConeGeometry(.14, .4, 14), mat(0xFF7A1E)); g.add(c); cyl(.15, .15, .04, mat(0x16181D), 0, -.2, 0, g, 14); }
+    else if (id === 'thr_rock') g.add(new THREE.Mesh(new THREE.DodecahedronGeometry(.2, 0), mat(0x6A6560, { flatShading: true })));
+    else if (id === 'thr_tray') { box(.4, .03, .28, mat(0xC9CFD8, { metalness: .8, roughness: .25 }), 0, 0, 0, g); }
+    return g;
+  }
+  const KIT_THROW = { thr_crate: { n: 'crate', d: 3.2, stun: 1.3 }, thr_tank: { n: 'gas canister', d: 2.4, stun: .9, aoe: 3.2 }, thr_cone: { n: 'traffic cone', d: 2, stun: 1.8 }, thr_rock: { n: 'chunk of concrete', d: 3.6, stun: 1 }, thr_tray: { n: 'steel tray', d: 2.2, stun: 1.6, bounce: 1 } };
+  function kitTypes(){ if (EV.inMed) return ['thr_tray', 'thr_tank', 'thr_crate']; if (EV.inMap) return ['thr_cone', 'thr_crate', 'thr_tank', 'thr_rock']; return ['thr_crate', 'thr_rock', 'thr_tank']; }
+  function kitDrop(){
+    const K = EV.kit, types = kitTypes(); let x, z, ok = false;
+    for (let k = 0; k < 20 && !ok; k++) { const a = Math.random() * 6.28, r = 3 + Math.random() * 6; x = pos.x + Math.cos(a) * r; z = pos.z + Math.sin(a) * r; ok = evValid(x, z) && !PILLARS.some(p => Math.hypot(x - p.x, z - p.z) < p.r + .6); }
+    if (!ok) return; const type = types[Math.random() * types.length | 0], g = new THREE.Group(); g.position.set(x, 0, z);
+    const m = kitMesh(type); m.position.y = .3; m.scale.setScalar(1.6); g.add(m);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(.55, .65, 28), new THREE.MeshBasicMaterial({ color: 0xFFC93C, transparent: true, opacity: .7, side: THREE.DoubleSide, depthWrite: false })); ring.rotation.x = -Math.PI / 2; ring.position.y = .03; g.add(ring);
+    g.traverse(o => { o.raycast = () => {}; if (o.isMesh) o.userData.noPick = true; }); (EV.inMap && BL.partG ? BL.partG : eventScene).add(g); K.props.push({ g, x, z, type, m });
+  }
+  function kitInit(){
+    if (!kitOnFor()) { EV.kit = null; return; } EV.kit = { props: [], hold: null, dropT: .2, streak: { t: '', n: 0 }, told: {}, counter: 0 };
+    const b = EV.boss, T = b && KIT_TRAITS[b.hero];
+    if (T && !EV.opts.cb) { const w = T.weak.find(kitHas); if (w) setTimeout(() => { if (EV && EV.kit && !EV.over) say(`${nmT(HEROES[b.hero].name)} is weak to ${w === 'throw' ? 'things you throw' : w === 'parry' ? 'a perfect block (block just as the hit lands)' : KITW[w].n}.${T.adapt ? ' And it learns: switch things up.' : ''}`, 3600); }, 5200); }
+  }
+  // pick things up by walking over them; batarangs home in; the counter window ticks down
+  function fkStep(dt){
+    if (EV && EV.kit === undefined) kitInit(); const K = EV && EV.kit; if (!K) return; if (EV.over) return; K.counter = Math.max(0, K.counter - dt); const t = performance.now() / 1000;
+    if ((K.dropT -= dt) <= 0) { K.dropT = K.props.length < 2 ? 3 : 9; if (K.props.length < 3) kitDrop(); }
+    K.props = K.props.filter(p => { p.m.rotation.y += dt * 1.2; p.m.position.y = .35 + Math.sin(t * 2 + p.x) * .06;
+      if (!K.hold && EV.dead <= 0 && Math.hypot(pos.x - p.x, pos.z - p.z) < 1.2) { K.hold = p.type; EV.prop = p.type; if (p.g.parent) p.g.parent.remove(p.g); disposeDeep(p.g); tone(520, .08, 'triangle', .04, 780); if (!K.told.pick) { K.told.pick = 1; say(`Picked up a ${KIT_THROW[p.type].n}. Attack to throw it.`, 2200); } return false; } return true; });
+    EV.shots.forEach(s => { if (!s.home || s.team !== EV.team) return; const tg = EV.units.filter(u => u.team !== EV.team && u.dead <= 0).sort((a, b) => Math.hypot(a.x - s.x, a.z - s.z) - Math.hypot(b.x - s.x, b.z - s.z))[0]; if (!tg) return; const want = Math.atan2(tg.x - s.x, tg.z - s.z), cur = Math.atan2(s.vx, s.vz), d = Math.atan2(Math.sin(want - cur), Math.cos(want - cur)), na = cur + clamp(d, -dt * 5, dt * 5), sp = Math.hypot(s.vx, s.vz); s.vx = Math.sin(na) * sp; s.vz = Math.cos(na) * sp; s.m.rotation.y += dt * 18; });
+  }
+  function kitClear(){ const K = EV && EV.kit; if (!K) return; K.props.forEach(p => { if (p.g.parent) p.g.parent.remove(p.g); disposeDeep(p.g); }); K.props = []; }
+  const kitBase = () => HEROES[EV.hero].dmg * armFactor() * (EV.rage > 0 ? 1.6 : 1) * (EV.pain ? .9 : 1) * (EV.laststand ? 2.5 : 1) * upgEdge() * (EV.kit && EV.kit.counter > 0 ? 1.8 : 1);
+  const kitShot = (o) => { shoot(Object.assign({ x: pos.x, z: pos.z, yaw, team: EV.team, from: 'me' }, o)); const s = EV.shots[EV.shots.length - 1]; if (o.mesh) { eventScene.remove(s.m); s.m = o.mesh.startsWith('thr_') ? kitMesh(o.mesh) : mkWeapon(o.mesh); s.m.scale.setScalar(o.sc || 1.4); eventScene.add(s.m); } return s; };
+  // the attack button, for everything that isn't a punch or a claw swipe; returns true when it handled it
+  function kitAttack(){
+    const K = EV.kit; if (!K) return false; const base = kitBase(), H = HEROES[EV.hero];
+    if (K.hold) { const T = KIT_THROW[K.hold], s = kitShot({ dmg: base * T.d, stun: T.stun, col: 0xFFC93C, tool: 'throw', mesh: K.hold, aoe: T.aoe, aoeD: base * T.d, bounce: T.bounce }); s.vx *= .8; s.vz *= .8; s.life = 1.3; s.y = 1.2;
+      K.hold = null; EV.prop = EV.wpn === 'claws' ? 'claws' : ['fists', 'claws'].includes(EV.wpn) ? H.prop || null : EV.wpn; EV.cd = .55; EV.swing = .3; tone(300, .15, 'triangle', .05, 160); return true; }
+    const w = EV.wpn; if (w === 'fists' || w === 'claws') return false;
+    EV.swing = .3; EV.punchSide = -(EV.punchSide || -1);
+    const melee = (range, arc, mult, after) => { const f = []; bodies().forEach(u => { if (u.isMe || !alive(u) || teamOf(u) === EV.team) return; const dx = u.x - pos.x, dz = u.z - pos.z, d = Math.hypot(dx, dz) - (HEROES[u.hero].r || .5); if (d < range && Math.abs(angDiff(Math.atan2(-dx, -dz), yaw)) < arc) { EV.hitTool = w; hitUnit(u, base * mult, 'me'); f.push(u); if (after) after(u); } }); tone(f.length ? 220 : 380, .08, f.length ? 'square' : 'sine', .04, f.length ? 110 : 600); return f; };
+    if (w === 'sword') { EV.cd = .62; melee(3, 1.5, 1.5); EV.shots.forEach(s => { if (s.team !== EV.team && Math.hypot(s.x - pos.x, s.z - pos.z) < 3) s.life = 0; }); }
+    if (w === 'storm') { EV.cd = .8; K.sn = (K.sn || 0) + 1; melee(3, 1.2, 1.8, u => { u.kx = (u.x - pos.x) * 3; u.kz = (u.z - pos.z) * 3; if (K.sn % 3 === 0) { boltFx(u.x, u.z); u.stun = Math.max(u.stun, 1); } }); }
+    if (w === 'necro') { EV.cd = .5; const f = melee(2.4, 1, 1.3); if (f.length) EV.hp = Math.min(EV.max, EV.hp + base * .35); }
+    if (w === 'defib') { EV.cd = 1.5; const f = melee(2.2, 1, 2.1, u => { u.stun = Math.max(u.stun, 1.2); }); tone(1500, .25, 'square', .05, 300); if (f.length) ringFx2(f[0].x, f[0].z, 1.4, 0x7FE8FF); }
+    if (w === 'mjolnir') { EV.cd = .95; const s = kitShot({ dmg: base * 1.7, stun: .7, col: 0xB9C4CF, tool: 'mjolnir', mesh: 'mjolnir', sc: .9 }); s.life = .9; tone(220, .2, 'sawtooth', .04, 120); }
+    if (w === 'batarang') { EV.cd = .45; [-.12, .12].forEach(o => { const s = kitShot({ dmg: base * .65, col: 0x16181D, tool: 'batarang', mesh: 'batarang', sc: .7 }); const a = yaw + o; s.vx = -Math.sin(a) * 22; s.vz = -Math.cos(a) * 22; s.home = 1; s.life = 1.4; }); tone(900, .06, 'triangle', .03, 1400); }
+    if (w === 'shield') { EV.cd = 1; const s = kitShot({ dmg: base * 1.3, stun: .5, col: 0xC8102E, tool: 'shield', mesh: 'shield', sc: .6, bounce: 1 }); s.life = 1; }
+    if (w === 'web') { EV.cd = .7; const s = kitShot({ dmg: base * .5, stun: 1.6, col: 0xEEF1F5, tool: 'web' }); s.life = 1; tone(1200, .08, 'sine', .03, 600); }
+    return true;
+  }
+  // weaknesses, habits, and the counter after a parry
+  function kitHit(u, d, from){
+    const K = EV.kit; if (!K || from !== 'me' || !u.boss) return d; const tool = EV.hitTool || EV.wpn, T = KIT_TRAITS[u.hero];
+    if (K.streak.t === tool) K.streak.n++; else K.streak = { t: tool, n: 1 };
+    if (T && T.weak.includes(tool)) { d *= 1.6; if (!K.told['w' + tool]) { K.told['w' + tool] = 1; say(`That hurts it: ${tool === 'throw' ? 'it can’t handle being hit with things' : KITW[tool].n.toLowerCase()} does extra damage.`, 1800); } }
+    if (T && T.adapt && K.streak.n > 6) { d *= .3; if (!K.told['a' + tool]) { K.told['a' + tool] = 1; say(`${nmT(HEROES[u.hero].name)} has learned your ${KITW[tool] ? KITW[tool].s.toLowerCase() : 'moves'}. Switch it up!`, 2400); } }
+    if (K.counter > 0 && T && T.weak.includes('parry')) d *= 1.4;
+    EV.hitTool = null; return d;
+  }
+  // block just as a hit lands to parry: they stagger and you hit much harder for a moment. The shield blocks everything.
+  function kitParry(from){
+    const K = EV.kit; if (!K) return false; const now = performance.now();
+    if (EV.wpn === 'shield') { tone(1500, .05, 'square', .03, 1100); return true; }
+    if (from && from.hero && !from.isMe && now - (EV.blockAt || 0) < 320) { from.stun = Math.max(from.stun || 0, 1.6); K.counter = 2.5; ringFx2(pos.x, pos.z, 1.6, 0xFFC93C); tone(1800, .12, 'triangle', .06, 2400); fightCall('PARRY!'); if (!K.told.parry) { K.told.parry = 1; say('Parried! They’re open: hit them hard, now.', 1800); } EV.hitTool = 'parry'; if (from.boss) kitHit(from, 0, 'me'); return true; }
+    return false;
+  }
+  // a shield held up sends shots back where they came from
+  function kitReflect(s){ if (!EV.kit || EV.wpn !== 'shield' || !EV.blocking) return false; s.team = EV.team; s.from = 'me'; s.vx *= -1.1; s.vz *= -1.1; s.life = 1; s.tool = 'shield'; tone(1600, .06, 'square', .04, 900); return true; }
+  function kitSet(id){
+    if (!EV || !EV.kit || EV.over) return false; const L = kitList(); if (!L.includes(id)) return false; if (EV.wpn === id) return true;
+    EV.wpn = id; if (!EV.kit.hold) EV.prop = id === 'fists' ? HEROES[EV.hero].prop || null : id; tone(id === 'fists' ? 400 : 900, .08, 'triangle', .04, id === 'fists' ? 300 : 1300); say(KITW[id].n + '.', 900); return true;
+  }
+  function kitCycle(dir){ const L = kitList(); if (!L || L.length < 2) return; const i = L.indexOf(EV.wpn); kitSet(L[(i + (dir || 1) + L.length) % L.length]); }
 
   // ======================= fight scenes: who says what before, during and after each battle =======================
   // Every story fight opens with a short scene (the camera finds whoever you're up against), villains and allies talk
@@ -11782,7 +11896,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!EV) return; const t = now / 1000, H = HEROES[EV.hero];
     if (EV.holdAtk) evAttack();
     EV.me.x = pos.x; EV.me.z = pos.z; EV.me.dead = EV.dead;
-    narrStep(dt);
+    narrStep(dt); fkStep(dt);
     if (!EV.over && !paused() && !EV.intro) {
       EV.t -= dt; EV.cd -= dt; EV.spCd -= dt; EV.inv -= dt; EV.rage -= dt; EV.swing = Math.max(0, EV.swing - dt); EV.slow = Math.max(0, (EV.slow || 0) - dt);
       if (H.regen || EV.rage > 0) EV.hp = Math.min(EV.max, EV.hp + (EV.rage > 0 ? 8 : H.regen) * dt);
@@ -11817,6 +11931,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (!evValid(s.x, s.z) && (EV.inTwr || EV.inDsp || EV.inMed || Math.hypot(s.x, s.z) > ER - 1)) s.life = 0;
       if (PILLARS.some(p => Math.hypot(s.x - p.x, s.z - p.z) < p.r)) s.life = 0;
       if (s.life > 0) for (const o of bodies()) { if (!alive(o) || teamOf(o) === s.team || s.hit === o) continue; const rr = (HEROES[o.hero].r || .5) + (s.big ? .4 : .2); if (Math.hypot(o.x - s.x, o.z - s.z) < rr) {
+        if (o.isMe && kitReflect(s)) break; if (s.from === 'me') EV.hitTool = s.tool || null;
         hitUnit(o, s.dmg, s.from); if (s.stun && !o.isMe) o.stun = s.stun;
         if (s.aoe) { bodies().forEach(q => { if (q !== o && alive(q) && teamOf(q) !== s.team && Math.hypot(q.x - s.x, q.z - s.z) < s.aoe) hitUnit(q, s.aoeD * .6, s.from); }); ringFx2(s.x, s.z, s.aoe, s.col); }
         if (s.bounce) { s.bounce = 0; s.hit = o; const nt = bodies().find(q => q !== o && alive(q) && teamOf(q) !== s.team && Math.hypot(q.x - s.x, q.z - s.z) < 10); if (nt) { const a = Math.atan2(-(nt.x - s.x), -(nt.z - s.z)); s.vx = -Math.sin(a) * 26; s.vz = -Math.cos(a) * 26; s.life = .8; break; } }
