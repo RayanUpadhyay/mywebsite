@@ -12323,6 +12323,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const ACH = [
     ['lair', 'Down the rabbit hole', 'Found the lair behind the bookshelf.', () => found.has('lair')],
     ['garden', 'Green thumb', 'Harvested something you grew in the greenhouse.', () => GH.s.n > 0],
+    ['fair', 'Blue ribbon', 'Won first place at a village fair.', () => Object.values(FM.s.fest || {}).some(r => r.place === 1)],
     ['first', 'First blood', 'Beat your first villain.', () => beaten.size > 0],
     ['mine', 'Know yourself', 'Beat all five of Rayan’s own creatures.', () => BOSSES.slice(0, 5).every(d => beaten.has(d.id))],
     ['mcu', 'Earth’s mightiest', 'Beat every MCU villain.', () => BOSSES.slice(5, 9).every(d => beaten.has(d.id))],
@@ -13685,6 +13686,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (k === 'lantern') { cyl(.025, .025, 1.1, fmc(0x3A2A20), 0, .55, 0, g, 6); box(.3, .03, .03, fmc(0x3A2A20), .12, 1.1, 0, g); const l = new THREE.Mesh(new THREE.SphereGeometry(.09, 12, 8), new THREE.MeshStandardMaterial({ color: 0xFFD08A, emissive: 0xFFB050, emissiveIntensity: .3 })); l.scale.y = 1.25; l.position.set(.25, .98, 0); g.add(l); g.userData.lamp = l; }
     if (k === 'bench') { box(.9, .05, .32, wood, 0, .42, 0, g); box(.9, .25, .04, wood, 0, .62, -.15, g); [-.38, .38].forEach(x => box(.05, .42, .28, wood, x, .21, 0, g)); }
     if (k === 'beehive') { box(.3, .35, .3, fmc(0x6B4A32), 0, .17, 0, g); for (let j = 0; j < 3; j++) box(.55 - j * .04, .2, .46, fmc(j % 2 ? 0xF2E2B0 : 0xE8D08A), 0, .45 + j * .2, 0, g); box(.6, .05, .5, fmc(0x8C6A48), 0, 1.06, 0, g); }
+    if (k === 'kite') { cyl(.025, .025, 1.6, wood, 0, .8, 0, g, 6); const kt = new THREE.Mesh(new THREE.PlaneGeometry(.45, .45), new THREE.MeshStandardMaterial({ color: 0xE4405A, side: THREE.DoubleSide })); kt.rotation.z = Math.PI / 4; kt.position.set(0, 1.75, 0); g.add(kt); for (let j = 0; j < 4; j++) { const t = new THREE.Mesh(new THREE.PlaneGeometry(.08, .06), new THREE.MeshStandardMaterial({ color: [0xFFC93C, 0x3AB86A][j % 2], side: THREE.DoubleSide })); t.position.set(0, 1.4 - j * .14, 0); g.add(t); } g.userData.spin = kt; }
+    if (k === 'boat') { const pd = cyl(.4, .4, .03, new THREE.MeshStandardMaterial({ color: 0x5FB8D8, roughness: .1 }), 0, .02, 0, g, 18); pd.castShadow = false; const bt = gp(ghGeo.k, fmc(0xF2EDE4), 0, .1, 0, .14, .1, .08, g); bt.rotation.z = Math.PI; }
+    if (k === 'diya') { const fl = new THREE.MeshStandardMaterial({ color: 0xFFD08A, emissive: 0xFF8A2E, emissiveIntensity: .3 }); for (let j = 0; j < 5; j++) { const x = -.36 + j * .18; cyl(.06, .04, .05, fmc(0xB5562E), x, .03, 0, g, 10); const f = new THREE.Mesh(ghGeo.k, fl); f.scale.set(.025, .07, .025); f.position.set(x, .1, 0); g.add(f); } g.userData.lamp = { material: fl }; }
+    if (k === 'rosette') { cyl(.025, .025, .9, wood, 0, .45, 0, g, 6); const r = cyl(.16, .16, .03, fmc(0x3A6AE0), 0, 1.0, .02, g, 16); r.rotation.x = Math.PI / 2; const c = cyl(.08, .08, .035, fmc(0xFFC93C), 0, 1.0, .04, g, 12); c.rotation.x = Math.PI / 2; [-1, 1].forEach(sd => { const t = box(.06, .26, .01, fmc(0x3A6AE0), sd * .05, .8, .03, g); t.rotation.z = sd * .2; }); }
     if (k === 'birdbath') { cyl(.07, .1, .6, fmc(0xC8C2B8), 0, .3, 0, g, 10); cyl(.26, .14, .1, fmc(0xC8C2B8), 0, .64, 0, g, 16); const w = cyl(.22, .22, .01, new THREE.MeshStandardMaterial({ color: 0x8FD0E8, roughness: .1 }), 0, .69, 0, g, 16); w.castShadow = false; }
     return g;
   }
@@ -13714,7 +13719,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const nextPlot = FM_PLOTS.find(p => p[0] > S.size);
     panelBody.innerHTML = `<div class="sec"><p class="meta">${who || 'Farm · seeds and supplies'}</p><h2 class="display">Shop</h2><p class="sub">🪙 ${S.coins} coins · ${FM_SEA[sea]} · farm level ${lv}</p>
       <h3>Seeds</h3>${seeds.map(k => { const C = FM_CROPS[k]; return row('s:' + k, C.n, `${C.sea === sea ? 'In season' : 'Sprouts in ' + FM_SEA[C.sea].toLowerCase()} · you have ${S.seeds[k] || 0}${C.re ? ' · bears again' : ''}`, FM_SEEDCOST[k], lv >= C.lvl && S.coins >= FM_SEEDCOST[k], lv < C.lvl ? `Level ${C.lvl}` : 'Not enough'); }).join('')}
-      <h3>For the farm</h3>${Object.keys(FM_ITEMS).filter(k => !FM_ITEMS[k].gift).map(k => { const I = FM_ITEMS[k]; return row('i:' + k, `${I.ic} ${I.n}`, `${I.d}${k === 'hen' ? ` · you have ${S.an.hens}` : S.items[k] ? ` · you have ${S.items[k]}` : ''}`, I.p, lv >= I.lvl && S.coins >= I.p, lv < I.lvl ? `Level ${I.lvl}` : 'Not enough'); }).join('')}
+      <h3>For the farm</h3>${Object.keys(FM_ITEMS).filter(k => !FM_ITEMS[k].gift && !FM_ITEMS[k].fest).map(k => { const I = FM_ITEMS[k]; return row('i:' + k, `${I.ic} ${I.n}`, `${I.d}${k === 'hen' ? ` · you have ${S.an.hens}` : S.items[k] ? ` · you have ${S.items[k]}` : ''}`, I.p, lv >= I.lvl && S.coins >= I.p, lv < I.lvl ? `Level ${I.lvl}` : 'Not enough'); }).join('')}
       ${nextPlot ? `<h3>A bigger plot</h3>${row('p:' + nextPlot[0], `${nextPlot[0]} × ${nextPlot[0]}`, `Up from ${S.size} × ${S.size}: room for ${nextPlot[0] * nextPlot[0] - S.size * S.size} more tiles.`, nextPlot[1], lv >= nextPlot[2] && S.coins >= nextPlot[1], lv < nextPlot[2] ? `Level ${nextPlot[2]}` : 'Not enough')}` : ''}
       <p class="apkmeta">Items go in your bag. Pick one with the hands (5, press again to choose), then tap a free tile to place it. Tap it with the hands to pick it back up.</p></div>`;
     panelBody.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => { const [t, k] = b.dataset.buy.split(':'), p = +b.dataset.p; if (S.coins < p) return;
@@ -14018,9 +14023,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const mb = new THREE.Group(); mb.position.set(1.6, 0, -.9); sc.add(mb); mb.userData.egg = 'fmail'; box(.08, 1.0, .08, mat(0x6B4A32), 0, .5, 0, mb); box(.36, .26, .5, mat(0xC0271C), 0, 1.1, 0, mb); FM.flag = box(.03, .26, .08, mat(0xFFC93C), .2, 1.3, .15, mb); FM.blocks.push({ x0: 1.3, x1: 1.9, z0: -1.2, z1: -.5 });
     const st = new THREE.Group(); st.position.set(-2.4, 0, -1.0); sc.add(st); st.userData.egg = 'fstove'; box(.9, .55, .7, mat(0xB5562E, { roughness: .95 }), 0, .27, 0, st); cyl(.22, .2, .22, mat(0x3A3A3A, { metalness: .5 }), 0, .66, 0, st, 14); const fire = box(.3, .12, .04, new THREE.MeshStandardMaterial({ color: 0xFF8A2E, emissive: 0xFF6A1C, emissiveIntensity: 1.2 }), 0, .18, .36, st); FM.fire = fire; FM.blocks.push({ x0: -2.9, x1: -1.9, z0: -1.4, z1: -.6 });
     // the villagers themselves
+    fmFestBuild(sc);
     FV.forEach(V => { const R = fvMesh(V); sc.add(R.g); const P = { V, R, g: R.g, x: 0, z: 0, at: '', route: [], pause: 0, t: Math.random() * 6 }; FM.vil.push(P); fvPlace(P, fvWhere(V), true); });
   }
-  const fvWhere = V => { const h = istHour(); let p = V.day[0][1]; V.day.forEach(([t, q]) => { if (h >= t) p = q; }); if (typeof fmFestNow === 'function') { const f = fmFestNow(); if (f && h >= 9 && h < 21) p = 'fest:' + V.id; } return p; };
+  const fvWhere = V => { const h = istHour(); let p = V.day[0][1]; V.day.forEach(([t, q]) => { if (h >= t) p = q; }); if (typeof fmFestNow === 'function') { const f = fmFestNow(); if (f && fmFestOpen(f)) p = 'fest:' + V.id; } return p; };
   const fvPts = id => { if (id.startsWith('fest:')) { const i = FV.findIndex(v => 'fest:' + v.id === id), a = i / FV.length * Math.PI * 2; return [[-30 + Math.cos(a) * 3.4, FV_LANE], [-30 + Math.cos(a) * 3.4, FV_LANE + Math.sin(a) * 1.4]]; } return FV_P[id]; };
   function fvPlace(P, id, snap){
     if (P.at === id && !snap) return; const to = fvPts(id); if (!to) return;
@@ -14055,7 +14061,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         S.req.push({ who: V.id, k, n, day: d, rw });
         S.mail.push({ t: `A request from ${V.n}`, from: V.n, b: `Dear neighbour,\n\nCould you bring me ${n} ${n === 1 ? FM_GOODS[k].one : FM_GOODS[k].many}? ${fvReqWhy(V.id, k)}\n\nI’ll make it worth your while: ${fvRewardText(rw)}.\n\n– ${V.n}`, seed: null, read: 0 }); } }
     if (!first && Math.random() < .3) { const ks = Object.keys(FM_CROPS).filter(c => FM_CROPS[c].sea === fmSeason() && FM_CROPS[c].lvl <= fmLevel()); const k = ks[Math.floor(Math.random() * ks.length)]; if (k) S.mail.push({ t: 'Extra seeds', from: 'Babu the postman', b: `The seed company sent a spare packet, so I brought it to the busiest farm on my route.\n\n– Babu`, seed: { k, n: 4 }, read: 0 }); }
-    S.mail = S.mail.slice(-30); fmSave();
+    fmFestInvite(); S.mail = S.mail.slice(-30); fmSave();
   }
   const fvReqWhy = (id, k) => ({ ammachi: 'I’m making something for the temple and mine haven’t come up yet.', ravi: 'Don’t ask why. It’s for a bet.', meena: 'The stall’s busy this week and I’ve run short.', joseph: 'The bees have been restless. A little treat helps.', tara: 'It’s for a very important experiment.', babu: 'My wife asked, and I said yes before checking.' })[id];
   const fvRewardText = rw => [rw.c ? `🪙 ${rw.c}` : '', rw.s ? `a bag of ${FM_CROPS[rw.s].n.toLowerCase()} seeds` : '', rw.r ? `my recipe for ${FM_DISH[rw.r].n.toLowerCase()}` : ''].filter(Boolean).join(' and ');
@@ -14098,7 +14104,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     panelBody.querySelector('#fvBack').onclick = () => fvPanel(V, mode === 'trade' ? 'Changed your mind? That’s okay.' : 'Oh, no gift? That’s fine.');
     panelBody.querySelectorAll('.ghseed').forEach(b => b.onclick = () => { const k = b.dataset.k; if (!(S.inv[k] > 0)) return; S.inv[k]--; if (!S.inv[k]) delete S.inv[k];
       if (mode === 'trade') { S.vil.stone = fmDay(); fmAddGood('stone', 1); fvAdd(V.id, 10); tone(1320, .1, 'sine', .05, 1600); return fvPanel(V, 'Deal! Here. This one has a stripe. Stripes are rare.'); }
-      S.vil.gift[V.id] = fmDay(); const r = V.love.includes(k) ? 0 : V.like.includes(k) ? 1 : V.hate.includes(k) ? 3 : 2, bd = fvBirthday(V) ? 3 : 1;
+      S.vil.gift[V.id] = fmDay(); const r = k === 'laddoo' || V.love.includes(k) ? 0 : V.like.includes(k) ? 1 : V.hate.includes(k) ? 3 : 2, bd = fvBirthday(V) ? 3 : 1;
       fvAdd(V.id, [80, 45, 20, -20][r] * (r < 3 ? bd : 1)); [[784, 988, 1175], [659, 784], [523], [220]][r].forEach((q, j) => setTimeout(() => tone(q, .12, r === 3 ? 'sawtooth' : 'triangle', .04), j * 90));
       fvPanel(V, (bd > 1 && r < 3 ? 'On my birthday, too! ' : '') + V.gift[r]); });
     panel.scrollTop = 0; panel.classList.add('on');
@@ -14140,6 +14146,88 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function fvHoney(i){ const S = FM.s.vil, d = fmDay(); if (S.honey[i] === d) return say('The bees are still busy. Tomorrow’s honey isn’t ready yet.', 2200);
     const c = i % FM_G, r = Math.floor(i / FM_G), fl = Object.keys(FM.s.tiles).some(j => { const T = FM.s.tiles[j]; return T && ['mustard', 'sunflower', 'marigold', 'watermelon'].includes(T.c) && fmStage(T.g) >= 3 && Math.max(Math.abs(j % FM_G - c), Math.abs(Math.floor(j / FM_G) - r)) <= 2; });
     S.honey[i] = d; fmAddGood('honey', fl ? 2 : 1); tone(660, .15, 'sine', .05, 880); say(fl ? 'Two jars of honey! The bees love the flowers next door.' : 'A jar of honey. Plant flowering crops nearby and the bees make more.', 2800); }
+
+  // --- festivals from the real calendar: the village gathers on the lane and you can enter your best crop ---
+  const FM_DIWALI = { 2025: [10, 20], 2026: [11, 8], 2027: [10, 29], 2028: [10, 17], 2029: [11, 5], 2030: [10, 26], 2031: [11, 14], 2032: [11, 2], 2033: [10, 22], 2034: [11, 10], 2035: [10, 30] };
+  const FM_FESTS = [
+    { id: 'harvest', n: 'Harvest Fair', ic: '🪁', start: () => [1, 13], days: 4, h: [9, 21], d: 'Sankranti on the lane: kites, sugarcane and the best crop of the season.', item: 'kite' },
+    { id: 'monsoon', n: 'Monsoon Fair', ic: '☔', start: () => [8, 8], days: 3, h: [10, 20], d: 'Paper boats in the puddles, hot pakodas and a prize for the best crop of the rains.', item: 'boat' },
+    { id: 'diwali', n: 'Diwali Night Market', ic: '🪔', start: y => { const d = FM_DIWALI[y] || [11, 1]; return [d[0], d[1] - 1]; }, days: 3, h: [17, 24], d: 'Lamps all along the lane, sweets, sparklers and a prize for the best crop.', item: 'diya' }
+  ];
+  Object.assign(FM_ITEMS, {
+    kite: { n: 'Kite on a pole', ic: '🪁', p: 40, lvl: 1, fest: 'harvest', d: 'A paper kite that flutters in the wind.' },
+    boat: { n: 'Paper boat pond', ic: '⛵', p: 40, lvl: 1, fest: 'monsoon', d: 'A tiny pond with a paper boat.' },
+    diya: { n: 'Row of diyas', ic: '🪔', p: 40, lvl: 1, fest: 'diwali', d: 'Little clay lamps that glow at night.' },
+    rosette: { n: 'Prize rosette', ic: '🏅', p: 0, lvl: 99, gift: 1, d: 'From a village fair.' }
+  });
+  FM_GOODS.laddoo = { n: 'Laddoo', one: 'laddoo', many: 'laddoos', p: 20 };
+  (function fmFestFix(){ const f = FM.s.fest, o = {}; if (f && typeof f === 'object') Object.keys(f).forEach(k => { const r = f[k]; if (/^(harvest|monsoon|diwali)-\d{4}$/.test(k) && r && typeof r === 'object') o[k] = { k: FM_GOODS[r.k] ? r.k : '', place: clamp(fmNum(r.place), 0, 9), score: fmNum(r.score, 9999), inv: r.inv ? 1 : 0, met: r.met ? 1 : 0 }; }); FM.s.fest = o; })();
+  const fmYear = () => +new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', year: 'numeric' }).format(new Date());
+  const fmToday = () => { const p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', month: 'numeric', day: 'numeric' }).formatToParts(new Date()); return [+p.find(q => q.type === 'month').value, +p.find(q => q.type === 'day').value]; };
+  const fmDOY = (y, m, d) => (Date.UTC(y, m - 1, d) - Date.UTC(y, 0, 1)) / 864e5;
+  // days until the festival starts this year (negative while it's on or after it)
+  const fmFestIn = (F, y) => { const [m, d] = F.start(y), [tm, td] = fmToday(); return fmDOY(y, m, d) - fmDOY(y, tm, td); };
+  function fmFestNow(){ if (FM.festForce) return FM_FESTS.find(F => F.id === FM.festForce); const y = fmYear(); return FM_FESTS.find(F => { const n = fmFestIn(F, y); return n <= 0 && n > -F.days; }) || null; }
+  const fmFestOpen = F => FM.festForce || (istHour() >= F.h[0] && istHour() < F.h[1]);
+  const fmFestKey = F => `${F.id}-${fmYear()}`;
+  function fmFestList(){
+    const y = fmYear(), list = FM_FESTS.map(F => { let n = fmFestIn(F, y), yr = y; if (n <= -F.days) { yr = y + 1; n = fmFestIn(F, yr) + (fmDOY(y, 12, 31) + 1); } const [m, d] = F.start(yr); return [n, F, m, d]; }).sort((a, b) => a[0] - b[0]);
+    const res = Object.keys(FM.s.fest).filter(k => FM.s.fest[k].place).map(k => { const [id, yr] = k.split('-'), F = FM_FESTS.find(q => q.id === id); return `<div class="ghrow"><b>${['', '🥇', '🥈', '🥉'][FM.s.fest[k].place] || '🎗️'}</b><span>${F.n} ${yr}: your ${FM_GOODS[FM.s.fest[k].k] ? FM_GOODS[FM.s.fest[k].k].many : 'crop'} came ${['', 'first', 'second', 'third', 'fourth'][FM.s.fest[k].place]}</span><span></span></div>`; }).join('');
+    return `<h3>Festivals</h3>${list.map(([n, F, m, d]) => `<div class="ghrow"><b>${F.ic}</b><span>${F.n} · ${d} ${FV_MON[m - 1]}${n <= 0 ? ' · on now!' : n === 1 ? ' · tomorrow' : ` · in ${n} days`}</span><span></span></div>`).join('')}${res ? `<h3>Your prizes</h3>${res}` : ''}`;
+  }
+  function fmFestInvite(){ const y = fmYear(); FM_FESTS.forEach(F => { const n = fmFestIn(F, y), k = fmFestKey(F); if (n > 0 && n <= 3 && !(FM.s.fest[k] && FM.s.fest[k].inv)) { FM.s.fest[k] = Object.assign(FM.s.fest[k] || { k: '', place: 0, score: 0 }, { inv: 1 }); const [m, d] = F.start(y);
+      FM.s.vil.mail.push({ t: `${F.n}: you’re invited`, from: 'Babu the postman', b: `The ${F.n} is on the lane from ${d} ${FV_MON[m - 1]}, for ${F.days} days. ${F.d}\n\nBring your best crop for the judging table. Ravi says he’s going to win. Ravi says that every year.\n\n– Babu`, seed: null, read: 0 }); fmSave(); } }); }
+  // the decorations: one set for each festival, hidden until it's on
+  function fmFestBuild(sc){
+    FM.festG = {}; const lane = FV_LANE;
+    FM_FESTS.forEach(F => { const g = new THREE.Group(); g.visible = false; sc.add(g); FM.festG[F.id] = g;
+      const cols = F.id === 'diwali' ? [0xFF8A2E, 0xFFC93C, 0xE4405A, 0xB050E0] : F.id === 'monsoon' ? [0x3A9AE0, 0x7CF2C0, 0xFFE24A, 0xF2EDE4] : [0xE4405A, 0xFFC93C, 0x3AB86A, 0x3A6AE0];
+      for (let x = -40; x <= -20; x += 4) { [-1.8, 1.8].forEach(dz => box(.1, 3.2, .1, mat(0x6B4A32), x, 1.6, lane + dz, g)); for (let k = 0; k < 8; k++) { const f = new THREE.Mesh(new THREE.ConeGeometry(.12, .25, 3), new THREE.MeshStandardMaterial({ color: cols[k % 4], side: THREE.DoubleSide, emissive: F.id === 'diwali' ? cols[k % 4] : 0, emissiveIntensity: .6 })); f.rotation.x = Math.PI; f.position.set(x, 3.0 - Math.sin(k / 7 * Math.PI) * .35, lane - 1.6 + k * .45); g.add(f); } }
+      const table = new THREE.Group(); table.position.set(-30, 0, lane - 2.6); g.add(table); table.userData.egg = 'ffest'; box(2.2, .85, .8, mat(0xF2EDE4), 0, .42, 0, table); box(2.3, .05, .9, mat(cols[0]), 0, .86, 0, table);
+      const ban = new THREE.Mesh(new THREE.PlaneGeometry(2.4, .45), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: tex(480, 90, (q, W, H) => { q.fillStyle = '#' + cols[0].toString(16).padStart(6, '0'); q.fillRect(0, 0, W, H); q.fillStyle = '#FFF8EC'; q.font = `800 40px ${DISPLAY}`; q.textAlign = 'center'; q.textBaseline = 'middle'; q.fillText(F.n.toUpperCase(), W / 2, H / 2 + 2); }) }));
+      ban.position.set(0, 2.1, -.1); table.add(ban); [-1.1, 1.1].forEach(x => box(.06, 2.3, .06, mat(0x6B4A32), x, 1.15, -.1, table));
+      if (F.id === 'diwali') { FM.diyas = []; for (let x = -42; x <= -16; x += 1.2) [-1.75, 1.75].forEach(dz => { const d = new THREE.Mesh(new THREE.SphereGeometry(.06, 8, 6), new THREE.MeshStandardMaterial({ color: 0xFFB050, emissive: 0xFF8A2E, emissiveIntensity: 1.8 })); d.position.set(x, .08, lane + dz); g.add(d); FM.diyas.push(d); }); }
+      if (F.id === 'harvest') for (let k = 0; k < 6; k++) { const kt = new THREE.Mesh(new THREE.PlaneGeometry(.6, .6), new THREE.MeshBasicMaterial({ color: cols[k % 4], side: THREE.DoubleSide })); kt.rotation.z = Math.PI / 4; kt.position.set(-38 + k * 3, 7 + (k % 3), lane - 3 + (k % 2) * 6); kt.userData.kite = k; g.add(kt); (FM.kites = FM.kites || []).push(kt); }
+      if (F.id === 'harvest') [-33, -27].forEach(x => { for (let k = 0; k < 5; k++) { const c = cyl(.03, .03, 2.2, mat(0x7AA84A), x + (k - 2) * .08, 1.1, lane - 2.8, g, 6); c.rotation.z = (k - 2) * .05; } });
+      if (F.id === 'monsoon') { const pd = new THREE.Mesh(new THREE.CircleGeometry(1.2, 20), new THREE.MeshStandardMaterial({ color: 0x5FB8D8, roughness: .1 })); pd.rotation.x = -Math.PI / 2; pd.position.set(-26, .02, lane + 1.2); g.add(pd); for (let k = 0; k < 3; k++) { const bt = new THREE.Mesh(new THREE.ConeGeometry(.12, .1, 4), mat(0xF2EDE4)); bt.position.set(-26.4 + k * .4, .07, lane + 1 + (k % 2) * .4); bt.rotation.z = Math.PI; g.add(bt); } }
+    });
+  }
+  function fmFestStep(dt, now){
+    if (!FM.festG) return; const F = fmFestNow(); Object.keys(FM.festG).forEach(id => FM.festG[id].visible = !!F && F.id === id);
+    if (F && FM.kites && F.id === 'harvest') FM.kites.forEach(k => { k.position.y = 7 + (k.userData.kite % 3) + Math.sin(now / 900 + k.userData.kite) * .6; k.rotation.y = Math.sin(now / 1300 + k.userData.kite) * .5; });
+    if (F && FM.diyas && !reduce) FM.diyas.forEach((d, i) => d.material.emissiveIntensity = 1.4 + Math.sin(now / 120 + i * 1.7) * .4);
+    if (F && !FM.festSaid) { FM.festSaid = true; const k = fmFestKey(F); FM.s.fest[k] = FM.s.fest[k] || { k: '', place: 0, score: 0 }; if (!FM.s.fest[k].met) { FM.s.fest[k].met = 1; FV.forEach(V => fvAdd(V.id, 10)); } setTimeout(() => say(`${F.ic} The ${F.n} is on in the village${fmFestOpen(F) ? '!' : ` (the lane fills up from ${F.h[0] > 12 ? F.h[0] - 12 + ' pm' : F.h[0] + ' am'}).`} Bring your best crop to the judging table.`, 4200), 2600); }
+  }
+  // the judging table: one entry per festival per year
+  function fmFestPanel(){
+    const F = fmFestNow(); if (!F) return; const k = fmFestKey(F), R = FM.s.fest[k] || {}, S = FM.s;
+    if (!fmFestOpen(F)) return say(`The ${F.n} tables are set up, but it doesn’t start till ${F.h[0] > 12 ? F.h[0] - 12 + ' pm' : F.h[0] + ' am'}.`, 3200);
+    const crops = Object.keys(FM_GOODS).filter(g => S.inv[g] > 0 && (FM_CROPS[g] || GH_SEEDS[g]));
+    const it = FM_ITEMS[F.item];
+    panelBody.innerHTML = `<div class="sec"><p class="meta">${F.ic} ${F.n} · ${fmYear()}</p><h2 class="display">The judging table</h2><p class="sub">${F.d}</p>
+      ${R.place ? `<p class="fvline">Your ${FM_GOODS[R.k].many} came ${['', 'first! 🥇', 'second 🥈', 'third 🥉', 'fourth'][R.place]} this year. Come back next year and try again.</p>`
+        : `<p class="sub">Enter a basket of one crop (up to five). The judges like a full basket, a crop in its season, and a good-looking one.</p>${crops.length ? `<div class="ghseeds">${crops.map(g => `<button class="ghseed" data-k="${g}"><b>${FM_GOODS[g].n} ×${Math.min(5, S.inv[g])}</b><small>${S.inv[g]} in your bag</small></button>`).join('')}</div>` : '<p class="sub">You haven’t any crops to enter. Harvest something and come back while the fair is on.</p>'}`}
+      <h3>The fair stall</h3><div class="ghrow"><b>${it.ic} ${it.n}</b><span>${it.d} Only at the ${F.n}.</span><button class="ghbtn" id="fmFestBuy"${S.coins >= it.p ? '' : ' disabled'}>🪙 ${it.p}</button></div>
+      ${F.id === 'diwali' ? `<div class="ghrow"><b>🟠 Laddoos</b><span>Everyone loves a laddoo at Diwali. A perfect gift.</span><button class="ghbtn" id="fmLaddoo"${S.coins >= 15 ? '' : ' disabled'}>🪙 15</button></div>` : ''}</div>`;
+    panelBody.querySelectorAll('.ghseed').forEach(b => b.onclick = () => fmFestEnter(F, b.dataset.k));
+    const fb = panelBody.querySelector('#fmFestBuy'); if (fb) fb.onclick = () => { if (S.coins < it.p) return; S.coins -= it.p; S.items[F.item] = (S.items[F.item] || 0) + 1; fmSave(); fmHud(true); tone(1046, .08, 'triangle', .05); say(`${it.n}: it’s in your bag. Place it with the hands.`, 2400); fmFestPanel(); };
+    const ld = panelBody.querySelector('#fmLaddoo'); if (ld) ld.onclick = () => { if (S.coins < 15) return; S.coins -= 15; fmAddGood('laddoo', 1); fmHud(true); tone(880, .08, 'triangle', .05); fmFestPanel(); };
+    panel.scrollTop = 0; panel.classList.add('on'); tone(660, .08, 'triangle', .05);
+  }
+  function fmFestEnter(F, g){
+    const S = FM.s, k = fmFestKey(F), n = Math.min(5, S.inv[g] || 0); if (!n || (S.fest[k] && S.fest[k].place)) return;
+    S.inv[g] -= n; if (!S.inv[g]) delete S.inv[g];
+    const C = FM_CROPS[g], fresh = C && C.sea === fmSeason() ? 25 : GH_SEEDS[g] ? 15 : 0, mine = Math.round(FM_GOODS[g].p * n * 1.4 + fresh + Math.min(30, (S.giants || 0) * 10) + Math.random() * 45);
+    const rivals = [['Ravi', 70 + Math.random() * 140], ['Ammachi', 60 + Math.random() * 110], ['Old Joseph', 50 + Math.random() * 120]].map(([w, sc]) => [w, Math.round(sc)]);
+    const table = [['You', mine], ...rivals].sort((a, b) => b[1] - a[1]), place = table.findIndex(r => r[0] === 'You') + 1;
+    S.fest[k] = Object.assign(S.fest[k] || {}, { k: g, place, score: mine }); const prize = [0, 250, 120, 60, 20][place];
+    S.coins += prize; if (place === 1) { S.items.rosette = (S.items.rosette || 0) + 1; ach('fair'); } fvAdd('ravi', place === 1 ? 30 : 10); fmSave(); fmHud(true);
+    (place === 1 ? [523, 659, 784, 1046, 1319] : [523, 659, 784]).forEach((q, j) => setTimeout(() => tone(q, .16, 'triangle', .05), j * 110));
+    panelBody.innerHTML = `<div class="sec"><p class="meta">${F.ic} ${F.n} · the results</p><h2 class="display">${['', 'First place!', 'Second place', 'Third place', 'Fourth place'][place]}</h2>
+      ${table.map((r, i) => `<div class="ghrow"><b>${['🥇', '🥈', '🥉', '4'][i]}</b><span>${r[0] === 'You' ? `<b>You</b> · ${n} ${FM_GOODS[g].many}` : r[0]}</span><span>${r[1]} pts</span></div>`).join('')}
+      <p class="fvline">“${place === 1 ? 'Ravi: Fine. FINE. Next year it’s mine.' : place === 2 ? 'Ravi: Close one! Not close enough, though.' : 'Ravi: Don’t worry, everyone starts somewhere. I started at the top, but still.'}”</p>
+      <p class="sub">${prize ? `Prize: 🪙 ${prize}${place === 1 ? ' and a prize rosette for the farm' : ''}.` : ''}</p></div>`;
+  }
 
   // --- the HUD: coins, season, level, and the tool bar (tap a tool, press 1–5, or scroll) ---
   const fmHudEl = document.createElement('div'); fmHudEl.className = 'fmhud'; fmHudEl.hidden = true;
@@ -14203,6 +14291,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.egg === 'fvpost') return say('The post box. Babu empties it every day, rain or shine.', 2400);
     if (p.egg === 'fmail') return fvMail();
     if (p.egg === 'fstove') return fvStove();
+    if (p.egg === 'ffest') return fmFestPanel();
     if (p.egg === 'fcoop') return say(`The coop. ${FM.s.an.hens} hens live here, and each lays an egg a day on the straw out front.`, 3000);
     return false;
   }
@@ -14225,6 +14314,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.egg === 'fvpost') return 'Post box';
     if (p.egg === 'fmail') return FM.s.vil.mail.some(m => !m.read) ? 'Mailbox: new post!' : 'Mailbox';
     if (p.egg === 'fstove') return 'Clay stove: cook something';
+    if (p.egg === 'ffest') return 'The judging table: enter your best crop';
     return null;
   }
   // the tile in front of you, for the keyboard
@@ -14240,7 +14330,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function farmStep(dt, now){
     fmHud(false);
     if ((FM.tickT -= dt) <= 0) { FM.tickT = 3; const ph = ghPhase(); if (ph !== FM.ph || Math.random() < .05) fmPhase(); fmSprinkle(); fvNewDay(); if (typeof raining === 'function' && raining() && fmRain() && !FM.rainSaid) { FM.rainSaid = true; say('It’s raining in Bangalore: the farm is watering itself.', 3200); } fmEggsShow(); FM.tiles.forEach((_, i) => fmRefresh(i)); }
-    fmCrowStep(dt, now); fmAnStep(dt, now); fvStep(dt, now); if (!reduce) FM.tiles.forEach(L => { if (L.plant && L.plant.userData.spin) L.plant.userData.spin.rotation.y += dt * 2; });
+    fmCrowStep(dt, now); fmAnStep(dt, now); fvStep(dt, now); fmFestStep(dt, now); if (!reduce) FM.tiles.forEach(L => { if (L.plant && L.plant.userData.spin) L.plant.userData.spin.rotation.y += dt * 2; });
     if (FM.pendFn && !walkTarget) { const f = FM.pendFn; FM.pendFn = null; f(); }
     if (FM.pend != null && !walkTarget) { const i = FM.pend; FM.pend = null; const L = FM.tiles[i]; if (Math.hypot(pos.x - L.x, pos.z - L.z) < 3.2) fmDo(i); }
     if (pos.z > -.5 && Math.abs(pos.x) < .7) { pos.z = -.6; leaveFarm(); }
