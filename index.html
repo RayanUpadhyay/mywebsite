@@ -13761,10 +13761,59 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function medStep(dt, now){
     if (!MED.built) return; const t = now / 1000; MED.t += dt;
+    medFxStep(dt);
     if (!reduce) MED.rain.forEach(r => { r.t.offset.y += dt * r.sp; r.t.offset.x += dt * r.sp * .05; });
     if (MED.t > .1) { MED.t = 0; MED.mons.forEach(m => { if (Math.hypot(pos.x, pos.z) < 60) medDrawMon(m, t); }); }
     MED.flick.forEach(f => { const on = reduce || Math.sin(t * 7.3) + Math.sin(t * 13.1) > -1.4; if (f.l) f.l.intensity = on ? f.base : f.base * .2; if (f.m) f.m.opacity = on ? 1 : .55; if (f.m) f.m.transparent = true; });
     if (MED.arm && !reduce) MED.arm.rotation.y = Math.sin(t * .2) * .15;
+  }
+  // ======================= Meridian General: the realistic pass =======================
+  // Polished terrazzo that shows the ceiling lights in it, clean panelled walls with a rail and a kick plate, ceiling
+  // tiles, brushed steel and glass with a clinical reflection, and a soft light in each room. The moods (blackout,
+  // quarantine, dream, red) still work: every light added here joins the ones cbMood dims and tints.
+  function medEnv(){ if (MED.env) return MED.env; const es = new THREE.Scene(), bm = c => new THREE.MeshBasicMaterial({ color: c, side: THREE.BackSide }); es.add(new THREE.Mesh(new THREE.BoxGeometry(10, 4, 10), [bm(0x8A96A4), bm(0x8A96A4), bm(0xE8F4FF), bm(0x2A303A), bm(0x8A96A4), bm(0x8A96A4)]));
+    for (let k = -2; k <= 2; k++) { const s = new THREE.Mesh(new THREE.BoxGeometry(.4, .05, 6), new THREE.MeshBasicMaterial({ color: 0xFFFFFF })); s.position.set(k * 2, 1.9, 0); es.add(s); }
+    const pm = new THREE.PMREMGenerator(renderer); MED.env = pm.fromScene(es, .03).texture; pm.dispose(); return MED.env; }
+  const txTerrazzo = () => txGet('terrazzo', () => txWrap(tex(256, 256, (c, w, h) => { c.fillStyle = '#9AA4AE'; c.fillRect(0, 0, w, h); for (let i = 0; i < 1600; i++) { const v = Math.random(); c.fillStyle = v < .3 ? 'rgba(60,70,82,.5)' : v < .6 ? 'rgba(230,236,240,.6)' : v < .7 ? 'rgba(120,150,170,.5)' : 'rgba(160,168,176,.5)'; c.beginPath(); c.arc(Math.random() * w, Math.random() * h, .6 + Math.random() * 1.6, 0, 7); c.fill(); }
+    c.fillStyle = 'rgba(40,48,58,.5)'; c.fillRect(0, 0, w, 2); c.fillRect(0, 0, 2, h); })));
+  const txPanel = () => txGet('hpanel', () => txWrap(tex(256, 256, (c, w, h) => { c.fillStyle = '#C8D2DA'; c.fillRect(0, 0, w, h); txSpeck(c, w, h, 900, .03); c.fillStyle = 'rgba(70,84,96,.35)'; c.fillRect(0, 0, 2, h); c.fillRect(0, h - 2, w, 2); })));
+  const txCeil = () => txGet('hceil', () => txWrap(tex(128, 128, (c, w, h) => { c.fillStyle = '#B4BEC8'; c.fillRect(0, 0, w, h); for (let i = 0; i < 500; i++) { c.fillStyle = 'rgba(80,90,100,.25)'; c.fillRect(Math.random() * w, Math.random() * h, 1, 1); } c.fillStyle = 'rgba(60,70,80,.55)'; c.fillRect(0, 0, w, 3); c.fillRect(0, 0, 3, h); })));
+  function medUV(o, per){ const P = o.geometry.parameters, g = o.geometry.clone(), uv = g.attributes.uv; o.userData.P = P;
+    if (o.geometry.type === 'PlaneGeometry') { for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * P.width / per, uv.getY(i) * P.height / per); }
+    else { const d = [[P.depth, P.height], [P.depth, P.height], [P.width, P.depth], [P.width, P.depth], [P.width, P.height], [P.width, P.height]]; for (let f = 0; f < 6; f++) for (let k = 0; k < 4; k++) { const i = f * 4 + k; uv.setXY(i, uv.getX(i) * d[f][0] / per, uv.getY(i) * d[f][1] / per); } }
+    o.geometry = g; }
+  function medMats(){
+    const env = medEnv(), seen = MED.seen = MED.seen || new Set();
+    const floorM = MED.floorM = mcGet('medFloor', () => new THREE.MeshStandardMaterial({ map: txTerrazzo(), color: 0x8E98A2, roughness: .16, metalness: .05, envMap: env, envMapIntensity: .45 }));
+    const wallM = mcGet('medWall', () => new THREE.MeshStandardMaterial({ map: txPanel(), color: 0x9EAAB6, roughness: .55, envMap: env, envMapIntensity: .25 }));
+    const ceilM = mcGet('medCeil', () => new THREE.MeshStandardMaterial({ map: txCeil(), color: 0x7A8490, roughness: .9 }));
+    MED.sc.traverse(o => { if (!o.isMesh || o.userData.mr || !o.material || Array.isArray(o.material)) return; o.userData.mr = 1; const m = o.material, gt = o.geometry.type, hx = m.color ? m.color.getHex() : 0;
+      if (gt === 'PlaneGeometry' && o.userData.walk && m.map && m.roughness <= .25) { medUV(o, 1.2); o.material = floorM; o.receiveShadow = true; medGleam(o); return; }
+      if (gt === 'PlaneGeometry' && hx === 0x161B23 && Math.abs(o.rotation.x - Math.PI / 2) < .01) { medUV(o, 1.2); o.material = ceilM; return; }
+      if (gt === 'BoxGeometry' && hx === 0x2A313C && Math.max(o.geometry.parameters.height, 0) >= 2.5) { medUV(o, 2.4); o.material = wallM; return; }
+      if (seen.has(m) || !m.isMeshStandardMaterial) return; seen.add(m);
+      if (m.metalness >= .5) { m.envMap = env; m.envMapIntensity = 1; if (!m.map) m.map = txMetal(); m.needsUpdate = true; }
+      else if (m.transparent && m.roughness <= .2) { m.envMap = env; m.envMapIntensity = .9; m.needsUpdate = true; }
+      else if (m.roughness <= .5 && hx > 0xC0C0C0) { m.envMap = env; m.envMapIntensity = .35; m.needsUpdate = true; } });
+  }
+  // the ceiling lights, mirrored in the polished floor: a soft streak under each strip
+  const gleamT = () => txGet('gleam', () => tex(32, 128, (c, w, h) => { const gr = c.createLinearGradient(0, 0, w, 0); gr.addColorStop(0, 'rgba(200,235,255,0)'); gr.addColorStop(.5, 'rgba(200,235,255,1)'); gr.addColorStop(1, 'rgba(200,235,255,0)'); c.fillStyle = gr; c.fillRect(0, 0, w, h); const g2 = c.createLinearGradient(0, 0, 0, h); g2.addColorStop(0, 'rgba(0,0,0,1)'); g2.addColorStop(.15, 'rgba(0,0,0,0)'); g2.addColorStop(.85, 'rgba(0,0,0,0)'); g2.addColorStop(1, 'rgba(0,0,0,1)'); c.globalCompositeOperation = 'destination-out'; c.fillStyle = g2; c.fillRect(0, 0, w, h); }));
+  function medGleam(floor){
+    const fx = floor.position.x, fz = floor.position.z, P = floor.userData.P, gm = MED.gleamM = MED.gleamM || new THREE.MeshBasicMaterial({ map: gleamT(), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: .2 });
+    MED.strips.forEach(s => { if (Math.abs(s.position.x - fx) > P.width / 2 || Math.abs(s.position.z - fz) > P.height / 2) return; const sp = s.geometry.parameters, g = new THREE.Mesh(new THREE.PlaneGeometry(.9, sp.depth * 1.1), gm); g.rotation.x = -Math.PI / 2; g.position.set(s.position.x, .012, s.position.z); g.userData.noPick = true; g.renderOrder = 1; MED.sc.add(g); (MED.gleams = MED.gleams || []).push([g, s]); });
+  }
+  function medLights(){
+    const add = (x, y, z, i, d) => { const L = new THREE.PointLight(0xDDEEFF, i, d, 2); L.position.set(x, y, z); MED.sc.add(L); if (MED.base) MED.base.push([L, i]); };
+    if (!lowFx) { add(0, 6, 1, .9, 22); add(33, 3.6, 0, .8, 16); add(-33, 3.8, 0, .8, 16); add(18, 3, 0, .4, 10); add(-18, 3, 0, .4, 10); } else add(0, 6, 1, .8, 26);
+    if (MED.mood) cbMood(MED.mood);
+  }
+  const _mt = new THREE.Color();
+  function medFxStep(dt){
+    if (!MED.built) return; if (!MED.rl) { MED.rl = 1; try { medMats(); medLights(); } catch (e) { console.error(e); } }
+    if ((MED.rlT = (MED.rlT || 0) - dt) <= 0) { MED.rlT = 2; try { medMats(); } catch (e) { console.error(e); } }
+    if (MED.gleams) { const m = MED.mood, op = m === 'quarantine' ? .1 : m === 'dream' ? .14 : m === 'ultron' ? .05 : .2; MED.gleamM.opacity = op; MED.gleams.forEach(([g, s]) => g.visible = s.visible); }
+    // reflections don't know about the lights going out, so they dim with the mood
+    if (MED.floorM) { const m = MED.mood; const tint = _mt.setHex({ quarantine: 0x8EB47E, dream: 0xA494D0, ultron: 0xB07474, blackout: 0x646C76 }[m] || 0xFFFFFF); MED.floorM.color.setHex(0x8E98A2).multiply(tint); const wM = mcGet('medWall', () => null), cM = mcGet('medCeil', () => null); if (wM) wM.color.setHex(0x9EAAB6).multiply(tint); if (cM) cM.color.setHex(0x7A8490).multiply(tint); MED.floorM.envMapIntensity = m === 'blackout' ? .05 : m === 'ultron' ? .12 : m === 'quarantine' ? .25 : m === 'dream' ? .3 : .45; const w = mcGet('medWall', () => null); if (w) w.envMapIntensity = m === 'blackout' || m === 'ultron' ? .03 : .25; }
   }
   // the red cross over the doors in the room behind the bookshelf: it never quite stays on
   function medCrossStep(now){
