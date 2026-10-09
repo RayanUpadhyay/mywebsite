@@ -3754,7 +3754,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     [5.82, 7.38].forEach(x => { const r = box(.05, .05, 4.6, railM, x, 2.3, 8.95, lairScene); r.rotation.x = -Math.atan2(3, 3.6); });
     addMarkerTo(lairScene, V(6.6, 5.9, 11)).userData.egg = 'lairexit';
     addMarkerTo(lairScene, V(-12.6, 3.5, -10.3)).userData.egg = 'rackinfo';
-    buildGate();
     plats.lair = [{ x0: -16.9, x1: 8.4, z0: -8.2, z1: 10.4 }];
     const flash = new THREE.PointLight(0x9FD4FF, 0, 18, 2); lairScene.add(flash);
     lairAnim = { sig, sigLight, flash };
@@ -3802,7 +3801,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       saved = { pos: V(3.4, 1.6, -.2), yaw: -Math.PI / 2, pitch: 0 };
       inWorld = true; zone = 'lair'; falling = false; vy = 0; walkTarget = null; pos.set(6.6, 4.6, 10.9); yaw = 0; pitch = -.32; uiZone();
       dock.classList.remove('on'); $('#worldBack').hidden = false; $('#worldBack').textContent = A ? 'Leave the fight' : 'Back upstairs';
-      if (A) fightMoved(); else say('You found the lair. Grab a weapon from the rack on the back wall, then open a pod. The DC wing is on the far left, and the glowing comic by the stairs starts the story. The Multiverse Gate by the stairs goes to other worlds.', 5200);
+      if (A) fightMoved(); else say('You found the lair. Grab a weapon from the rack on the back wall, then open a pod. The DC wing is on the far left, and the glowing comic by the stairs starts the story.', 5200);
     }, '#06070B');
   }
   // up the stairs and out through the bookshelf (a fight comes with you)
@@ -4364,7 +4363,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { id: 'city', name: 'Bangalore streets' },
     { id: 'lair', name: 'The lair', need: () => found.has('lair') }
   ];
-  ['gotham', 'metropolis', 'themyscira', 'battleworld', 'vormir', 'wakanda', 'asgard'].forEach(id => DESTS.push({ id, name: id[0].toUpperCase() + id.slice(1), need: () => visitedAreas.includes(id) }));
   const ringFx = $('#ringFx'), rctx = ringFx.getContext('2d');
   let ringAnim = null;
   function slingRing(dest){
@@ -6580,14 +6578,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     g.textAlign = 'left'; g.font = '800 34px "Instrument Sans", sans-serif'; g.fillStyle = '#FFC93C'; g.fillText('HOME', 50, 210);
     const room = HOME_PLACES[0]; HOME_PLACES.slice(1).forEach(p => line([room.x, room.y], [p.x, p.y], S.home[HOME_PLACES.indexOf(p)] === '1'));
     HOME_PLACES.forEach((p, i) => node(p.x, p.y, i === 0 ? 46 : 34, i === 0 ? '#FFC93C' : '#7CF2FF', S.home[i] === '1', p.name));
-    // the worlds through the Multiverse Gate, in a ring
-    const cx = 1080, cy = 600, R = 330, ks = Object.keys(AREAS);
-    g.textAlign = 'center'; g.font = '800 34px "Instrument Sans", sans-serif'; g.fillStyle = '#FFC93C'; g.fillText('WORLDS', cx, 210);
-    line([HOME_PLACES[4].x, HOME_PLACES[4].y], [cx, cy], S.home[4] === '1');
-    ks.forEach((k, i) => { const a = i / ks.length * Math.PI * 2 - Math.PI / 2, x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R * .95; line([cx, cy], [x, y], S.areas[i] === '1'); });
-    g.beginPath(); g.arc(cx, cy, 58, 0, 7); const gr = g.createRadialGradient(cx, cy, 5, cx, cy, 58); gr.addColorStop(0, '#FFFFFF'); gr.addColorStop(.5, '#9B4DFF'); gr.addColorStop(1, '#3C7CFF'); g.fillStyle = gr; g.fill();
-    g.fillStyle = '#FFFFFF'; g.font = '700 24px "Instrument Sans", sans-serif'; g.fillText('Multiverse Gate', cx, cy + 92);
-    ks.forEach((k, i) => { const a = i / ks.length * Math.PI * 2 - Math.PI / 2, x = cx + Math.cos(a) * R, y = cy + Math.sin(a) * R * .95; if (eaten.includes(k) || isErased(k)) { g.strokeStyle = '#FF3C3C'; g.lineWidth = 10; g.beginPath(); g.moveTo(x - 34, y - 34); g.lineTo(x + 34, y + 34); g.moveTo(x + 34, y - 34); g.lineTo(x - 34, y + 34); g.stroke(); g.fillStyle = '#FF5A5A'; g.font = '800 20px "Instrument Sans", sans-serif'; g.textAlign = 'center'; g.fillText(isErased(k) ? 'ERASED' : 'EATEN', x, y - 44); return; } node(x, y, 30, AREAS[k].col, S.areas[i] === '1', AREAS[k].name.replace(/^The /, ''), AREAS[k].uni); });
     // the other Earths you've lived on
     const ex = 1720; g.fillStyle = '#FFC93C'; g.font = '800 34px "Instrument Sans", sans-serif'; g.fillText('OTHER EARTHS', ex + 60, 210);
     ALT_KEYS.forEach((k, i) => { const y = 280 + i * 100, x = ex + (i % 2) * 120; node(x, y, 28, ALT_EARTHS[k].tint, S.earths[i] === '1', ALT_EARTHS[k].name, S.cur === k ? 'you live here' : ''); });
@@ -6616,7 +6606,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     wallMapBox.querySelector('.gbox').innerHTML = `<div class="ghead"><h2 class="display">The multiverse map</h2><button class="close" type="button" data-mp="close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
       <p class="gmsg">Everywhere you’ve been. Pick a place to open a sling-ring portal there.</p>
       <h3>Home</h3><div class="mvgrid">${HOME_PLACES.map((p, i) => card(p.name, 'Home', '#FFC93C', S.home[i] === '1', p.noGo || p.id === 'lair' ? '' : p.id)).join('')}</div>
-      <h3>Worlds</h3><div class="mvgrid">${Object.keys(AREAS).map((k, i) => card(AREAS[k].name, AREAS[k].uni, AREAS[k].col, S.areas[i] === '1', k)).join('')}</div>
       <h3>Other Earths</h3><div class="mvgrid">${ALT_KEYS.map((k, i) => card(ALT_EARTHS[k].name, altOn && altK === k ? 'You live here now' : 'Lived here once', ALT_EARTHS[k].tint, S.earths[i] === '1', '')).join('')}</div>
       <p class="gmsg">${S.b} of ${BOSSES.length} villains beaten · ${evDone.filter(k => evKeys().includes(k)).length} of ${evKeys().length} events played</p>`;
     wallMapBox.classList.add('on'); wallMapBox.querySelector('.close').focus();
@@ -6648,7 +6637,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     ] },
     { id: 'incursion', title: 'Incursion', tag: 'Another Earth is falling into yours.', start: () => say('Ebony Maw’s last words: “It was a gift. From a man in green armour.” Over Bangalore, the sky has a second Earth in it.', 6000), steps: [
       { t: 'Read the multiverse map on the lair wall.', check: () => F().lairmap, where: () => ['lair', V(-6.2, 4.6, 10.6)] },
-      invStep('gate', 'Go through the Multiverse Gate in the lair. On three other worlds, find the same file', { go: () => openGate() }),
+      invStep('gate', 'The same file is waiting in three other worlds: Mandalink (through the moon gate), Meridian General (through the hospital doors) and your own street. Find all three'),
       { t: 'The other Earth’s heroes are split over letting it through. Settle it: play Civil War.', go: () => openLobby('cw'), check: () => F()['ev:cw'] },
       { t: 'Stop the Final Incursion.', go: () => openLobby('inc'), check: () => F().collide },
       { id: 'c-breach', t: 'The other Earth’s {N} is holding the breach open. Decide.', keep: () => choiceKeep('breach', v => say(v === 'pull' ? 'You pull them through. Half your street comes with them.' : 'You seal it. For a second you can still hear them on the other side.', 4200)), check: () => !!SG.choice.breach },
@@ -9921,12 +9910,17 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const clueGot = c => c.page ? !!SG.pages[c.id] : !!SG.files[c.id];
   const invGroup = () => { const s = SG.active && curStep(); return s && s.inv || null; };
   const invLeft = g => CLUES.filter(c => c.g === g && !SG.files[c.id]).length + (g === 'gate' ? Math.max(0, 3 - gateGot()) : 0);
+  const GATE_SPOTS = [
+    { id: 'gate:mandalink', zone: 'hub', at: [3.2, 1.3, -1.5], text: 'Mandalink’s copy of the same file, tucked under a lantern: BD-CP · SUBJECT 04 · CONTINUITY: MULTIPLE WORLDS. Somebody filed you here too.' },
+    { id: 'gate:meridian', zone: 'med', at: [-2.5, 1.3, 2.5], text: 'Meridian General’s copy of the same file, in a patient folder with your name on it. BD-CP · SUBJECT 04. The admission date hasn’t happened yet.' },
+    { id: 'gate:street', zone: 'blr', at: [6, 8], text: 'Your own street’s copy of the same file, taped inside a bus shelter. BD-CP · SUBJECT 04. Three worlds, one file. Somebody has been everywhere you have.' }
+  ];
   const gateGot = () => Object.keys(SG.files).filter(k => k.startsWith('gate:')).length;
   const invCount = g => g === 'gate' ? `${Math.min(3, gateGot())}/3` : `${CLUES.filter(c => c.g === g && SG.files[c.id]).length}/${CLUES.filter(c => c.g === g).length}`;
   const invDone = g => invLeft(g) === 0;
   const pageOpen = p => { const i = chIx(p.ch); return SG.sagaDone || SG.done.includes(i) || SG.ch >= i; };
   const clueZoneOk = c => c.zone === 'room' ? !inWorld : inWorld && (c.zone === 'area' ? zone === c.area : zone === c.zone || zone === 'event' && EV && (c.zone === 'blr' && EV.inMap || c.zone === 'twr' && EV.inTwr || c.zone === 'dsp' && EV.inDsp)) && (!c.floor || TWR.floor === c.floor) && (!c.rock || DSP.cur === c.rock);
-  const clueParent = c => c.zone === 'room' ? scene : c.zone === 'lair' ? lairScene : c.zone === 'roof' ? roofScene : c.zone === 'blr' ? BL.sc : c.zone === 'twr' ? TWR.floors && TWR.floors[c.floor] : c.zone === 'dsp' ? DSP.rocks && DSP.rocks[c.rock] : c.zone === 'area' ? areaScenes[c.area] : null;
+  const clueParent = c => c.zone === 'med' ? MED.sc : c.zone === 'hub' ? (typeof world !== 'undefined' ? world : null) : c.zone === 'room' ? scene : c.zone === 'lair' ? lairScene : c.zone === 'roof' ? roofScene : c.zone === 'blr' ? BL.sc : c.zone === 'twr' ? TWR.floors && TWR.floors[c.floor] : c.zone === 'dsp' ? DSP.rocks && DSP.rocks[c.rock] : c.zone === 'area' ? areaScenes[c.area] : null;
   const clueLocal = c => { const a = typeof c.at === 'function' ? c.at() : c.at; if (c.zone === 'blr') { const [lx, lz] = toLocal(a[0], a[1]); return V(lx, 1.2 - (BL.off.y || 0), lz); } return V(a[0], a[1], a[2]); };
   const clueTex = {};
   function clueMesh(c){
@@ -9938,7 +9932,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const clueObjs = {};
   function activeClues(){
     const g = SG.active && invGroup(), L = CLUES.filter(c => c.g === g && !SG.files[c.id]);
-    if (g === 'gate' && AREAS[zone] && gateGot() < 3 && !SG.files['gate:' + zone]) { const an = areaAnim[zone], id = 'gate:' + zone; if (an) L.push({ id, g, zone: 'area', area: zone, at: [an.spawn[0] + 2, 1.3, an.spawn[1] - 3], title: 'A Continuity Programme file', text: `Another world’s copy of the same file. SUBJECT 04 VARIANT, ${AREAS[zone].name.toUpperCase()}: HARVESTED. EARTH SCHEDULED TO COLLIDE. Signed with a green thumbprint.` }); }
+    if (g === 'gate' && gateGot() < 3) GATE_SPOTS.forEach(c => { if (!SG.files[c.id]) L.push(Object.assign({ g, title: 'A Continuity Programme file', text: c.text }, c)); });
+    if (false) { const an = areaAnim[zone], id = 'gate:' + zone; if (an) L.push({ id, g, zone: 'area', area: zone, at: [an.spawn[0] + 2, 1.3, an.spawn[1] - 3], title: 'A Continuity Programme file', text: `Another world’s copy of the same file. SUBJECT 04 VARIANT, ${AREAS[zone].name.toUpperCase()}: HARVESTED. EARTH SCHEDULED TO COLLIDE. Signed with a green thumbprint.` }); }
     const P = PAGES.filter(p => !SG.pages[p.id] && pageOpen(p));
     // in the log, the pages you missed are lying in their own chapter's panel
     return L.concat(inLogCh() ? P.map(p => Object.assign({}, p, { zone: 'dsp', rock: 'l' + (chIx(p.ch) + 1), floor: null, at: [3.5, 1.2, 3.5] })) : P);
@@ -12010,9 +12005,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     box(.16, .02, .3, mat(0x16181D, { roughness: .3, metalness: .3 }), 0, .01, 0, g); const scr = box(.14, .005, .26, glowM(0x3C7CFF, { emissiveIntensity: .3 }), 0, .023, 0, g); g.userData.scr = scr;
     const led = sph(.012, glowM(0xFF3C3C, { emissiveIntensity: 1.5 }), .05, .03, -.12, g); g.userData.led = led;
     g.userData.egg = 'voicemail'; LABELS.voicemail = 'Check your voicemail';
-    // a portal the size of a coin, into the Quantum Realm
-    const qp = new THREE.Group(); qp.position.set(-3.75, .82, -4.05); scene.add(qp); const qr = new THREE.Mesh(new THREE.TorusGeometry(.06, .012, 8, 24), glowM(0xFF6AD5, { emissiveIntensity: 1.6 })); qr.position.y = .07; qp.add(qr); const qf = new THREE.Mesh(new THREE.CircleGeometry(.055, 20), new THREE.MeshBasicMaterial({ color: 0x2A0A3A, side: THREE.DoubleSide })); qr.add(qf);
-    qp.userData.egg = 'qportal'; LABELS.qportal = 'A tiny portal: shrink into the Quantum Realm'; g.userData.qr = qr;
   }
   function playVoicemail(){
     const left = BOSSES.filter(d => !beaten.has(d.id) && TAUNTS[d.id]);
@@ -12037,7 +12029,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     ['theend', 'The End', 'Watched every Earth fall.', () => instab >= 6 || saviour || firstSpark],
     ['saviour', 'Saviour of the Multiverse', 'Beat the Beyonder.', () => saviour],
     ['spark', 'Let there be light', 'Started a new universe from seven memories.', () => firstSpark],
-    ['areas', 'Globetrotter', 'Visited every world through the Multiverse Gate.', () => Object.keys(AREAS).every(k => visitedAreas.includes(k))],
+    ['areas', 'Globetrotter', 'Visited every world through the Multiverse Gate.', () => Object.keys(AREAS).every(k => visitedAreas.includes(k)), 'retired'],
     ['bugle', 'Extra! Extra!', 'Read about yourself in the Daily Bugle.', () => false],
     ['voicemail', 'New message', 'Listened to a villain’s voicemail.', () => false],
     ['pet', 'Good boy', 'Got a pet.', () => petK !== 'none'],
@@ -12054,7 +12046,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     achEl.innerHTML = `<small>Achievement unlocked · ${achGot.length}/${ACH.length}</small><b>${esc(a[1])}</b><span>${esc(a[2])}</span>`; achEl.classList.remove('on'); void achEl.offsetWidth; achEl.classList.add('on');
     [659, 880, 1175].forEach((f, i) => setTimeout(() => tone(f, .18, 'triangle', .045), i * 90)); clearTimeout(ach.t); ach.t = setTimeout(() => achEl.classList.remove('on'), 4200);
   }
-  const achMenu = () => `<h3>Achievements (${achGot.length}/${ACH.length})</h3><div class="achlist">${ACH.map(a => `<div class="${achGot.includes(a[0]) ? 'got' : ''}"><b>${achGot.includes(a[0]) ? esc(a[1]) : '???'}</b><small>${esc(a[2])}</small></div>`).join('')}</div>`;
+  const achShown = () => ACH.filter(a => !a[4] || achGot.includes(a[0]));
+  const achMenu = () => `<h3>Achievements (${achGot.filter(k => achShown().some(a => a[0] === k)).length}/${achShown().length})</h3><div class="achlist">${achShown().map(a => `<div class="${achGot.includes(a[0]) ? 'got' : ''}"><b>${achGot.includes(a[0]) ? esc(a[1]) : '???'}</b><small>${esc(a[2])}</small></div>`).join('')}</div>`;
   // Diwali: lamps along the walls and a rangoli on the floor (mid-October to mid-November, Bangalore time)
   let diwaliOn = false, diwaliG = null;
   const diwaliNow = () => { const p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', month: 'numeric', day: 'numeric' }).formatToParts(new Date()), m = +p.find(q => q.type === 'month').value, d = +p.find(q => q.type === 'day').value; return m === 10 && d >= 12 || m === 11 && d <= 18; };
@@ -12115,7 +12108,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (EV && EV.k === 'cv' && EV.cx && EV.cx.gal && EV.cx.gal.phase === 'eat') galEat(dt, now);
     biteStep(dt, now);
     petStep(dt, now);
-    if (phoneG) phoneG.userData.qr.rotation.y += dt * 2;
     if (phoneG) phoneG.userData.led.visible = BOSSES.some(d => !beaten.has(d.id) && TAUNTS[d.id]) && Math.floor(now / 600) % 2 === 0;
     if (lairScene && !bugleG) buildBugle();
     if (lairScene && !junk) buildJunk();
@@ -12125,7 +12117,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (galBeaten && roofScene && !roofHelm) buildGalTrophy();
     if (diwaliG && !reduce) diwaliG.children.forEach(o => { if (o.userData.ph !== undefined) o.material.emissiveIntensity = 1 + Math.sin(now / 300 + o.userData.ph) * .6; });
     if (now < achT) return; achT = now + 2000;
-    ACH.forEach(a => { if (!achGot.includes(a[0]) && a[3]()) ach(a[0]); }); achFirst = false; refreshWallMap(); podTint(); ultronFaces(SG.active && chId() === 'ultron' && !SG.flags.u3 && !normalView);
+    ACH.forEach(a => { if (!achGot.includes(a[0]) && a[3]()) ach(a[0]); }); shopAuto(); achFirst = false; refreshWallMap(); podTint(); ultronFaces(SG.active && chId() === 'ultron' && !SG.flags.u3 && !normalView);
     if (entered && !nightChecked) { nightChecked = true; if (phaseNow() === 'night' && !night && !inWorld) { flipLights(); say('It’s night in Bangalore, so the lights are low. The villains in the lair get bolder after dark.', 4600); } if (diwaliNow()) { buildDiwali(); setTimeout(() => say('Happy Diwali! The room is lit up for the festival.', 4000), 5000); } }
   }
 
@@ -12502,7 +12494,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     arkham: { name: 'Arkham Asylum', uni: 'DC', blurb: 'Gotham’s home for the criminally insane. The inmates are restless.', col: '#9CFF7A' },
     tva: { name: 'The TVA', uni: 'Marvel', blurb: 'The Time Variance Authority has noticed your incursions. You’re due in court.', col: '#E8923C' }
   });
-  ['quantum', 'knowhere', 'arkham', 'tva'].forEach(id => DESTS.push({ id, name: AREAS[id].name, need: () => visitedAreas.includes(id) }));
   // outfits you can buy from the Collector (one for every three villains you've beaten)
   OUTFITS.starlord = { name: 'Star-Lord jacket', gloves: 0, mask: 'helmet', glow: 1, shop: 1 };
   OUTFITS.nova = { name: 'Nova Corps', gloves: 1, metal: 1, mask: 'helmet', emblem: 'star', shop: 1 };
@@ -12615,6 +12606,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     fade(() => travel('room'), '#E8923C'); });
   tvaBox.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); tvaBox.classList.remove('on'); } });
   function timeDoor(){ const others = Object.keys(AREAS).filter(q => q !== 'tva'); tone(300, .8, 'sine', .05, 900); say('Through the time door!', 1600); setTimeout(() => enterArea(others[Math.floor(Math.random() * others.length)]), 400); }
+  // with Knowhere gone, the outfits it traded arrive on their own: one for every three villains you beat
+  function shopAuto(){ const earned = Math.min(SHOP.length, Math.floor(beaten.size / 3)); let got = null; while (shopGot.length < earned) { const next = SHOP.find(s2 => !shopGot.includes(s2)); if (!next) break; shopGot.push(next); got = next; } if (got) { try { localStorage.setItem('ru-shop', JSON.stringify(shopGot)); } catch (e) {} say(`New outfit unlocked: the ${OUTFITS[got].name}. Wear it from the menu under Your character.`, 5200); } }
   function collectorTrade(){
     const earned = Math.min(SHOP.length, Math.floor(beaten.size / 3)), next = SHOP.find(s2 => !shopGot.includes(s2));
     if (!next) return say('The Collector: “You have everything I’m willing to part with. Come back when you’ve found something rarer.”', 4200);
@@ -15281,7 +15274,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.egg === 'builder') return flyTo(views.builder.pos.clone(), views.builder.look, openBuilder);
     if (p.egg === 'switch') return flipLights();
     if (p.egg === 'voicemail') return playVoicemail();
-    if (p.egg === 'qportal') return enterArea('quantum');
     if (p.egg === 'surfer') return surferRematch();
     if (p.egg === 'lastpage') return closeComic();
     if (p.egg === 'cmask') { tone(300, .2, 'sine', .03); return say('A cheap red mask with a star on it. The Copycat\u2019s? But it was just a story\u2026', 4200); }
