@@ -295,6 +295,7 @@ body.mkwon .toast{top:calc(160px + env(safe-area-inset-top,0px))}
 .chatlog{flex:1;overflow-y:auto;padding:12px 14px;display:flex;flex-direction:column;gap:8px}.chatrow{max-width:85%;align-self:flex-start;background:#1C2129;border-radius:12px;padding:8px 10px}.chatrow.me{align-self:flex-end;background:#1F3A2A}.chatrow b{display:block;font-size:12px;opacity:.8}.chatrow p{margin:2px 0;white-space:pre-wrap;overflow-wrap:anywhere}.chatrow small{font-size:10.5px;opacity:.55}.chatnote{opacity:.6;text-align:center;font-size:13px}
 .chatsend{display:flex;gap:8px;padding:10px;border-top:1px solid #2A3038}.chatsend input{flex:1}
 @media (max-width:560px){.chatbox{inset:12px;width:auto;height:auto}}
+.ghseeds{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:14px}.ghseed{display:grid;grid-template-columns:22px 1fr;gap:2px 10px;align-items:center;text-align:left;padding:12px;border-radius:14px;border:1px solid rgba(128,128,128,.3);background:rgba(128,128,128,.08);color:inherit;font:inherit;cursor:pointer}.ghseed:hover{background:rgba(128,128,128,.16)}.ghseed i{width:18px;height:18px;border-radius:50%;grid-row:span 2}.ghseed small{opacity:.75;font-size:12px;line-height:1.35}.ghrow{display:grid;grid-template-columns:auto 1fr auto;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid rgba(128,128,128,.2);font-size:14px}.ghbtn{height:32px;padding:0 12px;border-radius:999px;border:1px solid rgba(128,128,128,.4);background:none;color:inherit;font:inherit;font-size:13px;cursor:pointer;white-space:nowrap}
 .apkdl{display:inline-flex;align-items:center;text-decoration:none}.apkmeta{font-size:13px;line-height:1.5;opacity:.85;margin:10px 0 0}.apkfacts{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:12px 0 0;font-size:13px}.apkfacts dt{font-weight:700}.apkfacts dd{margin:0;min-width:0}.apkfacts code{word-break:break-all;font-size:11.5px}
 .open{margin-top:14px;height:44px;padding:0 18px;border-radius:999px;border:0;background:var(--ink);color:var(--bg);font-weight:600;cursor:pointer}
 .vinyls{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:14px}
@@ -1970,7 +1971,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   views.optable = { pos: V(7.1, 1.65, .15), look: V(7.1, .8, tz) };
   // --- the junction where it forks ---
   vslab(9.2, 11.2, -2.6, 1.2, 0, mat(0xffffff, { map: cFloorT, roughness: .9 })); vslab(9.2, 11.2, -2.6, 1.2, 3.0, darkCeil);
-  wallZ(1.2, 9.2, 11.2, 3.0); wallX(9.2, -2.6, -.6, 3.0);
+  wallZ(1.2, 9.2, 9.75, 3.0); wallZ(1.2, 10.65, 11.2, 3.0); box(.9, .55, .1, darkWall, 10.2, 2.725, 1.2); wallX(9.2, -2.6, -.6, 3.0);
   // a dividing pillar between the two halves
   box(.5, 3.2, .5, mat(0x2A2D35, { roughness: .9 }), 11.3, 1.6, -1.45); wallZ(-1.35, 11.2, 12.6, 3.0); wallX(11.2, -2.6, -1.35, 3.0); wallZ(-2.6, 11.2, 12.6, 3.2); wallZ(-2.6, 8.6, 9.2, 3.2); wallX(11.2, 1.2, 2.0, 3.0);
   box(2.0, .2, .1, darkWall, 10.2, 3.1, -2.6); box(.1, .3, 1.8, darkWall, 9.2, 2.85, .3);
@@ -2090,12 +2091,14 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function flyTo(target, dir, done){
     if (inWorld) { const a = dir ? lookAngles(target, dir) : null; return moveCam(target, a ? a.yaw : null, a ? a.pitch : null, 1, done); }
     const a = dir ? lookAngles(target, dir) : null;
-    const R = (x, z) => x > 4.9 ? 'vault' : z > 4.7 ? 'hall' : 'room';
+    const R = (x, z) => x > 4.9 ? (x > 7 && z > 2.25 ? 'gh' : 'vault') : z > 4.7 ? 'hall' : 'room', inV = r => r === 'vault' || r === 'gh';
     const from = R(pos.x, pos.z), to = R(target.x, target.z), path = [];
-    if (from === 'vault' && to !== 'vault') path.push([V(4.9, 1.6, .3), Math.PI / 2]);
+    if (from === 'gh' && to !== 'gh') path.push([V(10.2, 1.6, 2.0), 0], [V(10.2, 1.6, .2), 0]);
+    if (inV(from) && !inV(to)) path.push([V(4.9, 1.6, .3), Math.PI / 2]);
     if (from === 'hall' && to !== 'hall') path.push([V(0, 1.6, 5.6), 0], [V(0, 1.6, 4.1), 0]);
     if (to === 'hall' && from !== 'hall') path.push([V(0, 1.6, 4.1), Math.PI], [V(0, 1.6, 5.6), Math.PI]);
-    if (to === 'vault' && from !== 'vault') path.push([V(4.9, 1.6, .3), -Math.PI / 2]);
+    if (inV(to) && !inV(from)) path.push([V(4.9, 1.6, .3), -Math.PI / 2]);
+    if (to === 'gh' && from !== 'gh') path.push([V(10.2, 1.6, .2), Math.PI], [V(10.2, 1.6, 2.0), Math.PI]);
     const step = i => {
       if (i < path.length) { const [p, y] = path[i]; return moveCam(p, y, 0, Math.min(1.6, .5 + pos.distanceTo(p) * .2), () => step(i + 1)); }
       moveCam(target, a ? a.yaw : null, a ? a.pitch : null, Math.min(2, .7 + pos.distanceTo(target) * .2), done);
@@ -2138,6 +2141,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     moon: ['One small step', 'Inspired by every space film I’ve watched way too many times, and the idea that the last fight should happen somewhere nobody has ever fought.'],
     jobs: ['Local hero', 'Inspired by the idea that the best heroes are the ones who still help with the small stuff: the parcels, the stuck kites, the stolen phones.'],
     streets: ['Street sweeper', 'Inspired by the comics where the hero’s own city throws up a new villain every week, and he has to know every street to keep up.'],
+    greenhouse: ['The greenhouse', 'Inspired by AgriBridge and the farmers it’s for, and by how good it feels to watch something you planted actually grow.'],
     binary: ['The full stack', 'Inspired by loving every layer of building things, from the AI model all the way down to the 0s and 1s.']
   };
   const TOTAL = Object.keys(SECRETS).length, found = new Set();
@@ -2232,7 +2236,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       tween(1.8, e => shelfPivot.rotation.y = -1.35 * e, () => {
         vaultOpen = true; shelfMoving = false;
         tween(1, e => { vaultLight.intensity = 1.6 * e; boardLight.intensity = .8 * e; surg.intensity = 2.2 * e; mgLamp.intensity = 1.1 * e; });
-        moveCam(V(4.0, 1.6, .3), -Math.PI / 2, 0, 1.2, () => say('A room behind the bookshelf, with two doors: the moon gate to Mandalink world, and the hospital doors to Meridian General.', 5200));
+        moveCam(V(4.0, 1.6, .3), -Math.PI / 2, 0, 1.2, () => say('A room behind the bookshelf, with two doors: the moon gate to Mandalink world, and the hospital doors to Meridian General. There’s a glass door to a greenhouse, too.', 5600));
       });
     });
   }
@@ -2602,6 +2606,299 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     say('Ding. The doors slide open.', 1600);
     setTimeout(() => { enterTwr('home', [17.8, 0], Math.PI / 2); setTimeout(() => { if (zone === 'twr' && liftEl.hidden) openLift(); }, 700); }, 450);
   }
+
+  // ======================= the greenhouse: through a glass door at the fork =======================
+  // Six beds you plant, water and harvest. Plants grow in real time while their soil is wet, so it's worth coming back.
+  const GH = { X0: 7.2, X1: 13.2, Z0: 2.4, Z1: 8.4, cx: 10.2, plots: [], mats: [], s: { p: [null, null, null, null, null, null], h: {}, n: 0 }, ph: '', busy: false, mistT: 20, mist: 0, scrT: 0, tickT: 0 };
+  const GH_SEEDS = {
+    tomato: { n: 'Tomato', h: 24, leaf: 0x3F7A3A, fruit: 0xE0362A, form: 'bush', tall: .85, fc: 6, fs: 'ball', y: [4, 6], one: 'tomato', many: 'tomatoes', pick: 'Pick the tomatoes', re: .7, note: 'fruits again after picking' },
+    chilli: { n: 'Chilli', h: 18, leaf: 0x2F6E35, fruit: 0xD7261E, form: 'bush', tall: .6, fc: 9, fs: 'cone', y: [8, 12], one: 'chilli', many: 'chillies', pick: 'Pick the chillies', re: .7, note: 'fruits again after picking' },
+    brinjal: { n: 'Brinjal', h: 30, leaf: 0x4A7A3E, fruit: 0x4B2A6E, form: 'bush', tall: .75, fc: 3, fs: 'egg', y: [2, 3], one: 'brinjal', many: 'brinjals', pick: 'Pick the brinjals', re: .7, note: 'fruits again after picking' },
+    sunflower: { n: 'Sunflower', h: 36, leaf: 0x4E8A3A, fruit: 0xFFC21C, form: 'tall', tall: 1.5, y: [1, 1], one: 'sunflower', many: 'sunflowers', pick: 'Cut the sunflower', re: 0, note: 'one huge flower' },
+    marigold: { n: 'Marigold', h: 8, leaf: 0x3C7A3A, fruit: 0xFF8A1C, form: 'flower', tall: .4, y: [5, 8], one: 'marigold', many: 'marigolds', pick: 'Pick the marigolds', re: .6, note: 'flowers again after picking' },
+    tulsi: { n: 'Tulsi', h: 10, leaf: 0x3A6E36, fruit: 0x8A5AA8, form: 'herb', tall: .5, y: [1, 1], one: 'bunch of tulsi', many: 'bunches of tulsi', pick: 'Pick the tulsi', re: .6, note: 'keeps growing back' }
+  };
+  const GH_DRY = 30, GH_ST = ['just planted', 'sprouting', 'growing', 'almost ready', 'ready to harvest'];
+  try {
+    const s = JSON.parse(localStorage.getItem('ru-garden') || 'null');
+    if (s && Array.isArray(s.p)) {
+      GH.s.p = GH.s.p.map((_, i) => { const P = s.p[i]; return P && GH_SEEDS[P.k] && isFinite(P.g) && isFinite(P.m) && isFinite(P.t) ? { k: P.k, g: clamp(+P.g, 0, 1), m: clamp(+P.m, 0, 100), t: +P.t } : null; });
+      if (s.h && typeof s.h === 'object') Object.keys(GH_SEEDS).forEach(k => { if (s.h[k] > 0) GH.s.h[k] = Math.floor(s.h[k]); });
+      GH.s.n = Math.max(0, Math.floor(+s.n || 0)); GH.s.seen = !!s.seen;
+    }
+  } catch (e) {}
+  const ghSave = () => { try { localStorage.setItem('ru-garden', JSON.stringify(GH.s)); } catch (e) {} };
+  // growth only happens while the soil is wet: a full watering lasts GH_DRY hours
+  function ghTick(P, now = Date.now()){
+    if (!P) return; const hrs = Math.max(0, (now - P.t) / 36e5), wet = Math.min(hrs, P.m / 100 * GH_DRY);
+    P.g = Math.min(1, P.g + wet / GH_SEEDS[P.k].h); P.m = Math.max(0, P.m - hrs / GH_DRY * 100); P.t = now;
+  }
+  const ghStage = g => g >= 1 ? 4 : g >= .7 ? 3 : g >= .35 ? 2 : g >= .1 ? 1 : 0;
+  const ghDur = h => h < 1 ? 'under an hour' : h < 20 ? `${Math.round(h)} hour${Math.round(h) === 1 ? '' : 's'}` : `${Math.round(h / 12) / 2} day${Math.round(h / 12) === 2 ? '' : 's'}`;
+  const ghPhase = () => { const t = istHour(); return t < 5 || t >= 19.5 ? 'night' : t < 7 ? 'dawn' : t < 17 ? 'day' : 'dusk'; };
+  // greenhouse materials pick up a little "daylight" glow of their own, so the room reads bright by day without extra lights
+  const gm = (c, o) => { const m = mat(c, Object.assign({ roughness: .75 }, o)); GH.mats.push(m); return m; };
+  const ghMC = {}, gmc = c => ghMC[c] || (ghMC[c] = gm(c));
+  const ghGeo = { s: new THREE.SphereGeometry(1, 10, 8), c: new THREE.CylinderGeometry(1, 1, 1, 8), k: new THREE.ConeGeometry(1, 1, 8) };
+  const gp = (geo, m, x, y, z, sx, sy, sz, par) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); o.castShadow = true; par.add(o); return o; };
+  // --- the doorway at the fork, and a short passage ---
+  vslab(9.75, 10.65, 1.15, GH.Z0, 0, mat(0xffffff, { map: cFloorT, roughness: .9 })); vslab(9.75, 10.65, 1.15, GH.Z0, 2.45, darkCeil);
+  wallX(9.75, 1.2, GH.Z0 - .06, 3.0); wallX(10.65, 1.2, GH.Z0 - .06, 3.0);
+  const ghSign = new THREE.Mesh(new THREE.PlaneGeometry(.86, .22), new THREE.MeshBasicMaterial({ transparent: true, map: tex(430, 110, (g, w, h) => { g.fillStyle = '#23331F'; g.fillRect(0, 0, w, h); g.strokeStyle = '#8FD07A'; g.lineWidth = 5; g.strokeRect(7, 7, w - 14, h - 14); g.fillStyle = '#CFF2B8'; g.font = `800 50px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('GREENHOUSE', w / 2, h / 2 + 3); }) }));
+  ghSign.rotation.y = Math.PI; ghSign.position.set(10.2, 2.72, 1.14); ghSign.userData.egg = 'ghdoor'; scene.add(ghSign);
+  addMarker(V(10.2, 2.05, 1.0), 0x8FE07A, { egg: 'ghdoor', vaultOnly: true });
+  views.ghdoor = { pos: V(10.2, 1.6, 3.3), look: V(10.2, 1.1, 7) };
+  // --- floor, brick, glass ---
+  const ghTileT = tex(256, 256, (g, w, h) => { g.fillStyle = '#8A4E32'; g.fillRect(0, 0, w, h); for (let y = 0; y < 4; y++) for (let x = 0; x < 4; x++) { g.fillStyle = ['#A65E3C', '#9C5638', '#B06842', '#A0593A'][(x + y * 3) % 4]; g.fillRect(x * 64 + 3, y * 64 + 3, 58, 58); } });
+  ghTileT.wrapS = ghTileT.wrapT = THREE.RepeatWrapping; ghTileT.repeat.set(4, 4);
+  vslab(GH.X0, GH.X1, GH.Z0, GH.Z1, 0, gm(0xffffff, { map: ghTileT, roughness: .85 }));
+  const brickT = tex(256, 128, (g, w, h) => { g.fillStyle = '#C9B8A6'; g.fillRect(0, 0, w, h); for (let r = 0; r < 8; r++) for (let c = -1; c < 5; c++) { g.fillStyle = ['#9A4A32', '#A8553A', '#8E4430', '#B05E40'][(r * 7 + c * 3 + 8) % 4]; g.fillRect(c * 64 + (r % 2) * 32 + 2, r * 16 + 2, 60, 12); } });
+  brickT.wrapS = brickT.wrapT = THREE.RepeatWrapping; brickT.repeat.set(3, 2);
+  const brickM = gm(0xffffff, { map: brickT, roughness: .95 });
+  wallZ(GH.Z0, GH.X0, 9.75, 2.7, brickM); wallZ(GH.Z0, 10.65, GH.X1, 2.7, brickM); box(.9, .25, .1, brickM, 10.2, 2.575, GH.Z0);
+  const ghTri = (w, h, m, x, y, z) => { const s = new THREE.Shape(); s.moveTo(-w / 2, 0); s.lineTo(w / 2, 0); s.lineTo(0, h); s.lineTo(-w / 2, 0); const o = new THREE.Mesh(new THREE.ShapeGeometry(s), m); o.position.set(x, y, z); scene.add(o); return o; };
+  const gbS = ghTri(GH.X1 - GH.X0, 1.5, gm(0xffffff, { map: brickT, roughness: .95, side: THREE.DoubleSide }), GH.cx, 2.7, GH.Z0);
+  // knee walls under the glass
+  wallX(GH.X0, GH.Z0, GH.Z1, .6, brickM); wallX(GH.X1, GH.Z0, GH.Z1, .6, brickM); wallZ(GH.Z1, GH.X0, GH.X1, .6, brickM);
+  const glassM = new THREE.MeshStandardMaterial({ color: 0xDDF2EA, transparent: true, opacity: .14, roughness: .05, metalness: .1, depthWrite: false, side: THREE.DoubleSide });
+  const frameGM = gm(0xE8EFE6, { roughness: .4, metalness: .3 });
+  const pane = (w, h, x, y, z, ry) => { const o = new THREE.Mesh(new THREE.PlaneGeometry(w, h), glassM); o.position.set(x, y, z); o.rotation.y = ry; o.userData.noPick = true; scene.add(o); return o; };
+  const LZ = GH.Z1 - GH.Z0, LX = GH.X1 - GH.X0;
+  pane(LZ, 2.1, GH.X0, 1.65, (GH.Z0 + GH.Z1) / 2, Math.PI / 2); pane(LZ, 2.1, GH.X1, 1.65, (GH.Z0 + GH.Z1) / 2, Math.PI / 2); pane(LX, 2.1, GH.cx, 1.65, GH.Z1, 0);
+  ghTri(LX, 1.5, glassM, GH.cx, 2.7, GH.Z1).userData.noPick = true;
+  for (let z = GH.Z0; z <= GH.Z1 + .01; z += LZ / 5) { box(.06, 2.1, .06, frameGM, GH.X0, 1.65, z); box(.06, 2.1, .06, frameGM, GH.X1, 1.65, z); }
+  for (let x = GH.X0; x <= GH.X1 + .01; x += LX / 5) box(.06, 2.1 + (1 - Math.abs(x - GH.cx) / (LX / 2)) * 1.5, .06, frameGM, x, .6 + (2.1 + (1 - Math.abs(x - GH.cx) / (LX / 2)) * 1.5) / 2, GH.Z1);
+  [[GH.X0, 'z'], [GH.X1, 'z']].forEach(([x]) => { box(.08, .08, LZ, frameGM, x, 2.7, (GH.Z0 + GH.Z1) / 2); box(.05, .05, LZ, frameGM, x, 1.65, (GH.Z0 + GH.Z1) / 2); });
+  box(LX, .08, .08, frameGM, GH.cx, 2.7, GH.Z1); box(LX, .05, .05, frameGM, GH.cx, 1.65, GH.Z1);
+  // the pitched glass roof, with white rafters
+  const RL = Math.hypot(LX / 2, 1.5), RA = Math.atan2(1.5, LX / 2);
+  [-1, 1].forEach(s => { const r = new THREE.Group(); r.position.set(GH.cx + s * LX / 4, 3.45, (GH.Z0 + GH.Z1) / 2); r.rotation.z = -s * RA; scene.add(r);
+    const gl = new THREE.Mesh(new THREE.PlaneGeometry(RL, LZ), glassM); gl.rotation.x = -Math.PI / 2; gl.userData.noPick = true; r.add(gl);
+    for (let k = 0; k <= 5; k++) box(RL, .06, .05, frameGM, 0, -.03, -LZ / 2 + k * LZ / 5, r); });
+  box(.1, .1, LZ, frameGM, GH.cx, 4.2, (GH.Z0 + GH.Z1) / 2);
+  // --- outside the glass: fields under the real sky (Bangalore time, like the window) ---
+  const ghSkyC = document.createElement('canvas'); ghSkyC.width = 1024; ghSkyC.height = 512;
+  const ghSkyT = new THREE.CanvasTexture(ghSkyC); ghSkyT.encoding = THREE.sRGBEncoding;
+  const ghTopM = new THREE.MeshBasicMaterial({ color: 0x3E8EDE, fog: false }), ghGrassM = new THREE.MeshBasicMaterial({ fog: false, map: (() => { const t = tex(256, 256, (g, w, h) => { g.fillStyle = '#5C8A3E'; g.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { g.fillStyle = ['#6B9A48', '#4E7A34', '#79A852', '#557F38'][i % 4]; g.fillRect(Math.random() * w, Math.random() * h, 2, 5); } }); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(5, 5); return t; })() });
+  function ghDrawSky(ph){
+    const g = ghSkyC.getContext('2d'), w = 1024, h = 512, hz = h * .667;
+    const cols = { night: ['#060B24', '#1B2350', '#0B1020'], dawn: ['#5B5BA8', '#F6A57A', '#4A4060'], day: ['#3E8EDE', '#CDEBFF', '#6E9A50'], dusk: ['#3B3478', '#F28C5B', '#3A3048'] }[ph];
+    const gr = g.createLinearGradient(0, 0, 0, hz); gr.addColorStop(0, cols[0]); gr.addColorStop(1, cols[1]); g.fillStyle = gr; g.fillRect(0, 0, w, hz);
+    if (ph === 'night') { for (let i = 0; i < 160; i++) { g.fillStyle = `rgba(255,255,255,${.3 + Math.random() * .7})`; g.fillRect(Math.random() * w, Math.random() * hz * .9, 2, 2); } g.fillStyle = '#F4F1E4'; g.beginPath(); g.arc(760, 90, 26, 0, 7); g.fill(); }
+    else { g.fillStyle = ph === 'day' ? '#FFF4C2' : '#FFC06A'; g.beginPath(); g.arc(ph === 'dawn' ? 220 : 780, ph === 'day' ? 70 : hz - 60, 30, 0, 7); g.fill();
+      if (ph === 'day') { g.fillStyle = 'rgba(255,255,255,.85)'; [[160, 90], [520, 60], [880, 130]].forEach(([x, y]) => { g.beginPath(); g.ellipse(x, y, 70, 18, 0, 0, 7); g.ellipse(x + 34, y - 10, 46, 16, 0, 0, 7); g.fill(); }); } }
+    // far hills, then rows of crops running to the horizon, with a few trees
+    g.fillStyle = ph === 'day' ? '#7FA0B8' : ph === 'night' ? '#121830' : '#5A4A6A'; g.beginPath(); g.moveTo(0, hz); for (let x = 0; x <= w; x += 32) g.lineTo(x, hz - 26 - Math.sin(x / 90) * 18 - Math.sin(x / 37) * 6); g.lineTo(w, hz); g.fill();
+    const fieldC = ph === 'day' ? ['#7DA84A', '#A8B848', '#6E9A40', '#C8B860'] : ph === 'night' ? ['#0E1622', '#121A26', '#0C131E', '#141C28'] : ['#4A5A3A', '#5A6040', '#40503A', '#6A6248'];
+    for (let r = 0; r < 14; r++) { const y0 = hz + Math.pow(r / 14, 1.8) * (h - hz), y1 = hz + Math.pow((r + 1) / 14, 1.8) * (h - hz); g.fillStyle = fieldC[r % 4]; g.fillRect(0, y0, w, y1 - y0 + 1); }
+    const treeC = ph === 'day' ? '#3E6A34' : ph === 'night' ? '#070B12' : '#2A3028';
+    [[90, 1], [300, .8], [470, 1.2], [690, .9], [950, 1.1]].forEach(([x, s]) => { g.fillStyle = treeC; g.fillRect(x - 3 * s, hz - 30 * s, 6 * s, 30 * s); g.beginPath(); g.arc(x, hz - 38 * s, 20 * s, 0, 7); g.arc(x - 14 * s, hz - 30 * s, 14 * s, 0, 7); g.arc(x + 14 * s, hz - 30 * s, 14 * s, 0, 7); g.fill(); });
+    if (ph === 'night' || ph === 'dusk') { g.fillStyle = 'rgba(255,214,120,.9)'; [[380, 3], [620, 4], [840, 2]].forEach(([x, n]) => { for (let i = 0; i < n; i++) g.fillRect(x + i * 7, hz - 8, 4, 4); }); }
+    ghSkyT.needsUpdate = true; ghTopM.color.set(cols[0]);
+    ghGrassM.color.set({ day: 0xffffff, dawn: 0xA898B8, dusk: 0xB08870, night: 0x1A2238 }[ph]);
+  }
+  const ghBack = (w, x, z, ry) => { const o = new THREE.Mesh(new THREE.PlaneGeometry(w, 9), new THREE.MeshBasicMaterial({ map: ghSkyT, fog: false })); o.position.set(x, 3.1, z); o.rotation.y = ry; o.userData.noPick = true; scene.add(o); return o; };
+  ghBack(13, 12.5, 14, Math.PI); ghBack(11.7, 6.0, 8.15, Math.PI / 2); ghBack(11.7, 19, 8.15, -Math.PI / 2); ghBack(5.8, 16.1, 2.3, 0); ghBack(1.2, 6.6, 2.3, 0);
+  // above the door wall, looking back through the roof: just sky
+  { const o = ghBack(13, 12.5, 2.3, 0); o.geometry = new THREE.PlaneGeometry(13, 4.85); o.position.y = 5.175; const uv = o.geometry.attributes.uv; for (let j = 0; j < uv.count; j++) uv.setY(j, .461 + uv.getY(j) * .539); }
+  [[12.5, 7.6, 8.15, 13, 11.7, Math.PI / 2, ghTopM], [12.5, -.02, 8.15, 13, 11.7, -Math.PI / 2, ghGrassM]].forEach(([x, y, z, w, d, rx, m]) => { const o = new THREE.Mesh(new THREE.PlaneGeometry(w, d), m); o.position.set(x, y, z); o.rotation.x = rx; o.userData.noPick = true; scene.add(o); });
+  // --- light: one lamp in the roof (warm by day, grow-light pink at night) ---
+  const ghLamp = new THREE.PointLight(0xFFF2DA, 0, 5.8, 1); ghLamp.position.set(GH.cx, 3.5, 5.4); scene.add(ghLamp);
+  const growM = new THREE.MeshStandardMaterial({ color: 0xF0E6FF, emissive: 0xE070FF, emissiveIntensity: 0 });
+  [8.1, 12.3].forEach(x => { box(.14, .05, 4.2, mat(0x2A2D35, { metalness: .5, roughness: .4 }), x, 2.62, 5.4); box(.1, .02, 4.1, growM, x, 2.59, 5.4); [3.6, 7.2].forEach(z => cyl(.006, .006, .5, mat(0x2A2D35), x, 2.9, z, null, 4)); });
+  // the mister line along the ridge
+  cyl(.02, .02, LZ - .2, gm(0x9AA3AE, { metalness: .6, roughness: .3 }), GH.cx, 3.95, (GH.Z0 + GH.Z1) / 2).rotation.x = Math.PI / 2;
+  const mistG = new THREE.BufferGeometry(), mistN = 90, mistP = new Float32Array(mistN * 3), mistV = new Float32Array(mistN * 3);
+  mistG.setAttribute('position', new THREE.BufferAttribute(mistP, 3));
+  const mist = new THREE.Points(mistG, new THREE.PointsMaterial({ color: 0xEAF6FF, size: .05, transparent: true, opacity: 0, depthWrite: false })); mist.visible = false; mist.userData.noPick = true; mist.frustumCulled = false; scene.add(mist);
+  // --- the raised beds: three plots each side of the path ---
+  const bedM = gm(0xffffff, { map: woodT, roughness: .8 }), soilM = gm(0x3A2A1E, { roughness: 1 });
+  [[8.1, 1], [12.3, -1]].forEach(([bx]) => { box(1.3, .5, 5.0, bedM, bx, .25, 5.4); box(1.18, .04, 4.88, soilM, bx, .49, 5.4); });
+  const LED = { off: 0x3A3F48, ok: 0x5FE07A, low: 0xFFB02E, dry: 0xFF4A3A };
+  [[8.1, 3.75], [8.1, 5.4], [8.1, 7.05], [12.3, 3.75], [12.3, 5.4], [12.3, 7.05]].forEach(([x, z], i) => {
+    const side = x < GH.cx ? 1 : -1, g = new THREE.Group(); g.position.set(x, .5, z); g.rotation.y = side > 0 ? 0 : Math.PI; g.userData.egg = 'ghplot'; g.userData.pi = i; scene.add(g);
+    const patch = new THREE.Mesh(new THREE.CylinderGeometry(.44, .46, .03, 24), gm(0x2C1F16, { roughness: 1 })); patch.position.y = .01; patch.receiveShadow = true; g.add(patch);
+    cyl(.012, .012, .3, gmc(0xD8DEE6), .46, .15, -.3, g, 6);
+    const led = new THREE.Mesh(new THREE.SphereGeometry(.028, 10, 8), new THREE.MeshBasicMaterial({ color: LED.off })); led.position.set(.46, .32, -.3); g.add(led);
+    const tag = box(.12, .07, .01, gmc(0xF2EDE4), .46, .25, -.3, g); tag.rotation.y = Math.PI / 2;
+    GH.plots.push({ g, x, z, side, led, plant: null, key: '' });
+  });
+  // --- the potting bench, the watering can and the seed packets ---
+  box(2.2, .06, .45, bedM, GH.cx, .9, 8.1); [[-1, -1], [-1, 1], [1, -1], [1, 1]].forEach(([a, b]) => box(.06, .9, .06, bedM, GH.cx + a * 1.02, .45, 8.1 + b * .18)); box(2.1, .04, .4, bedM, GH.cx, .3, 8.1);
+  [[10.9, .93], [11.05, .93], [10.97, 1.03]].forEach(([x, y]) => cyl(.08, .06, .1, gmc(0xB5562E), x, y + .02, 8.12, null, 12));
+  [[9.4, .55], [10.2, .5], [11.0, .55]].forEach(([x, s]) => { cyl(.11 * s * 2, .08 * s * 2, .18, gmc(0xB5562E), x, .41, 8.05, null, 14); });
+  const can = new THREE.Group(); can.userData.egg = 'ghcan'; scene.add(can);
+  const canM = gm(0x3E8A5A, { metalness: .4, roughness: .45 });
+  cyl(.09, .1, .2, canM, 0, .1, 0, can, 16); cyl(.012, .02, .28, canM, .17, .17, 0, can, 8).rotation.z = -1.0; cyl(.03, .02, .03, canM, .29, .25, 0, can, 8).rotation.z = -1.0;
+  const hdl = new THREE.Mesh(new THREE.TorusGeometry(.08, .012, 6, 16, Math.PI), canM); hdl.position.set(-.02, .2, 0); can.add(hdl);
+  const CAN_HOME = V(9.55, .93, 8.12); can.position.copy(CAN_HOME); can.rotation.y = -.4;
+  const dropsG = new THREE.BufferGeometry(), dropsP = new Float32Array(40 * 3); dropsG.setAttribute('position', new THREE.BufferAttribute(dropsP, 3));
+  const drops = new THREE.Points(dropsG, new THREE.PointsMaterial({ color: 0xBFE6FF, size: .035, transparent: true, opacity: .9, depthWrite: false })); drops.visible = false; drops.frustumCulled = false; drops.userData.noPick = true; scene.add(drops);
+  const seedRack = new THREE.Mesh(new THREE.PlaneGeometry(1.1, .62), new THREE.MeshStandardMaterial({ roughness: .8, map: tex(660, 372, (g, w, h) => {
+    g.fillStyle = '#6B4A32'; g.fillRect(0, 0, w, h); g.fillStyle = '#F2EDE4'; g.font = `800 30px ${DISPLAY}`; g.textAlign = 'center'; g.fillText('SEEDS', w / 2, 38);
+    Object.values(GH_SEEDS).forEach((D, i) => { const x = 22 + (i % 3) * 212, y = 56 + Math.floor(i / 3) * 154; g.fillStyle = '#F7F0E2'; g.fillRect(x, y, 190, 140); g.fillStyle = '#' + D.fruit.toString(16).padStart(6, '0'); g.beginPath(); g.arc(x + 95, y + 58, 34, 0, 7); g.fill(); g.fillStyle = '#' + D.leaf.toString(16).padStart(6, '0'); g.beginPath(); g.ellipse(x + 120, y + 24, 22, 9, -.6, 0, 7); g.fill(); g.fillStyle = '#23331F'; g.font = `700 26px "Instrument Sans", sans-serif`; g.fillText(D.n, x + 95, y + 124); });
+  }) }));
+  seedRack.position.set(8.45, 1.45, GH.Z0 + .06); seedRack.userData.egg = 'ghseeds'; scene.add(seedRack);
+  // the sensor screen: soil moisture and growth for every bed
+  const ghScrC = document.createElement('canvas'); ghScrC.width = 640; ghScrC.height = 420;
+  const ghScrT = new THREE.CanvasTexture(ghScrC); ghScrT.encoding = THREE.sRGBEncoding;
+  box(1.06, .72, .05, mat(0x16181D, { roughness: .4 }), 11.95, 1.5, GH.Z0 + .07);
+  const ghScr = new THREE.Mesh(new THREE.PlaneGeometry(.98, .644), new THREE.MeshBasicMaterial({ map: ghScrT, toneMapped: false })); ghScr.position.set(11.95, 1.5, GH.Z0 + .1); ghScr.userData.egg = 'ghscreen'; scene.add(ghScr);
+  function ghDrawScreen(){
+    const g = ghScrC.getContext('2d'), w = 640, h = 420; g.fillStyle = '#0E1A14'; g.fillRect(0, 0, w, h);
+    g.fillStyle = '#CFF2B8'; g.font = `800 34px ${DISPLAY}`; g.textBaseline = 'top'; g.fillText('Soil sensors', 26, 20);
+    g.fillStyle = '#7FB88A'; g.font = `500 18px "Instrument Sans", sans-serif`; g.fillText(`${istClock()} · ${GH.s.p.filter(Boolean).length} of 6 beds planted`, 28, 62);
+    GH.s.p.forEach((P, i) => { const y = 100 + i * 50; g.fillStyle = 'rgba(255,255,255,.06)'; g.fillRect(22, y, w - 44, 42);
+      g.fillStyle = '#FFFFFF'; g.font = `700 20px "Instrument Sans", sans-serif`; g.fillText(`${i + 1}  ${P ? GH_SEEDS[P.k].n : 'Empty'}`, 36, y + 11);
+      if (!P) return; const st = ghStage(P.g), mc = P.m > 40 ? '#5FE07A' : P.m > 10 ? '#FFB02E' : '#FF4A3A';
+      g.fillStyle = 'rgba(255,255,255,.12)'; g.fillRect(250, y + 14, 150, 14); g.fillStyle = mc; g.fillRect(250, y + 14, 150 * P.m / 100, 14);
+      g.fillStyle = st === 4 ? '#FFC93C' : '#C9E8D6'; g.font = `500 18px "Instrument Sans", sans-serif`; g.fillText(P.m <= 0 && st < 4 ? 'dry: water me' : GH_ST[st], 418, y + 12); });
+    ghScrT.needsUpdate = true;
+  }
+  // --- big plants in the corners, hanging ferns, and visitors (butterflies by day, fireflies at night) ---
+  const banana = new THREE.Group(); banana.position.set(12.75, 0, 8.0); banana.userData.egg = 'ghtree'; scene.add(banana);
+  cyl(.3, .24, .45, gmc(0xB5562E), 0, .22, 0, banana, 16); cyl(.07, .1, 1.7, gmc(0x7A8A4A), 0, 1.2, 0, banana, 10);
+  for (let i = 0; i < 7; i++) { const a = i * 2.3, l = new THREE.Group(); l.position.y = 1.95; l.rotation.set(0, a, .6 + (i % 3) * .25); banana.add(l); gp(ghGeo.s, gmc(0x5E9A3E), .55, 0, 0, .6, .02, .16, l); }
+  const lemon = new THREE.Group(); lemon.position.set(7.65, 0, 8.0); lemon.userData.egg = 'ghtree'; scene.add(lemon);
+  cyl(.26, .2, .4, gmc(0xB5562E), 0, .2, 0, lemon, 16); cyl(.03, .04, .8, gmc(0x6A4A30), 0, .75, 0, lemon, 8);
+  [[0, 1.3, 0, .4], [.2, 1.15, .1, .28], [-.18, 1.2, -.08, .3]].forEach(([x, y, z, r]) => gp(ghGeo.s, gmc(0x3E7A3A), x, y, z, r, r * .85, r, lemon));
+  for (let i = 0; i < 9; i++) { const a = i * 1.9; gp(ghGeo.s, gmc(0xF2D33A), Math.cos(a) * .36, 1.1 + (i % 3) * .14, Math.sin(a) * .36, .045, .035, .035, lemon); }
+  [[9.2, 4.2], [11.2, 6.6]].forEach(([x, z]) => { cyl(.004, .004, .9, mat(0x2A2D35), x, 3.1, z, null, 4); const b = cyl(.16, .1, .14, gmc(0xB5562E), x, 2.6, z, null, 12);
+    for (let i = 0; i < 9; i++) { const a = i * .7, f = new THREE.Group(); f.position.set(x, 2.67, z); f.rotation.set(Math.cos(a) * .9, a, Math.sin(a) * .9); scene.add(f); gp(ghGeo.s, gmc(0x4E9A44), 0, -.2, 0, .05, .26, .02, f); } });
+  const flies = [], bugs = [];
+  [0xFF8A2E, 0x6FB8FF, 0xFFE24A].forEach((c, i) => { const b = new THREE.Group(); scene.add(b); const wm = new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide });
+    const wl = new THREE.Mesh(new THREE.PlaneGeometry(.07, .06), wm), wr = wl.clone(); wl.position.x = -.035; wr.position.x = .035; const pl = new THREE.Group(), pr = new THREE.Group(); pl.add(wl); pr.add(wr); b.add(pl, pr);
+    b.traverse(o => o.userData.noPick = true); b.visible = false; bugs.push({ b, pl, pr, ph: i * 2.1 }); });
+  for (let i = 0; i < 14; i++) { const f = new THREE.Mesh(new THREE.SphereGeometry(.018, 6, 4), new THREE.MeshBasicMaterial({ color: 0xD8FF7A, transparent: true, toneMapped: false })); f.userData.noPick = true; f.visible = false; scene.add(f); flies.push({ f, ph: i * 1.37, x: 8.6 + (i * 0.53) % 3.2, z: 3 + (i * 1.71) % 5 }); }
+  // --- plants: built from simple shapes, one look per kind and stage ---
+  function ghPlantMesh(k, st, seed){
+    const D = GH_SEEDS[k], g = new THREE.Group(), R = rng(seed * 7919 + 13), leaf = gmc(D.leaf), stem = gmc(0x5A7A3A);
+    if (st === 0) { gp(ghGeo.s, gmc(0x4A3626), 0, .02, 0, .16, .05, .16, g); gp(ghGeo.c, gmc(0xD9C3A0), .14, .1, .1, .006, .2, .006, g); gp(ghGeo.c, gmc(D.fruit), .14, .19, .1, .035, .004, .035, g).rotation.x = Math.PI / 2; return g; }
+    if (st === 1) { gp(ghGeo.c, stem, 0, .07, 0, .008, .14, .008, g); [-1, 1].forEach(s => { const l = gp(ghGeo.s, leaf, s * .04, .14, 0, .045, .012, .025, g); l.rotation.z = s * .4; }); return g; }
+    const big = st >= 3 ? 1 : .6, H = D.tall * big;
+    if (D.form === 'tall') {
+      gp(ghGeo.c, stem, 0, H / 2, 0, .022, H, .022, g);
+      for (let i = 0; i < 4 + st; i++) { const y = .12 + i / (4 + st) * H * .8, a = i * 2.4, l = gp(ghGeo.s, leaf, Math.cos(a) * .12, y, Math.sin(a) * .12, .14 * big + .04, .02, .09 * big + .03, g); l.rotation.y = -a; l.rotation.z = .3; }
+      if (st === 3) gp(ghGeo.s, gmc(0x6FA64A), .03, H + .02, 0, .07, .06, .07, g);
+      if (st === 4) { const hd = new THREE.Group(); hd.position.set(.06, H, 0); hd.rotation.z = -1.0; g.add(hd); gp(ghGeo.c, gmc(0x5A3A1E), 0, 0, 0, .14, .05, .14, hd);
+        for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2; const p = gp(ghGeo.s, gmc(D.fruit), Math.cos(a) * .2, .01, Math.sin(a) * .2, .08, .012, .035, hd); p.rotation.y = -a; } }
+      return g;
+    }
+    const low = D.form === 'flower' || D.form === 'herb', n = D.form === 'herb' ? 22 : low ? 14 : st >= 3 ? 16 : 9;
+    if (!low) gp(ghGeo.c, stem, 0, H / 2, 0, .016, H, .016, g); else for (let i = 0; i < 4; i++) gp(ghGeo.c, stem, (R() - .5) * .12, H * .4, (R() - .5) * .12, .01, H * .8, .01, g);
+    for (let i = 0; i < n; i++) { const a = i * 2.4 + R(), y = (low ? .05 : .12) + R() * H * (low ? .9 : .85), rad = .05 + R() * (low ? .2 : .16) * big, r = (D.form === 'herb' ? .035 : .06) + R() * .04;
+      const l = gp(ghGeo.s, leaf, Math.cos(a) * rad, y, Math.sin(a) * rad, r * 1.5, r * .45, r, g); l.rotation.set(R() - .5, -a, R() * .5); }
+    if (st < 3) return g;
+    const fc = D.form === 'flower' ? 7 : D.form === 'herb' ? 8 : D.fc, col = st === 4 ? D.fruit : D.form === 'herb' ? 0x6A8A4A : 0x7FB24A;
+    for (let i = 0; i < fc; i++) { const a = i * 2.1 + R(), rad = (low ? .08 : .1) + R() * .12, y = low ? H * (.75 + R() * .3) : H * (.3 + R() * .6), x = Math.cos(a) * rad, z = Math.sin(a) * rad;
+      if (D.form === 'flower') { const s = st === 4 ? .065 : .035; gp(ghGeo.s, gmc(col), x, y, z, s, s * .8, s, g); if (st === 4) gp(ghGeo.s, gmc(0xE0601A), x, y + .02, z, s * .6, s * .5, s * .6, g); }
+      else if (D.form === 'herb') gp(ghGeo.k, gmc(col), x * .7, y + .05, z * .7, .016, .1, .016, g);
+      else if (D.fs === 'cone') { const c = gp(ghGeo.k, gmc(col), x, y, z, .016, .09, .016, g); c.rotation.x = Math.PI; }
+      else if (D.fs === 'egg') gp(ghGeo.s, gmc(col), x, y - .04, z, .05, .09, .05, g);
+      else gp(ghGeo.s, gmc(col), x, y, z, .045, .042, .045, g); }
+    return g;
+  }
+  function ghRefresh(i){
+    const L = GH.plots[i], P = GH.s.p[i]; if (P) ghTick(P);
+    const st = P ? ghStage(P.g) : -1, key = P ? `${P.k}:${st}` : '';
+    if (key !== L.key) { if (L.plant) { L.g.remove(L.plant); L.plant.traverse(o => { if (o.geometry && !Object.values(ghGeo).includes(o.geometry)) o.geometry.dispose(); }); L.plant = null; }
+      if (P) { L.plant = ghPlantMesh(P.k, st, i + 1); L.g.add(L.plant); } L.key = key; }
+    if (P) { const lo = [0, .1, .35, .7, 1][st], hi = [.1, .35, .7, 1, 1][st]; L.plant.scale.setScalar(st >= 3 ? 1 : .7 + .3 * (P.g - lo) / (hi - lo)); L.plant.rotation.z = P.m <= 0 && st < 4 ? .22 : 0; }
+    L.led.material.color.setHex(!P ? LED.off : P.m > 40 ? LED.ok : P.m > 10 ? LED.low : LED.dry);
+  }
+  GH.plots.forEach((_, i) => ghRefresh(i));
+  function ghLabel(i){
+    const P = GH.s.p[i]; if (!P) return `Bed ${i + 1}: plant a seed`; ghTick(P); const D = GH_SEEDS[P.k], st = ghStage(P.g);
+    if (st === 4) return D.pick;
+    if (P.m < 75) return `${D.n}: ${P.m <= 0 ? 'thirsty! ' : ''}water it (soil ${Math.round(P.m)}%)`;
+    return `${D.n} · ${GH_ST[st]} · soil ${Math.round(P.m)}%`;
+  }
+  function ghPlotClick(i){
+    if (GH.busy) return; const L = GH.plots[i];
+    if (Math.hypot(pos.x - L.x, pos.z - L.z) > 2.6 || pos.z < GH.Z0) return flyTo(V(L.x + L.side * 1.15, 1.6, L.z), V(L.x, .6, L.z), () => ghAct(i));
+    ghAct(i);
+  }
+  function ghAct(i){
+    const P = GH.s.p[i]; if (!P) return ghSeedPanel(i);
+    ghTick(P); const D = GH_SEEDS[P.k], st = ghStage(P.g);
+    if (st === 4) return ghHarvest(i);
+    if (P.m < 75) return ghWater(i);
+    const left = (1 - P.g) * D.h, wet = P.m / 100 * GH_DRY;
+    say(`${D.n}: ${GH_ST[st]}. The soil is still damp (${Math.round(P.m)}%), so it doesn’t need water yet. Ready in about ${ghDur(left)}${left > wet ? ', if you water it again in ' + ghDur(wet) : ''}.`, 5200);
+  }
+  function ghPlant(i, k){
+    const D = GH_SEEDS[k]; GH.s.p[i] = { k, g: 0, m: 100, t: Date.now() }; ghSave(); ghRefresh(i);
+    [523, 659, 784].forEach((f, j) => setTimeout(() => tone(f, .12, 'sine', .05), j * 80));
+    say(`${D.n} planted in bed ${i + 1}, and watered. It grows in real time, even while you’re away: ready in about ${ghDur(D.h)} if the soil stays wet.`, 5200);
+  }
+  function ghWater(i){
+    const L = GH.plots[i], P = GH.s.p[i]; GH.busy = true;
+    const at = V(L.x + L.side * .5, 1.05, L.z), yaw = L.side > 0 ? Math.PI : 0, from = can.position.clone(), r0 = can.rotation.y;
+    tween(.5, e => { can.position.lerpVectors(from, at, e); can.rotation.y = r0 + angDiff(r0, yaw) * e; }, () => {
+      tween(.3, e => can.rotation.z = -.7 * e, () => {
+        drops.visible = true; const tip = V(L.x + L.side * .2, .98, L.z); for (let j = 0; j < 40; j++) { dropsP[j * 3] = tip.x + (Math.random() - .5) * .05; dropsP[j * 3 + 1] = tip.y - Math.random() * .45; dropsP[j * 3 + 2] = tip.z + (Math.random() - .5) * .05; }
+        GH.pour = { t: 1.2, tip }; [1320, 1100, 1480, 990, 1250].forEach((f, j) => setTimeout(() => tone(f, .06, 'sine', .025, f * .7), j * 160));
+        setTimeout(() => { GH.pour = null; drops.visible = false; ghTick(P); P.m = 100; P.g = Math.min(1, P.g + .03); ghSave(); ghRefresh(i); ghDrawScreen();
+          tween(.3, e => can.rotation.z = -.7 * (1 - e), () => tween(.5, e => { can.position.lerpVectors(at, CAN_HOME, e); can.rotation.y = yaw + angDiff(yaw, -.4) * e; }, () => { GH.busy = false; }));
+          const D = GH_SEEDS[P.k], left = (1 - P.g) * D.h; say(left > .05 ? `Watered. The ${D.n.toLowerCase()} is happy for about ${ghDur(GH_DRY)}; ready in about ${ghDur(left)}.` : `Watered. The ${D.n.toLowerCase()} is ready to harvest.`, 3600);
+        }, 1200);
+      });
+    });
+  }
+  function ghHarvest(i){
+    const P = GH.s.p[i], D = GH_SEEDS[P.k], n = D.y[0] + Math.floor(Math.random() * (D.y[1] - D.y[0] + 1));
+    GH.s.h[P.k] = (GH.s.h[P.k] || 0) + n; GH.s.n = (GH.s.n || 0) + 1;
+    if (D.re) P.g = D.re; else GH.s.p[i] = null; ghSave(); ghRefresh(i); ghDrawScreen();
+    [659, 784, 988, 1319].forEach((f, j) => setTimeout(() => tone(f, .14, 'triangle', .05), j * 85));
+    const tot = GH.s.h[P.k]; say(`You picked ${n === 1 ? (/^[aeiou]/i.test(D.one) ? 'an ' : 'a ') + D.one : n + ' ' + D.many}. ${tot} so far.${D.re ? ' Keep it watered and there’ll be more.' : ' The bed is free for something new.'}`, 4200);
+    ach('garden');
+  }
+  function ghSeedPanel(i){
+    if (i == null) i = GH.s.p.findIndex(p => !p);
+    if (i < 0) return say('Every bed is planted. Harvest one, or dig one up on the sensor screen, to make room.', 3600);
+    panelBody.innerHTML = `<div class="sec"><p class="meta">Greenhouse · bed ${i + 1}</p><h2 class="display">Plant a seed</h2><p class="sub">Plants grow in real time while their soil is wet, even when you’re not here. One watering lasts about ${ghDur(GH_DRY)}.</p><div class="ghseeds">${Object.entries(GH_SEEDS).map(([k, D]) => `<button class="ghseed" data-k="${k}"><i style="background:#${D.fruit.toString(16).padStart(6, '0')}"></i><b>${D.n}</b><small>Ready in about ${ghDur(D.h)} · ${D.note}</small></button>`).join('')}</div></div>`;
+    panelBody.querySelectorAll('.ghseed').forEach(b => b.onclick = () => { closePanel(); ghPlant(i, b.dataset.k); });
+    panel.scrollTop = 0; panel.classList.add('on'); tone(660, .08, 'triangle', .05);
+  }
+  function ghPanel(){
+    GH.s.p.forEach(P => ghTick(P));
+    const rows = GH.s.p.map((P, i) => { if (!P) return `<div class="ghrow"><b>Bed ${i + 1}</b><span>Empty</span><button class="ghbtn" data-plant="${i}">Plant</button></div>`;
+      const D = GH_SEEDS[P.k], st = ghStage(P.g), left = (1 - P.g) * D.h;
+      return `<div class="ghrow"><b>Bed ${i + 1}</b><span>${D.n} · ${GH_ST[st]}${st < 4 ? ` (about ${ghDur(left)} to go)` : ''} · soil ${Math.round(P.m)}%${P.m <= 0 && st < 4 ? ', dry: growth paused' : ''}</span><button class="ghbtn" data-dig="${i}">Dig up</button></div>`; }).join('');
+    const got = Object.keys(GH_SEEDS).filter(k => GH.s.h[k]).map(k => `${GH.s.h[k]} ${GH.s.h[k] === 1 ? GH_SEEDS[k].one : GH_SEEDS[k].many}`).join(', ');
+    panelBody.innerHTML = `<div class="sec"><p class="meta">Greenhouse</p><h2 class="display">Soil sensors</h2><p class="sub">A bed stops growing when its soil dries out, and picks up again once you water it. Nothing dies.</p>${rows}<p class="apkmeta"><b>Harvested so far:</b> ${got || 'nothing yet'}.</p><p class="apkmeta">Real farming is a lot harder than this. AgriBridge, my app for farmers, brings market prices, government schemes and credit information to them in their own language.</p><button class="open" id="ghAgri">About AgriBridge</button></div>`;
+    panelBody.querySelectorAll('[data-plant]').forEach(b => b.onclick = () => ghSeedPanel(+b.dataset.plant));
+    panelBody.querySelectorAll('[data-dig]').forEach(b => b.onclick = () => { if (b.dataset.sure) { const i = +b.dataset.dig; GH.s.p[i] = null; ghSave(); ghRefresh(i); ghDrawScreen(); tone(220, .15, 'triangle', .05); ghPanel(); } else { b.dataset.sure = '1'; b.textContent = 'Sure? Tap again'; } });
+    panelBody.querySelector('#ghAgri').onclick = apkPanel;
+    panel.scrollTop = 0; panel.classList.add('on'); tone(660, .08, 'triangle', .05);
+  }
+  Object.assign(LABELS, { ghdoor: 'The greenhouse', ghseeds: 'Seed packets: plant something', ghscreen: 'Soil sensors', ghcan: 'The watering can', ghtree: 'A plant in a big pot' });
+  const inGh = () => vaultOpen && !inWorld && pos.x > GH.X0 && pos.x < GH.X1 && pos.z > GH.Z0 && pos.z < GH.Z1;
+  function ghSetPhase(ph){
+    GH.ph = ph; ghDrawSky(ph); const k = { day: .32, dawn: .16, dusk: .16, night: .05 }[ph];
+    GH.mats.forEach(m => { m.emissive.copy(m.color).multiplyScalar(k); if (m.map) m.emissive.setScalar(k * .7); });
+    ghLamp.color.setHex(ph === 'night' ? 0xD890FF : ph === 'day' ? 0xFFF2DA : 0xFFB27A); growM.emissiveIntensity = ph === 'night' ? 1.4 : .15;
+    bugs.forEach(B => B.b.visible = ph !== 'night'); flies.forEach(F => F.f.visible = ph === 'night');
+  }
+  function ghStep(dt, now){
+    const on = vaultOpen && !inWorld, k = Math.min(1, dt * 3);
+    ghLamp.intensity += ((on ? (GH.ph === 'night' ? .9 : GH.ph === 'day' ? 1.4 : 1.1) : 0) - ghLamp.intensity) * k;
+    if (!on || pos.x < 6) return;
+    if ((GH.tickT -= dt) <= 0) { GH.tickT = 2; const ph = ghPhase(); if (ph !== GH.ph) ghSetPhase(ph); GH.plots.forEach((_, i) => ghRefresh(i)); }
+    const here = inGh();
+    if (here && !GH.inside) { secret('greenhouse'); if (!GH.s.seen) { GH.s.seen = true; ghSave(); say('A greenhouse, behind the bookshelf. Plant something in one of the beds and keep it watered: it grows in real time, even while you’re away.', 6000); } }
+    GH.inside = here;
+    if (here && (GH.scrT -= dt) <= 0) { GH.scrT = 3; ghDrawScreen(); }
+    const T = now / 1000;
+    if (GH.ph !== 'night') bugs.forEach((B, i) => { const t = T * .35 + B.ph; B.b.position.set(GH.cx + Math.sin(t * 1.3) * 2.2, 1.0 + Math.sin(t * 2.1) * .35 + i * .15, 5.4 + Math.sin(t * .9 + i) * 2.3); B.b.rotation.y = Math.atan2(Math.cos(t * 1.3) * 1.3 * 2.2, Math.cos(t * .9 + i) * .9 * 2.3); const f = Math.sin(T * 18 + i) * .9; B.pl.rotation.y = f; B.pr.rotation.y = -f; });
+    else flies.forEach(F => { const t = T * .4 + F.ph; F.f.position.set(F.x + Math.sin(t) * .5, .9 + Math.sin(t * 1.7) * .4, F.z + Math.cos(t * .8) * .5); F.f.material.opacity = .3 + Math.max(0, Math.sin(T * 2.3 + F.ph * 3)) * .7; });
+    // the misters come on every so often
+    if (here && (GH.mistT -= dt) <= 0) { GH.mistT = 45; GH.mist = 4; for (let j = 0; j < mistN; j++) { mistP[j * 3] = GH.cx + (Math.random() - .5) * .1; mistP[j * 3 + 1] = 3.9; mistP[j * 3 + 2] = GH.Z0 + .4 + Math.random() * (LZ - .8); mistV[j * 3] = (Math.random() - .5) * .8; mistV[j * 3 + 1] = -.2 - Math.random() * .5; mistV[j * 3 + 2] = (Math.random() - .5) * .3; } mist.visible = true; tone(5200, .9, 'sine', .006, 4800); }
+    if (GH.mist > 0) { GH.mist -= dt; for (let j = 0; j < mistN * 3; j++) mistP[j] += mistV[j] * dt; mistG.attributes.position.needsUpdate = true; mist.material.opacity = Math.min(.6, GH.mist * .3); if (GH.mist <= 0) mist.visible = false; }
+    if (GH.pour) { for (let j = 0; j < 40; j++) { dropsP[j * 3 + 1] -= dt * 2.2; if (dropsP[j * 3 + 1] < .52) { dropsP[j * 3] = GH.pour.tip.x + (Math.random() - .5) * .05; dropsP[j * 3 + 1] = GH.pour.tip.y; dropsP[j * 3 + 2] = GH.pour.tip.z + (Math.random() - .5) * .05; } } dropsG.attributes.position.needsUpdate = true; }
+  }
+  ghSetPhase(ghPhase()); ghDrawScreen();
+  VR.ghd = { x0: 9.85, x1: 10.55, z0: .6, z1: 2.8 }; VR.gh = { x0: 8.95, x1: 11.45, z0: 2.6, z1: 7.6 };
 
   // ======================= the rooftop: your own roof, ten floors above the real Bangalore =======================
   // The city you see from here is the same map you walk around in (drawn under the roof; see gfxRender). G is street level.
@@ -12015,6 +12312,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // achievements: checked every couple of seconds, so nothing else needs to know about them
   const ACH = [
     ['lair', 'Down the rabbit hole', 'Found the lair behind the bookshelf.', () => found.has('lair')],
+    ['garden', 'Green thumb', 'Harvested something you grew in the greenhouse.', () => GH.s.n > 0],
     ['first', 'First blood', 'Beat your first villain.', () => beaten.size > 0],
     ['mine', 'Know yourself', 'Beat all five of Rayan’s own creatures.', () => BOSSES.slice(0, 5).every(d => beaten.has(d.id))],
     ['mcu', 'Earth’s mightiest', 'Beat every MCU villain.', () => BOSSES.slice(5, 9).every(d => beaten.has(d.id))],
@@ -15149,6 +15447,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.mlmap) return '地图 · Map';
     if (p.mlwall) return '学会的词 · Words you’ve learned';
     if (p.hof) return 'Mandalink Hall of Fame';
+    if (p.egg === 'ghplot') return ghLabel(p.o.userData.pi);
     if (p.egg === 'vaultbook') return bookLabel();
     if (p.egg === 'speakers') return lofi ? 'Stop the lo-fi' : 'Play lo-fi';
     if (p.egg === 'window') return `The sky outside, right now (${istClock()} for Rayan)`;
@@ -15262,6 +15561,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.egg === 'batfig') return vaultOpen ? tiltBat() : flyTo(V(3.4, 1.75, -.5), V(4.62, 2.05, -.5), tiltBat);
     if (p.egg === 'portal') return flyTo(views.portal.pos.clone(), views.portal.look, enterWorld);
     if (p.egg === 'meddoor') return flyTo(views.meddoor.pos.clone(), views.meddoor.look, enterMed);
+    if (p.egg === 'ghdoor') return flyTo(views.ghdoor.pos.clone(), views.ghdoor.look);
+    if (p.egg === 'ghplot') return ghPlotClick(p.o.userData.pi);
+    if (p.egg === 'ghseeds') return ghSeedPanel();
+    if (p.egg === 'ghscreen') return ghPanel();
+    if (p.egg === 'ghcan') return say('The watering can. Click a bed to water it; the little lights on the sensors turn amber, then red, as the soil dries out.', 4200);
+    if (p.egg === 'ghtree') return say('A big potted plant that someone else looks after. Your beds are the six in the middle.', 3200);
     if (p.egg !== 'crate' && p.egg !== 'shelfvinyl') putBackRecord();
     if (p.egg === 'scratch') return scratch();
     if (p.egg === 'speakers') return toggleLofi();
@@ -15382,7 +15687,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!reduce) {
       vinyl.rotation.y -= dt * 3.5 * spin; portal.userData.disc.rotation.z -= dt * 1.2;
     }
-    portal.userData.glow.intensity = 0; medCrossStep(now); vaultDoorsStep(dt); cbVisorStep(now); cbWorldStep(dt);
+    portal.userData.glow.intensity = 0; medCrossStep(now); vaultDoorsStep(dt); ghStep(dt, now); cbVisorStep(now); cbWorldStep(dt);
     if (inWorld) worldStep(dt, now);
     pageMeshes.forEach((m, i) => { m.rotation.y += dt * 1.2; m.position.y = m.userData.base + Math.sin(now / 600 + i) * .05; });
     const tsec = now / 1000;
