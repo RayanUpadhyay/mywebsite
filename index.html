@@ -2809,10 +2809,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function ghRefresh(i){
     const L = GH.plots[i], P = GH.s.p[i]; if (P) ghTick(P);
-    const st = P ? ghStage(P.g) : -1, key = P ? `${P.k}:${st}` : '';
+    const st = P ? ghStage(P.g) : -1, dry = !!(P && P.m <= 0 && st < 4), key = P ? `${P.k}:${st}:${GH.v2 ? 'v2' : ''}:${GH.v2 && dry ? 'd' : ''}` : '';
     if (key !== L.key) { if (L.plant) { L.g.remove(L.plant); L.plant.traverse(o => { if (o.geometry && !Object.values(ghGeo).includes(o.geometry)) o.geometry.dispose(); }); L.plant = null; }
-      if (P) { L.plant = ghPlantMesh(P.k, st, i + 1); L.g.add(L.plant); } L.key = key; }
-    if (P) { const lo = [0, .1, .35, .7, 1][st], hi = [.1, .35, .7, 1, 1][st]; L.plant.scale.setScalar(st >= 3 ? 1 : .7 + .3 * (P.g - lo) / (hi - lo)); L.plant.rotation.z = P.m <= 0 && st < 4 ? .22 : 0; }
+      if (P) { L.plant = GH.v2 ? ghPlantMesh2(P.k, st, i + 1, dry) : ghPlantMesh(P.k, st, i + 1); L.g.add(L.plant); } L.key = key; }
+    if (P) { const lo = [0, .1, .35, .7, 1][st], hi = [.1, .35, .7, 1, 1][st]; L.plant.scale.setScalar(st >= 3 ? 1 : .7 + .3 * (P.g - lo) / (hi - lo)); L.plant.rotation.z = !GH.v2 && P.m <= 0 && st < 4 ? .22 : 0; }
     L.led.material.color.setHex(!P ? LED.off : P.m > 40 ? LED.ok : P.m > 10 ? LED.low : LED.dry);
   }
   GH.plots.forEach((_, i) => ghRefresh(i));
@@ -2909,6 +2909,101 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   ghSetPhase(ghPhase()); ghDrawScreen();
   VR.ghd = { x0: 9.85, x1: 10.55, z0: .6, z1: 2.8 }; VR.gh = { x0: 8.95, x1: 11.45, z0: 2.6, z1: 7.6 }; VR.ghg = { x0: 11.0, x1: 11.8, z0: 7.0, z1: 8.6 };
+
+  // ======================= the room, the greenhouse and the bookshelf area: the realistic pass =======================
+  // Runs once just after start-up (it needs the shared textures defined further down). Materials get wood grain, plaster,
+  // fabric, brushed metal and reflections; daylight comes through the window with the real Bangalore time, with a soft beam
+  // and dust drifting in it; lamps glow warm. The greenhouse plants are rebuilt with real leaves.
+  const txFabric = () => txGet('fabric', () => txWrap(tex(128, 128, (g, w, h) => { g.fillStyle = '#E8E8E8'; g.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 2) { g.fillStyle = `rgba(0,0,0,${.04 + (y % 4 ? .03 : 0)})`; g.fillRect(0, y, w, 1); } for (let x = 0; x < w; x += 2) { g.fillStyle = 'rgba(255,255,255,.05)'; g.fillRect(x, 0, 1, h); } txSpeck(g, w, h, 1200, .06); })));
+  const RM = { done: false };
+  function roomEnv(){
+    if (RM.env) return RM.env; const es = new THREE.Scene(), bm = c => new THREE.MeshBasicMaterial({ color: c, side: THREE.BackSide });
+    const bx = new THREE.Mesh(new THREE.BoxGeometry(10, 3.2, 10), [bm(0xF2E8DA), bm(0xE8E2DA), bm(0xFFF4E2), bm(0x8A6A4A), bm(0xE8E2DA), bm(0x5A6AC8)]); es.add(bx);
+    const wnd = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4), new THREE.MeshBasicMaterial({ color: 0xFFFFFF, side: THREE.DoubleSide })); wnd.position.set(4.9, .2, -1); wnd.rotation.y = -Math.PI / 2; es.add(wnd);
+    const pm = new THREE.PMREMGenerator(renderer); RM.env = pm.fromScene(es, .04).texture; pm.dispose(); return RM.env;
+  }
+  function roomRealism(){
+    if (RM.done) return; RM.done = true;
+    const env = roomEnv(), seen = new Set(), hsl = {};
+    scene.traverse(o => {
+      if (!o.isMesh || !o.material || Array.isArray(o.material) || o.userData.pv) return; const m = o.material; if (seen.has(m) || !m.isMeshStandardMaterial) return; seen.add(m);
+      const geo = o.geometry && o.geometry.type, p = o.geometry && o.geometry.parameters || {}, big = Math.max(p.width || 0, p.height || 0, p.depth || 0) * Math.max(o.scale.x, o.scale.y, o.scale.z);
+      m.color.getHSL(hsl); const glow = m.emissive && (m.emissive.r + m.emissive.g + m.emissive.b) > .15;
+      if (m.transparent && m.roughness < .3) { m.envMap = env; m.envMapIntensity = .9; m.needsUpdate = true; return; }
+      if (m.map || glow || m.transparent) return;
+      if (m.metalness >= .35) { m.envMap = env; m.envMapIntensity = .9; if (hsl.l > .25) m.map = txMetal(); m.needsUpdate = true; return; }
+      if (geo === 'BoxGeometry' && hsl.h > .05 && hsl.h < .13 && m.roughness >= .99 && Math.min(p.width, p.height, p.depth) < .1) { m.map = txGet('cork', () => txWrap(tex(128, 128, (g, w, h) => { g.fillStyle = '#E2D4BC'; g.fillRect(0, 0, w, h); for (let i = 0; i < 1400; i++) { const v = Math.random(); g.fillStyle = v < .5 ? 'rgba(120,80,40,.35)' : 'rgba(255,240,215,.4)'; g.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 2, 1 + Math.random() * 2); } }))); m.needsUpdate = true; return; }
+      if (geo === 'BoxGeometry' && hsl.h > .03 && hsl.h < .13 && hsl.s > .18 && hsl.l > .1 && hsl.l < .6 && Math.min(p.width, p.height, p.depth) > .015) { m.map = txWood(); m.color.multiplyScalar(1.05); m.roughness = Math.min(m.roughness, .82); m.needsUpdate = true; return; }
+      if (geo === 'BoxGeometry' && big >= 2.3) { m.map = txGet('plasterIn', () => txWrap(tex(256, 256, (g, w, h) => { g.fillStyle = '#F4F2EE'; g.fillRect(0, 0, w, h); txSpeck(g, w, h, 1500, .022); }))); m.color.multiplyScalar(.97); m.needsUpdate = true; return; }
+      if (m.roughness >= .95 && hsl.s > .2) { m.map = txFabric(); m.needsUpdate = true; return; }
+      if (m.roughness <= .45 && m.metalness < .35) { m.envMap = env; m.envMapIntensity = .35; m.needsUpdate = true; }
+    });
+    // daylight through the window: a low sun just outside it (its shadows start at the glass, so the greenhouse behind can't block it)
+    const ws = RM.sun = new THREE.DirectionalLight(0xFFF1D8, 0); ws.castShadow = !lowFx; ws.shadow.mapSize.set(1024, 1024); ws.shadow.radius = 3; ws.shadow.bias = -.0006;
+    Object.assign(ws.shadow.camera, { left: -2.4, right: 2.4, top: 2.4, bottom: -2.4, near: .05, far: 14 }); scene.add(ws); scene.add(ws.target);
+    // the beam: a faint prism of light from the window to the floor, with dust drifting in it
+    RM.beamM = new THREE.MeshBasicMaterial({ map: tex(16, 128, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,240,210,1)'); gr.addColorStop(1, 'rgba(255,240,210,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); }), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: false });
+    RM.beam = new THREE.Mesh(new THREE.BufferGeometry(), RM.beamM); RM.beam.userData.noPick = true; RM.beam.frustumCulled = false; scene.add(RM.beam);
+    const dg = new THREE.BufferGeometry(), dp = new Float32Array(60 * 3); for (let i = 0; i < 60; i++) { dp[i * 3] = 2 + Math.random() * 3; dp[i * 3 + 1] = .2 + Math.random() * 2.2; dp[i * 3 + 2] = 1.8 + Math.random() * 2.2; } dg.setAttribute('position', new THREE.BufferAttribute(dp, 3));
+    RM.dust = new THREE.Points(dg, new THREE.PointsMaterial({ color: 0xFFF2D8, size: .018, transparent: true, opacity: 0, depthWrite: false })); RM.dust.userData.noPick = true; RM.dust.frustumCulled = false; scene.add(RM.dust);
+    // warm glows round the lamps
+    const glowT = tex(64, 64, (g, w, h) => { const gr = g.createRadialGradient(32, 32, 2, 32, 32, 32); gr.addColorStop(0, 'rgba(255,214,150,1)'); gr.addColorStop(.35, 'rgba(255,190,120,.35)'); gr.addColorStop(1, 'rgba(255,180,110,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, h); });
+    RM.glows = [[0, H - .8, .2, .9], [-4, 1.95, 3.8, 1.1]].map(([x, y, z, s]) => { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowT, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: .55 })); sp.position.set(x, y, z); sp.scale.setScalar(s); sp.userData.noPick = true; scene.add(sp); return sp; });
+    lamp.color.setHex(0xFFB878); sun.shadow.radius = 3; if (!lowFx) sun.shadow.mapSize.set(2048, 2048); if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+    roomLight(); setInterval(roomLight, 30000);
+    // the greenhouse plants, rebuilt with real leaves
+    GH.v2 = true; GH.plots.forEach((L, i) => { L.key = ''; ghRefresh(i); });
+  }
+  function roomLight(){
+    if (!RM.sun) return; const t = istHour(), ph = t < 5 || t >= 19.5 ? 'night' : t < 7 ? 'dawn' : t < 17 ? 'day' : 'dusk';
+    const elev = ph === 'day' ? .55 + Math.sin(clamp((t - 7) / 10, 0, 1) * Math.PI) * .45 : ph === 'night' ? .7 : .22, dir = V(-1, -elev, (t - 12) * .03).normalize();
+    RM.sun.color.setHex(ph === 'day' ? 0xFFF1D8 : ph === 'night' ? 0x8AA0E0 : 0xFFA860); RM.sun.intensity = ph === 'day' ? .45 : ph === 'night' ? .12 : .5;
+    RM.sun.position.set(5.6, 1.8, 2.9); RM.sun.target.position.copy(RM.sun.position).addScaledVector(dir, 5);
+    // the beam prism: the window rectangle, and where it lands
+    const wc = [[5, 1.1, 2.2], [5, 1.1, 3.6], [5, 2.5, 3.6], [5, 2.5, 2.2]], fl = wc.map(([x, y, z]) => { const k = y / -dir.y; return [x + dir.x * k, .01, z + dir.z * k]; });
+    const P = [], U = [], quad = (a, b, c, d, va, vb) => { P.push(...a, ...b, ...c, ...a, ...c, ...d); U.push(0, va, 1, va, 1, vb, 0, va, 1, vb, 0, vb); };
+    for (let k = 0; k < 4; k++) { const n = (k + 1) % 4; quad(wc[k], wc[n], fl[n], fl[k], 1, 0); }
+    const g = RM.beam.geometry; g.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(U, 2)); g.computeBoundingSphere();
+    RM.beamM.opacity = ph === 'day' ? .035 : ph === 'night' ? .01 : .03; RM.beamM.color.setHex(ph === 'night' ? 0x8AA0E0 : ph === 'day' ? 0xFFFFFF : 0xFFB070);
+    RM.dust.material.opacity = ph === 'night' ? .15 : .55; RM.glows.forEach(sp => sp.material.opacity = ph === 'day' ? .3 : .65); RM.ph = ph;
+  }
+  function roomStep(dt, now){
+    if (!RM.dust || inWorld || reduce) return; const a = RM.dust.geometry.attributes.position, p = a.array, t = now / 1000;
+    for (let i = 0; i < p.length; i += 3) { p[i] += Math.sin(t * .3 + i) * dt * .02; p[i + 1] += Math.cos(t * .21 + i * .7) * dt * .015; p[i + 2] += Math.sin(t * .17 + i * 1.3) * dt * .02; if (p[i + 1] < .1) p[i + 1] = 2.4; if (p[i + 1] > 2.5) p[i + 1] = .2; }
+    a.needsUpdate = true;
+  }
+  // greenhouse plants with leaves, flowers and fruit
+  function ghPlantMesh2(k, st, seed, dry){
+    const D = GH_SEEDS[k], g = new THREE.Group(), R = rng(seed * 7919 + 13), lf = fmLeafM(D.leaf), stemM = fmLeafM(0x5A7A3A), ripe = st === 4, big = st >= 3 ? 1 : .6, droop = dry ? .7 : 0, L = fmLeafGeo(), LB = fmLobeGeo();
+    const leaf = (x, y, z, ang, tilt, len, wid, m, lobe) => { const p = new THREE.Group(); p.position.set(x, y, z); p.rotation.set(0, ang, tilt - droop); g.add(p); const lm = new THREE.Mesh(lobe ? LB : L, m || lf); lm.scale.set(len, 1, wid / .4 * len); p.add(lm); };
+    const stalk = (x, z, h, r, y0 = 0) => { const s = new THREE.Mesh(pvG('stalk4', () => new THREE.CylinderGeometry(.6, 1, 1, 4, 1, true)), stemM); s.scale.set(r, h, r); s.position.set(x, y0 + h / 2, z); g.add(s); };
+    const ball = (m, x, y, z, sx, sy, sz) => { const b = new THREE.Mesh(AS(), m); b.scale.set(sx, sy, sz); b.position.set(x, y, z); g.add(b); return b; };
+    if (st === 0) { ball(fmc(0x4A3626), 0, .02, 0, .16, .05, .16); return mergeGroup(g); }
+    if (st === 1) { stalk(0, 0, .13, .008); [0, Math.PI].forEach(a => leaf(0, .13, 0, a, .35, .08, .045)); return mergeGroup(g); }
+    const H = D.tall * big;
+    if (D.form === 'tall') { stalk(0, 0, H, .022); for (let i = 0; i < 6; i++) leaf(0, .15 + i / 6 * H * .75, 0, i * 2.4, .2, .28 * big + .05, .3, null, true);
+      if (st === 3) ball(fmLeafM(0x6FA64A), .03, H + .02, 0, .07, .06, .07);
+      if (ripe) { const hd = new THREE.Group(); hd.position.set(.07, H, 0); hd.rotation.z = -1.0; g.add(hd); const disc = new THREE.Mesh(pvG('disc', () => new THREE.CylinderGeometry(1, 1, 1, 16)), mcGet('seedsM', () => new THREE.MeshStandardMaterial({ roughness: .9, map: tex(64, 64, (q, w, h) => { q.fillStyle = '#4A2E18'; q.fillRect(0, 0, w, h); for (let i = 0; i < 260; i++) { const a = i * 2.39996, r = Math.sqrt(i) * 1.9; q.fillStyle = i % 2 ? '#2A1A0E' : '#6A4A28'; q.fillRect(32 + Math.cos(a) * r, 32 + Math.sin(a) * r, 2, 2); } }) })));
+        disc.scale.set(.14, .04, .14); hd.add(disc); for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2, p = new THREE.Group(); p.rotation.y = -a; hd.add(p); const pt = new THREE.Mesh(L, fmLeafM(D.fruit)); pt.scale.set(.12, 1, .1); pt.position.x = .12; p.add(pt); } }
+      return mergeGroup(g); }
+    if (D.form === 'herb') { for (let i = 0; i < 4; i++) stalk((R() - .5) * .1, (R() - .5) * .1, H * .9, .006); for (let i = 0; i < 40; i++) { const a = i * 2.4 + R(); leaf(Math.cos(a) * .06, .06 + R() * H * .8, Math.sin(a) * .06, a, .3, .075 * big + .025, .06); }
+      if (st >= 3) for (let i = 0; i < 7; i++) { const a = i * 2.1, sp = new THREE.Mesh(pvG('okra', () => new THREE.CylinderGeometry(0, 1, 1, 5)), fmLeafM(ripe ? D.fruit : 0x6A8A4A)); sp.scale.set(.012, .09, .012); sp.position.set(Math.cos(a) * .06, H * .95, Math.sin(a) * .06); g.add(sp); }
+      return mergeGroup(g); }
+    if (D.form === 'flower') { for (let i = 0; i < 5; i++) stalk((R() - .5) * .14, (R() - .5) * .14, H * .85, .007); for (let i = 0; i < 26; i++) { const a = i * 2.4 + R(); leaf(Math.cos(a) * .07, .04 + R() * H * .6, Math.sin(a) * .06, a, .25, .07 * big + .02, .05, null, true); }
+      if (st >= 3) for (let i = 0; i < 7; i++) { const a = i * 2.1 + R(), x = Math.cos(a) * .11, z = Math.sin(a) * .11, y = H * (.8 + R() * .25), s = ripe ? .06 : .032; for (let j = 0; j < (ripe ? 3 : 1); j++) ball(fmLeafM(ripe ? (j % 2 ? 0xE0601A : D.fruit) : 0x8AB84A), x, y + j * .012, z, s * (1 - j * .22), s * .55, s * (1 - j * .22)); }
+      return mergeGroup(g); }
+    // bushes: tomato, chilli, brinjal
+    stalk(0, 0, H, .016); if (k === 'tomato' && st >= 3) { const pole = new THREE.Mesh(pvG('stalk4', () => new THREE.CylinderGeometry(.6, 1, 1, 4, 1, true)), woodM(0x8C6A48)); pole.scale.set(.012, H + .2, .012); pole.position.set(.06, (H + .2) / 2, .05); g.add(pole); }
+    const nl = k === 'brinjal' ? 16 : 28; for (let i = 0; i < nl; i++) { const a = i * 2.4 + R(), y = .1 + R() * H * .85; leaf(Math.cos(a) * .04, y, Math.sin(a) * .04, a, .2 + R() * .3, (k === 'brinjal' ? .18 : k === 'tomato' ? .15 : .11) * big + .04, k === 'chilli' ? .06 : .12, null, k !== 'chilli'); }
+    if (st >= 3) { const n = k === 'brinjal' ? 4 : k === 'tomato' ? 8 : 14, calyx = fmLeafM(0x3E7A34);
+      for (let i = 0; i < n; i++) { const a = i * 2.1 + R(), r = .1 + R() * .1, x = Math.cos(a) * r, z = Math.sin(a) * r, y = H * (.3 + R() * .55), c = ripe ? D.fruit : (k === 'brinjal' ? 0x8A6AA8 : 0x7FB24A), m = mcGet('gl' + c, () => new THREE.MeshStandardMaterial({ color: c, roughness: .25 }));
+        if (k === 'tomato') { ball(m, x, y, z, .06, .054, .06); ball(calyx, x, y + .052, z, .026, .008, .026); }
+        else if (k === 'chilli') { const ch = new THREE.Mesh(pvG('okra', () => new THREE.CylinderGeometry(0, 1, 1, 5)), m); ch.scale.set(.02, .12, .02); ch.position.set(x, y - .04, z); ch.rotation.set(Math.PI + (R() - .5) * .4, 0, (R() - .5) * .4); g.add(ch); }
+        else { ball(m, x, y - .06, z, .055, .1, .055); ball(calyx, x, y + .03, z, .034, .016, .034); } }
+      if (k === 'brinjal' && !ripe) for (let i = 0; i < 3; i++) ball(fmLeafM(0xB89AE0), Math.cos(i * 2) * .12, H * .9, Math.sin(i * 2) * .12, .02, .015, .02); }
+    return mergeGroup(g);
+  }
+  setTimeout(roomRealism, 0);
 
   // ======================= the rooftop: your own roof, ten floors above the real Bangalore =======================
   // The city you see from here is the same map you walk around in (drawn under the roof; see gfxRender). G is street level.
@@ -17067,7 +17162,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!reduce) {
       vinyl.rotation.y -= dt * 3.5 * spin; portal.userData.disc.rotation.z -= dt * 1.2;
     }
-    portal.userData.glow.intensity = 0; medCrossStep(now); vaultDoorsStep(dt); ghStep(dt, now); cbVisorStep(now); cbWorldStep(dt);
+    portal.userData.glow.intensity = 0; medCrossStep(now); vaultDoorsStep(dt); ghStep(dt, now); roomStep(dt, now); cbVisorStep(now); cbWorldStep(dt);
     if (inWorld) worldStep(dt, now);
     pageMeshes.forEach((m, i) => { m.rotation.y += dt * 1.2; m.position.y = m.userData.base + Math.sin(now / 600 + i) * .05; });
     const tsec = now / 1000;
