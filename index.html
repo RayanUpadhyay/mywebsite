@@ -13554,6 +13554,19 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // little bursts of soil and water
     FM.fxG = new THREE.BufferGeometry(); FM.fxP = new Float32Array(48 * 3); FM.fxV = new Float32Array(48 * 3); FM.fxG.setAttribute('position', new THREE.BufferAttribute(FM.fxP, 3));
     FM.fx = new THREE.Points(FM.fxG, new THREE.PointsMaterial({ color: 0x8C6A48, size: .06 })); FM.fx.visible = false; FM.fx.frustumCulled = false; FM.fx.userData.noPick = true; sc.add(FM.fx);
+    // the shipping crate by the plot, and a seed and supply stall by the path
+    const crate = new THREE.Group(); crate.position.set(5.9, 0, -1.9); crate.rotation.y = -.3; crate.userData.egg = 'fcrate'; sc.add(crate);
+    box(1.1, .7, .75, mat(0x9A7A50, { roughness: .9 }), 0, .35, 0, crate); for (let k = 0; k < 4; k++) box(1.12, .04, .77, mat(0x7A5A38), 0, .1 + k * .18, 0, crate); const lid = box(1.16, .07, .8, mat(0x7A5A38), 0, .74, -.05, crate); lid.rotation.x = -.25;
+    const crSign = new THREE.Mesh(new THREE.PlaneGeometry(.8, .22), new THREE.MeshBasicMaterial({ map: tex(320, 88, (g, w, h) => { g.fillStyle = '#F2EDE4'; g.fillRect(0, 0, w, h); g.fillStyle = '#5A3E28'; g.font = `800 40px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('SHIPPING', w / 2, h / 2 + 2); }) })); crSign.position.set(0, .45, .38); crate.add(crSign);
+    FM.blocks.push({ x0: 5.2, x1: 6.6, z0: -2.5, z1: -1.3 });
+    const shop = new THREE.Group(); shop.position.set(-5.8, 0, -1.4); shop.rotation.y = Math.PI / 2; shop.userData.egg = 'fshop'; sc.add(shop);
+    box(1.8, .9, .7, mat(0x8C6A48), 0, .45, 0, shop); [-.85, .85].forEach(x => box(.08, 2.2, .08, mat(0x6B4A32), x, 1.1, .3, shop)); [-.85, .85].forEach(x => box(.08, 2.0, .08, mat(0x6B4A32), x, 1.0, -.3, shop));
+    const awn = new THREE.Mesh(new THREE.PlaneGeometry(2.0, 1.0), new THREE.MeshStandardMaterial({ side: THREE.DoubleSide, map: tex(128, 64, (g, w, h) => { for (let x = 0; x < w; x += 16) { g.fillStyle = (x / 16) % 2 ? '#F2EDE4' : '#2E8A5A'; g.fillRect(x, 0, 16, h); } }) }));
+    awn.position.set(0, 2.15, 0); awn.rotation.x = -Math.PI / 2 + .3; shop.add(awn);
+    [[-.55, '#C8A050'], [-.1, '#7AAE4A'], [.4, '#E0B850']].forEach(([x, c]) => { const sk = new THREE.Mesh(ghGeo.s, mat(new THREE.Color(c).getHex(), { roughness: 1 })); sk.scale.set(.2, .18, .2); sk.position.set(x, 1.05, .05); shop.add(sk); });
+    const shSign = new THREE.Mesh(new THREE.PlaneGeometry(1.6, .3), new THREE.MeshBasicMaterial({ map: tex(480, 90, (g, w, h) => { g.fillStyle = '#2E8A5A'; g.fillRect(0, 0, w, h); g.fillStyle = '#FFF8EC'; g.font = `800 40px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('SEEDS & SUPPLIES', w / 2, h / 2 + 2); }) })); shSign.position.set(0, 1.6, .36); shop.add(shSign);
+    FM.blocks.push({ x0: -6.4, x1: -5.2, z0: -2.4, z1: -.4 });
+    FM.crowT = 40;
     plats.farm.push({ x0: -120, x1: 120, z0: -120, z1: 120 });
     FM.tiles.forEach((_, i) => fmRefresh(i)); fmPhase();
   }
@@ -13568,20 +13581,24 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     FM.sunBall.material.color.setHex(night ? 0xF4F1E4 : ph === 'day' ? 0xFFF4C2 : 0xFFC06A); FM.sunBall.scale.setScalar(night ? .6 : 1);
     FM.sun.color.setHex(night ? 0x8A9AD8 : ph === 'day' ? 0xFFF2DA : 0xFFB27A); FM.sun.intensity = night ? .25 : ph === 'day' ? 1.15 : .8;
     FM.hemi.intensity = night ? .3 : ph === 'day' ? .75 : .55; FM.hemi.color.setHex(night ? 0x5A6AA8 : 0xDDEFFF);
+    FM.tiles.forEach(L => { if (L.plant && L.plant.userData.lamp) L.plant.userData.lamp.material.emissiveIntensity = night || ph === 'dusk' ? 1.6 : .25; });
   }
   function fmRefresh(i){
     const L = FM.tiles[i]; if (!L) return; const on = fmActive(i); L.g.visible = on; L.b.visible = on; if (!on) return;
     const T = FM.s.tiles[i]; if (T) fmTick(T);
     const m = !T || !T.l ? 'grass' : T.m > 0 ? 'wet' : 'dry'; if (m !== L.mat) { L.b.material = FM.tileM[m]; L.mat = m; }
-    const st = T && T.c ? fmStage(T.g) : -1, key = T && T.c ? `${T.c}:${st}` : '';
-    if (key !== L.key) { if (L.plant) { L.g.remove(L.plant); L.plant = null; } if (key) { L.plant = fmCropMesh(T.c, st, i + 1); L.plant.position.y = .03; L.plant.traverse(o => { if (o.isMesh) o.castShadow = !lowFx; }); L.g.add(L.plant); } L.key = key; }
-    if (L.plant) { const lo = [0, .1, .35, .7, 1][st], hi = [.1, .35, .7, 1, 1][st]; L.plant.scale.setScalar(st >= 3 ? 1 : .7 + .3 * (T.g - lo) / (hi - lo)); L.plant.rotation.z = T.m <= 0 && st < 4 ? .18 : 0; }
+    const st = T && T.c && !T.it ? fmStage(T.g) : -1, key = T && T.it ? 'it:' + T.it : T && T.c ? `${T.c}:${st}:${st === 4 && T.gi ? 'G' : ''}` : '';
+    if (key !== L.key) { if (L.plant) { L.g.remove(L.plant); L.plant = null; } if (key) { L.plant = T.it ? fmItemMesh(T.it) : fmCropMesh(T.c, st, i + 1); L.plant.position.y = .03; L.plant.traverse(o => { if (o.isMesh) o.castShadow = !lowFx; }); L.g.add(L.plant); } L.key = key; }
+    if (L.plant && st >= 0) { const lo = [0, .1, .35, .7, 1][st], hi = [.1, .35, .7, 1, 1][st]; L.plant.scale.setScalar(st === 4 && T.gi ? 2.2 : st >= 3 ? 1 : .7 + .3 * (T.g - lo) / (hi - lo)); L.plant.rotation.z = T.m <= 0 && st < 4 ? .18 : 0; }
+    if (L.plant && L.plant.userData.lamp) L.plant.userData.lamp.material.emissiveIntensity = FM.ph === 'night' || FM.ph === 'dusk' ? 1.6 : .25;
   }
   const fmT = i => FM.s.tiles[i] || (FM.s.tiles[i] = { l: 0, c: null, g: 0, m: 0, t: Date.now(), gi: 0, it: '' });
   function fmLabel(i){
     const T = FM.s.tiles[i], tool = FM.s.tool; if (T) fmTick(T);
+    if (T && T.it) return tool === 'hand' ? `Pick up the ${FM_ITEMS[T.it].n.toLowerCase()}` : FM_ITEMS[T.it].n;
+    if (tool === 'hand' && FM.s.place && FM.s.items[FM.s.place] && !(T && T.c)) return `Place the ${FM_ITEMS[FM.s.place].n.toLowerCase()} here`;
     if (T && T.c) { const C = FM_CROPS[T.c], st = fmStage(T.g);
-      if (st === 4) return tool === 'sickle' || tool === 'hand' ? `Harvest: ${C.n === 'Mango tree' ? 'pick the mangoes' : C.n}` : `${C.n} is ready: switch to the sickle (4)`;
+      if (st === 4) return tool === 'sickle' || tool === 'hand' ? `Harvest${T.gi ? ' the giant ' + C.n.toLowerCase() + '!' : ': ' + (C.n === 'Mango tree' ? 'pick the mangoes' : C.n)}` : `${T.gi ? 'A giant ' + C.n.toLowerCase() : C.n} is ready: switch to the sickle (4)`;
       if (st === 0 && C.sea !== fmSeason()) return `${C.n} seed: it won’t sprout until ${FM_SEA[C.sea].toLowerCase()}`;
       if (tool === 'can') return `Water the ${C.n.toLowerCase()} (soil ${Math.round(T.m)}%)`;
       return `${C.n} · ${GH_ST[st]} · ${T.m > 0 ? `soil ${Math.round(T.m)}%` : 'dry: water it'}`; }
@@ -13599,10 +13616,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function fmDo(i){
     const T = fmT(i), tool = FM.s.tool, L = FM.tiles[i]; fmTick(T); FM.swing = .35;
     if (T.c && fmStage(T.g) === 4 && (tool === 'sickle' || tool === 'hand')) return fmHarvest(i);
-    if (tool === 'hoe') { if (T.l) return say(T.c ? 'There’s something growing here.' : 'Already tilled. Plant seeds with the seed bag (2).', 2200); if (T.it) return; T.l = 1; T.t = Date.now(); fmBurst(L.x, L.z, 0x8C6A48, true); tone(150, .12, 'triangle', .08, 90); }
+    if (tool === 'hand' && T.it) { const k = T.it; T.it = ''; FM.s.items[k] = (FM.s.items[k] || 0) + 1; if (!FM.s.place) FM.s.place = k; tone(330, .1, 'triangle', .05, 220); say(`Picked up the ${FM_ITEMS[k].n.toLowerCase()}.`, 1600); fmSave(); fmRefresh(i); fmHud(true); return; }
+    if (T.it) return say(`That’s a ${FM_ITEMS[T.it].n.toLowerCase()}. Pick it up with the hands (5) first.`, 2400);
+    if (tool === 'hand' && !T.c) { const k = FM.s.place; if (!k || !FM.s.items[k]) return fmPlacePanel(); FM.s.items[k]--; if (!FM.s.items[k]) { delete FM.s.items[k]; FM.s.place = Object.keys(FM.s.items)[0] || ''; } T.it = k; tone(260, .12, 'triangle', .06, 200); fmBurst(L.x, L.z, 0xB8A888, true); fmSave(); fmRefresh(i); fmHud(true); return; }
+    if (tool === 'hoe') { if (T.l) return say(T.c ? 'There’s something growing here.' : 'Already tilled. Plant seeds with the seed bag (2).', 2200); T.l = 1; T.t = Date.now(); fmBurst(L.x, L.z, 0x8C6A48, true); tone(150, .12, 'triangle', .08, 90); }
     else if (tool === 'seed') { if (!T.l) return say('Till the soil with the hoe first (1).', 2200); if (T.c) return say('Something’s already planted here.', 2000);
       const k = FM.s.seedSel; if (!k || !FM.s.seeds[k]) return fmSeedPanel();
-      FM.s.seeds[k]--; if (!FM.s.seeds[k]) delete FM.s.seeds[k]; T.c = k; T.g = 0; T.gi = 0; T.t = Date.now(); tone(520, .08, 'sine', .05, 700);
+      FM.s.seeds[k]--; if (!FM.s.seeds[k]) delete FM.s.seeds[k]; T.c = k; T.g = 0; T.gi = Math.random() < fmGiantChance() ? 1 : 0; T.t = Date.now(); tone(520, .08, 'sine', .05, 700);
       const C = FM_CROPS[k]; if (C.sea !== fmSeason()) say(`${C.n} won’t sprout until ${FM_SEA[C.sea].toLowerCase()}. The seed will wait in the soil.`, 3600);
       else if (!T.m) say(`${C.n} planted. Now water it (3): crops only grow while their soil is wet.`, 3200);
       if (FM.s.seeds[k] === undefined) { FM.s.seedSel = Object.keys(FM.s.seeds)[0] || ''; } }
@@ -13611,14 +13631,15 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     else if (tool === 'hand') { if (T.c) return say(fmLabel(i), 2400); return; }
     fmSave(); fmRefresh(i); fmHud(true);
   }
+  const fmGiantChance = () => FM_GIANT;
   function fmHarvest(i){
-    const T = FM.s.tiles[i], C = FM_CROPS[T.c], k = T.c, n = C.y[0] + Math.floor(Math.random() * (C.y[1] - C.y[0] + 1)), lv0 = fmLevel();
-    fmAddGood(k, n); FM.s.xp += Math.round(C.p * n / 2) + 2;
+    const T = FM.s.tiles[i], C = FM_CROPS[T.c], k = T.c, gi = T.gi, n = (C.y[0] + Math.floor(Math.random() * (C.y[1] - C.y[0] + 1))) * (gi ? 5 : 1), lv0 = fmLevel();
+    fmAddGood(k, n); FM.s.xp += Math.round(C.p * n / 2) + 2; T.gi = 0; if (gi) FM.s.giants = (FM.s.giants || 0) + 1;
     if (C.re) T.g = C.re; else { T.c = null; T.g = 0; }
     fmSave(); fmRefresh(i); fmHud(true); const L = FM.tiles[i]; fmBurst(L.x, L.z, C.col, true);
     [659, 784, 988].forEach((f, j) => setTimeout(() => tone(f, .12, 'triangle', .05), j * 80));
-    say(`+${n} ${n === 1 ? C.one : C.many}${C.re ? '. It’ll bear again if you keep it watered.' : '.'}`, 2400);
-    if (fmLevel() > lv0) setTimeout(() => { [523, 659, 784, 1046].forEach((f, j) => setTimeout(() => tone(f, .18, 'triangle', .05), j * 100)); say(`Farm level ${fmLevel()}!`, 3200); fmHud(true); }, 1200);
+    say(`${gi ? `A giant ${C.n.toLowerCase()}! ` : ''}+${n} ${n === 1 ? C.one : C.many}${C.re ? '. It’ll bear again if you keep it watered.' : '.'}`, gi ? 3600 : 2400);
+    if (fmLevel() > lv0) setTimeout(() => { const lv = fmLevel(), un = [...Object.values(FM_CROPS).filter(c => c.lvl === lv).map(c => c.n + ' seeds'), ...Object.values(FM_ITEMS).filter(x => x.lvl === lv).map(x => x.n.toLowerCase() + 's'), ...FM_PLOTS.filter(p => p[2] === lv).map(p => `a ${p[0]} × ${p[0]} plot`)]; [523, 659, 784, 1046].forEach((f, j) => setTimeout(() => tone(f, .18, 'triangle', .05), j * 100)); say(`Farm level ${lv}!${un.length ? ' New in the shop: ' + un.join(', ') + '.' : ''}`, 4200); fmHud(true); }, 1200);
   }
   function fmSeedPanel(){
     const S = FM.s.seeds, keys = Object.keys(FM_CROPS).filter(k => S[k] > 0), sea = fmSeason();
@@ -13631,15 +13652,104 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const S = FM.s, goods = Object.keys(FM_GOODS).filter(k => S.inv[k] > 0), seeds = Object.keys(FM_CROPS).filter(k => S.seeds[k] > 0), lv = fmLevel(), nx = FM_LV[lv];
     panelBody.innerHTML = `<div class="sec"><p class="meta">Farm · ${FM_SEA[fmSeason()]} · level ${lv}</p><h2 class="display">Your bag</h2><p class="sub">🪙 ${S.coins} coins · ${nx ? `${nx - S.xp} xp to level ${lv + 1}` : 'top level'}</p>
       <h3>Harvest</h3>${goods.length ? goods.map(k => `<div class="ghrow"><b>${S.inv[k]}</b><span>${S.inv[k] === 1 ? FM_GOODS[k].one : FM_GOODS[k].many}</span><span></span></div>`).join('') : '<p class="sub">Nothing yet. Greenhouse harvests land here too.</p>'}
-      <h3>Seeds</h3>${seeds.length ? seeds.map(k => `<div class="ghrow"><b>${S.seeds[k]}</b><span>${FM_CROPS[k].n}${FM_CROPS[k].sea !== fmSeason() ? ` (sprouts in ${FM_SEA[FM_CROPS[k].sea].toLowerCase()})` : ''}</span><span></span></div>`).join('') : '<p class="sub">No seeds left.</p>'}</div>`;
+      ${Object.keys(S.items || {}).length ? `<h3>To place</h3>${Object.keys(S.items).map(k => `<div class="ghrow"><b>${S.items[k]}</b><span>${FM_ITEMS[k].ic} ${FM_ITEMS[k].n}</span><span></span></div>`).join('')}` : ''}<h3>Seeds</h3>${seeds.length ? seeds.map(k => `<div class="ghrow"><b>${S.seeds[k]}</b><span>${FM_CROPS[k].n}${FM_CROPS[k].sea !== fmSeason() ? ` (sprouts in ${FM_SEA[FM_CROPS[k].sea].toLowerCase()})` : ''}</span><span></span></div>`).join('') : '<p class="sub">No seeds left.</p>'}</div>`;
     panel.scrollTop = 0; panel.classList.add('on'); tone(660, .08, 'triangle', .05);
   }
+  // --- the shop, the shipping crate, things to place, crows and the occasional giant crop ---
+  const FM_SEEDCOST = { paddy: 8, maize: 12, wheat: 6, peas: 10, mustard: 7, okra: 9, watermelon: 30, mango: 120 };
+  const FM_ITEMS = {
+    scarecrow: { n: 'Scarecrow', ic: '🧑‍🌾', p: 80, lvl: 1, d: 'Crows won’t land within three tiles of it.' },
+    sprinkler: { n: 'Sprinkler', ic: '⛲', p: 120, lvl: 2, d: 'Waters the eight tiles around it, once a day.' },
+    fence: { n: 'Fence', ic: '🪵', p: 10, lvl: 1, d: 'A length of wooden fence.' },
+    path: { n: 'Stone path', ic: '🪨', p: 5, lvl: 1, d: 'A flat stone to walk on.' },
+    pot: { n: 'Flower pot', ic: '🌼', p: 30, lvl: 1, d: 'Marigolds in a clay pot.' },
+    lantern: { n: 'Lantern', ic: '🏮', p: 45, lvl: 2, d: 'Glows softly after dark.' },
+    bench: { n: 'Bench', ic: '🪑', p: 60, lvl: 2, d: 'For sitting and admiring your rows.' },
+    birdbath: { n: 'Bird bath', ic: '🐦', p: 70, lvl: 3, d: 'The sparrows love it.' }
+  };
+  const FM_PLOTS = [[8, 400, 2], [10, 1200, 3]];
+  const FM_GIANT = .03;
+  (function fmFix(){ const s = FM.s; const items = {}; if (s.items && typeof s.items === 'object') Object.keys(FM_ITEMS).forEach(k => { if (s.items[k] > 0) items[k] = fmNum(s.items[k], 999); }); s.items = items;
+    s.place = FM_ITEMS[s.place] ? s.place : ''; const spr = {}; if (s.spr && typeof s.spr === 'object') Object.keys(s.spr).forEach(i => { if (typeof s.spr[i] === 'string') spr[i] = s.spr[i].slice(0, 10); }); s.spr = spr;
+    s.shipped = fmNum(s.shipped); s.giants = fmNum(s.giants); Object.values(s.tiles).forEach(T => { if (T.it && !FM_ITEMS[T.it]) T.it = ''; }); })();
+  function fmItemMesh(k){
+    const g = new THREE.Group(), wood = fmc(0x8C6A48);
+    if (k === 'scarecrow') { cyl(.03, .03, 1.5, wood, 0, .75, 0, g, 6); box(.9, .05, .05, wood, 0, 1.15, 0, g); box(.34, .45, .2, fmc(0xC0571C), 0, 1.1, 0, g); gp(ghGeo.s, fmc(0xE8D08A), 0, 1.5, 0, .14, .15, .14, g); cyl(.26, .26, .03, fmc(0xC8A050), 0, 1.62, 0, g, 12); cyl(.12, .14, .14, fmc(0xC8A050), 0, 1.69, 0, g, 12); [-1, 1].forEach(s => gp(ghGeo.s, fmc(0xE8D08A), s * .47, 1.12, 0, .06, .1, .06, g)); }
+    if (k === 'sprinkler') { cyl(.04, .05, .35, fmc(0x8A939E), 0, .17, 0, g, 8); const h = new THREE.Group(); h.position.y = .37; g.add(h); cyl(.07, .07, .05, fmc(0xB8C0C8), 0, 0, 0, h, 10); [-1, 1].forEach(s => { const a = cyl(.012, .012, .2, fmc(0xB8C0C8), s * .1, .02, 0, h, 6); a.rotation.z = Math.PI / 2; }); g.userData.spin = h; }
+    if (k === 'fence') { [-.42, 0, .42].forEach(x => box(.08, .7, .08, wood, x, .35, 0, g)); [.28, .55].forEach(y => box(.96, .06, .04, wood, 0, y, 0, g)); }
+    if (k === 'path') { [[-.2, -.2, .26], [.22, -.15, .22], [-.15, .22, .24], [.2, .24, .2]].forEach(([x, z, r]) => { const s = gp(ghGeo.c, fmc(0xB8B0A0), x, .045, z, r, .03, r * .9, g); s.rotation.y = x * 3; }); }
+    if (k === 'pot') { cyl(.16, .12, .24, fmc(0xB5562E), 0, .12, 0, g, 12); for (let i = 0; i < 6; i++) gp(ghGeo.s, fmc(i % 2 ? 0xFF8A1C : 0xFFB02E), Math.cos(i) * .08, .3 + (i % 3) * .03, Math.sin(i) * .08, .05, .045, .05, g); }
+    if (k === 'lantern') { cyl(.025, .025, 1.1, fmc(0x3A2A20), 0, .55, 0, g, 6); box(.3, .03, .03, fmc(0x3A2A20), .12, 1.1, 0, g); const l = new THREE.Mesh(new THREE.SphereGeometry(.09, 12, 8), new THREE.MeshStandardMaterial({ color: 0xFFD08A, emissive: 0xFFB050, emissiveIntensity: .3 })); l.scale.y = 1.25; l.position.set(.25, .98, 0); g.add(l); g.userData.lamp = l; }
+    if (k === 'bench') { box(.9, .05, .32, wood, 0, .42, 0, g); box(.9, .25, .04, wood, 0, .62, -.15, g); [-.38, .38].forEach(x => box(.05, .42, .28, wood, x, .21, 0, g)); }
+    if (k === 'birdbath') { cyl(.07, .1, .6, fmc(0xC8C2B8), 0, .3, 0, g, 10); cyl(.26, .14, .1, fmc(0xC8C2B8), 0, .64, 0, g, 16); const w = cyl(.22, .22, .01, new THREE.MeshStandardMaterial({ color: 0x8FD0E8, roughness: .1 }), 0, .69, 0, g, 16); w.castShadow = false; }
+    return g;
+  }
+  // which tiles a scarecrow watches (three tiles in every direction)
+  const fmGuarded = i => { const c = i % FM_G, r = Math.floor(i / FM_G); return Object.keys(FM.s.tiles).some(j => { const T = FM.s.tiles[j]; if (!T || T.it !== 'scarecrow') return false; const cj = j % FM_G, rj = Math.floor(j / FM_G); return Math.max(Math.abs(cj - c), Math.abs(rj - r)) <= 3; }); };
+  // sprinklers water their neighbours once a day; monsoon rain waters everything
+  function fmSprinkle(){
+    const day = fmDay(); let any = false;
+    Object.keys(FM.s.tiles).forEach(j => { const T = FM.s.tiles[j]; if (!T || T.it !== 'sprinkler' || FM.s.spr[j] === day) return; FM.s.spr[j] = day; any = true; const c = j % FM_G, r = Math.floor(j / FM_G);
+      for (let dc = -1; dc <= 1; dc++) for (let dr = -1; dr <= 1; dr++) { const cc = c + dc, rr = r + dr; if ((dc || dr) && cc >= 0 && cc < FM_G && rr >= 0 && rr < FM_G) { const k = cc + rr * FM_G, N = FM.s.tiles[k]; if (N && N.l && !N.it) { fmTick(N); N.m = 100; } } } });
+    if (any) fmSave(); return any;
+  }
+  function fmRain(){ let any = false; Object.values(FM.s.tiles).forEach(T => { if (T && T.l && !T.it && T.m < 95) { fmTick(T); T.m = 100; any = true; } }); if (any) fmSave(); return any; }
+  function fmShipPanel(){
+    const S = FM.s, goods = Object.keys(FM_GOODS).filter(k => S.inv[k] > 0), total = goods.reduce((a, k) => a + S.inv[k] * FM_GOODS[k].p, 0);
+    panelBody.innerHTML = `<div class="sec"><p class="meta">Farm · shipping crate</p><h2 class="display">Ship your harvest</h2><p class="sub">🪙 ${S.coins} coins. Whatever goes in the crate is paid for straight away.</p>
+      ${goods.length ? goods.map(k => `<div class="ghrow"><b>${S.inv[k]}</b><span>${S.inv[k] === 1 ? FM_GOODS[k].one : FM_GOODS[k].many} · 🪙 ${FM_GOODS[k].p} each</span><span><button class="ghbtn" data-sell="${k}" data-n="1">Sell 1</button> <button class="ghbtn" data-sell="${k}" data-n="${S.inv[k]}">All</button></span></div>`).join('') + `<button class="open" id="fmShipAll">Ship everything · 🪙 ${total}</button>` : '<p class="sub">Nothing to ship yet. Harvest something first.</p>'}</div>`;
+    const sell = (k, n) => { n = Math.min(n, S.inv[k] || 0); if (!n) return; S.inv[k] -= n; if (!S.inv[k]) delete S.inv[k]; const c = n * FM_GOODS[k].p; S.coins += c; S.shipped = (S.shipped || 0) + c; fmSave(); fmHud(true); [880, 1175].forEach((f, j) => setTimeout(() => tone(f, .08, 'triangle', .05), j * 70)); };
+    panelBody.querySelectorAll('[data-sell]').forEach(b => b.onclick = () => { sell(b.dataset.sell, +b.dataset.n); fmShipPanel(); });
+    const all = panelBody.querySelector('#fmShipAll'); if (all) all.onclick = () => { goods.forEach(k => sell(k, S.inv[k])); fmShipPanel(); say(`Shipped. 🪙 ${S.coins} coins.`, 2400); };
+    panel.scrollTop = 0; panel.classList.add('on'); tone(660, .08, 'triangle', .05);
+  }
+  function fmShopPanel(who){
+    const S = FM.s, lv = fmLevel(), sea = fmSeason(), seeds = Object.keys(FM_CROPS).sort((a, b) => (FM_CROPS[a].sea !== sea) - (FM_CROPS[b].sea !== sea));
+    const row = (id, name, sub, price, ok, why) => `<div class="ghrow"><b>${name}</b><span>${sub}</span><span>${ok ? `<button class="ghbtn" data-buy="${id}" data-p="${price}">🪙 ${price}</button>` : `<small>${why}</small>`}</span></div>`;
+    const nextPlot = FM_PLOTS.find(p => p[0] > S.size);
+    panelBody.innerHTML = `<div class="sec"><p class="meta">${who || 'Farm · seeds and supplies'}</p><h2 class="display">Shop</h2><p class="sub">🪙 ${S.coins} coins · ${FM_SEA[sea]} · farm level ${lv}</p>
+      <h3>Seeds</h3>${seeds.map(k => { const C = FM_CROPS[k]; return row('s:' + k, C.n, `${C.sea === sea ? 'In season' : 'Sprouts in ' + FM_SEA[C.sea].toLowerCase()} · you have ${S.seeds[k] || 0}${C.re ? ' · bears again' : ''}`, FM_SEEDCOST[k], lv >= C.lvl && S.coins >= FM_SEEDCOST[k], lv < C.lvl ? `Level ${C.lvl}` : 'Not enough'); }).join('')}
+      <h3>For the farm</h3>${Object.keys(FM_ITEMS).map(k => { const I = FM_ITEMS[k]; return row('i:' + k, `${I.ic} ${I.n}`, `${I.d}${S.items[k] ? ` · you have ${S.items[k]}` : ''}`, I.p, lv >= I.lvl && S.coins >= I.p, lv < I.lvl ? `Level ${I.lvl}` : 'Not enough'); }).join('')}
+      ${nextPlot ? `<h3>A bigger plot</h3>${row('p:' + nextPlot[0], `${nextPlot[0]} × ${nextPlot[0]}`, `Up from ${S.size} × ${S.size}: room for ${nextPlot[0] * nextPlot[0] - S.size * S.size} more tiles.`, nextPlot[1], lv >= nextPlot[2] && S.coins >= nextPlot[1], lv < nextPlot[2] ? `Level ${nextPlot[2]}` : 'Not enough')}` : ''}
+      <p class="apkmeta">Items go in your bag. Pick one with the hands (5, press again to choose), then tap a free tile to place it. Tap it with the hands to pick it back up.</p></div>`;
+    panelBody.querySelectorAll('[data-buy]').forEach(b => b.onclick = () => { const [t, k] = b.dataset.buy.split(':'), p = +b.dataset.p; if (S.coins < p) return;
+      S.coins -= p; if (t === 's') { S.seeds[k] = (S.seeds[k] || 0) + 1; if (!S.seedSel) S.seedSel = k; } else if (t === 'i') { S.items[k] = (S.items[k] || 0) + 1; if (!S.place) S.place = k; } else if (t === 'p') { S.size = +k; FM.tiles.forEach((_, i) => fmRefresh(i)); say(`Your plot is now ${k} × ${k}.`, 2600); }
+      fmSave(); fmHud(true); tone(1046, .08, 'triangle', .05); fmShopPanel(who); });
+    panel.scrollTop = 0; panel.classList.add('on'); tone(660, .08, 'triangle', .05);
+  }
+  function fmPlacePanel(){
+    const S = FM.s, ks = Object.keys(FM_ITEMS).filter(k => S.items[k] > 0);
+    if (!ks.length) return say('Nothing to place. The shop by the path sells scarecrows, sprinklers, fences and more.', 3200);
+    panelBody.innerHTML = `<div class="sec"><p class="meta">Farm · hands</p><h2 class="display">Place something</h2><p class="sub">Pick an item, then tap a free tile.</p><div class="ghseeds">${ks.map(k => `<button class="ghseed${S.place === k ? ' on' : ''}" data-k="${k}"><i style="background:none;font-style:normal;font-size:18px">${FM_ITEMS[k].ic}</i><b>${FM_ITEMS[k].n} ×${S.items[k]}</b><small>${FM_ITEMS[k].d}</small></button>`).join('')}</div></div>`;
+    panelBody.querySelectorAll('.ghseed').forEach(b => b.onclick = () => { S.place = b.dataset.k; S.tool = 'hand'; fmSave(); closePanel(); fmHud(true); idleShown = null; say(`Tap a free tile to place the ${FM_ITEMS[b.dataset.k].n.toLowerCase()}.`, 2000); });
+    panel.scrollTop = 0; panel.classList.add('on'); tone(660, .08, 'triangle', .05);
+  }
+  // crows: one lands on an unguarded crop now and then while you're here, and pecks if you don't shoo it
+  function fmCrowMesh(){
+    const g = new THREE.Group(), bm = fmc(0x1E1E24); gp(ghGeo.s, bm, 0, .14, 0, .1, .09, .16, g); gp(ghGeo.s, bm, 0, .24, -.12, .065, .065, .07, g); const bk = gp(ghGeo.k, fmc(0x3A3A30), 0, .23, -.21, .02, .07, .02, g); bk.rotation.x = -Math.PI / 2;
+    const wl = new THREE.Group(), wr = new THREE.Group(); wl.position.set(-.08, .17, 0); wr.position.set(.08, .17, 0); g.add(wl, wr); gp(ghGeo.s, bm, -.12, 0, 0, .14, .015, .08, wl); gp(ghGeo.s, bm, .12, 0, 0, .14, .015, .08, wr);
+    const hit = new THREE.Mesh(new THREE.SphereGeometry(.4, 8, 6), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); hit.position.y = .2; g.add(hit);
+    g.userData.w = [wl, wr]; g.userData.egg = 'fcrow'; return g;
+  }
+  function fmCrowStep(dt, now){
+    const C = FM.crow;
+    if (!C) { if ((FM.crowT -= dt) > 0 || FM.ph === 'night' || FM.s.noCrows) return; FM.crowT = 70 + Math.random() * 80;
+      const cand = Object.keys(FM.s.tiles).map(Number).filter(i => { const T = FM.s.tiles[i]; return fmActive(i) && T && T.c && fmStage(T.g) >= 1 && !fmGuarded(i); }); if (!cand.length) return;
+      const i = cand[Math.floor(Math.random() * cand.length)], L = FM.tiles[i], m = fmCrowMesh(); FM.sc.add(m); m.position.set(L.x + 12, 9, L.z - 10);
+      FM.crow = { m, i, st: 'in', t: 0, from: m.position.clone(), to: V(L.x, .06, L.z) }; tone(420, .25, 'sawtooth', .03, 300); return; }
+    C.t += dt; const fl = Math.sin(now / 60) * .9; C.m.userData.w[0].rotation.z = C.st === 'sit' ? .1 : fl; C.m.userData.w[1].rotation.z = C.st === 'sit' ? -.1 : -fl;
+    if (C.st === 'in') { const e = Math.min(1, C.t / 2.2); C.m.position.lerpVectors(C.from, C.to, e); C.m.position.y += Math.sin(e * Math.PI) * 1.5; C.m.lookAt(C.to.x, C.m.position.y, C.to.z); C.m.rotateY(Math.PI); if (e >= 1) { C.st = 'sit'; C.t = 0; say('A crow landed on your crops! Tap it to shoo it, or put up a scarecrow.', 3200); } }
+    else if (C.st === 'sit') { C.m.rotation.x = Math.sin(now / 150) > .6 ? .4 : 0; if (Math.hypot(pos.x - C.to.x, pos.z - C.to.z) < 1.6) return fmShoo(); if (C.t > 8) { const T = FM.s.tiles[C.i]; if (T && T.c) { fmTick(T); const ripe = fmStage(T.g) === 4; T.g = ripe ? Math.max(.7, FM_CROPS[T.c].re || .7) : Math.max(.1, T.g - .12); fmSave(); fmRefresh(C.i); say(ripe ? `The crow pecked your ${FM_CROPS[T.c].n.toLowerCase()}. It’ll take a little longer now.` : 'The crow pecked at a seedling and set it back a bit.', 3000); } C.st = 'out'; C.t = 0; C.from = C.m.position.clone(); C.to = V(C.from.x - 14, 10, C.from.z - 12); tone(380, .3, 'sawtooth', .03, 250); } }
+    else { const e = Math.min(1, C.t / 2); C.m.position.lerpVectors(C.from, C.to, e); if (e >= 1) { FM.sc.remove(C.m); FM.crow = null; } }
+  }
+  function fmShoo(){ const C = FM.crow; if (!C || C.st === 'out') return; C.st = 'out'; C.t = 0; C.from = C.m.position.clone(); C.to = V(C.from.x + 10, 10, C.from.z - 14); tone(520, .2, 'sawtooth', .04, 340); say('Shoo! The crow flaps off.', 1600); }
+
   // --- the HUD: coins, season, level, and the tool bar (tap a tool, press 1–5, or scroll) ---
   const fmHudEl = document.createElement('div'); fmHudEl.className = 'fmhud'; fmHudEl.hidden = true;
   fmHudEl.innerHTML = `<div class="fminfo"><span id="fmCoins"></span><span id="fmSea"></span><button id="fmBag" type="button">Bag</button></div><div class="fmbar" role="toolbar" aria-label="Farm tools">${FM_TOOLS.map(([id, n, ic], i) => `<button type="button" data-t="${id}" title="${n} (${i + 1})"><span>${ic}</span><small>${n}</small><i>${i + 1}</i></button>`).join('')}</div>`;
   document.body.appendChild(fmHudEl);
   fmHudEl.querySelector('#fmBag').onclick = () => fmBagPanel();
-  fmHudEl.querySelectorAll('.fmbar button').forEach(b => b.onclick = () => { if (b.dataset.t === 'seed' && FM.s.tool === 'seed') return fmSeedPanel(); fmTool(b.dataset.t); });
+  fmHudEl.querySelectorAll('.fmbar button').forEach(b => b.onclick = () => { if (b.dataset.t === 'seed' && FM.s.tool === 'seed') return fmSeedPanel(); if (b.dataset.t === 'hand' && FM.s.tool === 'hand') return fmPlacePanel(); fmTool(b.dataset.t); });
   function fmTool(t){ if (FM.s.tool === t) return; FM.s.tool = t; fmSave(); fmHud(true); idleShown = null; tone(440, .05, 'triangle', .04, 520); if (t === 'seed' && !FM.s.seedSel) { FM.s.seedSel = Object.keys(FM.s.seeds)[0] || ''; } }
   function fmCycle(d){ const i = FM_TOOLS.findIndex(t => t[0] === FM.s.tool); fmTool(FM_TOOLS[(i + d + FM_TOOLS.length) % FM_TOOLS.length][0]); }
   function fmHud(force){
@@ -13647,7 +13757,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!force && (FM.hudT -= 1) > 0) return; FM.hudT = 30;
     fmHudEl.querySelector('#fmCoins').textContent = `🪙 ${FM.s.coins}`;
     fmHudEl.querySelector('#fmSea').textContent = `${FM_SEA[fmSeason()]} · level ${fmLevel()}`;
-    fmHudEl.querySelectorAll('.fmbar button').forEach(b => { b.classList.toggle('on', b.dataset.t === FM.s.tool); if (b.dataset.t === 'seed') b.querySelector('small').textContent = FM.s.seedSel && FM.s.seeds[FM.s.seedSel] ? `${FM_CROPS[FM.s.seedSel].n} ×${FM.s.seeds[FM.s.seedSel]}` : 'Seed bag'; });
+    fmHudEl.querySelectorAll('.fmbar button').forEach(b => { b.classList.toggle('on', b.dataset.t === FM.s.tool); if (b.dataset.t === 'seed') b.querySelector('small').textContent = FM.s.seedSel && FM.s.seeds[FM.s.seedSel] ? `${FM_CROPS[FM.s.seedSel].n} ×${FM.s.seeds[FM.s.seedSel]}` : 'Seed bag'; if (b.dataset.t === 'hand') b.querySelector('small').textContent = FM.s.place && FM.s.items[FM.s.place] ? `${FM_ITEMS[FM.s.place].n} ×${FM.s.items[FM.s.place]}` : 'Hands'; });
   }
   // the tool in your hand
   function fmToolMesh(t){
@@ -13669,24 +13779,31 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       buildFarm(); saved = { pos: V(11.4, 1.6, 7.2), yaw: 0, pitch: 0 };
       inWorld = true; zone = 'farm'; vy = 0; walkTarget = null; FM.pend = null; pos.set(0, 1.6, -1.6); yaw = 0; pitch = -.12; uiZone();
       dock.classList.remove('on'); $('#worldBack').hidden = false; $('#worldBack').textContent = 'Back to the greenhouse'; jumpBtn.hidden = true;
-      FM.tiles.forEach((_, i) => fmRefresh(i)); fmPhase(); fmHud(true); idleShown = null;
+      try { fetchWeather(); } catch (e) {} fmSprinkle(); FM.tiles.forEach((_, i) => fmRefresh(i)); fmPhase(); fmHud(true); idleShown = null;
       if (!FM.s.seen) { FM.s.seen = 1; fmSave(); setTimeout(() => say('Your own farm. Till a tile with the hoe (1), plant from the seed bag (2), water it (3), and harvest with the sickle (4). Crops grow in real time while their soil is wet.', 7000), 600); }
       else say(`The farm. ${FM_SEA[fmSeason()]} in Bangalore.`, 2400);
     }, '#E8F4DC');
   }
   function leaveFarm(){
     if (!inWorld || zone !== 'farm') return; closePanel(); tone(780, .2, 'sine', .05, 520);
+    if (FM.crow) { FM.sc.remove(FM.crow.m); FM.crow = null; }
     fade(() => { inWorld = false; zone = 'hub'; walkTarget = null; FM.pend = null; vy = 0; pos.copy(saved.pos); yaw = saved.yaw; pitch = saved.pitch; if (!vaultOpen) { pos.set(3.2, 1.6, .3); yaw = Math.PI / 2; pitch = 0; } uiZone(); dock.classList.add('on'); $('#worldBack').hidden = true; jumpBtn.hidden = true; fmHud(true); idleShown = null; }, '#E8F4DC');
   }
   const farmValid = (x, z) => x > -26 && x < 26 && z > -40 && z < -.3 && !FM.blocks.some(b => x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1);
   function farmEgg(p){
     if (p.egg === 'ftile') return fmUse(p.o.userData.ti);
     if (p.egg === 'fmgh') return leaveFarm();
+    if (p.egg === 'fcrate') return fmShipPanel();
+    if (p.egg === 'fshop') return fmShopPanel();
+    if (p.egg === 'fcrow') return fmShoo();
     return false;
   }
   function farmLabelFor(p){
     if (p.egg === 'ftile') return fmActive(p.o.userData.ti) ? fmLabel(p.o.userData.ti) : null;
     if (p.egg === 'fmgh') return 'Back into the greenhouse';
+    if (p.egg === 'fcrate') return 'Shipping crate: sell your harvest';
+    if (p.egg === 'fshop') return 'Seeds and supplies';
+    if (p.egg === 'fcrow') return 'Shoo the crow!';
     return null;
   }
   // the tile in front of you, for the keyboard
@@ -13694,14 +13811,15 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   addEventListener('keydown', e => {
     if (!(inWorld && zone === 'farm') || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || e.repeat || panel.classList.contains('on')) return;
     const k = e.key.toLowerCase();
-    if (/^[1-5]$/.test(k)) { const t = FM_TOOLS[+k - 1][0]; if (t === 'seed' && FM.s.tool === 'seed') fmSeedPanel(); else fmTool(t); }
+    if (/^[1-5]$/.test(k)) { const t = FM_TOOLS[+k - 1][0]; if (t === 'seed' && FM.s.tool === 'seed') fmSeedPanel(); else if (t === 'hand' && FM.s.tool === 'hand') fmPlacePanel(); else fmTool(t); }
     else if (k === 'e' || k === 'f') { const i = fmFront(); if (i >= 0) fmUse(i); }
     else if (k === 'b' || k === 'i') fmBagPanel();
   });
   let fmWheelT = 0; canvas.addEventListener('wheel', e => { if (!(inWorld && zone === 'farm') || performance.now() < fmWheelT) return; fmWheelT = performance.now() + 180; fmCycle(e.deltaY > 0 ? 1 : -1); }, { passive: true });
   function farmStep(dt, now){
     fmHud(false);
-    if ((FM.tickT -= dt) <= 0) { FM.tickT = 3; const ph = ghPhase(); if (ph !== FM.ph || Math.random() < .05) fmPhase(); FM.tiles.forEach((_, i) => fmRefresh(i)); }
+    if ((FM.tickT -= dt) <= 0) { FM.tickT = 3; const ph = ghPhase(); if (ph !== FM.ph || Math.random() < .05) fmPhase(); fmSprinkle(); if (typeof raining === 'function' && raining() && fmRain() && !FM.rainSaid) { FM.rainSaid = true; say('It’s raining in Bangalore: the farm is watering itself.', 3200); } FM.tiles.forEach((_, i) => fmRefresh(i)); }
+    fmCrowStep(dt, now); if (!reduce) FM.tiles.forEach(L => { if (L.plant && L.plant.userData.spin) L.plant.userData.spin.rotation.y += dt * 2; });
     if (FM.pend != null && !walkTarget) { const i = FM.pend; FM.pend = null; const L = FM.tiles[i]; if (Math.hypot(pos.x - L.x, pos.z - L.z) < 3.2) fmDo(i); }
     if (pos.z > -.5 && Math.abs(pos.x) < .7) { pos.z = -.6; leaveFarm(); }
     const fi = fmFront(); FM.front = fi; FM.ring.visible = fi >= 0 && fine; if (fi >= 0) { FM.ring.position.set(FM.tiles[fi].x, .07, FM.tiles[fi].z); }
