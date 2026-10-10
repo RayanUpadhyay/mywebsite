@@ -2968,7 +2968,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     RM.dust.material.opacity = ph === 'night' ? .15 : .55; RM.glows.forEach(sp => sp.material.opacity = ph === 'day' ? .3 : .65); RM.ph = ph;
   }
   function roomStep(dt, now){
-    lairFxStep(dt, now); space2Step(dt);
+    lairFxStep(dt, now); space2Step(dt); try { cityDepth(); } catch (e) {}
     if (!RM.dust || inWorld || reduce) return; const a = RM.dust.geometry.attributes.position, p = a.array, t = now / 1000;
     for (let i = 0; i < p.length; i += 3) { p[i] += Math.sin(t * .3 + i) * dt * .02; p[i + 1] += Math.cos(t * .21 + i * .7) * dt * .015; p[i + 2] += Math.sin(t * .17 + i * 1.3) * dt * .02; if (p[i + 1] < .1) p[i + 1] = 2.4; if (p[i + 1] > 2.5) p[i + 1] = .2; }
     a.needsUpdate = true;
@@ -3304,9 +3304,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const SW = { on: false, roof: 0, lx: 0, lz: 0 }, bTops = new Map();
   function bTop(mx, mz){
     if (!bTops.size && BL.bld) BL.bld.forEach(b => { for (let gx = Math.floor(b.x0 / 16); gx <= Math.floor(b.x1 / 16); gx++) for (let gz = Math.floor(b.z0 / 16); gz <= Math.floor(b.z1 / 16); gz++) { const k = gx + ',' + gz; if (!bTops.has(k)) bTops.set(k, []); bTops.get(k).push(b); } });
-    const L = bTops.get(Math.floor(mx / 16) + ',' + Math.floor(mz / 16)); let t = 0; if (L) for (const b of L) if (mx > b.x0 && mx < b.x1 && mz > b.z0 && mz < b.z1) { const h = (SG.wreck || []).includes(b.key) && !newTL() ? b.h * .22 : b.h; if (h > t) t = h; } return t;
+    const L = bTops.get(Math.floor(mx / 16) + ',' + Math.floor(mz / 16)); let t = 0; if (L) for (const b of L) if (mx > b.x0 && mx < b.x1 && mz > b.z0 && mz < b.z1) { const h = (SG.wreck || []).includes(b.key) && !newTL() ? b.h * .22 : b.h; if (h > t) t = h; } if (BL.bld && inTowerZone(mx, mz, -.8) && TW.roof + .2 > t) t = TW.roof + .2; return t;
   }
-  const swBlocked = (mx, mz, feet) => Math.abs(mx) > 372 || Math.abs(mz) > 372 || inTowerZone(mx, mz, 1) || bTop(mx, mz) > feet + .45;
+  const swBlocked = (mx, mz, feet) => Math.abs(mx) > 372 || Math.abs(mz) > 372 || inTowerZone(mx, mz, 1) && feet < TW.roof + .3 || bTop(mx, mz) > feet + .45;
   const swRoofOK = (x, z) => { const [mx, mz] = toMap(x, z); return !swBlocked(mx, mz, SW.roof); };
   function swReset(){ SW.on = false; SW.roof = 0; if (zone === 'blr' && web.p) { web.p = null; drawWeb(); } }
   function webSwingStep(dt){
@@ -3321,13 +3321,15 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       // into a wall: back to where you were
       let [mx, mz] = toMap(pos.x, pos.z); if (swBlocked(mx, mz, pos.y - 1.6)) { pos.x = SW.lx; pos.z = SW.lz; cityV.x *= -.2; cityV.z *= -.2; [mx, mz] = toMap(pos.x, pos.z); }
       const sup = bTop(mx, mz);
-      if (pos.y - 1.6 <= sup && cityV.y <= 0) { pos.y = sup + 1.6; cityV.set(0, 0, 0); web.p = null; SW.on = false; SW.roof = sup > .3 ? sup : 0; vy = 0; grounded = true; tone(140, .08, 'sine', .05); drawWeb(); }
+      if (pos.y - 1.6 <= sup && cityV.y <= 0) { pos.y = sup + 1.6; cityV.set(0, 0, 0); web.p = null; SW.on = false; SW.roof = sup > .3 ? sup : 0; vy = 0; grounded = true; tone(140, .08, 'sine', .05); if (!SW.roof) swLandClear(); drawWeb(); }
     } else if (SW.roof) {
       const [mx, mz] = toMap(pos.x, pos.z), t = bTop(mx, mz);
       if (t < SW.roof - .35) { SW.on = true; cityV.set(0, 0, 0); SW.roof = 0; } else pos.y = SW.roof + 1.6;
     }
     SW.lx = pos.x; SW.lz = pos.z; drawWeb();
   }
+  // came down somewhere you can't stand (the lake, a fenced yard, hard against a wall): step to the nearest place you can
+  function swLandClear(){ if (blrValid(pos.x, pos.z)) return; for (let r = 1; r <= 70; r += 1.5) for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, x = pos.x + Math.cos(a) * r, z = pos.z + Math.sin(a) * r; if (blrValid(x, z)) { pos.x = x; pos.z = z; SW.lx = x; SW.lz = z; return; } } }
   function swJump(){ if (SW.on) return; SW.on = true; SW.roof = 0; cityV.set(-Math.sin(yaw) * 2.5, 7.5, -Math.cos(yaw) * 2.5); tone(420, .08, 'sine', .04, 620); }
   function toRoofTop(teleport){
     web.p = null; cityAir = false; cityV.set(0, 0, 0); zone = 'roof'; vy = 0;
@@ -8684,7 +8686,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // roads on a grid, with dashed centre lines
     const L0 = [-275, -220, -165, -110, -55, 0, 55, 110, 165, 220, 275], L = [-385, -330, ...L0, 330, 385], rt = tex(64, 512, (c, w, h) => { c.fillStyle = '#34373F'; c.fillRect(0, 0, w, h); c.fillStyle = '#E8C04A'; for (let y = 0; y < h; y += 64) c.fillRect(w / 2 - 2, y, 4, 34); c.fillStyle = '#6A6E78'; c.fillRect(0, 0, 3, h); c.fillRect(w - 3, 0, 3, h); });
     rt.wrapT = THREE.RepeatWrapping; rt.repeat.set(1, 46); const roadM = new THREE.MeshStandardMaterial({ map: rt, roughness: .95 });
-    L.forEach(l => { [0, 1].forEach(dir => { const r = new THREE.Mesh(new THREE.PlaneGeometry(10, 770), roadM); r.rotation.x = -Math.PI / 2; if (dir) r.rotation.z = Math.PI / 2; r.position.set(dir ? 0 : l, .01 + dir * .02, dir ? l : 0); r.userData.walk = true; g.add(r); }); });
+    L.forEach(l => { [0, 1].forEach(dir => { const r = new THREE.Mesh(new THREE.PlaneGeometry(10, 770), roadM); r.rotation.x = -Math.PI / 2; if (dir) r.rotation.z = Math.PI / 2; r.position.set(dir ? 0 : l, .02 + dir * .015, dir ? l : 0); r.userData.walk = true; g.add(r); }); });
     // buildings in the blocks between the roads (none in the open squares where things happen)
     const clear = (x0, x1, z0, z1) => Object.values(DIST).every(d => { const cx = clamp(d.x, x0, x1), cz = clamp(d.z, z0, z1); return Math.hypot(cx - d.x, cz - d.z) > 31; }) && !(x1 > HOUSE.x0 - 3 && x0 < HOUSE.x1 + 3 && z1 > HOUSE.z0 - 3 && z0 < HOUSE.z1 + 3) && !(x0 < -124 && z1 > -170 && z0 < -62) && !(x1 > -130 && x0 < -90 && z1 > 70 && z0 < 82);
     const winM = [0, 1, 2].map(i => new THREE.MeshStandardMaterial({ color: 0x1B1D24, map: winTex(true, ['#FFD27A', '#FFC93C', '#C9CFD8']), emissive: 0xFFFFFF, emissiveMap: winTex(true, [['#FFD27A', '#C9CFD8'], ['#FFC93C', '#9FD8FF'], ['#FFB070', '#FFD27A']][i]), emissiveIntensity: .45 }));
@@ -8708,7 +8710,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     for (let i = 0; i < 9; i++) box(.9, .08, .5, mat(0x5A5E68, { metalness: .6 }), HOUSE.x1 + .5, 1 + i * .95, -16 - (i % 2) * .6, g);
     signAt('HOME', '#FFC93C', HOUSE.door[0], 4, HOUSE.z1 + .3, 5);
     // the lake, and the Broker's warehouse beside it
-    const water = new THREE.Mesh(new THREE.PlaneGeometry(146, 104), new THREE.MeshStandardMaterial({ color: 0x14304A, emissive: 0x0A1E30, roughness: .2, metalness: .4 })); water.rotation.x = -Math.PI / 2; water.position.set(-201, .03, -114); g.add(water); blrBox(-275, -128, -166, -62);
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(146, 104), new THREE.MeshStandardMaterial({ color: 0x14304A, emissive: 0x0A1E30, roughness: .2, metalness: .4 })); water.rotation.x = -Math.PI / 2; water.position.set(-201, .06, -114); water.material.polygonOffset = true; water.material.polygonOffsetFactor = -2; water.material.polygonOffsetUnits = -2; g.add(water); blrBox(-275, -128, -166, -62);
     [[-124, -124], [-96, -124], [-124, -96], [-96, -96]].forEach(([x, z]) => { box(.8, 8, .8, mat(0x5A5E68), x, 4, z, g); blrBox(x - .4, x + .4, z - .4, z + .4); }); box(30, .4, 30, mat(0x3A3D44, { metalness: .5 }), -110, 8.2, -110, g);
     signAt('BROKER DYNAMICS · WAREHOUSE', '#FF8A2E', -110, 10.2, -95, 18); lamp(-110, -110, 0xFFB070, 1.2, 34);
     // Broker Tower: glass, four floors and the roof, a lift up the east side, the door on the west
@@ -11152,11 +11154,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       for (let t = -370; t < 370; t += 5) { const c = t + 2.5, o = l + side * 6.2, x = dir ? c : o, z = dir ? o : c, skip = ROADS.some(r => Math.abs(c - r) < 8) || offMap(x, z) || inTowerZone(x, z, 3); if (skip) { flush(); continue; } if (run) run[1] = t + 5; else run = [t, t + 5]; } flush(); })));
     inst(gB(2.4, .16, 5), BLC.kerbM = mat(0x5C5954, { roughness: .95 }), kerb, g).receiveShadow = true; inst(gB(.18, .2, 5), mat(0xA8A49A), lineK, g);
     // zebra crossings on every side of every junction
-    const zeb = []; BLC.nodes.forEach(n => [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dz]) => { for (let s = -4; s <= 4; s += 1.1) zeb.push([n.x + dx * 7.6 + (dx ? 0 : s), .05, n.z + dz * 7.6 + (dz ? 0 : s), dx ? Math.PI / 2 : 0]); }));
+    const zeb = []; BLC.nodes.forEach(n => [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dz]) => { for (let s = -4; s <= 4; s += 1.1) zeb.push([n.x + dx * 7.6 + (dx ? 0 : s), .065, n.z + dz * 7.6 + (dz ? 0 : s), dx ? Math.PI / 2 : 0]); }));
     inst(gB(.55, .02, 2.4), mat(0xEDEBE3, { roughness: .8 }), zeb, g);
     // a plain patch of asphalt where two roads cross, so neither road's markings run through the junction
     { const jt = tex(128, 128, (c, w, h) => { c.fillStyle = '#3A3C41'; c.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { const v = 40 + Math.random() * 40; c.fillStyle = `rgb(${v},${v},${v + 4})`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); } });
-      const jm = new THREE.MeshStandardMaterial({ map: jt, roughness: .92 }), js = []; ROADS.forEach(x => ROADS.forEach(z => { if (!(x < -126 && z > -168 && z < -60)) js.push([x, .04, z, 0, 1, 1, 1, -Math.PI / 2]); }));
+      const jm = new THREE.MeshStandardMaterial({ map: jt, roughness: .92 }), js = []; ROADS.forEach(x => ROADS.forEach(z => { if (!(x < -126 && z > -168 && z < -60)) js.push([x, .05, z, 0, 1, 1, 1, -Math.PI / 2]); }));
       const jim = inst(new THREE.PlaneGeometry(10, 10), jm, js, g); jim.receiveShadow = true; BLC.junctM = jm; }
     // traffic lights at the kerb on the left of every approach, one set of lamps per direction
     const poles = [], heads = [], lamps = { nsR: [], nsG: [], ewR: [], ewG: [] };
@@ -11290,7 +11292,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const roofV = cityLive(), inB = roofV || inWorld && (zone === 'blr' || zone === 'event' && EV && EV.inMap); if (!inB) { if (DRV.on) getOut(true); drvBtn.hidden = true; return; }
     const mood = BL.mood || 'night'; if (BLC.mood !== mood) applyMood(mood);
     BLC.sky.position.set(camera.position.x, 0, camera.position.z); skyStep(dt, now); city4Step(dt, now);
-    const M = BLC.M; BLC.sun.position.set(pos.x + M.sd.x * 140, M.sd.y * 140, pos.z + M.sd.z * 140); BLC.sun.target.position.set(pos.x, 0, pos.z);
+    const M = BLC.M; shadowSnap(BLC.sun, M.sd, pos.x, pos.z, 110 / BLC.sun.shadow.mapSize.x, 140);
     if (BLC.roofKey !== (SG.wreck || []).length + ':' + newTL()) roofBits();
     if (BLC.mast) BLC.mast.visible = Math.sin(now / 400) > 0; if (BLC.rotor) { BLC.heli.visible = !SG.active; BLC.rotor.rotation.y += dt * .6; }
     const T = now / 1000; if (BLC.sig) { const ns = nsGreen(T), ew = ewGreen(T); BLC.sig.nsG.visible = ns; BLC.sig.nsR.visible = !ns; BLC.sig.ewG.visible = ew; BLC.sig.ewR.visible = !ew; }
@@ -11675,7 +11677,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         idx.forEach((i, j) => { const [b, y, door] = own[key][i]; im.getMatrixAt(j, m4); (b.det || (b.det = [])).push({ im, i: j, y, door, m: m4.clone() }); }); }); });
     return out;
   }
-  function detCull(){ if (!detChunks.length) return; const [mx, mz] = toMap(pos.x, pos.z), far = lowFx ? 150 : 210; detChunks.forEach(c => c.im.visible = Math.abs(c.x - mx) < far && Math.abs(c.z - mz) < far); }
+  function detCull(){ if (!detChunks.length) return; const [mx, mz] = toMap(pos.x, pos.z), far = lowFx ? 150 : 230; detChunks.forEach(c => { const d = Math.max(Math.abs(c.x - mx), Math.abs(c.z - mz)); if (c.im.visible) { if (d > far + 32) c.im.visible = false; } else if (d < far) c.im.visible = true; }); }
   // ---------- facades: a ledge over every row of windows, balconies, AC units, shop awnings, roof parapets ----------
   function facadeDetail(g){
     const keys = ['ledge', 'par', 'slab', 'rail', 'ac', 'awn'], L = {}, own = {}, awnCol = []; keys.forEach(k => { L[k] = []; own[k] = []; });
@@ -12233,7 +12235,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ---------- pools of light under the street lamps ----------
   function cityPools(){
     const pts = []; ROADS.slice(1, -1).forEach(l => { for (let t = -370; t <= 370; t += 30) pts.push([l + 5.6, t], [t, l + 5.6]); });
-    const ok = pts.filter(([x, z]) => !offMap(x, z) && !inTowerZone(x, z, 3)).map(([x, z]) => [x, .07, z, 0, 12, 1, 12]);
+    const ok = pts.filter(([x, z]) => !offMap(x, z) && !inTowerZone(x, z, 3)).map(([x, z]) => [x, .09, z, 0, 12, 1, 12]);
     const m = BLC.poolM = new THREE.MeshBasicMaterial({ map: tex(128, 128, (c, w, h) => { const gr = c.createRadialGradient(64, 64, 2, 64, 64, 64); gr.addColorStop(0, 'rgba(255,200,130,1)'); gr.addColorStop(.4, 'rgba(255,180,110,.45)'); gr.addColorStop(1, 'rgba(255,170,100,0)'); c.fillStyle = gr; c.fillRect(0, 0, w, h); }),
       transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0, polygonOffset: true, polygonOffsetFactor: -4 });
     const im = BLC.pools = inst(new THREE.PlaneGeometry(1, 1).rotateX(-Math.PI / 2), m, ok, BL.mapG); im.userData.noPick = true; im.renderOrder = 2;
@@ -12352,8 +12354,22 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       else if (hx === 0x3F7A3F && gt === 'SphereGeometry') { o.geometry = cityCrownGeo(); o.material = new THREE.MeshStandardMaterial({ color: 0x4A8A3A, map: cityLeafM().map, roughness: .85 }); o.scale.set(.48, .5, .48); }
       else if (hx === 0xB8653A) { m.map = txGet('terracotta', () => txWrap(tex(64, 64, (c, w, h) => { c.fillStyle = '#C07048'; c.fillRect(0, 0, w, h); txSpeck(c, w, h, 300, .12); c.fillStyle = 'rgba(0,0,0,.12)'; c.fillRect(0, 6, w, 4); }))); m.needsUpdate = true; } });
   }
+  // ---------- no flicker: snapped shadows, layered ground, and a near plane that suits the height ----------
+  const _ssR = new THREE.Vector3(), _ssU = new THREE.Vector3(), _ssD = new THREE.Vector3(), _ssC = new THREE.Vector3();
+  function shadowSnap(L, sd, x, z, texel, dist){
+    _ssD.copy(sd).normalize(); _ssR.set(0, 1, 0).cross(_ssD); if (_ssR.lengthSq() < 1e-6) _ssR.set(1, 0, 0); _ssR.normalize(); _ssU.copy(_ssD).cross(_ssR).normalize();
+    _ssC.set(x, 0, z); const u = Math.round(_ssC.dot(_ssR) / texel) * texel, v = Math.round(_ssC.dot(_ssU) / texel) * texel, w = _ssC.dot(_ssD);
+    _ssC.copy(_ssR).multiplyScalar(u).addScaledVector(_ssU, v).addScaledVector(_ssD, w); L.target.position.copy(_ssC); L.position.copy(_ssC).addScaledVector(_ssD, dist); }
+  // every flat layer gets a draw order: the ground at the back, then the roads, then everything laid on top of them
+  function cityLayers(){
+    const back = (m, k) => { if (!m) return; m.polygonOffset = true; m.polygonOffsetFactor = k; m.polygonOffsetUnits = k; m.needsUpdate = true; };
+    BL.mapG.children.forEach(o => { const P = o.isMesh && o.geometry.parameters; if (!P) return; if (P.width === 900) back(o.material, 4); if (P.width === 10 && P.height === 770) back(o.material, 2); });
+    back(BLC.junctM, 1);
+  }
+  function cityDepth(){ const want = inWorld && (zone === 'blr' || zone === 'roof' || zone === 'city') && !A && !EV; if (want) { const n = clamp(.1 + Math.max(0, pos.y - BL.off.y - 4) * .003, .1, .2); if (Math.abs(camera.near - n) > .005) { camera.near = n; camera.updateProjectionMatrix(); } BLC.nearSet = true; }
+    else if (BLC.nearSet) { BLC.nearSet = false; if (zone !== 'mc' && zone !== 'sp' && zone !== 'space') { camera.near = .05; camera.updateProjectionMatrix(); } } }
   function city4Build(){
-    try { cityPools(); } catch (e) { console.error(e); } try { cityClouds(); } catch (e) { console.error(e); } try { if (BLC.streetG) cityFacade2(BLC.streetG); } catch (e) { console.error(e); } try { buildNewDistricts(); } catch (e) { console.error(e); }
+    try { cityLayers(); } catch (e) { console.error(e); } try { cityPools(); } catch (e) { console.error(e); } try { cityClouds(); } catch (e) { console.error(e); } try { if (BLC.streetG) cityFacade2(BLC.streetG); } catch (e) { console.error(e); } try { buildNewDistricts(); } catch (e) { console.error(e); }
     try { // anything the code holds on to by name keeps its single mesh
       const skip = new Set(), keep = v => { if (!v) return; if (v.isInstancedMesh) skip.add(v); else if (Array.isArray(v)) v.forEach(keep); else if (typeof v === 'object' && !v.isObject3D && !v.isMaterial && !v.isTexture && !v.isBufferGeometry && Object.getPrototypeOf(v) === Object.prototype) Object.values(v).forEach(w => { if (w && w.isInstancedMesh) skip.add(w); else if (Array.isArray(w)) w.forEach(x => x && x.isInstancedMesh && skip.add(x)); }); };
       [BLC, BL, PED, PL].forEach(o => Object.values(o).forEach(keep)); (BL.bld || []).forEach(b => skip.add(b.im)); [BLC.streetG, BL.mapG].forEach(p => p && cityChunk(p, skip)); } catch (e) { console.error(e); }
@@ -13696,6 +13712,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       rt.wrapS = rt.wrapT = THREE.RepeatWrapping; rt.repeat.set(4, 2); const rain = new THREE.Mesh(new THREE.PlaneGeometry(60, 30), new THREE.MeshBasicMaterial({ map: rt, transparent: true, depthWrite: false })); rain.position.set(0, 10, -10 - k * 5); rain.raycast = () => {}; sc.add(rain); MED.rain.push({ t: rt, sp: .5 + k * .25 }); }
     // reception: a curved desk with a glowing edge
     const desk = new THREE.Mesh(new THREE.CylinderGeometry(3, 3, 1.1, 40, 1, true, Math.PI * .75, Math.PI * .5), mat(0xE8EEF2, { roughness: .3, side: THREE.DoubleSide })); desk.position.set(0, .55, -1); sc.add(desk);
+    { const inner = new THREE.Mesh(new THREE.CylinderGeometry(2.45, 2.45, 1.1, 40, 1, true, Math.PI * .75, Math.PI * .5), mat(0xC9D2DA, { roughness: .5, side: THREE.DoubleSide })); inner.position.set(0, .55, -1); sc.add(inner);
+      const top = new THREE.Mesh(new THREE.RingGeometry(2.4, 3.06, 40, 1, Math.PI * .25, Math.PI * .5), mat(0xF4F7F8, { roughness: .25, side: THREE.DoubleSide })); top.rotation.x = Math.PI / 2; top.position.set(0, 1.11, -1); sc.add(top);
+      [Math.PI * .75, Math.PI * 1.25].forEach(a => { const e = box(.56, 1.1, .05, mat(0xE8EEF2, { roughness: .3 }), Math.sin(a) * 2.72, .55, -1 + Math.cos(a) * 2.72, sc); e.rotation.y = a + Math.PI / 2; });
+      const scr = box(.5, .32, .03, mat(0x16181D), -.9, 1.32, -3.5, sc); scr.rotation.y = .3; box(.04, .2, .04, mat(0x9AA3AE, { metalness: .6 }), -.93, 1.16, -3.55, sc); }
     const edge = new THREE.Mesh(new THREE.TorusGeometry(3, .03, 8, 40, Math.PI * .5), glow(0x5FE0E8, 1.2)); edge.rotation.x = Math.PI / 2; edge.rotation.z = Math.PI * .25; edge.position.set(0, 1.1, -1); sc.add(edge);
     medBlocks.push({ x0: -2.4, x1: 2.4, z0: -4.4, z1: -1.6 });
     const logo = new THREE.Mesh(new THREE.PlaneGeometry(5.4, 1.1), new THREE.MeshBasicMaterial({ transparent: true, map: medTex(1080, 220, (g, w, h) => { g.fillStyle = '#E8F7FA'; g.font = `800 110px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('MERIDIAN GENERAL', w / 2, 90); g.fillStyle = '#5FE0E8'; g.font = `600 36px "Instrument Sans", sans-serif`; g.fillText('TRAUMA · SURGERY · CRITICAL CARE', w / 2, 180); }) }));
@@ -13744,6 +13764,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // the corridors: dim, with a guide line on the floor
     [[18.5, '#E4572E'], [-18.5, '#5FE0E8']].forEach(([x, c]) => { B(16, 3.4, .2, wallM, x, 1.7, -1.6); B(16, 3.4, .2, wallM, x, 1.7, 1.6); const ln = new THREE.Mesh(new THREE.PlaneGeometry(16, .12), new THREE.MeshBasicMaterial({ color: c })); ln.rotation.x = -Math.PI / 2; ln.position.set(x, .01, 0); ln.raycast = () => {}; sc.add(ln);
       for (let k = 0; k < 4; k++) { const d = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 2.2), mat(0x3A4350)); d.position.set(x - 6 + k * 4, 1.1, k % 2 ? 1.49 : -1.49); d.rotation.y = k % 2 ? Math.PI : 0; sc.add(d); } });
+    B(.2, 1, 3, wallM, 26, 3.9, 0); B(.2, 1, 3, wallM, -26, 3.9, 0);
+    // the theatre's glass wall goes up to a header, not to nothing
+    B(.2, 1.4, 9.1, wallM, -29, 3.7, 0); B(.1, .1, 9.1, steel, -29, 3, 0);
+    // the ER monitors stand on poles, and the curtains hang from rails
+    for (let k = 0; k < 4; k++) [-1, 1].forEach(s2 => { const x = 28.5 + k * 3.2, z = s2 * 5.6; C(.025, .025, 1.5, steel, x - .7, .75, z + s2 * .6, 8); C(.22, .22, .04, steel, x - .7, .02, z + s2 * .6, 16); B(.05, .05, 2.8, steel, x + 1.5, 2.72, z); [-1.4, 1.4].forEach(o => C(.015, .015, 1.68, steel, x + 1.5, 3.56, z + o, 6)); });
     const lobbyL = new THREE.PointLight(0xBFE6FF, .9, 30, 2); lobbyL.position.set(0, 6, 0); sc.add(lobbyL);
     const cornerL = new THREE.PointLight(0x5FE0E8, .5, 14, 2); cornerL.position.set(-18, 2.8, 0); sc.add(cornerL);
     buildWard(); cbPager();
@@ -13791,6 +13816,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const wallM = mcGet('medWall', () => new THREE.MeshStandardMaterial({ map: txPanel(), color: 0x9EAAB6, roughness: .55, envMap: env, envMapIntensity: .25 }));
     const ceilM = mcGet('medCeil', () => new THREE.MeshStandardMaterial({ map: txCeil(), color: 0x7A8490, roughness: .9 }));
     MED.sc.traverse(o => { if (!o.isMesh || o.userData.mr || !o.material || Array.isArray(o.material)) return; o.userData.mr = 1; const m = o.material, gt = o.geometry.type, hx = m.color ? m.color.getHex() : 0;
+      if (gt === 'SphereGeometry' && hx === 0x2F6B4A) { o.geometry = cityCrownGeo(); o.material = mcGet('medLeaf', () => new THREE.MeshStandardMaterial({ color: 0x3E8A4A, map: cityLeafM().map, roughness: .8 })); o.scale.set(.72, .8, .72); return; }
       if (gt === 'PlaneGeometry' && o.userData.walk && m.map && m.roughness <= .25) { medUV(o, 1.2); o.material = floorM; o.receiveShadow = true; medGleam(o); return; }
       if (gt === 'PlaneGeometry' && hx === 0x161B23 && Math.abs(o.rotation.x - Math.PI / 2) < .01) { medUV(o, 1.2); o.material = ceilM; return; }
       if (gt === 'BoxGeometry' && hx === 0x2A313C && Math.max(o.geometry.parameters.height, 0) >= 2.5) { medUV(o, 2.4); o.material = wallM; return; }
@@ -15404,7 +15430,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     panel.scrollTop = 0; panel.classList.add('on');
   }
   panelBody.addEventListener('click', e => { const b = e.target.closest('[data-cb]'); if (b) { const i = +b.dataset.cb; closePanel(); setTimeout(() => cbRun(i, i < CB.s.ch), 200); } });
-  function cbPager(){ const g = new THREE.Group(); g.position.set(1.6, 1.12, -2.2); g.userData.egg = 'cbstart'; const p = box(.34, .06, .22, mat(0x16181D), 0, 0, 0, g); const scr = new THREE.Mesh(new THREE.PlaneGeometry(.28, .14), new THREE.MeshBasicMaterial({ map: tex(140, 70, (c, w, h) => { c.fillStyle = '#2A0606'; c.fillRect(0, 0, w, h); c.fillStyle = '#FF4A3A'; c.font = '700 22px sans-serif'; c.textAlign = 'center'; c.fillText('CODE', w / 2, 30); c.fillText('BLACK', w / 2, 58); }) })); scr.rotation.x = -Math.PI / 2 + .3; scr.position.set(0, .035, 0); g.add(scr); const l = new THREE.PointLight(0xFF3A2A, .6, 2.5, 2); l.position.y = .3; g.add(l); MED.pager = { g, l }; MED.sc.add(g); }
+  function cbPager(){ const g = new THREE.Group(); g.position.set(1.15, 1.17, -3.4); g.rotation.y = .45; g.userData.egg = 'cbstart'; const p = box(.34, .06, .22, mat(0x16181D), 0, 0, 0, g); const scr = new THREE.Mesh(new THREE.PlaneGeometry(.28, .14), new THREE.MeshBasicMaterial({ map: tex(140, 70, (c, w, h) => { c.fillStyle = '#2A0606'; c.fillRect(0, 0, w, h); c.fillStyle = '#FF4A3A'; c.font = '700 22px sans-serif'; c.textAlign = 'center'; c.fillText('CODE', w / 2, 30); c.fillText('BLACK', w / 2, 58); }) })); scr.rotation.x = -Math.PI / 2 + .3; scr.position.set(0, .035, 0); g.add(scr); const l = new THREE.PointLight(0xFF3A2A, .6, 2.5, 2); l.position.y = .3; g.add(l); MED.pager = { g, l }; MED.sc.add(g); }
   function cbWorldStep(dt){ if (CB.taskStep) CB.taskStep(); sfTraceStep(); if (MED.sc && inWorld && zone === 'med' && !CB.busy && (sfLive() ? MED.mood !== 'ultron' : MED.mood === 'ultron')) cbMood(sfLive() ? 'ultron' : ''); if (MED.mood === 'ultron' && MED.red2 && !reduce) MED.red2.intensity = Math.random() < .04 ? .2 : 1.6; if (MED.pager && !reduce) MED.pager.l.intensity = .4 + Math.max(0, Math.sin(performance.now() / 300)) * .6; }
   // ----- chapters 4 and 5: the sleep ward, and the operating theatre -----
   OUTFITS.cb_anaes = { hero: 1, c1: '#6B5FB8', c2: '#C9C2F0', gloves: 1, mask: 'helmet', glow: 1 };
