@@ -5342,6 +5342,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // cape
     let cape = null;
     if (k.cape) { cape = new THREE.Group(); cape.position.set(0, 1.5, .2); g.add(cape); const cm = new THREE.Mesh(new THREE.PlaneGeometry(.56 * bulk, 1.2), M(O === OUTFITS.asgard || O === OUTFITS.thor || O === OUTFITS.superman ? (O === OUTFITS.asgard ? k.c2 : '#B3121E') : k.c2, { side: THREE.DoubleSide, metalness: 0 })); cm.position.y = -.6; cm.castShadow = true; cape.add(cm); }
+    if (!o.plain && !mlNow()) try { avRealism({ g, legs, torso, arms, head, skinM, c1M, c2M, hairM, k, O, bulk, L }); } catch (e) { console.error(e); }
     g.scale.setScalar(s * (bulk > 1 ? 1.15 : 1));
     g.traverse(q => { if (q.isMesh) q.userData.noPick = true; });
     let held = null;
@@ -5353,6 +5354,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         if (atk > 0) { arms[1].a.rotation.x = -2.2 * Math.sin(atk * Math.PI); }
         head.position.y = 1.72 + (bulk - 1) * .1 + Math.sin(t * 2) * .006;
         if (cape) cape.rotation.x = .12 + mv * .35 + Math.sin(t * 3) * .03;
+        if (g.userData.lids || !mlNow()) avLive(g, head, t);
       } };
   }
 
@@ -5369,7 +5371,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function meStep(dt, now){
     const want = entered && (tpv || mirror) && !(EV && EV.cx && EV.cx.gal && (EV.cx.gal.phase === 'eat' || EV.cx.gal.phase === 'fall')) && !(EV && EV.st && EV.st.lp);
     if (!want) { if (me && me.g.parent) me.g.parent.remove(me.g); return; }
-    const L = curLook(), key = JSON.stringify(L) + armHurt() + (EV ? EV.scale || 1 : 1);
+    const L = curLook(), key = JSON.stringify(L) + armHurt() + (EV ? EV.scale || 1 : 1) + (mlNow() ? 'ml' : '');
     if (key !== meKey) { if (me) { if (me.g.parent) me.g.parent.remove(me.g); disposeDeep(me.g); } me = avatar(L, { burn: armHurt(), s: EV ? EV.scale || 1 : 1 }); meKey = key; meHeld = undefined; }
     const sc = sceneOf(); if (sc && me.g.parent !== sc) sc.add(me.g);
     const h = EV ? EV.prop || null : A ? (A.fists ? null : A.w.id) : held; if (h !== meHeld) { me.hold(h); meHeld = h; }
@@ -8369,7 +8371,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function bdEyes(R, par, col, w, y, z, sep){ [-1, 1].forEach(sd => R.add(new THREE.BoxGeometry(w || .045, .02, .01), col === undefined ? 0x16181D : R.glow(col, 1.6), sd * (sep || .05), y || .02, z || -.145, par || R.head)); }
   function bdFace(R, skin, hair, hairC){ const sk = R.add(new THREE.SphereGeometry(.15, 16, 12), skin, 0, 0, 0, R.head); sk.scale.set(.95, 1.1, .95); bdEyes(R); if (hair) R.add(new THREE.SphereGeometry(.157, 16, 10, 0, Math.PI * 2, 0, Math.PI / (hair === 'buzz' ? 2.4 : 2.1)), hairC || 0x1A1410, 0, .02, .01, R.head); return sk; }
   function bodyAv(id, s){
-    const make = BODY[id]; if (!make) return null; const R = make();
+    const make = BODY[id]; if (!make) return null; const R = make(); if (!mlNow()) try { bodyRealism(R); } catch (e) { console.error(e); }
     R.g.scale.multiplyScalar(s || 1); R.g.traverse(q => { if (q.isMesh) q.userData.noPick = true; });
     let held = null;
     return { g: R.g, head: R.head, custom: 1, arms: R.arms, legs: R.legs,
@@ -8382,6 +8384,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         if (o.float) R.body.position.y = o.float + Math.sin(t * 2) * .08; R.head.position.y = R.head0 + Math.sin(t * 2) * .006;
         if (o.hunch) R.body.rotation.x = o.hunch;
         R.fx.forEach(f => f(t, mv, atk));
+        if (!mlNow()) avLive(R.g, R.head, t);
       } };
   }
   const BODY = {
@@ -18970,6 +18973,55 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (!P.spark) P.sp.scale.setScalar(P.s * (1 + k * 1.6)); P.sp.material.opacity = (P.add ? 1 : .7) * (1 - k);
       if (k >= 1 || P.sp.parent !== fightG) { if (P.sp.parent) P.sp.parent.remove(P.sp); P.sp.material.dispose(); F7.puffs.splice(i, 1); } }
   }
+  // ======================= you and everyone else: the realistic pass =======================
+  // The same characters, built better: legs and arms that taper with knees and elbows, a torso with shoulders and a
+  // waist, hands with a thumb, rounded shoes, and (where the face shows) eyes that blink, brows, a nose, ears and lips.
+  // Clothes are woven cloth. Heads turn to look at you when you're close. Mandalink keeps its own look, so none of this
+  // happens there.
+  const mlNow = () => inWorld && zone === 'hub';
+  const avLathe = (prof, sides) => { const g = new THREE.LatheGeometry(prof.map(([y, r]) => new THREE.Vector2(r, y)), sides); g.computeVertexNormals(); return g; };
+  function avRealism(P){
+    const { legs, torso, arms, head, skinM, c1M, c2M, hairM, k, O, bulk } = P, b = bulk, sd = lowFx ? 8 : 12;
+    // cloth: woven, unless it's armour
+    const fab = mcGet('avFabT', () => { const t = txFabric().clone(); t.repeat.set(5, 4); t.needsUpdate = true; return t; }); [c1M, c2M].forEach(m => { if (m.metalness < .3 && !m.map) { m.map = fab; m.needsUpdate = true; } });
+    // legs: thigh, knee, calf, ankle; shoes with a rounded toe
+    legs.forEach(l => { const [leg, shoe] = l.children; if (leg && leg.geometry.type === 'CylinderGeometry') leg.geometry = avLathe([[-.4, .038 * b], [-.34, .046 * b], [-.2, .06 * b], [-.1, .064 * b], [-.02, .058 * b], [.04, .066 * b], [.2, .08 * b], [.36, .086 * b], [.4, .07 * b]], sd);
+      if (shoe && shoe.geometry.type === 'BoxGeometry') { shoe.geometry = new THREE.SphereGeometry(1, sd, 8); shoe.scale.set(.072 * b, .052, .15); shoe.position.y = -.82; } });
+    // torso: hips, waist, chest and shoulders, still round enough for the emblems
+    if (torso && torso.geometry.type === 'CylinderGeometry') torso.geometry = avLathe([[-.31, .2 * b], [-.2, .205 * b], [-.08, .19 * b], [.06, .22 * b], [.18, .245 * b], [.27, .25 * b], [.31, .2 * b]], sd + 4);
+    // arms taper to the wrist; hands get a palm and a thumb
+    arms.forEach((A2, i) => { if (A2.up && A2.up.geometry.type === 'CylinderGeometry') A2.up.geometry = avLathe([[-.32, .04 * b], [-.26, .046 * b], [-.02, .052 * b], [.02, .05 * b], [.2, .064 * b], [.32, .07 * b]], sd);
+      const h = A2.hand.children[0]; if (h && h.geometry.type === 'SphereGeometry') { h.scale.set(.85, 1.25, .62); const th = new THREE.Mesh(new THREE.CylinderGeometry(.016 * b, .014 * b, .07, 6), h.material); th.position.set((i ? -1 : 1) * -.045 * b, .01, -.03); th.rotation.z = (i ? -1 : 1) * .7; th.castShadow = true; A2.hand.add(th); } });
+    // the face, where it isn't covered
+    const open = !k.mask || k.mask === 'hood'; if (!open) return;
+    const eyes = head.children.filter(o => o.geometry && o.geometry.type === 'BoxGeometry' && Math.abs(o.position.z + .142) < .01); eyes.forEach(e => e.visible = false);
+    const white = mcGet('avEyeW', () => new THREE.MeshStandardMaterial({ color: 0xF4F2EE, roughness: .3 })), iris = mcGet('avEyeI', () => new THREE.MeshStandardMaterial({ color: 0x2A1A10, roughness: .2 })), lipM = new THREE.MeshStandardMaterial({ color: new THREE.Color(skinM.color).multiply(new THREE.Color(0xC88080)), roughness: .5 });
+    const add = (geo, m, x, y, z, sx, sy, sz) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); head.add(o); return o; }, S = n => new THREE.SphereGeometry(1, n, Math.max(4, n - 2));
+    const lids = [];
+    [-1, 1].forEach(s2 => { add(S(10), white, s2 * .05, .022, -.124, .024, .017, .012); add(S(8), iris, s2 * .05, .022, -.134, .011, .012, .006); lids.push(add(S(8), skinM, s2 * .05, .024, -.126, .027, .02, .016));
+      add(new THREE.BoxGeometry(.05, .009, .012), hairM, s2 * .05, .055, -.138, 1, 1, 1).rotation.z = s2 * -.12; add(S(6), skinM, s2 * .147, 0, .005, .018, .036, .026); });
+    lids.forEach(l => l.visible = false); add(S(6), skinM, 0, -.012, -.152, .021, .038, .028); add(S(8), lipM, 0, -.066, -.132, .032, .01, .014);
+    P.g.userData.lids = lids; P.g.userData.ph = Math.random() * 4;
+  }
+  // the bodies built by the rig builder keep their shapes; their surfaces get detail
+  // human faces on the rig-built cast: two small dark eye boxes become eyes that blink, with a nose and lips
+  function rigFace(R){ const H = R.head; if (!H) return; const eyes = []; let skin = null, big = 0; H.traverse(o => { if (!o.isMesh || !o.material || !o.material.color) return; const gt = o.geometry.type, P = o.geometry.parameters || {};
+      if (gt === 'BoxGeometry' && P.width < .06 && P.height < .04 && o.material.color.getHSL({}).l < .15) eyes.push(o); if (gt === 'SphereGeometry' && (P.radius || 0) * o.scale.x > big) { big = (P.radius || 0) * o.scale.x; skin = o.material; } });
+    if (eyes.length !== 2 || !skin || Math.abs(eyes[0].position.x + eyes[1].position.x) > .02 || Math.abs(eyes[0].position.z - eyes[1].position.z) > .02) return;
+    const fz = Math.sign(eyes[0].position.z) || -1, z0 = eyes[0].position.z, y0 = eyes[0].position.y, par = eyes[0].parent, white = mcGet('avEyeW', () => new THREE.MeshStandardMaterial({ color: 0xF4F2EE, roughness: .3 })), iris = mcGet('avEyeI', () => new THREE.MeshStandardMaterial({ color: 0x2A1A10, roughness: .2 })), lids = [];
+    const add = (m, x, y, z, sx, sy, sz) => { const o = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), m); o.position.set(x, y, z); o.scale.set(sx, sy, sz); par.add(o); return o; };
+    eyes.forEach(e => { e.visible = false; const x = e.position.x; add(white, x, y0, z0 - fz * .012, .024, .017, .012); add(iris, x, y0, z0 + fz * .0, .011, .012, .006); lids.push(add(skin, x, y0 + .002, z0 - fz * .01, .027, .02, .016)); });
+    lids.forEach(l => l.visible = false); add(skin, 0, y0 - .034, z0 + fz * .012, .02, .036, .026); add(new THREE.MeshStandardMaterial({ color: new THREE.Color(skin.color).multiply(new THREE.Color(0xC88080)), roughness: .5 }), 0, y0 - .088, z0 + fz * .004, .03, .009, .013);
+    R.g.userData.lids = lids; R.g.userData.ph = Math.random() * 4; }
+  function bodyRealism(R){ try { rigFace(R); } catch (e) { console.error(e); } const seen = new Set(); R.g.traverse(o => { if (!o.isMesh || !o.material || Array.isArray(o.material)) return; const m = o.material; if (seen.has(m) || !m.isMeshStandardMaterial || m.transparent) return; seen.add(m);
+      if (m.emissive && m.emissiveIntensity > .3 && (m.emissive.r + m.emissive.g + m.emissive.b) > .4) return; if (m.metalness >= .4) panelize(m, .35); else organicize(m); }); }
+  // every frame: blink, breathe, and look at you if you're close (never the body you're wearing)
+  const _avV = new THREE.Vector3();
+  function avLive(g, head, t){ if (!head || !g.parent) return; const U = g.userData;
+    if (U.lids) { const b = (t + U.ph) % 3.7 < .13; U.lids.forEach(l => l.visible = b); }
+    if (me && me.g === g) { head.rotation.y = 0; return; }
+    _avV.copy(camera.position); g.worldToLocal(_avV); const d = Math.hypot(_avV.x, _avV.z) * g.scale.x; let want = 0; if (d < 6) want = clamp(Math.atan2(-_avV.x, -_avV.z), -1, 1);
+    head.rotation.y += (want - head.rotation.y) * .12; }
   // ======================= STORY MODE 2+: the Books after the comic =======================
   // Its own save (ru-bk). It reuses the planet engine for its worlds and the flight engine for the trip in.
   const BK_KEY = 'ru-bk';
