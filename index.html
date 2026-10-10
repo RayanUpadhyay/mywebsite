@@ -11074,7 +11074,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     BLC.lamps.forEach(([l, i0]) => l.intensity = i0 * C.lamps); (BLC.facM || []).forEach(m => m.emissiveIntensity = C.win); if (BLC.boardM) BLC.boardM.emissiveIntensity = .05 + C.win * .8;
     if (!EV) { BL.sc.fog.near = C.near; BL.sc.fog.far = C.far; }
     // wet roads when it rains: darker, glossier, with puddles that catch the sky
-    if (BLC.roadM) { const w = C.wet, R = BLC.roadM; R.color.setScalar(1 - w * .45); R.roughness = .92 - w * .6; R.envMapIntensity = 1 + w * 1.4; const pud = w > .5 ? BLC.puddle : null; if (R.roughnessMap !== pud) { R.roughnessMap = pud; R.needsUpdate = true; } if (BLC.groundM) { BLC.groundM.color.setHex(0xC4C0B8).multiplyScalar(1 - w * .3); BLC.groundM.roughness = 1 - w * .45; } }
+    if (BLC.roadM) { const w = C.wet, R = BLC.roadM; R.color.setScalar(1 - w * .45); R.roughness = .92 - w * .6; R.envMapIntensity = 1 + w * 1.4; const pud = w > .5 ? BLC.puddle : null; if (R.roughnessMap !== pud) { R.roughnessMap = pud; R.needsUpdate = true; } const X = BLC.roadX; if (X) { X.color.copy(R.color); X.roughness = R.roughness; X.envMapIntensity = R.envMapIntensity; if (X.roughnessMap !== pud) { X.roughnessMap = pud; X.needsUpdate = true; } } if (BLC.groundM) { BLC.groundM.color.setHex(0xC4C0B8).multiplyScalar(1 - w * .3); BLC.groundM.roughness = 1 - w * .45; } }
     // the reflections follow the sky, but not every frame
     const key = C.top.getHexString() + C.fog.getHexString(); if (key !== GFX.envKey && now - GFX.envAt > (lowFx ? 30000 : 2000)) { GFX.envKey = key; GFX.envAt = now; try { envUpdate(); } catch (e) { console.error(e); } }
   }
@@ -12312,10 +12312,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       BLC.ndBulbs = inst(new THREE.SphereGeometry(.09, 6, 4), new THREE.MeshBasicMaterial({ color: 0xFFD27A }), bulbs, g); [[-19, 0], [19, 0], [0, -19], [0, 19]].forEach(([a, b]) => { P(new THREE.CylinderGeometry(.08, .08, 5.4, 6), 0x3A3D44, d.x + a, 2.7, d.z + b); blrBox(d.x + a - .15, d.x + a + .15, d.z + b - .15, d.z + b + .15); }); }
     // Indiranagar: a little lake with a railing and a walk round it
     { const d = NDIST[2]; paving(d, 0x6E7A62); arch(d, 'INDIRANAGAR LAKE WALK', 0x1F7A45);
-      const lk = water(d.x, d.z, 30, 30, .06); lk.geometry = new THREE.CircleGeometry(12, 40); blrBox(d.x - 11, d.x + 11, d.z - 11, d.z + 11);
+      const lk = water(d.x, d.z, 30, 30, .1); lk.geometry = new THREE.CircleGeometry(12, 40); blrBox(d.x - 11, d.x + 11, d.z - 11, d.z + 11);
       for (let i = 0; i < 40; i++) { const a = i / 40 * Math.PI * 2; P(new THREE.CylinderGeometry(.05, .05, 1, 5), 0x3A3D44, d.x + Math.cos(a) * 12.6, .5, d.z + Math.sin(a) * 12.6); P(new THREE.BoxGeometry(.06, .06, 2.1), 0x3A3D44, d.x + Math.cos(a + .078) * 12.6, .95, d.z + Math.sin(a + .078) * 12.6, 0, -a - .078); }
       for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2 + .2; tree(d.x + Math.cos(a) * 17, d.z + Math.sin(a) * 17, .8 + (i % 3) * .15); if (i % 2) bench(d.x + Math.cos(a + .3) * 14.5, d.z + Math.sin(a + .3) * 14.5, -a - .3 + Math.PI / 2); }
-      for (let i = 0; i < 9; i++) { const a = i * 2.3; P(new THREE.CircleGeometry(.5, 8), 0x3A7A3A, d.x + Math.cos(a) * (4 + i * .7), .08, d.z + Math.sin(a) * (4 + i * .7), -Math.PI / 2); } }
+      for (let i = 0; i < 9; i++) { const a = i * 2.3; P(new THREE.CircleGeometry(.5, 8), 0x3A7A3A, d.x + Math.cos(a) * (4 + i * .7), .14, d.z + Math.sin(a) * (4 + i * .7), -Math.PI / 2); } }
     // Malleshwaram: a market street of stalls under bright awnings
     { const d = NDIST[3]; paving(d, 0x847866); arch(d, 'MALLESHWARAM MARKET', 0xE07A1E); const AW = [0xC8102E, 0x1F7A45, 0xF2C230, 0x1E5AA8, 0xE07A1E, 0x6B3FA0], GOODS = [0xF2C230, 0xE04040, 0x7AC04A, 0xFF9AC8, 0xFFFFFF, 0xE07A1E, 0xB8BCC4];
       for (let r = -1; r <= 1; r += 2) for (let i = 0; i < 6; i++) { const x = d.x + r * 7, z = d.z - 15 + i * 6, c = AW[(i + (r > 0 ? 3 : 0)) % AW.length];
@@ -12363,7 +12363,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // every flat layer gets a draw order: the ground at the back, then the roads, then everything laid on top of them
   function cityLayers(){
     const back = (m, k) => { if (!m) return; m.polygonOffset = true; m.polygonOffsetFactor = k; m.polygonOffsetUnits = k; m.needsUpdate = true; };
-    BL.mapG.children.forEach(o => { const P = o.isMesh && o.geometry.parameters; if (!P) return; if (P.width === 900) back(o.material, 4); if (P.width === 10 && P.height === 770) back(o.material, 2); });
+    let cross = null; BL.mapG.children.forEach(o => { const P = o.isMesh && o.geometry.parameters; if (!P) return; if (P.width === 900) back(o.material, 4);
+      // the two road directions cross 1.5 cm apart: give the cross streets their own step so they never fight where no junction patch covers them
+      if (P.width === 10 && P.height === 770) { if (o.rotation.z) { if (!cross) { cross = BLC.roadX = o.material.clone(); back(cross, 2); } o.material = cross; } else back(o.material, 3); } });
     back(BLC.junctM, 1);
   }
   function cityDepth(){ const want = inWorld && (zone === 'blr' || zone === 'roof' || zone === 'city') && !A && !EV; if (want) { const n = clamp(.1 + Math.max(0, pos.y - BL.off.y - 4) * .003, .1, .2); if (Math.abs(camera.near - n) > .005) { camera.near = n; camera.updateProjectionMatrix(); } BLC.nearSet = true; }
