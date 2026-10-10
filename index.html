@@ -4819,7 +4819,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     camera.position.y += A.jz;
     if (A.shake > 0 && !reduce && !lowFx) camera.position.add(pv.set((Math.random() - .5) * A.shake * .5, (Math.random() - .5) * A.shake * .5, 0));
     camera.updateMatrixWorld();
-    sync3D(dt); hudUpdate(); drawOverlay();
+    sync3D(dt); try { fightFxStep(dt); } catch (e) { console.error(e); } hudUpdate(); drawOverlay();
     const tray = $('#tray'); if (!tray.hidden) tray.hidden = true;
   }
 
@@ -18931,6 +18931,45 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (m === propM()) { o.material = SP2.staM || (SP2.staM = panelize(new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .45, metalness: .25, envMap: env, envMapIntensity: .7 }), 1.2)); }
       else if (m.isMeshStandardMaterial && m.transparent && !m.envMap) { m.envMap = env; m.envMapIntensity = 1; m.needsUpdate = true; } }); }
   function space2Step(dt){ if (STA.built && !SP2.sta) { SP2.sta = 1; try { staRealism(); } catch (e) { console.error(e); } } }
+  // ======================= fights and bosses: the realistic pass =======================
+  // Every boss keeps its own shape and colours, but its surfaces get detail: machines get panel seams and worn metal,
+  // creatures get mottled skin with roughness that changes across it, and both catch reflections. The arena gets a key
+  // light and a rim light in the boss's colour, hits throw sparks, a flash and dust, and heavy steps kick up dust.
+  const F7 = { A: null, fl: 0, hp: 0, puffs: [], stepT: 0 };
+  function organicize(m){ if (m.userData.org) return m; m.userData.org = 1; const prev = m.onBeforeCompile;
+    m.onBeforeCompile = (sh, r) => { if (prev) prev(sh, r);
+      sh.vertexShader = 'varying vec3 vOW;\n' + sh.vertexShader.replace('#include <begin_vertex>', '#include <begin_vertex>\nvOW = position;');
+      sh.fragmentShader = 'varying vec3 vOW;\nfloat ogH(vec3 p){ return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }\nfloat ogN(vec3 p){ vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(mix(ogH(i), ogH(i + vec3(1,0,0)), f.x), mix(ogH(i + vec3(0,1,0)), ogH(i + vec3(1,1,0)), f.x), f.y), mix(mix(ogH(i + vec3(0,0,1)), ogH(i + vec3(1,0,1)), f.x), mix(ogH(i + vec3(0,1,1)), ogH(i + vec3(1,1,1)), f.x), f.y), f.z); }\n' + sh.fragmentShader
+        .replace('#include <color_fragment>', '#include <color_fragment>\nfloat ogM = ogN(vOW * 6.0) * 0.6 + ogN(vOW * 23.0) * 0.4; diffuseColor.rgb *= 0.82 + ogM * 0.3;')
+        .replace('#include <roughnessmap_fragment>', '#include <roughnessmap_fragment>\nroughnessFactor = clamp(roughnessFactor - 0.15 + ogM * 0.3, 0.05, 1.0);'); };
+    m.customProgramCacheKey = () => 'org' + (m.vertexColors ? 'v' : '') + (m.map ? 'm' : ''); m.needsUpdate = true; return m; }
+  function bossMats(root){ const env = lairEnv(), seen = new Set(); root.traverse(o => { if (!o.isMesh || !o.material) return; [].concat(o.material).forEach(m => { if (seen.has(m) || !m.isMeshStandardMaterial || m.transparent) return; seen.add(m);
+      const glow = m.emissive && (m.emissive.r + m.emissive.g + m.emissive.b) > .4 && m.emissiveIntensity > .3; if (glow) return;
+      if (m.metalness >= .4) panelize(m, .45); else organicize(m); if (!m.envMap) { m.envMap = env; m.envMapIntensity = m.metalness >= .4 ? 1 : .35; } m.needsUpdate = true; }); }); }
+  const puffT = () => txGet('puff', () => tex(64, 64, (c, w, h) => { const g = c.createRadialGradient(32, 32, 2, 32, 32, 32); g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(.6, 'rgba(255,255,255,.2)'); g.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); }));
+  function f7Puff(x, y, z, col, s, life, vy, add){ const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: add ? glowT2() : puffT(), color: col, transparent: true, depthWrite: false, blending: add ? THREE.AdditiveBlending : THREE.NormalBlending, opacity: add ? 1 : .7 }));
+    sp.position.set(x, y, z); sp.scale.setScalar(s); sp.userData.noPick = true; fightG.add(sp); F7.puffs.push({ sp, t: 0, life, s, vy: vy || 0, vx: (Math.random() - .5) * .8, vz: (Math.random() - .5) * .8, add }); }
+  function f7Hit(x, z, col){ const y = 1.1 + Math.random() * .6; f7Puff(x, y, z, 0xFFE8C0, 1.6, .18, 0, true);
+    const n = lowFx ? 6 : 14; for (let i = 0; i < n; i++) { const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowT2(), color: i % 2 ? 0xFFC060 : col, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+      sp.position.set(x, y, z); sp.scale.setScalar(.14); fightG.add(sp); const a = Math.random() * 6.283, u = Math.random(); F7.puffs.push({ sp, t: 0, life: .35 + Math.random() * .25, s: .14, vx: Math.cos(a) * (3 + u * 5), vz: Math.sin(a) * (3 + u * 5), vy: 2 + Math.random() * 4, g: 14, add: true, spark: true }); }
+    f7Puff(x, .25, z, 0x9A8E80, 1.2, .8, .5); }
+  function f7Setup(){
+    try { bossMats(A.model.g); (A.model.segs || []).forEach(bossMats); } catch (e) { console.error(e); }
+    if (lowFx) return; const col = new THREE.Color(A.def.col || 0xFFFFFF);
+    F7.key = new THREE.PointLight(0xFFE8D0, .9, 26, 2); F7.rim = new THREE.PointLight(col, 1.1, 14, 2); fightG.add(F7.key, F7.rim);
+  }
+  function fightFxStep(dt){
+    if (!A || !A.model) { F7.A = null; return; } if (F7.A !== A) { F7.A = A; F7.puffs = []; F7.fl = 0; F7.hp = A.boss.hp; try { f7Setup(); } catch (e) { console.error(e); } }
+    const b = A.boss, bx = WX(b.x), bz = WZ(b.y), col = new THREE.Color(A.def.col || 0xFFFFFF).getHex();
+    if (F7.key) { F7.key.position.set((bx + WX(A.p.x)) / 2, 6, (bz + WZ(A.p.y)) / 2 + 2); F7.rim.position.set(bx - 1.5, 3.5, bz - 2.5); }
+    // a hit: the boss lost health this frame
+    if (b.hp < F7.hp - .01 && b.flash > .03) f7Hit(bx + (WX(A.p.x) - bx) * .25, bz + (WZ(A.p.y) - bz) * .25, col); F7.hp = b.hp;
+    // heavy steps kick up dust
+    const sp = Math.hypot(b.vx || 0, b.vy || 0); if (sp > 60 && (F7.stepT -= dt) <= 0) { F7.stepT = .22; f7Puff(bx + (Math.random() - .5) * .8, .2, bz + (Math.random() - .5) * .8, 0x8A8070, 1 + (A.C.r || 30) / 40, .9, .4); }
+    for (let i = F7.puffs.length - 1; i >= 0; i--) { const P = F7.puffs[i]; P.t += dt; const k = P.t / P.life; P.sp.position.x += P.vx * dt; P.sp.position.z += P.vz * dt; P.sp.position.y += P.vy * dt; if (P.g) P.vy -= P.g * dt;
+      if (!P.spark) P.sp.scale.setScalar(P.s * (1 + k * 1.6)); P.sp.material.opacity = (P.add ? 1 : .7) * (1 - k);
+      if (k >= 1 || P.sp.parent !== fightG) { if (P.sp.parent) P.sp.parent.remove(P.sp); P.sp.material.dispose(); F7.puffs.splice(i, 1); } }
+  }
   // ======================= STORY MODE 2+: the Books after the comic =======================
   // Its own save (ru-bk). It reuses the planet engine for its worlds and the flight engine for the trip in.
   const BK_KEY = 'ru-bk';
