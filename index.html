@@ -14477,6 +14477,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!inT) { const cityNear = inWorld && zone === 'blr' && TD.near && !doorNear && !EV && !A; TD.btn.hidden = !cityNear; if (cityNear) TD.btn.textContent = TD.near.label + (fine ? ' (E)' : '');
       TD.hud.hidden = true; TD.tbtn.hidden = true; if (EV && EV.inTdy) { tdFightStep(dt); tdFxStep(dt); if (TD.grabBtn) { TD.btn.hidden = false; TD.btn.textContent = 'Break free!'; } } else if (TD.bloodEl) TD.bloodEl.style.opacity = 0; return; }
     const s = tdLoad(), night = TD.mode === 'night';
+    // seated in the chair, or crouched in a hiding place: the camera drops the same way it does when you crouch
+    if (TD.tied || TD.hide) KIT.crouchK = TD.tied ? .5 : .21;
     if (night && !TD.busy && !TD.escaping) { s.nightT = (s.nightT || 0) + dt;
       if (s.nightT >= 300) { s.night++; s.nightT = 0; s.learned = (s.learned || 0) + 1; tdSave(); if (s.night > 5) return tdBadEnd(); tone(330, .6, 'sine', .03, 440); say(`Grey light under the door. He sleeps through the day; you don’t. You know his routine a little better now. Night ${s.night} of 5.`, 5200); }
       if ((TD.saveT = (TD.saveT || 0) + dt) > 5) { TD.saveT = 0; tdSave(); } }
@@ -17854,7 +17856,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (zone === 'roof' && (pos.y < .5 || !platformAt(pos.x, pos.z) && pos.y < 1.4)) { zone = 'city'; cityAir = true; cityV.set(0, Math.min(0, vy), 0); cityLast = null; $('#worldBack').textContent = A ? 'Leave the fight' : 'Back to the rooftop'; }
     if (zone === 'city') { cityPhysics(dt); return roofStep(dt, now); }
     if (zone === 'blr' && (SW.on || SW.roof)) { webSwingStep(dt); if (SW.on || SW.roof) return; }
-    if (zone === 'tidy' && (TD.tied || TD.hide)) { vy = 0; grounded = true; pos.y = TD.tied ? 1.25 : 1.45; return; }
     // gravity
     const plat = platformAt(pos.x, pos.z), feet = pos.y - 1.6;
     if (zone === 'hub' && MK.flying) { vy = 0; grounded = true; pos.y += (1.9 - pos.y) * Math.min(1, dt * 5); }
