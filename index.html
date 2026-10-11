@@ -13959,13 +13959,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     [-.055, .055].forEach(x => R.add(new THREE.TorusGeometry(.034, .004, 6, 16), 0xC9CFD8, x, .02, -.142, R.head)); R.add(new THREE.BoxGeometry(.04, .005, .005), 0xC9CFD8, 0, .025, -.145, R.head);
     R.add(new THREE.BoxGeometry(.16, .025, .02), 0x2A2420, -.02, .118, -.1, R.head).rotation.z = -.25;
     R.add(new THREE.CylinderGeometry(.04, .04, .02, 12), 0x9AA3AE, 0, -.5, 0, R.arms[0].a).rotation.x = Math.PI / 2; return R; };
-  ST_FRAIL.t = [1, 1, 1]; ST_TITLE.td1 = 'The Tidy Man';
+  ST_FRAIL.t = [1, 1, 1]; ST_TITLE.td1 = 'The Tidy Man'; ST_TITLE.td2 = 'The Tidy Man: Lights Out';
   BTYPES.tidy = { sign: '', col: '#3A3D44', w: 0, door: 0x4A3A2A, names: [`Mr. Varadan’s house`] };
   // ---------- in Bangalore: his house on a quiet street, and the man himself by his car ----------
   function tdHouseBuild(){
     if (TD.house || !BL.bld || !BL.mapG) return; const s = tdLoad();
     // a small plot on a quiet street, away from the busy middle of the map
-    const cand = BL.bld.filter(b => !b.hide && !b.keep && plainLot(b) && b.h < 26 && facing(b) && b.x1 - b.x0 >= 10 && b.z1 - b.z0 >= 10 && b.x1 - b.x0 <= 22 && b.z1 - b.z0 <= 22 && !inTowerZone((b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2, 30))
+    const cand = BL.bld.filter(b => !b.hide && !b.keep && plainLot(b) && b.h < 26 && facing(b) && b.x1 - b.x0 >= 10 && b.z1 - b.z0 >= 10 && b.x1 - b.x0 <= 22 && b.z1 - b.z0 <= 22 && !inTowerZone((b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2, 30) && farFromFights([b.x0, b.x1, b.z0, b.z1], 30))
       .sort((a, c) => Math.hypot((a.x0 + a.x1) / 2 + 150, (a.z0 + a.z1) / 2 - 110) - Math.hypot((c.x0 + c.x1) / 2 + 150, (c.z0 + c.z1) / 2 - 110));
     const b = cand[0]; if (!b) return; hideLot(b); b.keep = true; b.h = 7.6; TD.lot = b;
     const F = lotFrame(b, facing(b)), g = F.g, wall = mat(0xD8D0C2, { roughness: .9 }), trim = mat(0xF2EEE6, { roughness: .7 }), roofM = mat(0x5A3A2E, { roughness: .8 }), dark = mat(0x16181D, { roughness: .6 });
@@ -13985,7 +13985,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // the places he turns up: outside a shop, by his car (always the same grey hatchback, always spotless)
   function tdSpot(){
     const s = tdLoad(), L = DOORS.filter(d => ['tiffin', 'kirana', 'medicals', 'tailor'].includes(d.type) && !d.b.hide && Math.hypot(d.front[0], d.front[1]) < 240); if (!L.length) return null;
-    const d = L[(s.meet * 37 + 11 + s.sightings * 7) % L.length], [nx, nz] = d.n, x = d.front[0] + nx * 2.4, z = d.front[1] + nz * 2.4;
+    const [px, pz] = inWorld && zone === 'blr' ? toMap(pos.x, pos.z) : [0, 0], near = L.map(q => [q, Math.hypot(q.front[0] - px, q.front[1] - pz)]).filter(([, dd]) => dd > 18).sort((a, c) => a[1] - c[1]);
+    const d = near.length ? near[Math.min(near.length - 1, s.sightings % 3)][0] : L[0], [nx, nz] = d.n, x = d.front[0] + nx * 2.4, z = d.front[1] + nz * 2.4;
     return { x, z, ry: Math.atan2(-nx, -nz) + Math.PI, cx: d.front[0] + nx * 5.6 - nz * 2.5, cz: d.front[1] + nz * 5.6 + nx * 2.5, cry: Math.atan2(-nz, nx), d };
   }
   function tdNpcPlace(){
@@ -14017,15 +14018,15 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       [[M, 'You delivered it. Thank you. I wiped the envelope before I gave it to you, you know. Fingerprints are so messy.'], [M, 'Hold still. Your sleeve has a thread loose.'], ['{N}', '…Thanks.'], [M, 'My flat is very neat. Everything has a place. People too, I think. Do you live alone?']],
       [[M, 'Lovely view from your tower roof, by the way. I walked past at night. The light was on.'], ['{N}', 'You walked past my building?'], [M, 'I walk everywhere. It’s good for the mind. Here: homemade. Eat it today, it won’t keep.'], [M, 'You look tired. You should sleep more. Deeply.']],
       [[M, 'I hate to ask. I’m moving some boxes at my house tonight and my back isn’t what it was. You’re strong. Would you help? I’ll make tea.'], ['{N}', 'Where’s your house?'], [M, 'Not far. A quiet street. You’ll know it: it’s the neatest one.']]];
-    const L = lines[Math.min(m, 4)];
+    const L = lines[m >= 1 ? 4 : 0];
     TD.talking = true;
     cityScene(L, () => { const P = TD.npc && TD.npc.P; return P ? [P.x, P.z] : [0, 0]; }, () => { TD.talking = false;
       if (m === 0) { JOB.rep += 5; jobSave(); say('He presses a few coins into your hand. Reputation +5.', 2600); }
       if (m === 1) { const d = DOORS.filter(q => q.type === 'tiffin' || q.type === 'kirana').sort((a, c) => Math.hypot(a.front[0] - TD.npc.P.x, a.front[1] - TD.npc.P.z) - Math.hypot(c.front[0] - TD.npc.P.x, c.front[1] - TD.npc.P.z))[3];
         if (d) { s.job = { name: d.name, x: d.front[0], z: d.front[1] }; say(`Take the envelope to ${d.name}. A white beam of light marks the shop.`, 3600); } }
       if (m === 3) { EV0heal(); say('Homemade lemon rice. It’s good. You feel a little drowsy afterwards.', 3200); }
-      if (m >= 4) return askChoice('tidy', v => { if (v === 'yes') { s.state = 'trap'; tdSave(); say('He writes the address on a card in perfect block capitals. A white beam of light marks his house.', 3600); } else { s.declined++; tdSave(); say('“Another time, then. I’ll be patient.”', 2600); } }, { h: TD_NAME, q: 'Help him move boxes at his house tonight?', a: [['yes', 'Sure, I’ll come'], ['no', 'Not tonight']] });
-      s.meet = Math.min(4, m + 1); if (s.firstDay < 0) s.firstDay = s.day; s.coolT = 150; tdSave(); TD.npcGone = 1; });
+      if (m >= 1) return askChoice('tidy', v => { if (v === 'yes') { s.state = 'trap'; tdSave(); say('He writes the address on a card in perfect block capitals. A white beam of light marks his house.', 3600); } else { s.declined++; tdSave(); say('“Another time, then. I’ll be patient.”', 2600); } }, { h: TD_NAME, q: 'Help him move boxes at his house tonight?', a: [['yes', 'Sure, I’ll come'], ['no', 'Not tonight']] });
+      s.meet = Math.min(1, m + 1); if (s.firstDay < 0) s.firstDay = s.day; s.coolT = 30; tdSave(); TD.npcGone = 1; });
     s.sightings++; tdSave();
   }
   const EV0heal = () => { try { if (typeof hpNow !== 'undefined') hpNow = Math.min(hpMax, hpNow + 20); } catch (e) {} };
@@ -14035,8 +14036,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const h = cityHour(); if (TD.lastH != null && h < TD.lastH - 12) { s.day++; tdSave(); } TD.lastH = h;
     const can = !SG.active && inWorld && zone === 'blr' && !EV && !A && !BL.lvl && !DRV.on && Math.abs(BL.off.y) < .01;
     s.coolT = Math.max(0, (s.coolT || 0) - dt);
-    const want = can && ((s.state === 'none' || s.state === 'met') && s.meet < 5 || s.state === 'loose' && s.sightings < 99) && !s.coolT && !TD.npcGone;
-    if (want && !TD.npc) tdNpcPlace(); if (!want && TD.npc && !TD.talking) tdNpcClear();
+    const want = can && ((s.state === 'none' || s.state === 'met') && s.meet < 2 || s.state === 'loose' && s.sightings < 99) && !s.coolT && !TD.npcGone;
+    if (want && !TD.npc) { tdNpcPlace(); if (TD.npc) say(s.meet ? 'Mr. Varadan is waiting by his grey hatchback nearby. Follow the white beam of light.' : 'A polite man by a grey hatchback is struggling with some boxes nearby. Follow the white beam of light.', 4200); } if (!want && TD.npc && !TD.talking) tdNpcClear();
     if (!can) return; const [mx, mz] = toMap(pos.x, pos.z);
     // after a few in-game days he asks anyway
     if (s.meet >= 2 && s.meet < 4 && s.firstDay >= 0 && s.day - s.firstDay >= 3) { s.meet = 4; tdSave(); }
@@ -14051,7 +14052,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // the envelope job
     if (s.job && Math.hypot(mx - s.job.x, mz - s.job.z) < 3 && onGround()) { say(`You hand the envelope over at ${s.job.name}. Nobody was expecting it. It’s empty. Reputation +15.`, 4200); JOB.rep += 15; jobSave(); s.job = null; tdSave(); }
     // a white beacon over the job, and over his house once you've said yes
-    const tgt = s.job ? [s.job.x, s.job.z] : s.state === 'trap' && TD.house ? TD.house.out : null;
+    const tgt = s.job ? [s.job.x, s.job.z] : s.state === 'trap' && TD.house ? TD.house.out : TD.npc && !TD.talking ? [TD.npc.P.x, TD.npc.P.z] : null;
     if (tgt && !TD.mark) { TD.mark = new THREE.Mesh(new THREE.CylinderGeometry(.5, .5, 60, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xF2EEE6, transparent: true, opacity: .35, depthWrite: false })); TD.mark.userData.noPick = true; BL.mapG.add(TD.mark); }
     if (TD.mark) { if (!tgt) { BL.mapG.remove(TD.mark); TD.mark = null; } else TD.mark.position.set(tgt[0], 30, tgt[1]); }
   }
@@ -14192,6 +14193,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     A2('knife', 6.55, -5, 1.1, () => !tdHas('knife') ? 'Take the kitchen knife' : !tdHas('cleaver') ? 'Take the meat cleaver' : null, () => tdTake(!tdHas('knife') ? 'knife' : 'cleaver', 6.6, -5.6, 2));
     A2('drawer', 7.1, -2.3, 1.1, () => !TD.drawerOpen ? 'Open the kitchen drawer' : !tdHas('torch') ? 'Take the torch' : 'Close the drawer', () => { if (!TD.drawerOpen) { TD.drawerOpen = 1; tdNoise(7.1, -2.3, 2); } else if (!tdHas('torch')) { tdTake('torch', 7.1, -2.3, 1); say('A torch. Press F (or the torch button) to switch it on. It helps you see, and helps him see you.', 4200); } else TD.drawerOpen = 0; tdItemsShow(); });
     A2('phone', -7.4, -4.8, 1.2, () => TD.phoneCut ? 'The phone line is dead. He cut it.' : 'Use the phone', () => { if (TD.phoneCut || TD.police > 0) return;
+      if (tdEvid() < 3) { if (!TD.cutT) TD.cutT = 18; }
       if (tdEvid() < 3) return say(`You whisper to the police. They ask who you are, where you are, whether this is a joke. Without proof, nobody is coming. (${tdEvid()} of 3 pieces of evidence)`, 4800);
       TD.police = 50; tdNoise(-7.4, -4.8, 14); tone(440, .3, 'sine', .05); say('“Police, what’s your emergency?” You tell them everything: the cards, the ledger, the photographs. “Stay hidden. Fifty seconds.”', 5200); });
     A2('front', 0, 5.4, 1.2, () => TD.mode === 'visit' ? 'Go back out to the street' : tdHas('frontkey') && s().knowCode ? `Unlock the door and enter ${s().code} on the alarm` : tdHas('frontkey') ? 'The key turns, but the alarm panel wants a code' : 'Deadbolted, with an alarm panel. You need his key and the code', () => {
@@ -14202,15 +14204,17 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     A2('study', 23, -2.3, 1.2, () => TD.doors.study.open ? null : tdHas('studykey') ? 'Unlock the study' : 'The study door is locked', () => { if (!tdHas('studykey')) { tdNoise(23, -2.3, 3); return say('Locked. A good lock. The key must be somewhere he keeps things.', 2600); } TD.doors.study.open = true; tdNoise(23, -2.3, 3); tdItemsShow(); });
     ['bed', 'bath', 'quiet'].forEach(k => { const d = TD.doors[k], [x0, x1, z0, z1] = d.rect, cx = (x0 + x1) / 2 + (k === 'bed' ? .55 : -.55), cz = (z0 + z1) / 2;
       A2('door_' + k, cx, cz, 1.1, () => TD.doors[k].open ? 'Close the door' : 'Open the door', () => { TD.doors[k].open = !TD.doors[k].open; tdNoise(cx, cz, 4); tone(TD.doors[k].open ? 200 : 160, .2, 'triangle', .03, 120); tdItemsShow(); }); });
-    A2('desk', 17.5, -4.6, 1.2, () => !tdHas('frontkey') ? 'Search his desk' : !s().knowCode ? 'Read his notebook' : null, () => { if (!tdHas('frontkey')) { tdTake('frontkey', 17.5, -5.3, 2); say('In the drawer, on a numbered hook: the front door key.', 2600); return; } s().knowCode = 1; tdSave(); say(`His notebook. Shopping lists, meter readings, people’s routines, all in the same neat hand. On the last page: “ALARM ${s().code}”.`, 5200); tdHudDraw(); });
+    A2('desk', 17.5, -4.6, 1.2, () => !tdHas('frontkey') && !TD.deskEmpty ? 'Search his desk' : !s().knowCode ? 'Read his notebook' : null, () => { if (!tdHas('frontkey') && !TD.deskEmpty) { if ((s().keySpot || 0) !== 0) { TD.deskEmpty = 1; tdNoise(17.5, -5.3, 2); say('The numbered hook in the drawer is empty. A neat label underneath: “MOVED. H.V.” He knew you’d look here.', 4200); return; } tdTake('frontkey', 17.5, -5.3, 2); say('In the drawer, on a numbered hook: the front door key.', 2600); return; } s().knowCode = 1; tdSave(); say(`His notebook. Shopping lists, meter readings, people’s routines, all in the same neat hand. On the last page: “ALARM ${s().code}”.`, 5200); tdHudDraw(); });
     A2('ledger', 16.9, -2.5, 1.1, () => !tdHas('evid_ledger') ? 'Take the ledger from the shelf' : null, () => { tdTake('evid_ledger', 16.5, -2.5, 2); say('Dates, initials, amounts of bleach. Twelve years of it.', 3200); });
     A2('dresser', 21.4, 5, 1.1, () => !tdHas('studykey') ? 'Search the dresser' : null, () => { tdTake('studykey', 21.5, 5.6, 2); say('Folded socks, sorted by colour. Under them, a key with a paper tag: STUDY.', 3000); });
+    A2('bedside', 20.6, 3.4, 1.0, () => !tdHas('frontkey') && s().keySpot === 1 ? 'Search his bedside table' : null, () => { tdTake('frontkey', 20.6, 3.6, 2); say('Inside a hollowed-out book on his bedside table, a key, wiped clean.', 3000); });
+    A2('books', -7.1, -1.2, 1.1, () => !tdHas('frontkey') && s().keySpot === 2 ? 'Look along the bookshelf' : null, () => { tdTake('frontkey', -7.4, -1.2, 2); say('Behind a row of tax guides, filed under K for key: the front door key.', 3000); });
     A2('hideU1', 17, 2.2, 1.0, () => 'Hide in the wardrobe', () => tdHideIn('wardrobe', 16.4, 2.2, 17.2, 2.2));
     A2('hideU2', 30.6, -4, 1.1, () => 'Hide behind the shower curtain', () => tdHideIn('bath', 30.9, -4.8, 30, -3.8));
     A2('photos', 31.2, 3, 1.4, () => !tdHas('evid_photos') ? 'Take some of the photographs' : null, () => { tdTake('evid_photos', 31.6, 3, 2); say('Strangers, asleep, photographed through windows. Each one labelled. The last label is your name.', 4600); });
   }
   function tdStairs(x, z, yw){ fade(() => { pos.set(x, 1.6, z); yaw = yw; pitch = 0; tdNoise(x, z, 3); tone(170, .3, 'triangle', .02, 120); }, '#000000'); }
-  function tdHideIn(k, hx, hz, ox, oz){ if (TD.hide) return; TD.hide = { k, x: hx, z: hz, ox, oz, seenGo: TD.ai && TD.ai.mode === 'chase' && TD.ai.sees }; pos.set(hx, 1.45, hz); say('You hold your breath. Press E to come out.', 2600); }
+  function tdHideIn(k, hx, hz, ox, oz){ if (TD.hide) return; const s = tdLoad(); s.hides = s.hides || {}; TD.hide = { known: (s.hides[k] || 0) > 0, k, x: hx, z: hz, ox, oz, seenGo: TD.ai && TD.ai.mode === 'chase' && TD.ai.sees }; pos.set(hx, 1.45, hz); s.hides[k] = (s.hides[k] || 0) + 1; tdSave(); say('You hold your breath. Press E to come out.', 2600); }
   function tdUnhide(){ if (!TD.hide) return; pos.set(TD.hide.ox, 1.6, TD.hide.oz); TD.hide = null; tdNoise(pos.x, pos.z, 2); }
   function tdStruggle(k){ if (!TD.tied) return; TD.str = (TD.str || 0) + k; tone(160 + Math.random() * 60, .05, 'triangle', .02); tdNoise(-28, 0, 2.5); if (TD.str >= 1) { TD.tied = false; pos.y = 1.6; tdItemsShow(); say('The tape gives. Your wrists are raw, but you’re free. Quietly now.', 3200); } }
   const tdTorchOn = () => !!(TD.torchOn && tdHas('torch'));
@@ -14230,7 +14234,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function tdPath(a, b){ const prev = { [a]: null }, q = [a]; while (q.length) { const c = q.shift(); if (c === b) break; tdNb(c).forEach(n => { if (!(n in prev)) { prev[n] = c; q.push(n); } }); } if (!(b in prev)) return []; const p = []; for (let c = b; c; c = prev[c]) p.unshift(c); return p; }
   function tdNearest(x, z){ const f = tdFloor(x); let best = null, bd = 1e9; Object.entries(TD_NODES).forEach(([id, [nx, nz]]) => { if (tdNodeFloor(id) !== f) return; const d = Math.hypot(nx - x, nz - z) + (tdSee(x, z, nx, nz) ? 0 : 6); if (d < bd) { bd = d; best = id; } }); return best; }
   const TD_ROUND = ['g_kit', 'g_knife', 'g_liv', 'g_phone', 'g_hallS', 'u_study', 'u_bath', 'u_bed', 'u_quiet', 'g_foyer', 'b_chair', 'b_shelf', 'b_bench'];
-  const TD_VOICE = ['Are you comfortable down there? I’ve put the heating on.', 'Everything has a place. You have a place too. It’s the chair.', 'I can hear you, you know. This house talks to me.', 'Don’t make a mess. I’ve only just finished the floors.', 'You’ll feel better if you stop struggling. Everyone does, eventually.', 'I’m not angry. I’m never angry. Anger is untidy.', 'Did you know you snore? Just a little. It’s sweet.'];
+  const TD_VOICE = ['Are you comfortable down there? I’ve put the heating on.', 'Everything has a place. You have a place too. It’s the chair.', 'I can hear you, you know. This house talks to me.', 'Don’t make a mess. I’ve only just finished the floors.', 'You’ll feel better if you stop struggling. Everyone does, eventually.', 'I’m not angry. I’m never angry. Anger is untidy.', 'Did you know you snore? Just a little. It’s sweet.', 'I’ve been doing this for twelve years. Nobody has ever looked twice at me. I’m very good at being nobody.', 'I have to be at the office at nine. I haven’t been late once. Not once.', 'The neighbours think I’m lovely. I water their plants when they’re away.', 'You’re clever. Clever people always think they’re the first to try the drain.'];
   function tdNoise(x, z, r){ if (!TD.ai || TD.mode !== 'night' || TD.ai.out) return; const A2 = TD.ai, f = tdFloor(x); if (tdFloor(A2.x) !== f && r < 9) return; const d = Math.hypot(A2.x - x, A2.z - z) * (tdFloor(A2.x) === f ? 1 : 2.5); if (d < r * 1.6) { if (A2.mode !== 'chase') { A2.mode = 'investigate'; A2.goal = [x, z]; A2.path = null; A2.wait = 0; if (Math.random() < .6) tdVoice(['What was that?', 'Hello?', 'I heard that.', 'Someone’s being careless.'][Math.random() * 4 | 0], true); } } }
   function tdVoice(t, near){ const s = performance.now(); if (s - (TD.voiceAt || 0) < 3500) return; TD.voiceAt = s; for (let i = 0; i < 3; i++) setTimeout(() => tone(2400 - i * 300, .04, 'square', .012, 1800), i * 60); say(`${near ? TD_NAME : 'Intercom'}: “${t}”`, 3600); }
   function tdAiNew(){ const A2 = TD.ai = { x: 0, z: -2, yaw: 0, mode: 'routine', path: null, wait: 2, sees: false, seenT: 0, lastSeen: null, out: false, goal: null, ri: 0, opened: null, voiceT: 25 };
@@ -14238,13 +14242,18 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function tdAiStep(dt, now){
     const A2 = TD.ai, s = tdLoad(); if (!A2) return; const T = s.nightT;
     // the night: he goes out to work for a while, and checks the basement now and then
-    const outNow = T > 120 && T < 190; if (outNow && !A2.out && A2.mode !== 'chase') { A2.out = true; A2.mode = 'routine'; TD.av.g.visible = false; tone(90, .8, 'sawtooth', .03, 60); say('A car starts outside and pulls away. He’s gone out. For now.', 3600); s.learned = Math.max(s.learned, 1); tdSave(); }
+    const outNow = T > 120 && T < 190; if (outNow && !A2.out && !A2.lurk && A2.mode !== 'chase' && s.night >= 2 && (A2.fake == null ? (A2.fake = Math.random() < .45) : A2.fake)) { A2.lurk = true; A2.mode = 'lurk'; A2.path = tdPath(tdNearest(A2.x, A2.z), 'g_foyer'); tone(90, .8, 'sawtooth', .03, 60); say('A car starts outside and pulls away. He’s gone out. For now.', 3600); }
+    if (A2.lurk) { if (!outNow && A2.mode === 'lurk') { A2.lurk = false; A2.mode = 'routine'; A2.path = null; } else if (A2.mode === 'lurk' && (!A2.path || !A2.path.length)) { A2.yaw += angDiff(A2.yaw, Math.atan2(6.4, -.2)) * Math.min(1, dt * 2); tdAnim(now, 0, false); A2.sees = tdFloor(pos.x) === 'G' && !TD.hide && Math.hypot(pos.x - A2.x, pos.z - A2.z) < 7 && tdSee(A2.x, A2.z, pos.x, pos.z); if (A2.sees) { A2.lurk = false; A2.mode = 'chase'; A2.lastSeen = [pos.x, pos.z]; tdVoice('I never left. The car rolled down the hill on its own. I’m careful with handbrakes, usually.', true); if (!scaresLow()) { tone(70, .6, 'sawtooth', .07, 40); fadeEl.style.background = '#300000'; fadeEl.classList.add('on'); setTimeout(() => fadeEl.classList.remove('on'), 140); } } return; } }
+    if (outNow && !A2.out && !A2.lurk && A2.mode !== 'chase' && !A2.fake) { A2.out = true; A2.mode = 'routine'; TD.av.g.visible = false; tone(90, .8, 'sawtooth', .03, 60); say('A car starts outside and pulls away. He’s gone out. For now.', 3600); s.learned = Math.max(s.learned, 1); tdSave(); }
     if (A2.out) { if (!outNow) { A2.out = false; A2.x = 0; A2.z = 5; TD.av.g.visible = true; tone(90, .8, 'sawtooth', .03, 60); setTimeout(() => tdVoice('I’m home. Did you miss me?'), 1500); A2.path = null; A2.mode = 'routine'; } else return; }
     if ([40, 100, 220, 270].some(t => T > t && T - dt <= t) && A2.mode === 'routine') { A2.mode = 'check'; A2.path = null; }
     const pf = tdFloor(pos.x), af = tdFloor(A2.x), dP = Math.hypot(pos.x - A2.x, pos.z - A2.z);
     // seeing you: in front of him, close enough for how dark it is, nothing in between, and you're not hiding
     const reach = tdTorchOn() ? 12 : (KIT && KIT.crouchK > .5 ? 3.5 : 7), fx = -Math.sin(A2.yaw), fz = -Math.cos(A2.yaw), dot = dP > .01 ? ((pos.x - A2.x) * fx + (pos.z - A2.z) * fz) / dP : 1;
     A2.sees = pf === af && !TD.hide && !TD.tied && dP < reach && (dot > .35 || dP < 1.6) && tdSee(A2.x, A2.z, pos.x, pos.z);
+    if (TD.hide && TD.hide.known && !TD.hide.hunted && A2.mode !== 'chase' && A2.mode !== 'lurk') { TD.hide.hunted = 1; A2.mode = 'investigate'; A2.goal = [TD.hide.ox, TD.hide.oz]; A2.path = null; A2.wait = 0; A2.reached = false; }
+    if (TD.hide && TD.hide.known && A2.mode !== 'chase' && pf === af && Math.hypot(A2.x - TD.hide.ox, A2.z - TD.hide.oz) < 2.6 && !TD.busy) { tdVoice('You hid here last time. I remember everything. I write it down.', true); return tdCaught(true); }
+    if (TD.cutT > 0 && (TD.cutT -= dt) <= 0) { TD.phoneCut = true; tdVoice('I’ve unplugged the phone. You were wasting the police’s time.'); }
     if (TD.tied && A2.mode === 'check' && af === 'B' && dP < 3) { A2.mode = 'routine'; A2.path = null; if (Math.random() < .7) tdVoice(['Good. You’re still here.', 'Comfortable? Good.', 'Shh. Sleep.'][Math.random() * 3 | 0], true); }
     if (A2.sees) { if (A2.mode !== 'chase') { A2.mode = 'chase'; tone(70, .6, 'sawtooth', .06, 40); if (!scaresLow()) { fadeEl.style.background = '#300000'; fadeEl.classList.add('on'); setTimeout(() => fadeEl.classList.remove('on'), 120); } tdVoice(['There you are.', 'Found you.', 'You’re making a mess.'][Math.random() * 3 | 0], true); } A2.seenT = 0; A2.lastSeen = [pos.x, pos.z]; }
     else if (A2.mode === 'chase') { A2.seenT += dt; if (A2.seenT > 6) { A2.mode = 'investigate'; A2.goal = A2.lastSeen; A2.path = null; A2.wait = 0; } }
@@ -14285,34 +14294,36 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function tdKnockout(why){
     const s = tdLoad(); TD.busy = true; tone(60, 1.2, 'sine', .06, 30);
-    fade(() => { s.night++; s.nightT = 0; s.inv = []; TD.moved = []; TD.drawerOpen = TD.freezerOpen = 0; TD.doors.study.open = false; ['bed', 'bath', 'quiet'].forEach(k => TD.doors[k].open = false); TD.police = 0; TD.torchOn = false; tdSave();
+    fade(() => { if (tdHas('frontkey') || s.knowCode) { s.code = String(1000 + Math.floor(Math.random() * 9000)); s.knowCode = 0; s.keySpot = ((s.keySpot || 0) + 1 + Math.floor(Math.random() * 2)) % 3; s.changed = 1; }
+      s.night++; s.nightT = 0; s.inv = []; TD.moved = []; TD.drawerOpen = TD.freezerOpen = 0; TD.doors.study.open = false; ['bed', 'bath', 'quiet'].forEach(k => TD.doors[k].open = false); TD.police = 0; TD.torchOn = false; tdSave();
       if (s.night > 5) { TD.busy = false; return tdBadEnd(); }
       tdNightStart(); TD.busy = false;
-      say(`${why === 'fight' ? 'He let you think you were winning. Then a needle, and nothing.' : 'A cloth over your face, sweet and chemical.'} Night ${s.night - 1} is lost. When you wake, everything is back where it belongs. Night ${s.night} of 5.`, 6200); }, '#000000');
+      say(`${why === 'fight' ? 'He let you think you were winning. Then a needle, and nothing.' : 'A cloth over your face, sweet and chemical.'} Night ${s.night - 1} is lost. When you wake, everything is back where it belongs. Night ${s.night} of 5.${s.changed ? ' And he has changed things: a new alarm code, and the key isn’t where it was.' : ''}`, 6200); s.changed = 0; tdSave(); }, '#000000');
   }
   // ---------- fights: the existing fight system, in his house, with whatever you've picked up ----------
   function tdFight(ambush){
     const s = tdLoad(); s.fights++; tdSave(); TD.fightAmbush = !!ambush; TD.scr = false;
     TD.canWin = s.fights >= 3 && (['cleaver', 'crowbar'].includes(tdWeapon()) || s.learned >= 2 || s.night >= 3);
-    startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'td1', tdy: 1 });
+    startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: TD.canWin ? 'td2' : 'td1', tdy: 1 });
   }
   function tdSetup(part){
-    if (part !== 'td1' || !EV.opts || !EV.opts.tdy) return; const A2 = TD.ai || { x: pos.x, z: pos.z - 2 };
+    if (!(part === 'td1' || part === 'td2') || !EV.opts || !EV.opts.tdy) return; const A2 = TD.ai || { x: pos.x, z: pos.z - 2 };
     const b = addUnit({ hero: 'tidy', team: 'en' }); b.x = A2.x; b.z = A2.z; b.boss = 1; EV.boss = b; if (TD.fightAmbush) b.hp = b.max * .7; if (TD.av) TD.av.g.visible = false;
-    EV.wpn = tdWeapon() || 'fists'; EV.prop = EV.wpn === 'fists' ? null : EV.wpn; EV.clawsTorn = true; EV.st.td = { b, dodgeT: 0, guard: 0, wounds: 0 }; plats.event = plats.tidy.slice();
+    EV.wpn = tdWeapon() || 'fists'; EV.prop = EV.wpn === 'fists' ? null : EV.wpn; EV.clawsTorn = true; EV.st.td = { b, dodgeT: 0, guard: 0, wounds: 0, final: part === 'td2', ph: 1, ndT: 7, grT: 6, frT: 1, amT: 6, trailT: 0, fl: 0 }; plats.event = plats.tidy.slice();
+    if (part === 'td2') { b.hp = b.max = Math.round(HEROES.tidy.hp * 1.15); say(`He takes off his glasses, folds them, and puts them in his shirt pocket. “I’ve been looking forward to this. You’re the first one who ever got this far.”`, 4600); tone(55, 2, 'sawtooth', .05, 40); return; }
     say(TD.fightAmbush ? 'You catch him from behind. Now.' : `He doesn’t shout. He just takes off his glasses and folds them away.${EV.wpn !== 'fists' ? '' : ' You have nothing but your hands.'}`, 3400);
   }
   function tdHit(u, d, from){
     if (!EV || !EV.opts || !EV.opts.tdy) return d; const S = EV.st.td; if (!S) return d;
-    if (u === S.b && from === 'me') { if (S.guard > 0) { d *= .3; tone(1100, .06, 'square', .03, 700); tdGore(u.x, 1.3, u.z, 2, true); return d; }
+    if (u === S.b && from === 'me') { if (S.final && S.ph >= 2) { d *= 1.1; } if (S.guard > 0) { d *= .3; tone(1100, .06, 'square', .03, 700); tdGore(u.x, 1.3, u.z, 2, true); return d; }
       const w = EV.wpn; d *= { cleaver: 1.5, crowbar: 1.4, hammer: 1.3, knife: 1.2 }[w] || 1;
-      tdGore(u.x, 1.25 + Math.random() * .3, u.z, w === 'fists' ? 4 : 10, false); if (!goreLow()) { if (Math.random() < .6) tdDecal(u.x + (Math.random() - .5) * .8, u.z + (Math.random() - .5) * .8, .25 + Math.random() * .25); if (S.wounds < 12) { S.wounds++; tdWound(u.av.g); } }
+      tdGore(u.x, 1.25 + Math.random() * .3, u.z, (w === 'fists' ? 4 : 10) * (S.final ? 2 : 1), false); if (S.final && w !== 'fists' && Math.random() < .35) tdSpurt(u, 18); if (!goreLow()) { if (Math.random() < (S.final ? 1 : .6)) tdDecal(u.x + (Math.random() - .5) * .8, u.z + (Math.random() - .5) * .8, .25 + Math.random() * .25); if (S.wounds < 12) { S.wounds++; tdWound(u.av.g); } }
       EV.shake = Math.max(EV.shake || 0, .22); tone(110, .14, 'sawtooth', .06, 60); }
     return d;
   }
   function tdHurt(d, from){
     if (!EV || !EV.opts || !EV.opts.tdy) return d; const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
-    tdGore(pos.x + fx * .5, 1.2, pos.z + fz * .5, 8, false); TD.blood = Math.min(1, (TD.blood || 0) + d / 30); TD.scar = Math.min(.45, (TD.scar || 0) + d / 160); if (!goreLow() && Math.random() < .5) tdDecal(pos.x, pos.z, .2 + Math.random() * .3);
+    const fin = EV.st && EV.st.td && EV.st.td.final; tdGore(pos.x + fx * .5, 1.2, pos.z + fz * .5, fin ? 16 : 8, false); TD.blood = Math.min(1, (TD.blood || 0) + d / (fin ? 20 : 30)); TD.scar = Math.min(.45, (TD.scar || 0) + d / 160); if (!goreLow() && Math.random() < .5) tdDecal(pos.x, pos.z, .2 + Math.random() * .3);
     if (d > 9) EV.shake = Math.max(EV.shake || 0, .35); tone(90, .2, 'sawtooth', .07, 45); return d;
   }
   function tdFightStep(dt){
@@ -14320,16 +14331,48 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // he reads you: when you wind up a swing he sidesteps or raises his arm
     if (EV.swing > .25 && S.dodgeT <= 0 && Math.hypot(b.x - pos.x, b.z - pos.z) < 2.8) { S.dodgeT = .9; if (Math.random() < .35) { const sx = -(b.z - pos.z), sz = b.x - pos.x, l = Math.hypot(sx, sz) || 1, k = Math.random() < .5 ? 1 : -1; b.kx += sx / l * 7 * k; b.kz += sz / l * 7 * k; } else if (Math.random() < .5) S.guard = .5; }
     // he isn't trying to kill you. Not yet. He lets you get close, then ends it
+    if (S.final) tdFinalStep(S, b, dt);
     if (!TD.canWin && !TD.scr && b.hp < b.max * .42) { TD.scr = true; say(`${TD_NAME}: “That’s enough. You did well. Better than most.” A needle, in your neck, quick as a handshake.`, 4200); endMatch(false); }
   }
+  // a jet of blood from a deep cut, in the direction the blow went
+  function tdSpurt(u, n){ if (goreLow()) return tdGore(u.x, 1.3, u.z, 6, false); const a = Math.atan2(u.x - pos.x, u.z - pos.z), sc = sceneOf(); if (!sc) return;
+    const m = new THREE.MeshBasicMaterial({ color: 0x8A0808 }); for (let i = 0; i < n; i++) setTimeout(() => { if (!EV || TD.fx.length > (lowFx ? 120 : 260)) return; const p = new THREE.Mesh(TD.dropG || (TD.dropG = new THREE.SphereGeometry(.025, 5, 4)), m); p.position.set(u.x, 1.35, u.z); sc.add(p);
+      TD.fx.push({ p, v: V(Math.sin(a) * (3 + Math.random() * 2) + (Math.random() - .5), 1.5 + Math.random() * 1.5, Math.cos(a) * (3 + Math.random() * 2) + (Math.random() - .5)), t: 0, sc, land: true }); }, i * 22); }
+  // the final fight: 1. the kitchen, calm and precise; 2. lights out, a needle in the dark, he comes from behind; 3. untidy: bleeding, desperate, trying to drag you back to the chair
+  function tdFinalStep(S, b, dt){
+    const f = b.hp / b.max, dP = Math.hypot(b.x - pos.x, b.z - pos.z), low = scaresLow(), dark = S.ph === 2 && !low;
+    if (S.ph === 1 && f < .66) { S.ph = 2; S.ndT = 3; S.amT = 5; tone(40, 1.5, 'sawtooth', .07, 25); say(low ? 'He backs off and flicks the fuse box. The lights drop to almost nothing. “Let’s see how you do when you can’t see.”' : 'A click from the fuse box. Every light in the house dies. In the dark, his voice is right next to you: “Let’s see how you do when you can’t see.”', 4600); }
+    if (S.ph === 2 && f < .3) { S.ph = 3; S.grT = 2; S.frT = .6; b.stun = 0; tone(90, .8, 'sawtooth', .08, 50); say('The lights stutter back on. His shirt is soaked through, his parting is gone, and he isn’t calm any more. “Look what you’ve DONE to my floor.”', 4800); }
+    // the house lights: on, out, or flickering back
+    TD.lights.forEach(l => { const k = S.ph === 2 ? (low ? .22 : (S.fl > 0 ? 1 : 0)) : S.ph === 3 ? (Math.random() < .12 ? .2 : 1) : 1; l.L.intensity = l.base * k; l.g.visible = k > .5; });
+    const on = tdTorchOn(); TD.torch.intensity = on ? 2.4 : 0; if (on) { TD.torch.position.set(pos.x, pos.y - .1, pos.z); TD.torch.target.position.set(pos.x - Math.sin(yaw) * 6, pos.y + Math.sin(pitch) * 6, pos.z - Math.cos(yaw) * 6); TD.torch.target.updateMatrixWorld(); }
+    if (S.ph === 2) { S.fl = Math.max(0, S.fl - dt); if (!low && Math.random() < dt * .25) { S.fl = .12; tone(60, .4, 'sine', .04, 30); }
+      if (b.av && b.av.g) b.av.g.visible = !dark || dP < (on ? 9 : 3) || S.fl > 0;
+      // he slips round behind you while you can't see him
+      if ((S.amT -= dt) <= 0 && dP > 2.5) { S.amT = 7 + Math.random() * 3; const bx = pos.x + Math.sin(yaw) * 1.8, bz = pos.z + Math.cos(yaw) * 1.8; if (evValid(bx, bz)) { b.x = bx; b.z = bz; if (!low) { tone(1400, .05, 'sine', .02, 2000); say('A whisper, right behind you: “Here.”', 1600); } } } }
+    else if (b.av && b.av.g) b.av.g.visible = true;
+    // the needle: a thin bright line in his hand, then a lunge (block or get away)
+    if (S.ph >= 2 && !S.grab) { if (S.nd > 0) { S.nd -= dt; if (S.nd <= 0) { if (dP < 2.4 && !EV.blocking && EV.dead <= 0) { EV.slowMe = 4.5; canvas.style.filter = 'blur(2px) saturate(.6)'; hurtMe(7, b); say('The needle goes in. Everything turns to syrup.', 2200); } else { tone(1600, .08, 'square', .03, 900); say('The needle misses by a finger’s width.', 1400); } } }
+      else if ((S.ndT -= dt) <= 0 && dP < 4) { S.ndT = 6 + Math.random() * 3; S.nd = .8; tone(2400, .4, 'sine', .02, 2600); say('Something thin and bright in his hand. Block it, or get away!', 1400); } }
+    if (EV.slowMe > 0) { EV.slowMe -= dt; if (EV.slowMe <= 0) { EV.slowMe = 0; canvas.style.filter = ''; } }
+    // untidy: faster blows, a blood trail, and he tries to drag you back to the chair
+    if (S.ph === 3) { if ((S.trailT -= dt) <= 0) { S.trailT = .35; tdDecal(b.x, b.z, .18 + Math.random() * .15, true); }
+      if (!S.grab && (S.frT -= dt) <= 0 && dP < 2 && b.stun <= 0) { S.frT = .9 + Math.random() * .4; hurtMe(6 + Math.random() * 5, b); }
+      if (!S.grab && (S.grT -= dt) <= 0 && dP < 1.8 && b.stun <= 0) { S.grT = 9 + Math.random() * 4; S.grab = { t: 2.8, n: 0 }; EV.lockT = 2.8; say(fine ? 'He has you by the collar, dragging you toward the basement stairs. Mash A and D to break free!' : 'He has you by the collar, dragging you toward the basement stairs. Tap Break free!', 2600); tone(70, .5, 'sawtooth', .06, 40); }
+      if (S.grab) { S.grab.t -= dt; EV.lockT = Math.max(EV.lockT, .1); if (S.grab.n >= 1) { S.grab = null; EV.lockT = 0; b.stun = 1.8; tdSpurt(b, 14); say('You drive your elbow back into his face and tear loose. He staggers.', 2200); tone(150, .2, 'square', .06, 60); }
+        else if (S.grab.t <= 0) { S.grab = null; EV.lockT = 0; hurtMe(24, b); for (let i = 0; i < 4; i++) tdDecal(pos.x + (Math.random() - .5), pos.z + (Math.random() - .5), .3 + Math.random() * .3, true); say('He slams you into the wall, again, and again, before you get free.', 2400); } } }
+    if (!S.grab) TD.grabBtn = false; else TD.grabBtn = true;
+  }
+  const tdMash = () => { const S = EV && EV.st && EV.st.td; if (S && S.grab) { S.grab.n += .11; tone(200 + Math.random() * 80, .04, 'triangle', .02); } };
+  addEventListener('keydown', e => { if (e.repeat || !EV || !EV.opts || !EV.opts.tdy) return; const k = e.key.toLowerCase(); if ((k === 'a' || k === 'd') && TD.lastMash !== k) { TD.lastMash = k; tdMash(); } });
   function tdFightEnd(won){ TD.fightDone = true; setTimeout(() => { if (EV) stopEvent(true); if (won) tdBeatHim(); else tdKnockout('fight'); }, 1800); }
-  function tdBack(){ tdArenaBack(); const left = !TD.fightDone; TD.fightDone = false; if (left && TD.mode === 'night') setTimeout(() => tdKnockout('fight'), 0); zone = 'tidy'; plats.event = []; if (TD.av) TD.av.g.visible = !(TD.ai && TD.ai.out); $('#worldBack').hidden = false; $('#worldBack').textContent = TD.mode === 'visit' ? 'Back to the street' : 'Give up'; hotEl.hidden = true; }
-  function tdBeatHim(){ const s = tdLoad(); s.wins++; tdSave(); TD.ai.mode = 'down'; if (TD.av) { TD.av.g.visible = true; TD.av.g.rotation.x = -Math.PI / 2; TD.av.g.position.y = .25; }
-    say('He goes down and stays down, glasses in his pocket, perfectly folded. His keys are on his belt, and the alarm fob with them.', 4800); s.inv.push('frontkey'); s.knowCode = 1; tdSave(); setTimeout(() => tdEscape('fight'), 4200); }
+  function tdBack(){ canvas.style.filter = ''; TD.grabBtn = false; tdArenaBack(); const left = !TD.fightDone; TD.fightDone = false; if (left && TD.mode === 'night') setTimeout(() => tdKnockout('fight'), 0); zone = 'tidy'; plats.event = []; if (TD.av) TD.av.g.visible = !(TD.ai && TD.ai.out); $('#worldBack').hidden = false; $('#worldBack').textContent = TD.mode === 'visit' ? 'Back to the street' : 'Leave for now'; hotEl.hidden = true; }
+  function tdBeatHim(){ const s = tdLoad(), fin = TD.canWin; s.wins++; if (fin) s.final = 1; tdSave(); TD.ai.mode = 'down'; if (TD.av) { TD.av.g.visible = true; TD.av.g.rotation.x = -Math.PI / 2; TD.av.g.position.y = .25; } if (fin && !goreLow()) for (let i = 0; i < 6; i++) tdDecal(TD.ai.x + (Math.random() - .5) * 1.6, TD.ai.z + (Math.random() - .5) * 1.6, .4 + Math.random() * .4);
+    say(fin ? 'He’s on the floor in the middle of the mess, breathing in little bubbles. He reaches for his glasses, puts them on, and looks around at the blood with real distress. “You’ve made such a mess,” he says. Then nothing. His keys are on his belt.' : 'He goes down and stays down, glasses in his pocket, perfectly folded. His keys are on his belt, and the alarm fob with them.', fin ? 7000 : 4800); s.inv.push('frontkey'); s.knowCode = 1; tdSave(); setTimeout(() => tdEscape('fight'), fin ? 6800 : 4200); }
   // ---------- gore: blood that flies, lands, pools and stays (or dark flashes on Low) ----------
   function tdGore(x, y, z, n, spark){
     const low = goreLow(), sc = sceneOf(); if (!sc) return; const m = spark ? new THREE.MeshBasicMaterial({ color: 0xFFE0A0 }) : new THREE.MeshBasicMaterial({ color: low ? 0x2A2030 : 0x7A0A0A });
-    for (let i = 0; i < n; i++) { const p = new THREE.Mesh(TD.dropG || (TD.dropG = new THREE.SphereGeometry(.025, 5, 4)), m); p.position.set(x, y, z); sc.add(p); TD.fx.push({ p, v: V((Math.random() - .5) * 4, 1 + Math.random() * 3, (Math.random() - .5) * 4), t: 0, sc, land: !spark && !low }); }
+    for (let i = 0; i < n && TD.fx.length < (lowFx ? 120 : 260); i++) { const p = new THREE.Mesh(TD.dropG || (TD.dropG = new THREE.SphereGeometry(.025, 5, 4)), m); p.position.set(x, y, z); sc.add(p); TD.fx.push({ p, v: V((Math.random() - .5) * 4, 1 + Math.random() * 3, (Math.random() - .5) * 4), t: 0, sc, land: !spark && !low }); }
     if (low && !spark) { fadeEl.style.background = '#14101A'; fadeEl.classList.add('on'); setTimeout(() => fadeEl.classList.remove('on'), 60); }
   }
   function tdDecal(x, z, r, smear){
@@ -14352,7 +14395,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     TD.hud = document.createElement('div'); TD.hud.className = 'tdhud'; TD.hud.hidden = true; document.body.appendChild(TD.hud);
     TD.bloodEl = document.createElement('div'); TD.bloodEl.className = 'tdblood'; document.body.appendChild(TD.bloodEl);
     TD.btn = document.createElement('button'); TD.btn.type = 'button'; TD.btn.className = 'btn alt drvbtn doorbtn tdbtn'; TD.btn.hidden = true; document.body.appendChild(TD.btn);
-    TD.btn.addEventListener('click', e => { e.stopPropagation(); if (TD.hide) return tdUnhide(); if (TD.near) TD.near.go(); });
+    TD.btn.addEventListener('click', e => { e.stopPropagation(); if (TD.grabBtn) return tdMash(); if (TD.hide) return tdUnhide(); if (TD.near) TD.near.go(); });
     TD.tbtn = document.createElement('button'); TD.tbtn.type = 'button'; TD.tbtn.className = 'btn tdtorch'; TD.tbtn.hidden = true; TD.tbtn.textContent = 'Torch'; document.body.appendChild(TD.tbtn);
     TD.tbtn.addEventListener('click', e => { e.stopPropagation(); if (!tdHas('torch')) return; TD.torchOn = !TD.torchOn; tone(TD.torchOn ? 1200 : 900, .04, 'square', .02); tdHudDraw(); });
   }
@@ -14367,7 +14410,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function tdNightStart(){
     const s = tdLoad(); tdBuild(); tdHudInit(); s.state = 'captive'; s.nightT = 0; s.inv = []; tdSave();
     TD.mode = 'night'; TD.tied = true; TD.str = 0; TD.hide = null; TD.moved = []; TD.drawerOpen = TD.freezerOpen = TD.grateOpen = 0; TD.police = 0; TD.torchOn = false; TD.phoneCut = false; TD.escaping = false; TD.busy = false; TD.fightDone = false;
-    Object.values(TD.doors).forEach(d => { d.open = false; d.his = false; }); tdAiNew(); TD.ai.x = 0; TD.ai.z = -2; if (TD.av) { TD.av.g.rotation.x = 0; TD.av.g.position.y = 0; }
+    Object.values(TD.doors).forEach(d => { d.open = false; d.his = false; }); TD.deskEmpty = 0; TD.cutT = 0;
+    if (!TD.wires) TD.wires = [[-20.6, 4.6], [6.6, 4.9], [22.9, -2.3]].map(([x, z]) => { const g = new THREE.Mesh(new THREE.BoxGeometry(.005, .005, 1.2), new THREE.MeshBasicMaterial({ color: 0xC9CFD8 })); g.position.set(x, .14, z); if (Math.abs(x - 22.9) < .1) g.rotation.y = Math.PI / 2; TD.sc.add(g); return { g, x, z }; });
+    TD.wires.forEach(w => { w.snap = 0; w.told = 0; w.g.visible = s.night >= 2; }); tdAiNew(); TD.ai.x = 0; TD.ai.z = -2; if (TD.av) { TD.av.g.rotation.x = 0; TD.av.g.position.y = 0; }
     web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'tidy'; vy = 0; falling = false; grounded = true; pos.set(-28, 1.25, 0); yaw = 0; pitch = -.08; KIT.crouch = false; KIT.sprint = false;
     closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Leave for now'; jumpBtn.hidden = true; uiZone(); tdItemsShow(); tdHudDraw();
   }
@@ -14393,7 +14438,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const L = s.call ? [['{N}', 'Hello? Someone called. Is anyone…'], [TD_NAME, 'Oh, it’s you. I’m so glad. Come in, quickly. The poor woman is downstairs.'], ['{N}', 'Mr. Varadan? This is your house?'], [TD_NAME, 'She was a recording. I’m sorry. I don’t like lying. It’s untidy.']]
       : [[TD_NAME, 'You came! Shoes off, please, on the rack. Thank you. The boxes are in the basement.'], [TD_NAME, 'Tea first. I insist. Two sugars? I guessed two.'], ['{N}', 'Thanks. …It tastes a bit bitter.'], [TD_NAME, 'That’s the cardamom. Sit down. You look so tired. Everyone does, at the end.']];
     cityScene(L, look, () => { tone(70, 2, 'sine', .06, 40); say(s.call ? 'A cloth over your face, sweet and chemical. The street tilts away.' : 'The room swims. His face is very close, and very calm. Then nothing.', 3400);
-      fade(() => { s.night = 1; s.nightT = 0; s.fights = s.fights || 0; tdSave(); tdNightStart();
+      fade(() => { s.night = 1; s.nightT = 0; s.fights = s.fights || 0; s.knowCode = 0; s.keySpot = 0; s.hides = {}; s.code = String(1000 + Math.floor(Math.random() * 9000)); tdSave(); tdNightStart();
         say(`You wake taped to a chair, in a basement wrapped in plastic. Your phone, your web-shooters, your mask: gone. Above you, footsteps, and someone humming. Night 1 of 5.${fine ? ' Struggle with A and D.' : ' Tap the button to struggle.'}`, 7200);
         setTimeout(() => tdVoice('Good morning. Well. Good evening. Make yourself at home. You’ll be here a while.'), 7600); }, '#000000'); });
   }
@@ -14431,8 +14476,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     tdHudInit(); const inT = inWorld && zone === 'tidy' && !!TD.sc;
     // talking to him in the street with E (or the button)
     if (!inT) { const cityNear = inWorld && zone === 'blr' && TD.near && !doorNear && !EV && !A; TD.btn.hidden = !cityNear; if (cityNear) TD.btn.textContent = TD.near.label + (fine ? ' (E)' : '');
-      TD.hud.hidden = true; TD.tbtn.hidden = true; if (EV && EV.inTdy) { tdFightStep(dt); tdFxStep(dt); } else if (TD.bloodEl) TD.bloodEl.style.opacity = 0; return; }
+      TD.hud.hidden = true; TD.tbtn.hidden = true; if (EV && EV.inTdy) { tdFightStep(dt); tdFxStep(dt); if (TD.grabBtn) { TD.btn.hidden = false; TD.btn.textContent = 'Break free!'; } } else if (TD.bloodEl) TD.bloodEl.style.opacity = 0; return; }
     const s = tdLoad(), night = TD.mode === 'night';
+    // seated in the chair, or crouched in a hiding place: the camera drops the same way it does when you crouch
+    if (TD.tied || TD.hide) KIT.crouchK = TD.tied ? .5 : .21;
     if (night && !TD.busy && !TD.escaping) { s.nightT = (s.nightT || 0) + dt;
       if (s.nightT >= 300) { s.night++; s.nightT = 0; s.learned = (s.learned || 0) + 1; tdSave(); if (s.night > 5) return tdBadEnd(); tone(330, .6, 'sine', .03, 440); say(`Grey light under the door. He sleeps through the day; you don’t. You know his routine a little better now. Night ${s.night} of 5.`, 5200); }
       if ((TD.saveT = (TD.saveT || 0) + dt) > 5) { TD.saveT = 0; tdSave(); } }
@@ -14455,6 +14502,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (night && !TD.tied && !TD.hide) { const mv = TD.lastP ? Math.hypot(pos.x - TD.lastP.x, pos.z - TD.lastP.z) / Math.max(dt, 1e-3) : 0; TD.noiseT = (TD.noiseT || 0) - dt;
       if (mv > .5 && TD.noiseT <= 0 && KIT.crouchK < .5) { TD.noiseT = KIT.sprinting ? .45 : 1.1; tdNoise(pos.x, pos.z, KIT.sprinting ? 6.5 : 2); if (KIT.sprinting) tone(80 + Math.random() * 20, .05, 'triangle', .03); } }
     TD.lastP = { x: pos.x, z: pos.z };
+    if (night && TD.wires) TD.wires.forEach(w => { if (w.snap || !w.g.visible) return; if (tdFloor(pos.x) === tdFloor(w.x) && Math.hypot(pos.x - w.x, pos.z - w.z) < .7 && !TD.tied && !TD.hide) { if (KIT.crouchK > .5) { if (!w.told) { w.told = 1; say('A thread, stretched ankle-high across the way, almost invisible. You duck under it.', 2800); } return; } w.snap = 1; w.g.visible = false; tdNoise(w.x, w.z, 14); [1800, 2400, 2100].forEach((f, i) => setTimeout(() => tone(f, .12, 'triangle', .03), i * 90)); say('Something snaps at your ankle, and a little bell rings somewhere in the house. A thread. He set a thread.', 3400); } });
     if (night && A2 && A2.mode !== 'down' && A2.mode !== 'gone' && !TD.busy && !TD.escaping) tdAiStep(dt, now);
     tdFxStep(dt); if ((TD.hudT = (TD.hudT || 0) - dt) <= 0) { TD.hudT = .5; tdHudDraw(); }
   }
@@ -17809,7 +17857,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (zone === 'roof' && (pos.y < .5 || !platformAt(pos.x, pos.z) && pos.y < 1.4)) { zone = 'city'; cityAir = true; cityV.set(0, Math.min(0, vy), 0); cityLast = null; $('#worldBack').textContent = A ? 'Leave the fight' : 'Back to the rooftop'; }
     if (zone === 'city') { cityPhysics(dt); return roofStep(dt, now); }
     if (zone === 'blr' && (SW.on || SW.roof)) { webSwingStep(dt); if (SW.on || SW.roof) return; }
-    if (zone === 'tidy' && (TD.tied || TD.hide)) { vy = 0; grounded = true; pos.y = TD.tied ? 1.25 : 1.45; return; }
     // gravity
     const plat = platformAt(pos.x, pos.z), feet = pos.y - 1.6;
     if (zone === 'hub' && MK.flying) { vy = 0; grounded = true; pos.y += (1.9 - pos.y) * Math.min(1, dt * 5); }
