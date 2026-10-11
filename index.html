@@ -3251,7 +3251,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function cityBoxesFromMap(){
     if (!BL.bld || cityBoxes.mapped === BL.bld && cityBoxes.tl === newTL()) return; cityBoxes.length = 0; cityTrees.length = 0; cityBoxes.mapped = BL.bld; cityBoxes.tl = newTL();
     cityBoxes.push({ x: 0, z: 0, hw: 7, hd: 7, top: 0, meshes: [] });
-    BL.bld.forEach((b, i) => { if (b.hide) return; const wr = (SG.wreck || []).includes(b.key) && !newTL(); cityBoxes.push({ i, bld: b, x: (b.x0 + b.x1) / 2 + 20, z: (b.z0 + b.z1) / 2 + 20, hw: (b.x1 - b.x0) / 2, hd: (b.z1 - b.z0) / 2, top: b.h * (wr ? .22 : 1) - 31, meshes: [] }); });
+    BL.bld.forEach((b, i) => { if (b.hide && !b.keep) return; const wr = (SG.wreck || []).includes(b.key) && !newTL(); cityBoxes.push({ i, bld: b, x: (b.x0 + b.x1) / 2 + 20, z: (b.z0 + b.z1) / 2 + 20, hw: (b.x1 - b.x0) / 2, hd: (b.z1 - b.z0) / 2, top: b.h * (wr ? .22 : 1) - 31, meshes: [] }); });
     if (!newTL()) cityBoxes.push({ x: TW.x + 20, z: TW.z + 20, hw: TW.r * .8, hd: TW.r * .8, top: TW.roof + 1 - 31, meshes: [] });
   }
   // the roof sits on top of your tower in the same map: line the city up under it
@@ -3273,20 +3273,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   let cityAir = false, cityLast = null;
   function cityPhysics(dt){
     const feet = pos.y - 1.6;
-    if (web.p) {
-      // swinging: gravity, a little push from W/S, and the web line holding you
-      cityV.y -= 22 * dt;
-      const f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0); if (f) { cityV.x += -Math.sin(yaw) * f * 12 * dt; cityV.z += -Math.cos(yaw) * f * 12 * dt; }
-      pos.addScaledVector(cityV, dt);
-      tmpV.subVectors(pos, web.p); const L = tmpV.length();
-      if (L > web.L) { tmpV.multiplyScalar(1 / L); pos.copy(web.p).addScaledVector(tmpV, web.L); const vr = cityV.dot(tmpV); if (vr > 0) cityV.addScaledVector(tmpV, -vr); }
+    if (web.p || cityAir) {
+      // swinging off your roof uses the same swing as the streets below: one feel everywhere
       cityAir = true;
-    } else if (cityAir) { cityV.y -= 22 * dt; pos.addScaledVector(cityV, dt); cityV.x *= .996; cityV.z *= .996; }
-    if (cityAir) {
-      const f2 = pos.y - 1.6;
-      if ((cityBlocked(pos.x, pos.z, f2) || !inCity(pos.x, pos.z)) && cityLast) { pos.x = cityLast.x; pos.z = cityLast.z; cityV.x *= -.2; cityV.z *= -.2; }
-      const g = roofTopAt(pos.x, pos.z, f2);
-      if (f2 <= g && cityV.y <= 0) { pos.y = g + 1.6; cityV.set(0, 0, 0); cityAir = false; if (!web.p) tone(140, .08, 'sine', .05); }
+      swingCore(dt, { top: (x, z, f) => roofTopAt(x, z, f), topAt: (x, z) => roofTopAt(x, z, 1e4), ground: G,
+        wall: (x, z, f) => !inCity(x, z) || cityBoxes.some(b => !b.off && Math.abs(x - b.x) < b.hw + .45 && Math.abs(z - b.z) < b.hd + .45 && b.top > f + .45),
+        wallPt: (x, z, f) => !inCity(x, z) || cityBoxes.some(b => !b.off && Math.abs(x - b.x) < b.hw && Math.abs(z - b.z) < b.hd && b.top > f + .45),
+        land: g => { pos.y = g + 1.6; cityV.set(0, 0, 0); cityAir = false; web.p = null; tone(140, .08, 'sine', .05); } });
     } else {
       // walking: stay on whatever you're standing on, and walking off an edge means falling
       const g = roofTopAt(pos.x, pos.z, feet + .1);
@@ -3315,34 +3308,57 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function webSwingStep(dt){
     if (EV || A || BL.lvl || DRV.on || Math.abs(BL.off.y) > .01) { if (SW.on || SW.roof) { swReset(); pos.y = 1.6; } return; }
     if (SW.on) {
-      // the last safe spot can only ever be a step behind you; anything further is stale (you walked, rode or were moved since)
-      if (Math.hypot(pos.x - SW.lx, pos.z - SW.lz) > 6) { SW.lx = pos.x; SW.lz = pos.z; }
-      cityV.y -= 22 * dt; if (web.p) { const f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0); if (f) { cityV.x += -Math.sin(yaw) * f * (12 + 4 * UPG2.swing) * dt; cityV.z += -Math.cos(yaw) * f * (12 + 4 * UPG2.swing) * dt; } } else { cityV.x *= .996; cityV.z *= .996; }
-      pos.addScaledVector(cityV, dt);
-      // the web reels you in as you hold it, so even from the pavement you're pulled up and away
-      if (web.p) { web.L = Math.max(4, web.L - (6 + 2 * UPG2.swing) * dt); tmpV.subVectors(web.p, pos).normalize(); cityV.addScaledVector(tmpV, (9 + 3 * UPG2.swing) * dt); }
-      if (web.p) { tmpV.subVectors(pos, web.p); const L = tmpV.length(); if (L > web.L) { tmpV.multiplyScalar(1 / L); pos.copy(web.p).addScaledVector(tmpV, web.L); const vr = cityV.dot(tmpV); if (vr > 0) cityV.addScaledVector(tmpV, -vr); } }
-      if (pos.y > 150) { pos.y = 150; cityV.y = Math.min(0, cityV.y); }
-      // reeled all the way in to a web stuck on a wall: climb it. The web jumps up over the edge of the roof and pulls you on top
-      if (web.p) { const dx = web.p.x - pos.x, dz = web.p.z - pos.z, hd = Math.hypot(dx, dz) || 1; if (hd < 3 && Math.abs(web.p.y - pos.y) < 4.6) { const ix = web.p.x + dx / hd * 1.6, iz = web.p.z + dz / hd * 1.6, [ax, az] = toMap(ix, iz), t = bTop(ax, az) - BL.off.y;
-        if (t > pos.y - 1.6 + .3 && t < 160) { web.p.set(ix, t + 2.6, iz); web.L = pos.distanceTo(web.p); cityV.y = Math.max(cityV.y, 10 + 2 * UPG2.swing); } } }
-      // into a wall: slide along it instead of stopping dead, keep your body (not just your feet) out of it, and if your web is
-      // stuck to that wall, it hauls you up the face and over the top instead of pinning you there
-      let [mx, mz] = toMap(pos.x, pos.z); const feet = pos.y - 1.6;
-      const [ox0, oz0] = toMap(SW.lx, SW.lz), hug = swBodyBlocked(ox0, oz0, feet), blk = hug ? swBlocked : swBodyBlocked;
-      if (blk(mx, mz, feet)) { const ox = ox0, oz = oz0;
-        if (!blk(mx, oz, feet)) { pos.z = SW.lz; cityV.z *= -.15; }
-        else if (!blk(ox, mz, feet)) { pos.x = SW.lx; cityV.x *= -.15; }
-        else { pos.x = SW.lx; pos.z = SW.lz; cityV.x *= -.15; cityV.z *= -.15; }
-        if (web.p && web.p.y > pos.y) { cityV.y = Math.max(cityV.y, 10 + 2 * UPG2.swing); web.L = Math.min(web.L, pos.distanceTo(web.p)); }
-        [mx, mz] = toMap(pos.x, pos.z); }
-      const sup = bTop(mx, mz);
-      if (pos.y - 1.6 <= sup && cityV.y <= 0) { pos.y = sup + 1.6; cityV.set(0, 0, 0); web.p = null; SW.on = false; SW.roof = sup > .3 ? sup : 0; vy = 0; grounded = true; tone(140, .08, 'sine', .05); if (!SW.roof) swLandClear(); drawWeb(); }
+      const off = BL.off.y;
+      swingCore(dt, { top: (x, z) => { const [mx, mz] = toMap(x, z); return bTop(mx, mz) - off; }, topAt: (x, z) => { const [mx, mz] = toMap(x, z); return bTop(mx, mz) - off; }, ground: 0,
+        wall: (x, z, f) => { const [mx, mz] = toMap(x, z); return swBodyBlocked(mx, mz, f); }, wallPt: (x, z, f) => { const [mx, mz] = toMap(x, z); return swBlocked(mx, mz, f); },
+        land: sup => { pos.y = sup + 1.6; cityV.set(0, 0, 0); web.p = null; SW.on = false; SW.roof = sup > .3 ? sup : 0; vy = 0; grounded = true; tone(140, .08, 'sine', .05); if (!SW.roof) swLandClear(); drawWeb(); } });
     } else if (SW.roof) {
       const [mx, mz] = toMap(pos.x, pos.z), t = bTop(mx, mz);
       if (t < SW.roof - .35) { SW.on = true; cityV.set(0, 0, 0); SW.roof = 0; } else pos.y = SW.roof + 1.6;
     }
     SW.lx = pos.x; SW.lz = pos.z; drawWeb();
+  }
+  // ---------- one swing for the whole city (streets and rooftops) ----------
+  // A real pendulum: the web keeps its length, so you arc down and up and carry your speed; it only reels you in when you're
+  // low, to lift you off the pavement. Run in small fixed steps so it's equally smooth at any frame rate. Walls: you slide along
+  // them, and if your web is stuck to one you climb it onto the roof. Skimming the street on a web keeps you running.
+  function swingCore(dt, C){
+    const up = UPG2.swing || 0, n = Math.min(8, Math.max(1, Math.ceil(dt * 120))), h = Math.min(dt, .1) / n;
+    for (let i = 0; i < n; i++) {
+      const lx = pos.x, lz = pos.z, f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0);
+      cityV.y -= 24 * h;
+      if (web.p) {
+        if (f) { cityV.x += -Math.sin(yaw) * f * (15 + 4 * up) * h; cityV.z += -Math.cos(yaw) * f * (15 + 4 * up) * h; }
+        const above = pos.y - 1.6 - C.top(pos.x, pos.z, pos.y - 1.6); if (above < 5 && web.p.y > pos.y) web.L = Math.max(4, web.L - (14 + 3 * up) * h);
+      } else { const k = Math.pow(.985, h * 60); cityV.x *= k; cityV.z *= k; }
+      const sp = cityV.length(); if (sp > 62) cityV.multiplyScalar(62 / sp);
+      pos.addScaledVector(cityV, h);
+      if (web.p) { tmpV.subVectors(pos, web.p); const L = tmpV.length(); if (L > web.L) { tmpV.multiplyScalar(1 / L); pos.copy(web.p).addScaledVector(tmpV, web.L); const vr = cityV.dot(tmpV); if (vr > 0) cityV.addScaledVector(tmpV, -vr); } }
+      if (pos.y > 150) { pos.y = 150; cityV.y = Math.min(0, cityV.y); }
+      // reeled in against the wall your web is stuck to: the web jumps over the roof edge and pulls you up on top
+      if (web.p) { const dx = web.p.x - pos.x, dz = web.p.z - pos.z, hd = Math.hypot(dx, dz) || 1; if (hd < 3 && Math.abs(web.p.y - pos.y) < 4.6) { const ix = web.p.x + dx / hd * 1.6, iz = web.p.z + dz / hd * 1.6, t = C.topAt(ix, iz);
+        if (t > pos.y - 1.6 + .3 && t < 160) { web.p.set(ix, t + 2.6, iz); web.L = pos.distanceTo(web.p); cityV.y = Math.max(cityV.y, 10 + 2 * up); } } }
+      // walls: slide along them (your body, not just your feet, stays out); starting pressed against one, only your feet count
+      const feet = pos.y - 1.6, W = C.wall(lx, lz, feet) ? C.wallPt : C.wall;
+      if (W(pos.x, pos.z, feet)) {
+        if (!W(pos.x, lz, feet)) { pos.z = lz; cityV.z *= -.1; } else if (!W(lx, pos.z, feet)) { pos.x = lx; cityV.x *= -.1; } else { pos.x = lx; pos.z = lz; cityV.x *= -.1; cityV.z *= -.1; }
+        if (web.p && web.p.y > pos.y) { cityV.y = Math.max(cityV.y, 10 + 2 * up); web.L = Math.min(web.L, pos.distanceTo(web.p)); }
+      }
+      // the street or a roof under you: on a web at speed you keep running; otherwise you land
+      const sup = C.top(pos.x, pos.z, pos.y - 1.6);
+      if (pos.y - 1.6 <= sup && cityV.y <= 0) { if (web.p && Math.hypot(cityV.x, cityV.z) > 4) { pos.y = sup + 1.6; cityV.y = 0; } else { C.land(sup); return; } }
+    }
+  }
+  // where a web sticks: what you're looking at if it's above you, otherwise up and ahead the way you're facing (like a real
+  // swinger aims), otherwise a high point in the sky ahead so a swing always has a good arc
+  function swingAnchor(){
+    const reach = 90 + 30 * UPG2.swing, ims = BL.bld ? [...new Set(BL.bld.map(b => b.im))] : [], fw = V(-Math.sin(yaw), 0, -Math.cos(yaw));
+    for (const el of [null, .6, .9, .35]) {
+      if (el === null) { ndc.set(0, 0); ray.setFromCamera(ndc, camera); } else ray.set(camera.position, V(fw.x * Math.cos(el), Math.sin(el), fw.z * Math.cos(el)));
+      const hit = ray.intersectObjects(ims, false).find(q => q.distance < reach && q.distance > 5 && q.point.y > pos.y + 4);
+      if (hit) return hit.point.clone();
+    }
+    return pos.clone().addScaledVector(fw, 22).add(V(0, 24, 0));
   }
   // came down somewhere you can't stand (the lake, a fenced yard, hard against a wall): step to the nearest place you can
   function swLandClear(){ if (blrValid(pos.x, pos.z)) return; for (let r = 1; r <= 70; r += 1.5) for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, x = pos.x + Math.cos(a) * r, z = pos.z + Math.sin(a) * r; if (blrValid(x, z)) { pos.x = x; pos.z = z; SW.lx = x; SW.lz = z; return; } } }
@@ -3359,10 +3375,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (held !== 'web' && inv.includes('web') && !dustedWeapon('web') && inWorld && (zone === 'blr' || zone === 'roof' || zone === 'city') && !EV && !A) hold('web');
     const street = inWorld && zone === 'blr' && !EV && !A && !BL.lvl && !DRV.on && !BL.cine && Math.abs(BL.off.y) < .01;
     if (held !== 'web' || dustedWeapon('web') || !inWorld || (zone !== 'roof' && zone !== 'city' && !street) || web.p) return;
-    ndc.set(0, 0); ray.setFromCamera(ndc, camera);
-    const hit = ray.intersectObjects(BL.bld ? [...new Set(BL.bld.map(b => b.im))] : [], false).find(h => h.distance < 90 + 30 * UPG2.swing);
-    if (hit) web.p = hit.point.clone(); else { ray.ray.direction.normalize(); web.p = pos.clone().addScaledVector(ray.ray.direction, 26).add(tmpV.set(0, 16, 0)); }
-    web.L = pos.distanceTo(web.p) * .92;
+    web.p = swingAnchor(); web.L = pos.distanceTo(web.p);
+    // firing a web mid-air keeps your speed; from a standstill it gives you a push forward to start the arc
+    if (Math.hypot(cityV.x, cityV.z) < 4 && (SW.on || cityAir)) { cityV.x += -Math.sin(yaw) * 5; cityV.z += -Math.cos(yaw) * 5; }
     if (street) { if (!SW.on) { cityV.set(-Math.sin(yaw) * 3, SW.roof ? 3 : 6, -Math.cos(yaw) * 3); SW.on = true; SW.roof = 0; SW.lx = pos.x; SW.lz = pos.z; } walkTarget = null; tone(1400, .12, 'triangle', .04, 500); drawWeb(); return; }
     if (zone === 'roof') { zone = 'city'; cityV.set(-Math.sin(yaw) * 3, 2, -Math.cos(yaw) * 3); $('#worldBack').textContent = A ? 'Leave the fight' : 'Back to the rooftop'; }
     cityAir = true; tone(1400, .12, 'triangle', .04, 500);
@@ -11191,14 +11206,16 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     inst(gC(.09, 4, 8), mat(0x2A2D33, { metalness: .6 }), poles, g); inst(gB(.38, 1.05, .32), mat(0x16181D), heads, g);
     BLC.sig = {}; Object.entries(lamps).forEach(([k, L]) => { BLC.sig[k] = inst(new THREE.SphereGeometry(.13, 8, 5), new THREE.MeshBasicMaterial({ color: k.endsWith('R') ? 0xFF2A1A : 0x3CE870 }), L, g); });
     // rain trees: Bangalore is the garden city
-    const trunks = [], crowns = [], limbs = [], LOBES = lowFx ? [[0, 4.1, 0, 2.8, 1.5], [1.2, 3.8, .4, 1.8, 1.1]] : [[0, 4.4, 0, 2.6, 1.4], [1.6, 3.9, .7, 1.9, 1.2], [-1.4, 4.0, -.9, 2.0, 1.2], [-.2, 4.0, 1.7, 1.8, 1.1]];
+    const trunks = [], crowns = [], limbs = [], LOBES = lowFx ? [[0, 4.6, 0, 2.5, 1.9], [1.3, 4.1, .4, 1.7, 1.35]] : [[0, 5.0, 0, 2.3, 1.85], [1.55, 4.35, .6, 1.75, 1.4], [-1.45, 4.45, -.75, 1.8, 1.45], [-.25, 4.3, 1.65, 1.65, 1.3], [.45, 4.2, -1.6, 1.6, 1.25]];
     ROADS.slice(1, -1).forEach(l => [0, 1].forEach(dir => [-1, 1].forEach(side => { for (let t = -366; t < 366; t += lowFx ? 22 : 11) { const c = t + (Math.random() - .5) * 4, o = l + side * 6.9, x = dir ? c : o, z = dir ? o : c;
       if (ROADS.some(r => Math.abs(c - r) < 12) || offMap(x, z) || inTowerZone(x, z, 5) || Object.values(DIST).some(d => Math.hypot(d.x - x, d.z - z) < 26) || gridHit(x, z, .9) || noProp(x, z)) continue;
       const s = .8 + Math.random() * .6, ry = Math.random() * 6, cs = Math.cos(ry), sn = Math.sin(ry); trunks.push([x, 1.6 * s, z, 0, s, s, s]); LOBES.forEach(([ox, oy, oz, w, hh]) => crowns.push([x + (ox * cs - oz * sn) * s, oy * s, z + (ox * sn + oz * cs) * s, Math.random() * 6, w * s, hh * s, w * s]));
-      if (!lowFx) [[.9, .5], [-.8, -.6]].forEach(([a, b]) => limbs.push([x + Math.cos(ry + a) * .5 * s, 3.1 * s, z + Math.sin(ry + a) * .5 * s, ry + a, s * .6, s * .9, s * .6, 0, b])); blrBox(x - .3, x + .3, z - .3, z + .3); } })));
-    const barkM = mat(0x4A3A2A, { roughness: 1 }); inst(gC(.24, 3.2, 7), barkM, trunks, g, true); if (limbs.length) inst(gC(.13, 2.2, 5), barkM, limbs, g, true); // crowns in 96 m squares, so the ones behind you or lost in the haze aren't drawn
+      if (!lowFx) [[.9, .55], [-.8, -.6], [2.6, .5]].forEach(([a, b]) => limbs.push([x + Math.cos(ry + a) * .35 * s, 3.55 * s, z + Math.sin(ry + a) * .35 * s, ry + a, s, s, s, 0, b])); blrBox(x - .3, x + .3, z - .3, z + .3); } })));
+    const barkM = mcGet('cityBark', () => new THREE.MeshStandardMaterial({ color: 0x8A7460, roughness: .95, map: txWrap(tex(64, 256, (c, w, h) => { c.fillStyle = '#4A3A2C'; c.fillRect(0, 0, w, h); for (let i = 0; i < 46; i++) { const x = Math.random() * w, v = 30 + Math.random() * 40 | 0; c.fillStyle = `rgba(${v},${v - 8},${v - 14},.75)`; c.fillRect(x, 0, 1 + Math.random() * 3, h); } for (let i = 0; i < 90; i++) { c.fillStyle = 'rgba(120,104,86,.35)'; c.fillRect(Math.random() * w, Math.random() * h, 3 + Math.random() * 6, 1); } })) }));
+    // the trunk tapers up from a flared foot; the limbs taper too and disappear up into the leaves
+    inst(new THREE.CylinderGeometry(.15, .3, 3.6, lowFx ? 7 : 10).translate(0, .2, 0), barkM, trunks, g, true); if (limbs.length) inst(new THREE.CylinderGeometry(.045, .12, 2.1, 6).translate(0, 1.05, 0), barkM, limbs, g, true); // crowns in 96 m squares, so the ones behind you or lost in the haze aren't drawn
     const tc = new THREE.Color(), byC = new Map(); crowns.forEach(c => { const ck = Math.floor(c[0] / DCH) + ',' + Math.floor(c[2] / DCH); if (!byC.has(ck)) byC.set(ck, []); byC.get(ck).push(c); });
-    byC.forEach((list, ck) => { const [gx, gz] = ck.split(',').map(Number), cx = (gx + .5) * DCH, cz = (gz + .5) * DCH, geo = cityCrownGeo().clone(), cr = inst(geo, cityLeafM(), list, g, true);
+    byC.forEach((list, ck) => { const [gx, gz] = ck.split(',').map(Number), cx = (gx + .5) * DCH, cz = (gz + .5) * DCH, geo = cityCrownGeo().clone(), cr = inst(geo, mcGet('cityLeafV', () => new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: .9, map: cityLeafM().map, vertexColors: true })), list, g, true);
       geo.boundingSphere = new THREE.Sphere(V(cx, 5, cz), DCH * .75 + 8); cr.frustumCulled = true; detChunks.push({ im: cr, x: cx, z: cz });
       list.forEach((_, i) => cr.setColorAt(i, tc.setHSL(.26 + Math.random() * .07, .38 + Math.random() * .17, .2 + Math.random() * .09))); if (cr.instanceColor) cr.instanceColor.needsUpdate = true; });
     // water tanks and air conditioners on the roofs
@@ -12238,9 +12255,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const cityRain = () => { try { return !!(raining() && (!SG.active || newTL())); } catch (e) { return false; } };
   function palRain(P){ const R = palMix('rain', 'rain', 0), f = .7; ['top', 'fog', 'glow', 'hemiC', 'hemiG', 'sunC'].forEach(n => P[n].lerp(R[n], f)); ['hemiI', 'sunI', 'win', 'lamps', 'near', 'far', 'exp', 'bloom', 'haze'].forEach(n => P[n] += (R[n] - P[n]) * f); P.stars = 0; P.wet = 1; P.sunUp = false; return P; }
   // ---------- tree crowns: a lumpy ball of leaves instead of a faceted gem ----------
-  function cityCrownGeo(){ return pvG('crown' + lowFx, () => { const g = new THREE.IcosahedronGeometry(1, 1), p = g.attributes.position, n = g.attributes.normal, v = new THREE.Vector3();
-    for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const h = lhash(Math.round(v.x * 50) + Math.round(v.z * 31), Math.round(v.y * 40)), r = .84 + h * .3; v.multiplyScalar(r); if (v.y < -.2) v.y = -.2 + (v.y + .2) * .45; p.setXYZ(i, v.x, v.y, v.z); v.normalize(); n.setXYZ(i, v.x, v.y * 1.2, v.z); }
-    p.needsUpdate = true; return g; }); }
+  // a crown of leaves: a smooth ball with soft clumps (no random spikes, so no jagged facets up close), flat-ish underneath,
+  // and darker below than on top, the way light falls through a real tree
+  function cityCrownGeo(){ return pvG('crown2' + lowFx, () => { const g = new THREE.IcosahedronGeometry(1, lowFx ? 1 : 2), p = g.attributes.position, n = g.attributes.normal, v = new THREE.Vector3(), col = new Float32Array(p.count * 3);
+    const bump = (x, y, z) => .1 * Math.sin(3.1 * x + 1.3) * Math.sin(2.7 * y + .4) * Math.sin(3.3 * z + 2.1) + .06 * Math.sin(5.9 * x + 2.2 * z + .7) * Math.cos(6.3 * y - 1.1) + .045 * Math.sin(9.1 * z + 3.3 * x) * Math.sin(8.7 * y + .9);
+    for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).normalize(); const r = .95 + bump(v.x, v.y, v.z); const nx = v.x, ny = v.y, nz = v.z; v.multiplyScalar(r); if (v.y < -.25) v.y = -.25 + (v.y + .25) * .5; p.setXYZ(i, v.x, v.y, v.z);
+      const l = Math.hypot(nx, ny * 1.15, nz); n.setXYZ(i, nx / l, ny * 1.15 / l, nz / l); const sh = .58 + .42 * Math.min(1, Math.max(0, (v.y + .35) / 1.2)) + bump(nz, nx, ny) * .6; col.set([sh * .96, sh, sh * .9], i * 3); }
+    p.needsUpdate = true; n.needsUpdate = true; g.setAttribute('color', new THREE.BufferAttribute(col, 3)); return g; }); }
   const cityLeafM = () => mcGet('cityLeaf', () => new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: .88, map: txWrap(tex(128, 128, (c, w, h) => { c.fillStyle = '#8C8C8C'; c.fillRect(0, 0, w, h);
     for (let i = 0; i < 520; i++) { const v = 90 + Math.random() * 130 | 0; c.fillStyle = `rgb(${v},${v},${v})`; c.save(); c.translate(Math.random() * w, Math.random() * h); c.rotate(Math.random() * 6.28); c.beginPath(); c.ellipse(0, 0, 4 + Math.random() * 3, 1.8 + Math.random(), 0, 0, 7); c.fill(); c.restore(); } })) }));
   // ---------- shop signboards over the shopfronts, and plants on the balconies ----------
