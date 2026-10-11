@@ -13985,7 +13985,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // the places he turns up: outside a shop, by his car (always the same grey hatchback, always spotless)
   function tdSpot(){
     const s = tdLoad(), L = DOORS.filter(d => ['tiffin', 'kirana', 'medicals', 'tailor'].includes(d.type) && !d.b.hide && Math.hypot(d.front[0], d.front[1]) < 240); if (!L.length) return null;
-    const d = L[(s.meet * 37 + 11 + s.sightings * 7) % L.length], [nx, nz] = d.n, x = d.front[0] + nx * 2.4, z = d.front[1] + nz * 2.4;
+    const [px, pz] = inWorld && zone === 'blr' ? toMap(pos.x, pos.z) : [0, 0], near = L.map(q => [q, Math.hypot(q.front[0] - px, q.front[1] - pz)]).filter(([, dd]) => dd > 18).sort((a, c) => a[1] - c[1]);
+    const d = near.length ? near[Math.min(near.length - 1, s.sightings % 3)][0] : L[0], [nx, nz] = d.n, x = d.front[0] + nx * 2.4, z = d.front[1] + nz * 2.4;
     return { x, z, ry: Math.atan2(-nx, -nz) + Math.PI, cx: d.front[0] + nx * 5.6 - nz * 2.5, cz: d.front[1] + nz * 5.6 + nx * 2.5, cry: Math.atan2(-nz, nx), d };
   }
   function tdNpcPlace(){
@@ -14017,15 +14018,15 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       [[M, 'You delivered it. Thank you. I wiped the envelope before I gave it to you, you know. Fingerprints are so messy.'], [M, 'Hold still. Your sleeve has a thread loose.'], ['{N}', '…Thanks.'], [M, 'My flat is very neat. Everything has a place. People too, I think. Do you live alone?']],
       [[M, 'Lovely view from your tower roof, by the way. I walked past at night. The light was on.'], ['{N}', 'You walked past my building?'], [M, 'I walk everywhere. It’s good for the mind. Here: homemade. Eat it today, it won’t keep.'], [M, 'You look tired. You should sleep more. Deeply.']],
       [[M, 'I hate to ask. I’m moving some boxes at my house tonight and my back isn’t what it was. You’re strong. Would you help? I’ll make tea.'], ['{N}', 'Where’s your house?'], [M, 'Not far. A quiet street. You’ll know it: it’s the neatest one.']]];
-    const L = lines[Math.min(m, 4)];
+    const L = lines[m >= 1 ? 4 : 0];
     TD.talking = true;
     cityScene(L, () => { const P = TD.npc && TD.npc.P; return P ? [P.x, P.z] : [0, 0]; }, () => { TD.talking = false;
       if (m === 0) { JOB.rep += 5; jobSave(); say('He presses a few coins into your hand. Reputation +5.', 2600); }
       if (m === 1) { const d = DOORS.filter(q => q.type === 'tiffin' || q.type === 'kirana').sort((a, c) => Math.hypot(a.front[0] - TD.npc.P.x, a.front[1] - TD.npc.P.z) - Math.hypot(c.front[0] - TD.npc.P.x, c.front[1] - TD.npc.P.z))[3];
         if (d) { s.job = { name: d.name, x: d.front[0], z: d.front[1] }; say(`Take the envelope to ${d.name}. A white beam of light marks the shop.`, 3600); } }
       if (m === 3) { EV0heal(); say('Homemade lemon rice. It’s good. You feel a little drowsy afterwards.', 3200); }
-      if (m >= 4) return askChoice('tidy', v => { if (v === 'yes') { s.state = 'trap'; tdSave(); say('He writes the address on a card in perfect block capitals. A white beam of light marks his house.', 3600); } else { s.declined++; tdSave(); say('“Another time, then. I’ll be patient.”', 2600); } }, { h: TD_NAME, q: 'Help him move boxes at his house tonight?', a: [['yes', 'Sure, I’ll come'], ['no', 'Not tonight']] });
-      s.meet = Math.min(4, m + 1); if (s.firstDay < 0) s.firstDay = s.day; s.coolT = 150; tdSave(); TD.npcGone = 1; });
+      if (m >= 1) return askChoice('tidy', v => { if (v === 'yes') { s.state = 'trap'; tdSave(); say('He writes the address on a card in perfect block capitals. A white beam of light marks his house.', 3600); } else { s.declined++; tdSave(); say('“Another time, then. I’ll be patient.”', 2600); } }, { h: TD_NAME, q: 'Help him move boxes at his house tonight?', a: [['yes', 'Sure, I’ll come'], ['no', 'Not tonight']] });
+      s.meet = Math.min(1, m + 1); if (s.firstDay < 0) s.firstDay = s.day; s.coolT = 30; tdSave(); TD.npcGone = 1; });
     s.sightings++; tdSave();
   }
   const EV0heal = () => { try { if (typeof hpNow !== 'undefined') hpNow = Math.min(hpMax, hpNow + 20); } catch (e) {} };
@@ -14035,8 +14036,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const h = cityHour(); if (TD.lastH != null && h < TD.lastH - 12) { s.day++; tdSave(); } TD.lastH = h;
     const can = !SG.active && inWorld && zone === 'blr' && !EV && !A && !BL.lvl && !DRV.on && Math.abs(BL.off.y) < .01;
     s.coolT = Math.max(0, (s.coolT || 0) - dt);
-    const want = can && ((s.state === 'none' || s.state === 'met') && s.meet < 5 || s.state === 'loose' && s.sightings < 99) && !s.coolT && !TD.npcGone;
-    if (want && !TD.npc) tdNpcPlace(); if (!want && TD.npc && !TD.talking) tdNpcClear();
+    const want = can && ((s.state === 'none' || s.state === 'met') && s.meet < 2 || s.state === 'loose' && s.sightings < 99) && !s.coolT && !TD.npcGone;
+    if (want && !TD.npc) { tdNpcPlace(); if (TD.npc) say(s.meet ? 'Mr. Varadan is waiting by his grey hatchback nearby. Follow the white beam of light.' : 'A polite man by a grey hatchback is struggling with some boxes nearby. Follow the white beam of light.', 4200); } if (!want && TD.npc && !TD.talking) tdNpcClear();
     if (!can) return; const [mx, mz] = toMap(pos.x, pos.z);
     // after a few in-game days he asks anyway
     if (s.meet >= 2 && s.meet < 4 && s.firstDay >= 0 && s.day - s.firstDay >= 3) { s.meet = 4; tdSave(); }
@@ -14051,7 +14052,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // the envelope job
     if (s.job && Math.hypot(mx - s.job.x, mz - s.job.z) < 3 && onGround()) { say(`You hand the envelope over at ${s.job.name}. Nobody was expecting it. It’s empty. Reputation +15.`, 4200); JOB.rep += 15; jobSave(); s.job = null; tdSave(); }
     // a white beacon over the job, and over his house once you've said yes
-    const tgt = s.job ? [s.job.x, s.job.z] : s.state === 'trap' && TD.house ? TD.house.out : null;
+    const tgt = s.job ? [s.job.x, s.job.z] : s.state === 'trap' && TD.house ? TD.house.out : TD.npc && !TD.talking ? [TD.npc.P.x, TD.npc.P.z] : null;
     if (tgt && !TD.mark) { TD.mark = new THREE.Mesh(new THREE.CylinderGeometry(.5, .5, 60, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xF2EEE6, transparent: true, opacity: .35, depthWrite: false })); TD.mark.userData.noPick = true; BL.mapG.add(TD.mark); }
     if (TD.mark) { if (!tgt) { BL.mapG.remove(TD.mark); TD.mark = null; } else TD.mark.position.set(tgt[0], 30, tgt[1]); }
   }
