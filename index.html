@@ -2087,7 +2087,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const inDoor = (x, z) => vaultOpen && x > 4.2 && x <= 5.7 && z >= -.25 && z <= .85;
   const inVault = (x, z) => vaultOpen && Object.values(VR).some(r => inRect(r, x, z));
   const inHall = (x, z) => entered && ((Math.abs(x) < .45 && z > 4.2 && z <= 5.5) || (Math.abs(x) < 1.2 && z > 5.5 && z < 10.3));
-  const valid = (x, z) => inWorld ? zone === 'med' ? medValid(x, z) : zone === 'farm' ? farmValid(x, z) : zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) || inDeep(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? (SW.roof ? swRoofOK(x, z) : blrValid(x, z)) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
+  const valid = (x, z) => inWorld ? zone === 'med' ? medValid(x, z) : zone === 'tidy' ? tdValid(x, z) : zone === 'farm' ? farmValid(x, z) : zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) || inDeep(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? (SW.roof ? swRoofOK(x, z) : blrValid(x, z)) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
   const region = x => x > 4.9 ? 'vault' : 'room';
   function flyTo(target, dir, done){
     if (inWorld) { const a = dir ? lookAngles(target, dir) : null; return moveCam(target, a ? a.yaw : null, a ? a.pitch : null, 1, done); }
@@ -3251,7 +3251,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function cityBoxesFromMap(){
     if (!BL.bld || cityBoxes.mapped === BL.bld && cityBoxes.tl === newTL()) return; cityBoxes.length = 0; cityTrees.length = 0; cityBoxes.mapped = BL.bld; cityBoxes.tl = newTL();
     cityBoxes.push({ x: 0, z: 0, hw: 7, hd: 7, top: 0, meshes: [] });
-    BL.bld.forEach((b, i) => { if (b.hide) return; const wr = (SG.wreck || []).includes(b.key) && !newTL(); cityBoxes.push({ i, bld: b, x: (b.x0 + b.x1) / 2 + 20, z: (b.z0 + b.z1) / 2 + 20, hw: (b.x1 - b.x0) / 2, hd: (b.z1 - b.z0) / 2, top: b.h * (wr ? .22 : 1) - 31, meshes: [] }); });
+    BL.bld.forEach((b, i) => { if (b.hide && !b.keep) return; const wr = (SG.wreck || []).includes(b.key) && !newTL(); cityBoxes.push({ i, bld: b, x: (b.x0 + b.x1) / 2 + 20, z: (b.z0 + b.z1) / 2 + 20, hw: (b.x1 - b.x0) / 2, hd: (b.z1 - b.z0) / 2, top: b.h * (wr ? .22 : 1) - 31, meshes: [] }); });
     if (!newTL()) cityBoxes.push({ x: TW.x + 20, z: TW.z + 20, hw: TW.r * .8, hd: TW.r * .8, top: TW.roof + 1 - 31, meshes: [] });
   }
   // the roof sits on top of your tower in the same map: line the city up under it
@@ -3273,20 +3273,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   let cityAir = false, cityLast = null;
   function cityPhysics(dt){
     const feet = pos.y - 1.6;
-    if (web.p) {
-      // swinging: gravity, a little push from W/S, and the web line holding you
-      cityV.y -= 22 * dt;
-      const f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0); if (f) { cityV.x += -Math.sin(yaw) * f * 12 * dt; cityV.z += -Math.cos(yaw) * f * 12 * dt; }
-      pos.addScaledVector(cityV, dt);
-      tmpV.subVectors(pos, web.p); const L = tmpV.length();
-      if (L > web.L) { tmpV.multiplyScalar(1 / L); pos.copy(web.p).addScaledVector(tmpV, web.L); const vr = cityV.dot(tmpV); if (vr > 0) cityV.addScaledVector(tmpV, -vr); }
+    if (web.p || cityAir) {
+      // swinging off your roof uses the same swing as the streets below: one feel everywhere
       cityAir = true;
-    } else if (cityAir) { cityV.y -= 22 * dt; pos.addScaledVector(cityV, dt); cityV.x *= .996; cityV.z *= .996; }
-    if (cityAir) {
-      const f2 = pos.y - 1.6;
-      if ((cityBlocked(pos.x, pos.z, f2) || !inCity(pos.x, pos.z)) && cityLast) { pos.x = cityLast.x; pos.z = cityLast.z; cityV.x *= -.2; cityV.z *= -.2; }
-      const g = roofTopAt(pos.x, pos.z, f2);
-      if (f2 <= g && cityV.y <= 0) { pos.y = g + 1.6; cityV.set(0, 0, 0); cityAir = false; if (!web.p) tone(140, .08, 'sine', .05); }
+      swingCore(dt, { top: (x, z, f) => roofTopAt(x, z, f), topAt: (x, z) => roofTopAt(x, z, 1e4), ground: G,
+        wall: (x, z, f) => !inCity(x, z) || cityBoxes.some(b => !b.off && Math.abs(x - b.x) < b.hw + .45 && Math.abs(z - b.z) < b.hd + .45 && b.top > f + .45),
+        wallPt: (x, z, f) => !inCity(x, z) || cityBoxes.some(b => !b.off && Math.abs(x - b.x) < b.hw && Math.abs(z - b.z) < b.hd && b.top > f + .45),
+        land: g => { pos.y = g + 1.6; cityV.set(0, 0, 0); cityAir = false; web.p = null; tone(140, .08, 'sine', .05); } });
     } else {
       // walking: stay on whatever you're standing on, and walking off an edge means falling
       const g = roofTopAt(pos.x, pos.z, feet + .1);
@@ -3315,34 +3308,57 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function webSwingStep(dt){
     if (EV || A || BL.lvl || DRV.on || Math.abs(BL.off.y) > .01) { if (SW.on || SW.roof) { swReset(); pos.y = 1.6; } return; }
     if (SW.on) {
-      // the last safe spot can only ever be a step behind you; anything further is stale (you walked, rode or were moved since)
-      if (Math.hypot(pos.x - SW.lx, pos.z - SW.lz) > 6) { SW.lx = pos.x; SW.lz = pos.z; }
-      cityV.y -= 22 * dt; if (web.p) { const f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0); if (f) { cityV.x += -Math.sin(yaw) * f * (12 + 4 * UPG2.swing) * dt; cityV.z += -Math.cos(yaw) * f * (12 + 4 * UPG2.swing) * dt; } } else { cityV.x *= .996; cityV.z *= .996; }
-      pos.addScaledVector(cityV, dt);
-      // the web reels you in as you hold it, so even from the pavement you're pulled up and away
-      if (web.p) { web.L = Math.max(4, web.L - (6 + 2 * UPG2.swing) * dt); tmpV.subVectors(web.p, pos).normalize(); cityV.addScaledVector(tmpV, (9 + 3 * UPG2.swing) * dt); }
-      if (web.p) { tmpV.subVectors(pos, web.p); const L = tmpV.length(); if (L > web.L) { tmpV.multiplyScalar(1 / L); pos.copy(web.p).addScaledVector(tmpV, web.L); const vr = cityV.dot(tmpV); if (vr > 0) cityV.addScaledVector(tmpV, -vr); } }
-      if (pos.y > 150) { pos.y = 150; cityV.y = Math.min(0, cityV.y); }
-      // reeled all the way in to a web stuck on a wall: climb it. The web jumps up over the edge of the roof and pulls you on top
-      if (web.p) { const dx = web.p.x - pos.x, dz = web.p.z - pos.z, hd = Math.hypot(dx, dz) || 1; if (hd < 3 && Math.abs(web.p.y - pos.y) < 4.6) { const ix = web.p.x + dx / hd * 1.6, iz = web.p.z + dz / hd * 1.6, [ax, az] = toMap(ix, iz), t = bTop(ax, az) - BL.off.y;
-        if (t > pos.y - 1.6 + .3 && t < 160) { web.p.set(ix, t + 2.6, iz); web.L = pos.distanceTo(web.p); cityV.y = Math.max(cityV.y, 10 + 2 * UPG2.swing); } } }
-      // into a wall: slide along it instead of stopping dead, keep your body (not just your feet) out of it, and if your web is
-      // stuck to that wall, it hauls you up the face and over the top instead of pinning you there
-      let [mx, mz] = toMap(pos.x, pos.z); const feet = pos.y - 1.6;
-      const [ox0, oz0] = toMap(SW.lx, SW.lz), hug = swBodyBlocked(ox0, oz0, feet), blk = hug ? swBlocked : swBodyBlocked;
-      if (blk(mx, mz, feet)) { const ox = ox0, oz = oz0;
-        if (!blk(mx, oz, feet)) { pos.z = SW.lz; cityV.z *= -.15; }
-        else if (!blk(ox, mz, feet)) { pos.x = SW.lx; cityV.x *= -.15; }
-        else { pos.x = SW.lx; pos.z = SW.lz; cityV.x *= -.15; cityV.z *= -.15; }
-        if (web.p && web.p.y > pos.y) { cityV.y = Math.max(cityV.y, 10 + 2 * UPG2.swing); web.L = Math.min(web.L, pos.distanceTo(web.p)); }
-        [mx, mz] = toMap(pos.x, pos.z); }
-      const sup = bTop(mx, mz);
-      if (pos.y - 1.6 <= sup && cityV.y <= 0) { pos.y = sup + 1.6; cityV.set(0, 0, 0); web.p = null; SW.on = false; SW.roof = sup > .3 ? sup : 0; vy = 0; grounded = true; tone(140, .08, 'sine', .05); if (!SW.roof) swLandClear(); drawWeb(); }
+      const off = BL.off.y;
+      swingCore(dt, { top: (x, z) => { const [mx, mz] = toMap(x, z); return bTop(mx, mz) - off; }, topAt: (x, z) => { const [mx, mz] = toMap(x, z); return bTop(mx, mz) - off; }, ground: 0,
+        wall: (x, z, f) => { const [mx, mz] = toMap(x, z); return swBodyBlocked(mx, mz, f); }, wallPt: (x, z, f) => { const [mx, mz] = toMap(x, z); return swBlocked(mx, mz, f); },
+        land: sup => { pos.y = sup + 1.6; cityV.set(0, 0, 0); web.p = null; SW.on = false; SW.roof = sup > .3 ? sup : 0; vy = 0; grounded = true; tone(140, .08, 'sine', .05); if (!SW.roof) swLandClear(); drawWeb(); } });
     } else if (SW.roof) {
       const [mx, mz] = toMap(pos.x, pos.z), t = bTop(mx, mz);
       if (t < SW.roof - .35) { SW.on = true; cityV.set(0, 0, 0); SW.roof = 0; } else pos.y = SW.roof + 1.6;
     }
     SW.lx = pos.x; SW.lz = pos.z; drawWeb();
+  }
+  // ---------- one swing for the whole city (streets and rooftops) ----------
+  // A real pendulum: the web keeps its length, so you arc down and up and carry your speed; it only reels you in when you're
+  // low, to lift you off the pavement. Run in small fixed steps so it's equally smooth at any frame rate. Walls: you slide along
+  // them, and if your web is stuck to one you climb it onto the roof. Skimming the street on a web keeps you running.
+  function swingCore(dt, C){
+    const up = UPG2.swing || 0, n = Math.min(8, Math.max(1, Math.ceil(dt * 120))), h = Math.min(dt, .1) / n;
+    for (let i = 0; i < n; i++) {
+      const lx = pos.x, lz = pos.z, f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0);
+      cityV.y -= 24 * h;
+      if (web.p) {
+        if (f) { cityV.x += -Math.sin(yaw) * f * (15 + 4 * up) * h; cityV.z += -Math.cos(yaw) * f * (15 + 4 * up) * h; }
+        const above = pos.y - 1.6 - C.top(pos.x, pos.z, pos.y - 1.6); if (above < 5 && web.p.y > pos.y) web.L = Math.max(4, web.L - (14 + 3 * up) * h);
+      } else { const k = Math.pow(.985, h * 60); cityV.x *= k; cityV.z *= k; }
+      const sp = cityV.length(); if (sp > 62) cityV.multiplyScalar(62 / sp);
+      pos.addScaledVector(cityV, h);
+      if (web.p) { tmpV.subVectors(pos, web.p); const L = tmpV.length(); if (L > web.L) { tmpV.multiplyScalar(1 / L); pos.copy(web.p).addScaledVector(tmpV, web.L); const vr = cityV.dot(tmpV); if (vr > 0) cityV.addScaledVector(tmpV, -vr); } }
+      if (pos.y > 150) { pos.y = 150; cityV.y = Math.min(0, cityV.y); }
+      // reeled in against the wall your web is stuck to: the web jumps over the roof edge and pulls you up on top
+      if (web.p) { const dx = web.p.x - pos.x, dz = web.p.z - pos.z, hd = Math.hypot(dx, dz) || 1; if (hd < 3 && Math.abs(web.p.y - pos.y) < 4.6) { const ix = web.p.x + dx / hd * 1.6, iz = web.p.z + dz / hd * 1.6, t = C.topAt(ix, iz);
+        if (t > pos.y - 1.6 + .3 && t < 160) { web.p.set(ix, t + 2.6, iz); web.L = pos.distanceTo(web.p); cityV.y = Math.max(cityV.y, 10 + 2 * up); } } }
+      // walls: slide along them (your body, not just your feet, stays out); starting pressed against one, only your feet count
+      const feet = pos.y - 1.6, W = C.wall(lx, lz, feet) ? C.wallPt : C.wall;
+      if (W(pos.x, pos.z, feet)) {
+        if (!W(pos.x, lz, feet)) { pos.z = lz; cityV.z *= -.1; } else if (!W(lx, pos.z, feet)) { pos.x = lx; cityV.x *= -.1; } else { pos.x = lx; pos.z = lz; cityV.x *= -.1; cityV.z *= -.1; }
+        if (web.p && web.p.y > pos.y) { cityV.y = Math.max(cityV.y, 10 + 2 * up); web.L = Math.min(web.L, pos.distanceTo(web.p)); }
+      }
+      // the street or a roof under you: on a web at speed you keep running; otherwise you land
+      const sup = C.top(pos.x, pos.z, pos.y - 1.6);
+      if (pos.y - 1.6 <= sup && cityV.y <= 0) { if (web.p && Math.hypot(cityV.x, cityV.z) > 4) { pos.y = sup + 1.6; cityV.y = 0; } else { C.land(sup); return; } }
+    }
+  }
+  // where a web sticks: what you're looking at if it's above you, otherwise up and ahead the way you're facing (like a real
+  // swinger aims), otherwise a high point in the sky ahead so a swing always has a good arc
+  function swingAnchor(){
+    const reach = 90 + 30 * UPG2.swing, ims = BL.bld ? [...new Set(BL.bld.map(b => b.im))] : [], fw = V(-Math.sin(yaw), 0, -Math.cos(yaw));
+    for (const el of [null, .6, .9, .35]) {
+      if (el === null) { ndc.set(0, 0); ray.setFromCamera(ndc, camera); } else ray.set(camera.position, V(fw.x * Math.cos(el), Math.sin(el), fw.z * Math.cos(el)));
+      const hit = ray.intersectObjects(ims, false).find(q => q.distance < reach && q.distance > 5 && q.point.y > pos.y + 4);
+      if (hit) return hit.point.clone();
+    }
+    return pos.clone().addScaledVector(fw, 22).add(V(0, 24, 0));
   }
   // came down somewhere you can't stand (the lake, a fenced yard, hard against a wall): step to the nearest place you can
   function swLandClear(){ if (blrValid(pos.x, pos.z)) return; for (let r = 1; r <= 70; r += 1.5) for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, x = pos.x + Math.cos(a) * r, z = pos.z + Math.sin(a) * r; if (blrValid(x, z)) { pos.x = x; pos.z = z; SW.lx = x; SW.lz = z; return; } } }
@@ -3359,10 +3375,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (held !== 'web' && inv.includes('web') && !dustedWeapon('web') && inWorld && (zone === 'blr' || zone === 'roof' || zone === 'city') && !EV && !A) hold('web');
     const street = inWorld && zone === 'blr' && !EV && !A && !BL.lvl && !DRV.on && !BL.cine && Math.abs(BL.off.y) < .01;
     if (held !== 'web' || dustedWeapon('web') || !inWorld || (zone !== 'roof' && zone !== 'city' && !street) || web.p) return;
-    ndc.set(0, 0); ray.setFromCamera(ndc, camera);
-    const hit = ray.intersectObjects(BL.bld ? [...new Set(BL.bld.map(b => b.im))] : [], false).find(h => h.distance < 90 + 30 * UPG2.swing);
-    if (hit) web.p = hit.point.clone(); else { ray.ray.direction.normalize(); web.p = pos.clone().addScaledVector(ray.ray.direction, 26).add(tmpV.set(0, 16, 0)); }
-    web.L = pos.distanceTo(web.p) * .92;
+    web.p = swingAnchor(); web.L = pos.distanceTo(web.p);
+    // firing a web mid-air keeps your speed; from a standstill it gives you a push forward to start the arc
+    if (Math.hypot(cityV.x, cityV.z) < 4 && (SW.on || cityAir)) { cityV.x += -Math.sin(yaw) * 5; cityV.z += -Math.cos(yaw) * 5; }
     if (street) { if (!SW.on) { cityV.set(-Math.sin(yaw) * 3, SW.roof ? 3 : 6, -Math.cos(yaw) * 3); SW.on = true; SW.roof = 0; SW.lx = pos.x; SW.lz = pos.z; } walkTarget = null; tone(1400, .12, 'triangle', .04, 500); drawWeb(); return; }
     if (zone === 'roof') { zone = 'city'; cityV.set(-Math.sin(yaw) * 3, 2, -Math.cos(yaw) * 3); $('#worldBack').textContent = A ? 'Leave the fight' : 'Back to the rooftop'; }
     cityAir = true; tone(1400, .12, 'triangle', .04, 500);
@@ -3871,6 +3886,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function mkWeapon(id){
     if (id === 'defib' || String(id).startsWith('thr_')) return kitMesh(id);
     const g = new THREE.Group(), metal = (c) => mat(c, { metalness: .75, roughness: .3 });
+    if (id === 'knife') { cyl(.018, .02, .12, mat(0x2A1E16), 0, 0, 0, g, 8); box(.03, .2, .006, metal(0xD8DEE4), 0, .16, 0, g); return g; }
+    if (id === 'cleaver') { cyl(.02, .022, .13, mat(0x3A2A1E), 0, 0, 0, g, 8); box(.11, .17, .008, metal(0xC9CFD8), .035, .15, 0, g); box(.11, .015, .009, metal(0xEEF2F6), .035, .065, 0, g); return g; }
+    if (id === 'hammer') { cyl(.018, .02, .34, mat(0x7A5434), 0, .1, 0, g, 8); box(.15, .05, .05, metal(0x5A5E68), .02, .29, 0, g); box(.06, .03, .045, metal(0x5A5E68), -.08, .3, 0, g).rotation.z = .5; return g; }
+    if (id === 'crowbar') { cyl(.014, .014, .7, metal(0x8A1A1A), 0, .2, 0, g, 8); const h = new THREE.Mesh(new THREE.TorusGeometry(.05, .014, 6, 12, Math.PI), metal(0x8A1A1A)); h.position.set(.05, .55, 0); g.add(h); return g; }
     if (id === 'mjolnir') {
       const h = cyl(.035, .04, .5, mat(0x6B4A2B), 0, .1, 0, g, 10); h.castShadow = true;
       for (let y = -.08; y < .3; y += .07) cyl(.042, .042, .02, mat(0x3B2616), 0, y, 0, g, 10);
@@ -4790,6 +4809,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       ${BZ.s.seen ? '<div class="prow"><b>Reset the space campaign<br><small>Only the campaign: the story and everything else stay as they are.</small></b><button class="btn" type="button" data-pa="bzreset">Reset</button></div>' : ''}
       <h3>Settings</h3>
       <div class="prow"><b>Reduce effects<br><small>No dust clouds or screen shake, no shadows, lower resolution. Try it on slower laptops and phones.</small></b><button class="btn" type="button" data-pa="fx">${lowFx ? 'On' : 'Off'}</button></div>
+      <div class="prow"><b>Gore (The Tidy Man)<br><small>Full: blood that splashes, pools and stays, and wounds. Low: dark hit flashes instead of blood.</small></b><button class="btn" type="button" data-pa="gore">${(() => { try { return localStorage.getItem('ru-gore') === 'low' ? 'Low' : 'Full'; } catch (e) { return 'Full'; } })()}</button></div>
+      <div class="prow"><b>Scares (The Tidy Man)<br><small>Low: no jump scares or red flashes, and a quieter heartbeat.</small></b><button class="btn" type="button" data-pa="scares">${(() => { try { return localStorage.getItem('ru-scares') === 'low' ? 'Low' : 'Full'; } catch (e) { return 'Full'; } })()}</button></div>
       ${snapState ? '<div class="prow"><b>The snap<br><small>Creatures and weapons are dust, and your room is wrecked.</small></b><button class="btn" type="button" data-pa="unsnap">Undo it</button></div>' : ''}
       <div class="prow"><b>Reset everything<br><small>Beaten creatures, unlocked weapons, your inventory, wear and poisoning.</small></b><button class="btn" type="button" data-pa="reset">Reset</button></div>
       <div class="gact">${A ? '<button class="btn alt" type="button" data-pa="leave">Leave the fight</button>' : ''}<button class="btn" type="button" data-pa="close">Resume</button></div>`;
@@ -4805,6 +4826,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (act2 === 'bzreset' && confirm('Reset the space campaign? Your story progress isn’t touched.')) { const wasMc = inWorld && zone === 'mc'; try { localStorage.removeItem(BZ_KEY); } catch (er) {} BZ.s = bzFresh(); BZ.job = null; BZ.offers = []; if (wasMc) { closePause(); bzLeave(); } else renderPause(); }
     if (act2 === 'leave') { closePause(); endFight(); }
     if (act2 === 'unsnap') { unsnap(); renderPause(); }
+    if (act2 === 'gore' || act2 === 'scares') { const k = 'ru-' + act2; try { localStorage.setItem(k, localStorage.getItem(k) === 'low' ? 'full' : 'low'); } catch (er) {} renderPause(); }
     if (act2 === 'fx') { lowFx = !lowFx; fxChosen = true; try { localStorage.setItem('ru-lowfx', lowFx ? '1' : '0'); } catch (er) {} applyFx(); renderPause(); }
     if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon', 'ru-arm', 'ru-evsolo', 'ru-evdone', 'ru-incursion', 'ru-instab', 'ru-recap', 'ru-lost', 'ru-saviour', 'ru-spark', 'ru-alt', 'ru-altseen', 'ru-metdoom', 'ru-inchero', 'ru-ach', 'ru-pet', 'ru-shop', 'ru-parts', 'ru-wreck', 'ru-cvwon', 'ru-galactus', 'ru-cvforced', 'ru-galbite', 'ru-eaten', 'ru-story', 'ru-cmask', 'ru-ultronred'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
   });
@@ -5616,7 +5638,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + Math.PI / 8; PILLARS.push({ x: Math.cos(a) * 12.5, z: Math.sin(a) * 12.5, r: 1 }); }
   const PILL0 = PILLARS.slice();
   const EMIT = { x: -11, z: 5, r: 3 };
-  const evValid = (x, z) => (EV && EV.inMap ? blrValid(x, z) : EV && EV.inTwr ? twrValid(x, z) : EV && EV.inDsp ? dspValid(x, z) : EV && EV.inMed ? medValid(x, z) : Math.hypot(x, z) < ER - .6) && !PILLARS.some(p => Math.hypot(x - p.x, z - p.z) < p.r + .4);
+  const evValid = (x, z) => (EV && EV.inMap ? blrValid(x, z) : EV && EV.inTwr ? twrValid(x, z) : EV && EV.inDsp ? dspValid(x, z) : EV && EV.inMed ? medValid(x, z) : EV && EV.inTdy ? tdValid(x, z) : Math.hypot(x, z) < ER - .6) && !PILLARS.some(p => Math.hypot(x - p.x, z - p.z) < p.r + .4);
   function buildArena(k, home){
     if (eventScene) { if (eventScene.userData.homeG) eventScene.remove(eventScene.userData.homeG); disposeDeep(eventScene); }
     const sc = eventScene = new THREE.Scene();
@@ -5718,12 +5740,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function startEvent(k, team, hero, opts = {}){
     evOptsNow = opts;
-    const inMap = !!opts.site && !!(BL && BL.sc) && inWorld && (zone === 'blr' || zone === 'event' && !!EV && !!EV.inMap), inTwr = !!opts.twr && inWorld && (zone === 'twr' || zone === 'event' && !!EV && !!EV.inTwr), inDsp = !!opts.dsp && inWorld && (zone === 'dsp' || zone === 'event' && !!EV && !!EV.inDsp), inMed = !!opts.med && inWorld && (zone === 'med' || zone === 'event' && !!EV && !!EV.inMed), retry = inMap && !!EV && EV.over;
+    const inMap = !!opts.site && !!(BL && BL.sc) && inWorld && (zone === 'blr' || zone === 'event' && !!EV && !!EV.inMap), inTwr = !!opts.twr && inWorld && (zone === 'twr' || zone === 'event' && !!EV && !!EV.inTwr), inDsp = !!opts.dsp && inWorld && (zone === 'dsp' || zone === 'event' && !!EV && !!EV.inDsp), inMed = !!opts.med && inWorld && (zone === 'med' || zone === 'event' && !!EV && !!EV.inMed), inTdy = !!opts.tdy && inWorld && (zone === 'tidy' || zone === 'event' && !!EV && !!EV.inTdy), retry = inMap && !!EV && EV.over;
     if (EV) stopEvent(true);
-    (inMap || inTwr || inDsp || inMed ? f => f() : f => fade(f, '#0B0D14'))(() => {
-      const home = k === 'inc' && metDoom; if (inMap) blrArena(k, opts); else if (inTwr) twrArena(); else if (inDsp) dspArena(); else if (inMed) medArena(); else buildArena(k, home); tip.classList.remove('on'); if (k === 'inc') { incHero = hero; try { localStorage.setItem('ru-inchero', hero); } catch (e) {} }
+    (inMap || inTwr || inDsp || inMed || inTdy ? f => f() : f => fade(f, '#0B0D14'))(() => {
+      const home = k === 'inc' && metDoom; if (inMap) blrArena(k, opts); else if (inTwr) twrArena(); else if (inDsp) dspArena(); else if (inMed) medArena(); else if (inTdy) tdArena(); else buildArena(k, home); tip.classList.remove('on'); if (k === 'inc') { incHero = hero; try { localStorage.setItem('ru-inchero', hero); } catch (e) {} }
       const H = HEROES[hero], hp0 = k === 'inc' && hero === 'hulk' ? 700 : H.hp, D0 = { easy: [.6, .8], normal: [1, 1], hard: [1.4, 1.25] }[opts.diff] || [1, 1], D = [D0[0] * .6, D0[1] * .7];  // story fights are a good bit easier than the old free-play numbers
-      EV = { inMap, inTwr, inDsp, inMed, k, team, hero, opts, solo: !!opts.solo, diffIn: D[0], foeHp: D[1], look: heroLook(hero), hp: hp0, max: hp0, t: EVENTS[k].time, score: {}, units: [], shots: [], fx: [], cd: 0, spCd: 1, swing: 0, dead: 0, inv: 1.5, kos: 0, deaths: 0, dmg: 0, rage: 0,
+      EV = { inMap, inTwr, inDsp, inMed, inTdy, k, team, hero, opts, solo: !!opts.solo, diffIn: D[0], foeHp: D[1], look: heroLook(hero), hp: hp0, max: hp0, t: EVENTS[k].time, score: {}, units: [], shots: [], fx: [], cd: 0, spCd: 1, swing: 0, dead: 0, inv: 1.5, kos: 0, deaths: 0, dmg: 0, rage: 0,
         big: !!H.scale, scale: H.scale || 1, speed: H.speed, prop: H.prop || null, over: false, charge: 0, weak: 0, remotes: new Map(), home };
       Object.keys(EVENTS[k].teams).forEach(t => EV.score[t] = 0);
       EV.me = { isMe: 1, team, hero, x: 0, z: 0, dead: 0, r: H.r || .5 };
@@ -5755,9 +5777,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       EV.units.filter(u => u.team !== team && u.hero !== 'anchor').forEach(u => { u.hp = u.max = Math.round(u.max * EV.foeHp); });
       let [sx, sz] = spawnOf(team); if (home) { sx = 3.5; sz = 10.5; }
       saved = { pos: V(0, 1.6, 2.6), yaw: 0, pitch: -.05 };
-      inWorld = true; zone = 'event'; falling = false; vy = 0; walkTarget = null; if (!inMap && !inTwr && !inDsp && !inMed) { pos.set(sx, 1.6, sz); yaw = home ? Math.PI : sz > 0 ? 0 : Math.PI; pitch = -.08; } else if (retry && k === 'br' && (opts.part || 1) === 1) { const [lx, lz] = toLocal(8, 10); pos.set(lx, 1.6, lz); } if (k === 'wwh' && team === 'heroes') yaw = Math.atan2(sx, sz);
-      closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = inMap || inTwr || inDsp || inMed ? 'Leave the fight' : 'Leave the event'; jumpBtn.hidden = fine; uiZone();
-      evHud.hidden = false; $('#evEnd').hidden = true; ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = false); if (inMap || inTwr || inDsp || inMed) $('#evSwap').hidden = true; $('#evSp').textContent = `${H.sp}\n(E)`; $('#evSp').hidden = noImprov(hero, k); document.body.classList.add('inevent');
+      inWorld = true; zone = 'event'; falling = false; vy = 0; walkTarget = null; if (!inMap && !inTwr && !inDsp && !inMed && !inTdy) { pos.set(sx, 1.6, sz); yaw = home ? Math.PI : sz > 0 ? 0 : Math.PI; pitch = -.08; } else if (retry && k === 'br' && (opts.part || 1) === 1) { const [lx, lz] = toLocal(8, 10); pos.set(lx, 1.6, lz); } if (k === 'wwh' && team === 'heroes') yaw = Math.atan2(sx, sz);
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = inMap || inTwr || inDsp || inMed || inTdy ? 'Leave the fight' : 'Leave the event'; jumpBtn.hidden = fine; uiZone();
+      evHud.hidden = false; $('#evEnd').hidden = true; ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = false); if (inMap || inTwr || inDsp || inMed || inTdy) $('#evSwap').hidden = true; $('#evSp').textContent = `${H.sp}\n(E)`; $('#evSp').hidden = noImprov(hero, k); document.body.classList.add('inevent');
       say(k === 'st' ? ({ u1: 'Ultron\u2019s drones, in the rain. You\u2019re still hurt, so pick your fights.', u2: 'Five connections keep him alive: three substations and two server racks. Break them all.', u3: 'Three cables feed his body. While they\u2019re plugged in, he heals and shrugs off your hits. Cut them first.', p1: 'Knock each possessed villain out to snap her string. They don\u2019t want to hurt you. She does.', p2: 'Your friends, on her strings. Knock them out to set them free. Watch out: she can get into your head too.', p3: 'She hides behind her puppets. Break every string, then hit her while she\u2019s exposed.', c1: 'Put out the fires (stand in them) and free the people trapped under the stalls (stand next to them).', c2: 'He\u2019s fast and he won\u2019t fight fair. Land 5 hits to wear him down.', c3: 'The Copycat, in a cape he bought online. Beat him.' })[opts.part || 'u1'] || (SBTXT[opts.part] || {}).intro || '' : k === 'of' ? 'The last world left is your own room. The Overfit is here, wearing everything he stole. Mix up your attacks: he learns anything you repeat. E improvises something random.' : k === 'br' ? ['Tail the truck. Stay between 6 and 13 metres: any closer and they\u2019ll spot you.', 'Clear out his guards quietly. Their gear is cheap knock-offs, but you\u2019re hurt: one wrong move and you\u2019re done.', 'Floor by floor to the top. You won\u2019t get back up if you go down.', 'The Broker, in a suit built from the wreckage of every battle. Break it apart piece by piece.'][(opts.part || 1) - 1] : k === 'cv' ? `Convergence. Every universe is about to collide. Guard the three anchors and survive until Doom shows up.` : isPvp(k) ? `You’re ${H.name}. First team to ${EVENTS[k].goal} takedowns wins.` : k === 'sw' ? 'Capture the three domain flags: stand in a ring with no enemies inside. First side to 120 points wins.' : k === 'fp' ? 'You’re the Flash. Grab ten glowing timeline shards before Reverse-Flash does. E dashes through anyone in your way.' : k === 'dks' ? 'Darkseid is here. Stay out of the fire pits, beat the Parademons and take him down. Watch out for his Omega Beams.' : k === 'wwh' ? (team === 'hulk' ? 'You’re the Hulk. Smash the heroes and survive until time runs out. Space to leap, E to thunderclap.' : 'Take the Hulk down before time runs out. Stay spread out: his thunderclap hits everyone nearby.') : k === 'inc' ? 'The other Earth is coming. Hold the three golden anchors against the variants pouring out of the rifts, then take down Doom.' : 'Superman is invulnerable. Hold the green Kryptonite emitter to weaken him, then hit him with everything.', 5200);
       if (k === 'cv') { $('#worldBack').hidden = true; if (opts.forced) say('The portal misfires! Every universe is colliding at once, and you\u2019ve been pulled into the middle of it. There\u2019s no way out but through.', 6000); }
       narrStart();
@@ -5769,8 +5791,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function stopEvent(quiet){
     if (EV && EV.camT > 0) tpv = EV.camSaved; document.body.classList.remove('possessed'); document.body.classList.remove('pain'); dlgClear();
     if (!EV) return; kitClear(); EV.units.slice().forEach(dropUnit); EV.shots.forEach(s => s.m && s.m.parent && s.m.parent.remove(s.m)); EV.fx.forEach(f => f.m.parent && f.m.parent.remove(f.m));
-    const wasHome = EV.home, wasMap = EV.inMap, wasTwr = EV.inTwr, wasDsp = EV.inDsp, wasMed = EV.inMed, wasMoon = !!EV.moon, wasBk = !!(EV.opts && EV.opts.bk); EV = null; evHud.hidden = true; evHurt.style.opacity = 0; document.body.classList.remove('inevent'); if (document.pointerLockElement) document.exitPointerLock();
-    if (wasMed) medBack();
+    const wasHome = EV.home, wasMap = EV.inMap, wasTwr = EV.inTwr, wasDsp = EV.inDsp, wasMed = EV.inMed, wasTdy = EV.inTdy, wasMoon = !!EV.moon, wasBk = !!(EV.opts && EV.opts.bk); EV = null; evHud.hidden = true; evHurt.style.opacity = 0; document.body.classList.remove('inevent'); if (document.pointerLockElement) document.exitPointerLock();
+    if (wasTdy) tdBack();
+    else if (wasMed) medBack();
     else if (wasMap) blrBack();
     else if (wasTwr) twrBack();
     else if (wasDsp) dspBack();
@@ -5846,6 +5869,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (u.boss && EV.k === 'inj') { d *= EV.weak > 0 ? 1.6 : .08; if (EV.weak <= 0 && from === 'me' && !EV.toldImmune) { EV.toldImmune = 1; say('He’s invulnerable! Hold the Kryptonite emitter to weaken him.', 3000); } }
     if (from === 'me') d *= 1 + .15 * UPG2.punch;
     if (from === 'me') { EV.dmg += d; if (EV.k === 'inj' && u.boss) lbAdd('d', d); }
+    d = tdHit(u, d, from);
     numFx(u, d, from === 'me');
     if (u.remote) { if (from === 'me' && mq) mq.pub(`${MP_TOPIC}/ev/${mpId}`, JSON.stringify({ to: u.id, d: Math.round(d) })); return; }
     u.hp -= d; if (u.hp <= 0) killUnit(u, from);
@@ -5875,7 +5899,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     else if (EV.blocking && kitParry(from)) return;
     else if (EV.blocking) { d *= EV.hero === 'echo18' ? .1 : .25; KIT.stam = Math.max(0, KIT.stam - (EV.hero === 'echo18' ? .06 : .14) * upgReflex()); tone(1200, .05, 'square', .03, 800); if (KIT.stam <= 0) { EV.blocking = false; EV.guardT = 1.2; say('Guard broken!', 1200); } }
     if (EV.k === 'st') d *= EV.frailTake || 1;
-    d *= upgIron(); d = storyHurt(d, from);
+    d *= upgIron(); d = storyHurt(d, from); d = tdHurt(d, from);
     EV.hp -= d; EV.hurtT = .4; EV.calm = 0; if (EV.laststand && EV.hp < 1) EV.hp = 1; tone(120, .15, 'sawtooth', .04, 70);
     const oneLife = EV.k === 'wwh' && EV.hero === 'hulk' || EV.k === 'br' || EV.k === 'st';
     if (EV.hp <= 0 && EV.party && partyDown()) return;
@@ -5887,6 +5911,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function endMatch(won){
     if (EV && EV.opts && EV.opts.bk && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return bkFightEnd(won); }
     if (EV && EV.opts && EV.opts.cb && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return cbFightEnd(won); }
+    if (EV && EV.opts && EV.opts.tdy && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return tdFightEnd(won); }
     if (EV && EV.opts && EV.opts.sf && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return sfFightEnd(won); }
     if (EV && !EV.over) { storyFlag('ev:' + EV.k); if (won) storyFlag('evwin:' + EV.k); if (won && EV.k === 'br') storyFlag('br' + EV.part); if (won && EV.k === 'st') { storyFlag(EV.st.part); sbWon(EV.st.part); } }
     if (EV && EV.k === 'st' && EV.st && EV.st.part === 'c3' && won && !EV.over) { EV.over = true; if (SG.active && !SG.choice.mask) return maskChoice(); return lpStart(); }
@@ -7599,7 +7624,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function stSetup(part){
     const S = EV.st = { part, trick: 0, possT: 12, wave: 0, fires: [], people: [], tags: 0, ready: false }, add = (h, x, z) => { const u = addUnit({ hero: h, team: 'en' }); u.x = x; u.z = z; if (S.ready) { u.hp = u.max = Math.round(u.max * EV.foeHp); drawTag(u); } if (h === 'udrone') droneAv(u); return u; }, ring = (n, R) => Array.from({ length: n }, (_, i) => [Math.cos(i / n * Math.PI * 2) * R, Math.sin(i / n * Math.PI * 2) * R - 4]);
     S.add = add; S.ring = ring;
-    stSetup2(part); sbSetup(part); cbSetup(part); if (EV.opts && EV.opts.sf) sfSetupMap(part); gangSetup(part); moonSetup(part); bkFSetup(part); bk7Setup(part); zSetup(part); kSetup(part); vSetup(part); xSetup(part); actSetup(part); a5Setup(part);
+    stSetup2(part); sbSetup(part); cbSetup(part); if (EV.opts && EV.opts.sf) sfSetupMap(part); gangSetup(part); moonSetup(part); bkFSetup(part); bk7Setup(part); zSetup(part); kSetup(part); vSetup(part); xSetup(part); actSetup(part); a5Setup(part); tdSetup(part);
     if (part === 'u1') S.wave = 0;
     if (part === 'u2') { S.targets = (EV.inMap ? U2_TARGETS.map(([x, z, h]) => [...toLocal(x, z), h]) : [[-16, -12, 'ustation'], [16, -12, 'ustation'], [0, -20, 'ustation'], [-12, 10, 'userver'], [12, 10, 'userver']]).map(([x, z, h]) => { const u = add(h, x, z); staticAv(u, h); return u; }); S.droneT = 2; }
     if (part === 'u3') { const b = add('ultronx', 0, -14); ultronAv(b); b.boss = 1; EV.boss = b; S.cables = [[-12, -18], [12, -18], [0, -24]].map(([x, z]) => { const u = add('ucable', x, z); staticAv(u, 'ucable'); return u; }); S.cableLine = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xFF3030 })); eventScene.add(S.cableLine); for (let i = 0; i < 3; i++) add('udrone', (i - 1) * 6, -8); }
@@ -8110,7 +8135,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (t === 'truth') return bzTruthTab(B);
     if (bzPhone(t, B)) return;
     if (t === 'map') return phMap();
-    if (t === 'story') { const s = curStep(); B.innerHTML = bkPhoneCard() + `<div class="phcard"><b>${SG.active ? `Chapter ${SG.ch + 1}: ${esc(nmT(SAGA[SG.ch].title))}` : SG.sagaDone ? 'The story is finished' : 'The story is waiting'}</b><small>${SG.active && s ? esc(nmT(stepText(s))) : 'Open the comic in the story vault, under the lair (a loose brick by the scoreboard).'}</small></div>`
+    if (t === 'story') { const s = curStep(); B.innerHTML = bkPhoneCard() + tdPhoneCard() + `<div class="phcard"><b>${SG.active ? `Chapter ${SG.ch + 1}: ${esc(nmT(SAGA[SG.ch].title))}` : SG.sagaDone ? 'The story is finished' : 'The story is waiting'}</b><small>${SG.active && s ? esc(nmT(stepText(s))) : 'Open the comic in the story vault, under the lair (a loose brick by the scoreboard).'}</small></div>`
       + SAGA.map((C, i) => { const done = SG.done.includes(i), cur = SG.ch === i && !done; return done || cur ? `<div class="phcard"><b>${i + 1}. ${esc(nmT(C.title))}${cur ? ' · now' : ''}</b><small>${esc(nmT(done ? RECAP[C.id] || C.tag : C.tag))}</small></div>` : ''; }).join(''); return; }
     if (t === 'jobs') { const q = JOB.q; B.innerHTML = `<div class="phcard"><b>Reputation: ${JOB.rep}</b><small>${JOB.done} job${JOB.done === 1 ? '' : 's'} done · ${JOB.sealed.size} stash house${JOB.sealed.size === 1 ? '' : 's'} shut down · ${Object.keys(SBK).length} of ${SBOSS.length} street bosses beaten</small></div>`
       + (q ? `<div class="phcard"><b>Now: ${esc(q.title)}</b><small>${esc(jobHud.textContent.replace(/^Job · reputation \d+/, '').replace(q.title, ''))}</small><div class="phrow"><button type="button" data-a="drop">Give up this job</button></div></div>` : '<div class="phcard"><b>No job right now</b><small>Look for people with a yellow ! inside the buildings, or call one of your contacts.</small></div>')
@@ -8123,7 +8148,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       + SUITS2.map(([k, c]) => { const got = shopGot.includes(k); return `<div class="phcard"><b>${OUTFITS[k].name}</b><small>${got ? 'Yours. Change into it from the mirror or the Look menu.' : 'A new suit.'}</small><div class="phrow">${got ? '<button type="button" disabled>Owned</button>' : `<button type="button" class="y" data-s="${k}" data-c="${c}" ${JOB.rep < c ? 'disabled' : ''}>Buy for ${c}</button>`}</div></div>`; }).join('');
       B.querySelectorAll('[data-u]').forEach(b => b.onclick = () => { const k = b.dataset.u, c = UPG2_DEF[k][2][UPG2[k]]; if (JOB.rep < c) return; JOB.rep -= c; UPG2[k]++; jobSave(); upgSave(); tone(784, .15, 'triangle', .05); say(`${UPG2_DEF[k][0]} upgraded to level ${UPG2[k]}.`, 2200); phShow('upg'); });
       B.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { const k = b.dataset.s, c = +b.dataset.c; if (JOB.rep < c) return; JOB.rep -= c; jobSave(); shopGot.push(k); try { localStorage.setItem('ru-shop', JSON.stringify(shopGot)); } catch (e) {} look.outfit = k; look.cape = OUTFITS[k].cape ? 1 : 0; saveLook(); idleShown = undefined; tone(988, .2, 'triangle', .05); say(`You’re wearing the ${OUTFITS[k].name} now.`, 2400); phShow('upg'); }); return; }
-    if (t === 'news') { const H = []; try { H.push(...storyHeadlines()); } catch (e) {} if (JOB.sealed.size) H.unshift(`${JOB.sealed.size} DRUG DEN${JOB.sealed.size > 1 ? 'S' : ''} SHUT DOWN. POLICE SAY THEY ‘HAD SOME HELP’`); if (Object.keys(SBK).length) H.unshift(`MASKED HERO BEATS ${SBOSS.filter(q => SBK[q.id]).map(q => q.name.toUpperCase()).join(', ')}`); if (HEAT.lv) H.unshift('POLICE HUNT RECKLESS VIGILANTE ACROSS CITY'); if (JOB.done) H.push(`“${heroName().toUpperCase()} FOUND MY CAT,” SAYS GRATEFUL AUNTY`); if (festNow()) H.unshift('FIREWORKS LIGHT UP THE CITY TONIGHT');
+    if (t === 'news') { const H = []; try { H.push(...storyHeadlines()); } catch (e) {} try { H.unshift(...tdNews()); } catch (e) {} if (JOB.sealed.size) H.unshift(`${JOB.sealed.size} DRUG DEN${JOB.sealed.size > 1 ? 'S' : ''} SHUT DOWN. POLICE SAY THEY ‘HAD SOME HELP’`); if (Object.keys(SBK).length) H.unshift(`MASKED HERO BEATS ${SBOSS.filter(q => SBK[q.id]).map(q => q.name.toUpperCase()).join(', ')}`); if (HEAT.lv) H.unshift('POLICE HUNT RECKLESS VIGILANTE ACROSS CITY'); if (JOB.done) H.push(`“${heroName().toUpperCase()} FOUND MY CAT,” SAYS GRATEFUL AUNTY`); if (festNow()) H.unshift('FIREWORKS LIGHT UP THE CITY TONIGHT');
       B.innerHTML = '<div class="phcard"><b>The Daily Bugle · Bangalore edition</b><small>Today’s headlines</small></div>' + (H.length ? H.slice(0, 8) : ['QUIET DAY IN THE GARDEN CITY']).map(x => `<div class="phnews">${esc(nmT(x))}</div>`).join(''); return; }
     if (t === 'contacts') { B.innerHTML = '<div class="phcard"><b>Contacts</b><small>People you’ve helped. Call them for another job.</small></div>' + (PH.contacts.length ? PH.contacts.map((c, i) => `<div class="phcard"><b>${esc(c.who)}</b><small>${esc(c.where)}</small><div class="phrow"><button type="button" class="y" data-c="${i}" ${JOB.q ? 'disabled' : ''}>Call</button></div></div>`).join('') : '<div class="phcard"><small>No contacts yet. Take a job from someone first.</small></div>');
       B.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { const c = PH.contacts[+b.dataset.c], d = DOORS.find(x => x.name === c.where); if (!d || JOB.q) return; const keep = BIN.d; BIN.d = d; const o = jobOffer(d); BIN.d = keep; tone(523, .1, 'sine', .04); if (!o) return say(`${c.who}: “Nothing today. Thanks for calling!”`, 2600); phoneClose(); askChoice('job', v => { if (v === 'yes') jobStart(o); }, { q: `${c.who} (on the phone): “${o.ask}”`, a: [['yes', 'On my way'], ['no', 'Not right now']] }); }); return; }
@@ -8878,7 +8903,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ---------- sprint, crouch, block, weapons and pain (chapter 9 on) ----------
   var KIT = { stam: 1, sprint: false, crouch: false, crouchK: 0, restT: 0, winded: false, sprinting: false };
   const kitReached = () => { try { return SG.ch >= chIx('broker') || SG.gold || SG.sagaDone; } catch (e) { return false; } };
-  const kitOn = () => kitReached() && inWorld && !A && ['blr', 'roof', 'lair', 'event', 'twr', 'dsp'].includes(zone);
+  const kitOn = () => inWorld && !A && (zone === 'tidy' || kitReached() && ['blr', 'roof', 'lair', 'event', 'twr', 'dsp'].includes(zone));
   // from chapter 9 until the end of the story, the only weapon left is Wolverine's claws
   function lostWeapon(id){ try { if (SG.sagaDone || SG.done.includes(chIx('page1'))) return false; const L = chIx('last'); return SG.active && SG.ch === L || SG.active && SG.ch > L && id !== 'claws' || SG.ch >= chIx('broker') && !SG.gold && id !== 'claws'; } catch (e) { return false; } }
   const canClaws = () => !!EV && (EV.hero === 'rayan' || EV.hero === 'copyhero') && (EV.k === 'br' || EV.k === 'st') && kitReached() && !EV.clawsTorn && !ch13();
@@ -8976,7 +9001,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     fists: { n: 'Fists', s: 'Fists' }, claws: { n: 'Adamantium claws', s: 'Claws' },
     mjolnir: { n: 'Mjölnir', s: 'Mjölnir' }, storm: { n: 'Stormbreaker', s: 'Storm' }, batarang: { n: 'Batarangs', s: 'Batarangs' },
     sword: { n: 'Diamond sword', s: 'Sword' }, shield: { n: 'Vibranium shield', s: 'Shield' }, necro: { n: 'Necrosword', s: 'Necro' },
-    web: { n: 'Web-shooters', s: 'Webs' }, defib: { n: 'Defib paddles', s: 'Defib' }, throw: { n: 'Something to throw', s: 'Throw' }, parry: { n: 'A perfect block', s: 'Parry' }
+    web: { n: 'Web-shooters', s: 'Webs' }, knife: { n: 'Kitchen knife', s: 'Knife' }, hammer: { n: 'Claw hammer', s: 'Hammer' }, crowbar: { n: 'Crowbar', s: 'Crowbar' }, cleaver: { n: 'Meat cleaver', s: 'Cleaver' }, defib: { n: 'Defib paddles', s: 'Defib' }, throw: { n: 'Something to throw', s: 'Throw' }, parry: { n: 'A perfect block', s: 'Parry' }
   };
   // who is weak to what (always something you have in that part of the story), and who adapts to repetition
   const KIT_TRAITS = {
@@ -8987,11 +9012,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     thanos20: { weak: ['storm', 'mjolnir', 'parry'] }, ofspace: { weak: ['parry'], adapt: 1 }, overfitx: { weak: ['parry'], adapt: 1 }, dlboss: { weak: ['web', 'batarang', 'parry'] }, scrb: { weak: ['throw', 'parry'], adapt: 1 },
     sb_gridlock: { weak: ['web', 'parry'] }, sb_static: { weak: ['throw', 'shield'] }, sb_pothole: { weak: ['sword', 'storm', 'claws'] }, sb_monsoon: { weak: ['throw', 'web'] }, sb_smog: { weak: ['batarang', 'throw'] }, sb_rust: { weak: ['claws', 'parry'] },
     cb_adrenal: { weak: ['defib', 'parry'] }, cb_fever: { weak: ['throw'] }, cb_plague: { weak: ['defib', 'throw'] }, cb_anaes: { weak: ['throw', 'parry'] }, cb_suture: { weak: ['defib', 'parry'] }, sf_mri: { weak: ['throw', 'defib'] }, sf_surg: { weak: ['defib', 'throw'] },
-    oldme: { weak: ['parry'], adapt: 1 }, clockmaker: { weak: ['web', 'throw', 'batarang'] }, overseer: { weak: ['sword', 'claws', 'throw'] }, queen: { weak: ['storm', 'sword', 'throw'] }, editor: { weak: ['parry', 'throw'], adapt: 1 }, author: { weak: ['parry'], adapt: 1 }
+    oldme: { weak: ['parry'], adapt: 1 }, clockmaker: { weak: ['web', 'throw', 'batarang'] }, overseer: { weak: ['sword', 'claws', 'throw'] }, queen: { weak: ['storm', 'sword', 'throw'] }, editor: { weak: ['parry', 'throw'], adapt: 1 }, tidy: { weak: ['parry', 'crowbar', 'cleaver'], adapt: 1 }, author: { weak: ['parry'], adapt: 1 }
   };
   const kitOnFor = () => !!EV && EV.hero === 'rayan' && (EV.k === 'st' || EV.k === 'br');
   function kitList(){
-    if (!kitOnFor()) return null; const L = ['fists']; if (canClaws()) L.push('claws');
+    if (!kitOnFor()) return null; if (EV.opts && EV.opts.tdy) return ['fists', ...TD_WPN.filter(tdHas)]; const L = ['fists']; if (canClaws()) L.push('claws');
     if (EV.opts && EV.opts.cb) { L.push('defib'); return L; }
     ['mjolnir', 'storm', 'batarang', 'sword', 'shield', 'necro', 'web'].forEach(id => { try { if (inv.includes(id) && !dustedWeapon(id)) L.push(id); } catch (e) {} });
     return L;
@@ -9010,7 +9035,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const KIT_THROW = { thr_crate: { n: 'crate', d: 3.2, stun: 1.3 }, thr_tank: { n: 'gas canister', d: 2.4, stun: .9, aoe: 3.2 }, thr_cone: { n: 'traffic cone', d: 2, stun: 1.8 }, thr_rock: { n: 'chunk of concrete', d: 3.6, stun: 1 }, thr_tray: { n: 'steel tray', d: 2.2, stun: 1.6, bounce: 1 } };
   function kitTypes(){ if (EV.inMed) return ['thr_tray', 'thr_tank', 'thr_crate']; if (EV.inMap) return ['thr_cone', 'thr_crate', 'thr_tank', 'thr_rock']; return ['thr_crate', 'thr_rock', 'thr_tank']; }
   function kitDrop(){
-    const K = EV.kit, types = kitTypes(); let x, z, ok = false;
+    if (EV.opts && EV.opts.tdy) return; const K = EV.kit, types = kitTypes(); let x, z, ok = false;
     for (let k = 0; k < 20 && !ok; k++) { const a = Math.random() * 6.28, r = 3 + Math.random() * 6; x = pos.x + Math.cos(a) * r; z = pos.z + Math.sin(a) * r; ok = evValid(x, z) && !PILLARS.some(p => Math.hypot(x - p.x, z - p.z) < p.r + .6); }
     if (!ok) return; const type = types[Math.random() * types.length | 0], g = new THREE.Group(); g.position.set(x, 0, z);
     const m = kitMesh(type); m.position.y = .3; m.scale.setScalar(1.6); g.add(m);
@@ -9048,6 +9073,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (w === 'mjolnir') { EV.cd = .95; const s = kitShot({ dmg: base * 1.7, stun: .7, col: 0xB9C4CF, tool: 'mjolnir', mesh: 'mjolnir', sc: .9 }); s.life = .9; tone(220, .2, 'sawtooth', .04, 120); }
     if (w === 'batarang') { EV.cd = .45; [-.12, .12].forEach(o => { const s = kitShot({ dmg: base * .65, col: 0x16181D, tool: 'batarang', mesh: 'batarang', sc: .7 }); const a = yaw + o; s.vx = -Math.sin(a) * 22; s.vz = -Math.cos(a) * 22; s.home = 1; s.life = 1.4; }); tone(900, .06, 'triangle', .03, 1400); }
     if (w === 'shield') { EV.cd = 1; const s = kitShot({ dmg: base * 1.3, stun: .5, col: 0xC8102E, tool: 'shield', mesh: 'shield', sc: .6, bounce: 1 }); s.life = 1; }
+    if (w === 'knife') { EV.cd = .35; melee(1.9, 1.1, 1.1); }
+    if (w === 'hammer') { EV.cd = .7; melee(2.1, 1.1, 1.6, u => { if (Math.random() < .3) u.stun = Math.max(u.stun, .6); }); }
+    if (w === 'crowbar') { EV.cd = .75; melee(2.5, 1.3, 1.7, u => { u.kx = (u.x - pos.x) * 2; u.kz = (u.z - pos.z) * 2; }); }
+    if (w === 'cleaver') { EV.cd = .6; melee(2.1, 1.2, 1.9); }
     if (w === 'web') { EV.cd = .7; const s = kitShot({ dmg: base * .5, stun: 1.6, col: 0xEEF1F5, tool: 'web' }); s.life = 1; tone(1200, .08, 'sine', .03, 600); }
     return true;
   }
@@ -11191,14 +11220,16 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     inst(gC(.09, 4, 8), mat(0x2A2D33, { metalness: .6 }), poles, g); inst(gB(.38, 1.05, .32), mat(0x16181D), heads, g);
     BLC.sig = {}; Object.entries(lamps).forEach(([k, L]) => { BLC.sig[k] = inst(new THREE.SphereGeometry(.13, 8, 5), new THREE.MeshBasicMaterial({ color: k.endsWith('R') ? 0xFF2A1A : 0x3CE870 }), L, g); });
     // rain trees: Bangalore is the garden city
-    const trunks = [], crowns = [], limbs = [], LOBES = lowFx ? [[0, 4.1, 0, 2.8, 1.5], [1.2, 3.8, .4, 1.8, 1.1]] : [[0, 4.4, 0, 2.6, 1.4], [1.6, 3.9, .7, 1.9, 1.2], [-1.4, 4.0, -.9, 2.0, 1.2], [-.2, 4.0, 1.7, 1.8, 1.1]];
+    const trunks = [], crowns = [], limbs = [], LOBES = lowFx ? [[0, 4.6, 0, 2.5, 1.9], [1.3, 4.1, .4, 1.7, 1.35]] : [[0, 5.0, 0, 2.3, 1.85], [1.55, 4.35, .6, 1.75, 1.4], [-1.45, 4.45, -.75, 1.8, 1.45], [-.25, 4.3, 1.65, 1.65, 1.3], [.45, 4.2, -1.6, 1.6, 1.25]];
     ROADS.slice(1, -1).forEach(l => [0, 1].forEach(dir => [-1, 1].forEach(side => { for (let t = -366; t < 366; t += lowFx ? 22 : 11) { const c = t + (Math.random() - .5) * 4, o = l + side * 6.9, x = dir ? c : o, z = dir ? o : c;
       if (ROADS.some(r => Math.abs(c - r) < 12) || offMap(x, z) || inTowerZone(x, z, 5) || Object.values(DIST).some(d => Math.hypot(d.x - x, d.z - z) < 26) || gridHit(x, z, .9) || noProp(x, z)) continue;
       const s = .8 + Math.random() * .6, ry = Math.random() * 6, cs = Math.cos(ry), sn = Math.sin(ry); trunks.push([x, 1.6 * s, z, 0, s, s, s]); LOBES.forEach(([ox, oy, oz, w, hh]) => crowns.push([x + (ox * cs - oz * sn) * s, oy * s, z + (ox * sn + oz * cs) * s, Math.random() * 6, w * s, hh * s, w * s]));
-      if (!lowFx) [[.9, .5], [-.8, -.6]].forEach(([a, b]) => limbs.push([x + Math.cos(ry + a) * .5 * s, 3.1 * s, z + Math.sin(ry + a) * .5 * s, ry + a, s * .6, s * .9, s * .6, 0, b])); blrBox(x - .3, x + .3, z - .3, z + .3); } })));
-    const barkM = mat(0x4A3A2A, { roughness: 1 }); inst(gC(.24, 3.2, 7), barkM, trunks, g, true); if (limbs.length) inst(gC(.13, 2.2, 5), barkM, limbs, g, true); // crowns in 96 m squares, so the ones behind you or lost in the haze aren't drawn
+      if (!lowFx) [[.9, .55], [-.8, -.6], [2.6, .5]].forEach(([a, b]) => limbs.push([x + Math.cos(ry + a) * .35 * s, 3.55 * s, z + Math.sin(ry + a) * .35 * s, ry + a, s, s, s, 0, b])); blrBox(x - .3, x + .3, z - .3, z + .3); } })));
+    const barkM = mcGet('cityBark', () => new THREE.MeshStandardMaterial({ color: 0x8A7460, roughness: .95, map: txWrap(tex(64, 256, (c, w, h) => { c.fillStyle = '#4A3A2C'; c.fillRect(0, 0, w, h); for (let i = 0; i < 46; i++) { const x = Math.random() * w, v = 30 + Math.random() * 40 | 0; c.fillStyle = `rgba(${v},${v - 8},${v - 14},.75)`; c.fillRect(x, 0, 1 + Math.random() * 3, h); } for (let i = 0; i < 90; i++) { c.fillStyle = 'rgba(120,104,86,.35)'; c.fillRect(Math.random() * w, Math.random() * h, 3 + Math.random() * 6, 1); } })) }));
+    // the trunk tapers up from a flared foot; the limbs taper too and disappear up into the leaves
+    inst(new THREE.CylinderGeometry(.15, .3, 3.6, lowFx ? 7 : 10).translate(0, .2, 0), barkM, trunks, g, true); if (limbs.length) inst(new THREE.CylinderGeometry(.045, .12, 2.1, 6).translate(0, 1.05, 0), barkM, limbs, g, true); // crowns in 96 m squares, so the ones behind you or lost in the haze aren't drawn
     const tc = new THREE.Color(), byC = new Map(); crowns.forEach(c => { const ck = Math.floor(c[0] / DCH) + ',' + Math.floor(c[2] / DCH); if (!byC.has(ck)) byC.set(ck, []); byC.get(ck).push(c); });
-    byC.forEach((list, ck) => { const [gx, gz] = ck.split(',').map(Number), cx = (gx + .5) * DCH, cz = (gz + .5) * DCH, geo = cityCrownGeo().clone(), cr = inst(geo, cityLeafM(), list, g, true);
+    byC.forEach((list, ck) => { const [gx, gz] = ck.split(',').map(Number), cx = (gx + .5) * DCH, cz = (gz + .5) * DCH, geo = cityCrownGeo().clone(), cr = inst(geo, mcGet('cityLeafV', () => new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: .9, map: cityLeafM().map, vertexColors: true })), list, g, true);
       geo.boundingSphere = new THREE.Sphere(V(cx, 5, cz), DCH * .75 + 8); cr.frustumCulled = true; detChunks.push({ im: cr, x: cx, z: cz });
       list.forEach((_, i) => cr.setColorAt(i, tc.setHSL(.26 + Math.random() * .07, .38 + Math.random() * .17, .2 + Math.random() * .09))); if (cr.instanceColor) cr.instanceColor.needsUpdate = true; });
     // water tanks and air conditioners on the roofs
@@ -11939,6 +11970,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     g.traverse(o => { if (o.isMesh && !o.userData.walk) o.userData.noPick = true; });
   }
   function enterBin(d){
+    if (d && d.type === 'tidy') return tdDoor(d);
     if (d && d.type === 'stash' && JOB.sealed.has(d)) return say('Police tape across the door. There’s nothing left in there.', 2600);
     if (d && d.type === 'stash' && !nightNow()) return say('Padlocked, shutters down. They only open for business after dark (7 pm).', 3200);
     if (A || EV || !d || TWR.busy) return; if (!TWR.sc) buildTwr(); doorBtn.hidden = true; TWR.busy = true; setTimeout(() => TWR.busy = false, 1500);
@@ -12238,9 +12270,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const cityRain = () => { try { return !!(raining() && (!SG.active || newTL())); } catch (e) { return false; } };
   function palRain(P){ const R = palMix('rain', 'rain', 0), f = .7; ['top', 'fog', 'glow', 'hemiC', 'hemiG', 'sunC'].forEach(n => P[n].lerp(R[n], f)); ['hemiI', 'sunI', 'win', 'lamps', 'near', 'far', 'exp', 'bloom', 'haze'].forEach(n => P[n] += (R[n] - P[n]) * f); P.stars = 0; P.wet = 1; P.sunUp = false; return P; }
   // ---------- tree crowns: a lumpy ball of leaves instead of a faceted gem ----------
-  function cityCrownGeo(){ return pvG('crown' + lowFx, () => { const g = new THREE.IcosahedronGeometry(1, 1), p = g.attributes.position, n = g.attributes.normal, v = new THREE.Vector3();
-    for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i); const h = lhash(Math.round(v.x * 50) + Math.round(v.z * 31), Math.round(v.y * 40)), r = .84 + h * .3; v.multiplyScalar(r); if (v.y < -.2) v.y = -.2 + (v.y + .2) * .45; p.setXYZ(i, v.x, v.y, v.z); v.normalize(); n.setXYZ(i, v.x, v.y * 1.2, v.z); }
-    p.needsUpdate = true; return g; }); }
+  // a crown of leaves: a smooth ball with soft clumps (no random spikes, so no jagged facets up close), flat-ish underneath,
+  // and darker below than on top, the way light falls through a real tree
+  function cityCrownGeo(){ return pvG('crown2' + lowFx, () => { const g = new THREE.IcosahedronGeometry(1, lowFx ? 1 : 2), p = g.attributes.position, n = g.attributes.normal, v = new THREE.Vector3(), col = new Float32Array(p.count * 3);
+    const bump = (x, y, z) => .1 * Math.sin(3.1 * x + 1.3) * Math.sin(2.7 * y + .4) * Math.sin(3.3 * z + 2.1) + .06 * Math.sin(5.9 * x + 2.2 * z + .7) * Math.cos(6.3 * y - 1.1) + .045 * Math.sin(9.1 * z + 3.3 * x) * Math.sin(8.7 * y + .9);
+    for (let i = 0; i < p.count; i++) { v.fromBufferAttribute(p, i).normalize(); const r = .95 + bump(v.x, v.y, v.z); const nx = v.x, ny = v.y, nz = v.z; v.multiplyScalar(r); if (v.y < -.25) v.y = -.25 + (v.y + .25) * .5; p.setXYZ(i, v.x, v.y, v.z);
+      const l = Math.hypot(nx, ny * 1.15, nz); n.setXYZ(i, nx / l, ny * 1.15 / l, nz / l); const sh = .58 + .42 * Math.min(1, Math.max(0, (v.y + .35) / 1.2)) + bump(nz, nx, ny) * .6; col.set([sh * .96, sh, sh * .9], i * 3); }
+    p.needsUpdate = true; n.needsUpdate = true; g.setAttribute('color', new THREE.BufferAttribute(col, 3)); return g; }); }
   const cityLeafM = () => mcGet('cityLeaf', () => new THREE.MeshStandardMaterial({ color: 0xFFFFFF, roughness: .88, map: txWrap(tex(128, 128, (c, w, h) => { c.fillStyle = '#8C8C8C'; c.fillRect(0, 0, w, h);
     for (let i = 0; i < 520; i++) { const v = 90 + Math.random() * 130 | 0; c.fillStyle = `rgb(${v},${v},${v})`; c.save(); c.translate(Math.random() * w, Math.random() * h); c.rotate(Math.random() * 6.28); c.beginPath(); c.ellipse(0, 0, 4 + Math.random() * 3, 1.8 + Math.random(), 0, 0, 7); c.fill(); c.restore(); } })) }));
   // ---------- shop signboards over the shopfronts, and plants on the balconies ----------
@@ -12850,7 +12886,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // every couple of seconds: achievements, the real night, and the phone light
   let nightChecked = false;
   function littleStep(dt, now){
-    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt);
+    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.dz) deathStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.fin) finalStep(dt, now);
@@ -12883,7 +12919,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (u.dead > 0) { u.dead -= dt; if (u.dead <= 0 && !u.boss && u.hero !== 'hulk') { place(u); u.hp = u.max; u.av.g.visible = true; drawTag(u); } return; }
     u.cd -= dt; u.spCd -= dt; u.stun -= dt; u.rage -= dt; u.swing = Math.max(0, u.swing - dt);
     if (H.regen || u.rage > 0) u.hp = Math.min(u.max, u.hp + (u.rage > 0 ? 8 : H.regen) * dt);
-    u.x += u.kx * dt; u.z += u.kz * dt; u.kx *= Math.max(0, 1 - dt * 5); u.kz *= Math.max(0, 1 - dt * 5); if (!evValid(u.x, u.z) && (EV.inMap || EV.inTwr || EV.inDsp || EV.inMed)) { u.x -= u.kx * dt; u.z -= u.kz * dt; } else if (!evValid(u.x, u.z)) { const d = Math.hypot(u.x, u.z); if (d > ER - .7) { u.x *= (ER - .8) / d; u.z *= (ER - .8) / d; } PILLARS.forEach(p => { const dd = Math.hypot(u.x - p.x, u.z - p.z); if (dd < p.r + .45) { u.x = p.x + (u.x - p.x) / dd * (p.r + .46); u.z = p.z + (u.z - p.z) / dd * (p.r + .46); } }); }
+    u.x += u.kx * dt; u.z += u.kz * dt; u.kx *= Math.max(0, 1 - dt * 5); u.kz *= Math.max(0, 1 - dt * 5); if (!evValid(u.x, u.z) && (EV.inMap || EV.inTwr || EV.inDsp || EV.inMed || EV.inTdy)) { u.x -= u.kx * dt; u.z -= u.kz * dt; } else if (!evValid(u.x, u.z)) { const d = Math.hypot(u.x, u.z); if (d > ER - .7) { u.x *= (ER - .8) / d; u.z *= (ER - .8) / d; } PILLARS.forEach(p => { const dd = Math.hypot(u.x - p.x, u.z - p.z); if (dd < p.r + .45) { u.x = p.x + (u.x - p.x) / dd * (p.r + .46); u.z = p.z + (u.z - p.z) / dd * (p.r + .46); } }); }
     if (u.stun > 0) return;
     if (EV.k === 'br' && EV.part === 2 && !u.alert && brSneak(u, dt)) return;
     if (u.boss) return supermanStep(u, dt, t);
@@ -13011,7 +13047,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // shots
     EV.shots = EV.shots.filter(s => {
       s.x += s.vx * dt; s.z += s.vz * dt; s.life -= dt; s.m.position.set(s.x, s.y, s.z); if (s.big) s.m.rotation.z += dt * 20;
-      if (!evValid(s.x, s.z) && (EV.inTwr || EV.inDsp || EV.inMed || Math.hypot(s.x, s.z) > ER - 1)) s.life = 0;
+      if (!evValid(s.x, s.z) && (EV.inTwr || EV.inDsp || EV.inMed || EV.inTdy || Math.hypot(s.x, s.z) > ER - 1)) s.life = 0;
       if (PILLARS.some(p => Math.hypot(s.x - p.x, s.z - p.z) < p.r)) s.life = 0;
       if (s.life > 0) for (const o of bodies()) { if (!alive(o) || teamOf(o) === s.team || s.hit === o) continue; const rr = (HEROES[o.hero].r || .5) + (s.big ? .4 : .2); if (Math.hypot(o.x - s.x, o.z - s.z) < rr) {
         if (o.isMe && kitReflect(s)) break; if (s.from === 'me') EV.hitTool = s.tool || null;
@@ -13500,7 +13536,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const platformAt = (x, z) => plats[zone].find(p => onPlat(x, z, p)) || null;
   let codeScene = null, chipScene = null, seaScene = null, falling = false;
   let spaceScene = null, eventScene = null; const areaScenes = {};
-  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene, event: eventScene, void: voidScene, blr: BL && BL.sc, twr: TWR && TWR.sc, dsp: DSP && DSP.sc, mc: BZ.sc, sp: SPF.sc, med: MED.sc, farm: FM.sc })[zone] || areaScenes[zone] : scene;
+  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene, event: eventScene, void: voidScene, blr: BL && BL.sc, twr: TWR && TWR.sc, dsp: DSP && DSP.sc, mc: BZ.sc, sp: SPF.sc, med: MED.sc, farm: FM.sc, tidy: TD.sc })[zone] || areaScenes[zone] : scene;
   function radTile(parent, ch, x, y, z){
     const m = new THREE.Mesh(new THREE.PlaneGeometry(.55, .55), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: tex(160, 160, (g, w, h) => { g.fillStyle = '#FFE29A'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, h, 34) : g.rect(0, 0, w, h); g.fill(); g.fillStyle = '#24425E'; g.font = `700 110px ${ZH}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, w / 2, h / 2 + 6); }) }));
     m.position.set(x, y, z); m.userData.collect = ch; m.userData.base = y; parent.add(m); worldAnim.tiles.push(m); return m;
@@ -13901,6 +13937,531 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const t = now / 1000, on = reduce || !(Math.sin(t * 3.1) > .93 || (Math.sin(t * 17) > .97 && Math.sin(t * .7) > 0));
     crossM.emissiveIntensity = on ? 1.3 : .15; crossLight.intensity = on ? .9 : .05;
   }
+  // ======================= The Tidy Man: a free-play horror story =======================
+  // Hari Varadan is calm, polite and helpful. He lives in Bangalore free play, remembers you, and over a few meetings works
+  // out where you live. Then he asks for help moving boxes at his house, and you wake up taped to a chair in his basement.
+  // Five nights to get out: the front door (study key and the alarm code from his notebook), the drain in the basement
+  // (crowbar and a torch), or proof and a phone call to the police. He cleans, checks on you, goes out to work, comes back,
+  // notices anything moved or left open, hears you, and hunts you methodically. Fights use the usual fight system.
+  const TD = { s: null, sc: null, built: false, npc: null, car: null, house: null, lot: null, mark: null, near: null, acts: [], fx: [], decals: [], tied: false, mode: '', hide: null, lastP: null };
+  const TD_KEY = 'ru-tidy', TD_NAME = 'Hari Varadan';
+  function tdLoad(){ if (TD.s) return TD.s; let s = null; try { s = JSON.parse(localStorage.getItem(TD_KEY) || 'null'); } catch (e) {}
+    TD.s = Object.assign({ v: 1, meet: 0, day: 0, firstDay: -1, coolT: 0, state: 'none', declined: 0, call: 0, night: 1, nightT: 0, inv: [], evid: [], evidOut: 0, fights: 0, wins: 0, learned: 0, log: [], job: null, code: String(1000 + Math.floor(Math.random() * 9000)), knowCode: 0, sightings: 0, reward: 0 }, s && typeof s === 'object' ? s : {}); return TD.s; }
+  function tdSave(){ try { localStorage.setItem(TD_KEY, JSON.stringify(TD.s)); } catch (e) {} }
+  const goreLow = () => { try { return localStorage.getItem('ru-gore') === 'low'; } catch (e) { return false; } };
+  const scaresLow = () => { try { return localStorage.getItem('ru-scares') === 'low'; } catch (e) { return false; } };
+  const tdLog = t => { const s = tdLoad(); s.log.unshift(t); s.log = s.log.slice(0, 12); tdSave(); };
+  // his look: an ordinary, careful man. Pressed cream shirt, an olive knitted vest, grey trousers, rimless glasses, a neat side parting and a wristwatch
+  OUTFITS.tidyo = { hero: 1, c1: '#E9E6DE', c2: '#4A4F58', hair: 'short', hairCol: '#2A2420', skin: '#B88A64' };
+  HEROES.tidy = { name: 'The Tidy Man', outfit: 'tidyo', hp: 520, kind: 'melee', dmg: 11, range: 2.2, cd: .85, speed: 4.6, r: .5, prop: 'cleaver' };
+  BODY.tidy = () => { const R = bdRig({ legL: .9, legR: .075, tH: .64, bw: .23, legM: 0x4A4F58, torM: 0xE9E6DE, armM: 0xE9E6DE, handM: 0xB88A64 }); bdFace(R, 0xB88A64, 'short', 0x2A2420);
+    R.add(new THREE.CylinderGeometry(.236, .2, .36, 14), 0x5A6248, 0, R.hip + .26, 0); R.add(new THREE.BoxGeometry(.05, .3, .01), 0x3A3D44, 0, R.hip + .44, -.205);
+    [-.055, .055].forEach(x => R.add(new THREE.TorusGeometry(.034, .004, 6, 16), 0xC9CFD8, x, .02, -.142, R.head)); R.add(new THREE.BoxGeometry(.04, .005, .005), 0xC9CFD8, 0, .025, -.145, R.head);
+    R.add(new THREE.BoxGeometry(.16, .025, .02), 0x2A2420, -.02, .118, -.1, R.head).rotation.z = -.25;
+    R.add(new THREE.CylinderGeometry(.04, .04, .02, 12), 0x9AA3AE, 0, -.5, 0, R.arms[0].a).rotation.x = Math.PI / 2; return R; };
+  ST_FRAIL.t = [1, 1, 1]; ST_TITLE.td1 = 'The Tidy Man';
+  BTYPES.tidy = { sign: '', col: '#3A3D44', w: 0, door: 0x4A3A2A, names: [`Mr. Varadan’s house`] };
+  // ---------- in Bangalore: his house on a quiet street, and the man himself by his car ----------
+  function tdHouseBuild(){
+    if (TD.house || !BL.bld || !BL.mapG) return; const s = tdLoad();
+    // a small plot on a quiet street, away from the busy middle of the map
+    const cand = BL.bld.filter(b => !b.hide && !b.keep && plainLot(b) && b.h < 26 && facing(b) && b.x1 - b.x0 >= 10 && b.z1 - b.z0 >= 10 && b.x1 - b.x0 <= 22 && b.z1 - b.z0 <= 22 && !inTowerZone((b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2, 30))
+      .sort((a, c) => Math.hypot((a.x0 + a.x1) / 2 + 150, (a.z0 + a.z1) / 2 - 110) - Math.hypot((c.x0 + c.x1) / 2 + 150, (c.z0 + c.z1) / 2 - 110));
+    const b = cand[0]; if (!b) return; hideLot(b); b.keep = true; b.h = 7.6; TD.lot = b;
+    const F = lotFrame(b, facing(b)), g = F.g, wall = mat(0xD8D0C2, { roughness: .9 }), trim = mat(0xF2EEE6, { roughness: .7 }), roofM = mat(0x5A3A2E, { roughness: .8 }), dark = mat(0x16181D, { roughness: .6 });
+    const W = Math.min(F.W - 2, 11), D = Math.min(F.D - 3, 9), v0 = 2.6;   // set back behind a little front garden
+    box(W, 7, D, wall, 0, 3.5, v0 + D / 2, g); box(W + .3, .3, D + .3, trim, 0, 3.55, v0 + D / 2, g); box(W + .6, .5, D + .6, roofM, 0, 7.25, v0 + D / 2, g);
+    // windows with the blinds all drawn exactly level, a front door with a keypad, a doormat squared to the step
+    const win = (u, y) => { box(1.3, 1.2, .1, mat(0x2A3440, { roughness: .1, metalness: .4 }), u, y, v0 - .02, g); box(1.2, .9, .05, mat(0xE8E2D4), u, y + .1, v0 - .05, g); box(1.5, .1, .2, trim, u, y - .65, v0 - .05, g); };
+    [-W / 2 + 1.8, W / 2 - 1.8].forEach(u => { win(u, 1.7); win(u, 5); }); win(0, 5);
+    box(1.2, 2.3, .12, mat(0x4A3A2A, { roughness: .6 }), 0, 1.15, v0 - .04, g); box(.18, .26, .04, dark, .78, 1.3, v0 - .08, g); box(1.6, .08, .9, mat(0x5A5E68), 0, .04, v0 - .5, g); box(.9, .02, .6, mat(0x6B5A3A), 0, .09, v0 - .55, g);
+    // a hedge clipped flat on top, and a gate
+    [-1, 1].forEach(sd => box(F.W / 2 - 1.2, .9, .5, mat(0x2F5A2E, { roughness: .9 }), sd * (F.W / 4 + .6), .45, .4, g)); box(1.6, 1, .06, mat(0x2A2D33, { metalness: .5 }), 0, .5, .4, g);
+    F.solid(-W / 2, W / 2, v0, v0 + D);
+    const out = F.toM(0, -1.4), fr = F.toM(0, v0 - .9), n = [F.toM(0, 0)[0] - F.toM(0, 1)[0], F.toM(0, 0)[1] - F.toM(0, 1)[1]];
+    TD.house = { g, F, out, fr, n }; DOORS.push({ b, F: { nx: n[0], nz: n[1], a0: 0, a1: 0, street: true, len: 0 }, u: 0, type: 'tidy', name: `Mr. Varadan’s house`, out, front: fr, n, seed: 777 });
+    void s;
+  }
+  // the places he turns up: outside a shop, by his car (always the same grey hatchback, always spotless)
+  function tdSpot(){
+    const s = tdLoad(), L = DOORS.filter(d => ['tiffin', 'kirana', 'medicals', 'tailor'].includes(d.type) && !d.b.hide && Math.hypot(d.front[0], d.front[1]) < 240); if (!L.length) return null;
+    const d = L[(s.meet * 37 + 11 + s.sightings * 7) % L.length], [nx, nz] = d.n, x = d.front[0] + nx * 2.4, z = d.front[1] + nz * 2.4;
+    return { x, z, ry: Math.atan2(-nx, -nz) + Math.PI, cx: d.front[0] + nx * 5.6 - nz * 2.5, cz: d.front[1] + nz * 5.6 + nx * 2.5, cry: Math.atan2(-nz, nx), d };
+  }
+  function tdNpcPlace(){
+    const P = tdSpot(); if (!P) return; tdNpcClear();
+    let av = null; try { av = bodyAv('tidy', 1); } catch (e) {} if (!av) av = avatar(heroLook('tidy')); av.g.position.set(P.x, 0, P.z); av.g.rotation.y = P.ry; BL.mapG.add(av.g); TD.npc = { av, P, t: 0 };
+    // his car, boot open: neat rolls of plastic sheeting, a roll of tape, a bottle of bleach
+    const car = makeVehicle('car', 0x8A8F96, BL.mapG); car.g.position.set(P.cx, 0, P.cz); car.g.rotation.y = P.cry; TD.car = car;
+    const boot = new THREE.Group(); boot.position.set(0, 1.0, -2.1); car.g.add(boot); const lid = box(1.5, .06, .9, mat(0x8A8F96, { metalness: .4, roughness: .4 }), 0, .45, -.2, boot); lid.rotation.x = -1.1;
+    const sheet = mat(0xE8EEF2, { transparent: true, opacity: .75, roughness: .2 });
+    [-.4, 0, .4].forEach(x => { const r = cyl(.14, .14, .5, sheet, x, -.15, .3, boot, 14); r.rotation.z = Math.PI / 2; }); cyl(.08, .08, .05, mat(0x9AA3AE), .55, -.3, .5, boot, 12); box(.12, .28, .08, mat(0xF4F4F4), -.62, -.2, .45, boot);
+    // something he's careful about: a little speech mark above him so you can find him
+    const tag = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex(64, 64, (c, w, h) => { c.fillStyle = '#F2EEE6'; c.beginPath(); c.arc(32, 28, 22, 0, 7); c.fill(); c.fillStyle = '#3A3D44'; c.font = '700 30px sans-serif'; c.textAlign = 'center'; c.fillText('…', 32, 34); }), depthWrite: false }));
+    tag.scale.set(.6, .6, 1); tag.position.y = 2.25; av.g.add(tag); TD.npc.tag = tag;
+  }
+  function tdNpcClear(){ if (TD.npc) { BL.mapG.remove(TD.npc.av.g); disposeDeep(TD.npc.av.g); TD.npc = null; } if (TD.car) { BL.mapG.remove(TD.car.g); TD.car = null; } }
+  // what he says depends on what you've been up to
+  function tdNotice(){
+    const L = []; if (JOB.sealed && JOB.sealed.size) L.push(`I read about the ${JOB.sealed.size > 1 ? 'drug dens' : 'drug den'} the police shut down. People say a masked kid helped. Was that you?`);
+    if (Object.keys(SBK || {}).length) L.push(`That fight on the news the other day, with ${SBOSS.filter(q => SBK[q.id]).map(q => q.name)[0] || 'that brute'}. You fight like someone who was never taught to lose.`);
+    if (HEAT && HEAT.lv) L.push('The police are looking for someone in a mask today. Don’t worry. I didn’t see anything.');
+    if (JOB.done > 3) L.push(`You do a lot of jobs for people. ${JOB.done}, by my count. You like being useful. So do I.`);
+    return L[0] || 'You’re always out on your own. Doesn’t anyone worry where you are?';
+  }
+  function tdTalk(){
+    const s = tdLoad(); if (BL.cine || DLG) return; const N = TD_NAME, m = s.meet, M = 'Mr. Varadan';
+    const lines = [
+      [[N, 'Oh! Thank you. These boxes are heavier than they look. Cleaning supplies. You can never have too many.'], ['{N}', 'No problem. That’s a lot of plastic sheeting in your boot.'], [N, 'For the furniture. Dust gets into everything otherwise. I’m Hari. Hari Varadan. I do accounts, mostly. Keeping things tidy.'], [N, 'Do you live around here? You must, you seem to be everywhere.']],
+      [[M, `It’s you again. ${tdNotice()}`], ['{N}', 'Something like that.'], [M, 'Would you do me a small favour? An envelope, for a shop down the road. I’d go myself, but I don’t like leaving the car unlocked.'], [M, 'Which floor did you say your flat was on? Lifts or stairs? I only ask because stairs are so much quieter.']],
+      [[M, 'You delivered it. Thank you. I wiped the envelope before I gave it to you, you know. Fingerprints are so messy.'], [M, 'Hold still. Your sleeve has a thread loose.'], ['{N}', '…Thanks.'], [M, 'My flat is very neat. Everything has a place. People too, I think. Do you live alone?']],
+      [[M, 'Lovely view from your tower roof, by the way. I walked past at night. The light was on.'], ['{N}', 'You walked past my building?'], [M, 'I walk everywhere. It’s good for the mind. Here: homemade. Eat it today, it won’t keep.'], [M, 'You look tired. You should sleep more. Deeply.']],
+      [[M, 'I hate to ask. I’m moving some boxes at my house tonight and my back isn’t what it was. You’re strong. Would you help? I’ll make tea.'], ['{N}', 'Where’s your house?'], [M, 'Not far. A quiet street. You’ll know it: it’s the neatest one.']]];
+    const L = lines[Math.min(m, 4)];
+    TD.talking = true;
+    cityScene(L, () => { const P = TD.npc && TD.npc.P; return P ? [P.x, P.z] : [0, 0]; }, () => { TD.talking = false;
+      if (m === 0) { JOB.rep += 5; jobSave(); say('He presses a few coins into your hand. Reputation +5.', 2600); }
+      if (m === 1) { const d = DOORS.filter(q => q.type === 'tiffin' || q.type === 'kirana').sort((a, c) => Math.hypot(a.front[0] - TD.npc.P.x, a.front[1] - TD.npc.P.z) - Math.hypot(c.front[0] - TD.npc.P.x, c.front[1] - TD.npc.P.z))[3];
+        if (d) { s.job = { name: d.name, x: d.front[0], z: d.front[1] }; say(`Take the envelope to ${d.name}. A white beam of light marks the shop.`, 3600); } }
+      if (m === 3) { EV0heal(); say('Homemade lemon rice. It’s good. You feel a little drowsy afterwards.', 3200); }
+      if (m >= 4) return askChoice('tidy', v => { if (v === 'yes') { s.state = 'trap'; tdSave(); say('He writes the address on a card in perfect block capitals. A white beam of light marks his house.', 3600); } else { s.declined++; tdSave(); say('“Another time, then. I’ll be patient.”', 2600); } }, { h: TD_NAME, q: 'Help him move boxes at his house tonight?', a: [['yes', 'Sure, I’ll come'], ['no', 'Not tonight']] });
+      s.meet = Math.min(4, m + 1); if (s.firstDay < 0) s.firstDay = s.day; s.coolT = 150; tdSave(); TD.npcGone = 1; });
+    s.sightings++; tdSave();
+  }
+  const EV0heal = () => { try { if (typeof hpNow !== 'undefined') hpNow = Math.min(hpMax, hpNow + 20); } catch (e) {} };
+  // the city side: count the days, put him somewhere, run the delivery job, and spring the trap
+  function tdCityStep(dt){
+    const s = tdLoad(); tdHouseBuild();
+    const h = cityHour(); if (TD.lastH != null && h < TD.lastH - 12) { s.day++; tdSave(); } TD.lastH = h;
+    const can = !SG.active && inWorld && zone === 'blr' && !EV && !A && !BL.lvl && !DRV.on && Math.abs(BL.off.y) < .01;
+    s.coolT = Math.max(0, (s.coolT || 0) - dt);
+    const want = can && ((s.state === 'none' || s.state === 'met') && s.meet < 5 || s.state === 'loose' && s.sightings < 99) && !s.coolT && !TD.npcGone;
+    if (want && !TD.npc) tdNpcPlace(); if (!want && TD.npc && !TD.talking) tdNpcClear();
+    if (!can) return; const [mx, mz] = toMap(pos.x, pos.z);
+    // after a few in-game days he asks anyway
+    if (s.meet >= 2 && s.meet < 4 && s.firstDay >= 0 && s.day - s.firstDay >= 3) { s.meet = 4; tdSave(); }
+    // turned him down twice: a phone call, at night, from a woman who says someone's in her house (it's his house)
+    if (s.state === 'met' && s.declined >= 2 && !s.call && nightNow()) { s.call = 1; s.state = 'trap'; tdSave(); tone(880, .2, 'sine', .05); setTimeout(() => tone(880, .2, 'sine', .05), 300); say('Your phone rings. A woman, whispering: “Please, there’s a man in the house, he’s been here for days, I can hear him downstairs…” She gives an address. A white beam of light marks the house.', 6500); }
+    if (TD.npc) { const P = TD.npc.P, d = Math.hypot(mx - P.x, mz - P.z); TD.npc.av.anim(performance.now() / 1000, 0, 0); TD.npc.av.g.rotation.y += angDiff(TD.npc.av.g.rotation.y, Math.atan2(mx - P.x, mz - P.z)) * Math.min(1, dt * 3);
+      if (d < 30 && !TD.npc.waved) { TD.npc.waved = 1; say(s.meet ? 'A polite man by a grey hatchback raises a hand. It’s Mr. Varadan.' : 'A neat, polite-looking man is struggling with boxes by a grey hatchback.', 3200); }
+      TD.near = d < 2.6 && onGround() && !BL.cine ? { label: s.state === 'loose' ? `Confront ${TD_NAME}` : `Talk to ${s.meet ? 'Mr. Varadan' : 'the polite man'}`, go: () => s.state === 'loose' ? tdConfront() : tdTalk() } : null; }
+    else TD.near = null;
+    if (TD.npcGone && !TD.talking && s.coolT <= 0) TD.npcGone = 0;
+    if (s.state === 'none' && s.meet) { s.state = 'met'; tdSave(); }
+    // the envelope job
+    if (s.job && Math.hypot(mx - s.job.x, mz - s.job.z) < 3 && onGround()) { say(`You hand the envelope over at ${s.job.name}. Nobody was expecting it. It’s empty. Reputation +15.`, 4200); JOB.rep += 15; jobSave(); s.job = null; tdSave(); }
+    // a white beacon over the job, and over his house once you've said yes
+    const tgt = s.job ? [s.job.x, s.job.z] : s.state === 'trap' && TD.house ? TD.house.out : null;
+    if (tgt && !TD.mark) { TD.mark = new THREE.Mesh(new THREE.CylinderGeometry(.5, .5, 60, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xF2EEE6, transparent: true, opacity: .35, depthWrite: false })); TD.mark.userData.noPick = true; BL.mapG.add(TD.mark); }
+    if (TD.mark) { if (!tgt) { BL.mapG.remove(TD.mark); TD.mark = null; } else TD.mark.position.set(tgt[0], 30, tgt[1]); }
+  }
+  // seen again after you got away: he doesn't run. He smiles.
+  function tdConfront(){
+    const s = tdLoad(), ev = s.evidOut >= 3;
+    cityScene([[TD_NAME, 'You left without saying goodbye. I had to clean the whole house twice.'], ['{N}', 'It’s over, Hari.'], [TD_NAME, ev ? 'Is it? …You kept the photographs. That was untidy of you.' : 'Is it? Nobody believes a kid in a mask. I checked.']], () => [TD.npc.P.x, TD.npc.P.z], () => {
+      if (ev) askChoice('tidy2', v => { if (v === 'call') { tdArrest('street'); } }, { h: 'The Tidy Man', q: 'You still have his photographs, his ledger and the ID cards.', a: [['call', 'Call the police, right now'], ['wait', 'Let him walk away']] });
+      else say('He gets into his car and drives away, unhurried. You need proof. His house is still there.', 4200);
+      s.coolT = 300; TD.npcGone = 1; tdSave(); });
+  }
+  function tdArrest(how){
+    const s = tdLoad(); s.state = 'arrested'; s.reward = (s.reward || 0) + 30; JOB.rep += 30; jobSave(); tdLog(how === 'street' ? 'You called the police on Hari Varadan in the street. He was arrested without a fight.' : 'Hari Varadan was arrested at his house. The police found everything.'); tdSave(); tdNpcClear();
+    say('Sirens. Two police jeeps box in the grey hatchback. Hari Varadan steps out, hands raised, and straightens his collar. Reputation +30.', 5200);
+  }
+  // ---------- inside his house: a sealed basement, the ground floor, and upstairs (each floor laid out on its own, joined by the stairs) ----------
+  const TDF = {
+    B: { rooms: [[-34, -22, -6, 6], [-22.8, -19, 2.8, 6]], gaps: [], y: 2.5 },
+    G: { rooms: [[-1.6, 1.6, -6, 6], [-8, -1.6, -6, 2.2], [1.6, 8, -6, 2.2], [-8, 8, 2.2, 6]], gaps: [{ x0: -2.05, x1: -1.15, z0: -1, z1: .6 }, { x0: 1.15, x1: 2.05, z0: -1, z1: .6 }, { x0: -.7, x1: .7, z0: 5.6, z1: 6.6, lock: 'front' }], y: 2.7 },
+    U: { rooms: [[22.4, 25.6, -6, 6], [16, 22.4, -6, 1], [16, 22.4, 1, 6], [25.6, 32, -6, 0], [25.6, 32, 0, 6]], gaps: [{ x0: 21.95, x1: 22.85, z0: -3, z1: -1.6, lock: 'study' }, { x0: 21.95, x1: 22.85, z0: 3, z1: 4.4 }, { x0: 25.15, x1: 26.05, z0: -3, z1: -1.6 }, { x0: 25.15, x1: 26.05, z0: 3, z1: 4.4 }], y: 2.7 } };
+  const tdFloor = x => x < -15 ? 'B' : x > 14 ? 'U' : 'G';
+  const tdIn = (r, x, z, m = 0) => x > r[0] + m && x < r[1] - m && z > r[2] + m && z < r[3] - m;
+  const tdLocked = g => g.lock === 'front';
+  function tdValid(x, z){
+    const F = TDF[tdFloor(x)]; if (TD.tied) return false;
+    const ok = F.rooms.some(r => tdIn(r, x, z, .3)) || F.gaps.some(g => !tdLocked(g) && x > g.x0 && x < g.x1 && z > g.z0 && z < g.z1); if (!ok) return false;
+    if ((TD.doorsShut ? TD.doorsShut() : []).some(r => x > r[0] - .25 && x < r[1] + .25 && z > r[2] && z < r[3])) return false;
+    return !(TD.blocks || []).some(b => x > b[0] - .3 && x < b[1] + .3 && z > b[2] - .3 && z < b[3] + .3);
+  }
+  // the walls: every room edge, minus doorways and the bits where rooms run into each other
+  function tdWalls(F, m, h, par){
+    const segs = [], E = .02;
+    F.rooms.forEach(r => [[r[0], r[2], r[3], 'x'], [r[1], r[2], r[3], 'x'], [r[2], r[0], r[1], 'z'], [r[3], r[0], r[1], 'z']].forEach(([c, a0, a1, ax]) => {
+      const cut = [];
+      F.gaps.forEach(g => { if (ax === 'x' ? g.x0 < c - E && g.x1 > c + E : g.z0 < c - E && g.z1 > c + E) cut.push(ax === 'x' ? [g.z0, g.z1] : [g.x0, g.x1]); });
+      F.rooms.forEach(q => { if (q === r) return; if (ax === 'x' ? q[0] < c - E && q[1] > c + E : q[2] < c - E && q[3] > c + E) cut.push(ax === 'x' ? [q[2], q[3]] : [q[0], q[1]]); });
+      cut.sort((p, q) => p[0] - q[0]); let s0 = a0; cut.forEach(([c0, c1]) => { if (c1 <= s0 || c0 >= a1) return; if (c0 > s0 + .05) segs.push([ax, c, s0, Math.min(c0, a1)]); s0 = Math.max(s0, c1); }); if (a1 > s0 + .05) segs.push([ax, c, s0, a1]); }));
+    const seen = new Set(); segs.forEach(([ax, c, a0, a1]) => { const k = [ax, c.toFixed(2), a0.toFixed(2), a1.toFixed(2)].join(); if (seen.has(k)) return; seen.add(k); const L = a1 - a0, mid = (a0 + a1) / 2;
+      const w = ax === 'x' ? box(.14, h, L, m, c, h / 2, mid, par) : box(L, h, .14, m, mid, h / 2, c, par); w.userData.tdWall = 1; TD.walls.push(ax === 'x' ? [c - .07, c + .07, a0, a1] : [a0, a1, c - .07, c + .07]); });
+  }
+  // a line of sight on one floor: does anything solid stand between two points?
+  function tdSee(ax, az, bx, bz){
+    const segX = (x0, x1, z0, z1) => { const steps = Math.ceil(Math.hypot(bx - ax, bz - az) / .3); for (let i = 1; i < steps; i++) { const t = i / steps, x = ax + (bx - ax) * t, z = az + (bz - az) * t; if (x > x0 && x < x1 && z > z0 && z < z1) return true; } return false; };
+    return !TD.walls.some(w => segX(...w)) && !TD.doorsShut().some(w => segX(...w));
+  }
+  function tdBuild(){
+    if (TD.built) return; TD.built = true; const sc = TD.sc = new THREE.Scene(); sc.background = new THREE.Color(0x020203); sc.fog = new THREE.Fog(0x020203, 6, 26); TD.walls = []; TD.blocks = []; TD.acts = []; TD.items = {}; TD.doors = {}; TD.lights = [];
+    TD.doorsShut = () => Object.values(TD.doors).filter(d => !d.open && d.rect).map(d => d.rect);
+    TD.amb = new THREE.HemisphereLight(0x8A9AB0, 0x14100C, .16); sc.add(TD.amb);
+    const wood = txWrap(tex(256, 256, (c, w, h) => { c.fillStyle = '#7A5A3A'; c.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 32) { c.fillStyle = y % 64 ? '#6E5034' : '#82603E'; c.fillRect(0, y, w, 30); for (let i = 0; i < 30; i++) { c.fillStyle = 'rgba(40,24,10,.25)'; c.fillRect(Math.random() * w, y + Math.random() * 30, 20 + Math.random() * 40, 1); } c.fillStyle = 'rgba(0,0,0,.4)'; c.fillRect(0, y + 30, w, 2); } }));
+    const conc = txWrap(tex(256, 256, (c, w, h) => { c.fillStyle = '#6A6A66'; c.fillRect(0, 0, w, h); for (let i = 0; i < 1500; i++) { const v = 80 + Math.random() * 50 | 0; c.fillStyle = `rgba(${v},${v},${v - 4},.5)`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); } for (let i = 0; i < 6; i++) { c.strokeStyle = 'rgba(40,40,38,.4)'; c.beginPath(); c.moveTo(Math.random() * w, Math.random() * h); c.lineTo(Math.random() * w, Math.random() * h); c.stroke(); } }));
+    const paper = txWrap(tex(128, 128, (c, w, h) => { c.fillStyle = '#C9C0AC'; c.fillRect(0, 0, w, h); c.fillStyle = 'rgba(150,140,118,.5)'; for (let x = 0; x < w; x += 16) c.fillRect(x, 0, 2, h); }));
+    const wallG = mat(0xFFFFFF, { map: paper, roughness: .9 }), wallB = mat(0x8A8A84, { map: conc, roughness: 1 }), floorW = mat(0xFFFFFF, { map: wood, roughness: .6 }), floorC = mat(0xFFFFFF, { map: conc, roughness: 1 }), ceil = mat(0x2A2826, { roughness: 1 });
+    const plast = new THREE.MeshStandardMaterial({ color: 0xE8EEF2, transparent: true, opacity: .55, roughness: .15, side: THREE.DoubleSide, depthWrite: false });
+    const steel = mat(0x9AA3AE, { metalness: .7, roughness: .3 }), dark = mat(0x16181D, { roughness: .6 }), cream = mat(0xE8E2D4, { roughness: .7 }), brownM = mat(0x5A3A2A, { roughness: .7 });
+    const B = (w, h, d, m, x, y, z, solid) => { const o = box(w, h, d, m, x, y, z, sc); if (solid) TD.blocks.push([x - w / 2, x + w / 2, z - d / 2, z + d / 2]); return o; };
+    Object.entries(TDF).forEach(([k, F]) => { const fm = k === 'B' ? floorC : floorW; F.rooms.forEach(r => { const w = r[1] - r[0], d = r[3] - r[2], f = new THREE.Mesh(new THREE.PlaneGeometry(w, d), fm.clone()); f.material.map = fm.map.clone(); f.material.map.needsUpdate = true; f.material.map.repeat.set(w / 3, d / 3); f.rotation.x = -Math.PI / 2; f.position.set((r[0] + r[1]) / 2, 0, (r[2] + r[3]) / 2); f.receiveShadow = true; f.userData.walk = true; sc.add(f);
+      const c = new THREE.Mesh(new THREE.PlaneGeometry(w, d), ceil); c.rotation.x = Math.PI / 2; c.position.set((r[0] + r[1]) / 2, F.y, (r[2] + r[3]) / 2); sc.add(c); }); tdWalls(F, k === 'B' ? wallB : wallG, F.y, sc); });
+    plats.tidy = []; Object.values(TDF).forEach(F => F.rooms.forEach(r => plats.tidy.push({ x0: r[0], x1: r[1], z0: r[2], z1: r[3] })));
+    // a bare bulb (or a lamp) that can flicker
+    const bulb = (x, y, z, i, col = 0xFFD9A0, d = 9) => { const L = new THREE.PointLight(col, i, d, 2); L.position.set(x, y, z); sc.add(L); const g = sph(.05, new THREE.MeshBasicMaterial({ color: col }), x, y + .02, z, sc, 1, 1, 1, 8); TD.lights.push({ L, g, base: i, fl: Math.random() * 6 }); return L; };
+    // ===== the basement: concrete, plastic sheeting, a chair in the middle, a drain, a freezer, shelves of labelled boxes =====
+    const chair = new THREE.Group(); chair.position.set(-28, 0, 0); sc.add(chair); box(.5, .05, .5, brownM, 0, .48, 0, chair); box(.5, .55, .05, brownM, 0, .78, .23, chair); [[-.22, -.22], [.22, -.22], [-.22, .22], [.22, .22]].forEach(([a, b]) => box(.05, .48, .05, brownM, a, .24, b, chair));
+    TD.tape = [box(.54, .06, .54, mat(0x8A8F96, { roughness: .5 }), 0, .62, 0, chair), box(.08, .08, .3, mat(0x8A8F96), -.25, .5, 0, chair), box(.08, .08, .3, mat(0x8A8F96), .25, .5, 0, chair)];
+    // the sheeting: floor and the walls around the chair, folded and taped flat
+    const pf = new THREE.Mesh(new THREE.PlaneGeometry(6, 6), plast); pf.rotation.x = -Math.PI / 2; pf.position.set(-28, .012, 0); sc.add(pf);
+    [[-31, 2.5, 0, Math.PI / 2], [-28, 1.25, -3, 0]].forEach(([x, , z, ry]) => { const w = new THREE.Mesh(new THREE.PlaneGeometry(6, 2.45, 12, 1), plast); const p = w.geometry.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin(p.getX(i) * 5) * .05); w.geometry.computeVertexNormals(); w.position.set(x === -31 ? -33.88 : x, 1.25, z === -3 ? -5.88 : z); w.rotation.y = ry; sc.add(w); });
+    bulb(-28, 2.3, 0, .9); bulb(-22, 2.3, 4.4, .25);
+    cyl(.003, .003, .25, dark, -28, 2.42, 0, sc, 4);
+    B(1.8, .9, .8, mat(0xE8EEF2, { roughness: .4 }), -21, .45, -4.6, true); box(1.8, .06, .8, mat(0xD8DEE4), -21, .93, -4.6, sc); TD.freezerLid = box(1.78, .06, .78, mat(0xD8DEE4), -21, .96, -4.6, sc);
+    B(.5, 2, 3.2, brownM, -33.5, 1, -2.5, true); for (let i = 0; i < 4; i++) box(.48, .04, 3.1, brownM, -33.5, .3 + i * .5, -2.5, sc);
+    for (let i = 0; i < 4; i++) for (let k = 0; k < 3; k++) { const bx = box(.36, .3, .4, mat(0xB89A6A, { roughness: .9 }), -33.45, .48 + i * .5, -3.6 + k * .9, sc); box(.2, .08, .005, mat(0xF4F1E8), -33.25, .48 + i * .5, -3.6 + k * .9, sc).rotation.y = Math.PI / 2; void bx; }
+    B(2.2, .9, .8, brownM, -24, .45, -5.4, true); box(2.2, .05, .8, mat(0x7A6A54), -24, .92, -5.4, sc); box(2, 1, .04, mat(0xC9B89A), -24, 1.7, -5.95, sc);
+    for (let i = 0; i < 9; i++) { const t = box(.04, .32, .04, steel, -24.8 + i * .2, 1.7, -5.9, sc); t.rotation.z = (i % 2) * .1 - .05; }
+    TD.grate = box(.8, .03, .8, mat(0x3A3D44, { metalness: .6, roughness: .5 }), -32, .02, 4.6, sc); for (let i = 0; i < 5; i++) box(.7, .035, .04, dark, -32, .03, 4.3 + i * .15, sc);
+    for (let i = 0; i < 6; i++) cyl(.09, .1, .3, mat(i % 2 ? 0xF4F4F4 : 0x3C8ACF, { roughness: .4 }), -25.5 + i * .25, .15, 5.6, sc, 10);
+    // ===== the ground floor: a hall with the shoes lined up, a living room, a kitchen, the foyer and the front door =====
+    bulb(0, 2.55, -3, .5); bulb(-5, 2.55, -2, .45); bulb(5, 2.55, -2, .45, 0xE8F0FF); bulb(0, 2.55, 4.2, .4);
+    for (let i = 0; i < 6; i++) box(.12, .1, .3, dark, -1.3, .05, -5 + i * .35, sc);
+    B(2.4, .7, .9, mat(0x5A6248, { roughness: .9 }), -5, .35, -5.3, true); box(2.4, .5, .2, mat(0x5A6248, { roughness: .9 }), -5, .9, -5.7, sc); B(1.2, .4, .7, brownM, -5, .2, -3.6, true);
+    B(1.6, .9, .4, dark, -5, .45, 1.8, true); box(1.4, .8, .05, mat(0x0A0C10, { roughness: .2 }), -5, 1.3, 1.7, sc);
+    B(.5, .7, .5, brownM, -7.5, .35, -5.4, true); TD.phone = box(.24, .08, .18, mat(0xE8E2D4), -7.5, .74, -5.4, sc); box(.06, .05, .2, mat(0x2A2D33), -7.5, .8, -5.4, sc);
+    B(.4, 2, 2.4, brownM, -7.7, 1, -1.2, true); for (let i = 0; i < 4; i++) for (let k = 0; k < 7; k++) box(.25, .3, .05, mat([0x8A1A2E, 0x1E5AA8, 0x2E6B2E, 0xD8A020][(i + k) % 4]), -7.6, .35 + i * .45, -2.2 + k * .3, sc);
+    B(4.4, .9, .7, mat(0xEDEAE2, { roughness: .5 }), 5.6, .45, -5.6, true); box(4.4, .05, .7, mat(0x3A3D44, { roughness: .3 }), 5.6, .92, -5.6, sc); B(.8, 1.9, .7, mat(0xE8EEF2, { metalness: .3, roughness: .3 }), 7.5, .95, -3.6, true);
+    TD.knifeBlock = box(.22, .26, .14, brownM, 6.6, 1.07, -5.7, sc); TD.drawer = box(.6, .18, .05, mat(0xEDEAE2), 7.4, .7, -2.3, sc); B(.7, .9, 2.6, mat(0xEDEAE2, { roughness: .5 }), 7.6, .45, -1.6, true);
+    box(.12, 2.35, 1.4, mat(0x4A3A2A), 0, 1.17, 6, sc).rotation.y = Math.PI / 2; TD.keypad = box(.2, .26, .04, mat(0x16181D), .9, 1.35, 5.9, sc); TD.keyLed = sph(.02, new THREE.MeshBasicMaterial({ color: 0xFF2A1A }), .9, 1.45, 5.87, sc, 1, 1, 1, 6);
+    [-6.6, 6.6].forEach(x => { for (let i = 0; i < 6; i++) box(1.2, .18, .3, mat(0x5A4632), x + (x < 0 ? 1 : -1) * .1, .09 + i * .2, 5.6 - i * .3, sc); });
+    // ===== upstairs: the study (locked), his bedroom, the bathroom, and the quiet room =====
+    bulb(24, 2.55, 0, .4); bulb(19, 2.55, -2.5, .45); bulb(19, 2.55, 3.5, .35); bulb(29, 2.55, -3, .4, 0xE8F0FF); bulb(29, 2.55, 3, .3, 0xFFB080);
+    B(2, .78, .9, brownM, 18, .39, -5.3, true); TD.notebook = box(.3, .03, .22, mat(0x2A3A48), 17.5, .8, -5.3, sc); box(.6, .5, .5, dark, 19.5, .25, -4.2, sc); B(.5, 1.3, 1.2, mat(0x5A5E68, { metalness: .4 }), 16.3, .65, -2.5, true);
+    TD.ledger = box(.08, .3, .22, mat(0x6A1A1A), 16.5, 1.4, -2.5, sc); box(.45, .03, 1.1, mat(0x5A5E68), 16.3, 1.31, -2.5, sc);
+    B(2, .5, 2.4, cream, 19, .25, 4.6, true); box(2, .2, .5, mat(0xF4F1E8), 19, .6, 5.6, sc); TD.wardrobe = B(.7, 2.2, 1.6, brownM, 16.4, 1.1, 2.2, true); TD.dresser = B(1.2, .8, .5, brownM, 21.5, .4, 5.6, true);
+    B(1.8, .55, .8, mat(0xF4F4F4, { roughness: .3 }), 30.9, .28, -4.8, true); box(.02, 1.9, 1.8, new THREE.MeshStandardMaterial({ color: 0xA8C8D8, transparent: true, opacity: .6, side: THREE.DoubleSide }), 29.95, 1.3, -4.8, sc);
+    B(.6, .85, .45, mat(0xF4F4F4), 26.2, .43, -5.6, true); box(.6, .8, .04, mat(0xB8D0E0, { roughness: .05, metalness: .6 }), 26.2, 1.5, -5.95, sc);
+    // the quiet room: one chair, facing a wall of photographs, each labelled in the same neat hand
+    box(.5, .9, .5, brownM, 28, .45, 2.5, sc); TD.photos = new THREE.Group(); TD.photos.position.set(31.88, 1.5, 3); TD.photos.rotation.y = -Math.PI / 2; sc.add(TD.photos);
+    for (let r = 0; r < 4; r++) for (let c = 0; c < 6; c++) { box(.28, .32, .01, mat(0xF4F1E8), -1 + c * .4, -.6 + r * .42, 0, TD.photos); box(.22, .2, .012, mat([0x6A5A4A, 0x4A5A6A, 0x5A4A3A][(r + c) % 3]), -1 + c * .4, -.56 + r * .42, 0, TD.photos); }
+    // the stairs between floors are doorways in the dark: you go through and you're on the other floor
+    const stair = (x, z, ry) => { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; sc.add(g); for (let i = 0; i < 5; i++) box(1, .15, .32, brownM, 0, .08 + i * .16, -i * .3, g); return g; };
+    stair(-20.2, 5.4, -Math.PI / 2); stair(-7, 5.4, Math.PI / 2); stair(7, 5.4, -Math.PI / 2); stair(24, -5.5, 0);
+    // closable doors: the study, the bathroom, the bedroom, the quiet room
+    const door = (k, gx, gz0, gz1, lock) => { const g = new THREE.Group(); g.position.set(gx, 0, gz0); sc.add(g); const p = box(.06, 2.2, gz1 - gz0, mat(0x6A4E3A, { roughness: .6 }), 0, 1.1, (gz1 - gz0) / 2, g); void p; TD.doors[k] = { g, open: false, lock, rect: [gx - .1, gx + .1, gz0, gz1] }; };
+    door('study', 22.4, -3, -1.6, 'study'); door('bed', 22.4, 3, 4.4); door('bath', 25.6, -3, -1.6); door('quiet', 25.6, 3, 4.4);
+    // your torch: a beam from where you look
+    TD.torch = new THREE.SpotLight(0xFFF2DC, 0, 16, .45, .5, 1.6); sc.add(TD.torch); sc.add(TD.torch.target);
+    tdActs();
+  }
+  // ---------- things you can do in the house ----------
+  const TD_ITEMS = { crowbar: 'a crowbar', hammer: 'a claw hammer', torch: 'a torch', knife: 'a kitchen knife', cleaver: 'a meat cleaver', studykey: 'the study key', frontkey: 'the front door key', evid_ids: 'a bag of ID cards', evid_ledger: 'his ledger', evid_photos: 'photographs from the wall' };
+  const TD_WPN = ['cleaver', 'crowbar', 'hammer', 'knife'];
+  const tdHas = k => tdLoad().inv.includes(k), tdEvid = () => tdLoad().inv.filter(k => k.startsWith('evid_')).length;
+  const tdWeapon = () => TD_WPN.find(tdHas) || null;
+  function tdTake(k, x, z, noise = 3){ const s = tdLoad(); if (s.inv.includes(k)) return; s.inv.push(k); tdSave(); TD.moved = TD.moved || []; TD.moved.push({ k, x, z }); tdNoise(x, z, noise); tone(520, .08, 'triangle', .04, 780); say(`You take ${TD_ITEMS[k]}.${TD_WPN.includes(k) ? ' If he catches you now, you can fight back.' : ''}`, 2600); tdItemsShow(); tdHudDraw(); }
+  function tdItemsShow(){ const s = tdLoad(), h = k => !s.inv.includes(k);
+    if (TD.items.knife) TD.items.knife.visible = h('knife'); if (TD.items.cleaver) TD.items.cleaver.visible = h('cleaver'); if (TD.items.hammer) TD.items.hammer.visible = h('hammer');
+    if (TD.notebook) TD.notebook.visible = true; if (TD.ledger) TD.ledger.visible = h('evid_ledger'); if (TD.photos) TD.photos.scale.setScalar(h('evid_photos') ? 1 : .001);
+    if (TD.freezerLid) TD.freezerLid.rotation.x = TD.freezerOpen ? -1.2 : 0; if (TD.freezerLid) TD.freezerLid.position.set(-21, TD.freezerOpen ? 1.3 : .96, TD.freezerOpen ? -4.95 : -4.6);
+    if (TD.drawer) TD.drawer.position.z = TD.drawerOpen ? -2.6 : -2.3; if (TD.grate) TD.grate.visible = !TD.grateOpen;
+    Object.values(TD.doors).forEach(d => { d.g.rotation.y = d.open ? -1.4 : 0; }); TD.tape.forEach(t => t.visible = TD.tied); }
+  function tdActs(){
+    const s = () => tdLoad(), A2 = (k, x, z, r, label, go) => TD.acts.push({ k, x, z, r, label, go });
+    const sc = TD.sc; TD.items.knife = mkWeapon('knife'); TD.items.knife.scale.setScalar(.5); TD.items.knife.position.set(6.55, 1.22, -5.7); sc.add(TD.items.knife);
+    TD.items.cleaver = mkWeapon('cleaver'); TD.items.cleaver.scale.setScalar(.5); TD.items.cleaver.position.set(6.68, 1.24, -5.7); sc.add(TD.items.cleaver);
+    TD.items.hammer = mkWeapon('hammer'); TD.items.hammer.scale.setScalar(.6); TD.items.hammer.rotation.z = Math.PI / 2; TD.items.hammer.position.set(-23.6, .98, -5.3); sc.add(TD.items.hammer);
+    // basement
+    A2('chair', -28, 0, 1.2, () => TD.tied ? 'Struggle against the tape (tap fast, or A and D)' : null, () => tdStruggle(.06));
+    A2('boxes', -33, -3, 1.4, () => !TD.tied && !tdHas('crowbar') ? 'Search the labelled boxes' : null, () => { tdTake('crowbar', -33, -3, 4); say('Under the bleach, wrapped in a towel: a crowbar.', 2400); });
+    A2('bench', -24, -4.6, 1.3, () => !TD.tied && !tdHas('hammer') ? 'Take the hammer off the workbench' : null, () => tdTake('hammer', -24, -4.6));
+    A2('freezer', -21, -3.9, 1.3, () => TD.tied ? null : !TD.freezerOpen ? 'Open the chest freezer' : !tdHas('evid_ids') ? 'Take the bag of ID cards' : 'Close the freezer', () => { if (!TD.freezerOpen) { TD.freezerOpen = 1; tdNoise(-21, -4, 3); say('Frost, and a sealed bag of ID cards. Driving licences. College cards. A lot of names.', 3600); } else if (!tdHas('evid_ids')) tdTake('evid_ids', -21, -4.6, 2); else { TD.freezerOpen = 0; tdNoise(-21, -4, 2); } tdItemsShow(); });
+    A2('grate', -32, 4.6, 1.3, () => TD.tied ? null : !TD.grateOpen ? (tdHas('crowbar') ? 'Lever the drain grate up with the crowbar' : 'A drain grate, bolted down. You’d need something to lever it') : tdTorchOn() ? 'Climb down into the drain' : 'It’s pitch black down there. You need a light.', () => {
+      if (!TD.grateOpen) { if (!tdHas('crowbar')) return; TD.grateOpen = 1; tdNoise(-32, 4.6, 9); tone(140, .5, 'sawtooth', .05, 80); say('The grate comes up with a scream of metal. He’ll have heard that.', 2800); tdItemsShow(); return; }
+      if (!tdTorchOn()) return; tdEscape('drain'); });
+    A2('stairB', -20.4, 4.6, 1.2, () => TD.tied ? null : 'Go up the stairs', () => tdStairs(-6.4, 4.4, -Math.PI / 2));
+    A2('hideB', -32.8, 1.2, 1.1, () => TD.tied ? null : 'Squeeze behind the shelves', () => tdHideIn('shelves', -33.2, 1.2, -32.4, 1.2));
+    // ground floor
+    A2('stairG1', -6.6, 4.6, 1.2, () => 'Go down to the basement', () => tdStairs(-21.2, 4.4, Math.PI / 2));
+    A2('stairG2', 6.6, 4.6, 1.2, () => 'Go upstairs', () => tdStairs(24, -4.6, Math.PI));
+    A2('knife', 6.55, -5, 1.1, () => !tdHas('knife') ? 'Take the kitchen knife' : !tdHas('cleaver') ? 'Take the meat cleaver' : null, () => tdTake(!tdHas('knife') ? 'knife' : 'cleaver', 6.6, -5.6, 2));
+    A2('drawer', 7.1, -2.3, 1.1, () => !TD.drawerOpen ? 'Open the kitchen drawer' : !tdHas('torch') ? 'Take the torch' : 'Close the drawer', () => { if (!TD.drawerOpen) { TD.drawerOpen = 1; tdNoise(7.1, -2.3, 2); } else if (!tdHas('torch')) { tdTake('torch', 7.1, -2.3, 1); say('A torch. Press F (or the torch button) to switch it on. It helps you see, and helps him see you.', 4200); } else TD.drawerOpen = 0; tdItemsShow(); });
+    A2('phone', -7.4, -4.8, 1.2, () => TD.phoneCut ? 'The phone line is dead. He cut it.' : 'Use the phone', () => { if (TD.phoneCut || TD.police > 0) return;
+      if (tdEvid() < 3) return say(`You whisper to the police. They ask who you are, where you are, whether this is a joke. Without proof, nobody is coming. (${tdEvid()} of 3 pieces of evidence)`, 4800);
+      TD.police = 50; tdNoise(-7.4, -4.8, 14); tone(440, .3, 'sine', .05); say('“Police, what’s your emergency?” You tell them everything: the cards, the ledger, the photographs. “Stay hidden. Fifty seconds.”', 5200); });
+    A2('front', 0, 5.4, 1.2, () => TD.mode === 'visit' ? 'Go back out to the street' : tdHas('frontkey') && s().knowCode ? `Unlock the door and enter ${s().code} on the alarm` : tdHas('frontkey') ? 'The key turns, but the alarm panel wants a code' : 'Deadbolted, with an alarm panel. You need his key and the code', () => {
+      if (TD.mode === 'visit') return tdExit(); if (tdHas('frontkey') && s().knowCode) tdEscape('front'); else tdNoise(0, 5.4, 3); });
+    A2('hideG', 7.4, 1.2, 1.0, () => 'Hide in the pantry', () => tdHideIn('pantry', 7.6, 1.5, 6.9, 1.1));
+    // upstairs
+    A2('stairU', 24, -5.2, 1.2, () => 'Go downstairs', () => tdStairs(6.4, 4.4, Math.PI / 2));
+    A2('study', 23, -2.3, 1.2, () => TD.doors.study.open ? null : tdHas('studykey') ? 'Unlock the study' : 'The study door is locked', () => { if (!tdHas('studykey')) { tdNoise(23, -2.3, 3); return say('Locked. A good lock. The key must be somewhere he keeps things.', 2600); } TD.doors.study.open = true; tdNoise(23, -2.3, 3); tdItemsShow(); });
+    ['bed', 'bath', 'quiet'].forEach(k => { const d = TD.doors[k], [x0, x1, z0, z1] = d.rect, cx = (x0 + x1) / 2 + (k === 'bed' ? .55 : -.55), cz = (z0 + z1) / 2;
+      A2('door_' + k, cx, cz, 1.1, () => TD.doors[k].open ? 'Close the door' : 'Open the door', () => { TD.doors[k].open = !TD.doors[k].open; tdNoise(cx, cz, 4); tone(TD.doors[k].open ? 200 : 160, .2, 'triangle', .03, 120); tdItemsShow(); }); });
+    A2('desk', 17.5, -4.6, 1.2, () => !tdHas('frontkey') ? 'Search his desk' : !s().knowCode ? 'Read his notebook' : null, () => { if (!tdHas('frontkey')) { tdTake('frontkey', 17.5, -5.3, 2); say('In the drawer, on a numbered hook: the front door key.', 2600); return; } s().knowCode = 1; tdSave(); say(`His notebook. Shopping lists, meter readings, people’s routines, all in the same neat hand. On the last page: “ALARM ${s().code}”.`, 5200); tdHudDraw(); });
+    A2('ledger', 16.9, -2.5, 1.1, () => !tdHas('evid_ledger') ? 'Take the ledger from the shelf' : null, () => { tdTake('evid_ledger', 16.5, -2.5, 2); say('Dates, initials, amounts of bleach. Twelve years of it.', 3200); });
+    A2('dresser', 21.4, 5, 1.1, () => !tdHas('studykey') ? 'Search the dresser' : null, () => { tdTake('studykey', 21.5, 5.6, 2); say('Folded socks, sorted by colour. Under them, a key with a paper tag: STUDY.', 3000); });
+    A2('hideU1', 17, 2.2, 1.0, () => 'Hide in the wardrobe', () => tdHideIn('wardrobe', 16.4, 2.2, 17.2, 2.2));
+    A2('hideU2', 30.6, -4, 1.1, () => 'Hide behind the shower curtain', () => tdHideIn('bath', 30.9, -4.8, 30, -3.8));
+    A2('photos', 31.2, 3, 1.4, () => !tdHas('evid_photos') ? 'Take some of the photographs' : null, () => { tdTake('evid_photos', 31.6, 3, 2); say('Strangers, asleep, photographed through windows. Each one labelled. The last label is your name.', 4600); });
+  }
+  function tdStairs(x, z, yw){ fade(() => { pos.set(x, 1.6, z); yaw = yw; pitch = 0; tdNoise(x, z, 3); tone(170, .3, 'triangle', .02, 120); }, '#000000'); }
+  function tdHideIn(k, hx, hz, ox, oz){ if (TD.hide) return; TD.hide = { k, x: hx, z: hz, ox, oz, seenGo: TD.ai && TD.ai.mode === 'chase' && TD.ai.sees }; pos.set(hx, 1.45, hz); say('You hold your breath. Press E to come out.', 2600); }
+  function tdUnhide(){ if (!TD.hide) return; pos.set(TD.hide.ox, 1.6, TD.hide.oz); TD.hide = null; tdNoise(pos.x, pos.z, 2); }
+  function tdStruggle(k){ if (!TD.tied) return; TD.str = (TD.str || 0) + k; tone(160 + Math.random() * 60, .05, 'triangle', .02); tdNoise(-28, 0, 2.5); if (TD.str >= 1) { TD.tied = false; pos.y = 1.6; tdItemsShow(); say('The tape gives. Your wrists are raw, but you’re free. Quietly now.', 3200); } }
+  const tdTorchOn = () => !!(TD.torchOn && tdHas('torch'));
+  addEventListener('keydown', e => { if (!inWorld || zone !== 'tidy' || EV || e.repeat) return; const k = e.key.toLowerCase();
+    if (k === 'e') { if (TD.hide) return tdUnhide(); if (TD.near) TD.near.go(); }
+    if (k === 'f' && tdHas('torch')) { TD.torchOn = !TD.torchOn; tone(TD.torchOn ? 1200 : 900, .04, 'square', .02); tdHudDraw(); }
+    if (TD.tied && (k === 'a' || k === 'd') && TD.lastK !== k) { TD.lastK = k; tdStruggle(.05); } });
+  // ---------- his routine, his eyes and his ears ----------
+  const TD_NODES = { b_chair: [-28, 1.4], b_shelf: [-32, -2.5], b_bench: [-24.5, -4], b_drain: [-30.5, 4], b_free: [-25, 2], b_stair: [-20.6, 4.4],
+    g_stairB: [-6.4, 4.4], g_foyer: [0, 4.2], g_stairU: [6.4, 4.4], g_front: [0, 5.2], g_hallS: [0, -4.5], g_hallM: [0, -.2], g_livD: [-1.6, -.2], g_liv: [-5, -2], g_phone: [-6.6, -4.6], g_kitD: [1.6, -.2], g_kit: [4.6, -2.6], g_knife: [6, -4.8],
+    u_stair: [24, -4.6], u_landS: [24, -2.3], u_landN: [24, 3.7], u_studyD: [22.4, -2.3], u_study: [19, -3], u_bedD: [22.4, 3.7], u_bed: [19, 3.4], u_bathD: [25.6, -2.3], u_bath: [28.6, -3], u_quietD: [25.6, 3.7], u_quiet: [28.6, 3] };
+  const TD_EDGES = [['b_chair', 'b_shelf'], ['b_chair', 'b_bench'], ['b_chair', 'b_drain'], ['b_chair', 'b_free'], ['b_free', 'b_stair'], ['b_bench', 'b_free'], ['b_drain', 'b_free'], ['b_stair', 'g_stairB'],
+    ['g_stairB', 'g_foyer'], ['g_foyer', 'g_stairU'], ['g_foyer', 'g_front'], ['g_foyer', 'g_hallM'], ['g_hallM', 'g_hallS'], ['g_hallM', 'g_livD'], ['g_livD', 'g_liv'], ['g_liv', 'g_phone'], ['g_hallM', 'g_kitD'], ['g_kitD', 'g_kit'], ['g_kit', 'g_knife'], ['g_stairU', 'u_stair'],
+    ['u_stair', 'u_landS'], ['u_landS', 'u_landN'], ['u_landS', 'u_studyD'], ['u_studyD', 'u_study'], ['u_landN', 'u_bedD'], ['u_bedD', 'u_bed'], ['u_landS', 'u_bathD'], ['u_bathD', 'u_bath'], ['u_landN', 'u_quietD'], ['u_quietD', 'u_quiet']];
+  const tdNb = id => TD_EDGES.filter(e => e.includes(id)).map(e => e[0] === id ? e[1] : e[0]);
+  const tdNodeFloor = id => ({ b: 'B', g: 'G', u: 'U' })[id[0]];
+  function tdPath(a, b){ const prev = { [a]: null }, q = [a]; while (q.length) { const c = q.shift(); if (c === b) break; tdNb(c).forEach(n => { if (!(n in prev)) { prev[n] = c; q.push(n); } }); } if (!(b in prev)) return []; const p = []; for (let c = b; c; c = prev[c]) p.unshift(c); return p; }
+  function tdNearest(x, z){ const f = tdFloor(x); let best = null, bd = 1e9; Object.entries(TD_NODES).forEach(([id, [nx, nz]]) => { if (tdNodeFloor(id) !== f) return; const d = Math.hypot(nx - x, nz - z) + (tdSee(x, z, nx, nz) ? 0 : 6); if (d < bd) { bd = d; best = id; } }); return best; }
+  const TD_ROUND = ['g_kit', 'g_knife', 'g_liv', 'g_phone', 'g_hallS', 'u_study', 'u_bath', 'u_bed', 'u_quiet', 'g_foyer', 'b_chair', 'b_shelf', 'b_bench'];
+  const TD_VOICE = ['Are you comfortable down there? I’ve put the heating on.', 'Everything has a place. You have a place too. It’s the chair.', 'I can hear you, you know. This house talks to me.', 'Don’t make a mess. I’ve only just finished the floors.', 'You’ll feel better if you stop struggling. Everyone does, eventually.', 'I’m not angry. I’m never angry. Anger is untidy.', 'Did you know you snore? Just a little. It’s sweet.'];
+  function tdNoise(x, z, r){ if (!TD.ai || TD.mode !== 'night' || TD.ai.out) return; const A2 = TD.ai, f = tdFloor(x); if (tdFloor(A2.x) !== f && r < 9) return; const d = Math.hypot(A2.x - x, A2.z - z) * (tdFloor(A2.x) === f ? 1 : 2.5); if (d < r * 1.6) { if (A2.mode !== 'chase') { A2.mode = 'investigate'; A2.goal = [x, z]; A2.path = null; A2.wait = 0; if (Math.random() < .6) tdVoice(['What was that?', 'Hello?', 'I heard that.', 'Someone’s being careless.'][Math.random() * 4 | 0], true); } } }
+  function tdVoice(t, near){ const s = performance.now(); if (s - (TD.voiceAt || 0) < 3500) return; TD.voiceAt = s; for (let i = 0; i < 3; i++) setTimeout(() => tone(2400 - i * 300, .04, 'square', .012, 1800), i * 60); say(`${near ? TD_NAME : 'Intercom'}: “${t}”`, 3600); }
+  function tdAiNew(){ const A2 = TD.ai = { x: 0, z: -2, yaw: 0, mode: 'routine', path: null, wait: 2, sees: false, seenT: 0, lastSeen: null, out: false, goal: null, ri: 0, opened: null, voiceT: 25 };
+    if (!TD.av) { let av = null; try { av = bodyAv('tidy', 1); } catch (e) {} if (!av) av = avatar(heroLook('tidy')); TD.av = av; TD.sc.add(av.g); av.hold('fists'); } TD.av.g.visible = true; return A2; }
+  function tdAiStep(dt, now){
+    const A2 = TD.ai, s = tdLoad(); if (!A2) return; const T = s.nightT;
+    // the night: he goes out to work for a while, and checks the basement now and then
+    const outNow = T > 120 && T < 190; if (outNow && !A2.out && A2.mode !== 'chase') { A2.out = true; A2.mode = 'routine'; TD.av.g.visible = false; tone(90, .8, 'sawtooth', .03, 60); say('A car starts outside and pulls away. He’s gone out. For now.', 3600); s.learned = Math.max(s.learned, 1); tdSave(); }
+    if (A2.out) { if (!outNow) { A2.out = false; A2.x = 0; A2.z = 5; TD.av.g.visible = true; tone(90, .8, 'sawtooth', .03, 60); setTimeout(() => tdVoice('I’m home. Did you miss me?'), 1500); A2.path = null; A2.mode = 'routine'; } else return; }
+    if ([40, 100, 220, 270].some(t => T > t && T - dt <= t) && A2.mode === 'routine') { A2.mode = 'check'; A2.path = null; }
+    const pf = tdFloor(pos.x), af = tdFloor(A2.x), dP = Math.hypot(pos.x - A2.x, pos.z - A2.z);
+    // seeing you: in front of him, close enough for how dark it is, nothing in between, and you're not hiding
+    const reach = tdTorchOn() ? 12 : (KIT && KIT.crouchK > .5 ? 3.5 : 7), fx = -Math.sin(A2.yaw), fz = -Math.cos(A2.yaw), dot = dP > .01 ? ((pos.x - A2.x) * fx + (pos.z - A2.z) * fz) / dP : 1;
+    A2.sees = pf === af && !TD.hide && !TD.tied && dP < reach && (dot > .35 || dP < 1.6) && tdSee(A2.x, A2.z, pos.x, pos.z);
+    if (TD.tied && A2.mode === 'check' && af === 'B' && dP < 3) { A2.mode = 'routine'; A2.path = null; if (Math.random() < .7) tdVoice(['Good. You’re still here.', 'Comfortable? Good.', 'Shh. Sleep.'][Math.random() * 3 | 0], true); }
+    if (A2.sees) { if (A2.mode !== 'chase') { A2.mode = 'chase'; tone(70, .6, 'sawtooth', .06, 40); if (!scaresLow()) { fadeEl.style.background = '#300000'; fadeEl.classList.add('on'); setTimeout(() => fadeEl.classList.remove('on'), 120); } tdVoice(['There you are.', 'Found you.', 'You’re making a mess.'][Math.random() * 3 | 0], true); } A2.seenT = 0; A2.lastSeen = [pos.x, pos.z]; }
+    else if (A2.mode === 'chase') { A2.seenT += dt; if (A2.seenT > 6) { A2.mode = 'investigate'; A2.goal = A2.lastSeen; A2.path = null; A2.wait = 0; } }
+    // he noticed you're not in the chair
+    if (A2.mode === 'check' && af === 'B' && Math.hypot(A2.x + 28, A2.z) < 2.5 && !TD.tied) { A2.mode = 'investigate'; A2.goal = [pos.x, pos.z]; A2.path = null; tdVoice('You’re out of your chair. That’s not where you belong.', true); }
+    // things you moved or left open: he notices, tidies them, and comes looking
+    if (A2.mode !== 'chase') { const dirty = []; if (TD.drawerOpen) dirty.push(['drawer', 7.1, -2.3, () => TD.drawerOpen = 0]); if (TD.freezerOpen) dirty.push(['freezer', -21, -4, () => TD.freezerOpen = 0]);
+      ['bed', 'bath', 'quiet'].forEach(k => { const d = TD.doors[k]; if (d.open && !d.his) dirty.push([k, d.rect[0], (d.rect[2] + d.rect[3]) / 2, () => d.open = false]); });
+      (TD.moved || []).forEach(m => dirty.push(['moved', m.x, m.z, () => { TD.moved = TD.moved.filter(q => q !== m); }]));
+      for (const [k, x, z, fix] of dirty) if (tdFloor(x) === af && Math.hypot(A2.x - x, A2.z - z) < 3.2 && tdSee(A2.x, A2.z, x, z)) { fix(); tdItemsShow(); A2.mode = 'investigate'; A2.goal = [pos.x + (Math.random() - .5) * 6, pos.z + (Math.random() - .5) * 6]; A2.path = null; tdVoice(k === 'moved' ? 'Someone’s been moving my things.' : 'I didn’t leave that open.', true); break; } }
+    // where he's going
+    let tx, tz, spd = A2.mode === 'chase' ? 4.1 + .15 * s.night : A2.mode === 'investigate' ? 2.4 : 1.5;
+    if (A2.mode === 'chase' && pf === af && A2.sees) { tx = pos.x; tz = pos.z; A2.path = null; }
+    else { if (!A2.path || !A2.path.length) { if (A2.wait > 0) { A2.wait -= dt; tdAnim(now, 0, true); return; }
+        const goal = A2.mode === 'check' ? 'b_chair' : A2.mode === 'routine' ? TD_ROUND[A2.ri++ % TD_ROUND.length] : A2.mode === 'chase' ? tdNearest(pos.x, pos.z) : tdNearest(...(A2.goal || [pos.x, pos.z]));
+        if (A2.mode === 'investigate' && A2.reached) { A2.reached = false; A2.mode = 'routine'; A2.wait = 3; return; }
+        A2.path = tdPath(tdNearest(A2.x, A2.z), goal); if (A2.mode === 'investigate') A2.reached = true; if (A2.mode === 'routine') A2.wait = 3 + Math.random() * 4; if (!A2.path.length) { A2.wait = 1; return; } }
+      const [nx, nz] = TD_NODES[A2.path[0]]; tx = nx; tz = nz;
+      if (Math.hypot(nx - A2.x, nz - A2.z) < .35) { const cur = A2.path.shift(), nxt = A2.path[0]; if (nxt && tdNodeFloor(cur) !== tdNodeFloor(nxt)) { const [qx, qz] = TD_NODES[nxt]; A2.x = qx; A2.z = qz; tone(170, .3, 'triangle', .015, 120); } if (!A2.path.length && A2.mode === 'routine') A2.wait = 3 + Math.random() * 5; return; } }
+    const dx = tx - A2.x, dz = tz - A2.z, d = Math.hypot(dx, dz); if (d > .05) { const st = Math.min(d, spd * dt); A2.x += dx / d * st; A2.z += dz / d * st; A2.yaw += angDiff(A2.yaw, Math.atan2(-dx, -dz)) * Math.min(1, dt * 8); }
+    // he opens doors as he goes and closes them after him (he's tidy)
+    Object.entries(TD.doors).forEach(([k, D]) => { const cx = (D.rect[0] + D.rect[1]) / 2, cz = (D.rect[2] + D.rect[3]) / 2, n = Math.hypot(A2.x - cx, A2.z - cz); if (n < 1.1 && !D.open && (k !== 'study' || true)) { D.open = true; D.his = true; tdItemsShow(); tone(200, .2, 'triangle', .02, 120); } if (D.his && n > 1.8) { D.open = false; D.his = false; tdItemsShow(); } });
+    tdAnim(now, Math.min(1, spd / 2), false);
+    // caught
+    if (A2.mode === 'chase' && pf === af && dP < 1.15 && !TD.hide) tdCaught(false);
+    if (TD.hide && A2.mode === 'chase' && TD.hide.seenGo && pf === af && dP < 1.6) tdCaught(true);
+  }
+  function tdAnim(now, mv, wipe){ const A2 = TD.ai; TD.av.g.position.set(A2.x, 0, A2.z); TD.av.g.rotation.y = A2.yaw + Math.PI; TD.av.anim(now / 1000, mv, wipe ? Math.sin(now / 300) > .3 : false); }
+  // ---------- caught ----------
+  function tdCaught(pulled){
+    const s = tdLoad(), A2 = TD.ai; if (TD.busy) return; TD.busy = true; if (TD.hide) { TD.hide = null; pos.y = 1.6; }
+    // the scare: he's right there, filling your view
+    const fx = -Math.sin(yaw), fz = -Math.cos(yaw); A2.x = pos.x + fx * .9; A2.z = pos.z + fz * .9; A2.yaw = Math.atan2(fx, fz); tdAnim(performance.now(), 0, false); pitch = .05;
+    if (!scaresLow()) { [90, 70, 50].forEach((f, i) => setTimeout(() => tone(f, .5, 'sawtooth', .09, f / 2), i * 70)); fadeEl.style.background = '#600000'; fadeEl.classList.add('on'); setTimeout(() => fadeEl.classList.remove('on'), 160); }
+    else tone(220, .3, 'sine', .04, 160);
+    say(pulled ? `${TD_NAME}: “I saw you go in there. Did you think I wouldn’t check?”` : `${TD_NAME}: “Got you.”`, 2600);
+    setTimeout(() => { TD.busy = false; const w = tdWeapon(); if (w && s.fights < 6) tdFight(false); else tdKnockout(w ? 'tired' : 'caught'); }, scaresLow() ? 1200 : 1600);
+  }
+  function tdKnockout(why){
+    const s = tdLoad(); TD.busy = true; tone(60, 1.2, 'sine', .06, 30);
+    fade(() => { s.night++; s.nightT = 0; s.inv = []; TD.moved = []; TD.drawerOpen = TD.freezerOpen = 0; TD.doors.study.open = false; ['bed', 'bath', 'quiet'].forEach(k => TD.doors[k].open = false); TD.police = 0; TD.torchOn = false; tdSave();
+      if (s.night > 5) { TD.busy = false; return tdBadEnd(); }
+      tdNightStart(); TD.busy = false;
+      say(`${why === 'fight' ? 'He let you think you were winning. Then a needle, and nothing.' : 'A cloth over your face, sweet and chemical.'} Night ${s.night - 1} is lost. When you wake, everything is back where it belongs. Night ${s.night} of 5.`, 6200); }, '#000000');
+  }
+  // ---------- fights: the existing fight system, in his house, with whatever you've picked up ----------
+  function tdFight(ambush){
+    const s = tdLoad(); s.fights++; tdSave(); TD.fightAmbush = !!ambush; TD.scr = false;
+    TD.canWin = s.fights >= 3 && (['cleaver', 'crowbar'].includes(tdWeapon()) || s.learned >= 2 || s.night >= 3);
+    startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: 'td1', tdy: 1 });
+  }
+  function tdSetup(part){
+    if (part !== 'td1' || !EV.opts || !EV.opts.tdy) return; const A2 = TD.ai || { x: pos.x, z: pos.z - 2 };
+    const b = addUnit({ hero: 'tidy', team: 'en' }); b.x = A2.x; b.z = A2.z; b.boss = 1; EV.boss = b; if (TD.fightAmbush) b.hp = b.max * .7; if (TD.av) TD.av.g.visible = false;
+    EV.wpn = tdWeapon() || 'fists'; EV.prop = EV.wpn === 'fists' ? null : EV.wpn; EV.clawsTorn = true; EV.st.td = { b, dodgeT: 0, guard: 0, wounds: 0 }; plats.event = plats.tidy.slice();
+    say(TD.fightAmbush ? 'You catch him from behind. Now.' : `He doesn’t shout. He just takes off his glasses and folds them away.${EV.wpn !== 'fists' ? '' : ' You have nothing but your hands.'}`, 3400);
+  }
+  function tdHit(u, d, from){
+    if (!EV || !EV.opts || !EV.opts.tdy) return d; const S = EV.st.td; if (!S) return d;
+    if (u === S.b && from === 'me') { if (S.guard > 0) { d *= .3; tone(1100, .06, 'square', .03, 700); tdGore(u.x, 1.3, u.z, 2, true); return d; }
+      const w = EV.wpn; d *= { cleaver: 1.5, crowbar: 1.4, hammer: 1.3, knife: 1.2 }[w] || 1;
+      tdGore(u.x, 1.25 + Math.random() * .3, u.z, w === 'fists' ? 4 : 10, false); if (!goreLow()) { if (Math.random() < .6) tdDecal(u.x + (Math.random() - .5) * .8, u.z + (Math.random() - .5) * .8, .25 + Math.random() * .25); if (S.wounds < 12) { S.wounds++; tdWound(u.av.g); } }
+      EV.shake = Math.max(EV.shake || 0, .22); tone(110, .14, 'sawtooth', .06, 60); }
+    return d;
+  }
+  function tdHurt(d, from){
+    if (!EV || !EV.opts || !EV.opts.tdy) return d; const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+    tdGore(pos.x + fx * .5, 1.2, pos.z + fz * .5, 8, false); TD.blood = Math.min(1, (TD.blood || 0) + d / 30); TD.scar = Math.min(.45, (TD.scar || 0) + d / 160); if (!goreLow() && Math.random() < .5) tdDecal(pos.x, pos.z, .2 + Math.random() * .3);
+    if (d > 9) EV.shake = Math.max(EV.shake || 0, .35); tone(90, .2, 'sawtooth', .07, 45); return d;
+  }
+  function tdFightStep(dt){
+    const S = EV && EV.opts && EV.opts.tdy && EV.st && EV.st.td; if (!S || EV.over) return; const b = S.b; S.guard = Math.max(0, S.guard - dt); S.dodgeT = Math.max(0, S.dodgeT - dt);
+    // he reads you: when you wind up a swing he sidesteps or raises his arm
+    if (EV.swing > .25 && S.dodgeT <= 0 && Math.hypot(b.x - pos.x, b.z - pos.z) < 2.8) { S.dodgeT = .9; if (Math.random() < .35) { const sx = -(b.z - pos.z), sz = b.x - pos.x, l = Math.hypot(sx, sz) || 1, k = Math.random() < .5 ? 1 : -1; b.kx += sx / l * 7 * k; b.kz += sz / l * 7 * k; } else if (Math.random() < .5) S.guard = .5; }
+    // he isn't trying to kill you. Not yet. He lets you get close, then ends it
+    if (!TD.canWin && !TD.scr && b.hp < b.max * .42) { TD.scr = true; say(`${TD_NAME}: “That’s enough. You did well. Better than most.” A needle, in your neck, quick as a handshake.`, 4200); endMatch(false); }
+  }
+  function tdFightEnd(won){ TD.fightDone = true; setTimeout(() => { if (EV) stopEvent(true); if (won) tdBeatHim(); else tdKnockout('fight'); }, 1800); }
+  function tdBack(){ tdArenaBack(); const left = !TD.fightDone; TD.fightDone = false; if (left && TD.mode === 'night') setTimeout(() => tdKnockout('fight'), 0); zone = 'tidy'; plats.event = []; if (TD.av) TD.av.g.visible = !(TD.ai && TD.ai.out); $('#worldBack').hidden = false; $('#worldBack').textContent = TD.mode === 'visit' ? 'Back to the street' : 'Give up'; hotEl.hidden = true; }
+  function tdBeatHim(){ const s = tdLoad(); s.wins++; tdSave(); TD.ai.mode = 'down'; if (TD.av) { TD.av.g.visible = true; TD.av.g.rotation.x = -Math.PI / 2; TD.av.g.position.y = .25; }
+    say('He goes down and stays down, glasses in his pocket, perfectly folded. His keys are on his belt, and the alarm fob with them.', 4800); s.inv.push('frontkey'); s.knowCode = 1; tdSave(); setTimeout(() => tdEscape('fight'), 4200); }
+  // ---------- gore: blood that flies, lands, pools and stays (or dark flashes on Low) ----------
+  function tdGore(x, y, z, n, spark){
+    const low = goreLow(), sc = sceneOf(); if (!sc) return; const m = spark ? new THREE.MeshBasicMaterial({ color: 0xFFE0A0 }) : new THREE.MeshBasicMaterial({ color: low ? 0x2A2030 : 0x7A0A0A });
+    for (let i = 0; i < n; i++) { const p = new THREE.Mesh(TD.dropG || (TD.dropG = new THREE.SphereGeometry(.025, 5, 4)), m); p.position.set(x, y, z); sc.add(p); TD.fx.push({ p, v: V((Math.random() - .5) * 4, 1 + Math.random() * 3, (Math.random() - .5) * 4), t: 0, sc, land: !spark && !low }); }
+    if (low && !spark) { fadeEl.style.background = '#14101A'; fadeEl.classList.add('on'); setTimeout(() => fadeEl.classList.remove('on'), 60); }
+  }
+  function tdDecal(x, z, r, smear){
+    const sc = sceneOf(); if (!sc || goreLow()) return; const m = TD.decM || (TD.decM = new THREE.MeshBasicMaterial({ map: tex(64, 64, (c, w, h) => { const g = c.createRadialGradient(32, 32, 4, 32, 32, 31); g.addColorStop(0, 'rgba(70,4,4,.95)'); g.addColorStop(.7, 'rgba(90,8,8,.8)'); g.addColorStop(1, 'rgba(90,8,8,0)'); c.fillStyle = g; c.beginPath(); for (let k = 0; k < 14; k++) { const a = k / 14 * 6.28, rr = 22 + Math.random() * 9; c.lineTo(32 + Math.cos(a) * rr, 32 + Math.sin(a) * rr); } c.fill(); }), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }));
+    const d = new THREE.Mesh(TD.decG || (TD.decG = new THREE.PlaneGeometry(1, 1)), m); d.rotation.x = -Math.PI / 2; d.rotation.z = Math.random() * 6.28; d.position.set(x, .015 + TD.decals.length * .0004, z); d.scale.set(r * (smear ? 2.6 : 1), r, 1); d.userData.grow = r * 1.6; d.userData.noPick = true; sc.add(d); TD.decals.push(d);
+    if (TD.decals.length > 70) { const o = TD.decals.shift(); if (o.parent) o.parent.remove(o); }
+  }
+  function tdWound(g){ const w = new THREE.Mesh(TD.wG || (TD.wG = new THREE.PlaneGeometry(.12, .08)), TD.wM || (TD.wM = new THREE.MeshBasicMaterial({ color: 0x5A0606, side: THREE.DoubleSide }))); const a = Math.random() * 6.28; w.position.set(Math.sin(a) * .24, .9 + Math.random() * .7, Math.cos(a) * .24); w.rotation.y = a; g.add(w); }
+  function tdFxStep(dt){
+    TD.fx = TD.fx.filter(f => { f.t += dt; f.v.y -= 12 * dt; f.p.position.addScaledVector(f.v, dt); if (f.p.position.y < .02) { if (f.land && Math.random() < .25) tdDecal(f.p.position.x, f.p.position.z, .05 + Math.random() * .08, TD.mode === 'night' && tdFloor(f.p.position.x) === 'B'); f.sc.remove(f.p); return false; } if (f.t > 2) { f.sc.remove(f.p); return false; } return true; });
+    TD.decals.forEach(d => { if (d.userData.grow && d.scale.y < d.userData.grow) { d.scale.multiplyScalar(1 + dt * .25); } });
+    const b = TD.blood || 0; TD.blood = Math.max(TD.scar || 0, b - dt * .25); if (TD.bloodEl) { TD.bloodEl.style.opacity = (inWorld && (zone === 'tidy' || zone === 'event' && EV && EV.inTdy)) ? TD.blood : 0; TD.bloodEl.style.background = goreLow() ? 'radial-gradient(circle, transparent 45%, rgba(10,8,14,.9))' : 'radial-gradient(circle, transparent 42%, rgba(110,0,0,.85))'; }
+  }
+  // ---------- the HUD: which night, what you're carrying, and a button for whatever's in front of you ----------
+  function tdHudInit(){
+    if (TD.hud) return; const s = document.createElement('style');
+    s.textContent = '.tdhud{position:fixed;left:12px;top:12px;z-index:6;max-width:300px;padding:9px 12px;border-radius:10px;background:rgba(6,6,8,.72);color:#E8E2D4;font:600 13px/1.45 system-ui,sans-serif;pointer-events:none}.tdhud b{color:#F2EEE6;font-size:14px}.tdhud small{display:block;color:#A8A196;font-weight:500}.tdhud i{font-style:normal;color:#FF8A6E}'
+      + '.tdblood{position:fixed;inset:0;z-index:5;pointer-events:none;opacity:0;transition:opacity .15s}.tdbtn{bottom:172px}.tdtorch{position:fixed;right:14px;bottom:236px;z-index:7}';
+    document.head.appendChild(s);
+    TD.hud = document.createElement('div'); TD.hud.className = 'tdhud'; TD.hud.hidden = true; document.body.appendChild(TD.hud);
+    TD.bloodEl = document.createElement('div'); TD.bloodEl.className = 'tdblood'; document.body.appendChild(TD.bloodEl);
+    TD.btn = document.createElement('button'); TD.btn.type = 'button'; TD.btn.className = 'btn alt drvbtn doorbtn tdbtn'; TD.btn.hidden = true; document.body.appendChild(TD.btn);
+    TD.btn.addEventListener('click', e => { e.stopPropagation(); if (TD.hide) return tdUnhide(); if (TD.near) TD.near.go(); });
+    TD.tbtn = document.createElement('button'); TD.tbtn.type = 'button'; TD.tbtn.className = 'btn tdtorch'; TD.tbtn.hidden = true; TD.tbtn.textContent = 'Torch'; document.body.appendChild(TD.tbtn);
+    TD.tbtn.addEventListener('click', e => { e.stopPropagation(); if (!tdHas('torch')) return; TD.torchOn = !TD.torchOn; tone(TD.torchOn ? 1200 : 900, .04, 'square', .02); tdHudDraw(); });
+  }
+  function tdHudDraw(){
+    tdHudInit(); const s = tdLoad(), on = inWorld && zone === 'tidy' && !EV; TD.hud.hidden = !on; TD.tbtn.hidden = !on || fine || !tdHas('torch'); if (!on) return;
+    const items = s.inv.filter(k => !k.startsWith('evid_')).map(k => TD_ITEMS[k]), ev = tdEvid(), T = Math.max(0, 300 - (s.nightT || 0));
+    TD.hud.innerHTML = TD.mode === 'visit' ? `<b>${TD_NAME}’s house</b><small>${s.state === 'arrested' ? 'Police tape on the door. The house is empty and very clean.' : 'He’s gone. The house is exactly as he left it.'}</small>${ev ? `<small>Evidence: ${ev} of 3</small>` : ''}`
+      : `<b>Night ${s.night} of 5</b> · ${Math.floor(T / 60)}:${String(Math.floor(T % 60)).padStart(2, '0')} till dawn<small>${TD.tied ? 'Taped to the chair. Struggle free (tap the button, or A and D).' : TD.hide ? 'Hiding. Hold still.' : TD.ai && TD.ai.out ? 'He’s out. Move.' : 'Get out: the front door, the drain, or the police.'}</small>`
+        + `<small>Carrying: ${items.length ? items.join(', ') : 'nothing'}${tdHas('torch') ? ` · torch ${TD.torchOn ? 'on' : 'off'}${fine ? ' (F)' : ''}` : ''}</small><small>Evidence: ${ev} of 3${s.knowCode ? ` · alarm code ${s.code}` : ''}</small>${TD.police > 0 ? `<small><i>Police on the way: ${Math.ceil(TD.police)} s</i></small>` : ''}`;
+  }
+  // ---------- each night: back in the chair, everything put back where it belongs ----------
+  function tdNightStart(){
+    const s = tdLoad(); tdBuild(); tdHudInit(); s.state = 'captive'; s.nightT = 0; s.inv = []; tdSave();
+    TD.mode = 'night'; TD.tied = true; TD.str = 0; TD.hide = null; TD.moved = []; TD.drawerOpen = TD.freezerOpen = TD.grateOpen = 0; TD.police = 0; TD.torchOn = false; TD.phoneCut = false; TD.escaping = false; TD.busy = false; TD.fightDone = false;
+    Object.values(TD.doors).forEach(d => { d.open = false; d.his = false; }); tdAiNew(); TD.ai.x = 0; TD.ai.z = -2; if (TD.av) { TD.av.g.rotation.x = 0; TD.av.g.position.y = 0; }
+    web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'tidy'; vy = 0; falling = false; grounded = true; pos.set(-28, 1.25, 0); yaw = 0; pitch = -.08; KIT.crouch = false; KIT.sprint = false;
+    closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Leave for now'; jumpBtn.hidden = true; uiZone(); tdItemsShow(); tdHudDraw();
+  }
+  // walking his house after it's over: empty, quiet, still tidy
+  function tdVisit(){
+    const s = tdLoad(); if (A || EV) return; if (DRV.on) getOut(true);
+    fade(() => { tdBuild(); tdHudInit(); TD.mode = 'visit'; TD.tied = false; TD.hide = null; TD.ai = null; if (TD.av) TD.av.g.visible = false; TD.police = 0; TD.escaping = false; TD.busy = false; s.inv = s.inv.filter(k => k.startsWith('evid_') && s.state === 'loose'); tdSave();
+      Object.values(TD.doors).forEach(d => { d.open = false; d.his = false; }); TD.doors.study.open = true; TD.grateOpen = 0; TD.drawerOpen = TD.freezerOpen = 0;
+      web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'tidy'; vy = 0; falling = false; grounded = true; pos.set(0, 1.6, 4.6); yaw = 0; pitch = -.05;
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Back to the street'; jumpBtn.hidden = fine; uiZone(); tdItemsShow(); tdHudDraw();
+      say(s.state === 'arrested' ? 'Police tape across the stairs. The basement chair is gone, taken as evidence. It still smells of bleach.' : `The house is silent. He hasn’t been back. ${s.evidOut >= 3 ? '' : 'Proof would still be useful: his ledger, the cards, the photographs.'}`, 4600); }, '#000000');
+  }
+  // his front door: the trap, the house after, or nobody home
+  function tdDoor(d){
+    const s = tdLoad(); if (A || EV || TD.busy || BL.cine) return; doorBtn.hidden = true;
+    if (s.state === 'captive') { if (DRV.on) getOut(true); return fade(() => { tdNightStart(); say(`Back in his basement. Night ${s.night} of 5. The tape is fresh.`, 3600); }, '#000000'); }
+    if (s.state === 'trap') return tdTrap();
+    if (s.state === 'arrested' || s.state === 'loose') return tdVisit();
+    say(s.meet ? 'Nobody answers. The curtains are drawn exactly level.' : 'A neat little house. Nobody answers the door.', 2800);
+  }
+  function tdTrap(){
+    const s = tdLoad(), H = TD.house; if (DRV.on) getOut(true); TD.busy = true; const look = () => H ? H.fr : [0, 0];
+    const L = s.call ? [['{N}', 'Hello? Someone called. Is anyone…'], [TD_NAME, 'Oh, it’s you. I’m so glad. Come in, quickly. The poor woman is downstairs.'], ['{N}', 'Mr. Varadan? This is your house?'], [TD_NAME, 'She was a recording. I’m sorry. I don’t like lying. It’s untidy.']]
+      : [[TD_NAME, 'You came! Shoes off, please, on the rack. Thank you. The boxes are in the basement.'], [TD_NAME, 'Tea first. I insist. Two sugars? I guessed two.'], ['{N}', 'Thanks. …It tastes a bit bitter.'], [TD_NAME, 'That’s the cardamom. Sit down. You look so tired. Everyone does, at the end.']];
+    cityScene(L, look, () => { tone(70, 2, 'sine', .06, 40); say(s.call ? 'A cloth over your face, sweet and chemical. The street tilts away.' : 'The room swims. His face is very close, and very calm. Then nothing.', 3400);
+      fade(() => { s.night = 1; s.nightT = 0; s.fights = s.fights || 0; tdSave(); tdNightStart();
+        say(`You wake taped to a chair, in a basement wrapped in plastic. Your phone, your web-shooters, your mask: gone. Above you, footsteps, and someone humming. Night 1 of 5.${fine ? ' Struggle with A and D.' : ' Tap the button to struggle.'}`, 7200);
+        setTimeout(() => tdVoice('Good morning. Well. Good evening. Make yourself at home. You’ll be here a while.'), 7600); }, '#000000'); });
+  }
+  // ---------- getting out ----------
+  function tdEscape(route){
+    if (TD.escaping) return; TD.escaping = true; const s = tdLoad(), ev = tdEvid();
+    const R = { front: ['You turn his key, tap in the code, and the alarm chirps once, politely. The door opens onto the street. Cold air. You run and you don’t look back.', 40],
+      drain: ['You drop into the drain and crawl, torch in your teeth, through the dark for a long time. Then a grille, and streetlight, and you’re out.', 40],
+      police: ['Blue lights through the curtains. Boots on the stairs. “Police! Hari Varadan, on the floor!” He lies down carefully, so as not to crease his shirt.', 60],
+      fight: ['You take his keys, walk out of his front door, and call the police from the house across the road. They find him still on the floor.', 60] }[route];
+    s.reward = (s.reward || 0) + R[1]; JOB.rep += R[1]; jobSave();
+    if (route === 'police' || route === 'fight') { s.state = 'arrested'; tdLog(route === 'police' ? `Night ${s.night}: you called the police from his own phone, with proof. Hari Varadan was arrested at his house.` : `Night ${s.night}: you beat Hari Varadan in his own house. He was arrested.`); }
+    else { s.state = 'loose'; s.evidOut = ev; s.sightings = 0; s.coolT = 240; tdLog(`Night ${s.night}: you got out through ${route === 'front' ? 'his front door' : 'the basement drain'}. Hari Varadan is still out there.${ev ? ` You took ${ev} piece${ev > 1 ? 's' : ''} of evidence with you.` : ''}`); }
+    s.inv = []; s.nightT = 0; tdSave(); if (TD.ai) TD.ai.mode = 'gone';
+    say(`${R[0]} Reputation +${R[1]}.`, 6400); setTimeout(() => tdExit(route), route === 'drain' ? 3600 : 2600);
+  }
+  function tdBadEnd(){
+    const s = tdLoad(); s.state = 'loose'; s.evidOut = 0; s.sightings = 0; s.coolT = 300; s.inv = []; s.night = 1; s.nightT = 0; tdLog('Five nights. You woke on a park bench with no memory of the last of them. His house was empty and smelled of bleach. He’s gone, for now.'); tdSave();
+    say('The fifth night ends. You wake on a park bench in the rain, your things in a neat pile beside you. When you go back, the house is empty. He’s gone.', 6800); tdExit('bad');
+  }
+  // out to the street in front of his house (and remember any evidence you carried out on a visit)
+  function tdExit(why){
+    const s = tdLoad(); if (TD.mode === 'visit' && s.state === 'loose') { s.evidOut = Math.max(s.evidOut || 0, tdEvid()); s.inv = []; tdSave(); }
+    if (TD.mode === 'night' && !why) say(`You can carry on later: his front door takes you back to the basement. Night ${s.night} of 5.`, 3600);
+    TD.mode = ''; TD.tied = false; TD.hide = null; TD.torchOn = false; TD.police = 0; if (TD.hud) { TD.hud.hidden = true; TD.btn.hidden = true; TD.tbtn.hidden = true; TD.bloodEl.style.opacity = 0; } TD.blood = TD.scar = 0;
+    const H = TD.house; if (!H) return travel('room'); const [nx, nz] = H.n; TD.busy = false; TD.escaping = false;
+    enterBlr([H.out[0] + nx * (why === 'drain' ? 12 : 0), H.out[1] + nz * (why === 'drain' ? 12 : 0), Math.atan2(-nx, -nz)]);
+  }
+  // ---------- fight arena: his house, in place ----------
+  function tdArena(){ eventScene = TD.sc; PILLARS.length = 0; plats.event = plats.tidy.map(r => Object.assign({}, r)); TD.keep = new Set(TD.sc.children); }
+  function tdArenaBack(){ if (TD.keep) TD.sc.children.slice().forEach(o => { if (!TD.keep.has(o) && !TD.decals.includes(o) && !TD.fx.some(f => f.p === o) && o !== TD.av.g) { TD.sc.remove(o); if (o !== viewG && !(me && o === me.g)) disposeDeep(o); } }); TD.keep = null; }
+  // ---------- every frame ----------
+  function tdFrame(dt, now){
+    if (BL && BL.sc) { try { tdCityStep(dt); } catch (e) {} }
+    tdHudInit(); const inT = inWorld && zone === 'tidy' && !!TD.sc;
+    // talking to him in the street with E (or the button)
+    if (!inT) { const cityNear = inWorld && zone === 'blr' && TD.near && !doorNear && !EV && !A; TD.btn.hidden = !cityNear; if (cityNear) TD.btn.textContent = TD.near.label + (fine ? ' (E)' : '');
+      TD.hud.hidden = true; TD.tbtn.hidden = true; if (EV && EV.inTdy) { tdFightStep(dt); tdFxStep(dt); } else if (TD.bloodEl) TD.bloodEl.style.opacity = 0; return; }
+    const s = tdLoad(), night = TD.mode === 'night';
+    if (night && !TD.busy && !TD.escaping) { s.nightT = (s.nightT || 0) + dt;
+      if (s.nightT >= 300) { s.night++; s.nightT = 0; s.learned = (s.learned || 0) + 1; tdSave(); if (s.night > 5) return tdBadEnd(); tone(330, .6, 'sine', .03, 440); say(`Grey light under the door. He sleeps through the day; you don’t. You know his routine a little better now. Night ${s.night} of 5.`, 5200); }
+      if ((TD.saveT = (TD.saveT || 0) + dt) > 5) { TD.saveT = 0; tdSave(); } }
+    // what's in reach
+    TD.near = null; if (!TD.busy && !TD.escaping && !TD.hide) { const f = tdFloor(pos.x); let bd = 9;
+      TD.acts.forEach(a => { if (tdFloor(a.x) !== f) return; const d = Math.hypot(a.x - pos.x, a.z - pos.z); if (d > a.r || d >= bd) return; if (TD.mode === 'visit' && /^(chair|hideB|hideG|hideU1|hideU2|grate|phone)$/.test(a.k)) return; const l = a.label(); if (!l) return; bd = d; TD.near = { label: l, go: a.go, k: a.k }; }); }
+    TD.btn.hidden = !(TD.near || TD.hide) || TD.busy; if (!TD.btn.hidden) TD.btn.textContent = TD.hide ? `Come out${fine ? ' (E)' : ''}` : TD.near.label + (fine ? (TD.near.k === 'chair' ? '' : ' (E)') : '');
+    // your torch, from your eyes
+    const on = tdTorchOn(); TD.torch.intensity = on ? 2.4 : 0; if (on) { const fx = -Math.sin(yaw) * Math.cos(pitch), fy = Math.sin(pitch), fz = -Math.cos(yaw) * Math.cos(pitch); TD.torch.position.set(pos.x, pos.y - .1, pos.z); TD.torch.target.position.set(pos.x + fx * 6, pos.y + fy * 6, pos.z + fz * 6); TD.torch.target.updateMatrixWorld(); }
+    // bulbs flicker, worse when he's close
+    const A2 = TD.ai, dP = A2 && !A2.out && A2.mode !== 'gone' && tdFloor(A2.x) === tdFloor(pos.x) ? Math.hypot(A2.x - pos.x, A2.z - pos.z) : 99;
+    TD.lights.forEach(l => { l.fl -= dt; let k = 1; if (l.fl < 0) { if (Math.random() < (dP < 6 ? .5 : .08)) k = Math.random() * .4; if (l.fl < -.12) l.fl = .3 + Math.random() * (dP < 6 ? .8 : 4); } l.L.intensity = l.base * k * (night ? 1 : 1.3); l.g.visible = k > .5; });
+    // your heartbeat, faster the closer he is
+    if (night && dP < 11 && !scaresLow() || night && dP < 6) { TD.beatT = (TD.beatT || 0) - dt; if (TD.beatT <= 0) { TD.beatT = .35 + Math.max(0, dP - 1.5) / 11 * .85; tone(52, .1, 'sine', .09, 40); setTimeout(() => tone(48, .09, 'sine', .07, 38), 140); } }
+    // his voice over the intercom, now and then
+    if (night && A2 && A2.mode === 'routine' && !A2.out && dP > 6 && (A2.voiceT -= dt) <= 0) { A2.voiceT = 30 + Math.random() * 30; tdVoice(TD_VOICE[Math.random() * TD_VOICE.length | 0]); }
+    // the police, on their way
+    if (TD.police > 0 && night) { TD.police -= dt; if (TD.police <= 0) { TD.police = 0; tdEscape('police'); } }
+    // making noise when you move: running is loud, walking is soft, crouching is silent
+    if (night && !TD.tied && !TD.hide) { const mv = TD.lastP ? Math.hypot(pos.x - TD.lastP.x, pos.z - TD.lastP.z) / Math.max(dt, 1e-3) : 0; TD.noiseT = (TD.noiseT || 0) - dt;
+      if (mv > .5 && TD.noiseT <= 0 && KIT.crouchK < .5) { TD.noiseT = KIT.sprinting ? .45 : 1.1; tdNoise(pos.x, pos.z, KIT.sprinting ? 6.5 : 2); if (KIT.sprinting) tone(80 + Math.random() * 20, .05, 'triangle', .03); } }
+    TD.lastP = { x: pos.x, z: pos.z };
+    if (night && A2 && A2.mode !== 'down' && A2.mode !== 'gone' && !TD.busy && !TD.escaping) tdAiStep(dt, now);
+    tdFxStep(dt); if ((TD.hudT = (TD.hudT || 0) - dt) <= 0) { TD.hudT = .5; tdHudDraw(); }
+  }
+  // the house in the gallery of places: one log card on the phone
+  function tdPhoneCard(){ const s = tdLoad(); if (!s.log.length) return ''; return `<div class="phcard"><b>The Tidy Man</b><small>${s.log.slice(0, 4).map(esc).join('<br>')}</small></div>`; }
+  function tdNews(){ const s = tdLoad(); return s.state === 'arrested' ? ['POLITE ACCOUNTANT ARRESTED: POLICE FIND “HOUSE OF HORRORS” SPOTLESS', 'NEIGHBOURS SHOCKED: “HE ALWAYS SWEPT THE PAVEMENT”'] : s.state === 'loose' && s.log.length ? ['POLICE SEEK MAN IN OLIVE VEST AFTER TEEN ESCAPES QUIET-STREET HOUSE'] : []; }
+  addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'e' && inWorld && zone === 'blr' && TD.near && !doorNear && !DRV.on) TD.near.go(); });
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
@@ -15864,7 +16425,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // if the bookshelf is closed, the vault (and the operating table) is sealed off, so come back into the room instead
     fade(() => { inWorld = false; zone = 'hub'; uiZone(); walkTarget = null; vy = 0; pos.copy(saved.pos); yaw = saved.yaw; pitch = saved.pitch; if (region(pos.x) === 'vault' && !vaultOpen) { pos.set(3.2, 1.6, .3); yaw = Math.PI / 2; pitch = 0; } dock.classList.add('on'); $('#worldBack').hidden = true; jumpBtn.hidden = true; $('#worldBack').textContent = 'Back to the room'; });
   }
-  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : inWorld && zone === 'med' ? leaveMed() : inWorld && zone === 'farm' ? leaveFarm() : inWorld && zone === 'mc' ? bzLeave() : inWorld && zone === 'sp' ? spAbort() : inWorld && zone === 'blr' ? leaveBlr() : inWorld && (zone === 'twr' || zone === 'dsp') ? fade(() => travel('room'), '#06070B') : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
+  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : inWorld && zone === 'tidy' ? tdExit() : inWorld && zone === 'med' ? leaveMed() : inWorld && zone === 'farm' ? leaveFarm() : inWorld && zone === 'mc' ? bzLeave() : inWorld && zone === 'sp' ? spAbort() : inWorld && zone === 'blr' ? leaveBlr() : inWorld && (zone === 'twr' || zone === 'dsp') ? fade(() => travel('room'), '#06070B') : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
   function enterAI(){
     fade(() => {
       if (!aiScene) buildAI();
@@ -17248,6 +17809,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (zone === 'roof' && (pos.y < .5 || !platformAt(pos.x, pos.z) && pos.y < 1.4)) { zone = 'city'; cityAir = true; cityV.set(0, Math.min(0, vy), 0); cityLast = null; $('#worldBack').textContent = A ? 'Leave the fight' : 'Back to the rooftop'; }
     if (zone === 'city') { cityPhysics(dt); return roofStep(dt, now); }
     if (zone === 'blr' && (SW.on || SW.roof)) { webSwingStep(dt); if (SW.on || SW.roof) return; }
+    if (zone === 'tidy' && (TD.tied || TD.hide)) { vy = 0; grounded = true; pos.y = TD.tied ? 1.25 : 1.45; return; }
     // gravity
     const plat = platformAt(pos.x, pos.z), feet = pos.y - 1.6;
     if (zone === 'hub' && MK.flying) { vy = 0; grounded = true; pos.y += (1.9 - pos.y) * Math.min(1, dt * 5); }
