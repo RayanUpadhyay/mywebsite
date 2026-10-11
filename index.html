@@ -14309,7 +14309,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!(part === 'td1' || part === 'td2') || !EV.opts || !EV.opts.tdy) return; const A2 = TD.ai || { x: pos.x, z: pos.z - 2 };
     const b = addUnit({ hero: 'tidy', team: 'en' }); b.x = A2.x; b.z = A2.z; b.boss = 1; EV.boss = b; if (TD.fightAmbush) b.hp = b.max * .7; if (TD.av) TD.av.g.visible = false;
     EV.wpn = tdWeapon() || 'fists'; EV.prop = EV.wpn === 'fists' ? null : EV.wpn; EV.clawsTorn = true; EV.st.td = { b, dodgeT: 0, guard: 0, wounds: 0, final: part === 'td2', ph: 1, ndT: 7, grT: 6, frT: 1, amT: 6, trailT: 0, fl: 0 }; plats.event = plats.tidy.slice();
-    if (part === 'td2') { b.hp = b.max = Math.round(HEROES.tidy.hp * 1.15 * EV.foeHp); say(`He takes off his glasses, folds them, and puts them in his shirt pocket. “I’ve been looking forward to this. You’re the first one who ever got this far.”`, 4600); tone(55, 2, 'sawtooth', .05, 40); return; }
+    if (part === 'td2') { b.hp = b.max = Math.round(HEROES.tidy.hp * 1.15); say(`He takes off his glasses, folds them, and puts them in his shirt pocket. “I’ve been looking forward to this. You’re the first one who ever got this far.”`, 4600); tone(55, 2, 'sawtooth', .05, 40); return; }
     say(TD.fightAmbush ? 'You catch him from behind. Now.' : `He doesn’t shout. He just takes off his glasses and folds them away.${EV.wpn !== 'fists' ? '' : ' You have nothing but your hands.'}`, 3400);
   }
   function tdHit(u, d, from){
@@ -14335,7 +14335,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   // a jet of blood from a deep cut, in the direction the blow went
   function tdSpurt(u, n){ if (goreLow()) return tdGore(u.x, 1.3, u.z, 6, false); const a = Math.atan2(u.x - pos.x, u.z - pos.z), sc = sceneOf(); if (!sc) return;
-    const m = new THREE.MeshBasicMaterial({ color: 0x8A0808 }); for (let i = 0; i < n; i++) setTimeout(() => { if (!EV) return; const p = new THREE.Mesh(TD.dropG || (TD.dropG = new THREE.SphereGeometry(.025, 5, 4)), m); p.position.set(u.x, 1.35, u.z); sc.add(p);
+    const m = new THREE.MeshBasicMaterial({ color: 0x8A0808 }); for (let i = 0; i < n; i++) setTimeout(() => { if (!EV || TD.fx.length > (lowFx ? 120 : 260)) return; const p = new THREE.Mesh(TD.dropG || (TD.dropG = new THREE.SphereGeometry(.025, 5, 4)), m); p.position.set(u.x, 1.35, u.z); sc.add(p);
       TD.fx.push({ p, v: V(Math.sin(a) * (3 + Math.random() * 2) + (Math.random() - .5), 1.5 + Math.random() * 1.5, Math.cos(a) * (3 + Math.random() * 2) + (Math.random() - .5)), t: 0, sc, land: true }); }, i * 22); }
   // the final fight: 1. the kitchen, calm and precise; 2. lights out, a needle in the dark, he comes from behind; 3. untidy: bleeding, desperate, trying to drag you back to the chair
   function tdFinalStep(S, b, dt){
@@ -14371,7 +14371,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ---------- gore: blood that flies, lands, pools and stays (or dark flashes on Low) ----------
   function tdGore(x, y, z, n, spark){
     const low = goreLow(), sc = sceneOf(); if (!sc) return; const m = spark ? new THREE.MeshBasicMaterial({ color: 0xFFE0A0 }) : new THREE.MeshBasicMaterial({ color: low ? 0x2A2030 : 0x7A0A0A });
-    for (let i = 0; i < n; i++) { const p = new THREE.Mesh(TD.dropG || (TD.dropG = new THREE.SphereGeometry(.025, 5, 4)), m); p.position.set(x, y, z); sc.add(p); TD.fx.push({ p, v: V((Math.random() - .5) * 4, 1 + Math.random() * 3, (Math.random() - .5) * 4), t: 0, sc, land: !spark && !low }); }
+    for (let i = 0; i < n && TD.fx.length < (lowFx ? 120 : 260); i++) { const p = new THREE.Mesh(TD.dropG || (TD.dropG = new THREE.SphereGeometry(.025, 5, 4)), m); p.position.set(x, y, z); sc.add(p); TD.fx.push({ p, v: V((Math.random() - .5) * 4, 1 + Math.random() * 3, (Math.random() - .5) * 4), t: 0, sc, land: !spark && !low }); }
     if (low && !spark) { fadeEl.style.background = '#14101A'; fadeEl.classList.add('on'); setTimeout(() => fadeEl.classList.remove('on'), 60); }
   }
   function tdDecal(x, z, r, smear){
