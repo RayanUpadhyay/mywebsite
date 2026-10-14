@@ -2087,7 +2087,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const inDoor = (x, z) => vaultOpen && x > 4.2 && x <= 5.7 && z >= -.25 && z <= .85;
   const inVault = (x, z) => vaultOpen && Object.values(VR).some(r => inRect(r, x, z));
   const inHall = (x, z) => entered && ((Math.abs(x) < .45 && z > 4.2 && z <= 5.5) || (Math.abs(x) < 1.2 && z > 5.5 && z < 10.3));
-  const valid = (x, z) => inWorld ? zone === 'med' ? medValid(x, z) : zone === 'tidy' ? tdValid(x, z) : zone === 'apt' ? aptValid(x, z) : zone === 'fly' ? false : zone === 'farm' ? farmValid(x, z) : zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) || inDeep(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? (SW.roof ? swRoofOK(x, z) : blrValid(x, z)) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
+  const valid = (x, z) => inWorld ? zone === 'med' ? medValid(x, z) : zone === 'tidy' ? tdValid(x, z) : zone === 'apt' ? aptValid(x, z) : zone === 'fly' ? false : zone === 'xc' ? xcValid(x, z) : zone === 'xin' ? xinValid(x, z) : zone === 'farm' ? farmValid(x, z) : zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) || inDeep(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? (SW.roof ? swRoofOK(x, z) : blrValid(x, z)) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
   const region = x => x > 4.9 ? 'vault' : 'room';
   function flyTo(target, dir, done){
     if (inWorld) { const a = dir ? lookAngles(target, dir) : null; return moveCam(target, a ? a.yaw : null, a ? a.pitch : null, 1, done); }
@@ -3373,6 +3373,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function webStart(){
     if (inWorld && zone === 'mc') { if (!EV && !A) bzWeb(); return; }
     if (inWorld && zone === 'apt') { if (!EV && !A) aptWeb(); return; }
+    if (inWorld && zone === 'xc') { if (!EV && !A) xcWeb(); return; }
     if (held !== 'web' && inv.includes('web') && !dustedWeapon('web') && inWorld && (zone === 'blr' || zone === 'roof' || zone === 'city') && !EV && !A) hold('web');
     const street = inWorld && zone === 'blr' && !EV && !A && !BL.lvl && !DRV.on && !BL.cine && Math.abs(BL.off.y) < .01;
     if (held !== 'web' || dustedWeapon('web') || !inWorld || (zone !== 'roof' && zone !== 'city' && !street) || web.p) return;
@@ -3386,7 +3387,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function webEnd(){ if (inWorld && zone === 'mc') return bzWebEnd(); if (!web.p) return; web.p = null; cityV.y += 2.5; cityV.multiplyScalar(1.08); tone(700, .06, 'sine', .03, 1000); drawWeb(); }
   function drawWeb(){
     if (!web.line) { web.line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(0, 0, 0), V(0, 1, 0)]), new THREE.LineBasicMaterial({ color: 0xF4F4F4 })); web.line.userData.noPick = true; }
-    const wsc = zone === 'blr' ? BL.sc : zone === 'apt' ? APT.sc : roofScene;
+    const wsc = zone === 'blr' ? BL.sc : zone === 'apt' ? APT.sc : zone === 'xc' ? XC.sc : roofScene;
     if (!web.p || !wsc) { if (web.line.parent) web.line.parent.remove(web.line); return; }
     if (web.line.parent !== wsc) wsc.add(web.line);
     const hand = tmpV.set(.3, -.25, -.4).applyQuaternion(camera.quaternion).add(pos);
@@ -4852,7 +4853,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (menuBtn.hidden) { menuBtn.hidden = false; povBtn.hidden = false; povBtn.textContent = tpv ? '1st person' : '3rd person'; }
     if (!A) idleView();
     // web-shooters on the rooftop (or down in Bangalore): swinging is available
-    const canSwing = (held === 'web' || inv.includes('web') && zone === 'blr') && !dustedWeapon('web') && inWorld && (zone === 'roof' || zone === 'city' || zone === 'blr' && !EV && !BL.lvl && !DRV.on) || inWorld && zone === 'mc' && !EV && !A || inWorld && zone === 'apt' && !EV && !A && (held === 'web' || inv.includes('web')) && !dustedWeapon('web');
+    const canSwing = (held === 'web' || inv.includes('web') && zone === 'blr') && !dustedWeapon('web') && inWorld && (zone === 'roof' || zone === 'city' || zone === 'blr' && !EV && !BL.lvl && !DRV.on) || inWorld && zone === 'mc' && !EV && !A || inWorld && (zone === 'apt' || zone === 'xc' && !XC.drv && !XC.ride) && !EV && !A && (held === 'web' || inv.includes('web')) && !dustedWeapon('web');
     if (swingBtn.hidden === (canSwing && !fine)) swingBtn.hidden = !(canSwing && !fine);
     if (canSwing && !swingHinted) { swingHinted = true; say(fine ? 'Web-shooters: aim at a building and hold Q to swing. Release to let go; land on any roof. Space jumps off a roof.' : 'Web-shooters: aim at a building and hold Swing. Let go to fly; land on any roof.', 4200); }
   }
@@ -5639,7 +5640,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   for (let k = 0; k < 8; k++) { const a = k / 8 * Math.PI * 2 + Math.PI / 8; PILLARS.push({ x: Math.cos(a) * 12.5, z: Math.sin(a) * 12.5, r: 1 }); }
   const PILL0 = PILLARS.slice();
   const EMIT = { x: -11, z: 5, r: 3 };
-  const evValid = (x, z) => (EV && EV.inMap ? blrValid(x, z) : EV && EV.inTwr ? twrValid(x, z) : EV && EV.inDsp ? dspValid(x, z) : EV && EV.inMed ? medValid(x, z) : EV && EV.inTdy ? tdValid(x, z) : Math.hypot(x, z) < ER - .6) && !PILLARS.some(p => Math.hypot(x - p.x, z - p.z) < p.r + .4);
+  const evValid = (x, z) => (EV && EV.inMap ? blrValid(x, z) : EV && EV.inTwr ? twrValid(x, z) : EV && EV.inDsp ? dspValid(x, z) : EV && EV.inMed ? medValid(x, z) : EV && EV.inTdy ? tdValid(x, z) : EV && EV.inXc ? xcEvValid(x, z) : Math.hypot(x, z) < ER - .6) && !PILLARS.some(p => Math.hypot(x - p.x, z - p.z) < p.r + .4);
   function buildArena(k, home){
     if (eventScene) { if (eventScene.userData.homeG) eventScene.remove(eventScene.userData.homeG); disposeDeep(eventScene); }
     const sc = eventScene = new THREE.Scene();
@@ -5741,12 +5742,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function startEvent(k, team, hero, opts = {}){
     evOptsNow = opts;
-    const inMap = !!opts.site && !!(BL && BL.sc) && inWorld && (zone === 'blr' || zone === 'event' && !!EV && !!EV.inMap), inTwr = !!opts.twr && inWorld && (zone === 'twr' || zone === 'event' && !!EV && !!EV.inTwr), inDsp = !!opts.dsp && inWorld && (zone === 'dsp' || zone === 'event' && !!EV && !!EV.inDsp), inMed = !!opts.med && inWorld && (zone === 'med' || zone === 'event' && !!EV && !!EV.inMed), inTdy = !!opts.tdy && inWorld && (zone === 'tidy' || zone === 'event' && !!EV && !!EV.inTdy), retry = inMap && !!EV && EV.over;
+    const inMap = !!opts.site && !!(BL && BL.sc) && inWorld && (zone === 'blr' || zone === 'event' && !!EV && !!EV.inMap), inTwr = !!opts.twr && inWorld && (zone === 'twr' || zone === 'event' && !!EV && !!EV.inTwr), inDsp = !!opts.dsp && inWorld && (zone === 'dsp' || zone === 'event' && !!EV && !!EV.inDsp), inMed = !!opts.med && inWorld && (zone === 'med' || zone === 'event' && !!EV && !!EV.inMed), inTdy = !!opts.tdy && inWorld && (zone === 'tidy' || zone === 'event' && !!EV && !!EV.inTdy), inXc = !!opts.xc && inWorld && (zone === 'xc' || zone === 'xin' || zone === 'event' && !!EV && !!EV.inXc), retry = inMap && !!EV && EV.over;
     if (EV) stopEvent(true);
-    (inMap || inTwr || inDsp || inMed || inTdy ? f => f() : f => fade(f, '#0B0D14'))(() => {
-      const home = k === 'inc' && metDoom; if (inMap) blrArena(k, opts); else if (inTwr) twrArena(); else if (inDsp) dspArena(); else if (inMed) medArena(); else if (inTdy) tdArena(); else buildArena(k, home); tip.classList.remove('on'); if (k === 'inc') { incHero = hero; try { localStorage.setItem('ru-inchero', hero); } catch (e) {} }
+    (inMap || inTwr || inDsp || inMed || inTdy || inXc ? f => f() : f => fade(f, '#0B0D14'))(() => {
+      const home = k === 'inc' && metDoom; if (inMap) blrArena(k, opts); else if (inTwr) twrArena(); else if (inDsp) dspArena(); else if (inMed) medArena(); else if (inTdy) tdArena(); else if (inXc) xcArena(); else buildArena(k, home); tip.classList.remove('on'); if (k === 'inc') { incHero = hero; try { localStorage.setItem('ru-inchero', hero); } catch (e) {} }
       const H = HEROES[hero], hp0 = k === 'inc' && hero === 'hulk' ? 700 : H.hp, D0 = { easy: [.6, .8], normal: [1, 1], hard: [1.4, 1.25] }[opts.diff] || [1, 1], D = [D0[0] * .6, D0[1] * .7];  // story fights are a good bit easier than the old free-play numbers
-      EV = { inMap, inTwr, inDsp, inMed, inTdy, k, team, hero, opts, solo: !!opts.solo, diffIn: D[0], foeHp: D[1], look: heroLook(hero), hp: hp0, max: hp0, t: EVENTS[k].time, score: {}, units: [], shots: [], fx: [], cd: 0, spCd: 1, swing: 0, dead: 0, inv: 1.5, kos: 0, deaths: 0, dmg: 0, rage: 0,
+      EV = { inMap, inTwr, inDsp, inMed, inTdy, inXc, k, team, hero, opts, solo: !!opts.solo, diffIn: D[0], foeHp: D[1], look: heroLook(hero), hp: hp0, max: hp0, t: EVENTS[k].time, score: {}, units: [], shots: [], fx: [], cd: 0, spCd: 1, swing: 0, dead: 0, inv: 1.5, kos: 0, deaths: 0, dmg: 0, rage: 0,
         big: !!H.scale, scale: H.scale || 1, speed: H.speed, prop: H.prop || null, over: false, charge: 0, weak: 0, remotes: new Map(), home };
       Object.keys(EVENTS[k].teams).forEach(t => EV.score[t] = 0);
       EV.me = { isMe: 1, team, hero, x: 0, z: 0, dead: 0, r: H.r || .5 };
@@ -5778,9 +5779,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       EV.units.filter(u => u.team !== team && u.hero !== 'anchor').forEach(u => { u.hp = u.max = Math.round(u.max * EV.foeHp); });
       let [sx, sz] = spawnOf(team); if (home) { sx = 3.5; sz = 10.5; }
       saved = { pos: V(0, 1.6, 2.6), yaw: 0, pitch: -.05 };
-      inWorld = true; zone = 'event'; falling = false; vy = 0; walkTarget = null; if (!inMap && !inTwr && !inDsp && !inMed && !inTdy) { pos.set(sx, 1.6, sz); yaw = home ? Math.PI : sz > 0 ? 0 : Math.PI; pitch = -.08; } else if (retry && k === 'br' && (opts.part || 1) === 1) { const [lx, lz] = toLocal(8, 10); pos.set(lx, 1.6, lz); } if (k === 'wwh' && team === 'heroes') yaw = Math.atan2(sx, sz);
-      closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = inMap || inTwr || inDsp || inMed || inTdy ? 'Leave the fight' : 'Leave the event'; jumpBtn.hidden = fine; uiZone();
-      evHud.hidden = false; $('#evEnd').hidden = true; ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = false); if (inMap || inTwr || inDsp || inMed || inTdy) $('#evSwap').hidden = true; $('#evSp').textContent = `${H.sp}\n(E)`; $('#evSp').hidden = noImprov(hero, k); document.body.classList.add('inevent');
+      inWorld = true; zone = 'event'; falling = false; vy = 0; walkTarget = null; if (!inMap && !inTwr && !inDsp && !inMed && !inTdy && !inXc) { pos.set(sx, 1.6, sz); yaw = home ? Math.PI : sz > 0 ? 0 : Math.PI; pitch = -.08; } else if (retry && k === 'br' && (opts.part || 1) === 1) { const [lx, lz] = toLocal(8, 10); pos.set(lx, 1.6, lz); } if (k === 'wwh' && team === 'heroes') yaw = Math.atan2(sx, sz);
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = inMap || inTwr || inDsp || inMed || inTdy || inXc ? 'Leave the fight' : 'Leave the event'; jumpBtn.hidden = fine; uiZone();
+      evHud.hidden = false; $('#evEnd').hidden = true; ['#evAgain', '#evSwap', '#evLeave'].forEach(q => $(q).hidden = false); if (inMap || inTwr || inDsp || inMed || inTdy || inXc) $('#evSwap').hidden = true; $('#evSp').textContent = `${H.sp}\n(E)`; $('#evSp').hidden = noImprov(hero, k); document.body.classList.add('inevent');
       say(k === 'st' ? ({ u1: 'Ultron\u2019s drones, in the rain. You\u2019re still hurt, so pick your fights.', u2: 'Five connections keep him alive: three substations and two server racks. Break them all.', u3: 'Three cables feed his body. While they\u2019re plugged in, he heals and shrugs off your hits. Cut them first.', p1: 'Knock each possessed villain out to snap her string. They don\u2019t want to hurt you. She does.', p2: 'Your friends, on her strings. Knock them out to set them free. Watch out: she can get into your head too.', p3: 'She hides behind her puppets. Break every string, then hit her while she\u2019s exposed.', c1: 'Put out the fires (stand in them) and free the people trapped under the stalls (stand next to them).', c2: 'He\u2019s fast and he won\u2019t fight fair. Land 5 hits to wear him down.', c3: 'The Copycat, in a cape he bought online. Beat him.' })[opts.part || 'u1'] || (SBTXT[opts.part] || {}).intro || '' : k === 'of' ? 'The last world left is your own room. The Overfit is here, wearing everything he stole. Mix up your attacks: he learns anything you repeat. E improvises something random.' : k === 'br' ? ['Tail the truck. Stay between 6 and 13 metres: any closer and they\u2019ll spot you.', 'Clear out his guards quietly. Their gear is cheap knock-offs, but you\u2019re hurt: one wrong move and you\u2019re done.', 'Floor by floor to the top. You won\u2019t get back up if you go down.', 'The Broker, in a suit built from the wreckage of every battle. Break it apart piece by piece.'][(opts.part || 1) - 1] : k === 'cv' ? `Convergence. Every universe is about to collide. Guard the three anchors and survive until Doom shows up.` : isPvp(k) ? `You’re ${H.name}. First team to ${EVENTS[k].goal} takedowns wins.` : k === 'sw' ? 'Capture the three domain flags: stand in a ring with no enemies inside. First side to 120 points wins.' : k === 'fp' ? 'You’re the Flash. Grab ten glowing timeline shards before Reverse-Flash does. E dashes through anyone in your way.' : k === 'dks' ? 'Darkseid is here. Stay out of the fire pits, beat the Parademons and take him down. Watch out for his Omega Beams.' : k === 'wwh' ? (team === 'hulk' ? 'You’re the Hulk. Smash the heroes and survive until time runs out. Space to leap, E to thunderclap.' : 'Take the Hulk down before time runs out. Stay spread out: his thunderclap hits everyone nearby.') : k === 'inc' ? 'The other Earth is coming. Hold the three golden anchors against the variants pouring out of the rifts, then take down Doom.' : 'Superman is invulnerable. Hold the green Kryptonite emitter to weaken him, then hit him with everything.', 5200);
       if (k === 'cv') { $('#worldBack').hidden = true; if (opts.forced) say('The portal misfires! Every universe is colliding at once, and you\u2019ve been pulled into the middle of it. There\u2019s no way out but through.', 6000); }
       narrStart();
@@ -5792,8 +5793,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function stopEvent(quiet){
     if (EV && EV.camT > 0) tpv = EV.camSaved; document.body.classList.remove('possessed'); document.body.classList.remove('pain'); dlgClear();
     if (!EV) return; kitClear(); EV.units.slice().forEach(dropUnit); EV.shots.forEach(s => s.m && s.m.parent && s.m.parent.remove(s.m)); EV.fx.forEach(f => f.m.parent && f.m.parent.remove(f.m));
-    const wasHome = EV.home, wasMap = EV.inMap, wasTwr = EV.inTwr, wasDsp = EV.inDsp, wasMed = EV.inMed, wasTdy = EV.inTdy, wasMoon = !!EV.moon, wasBk = !!(EV.opts && EV.opts.bk); EV = null; evHud.hidden = true; evHurt.style.opacity = 0; document.body.classList.remove('inevent'); if (document.pointerLockElement) document.exitPointerLock();
+    const wasHome = EV.home, wasMap = EV.inMap, wasTwr = EV.inTwr, wasDsp = EV.inDsp, wasMed = EV.inMed, wasTdy = EV.inTdy, wasXc = EV.inXc, wasMoon = !!EV.moon, wasBk = !!(EV.opts && EV.opts.bk); EV = null; evHud.hidden = true; evHurt.style.opacity = 0; document.body.classList.remove('inevent'); if (document.pointerLockElement) document.exitPointerLock();
     if (wasTdy) tdBack();
+    else if (wasXc) xcBack();
     else if (wasMed) medBack();
     else if (wasMap) blrBack();
     else if (wasTwr) twrBack();
@@ -5912,6 +5914,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function endMatch(won){
     if (EV && EV.opts && EV.opts.bk && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return bkFightEnd(won); }
     if (EV && EV.opts && EV.opts.cb && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return cbFightEnd(won); }
+    if (EV && EV.opts && EV.opts.xc && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return xcFightEnd(won); }
     if (EV && EV.opts && EV.opts.tdy && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return tdFightEnd(won); }
     if (EV && EV.opts && EV.opts.sf && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return sfFightEnd(won); }
     if (EV && !EV.over) { storyFlag('ev:' + EV.k); if (won) storyFlag('evwin:' + EV.k); if (won && EV.k === 'br') storyFlag('br' + EV.part); if (won && EV.k === 'st') { storyFlag(EV.st.part); sbWon(EV.st.part); } }
@@ -7625,7 +7628,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function stSetup(part){
     const S = EV.st = { part, trick: 0, possT: 12, wave: 0, fires: [], people: [], tags: 0, ready: false }, add = (h, x, z) => { const u = addUnit({ hero: h, team: 'en' }); u.x = x; u.z = z; if (S.ready) { u.hp = u.max = Math.round(u.max * EV.foeHp); drawTag(u); } if (h === 'udrone') droneAv(u); return u; }, ring = (n, R) => Array.from({ length: n }, (_, i) => [Math.cos(i / n * Math.PI * 2) * R, Math.sin(i / n * Math.PI * 2) * R - 4]);
     S.add = add; S.ring = ring;
-    stSetup2(part); sbSetup(part); cbSetup(part); if (EV.opts && EV.opts.sf) sfSetupMap(part); gangSetup(part); moonSetup(part); bkFSetup(part); bk7Setup(part); zSetup(part); kSetup(part); vSetup(part); xSetup(part); actSetup(part); a5Setup(part); tdSetup(part);
+    stSetup2(part); sbSetup(part); cbSetup(part); if (EV.opts && EV.opts.sf) sfSetupMap(part); gangSetup(part); moonSetup(part); bkFSetup(part); bk7Setup(part); zSetup(part); kSetup(part); vSetup(part); xSetup(part); actSetup(part); a5Setup(part); tdSetup(part); xcSetup(part);
     if (part === 'u1') S.wave = 0;
     if (part === 'u2') { S.targets = (EV.inMap ? U2_TARGETS.map(([x, z, h]) => [...toLocal(x, z), h]) : [[-16, -12, 'ustation'], [16, -12, 'ustation'], [0, -20, 'ustation'], [-12, 10, 'userver'], [12, 10, 'userver']]).map(([x, z, h]) => { const u = add(h, x, z); staticAv(u, h); return u; }); S.droneT = 2; }
     if (part === 'u3') { const b = add('ultronx', 0, -14); ultronAv(b); b.boss = 1; EV.boss = b; S.cables = [[-12, -18], [12, -18], [0, -24]].map(([x, z]) => { const u = add('ucable', x, z); staticAv(u, 'ucable'); return u; }); S.cableLine = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xFF3030 })); eventScene.add(S.cableLine); for (let i = 0; i < 3; i++) add('udrone', (i - 1) * 6, -8); }
@@ -8149,7 +8152,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       + SUITS2.map(([k, c]) => { const got = shopGot.includes(k); return `<div class="phcard"><b>${OUTFITS[k].name}</b><small>${got ? 'Yours. Change into it from the mirror or the Look menu.' : 'A new suit.'}</small><div class="phrow">${got ? '<button type="button" disabled>Owned</button>' : `<button type="button" class="y" data-s="${k}" data-c="${c}" ${JOB.rep < c ? 'disabled' : ''}>Buy for ${c}</button>`}</div></div>`; }).join('');
       B.querySelectorAll('[data-u]').forEach(b => b.onclick = () => { const k = b.dataset.u, c = UPG2_DEF[k][2][UPG2[k]]; if (JOB.rep < c) return; JOB.rep -= c; UPG2[k]++; jobSave(); upgSave(); tone(784, .15, 'triangle', .05); say(`${UPG2_DEF[k][0]} upgraded to level ${UPG2[k]}.`, 2200); phShow('upg'); });
       B.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { const k = b.dataset.s, c = +b.dataset.c; if (JOB.rep < c) return; JOB.rep -= c; jobSave(); shopGot.push(k); try { localStorage.setItem('ru-shop', JSON.stringify(shopGot)); } catch (e) {} look.outfit = k; look.cape = OUTFITS[k].cape ? 1 : 0; saveLook(); idleShown = undefined; tone(988, .2, 'triangle', .05); say(`You’re wearing the ${OUTFITS[k].name} now.`, 2400); phShow('upg'); }); return; }
-    if (t === 'news') { const H = []; try { H.push(...storyHeadlines()); } catch (e) {} try { H.unshift(...tdNews()); } catch (e) {} if (JOB.sealed.size) H.unshift(`${JOB.sealed.size} DRUG DEN${JOB.sealed.size > 1 ? 'S' : ''} SHUT DOWN. POLICE SAY THEY ‘HAD SOME HELP’`); if (Object.keys(SBK).length) H.unshift(`MASKED HERO BEATS ${SBOSS.filter(q => SBK[q.id]).map(q => q.name.toUpperCase()).join(', ')}`); if (HEAT.lv) H.unshift('POLICE HUNT RECKLESS VIGILANTE ACROSS CITY'); if (JOB.done) H.push(`“${heroName().toUpperCase()} FOUND MY CAT,” SAYS GRATEFUL AUNTY`); if (festNow()) H.unshift('FIREWORKS LIGHT UP THE CITY TONIGHT');
+    if (t === 'news') { const H = []; try { H.push(...storyHeadlines()); } catch (e) {} try { H.unshift(...tdNews()); } catch (e) {} try { H.push(...xcNews()); } catch (e) {} if (JOB.sealed.size) H.unshift(`${JOB.sealed.size} DRUG DEN${JOB.sealed.size > 1 ? 'S' : ''} SHUT DOWN. POLICE SAY THEY ‘HAD SOME HELP’`); if (Object.keys(SBK).length) H.unshift(`MASKED HERO BEATS ${SBOSS.filter(q => SBK[q.id]).map(q => q.name.toUpperCase()).join(', ')}`); if (HEAT.lv) H.unshift('POLICE HUNT RECKLESS VIGILANTE ACROSS CITY'); if (JOB.done) H.push(`“${heroName().toUpperCase()} FOUND MY CAT,” SAYS GRATEFUL AUNTY`); if (festNow()) H.unshift('FIREWORKS LIGHT UP THE CITY TONIGHT');
       B.innerHTML = '<div class="phcard"><b>The Daily Bugle · Bangalore edition</b><small>Today’s headlines</small></div>' + (H.length ? H.slice(0, 8) : ['QUIET DAY IN THE GARDEN CITY']).map(x => `<div class="phnews">${esc(nmT(x))}</div>`).join(''); return; }
     if (t === 'contacts') { B.innerHTML = '<div class="phcard"><b>Contacts</b><small>People you’ve helped. Call them for another job.</small></div>' + (PH.contacts.length ? PH.contacts.map((c, i) => `<div class="phcard"><b>${esc(c.who)}</b><small>${esc(c.where)}</small><div class="phrow"><button type="button" class="y" data-c="${i}" ${JOB.q ? 'disabled' : ''}>Call</button></div></div>`).join('') : '<div class="phcard"><small>No contacts yet. Take a job from someone first.</small></div>');
       B.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { const c = PH.contacts[+b.dataset.c], d = DOORS.find(x => x.name === c.where); if (!d || JOB.q) return; const keep = BIN.d; BIN.d = d; const o = jobOffer(d); BIN.d = keep; tone(523, .1, 'sine', .04); if (!o) return say(`${c.who}: “Nothing today. Thanks for calling!”`, 2600); phoneClose(); askChoice('job', v => { if (v === 'yes') jobStart(o); }, { q: `${c.who} (on the phone): “${o.ask}”`, a: [['yes', 'On my way'], ['no', 'Not right now']] }); }); return; }
@@ -12887,7 +12890,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // every couple of seconds: achievements, the real night, and the phone light
   let nightChecked = false;
   function littleStep(dt, now){
-    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now);
+    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.dz) deathStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.fin) finalStep(dt, now);
@@ -12920,10 +12923,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (u.dead > 0) { u.dead -= dt; if (u.dead <= 0 && !u.boss && u.hero !== 'hulk') { place(u); u.hp = u.max; u.av.g.visible = true; drawTag(u); } return; }
     u.cd -= dt; u.spCd -= dt; u.stun -= dt; u.rage -= dt; u.swing = Math.max(0, u.swing - dt);
     if (H.regen || u.rage > 0) u.hp = Math.min(u.max, u.hp + (u.rage > 0 ? 8 : H.regen) * dt);
-    u.x += u.kx * dt; u.z += u.kz * dt; u.kx *= Math.max(0, 1 - dt * 5); u.kz *= Math.max(0, 1 - dt * 5); if (!evValid(u.x, u.z) && (EV.inMap || EV.inTwr || EV.inDsp || EV.inMed || EV.inTdy)) { u.x -= u.kx * dt; u.z -= u.kz * dt; } else if (!evValid(u.x, u.z)) { const d = Math.hypot(u.x, u.z); if (d > ER - .7) { u.x *= (ER - .8) / d; u.z *= (ER - .8) / d; } PILLARS.forEach(p => { const dd = Math.hypot(u.x - p.x, u.z - p.z); if (dd < p.r + .45) { u.x = p.x + (u.x - p.x) / dd * (p.r + .46); u.z = p.z + (u.z - p.z) / dd * (p.r + .46); } }); }
+    u.x += u.kx * dt; u.z += u.kz * dt; u.kx *= Math.max(0, 1 - dt * 5); u.kz *= Math.max(0, 1 - dt * 5); if (!evValid(u.x, u.z) && (EV.inMap || EV.inTwr || EV.inDsp || EV.inMed || EV.inTdy || EV.inXc)) { u.x -= u.kx * dt; u.z -= u.kz * dt; } else if (!evValid(u.x, u.z)) { const d = Math.hypot(u.x, u.z); if (d > ER - .7) { u.x *= (ER - .8) / d; u.z *= (ER - .8) / d; } PILLARS.forEach(p => { const dd = Math.hypot(u.x - p.x, u.z - p.z); if (dd < p.r + .45) { u.x = p.x + (u.x - p.x) / dd * (p.r + .46); u.z = p.z + (u.z - p.z) / dd * (p.r + .46); } }); }
     if (u.stun > 0) return;
     if (EV.k === 'br' && EV.part === 2 && !u.alert && brSneak(u, dt)) return;
-    if (u.boss && u.hero !== 'tidy') return supermanStep(u, dt, t);
+    if (u.boss && u.hero !== 'tidy' && !HEROES[u.hero].grounded) return supermanStep(u, dt, t);
     if ((EV.k === 'sw' || EV.k === 'cv' && u.role === 'flag') && swBot(u, dt)) return;
     if (EV.k === 'fp' && u.hero === 'rflash' && fpBot(u, dt)) return;
     if ((u.retarget = (u.retarget || 0) - dt) <= 0 || !u.tgt || !alive(u.tgt)) { u.retarget = 1 + Math.random(); u.tgt = nearestFoe(u); }
@@ -13048,7 +13051,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // shots
     EV.shots = EV.shots.filter(s => {
       s.x += s.vx * dt; s.z += s.vz * dt; s.life -= dt; s.m.position.set(s.x, s.y, s.z); if (s.big) s.m.rotation.z += dt * 20;
-      if (!evValid(s.x, s.z) && (EV.inTwr || EV.inDsp || EV.inMed || EV.inTdy || Math.hypot(s.x, s.z) > ER - 1)) s.life = 0;
+      if (!evValid(s.x, s.z) && (EV.inTwr || EV.inDsp || EV.inMed || EV.inTdy || EV.inXc || Math.hypot(s.x, s.z) > ER - 1)) s.life = 0;
       if (PILLARS.some(p => Math.hypot(s.x - p.x, s.z - p.z) < p.r)) s.life = 0;
       if (s.life > 0) for (const o of bodies()) { if (!alive(o) || teamOf(o) === s.team || s.hit === o) continue; const rr = (HEROES[o.hero].r || .5) + (s.big ? .4 : .2); if (Math.hypot(o.x - s.x, o.z - s.z) < rr) {
         if (o.isMe && kitReflect(s)) break; if (s.from === 'me') EV.hitTool = s.tool || null;
@@ -13537,7 +13540,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const platformAt = (x, z) => plats[zone].find(p => onPlat(x, z, p)) || null;
   let codeScene = null, chipScene = null, seaScene = null, falling = false;
   let spaceScene = null, eventScene = null; const areaScenes = {};
-  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene, event: eventScene, void: voidScene, blr: BL && BL.sc, twr: TWR && TWR.sc, dsp: DSP && DSP.sc, mc: BZ.sc, sp: SPF.sc, med: MED.sc, farm: FM.sc, tidy: TD.sc, apt: APT.sc, fly: APT.fsc })[zone] || areaScenes[zone] : scene;
+  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene, event: eventScene, void: voidScene, blr: BL && BL.sc, twr: TWR && TWR.sc, dsp: DSP && DSP.sc, mc: BZ.sc, sp: SPF.sc, med: MED.sc, farm: FM.sc, tidy: TD.sc, apt: APT.sc, fly: APT.fsc, xc: XC.sc, xin: XC.isc })[zone] || areaScenes[zone] : scene;
   function radTile(parent, ch, x, y, z){
     const m = new THREE.Mesh(new THREE.PlaneGeometry(.55, .55), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: tex(160, 160, (g, w, h) => { g.fillStyle = '#FFE29A'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, h, 34) : g.rect(0, 0, w, h); g.fill(); g.fillStyle = '#24425E'; g.font = `700 110px ${ZH}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, w / 2, h / 2 + 6); }) }));
     m.position.set(x, y, z); m.userData.collect = ch; m.userData.base = y; parent.add(m); worldAnim.tiles.push(m); return m;
@@ -14528,7 +14531,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     goi: { name: 'Goa', code: 'GOI', port: 'Goa Coastal Airport', col: 0x1F8A6A, acc: '#FFD27A', grass: 0x4E8A3E, sea: 1, ground: 0x6E8A4A },
     del: { name: 'Delhi', code: 'DEL', port: 'Delhi Capital International', col: 0x8A3A9A, acc: '#F2C94A', grass: 0x8A8456, sea: 0, ground: 0x9A8A66 } };
   // which cities you can actually walk into from their airport (the rest are still being built)
-  const APT_OPEN = { blr: 1 };
+  const APT_OPEN = { blr: 1, bom: 1 };
   const APT_KEY = 'ru-air', APT_FARE = 15;
   const APT = { sc: null, fsc: null, city: 'blr', B: [], acts: [], people: [], planes: [], solids: [], air: false, roof: 0, near: null, ticket: null, fly: null, stand: null, standG: null };
   const APT_T = { x0: -60, x1: 60, z0: -12, z1: 30, h: 14 };
@@ -14663,7 +14666,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function aptLeave(){
     if (!APT_OPEN[APT.city]) return say(`${APT_CITIES[APT.city].name}’s streets aren’t open yet. The departures board can fly you on or home.`, 3600);
     APT.ticket = null; APT.air = false; APT.roof = 0; web.p = null; drawWeb();
-    if (APT.city === 'blr') { const s = APT.stand || [330, 0]; enterBlr([s[0] - 4, s[1], -Math.PI / 2]); }
+    if (APT.city === 'blr') { const s = APT.stand || [330, 0]; enterBlr([s[0] - 4, s[1], -Math.PI / 2]); } else { xcEnter(APT.city); return; }
     setTimeout(() => { if (zone !== 'apt' && zone !== 'fly') aptFree(); }, 1500);
   }
   // ---------- the taxi stand on Bangalore's east edge ----------
@@ -14776,6 +14779,489 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function aptArrive(){
     const tk = APT.ticket; if (!tk || APT.arriving) return; APT.arriving = true; const s = aptLoad(); s.flights++; s.last = tk.to; aptSave(s); APT.arrGate = tk.gate;
     APT.ticket = null; aptEnter(tk.to, 'gate'); setTimeout(() => { APT.arriving = false; }, 1500);
+  }
+  // ======================= Other cities: Mumbai, Goa and Delhi, each a full city of its own =======================
+  // One engine builds whichever city you fly to: a road grid at Bangalore's scale with traffic you can drive, crowds,
+  // shops you can walk into (with jobs from the people inside), rooftops, web-swinging, a stash house to raid at night,
+  // street bosses, local transport, parks and landmarks, secrets, the real weather and time there, and its own headlines.
+  // Only the city you're in is built; leaving it frees it. Each city keeps its own save (ru-xc-<city>), so Bangalore's are untouched.
+  const XC_L = [-220, -165, -110, -55, 0, 55, 110, 165, 220], XC_B = 240;
+  const XC = { city: '', P: null, sc: null, g: null, lots: [], B: [], grid: new Map(), ims: [], cars: [], peds: [], doors: [], acts: [], lm: [], anim: [], water: [], air: false, roof: 0, drv: null, near: null, s: null, wx: null, rain: null, dist: '', ride: null, isc: null, inside: null, sun: null, hemi: null };
+  const XC_ZERO = new THREE.Vector3();
+  // a material for city buildings: Bangalore's window shader (windows follow the world, so they don't stretch), in this city's tint
+  function xcFacade(k, tint){ const m = facadeMat(k), ob = m.onBeforeCompile; m.onBeforeCompile = sh => { ob(sh); sh.uniforms.uOff.value = XC_ZERO; }; m.color.setHex(tint); return m; }
+  function xcLoad(c){ let s = null; try { s = JSON.parse(localStorage.getItem('ru-xc-' + c) || 'null'); } catch (e) {} return Object.assign({ v: 1, visits: 0, secrets: [], bosses: [], raids: 0, jobs: 0, rides: 0, seen: [] }, s && typeof s === 'object' ? s : {}); }
+  function xcSave(){ if (!XC.city || !XC.s) return; try { localStorage.setItem('ru-xc-' + XC.city, JSON.stringify(XC.s)); } catch (e) {} }
+  // ---------- each city's character ----------
+  const XC_P = {
+    bom: { name: 'Mumbai', lat: 19.08, lon: 72.88, tints: [0xF2EEE6, 0xE8DCC8, 0xD8E4EC], sky: [0x9EC8E8, 0xF0A070, 0x0A1430], warm: .1,
+      water: [[-900, -232, -900, 900], [40, 900, -900, -232]], // the Arabian Sea to the west, the harbour to the south-east
+      h: (x, z, r) => x > 110 && z > -60 && z < 70 ? 11 + r * 6 : Math.hypot(x - 20, z - 40) < 120 ? 34 + r * 60 : 16 + r * 34,
+      dists: [['Marine Lines', x => x < -110], ['the Fort', (x, z) => z < -110], ['the chawls', (x, z) => x > 110 && z > -60 && z < 70], ['Dadar', (x, z) => z > 110], ['Central Mumbai', () => true]],
+      shops: [['Vada Pav Corner', 'food'], ['Irani Café', 'food'], ['Chowpatty Pav Bhaji', 'food'], ['Bombay Chemist', 'shop'], ['Lucky Tailors', 'shop'], ['Crawford Fabrics', 'shop'], ['Film Poster House', 'shop'], ['Sea Breeze Kirana', 'shop'], ['Harbour Electronics', 'shop'], ['Dabba Express', 'food'], ['Gold Souk Jewellers', 'shop'], ['Colaba Books', 'shop']],
+      transit: { kind: 'train', name: 'the local train', axis: 'z', at: 82, st: [[-150, 'Marine Lines'], [10, 'Mumbai Central'], [170, 'Dadar']] },
+      bosses: [{ id: 'xb_toll', name: 'The Tollkeeper', at: [-228, 168], hp: 560, look: [0x2A2D33, 0xE8B04A], line: 'Everybody pays to cross. Even you.', win: 'The Tollkeeper’s booth is empty. Drivers cross the sea bridge for free tonight.' },
+        { id: 'xb_dada', name: 'Chawl Dada', at: [165, 30], hp: 620, look: [0xF2EEE6, 0x5A3A2A], line: 'These lanes are mine. Every landlord, every rent, every door.', win: 'Chawl Dada is carried out of the lanes. The families on the third floor cheer from the balconies.' }],
+      news: ['MASKED HERO SPOTTED ON MARINE DRIVE AT MIDNIGHT', 'LOCAL TRAIN COMMUTERS SAY “HE HELD THE DOORS”', 'HARBOUR SMUGGLERS ARRESTED AFTER TIP-OFF'],
+      sea: 1 },
+    goi: { name: 'Goa', lat: 15.49, lon: 73.83, tints: [0xF2D27A, 0x8FC8E0, 0xE8907A], sky: [0xA8D4F0, 0xF4904E, 0x0C1830], warm: .35,
+      water: [[-900, -205, -900, 900], [-205, 900, 140, 172]], // the beach and the sea to the west, the river across the north
+      h: (x, z, r) => x > 60 && z < 120 && z > -120 ? 7 + r * 5 : 6 + r * 8,
+      dists: [['the beach', x => x < -150], ['Fontainhas', (x, z) => x > 60 && z < 120 && z > -120], ['across the river', (x, z) => z > 172], ['Panjim', () => true]],
+      shops: [['Shack Café', 'food'], ['Fish Thali House', 'food'], ['Bebinca Bakery', 'food'], ['Azulejo Tiles', 'shop'], ['Surf & Scooter Hire', 'shop'], ['Cashew Corner', 'shop'], ['Old Quarter Pharmacy', 'shop'], ['Riverside Books', 'shop'], ['Coconut Stand', 'food'], ['Feira Market', 'shop']],
+      transit: { kind: 'ferry', name: 'the river ferry', axis: 'x', at: 156, st: [[-120, 'Beach Jetty'], [40, 'Panjim Jetty'], [180, 'Old Quarter Jetty']] },
+      bosses: [{ id: 'xb_salt', name: 'Captain Salt', at: [-178, -62], hp: 560, look: [0x2A4A6A, 0xF2EEE6], line: 'This beach has a price, boy. I set it.', win: 'Captain Salt’s boats are tied up and empty. The fishermen go out at dawn without paying anyone.' },
+        { id: 'xb_land', name: 'The Land Shark', at: [110, 100], hp: 620, look: [0xE8E4DC, 0x8A1A2E], line: 'Pretty old houses. They’d look prettier knocked down.', win: 'The Land Shark’s forged papers blow down the lane. The old houses stay standing.' }],
+      news: ['STRANGER IN A MASK PULLS SWIMMER FROM RIP CURRENT', 'OLD QUARTER SAVED: LAND DEAL “WAS FORGED”', 'BEACH SHACKS REPORT QUIETEST SEASON IN YEARS'],
+      sea: 1, palms: 1, bridges: [[-205, 900, 140, 172]] },
+    del: { name: 'Delhi', lat: 28.61, lon: 77.21, tints: [0xE8DCC0, 0xD89A7A, 0xE0E4E8], sky: [0xB8C8D8, 0xE8A070, 0x0C1028], warm: .2, haze: 1,
+      water: [],
+      h: (x, z, r) => x > 110 && z > 110 ? 8 + r * 6 : Math.abs(z) < 30 ? 0 : 14 + r * 30,
+      dists: [['the Old City', (x, z) => x > 110 && z > 110], ['the Avenue', (x, z) => Math.abs(z) < 30], ['Mehrauli', (x, z) => z < -150], ['Connaught Circle', (x, z) => Math.hypot(x, z - 90) < 60], ['New Delhi', () => true]],
+      shops: [['Paratha Gali Stall', 'food'], ['Chaat Corner', 'food'], ['Chhole Bhature House', 'food'], ['Spice Market Traders', 'shop'], ['Chandni Silks', 'shop'], ['Old City Clocks', 'shop'], ['Kulfi Wala', 'food'], ['Circle Book Depot', 'shop'], ['Brass & Copper', 'shop'], ['Metro Mobiles', 'shop']],
+      transit: { kind: 'metro', name: 'the metro', axis: 'x', at: 52, st: [[-160, 'Mehrauli Road'], [0, 'Central Secretariat'], [170, 'Old City Gate']] },
+      bosses: [{ id: 'xb_courier', name: 'The Courier', at: [-55, -150], hp: 540, look: [0x1E5AA8, 0xFFC93C], line: 'I deliver anything. Tonight I’m delivering you.', win: 'The Courier’s stolen parcels are back at the post office by morning.' },
+        { id: 'xb_babu', name: 'Brass Knuckle Babu', at: [165, 150], hp: 640, look: [0x5A4632, 0xC9A04A], line: 'Every stall in this market pays me. Twice on Sundays.', win: 'Brass Knuckle Babu is led away through the market. The stallholders keep their takings.' }],
+      news: ['THE AVENUE AT NIGHT: “A SHADOW ON THE GATE”', 'OLD CITY MARKET PROTECTION RACKET BROKEN', 'METRO STATION THIEVES CAUGHT, TIED UP NEATLY'] } };
+  const xcInWater = (x, z) => XC.P && XC.P.water.some(w => x > w[0] && x < w[1] && z > w[2] && z < w[3]) && !(XC.P.bridges && XC.P.bridges.some(r => x > r[0] && x < r[1] && z > r[2] && z < r[3]) && XC_L.some(l => Math.abs(x - l) < 5));
+  const xcDist = (x, z) => { const D = XC.P.dists.find(d => d[1](x, z)); return D ? D[0] : XC.P.name; };
+  const xcHash = (x, z) => { const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453; return s - Math.floor(s); };
+  const xcOnRoad = (x, z) => XC_L.some(l => Math.abs(x - l) < 5 || Math.abs(z - l) < 5);
+  // solid things: buildings and landmarks, with their tops (for rooftops and swinging), in a grid for speed
+  function xcSolid(x0, x1, z0, z1, top, tag){ const b = { x0, x1, z0, z1, top, tag }; XC.B.push(b); for (let gx = Math.floor(x0 / 16); gx <= Math.floor(x1 / 16); gx++) for (let gz = Math.floor(z0 / 16); gz <= Math.floor(z1 / 16); gz++) { const k = gx + ',' + gz; if (!XC.grid.has(k)) XC.grid.set(k, []); XC.grid.get(k).push(b); } return b; }
+  const xcCell = (x, z) => XC.grid.get(Math.floor(x / 16) + ',' + Math.floor(z / 16)) || [];
+  function xcTopAt(x, z){ let t = 0; for (const b of xcCell(x, z)) if (x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1 && b.top > t) t = b.top; return t; }
+  function xcTop(x, z, f){ let t = 0; for (const b of xcCell(x, z)) if (x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1 && b.top <= f + .6 && b.top > t) t = b.top; return t; }
+  const xcOut = (x, z) => Math.abs(x) > XC_B + 40 || Math.abs(z) > XC_B + 40;
+  function xcBlocked(x, z, f, m){ if (xcOut(x, z)) return true; for (const b of xcCell(x, z)) if (x > b.x0 - m && x < b.x1 + m && z > b.z0 - m && z < b.z1 + m && b.top > f + .45 && !(b.low && f + 1.9 < b.low)) return true; if (m) for (const [dx, dz] of [[m, 0], [-m, 0], [0, m], [0, -m]]) for (const b of xcCell(x + dx, z + dz)) if (x + dx > b.x0 && x + dx < b.x1 && z + dz > b.z0 && z + dz < b.z1 && b.top > f + .45 && !(b.low && f + 1.9 < b.low)) return true; return false; }
+  function xcValid(x, z){
+    if (XC.air || XC.drv || XC.ride) return false; if (Math.abs(x) > XC_B || Math.abs(z) > XC_B) return false;
+    if (XC.roof) return !xcBlocked(x, z, XC.roof, 0) && xcTopAt(x, z) >= XC.roof - .35 || xcTopAt(x, z) < XC.roof - .35;
+    if (xcInWater(x, z)) return false; return !xcBlocked(x, z, 0, .3);
+  }
+  // ---------- Mumbai: Marine Drive, the harbour arch, the sea bridge, chawls, Chowpatty, the maidan, the local train ----------
+  const XC_LM = {};
+  XC_LM.bom = {
+    res: [[-216, -168, 58, 112], [118, 182, -232, -186], [-112, -58, -112, -58], [-166, -134, -206, -174], [84, 105, -162, -138], [84, 105, -2, 22], [84, 105, 158, 182]],
+    taxi: [7, 214], hello: 'Mumbai. Salt in the air, the sea wall to the west, and the local train rattling through the middle of town. Marine Drive lights up after dark.',
+    secrets: [[150, 27.2, -214, 'A pigeon’s nest on top of the harbour arch, full of shiny bottle caps.'], [-228.5, 0, -228, 'A message in a bottle on the sea wall: “If you find this, the tide was kind.”'], [190, -1, 40, 'A tiffin box on a chawl roof, still warm. Someone’s lunch, hidden from the crows.'], [-85, 0, -85, 'A cricket ball signed by a whole school team, under the maidan’s banyan tree.'], [82, 0, 230, 'Someone painted a tiny train on the last sleeper of the line.']],
+    build(g){
+      const stone = mat(0xC8A86A, { roughness: .95 }), dark = mat(0x3A3D44), wht = mat(0xF2EEE6, { roughness: .8 }), sand = mat(0xE0C890, { roughness: 1 });
+      // Marine Drive: the promenade, the sea wall, tetrapods in the waves, and a necklace of lamps
+      box(7, .3, 480, mat(0xBDB6A8, { roughness: .9 }), -228.5, .15, 0, g); box(.6, 1, 480, stone, -232.3, .5, 0, g); xcSolid(-233, -232, -240, 240, 1, 'w');
+      const tp = []; for (let z = -236; z <= 236; z += 2.2) for (let k = 0; k < 2; k++) tp.push([-234.5 - k * 1.6 + xcHash(z, k) * .4, .3, z + k * 1.1, xcHash(k, z) * 6, 1, 1, 1, xcHash(z, z) * 3, 0]); inst(new THREE.TetrahedronGeometry(1, 0), mat(0x8A8A84, { roughness: 1 }), tp, g);
+      const nl = []; for (let z = -232; z <= 232; z += 12) nl.push([-230.5, 4.2, z]); inst(new THREE.CylinderGeometry(.08, .1, 8.4, 6), dark, nl.map(([x, y, z]) => [x, y, z]), g); const nm = new THREE.MeshStandardMaterial({ color: 0xFFF2C0, emissive: 0xFFD27A, emissiveIntensity: 0 }); inst(new THREE.SphereGeometry(.35, 10, 8), nm, nl.map(([x, , z]) => [x, 8.5, z]), g); XC.anim.push(() => { nm.emissiveIntensity = XC.night ? 2.4 : 0; });
+      // Chowpatty: sand, food stalls, families
+      const beach = new THREE.Mesh(new THREE.PlaneGeometry(48, 54), sand); beach.rotation.x = -Math.PI / 2; beach.position.set(-192, .04, 85); g.add(beach);
+      [['VADA PAV', 0xF2C230, -200, 70], ['PAV BHAJI', 0xC8462E, -186, 80], ['KULFI', 0x8FC8E0, -200, 96], ['BHEL PURI', 0x1F7A45, -180, 100]].forEach(([n, col, x, z]) => { box(2.4, 1, 1.4, mat(0x6A4E3A), x, .5, z, g); box(2.8, .1, 1.8, mat(col), x, 2.4, z, g); [-1.2, 1.2].forEach(o => cyl(.04, .04, 2.4, dark, x + o, 1.2, z - .8, g, 6)); const s = new THREE.Mesh(new THREE.PlaneGeometry(2.4, .5), xcSign(n, '#0B0D14', '#FFFFFF', 2.4, .5)); s.position.set(x, 2.1, z + .72); g.add(s); xcSolid(x - 1.2, x + 1.2, z - .7, z + .7, 1, 's');
+        try { const v = avatar(crowdLook(x | 0)); v.g.position.set(x, 0, z - 1.4); g.add(v.g); } catch (e) {} });
+      // the harbour arch: honey-coloured stone, four turrets, a dome-crowned centre, and boats bobbing below
+      const A = new THREE.Group(); A.position.set(150, 0, -214); g.add(A); XC.lm.push(A);
+      box(26, 3, 14, stone, 0, 1.5, 0, A); [-9, 9].forEach(x => box(8, 22, 14, stone, x, 12, 0, A)); box(26, 4, 14, stone, 0, 24, 0, A); box(10, 2, 14, stone, 0, 20, 0, A);
+      [[-12, -6], [12, -6], [-12, 6], [12, 6]].forEach(([x, z]) => { cyl(1.4, 1.6, 6, stone, x, 29, z, A, 12); sph(1.5, stone, x, 32.2, z, A, 1, 1, 1, 12); }); cyl(4, 4, 1, stone, 0, 26.5, 0, A, 20);
+      xcSolid(127, 141, -221, -207, 26, 'a'); xcSolid(159, 173, -221, -207, 26, 'a'); xcSolid(141, 159, -221, -207, 26.1, 'a').low = 18; // you can walk under the middle of the arch
+      for (let i = 0; i < 6; i++) { const b = new THREE.Group(); b.position.set(70 + i * 22, 0, -250 - (i % 2) * 10); g.add(b); box(3, 1.2, 8, mat([0xF2EEE6, 0x1E5AA8, 0xC8462E][i % 3]), 0, .5, 0, b); box(2.4, 1.4, 3, wht, 0, 1.6, -1, b); XC.anim.push(t => { b.position.y = Math.sin(t * 1.3 + i) * .15; b.rotation.z = Math.sin(t + i) * .04; }); }
+      // the sea bridge, sweeping out over the water on two great pylons with fans of cables
+      const br = new THREE.Group(); g.add(br); XC.lm.push(br); box(520, 1.2, 16, mat(0xA8A49A, { roughness: .9 }), -500, 12, 175, br); for (let x = -260; x >= -740; x -= 30) box(3, 12, 6, mat(0x8A8A84), x, 6, 175, br);
+      box(30, 1, 16, mat(0xA8A49A), -248, 6, 175, br).rotation.z = .38; const cm = new THREE.LineBasicMaterial({ color: 0xE8E4DC });
+      [-340, -520].forEach(px => { [-1, 1].forEach(s => { const p = box(2.2, 70, 2.2, mat(0xD8D4CC), px, 35, 175 + s * 4, br); p.rotation.x = -s * .06; }); box(3, 3, 12, mat(0xD8D4CC), px, 60, 175, br);
+        const pts = []; for (let k = 1; k <= 10; k++) [-1, 1].forEach(d => { pts.push(V(px, 60 - k * 1.5, 175), V(px + d * k * 9, 12.6, 175 - 6)); pts.push(V(px, 60 - k * 1.5, 175), V(px + d * k * 9, 12.6, 175 + 6)); }); br.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), cm)); });
+      // the chawls: long buildings with walkway balconies on every floor, washing lines, and colours
+      const bal = [], rail = [], cloth = [], clothM = [0xC8462E, 0x1E5AA8, 0xF2C230, 0x1F7A45, 0xF2EEE6];
+      XC.lots.forEach(l => { if (!(l.x0 > 110 && l.z0 > -60 && l.z1 < 70)) return; const side = l.x0 + .0, w = l.z1 - l.z0; for (let y = 3.2; y < l.h - 1; y += 3.2) { bal.push([side - .7, y, (l.z0 + l.z1) / 2, 0, 1.4, .15, w]); rail.push([side - 1.35, y + .5, (l.z0 + l.z1) / 2, 0, .06, 1, w]);
+          for (let k = 0; k < 4; k++) cloth.push([side - 1.1, y + 1.4, l.z0 + 1.5 + k * (w - 3) / 3 + xcHash(y, k), 0, .05, .7, .6, 0, 0, clothM[(k + (y | 0)) % 5]]); } });
+      inst(new THREE.BoxGeometry(1, 1, 1), mat(0xB8B0A0, { roughness: .9 }), bal, g, true); inst(new THREE.BoxGeometry(1, 1, 1), mat(0x3A6A6A, { metalness: .4 }), rail, g);
+      clothM.forEach((c, i) => inst(new THREE.BoxGeometry(1, 1, 1), mat(c, { roughness: .9 }), cloth.filter(q => q[9] === c).map(q => q.slice(0, 9)), g));
+      // the maidan: a cricket pitch, a banyan tree, and boys playing
+      const gr = new THREE.Mesh(new THREE.PlaneGeometry(54, 54), mat(0x5E8A3E, { roughness: 1 })); gr.rotation.x = -Math.PI / 2; gr.position.set(-85, .04, -85); g.add(gr); const pitch = new THREE.Mesh(new THREE.PlaneGeometry(3, 20), mat(0xC8B08A)); pitch.rotation.x = -Math.PI / 2; pitch.position.set(-75, .05, -80); g.add(pitch);
+      cyl(1.2, 1.6, 6, mat(0x5A4632), -85, 3, -85, g, 10); [[0, 7, 0, 5], [3, 6.5, 2, 3.5], [-3, 6.8, -2, 3.8]].forEach(([x, y, z, r]) => sph(r, mat(0x3E6A2E, { roughness: .9 }), -85 + x, y, -85 + z, g, 1, .7, 1, 12)); xcSolid(-86.2, -83.8, -86.2, -83.8, 6, 't');
+      for (let i = 0; i < 5; i++) { try { const v = avatar(crowdLook(i * 9 + 1)); v.g.position.set(-80 + (i % 3) * 3, 0, -90 + i * 3); v.g.scale.setScalar(.7); g.add(v.g); XC.anim.push(t => v.anim(t + i, Math.sin(t + i) > 0 ? .8 : 0, 0)); } catch (e) {} }
+      xcSpaceBuild(g, -150, -190);
+      // the taxi stand
+      const [tx, tz] = this.taxi; cyl(.08, .08, 3.4, dark, tx + 2, 1.7, tz, g, 8); const ts = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1), xcSign('✈ AIRPORT TAXIS', '#0B0D14', '#FFC93C', 2.6, 1)); ts.position.set(tx + 2, 3.2, tz); g.add(ts);
+    } };
+  // ---------- Goa: beaches with waves and shacks, the coloured old quarter, white churches, palm-lined roads, the river ferry ----------
+  XC_LM.goi = {
+    res: [[-216, -166, -240, 140], [116, 160, -84, -36], [162, 198, 42, 78], [-100, -64, 178, 212], [-130, -110, 128, 140], [30, 50, 128, 140], [170, 190, 128, 140]],
+    taxi: [7, -214], hello: 'Goa. Warm wind, palm trees on every road, the sea to the west and the river to the north. Stay for the sunset.',
+    secrets: [[138, 16, -62, 'A brass bell clapper wrapped in a 1950s newspaper, inside the church tower.'], [-190, 3.2, 20, 'A message carved under a shack roof: “We were here every monsoon.”'], [40, .4, 145, 'An old ferry ticket, stamped for a crossing that never happened.'], [150, -1, 0, 'Blue-and-white azulejo tiles stacked on a roof, waiting to be put back.'], [-200, 0, -228, 'A perfect conch shell at the very end of the beach.']],
+    build(g){
+      const sand = mat(0xE8D2A0, { roughness: 1 }), thatch = mat(0xB89A5A, { roughness: 1 }), wood = mat(0x7A5A3A, { roughness: .9 }), wht = mat(0xF4F1E8, { roughness: .8 });
+      // the beach, and white foam rolling in
+      const b = new THREE.Mesh(new THREE.PlaneGeometry(50, 480), sand); b.rotation.x = -Math.PI / 2; b.position.set(-190, .04, 0); g.add(b);
+      for (let k = 0; k < 3; k++) { const f = new THREE.Mesh(new THREE.PlaneGeometry(4, 480), new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: .5, depthWrite: false })); f.rotation.x = -Math.PI / 2; f.position.set(-207, .09, 0); g.add(f); XC.anim.push(t => { const p = ((t * .18 + k / 3) % 1); f.position.x = -224 + p * 18; f.material.opacity = .55 * (1 - p); }); }
+      // shacks: thatched roofs, plastic chairs, umbrellas, fairy lights at night
+      const lights = new THREE.MeshStandardMaterial({ color: 0xFFE0A0, emissive: 0xFFC060, emissiveIntensity: 0 }); XC.anim.push(() => { lights.emissiveIntensity = XC.night ? 2 : 0; });
+      for (let i = 0; i < 7; i++) { const z = -200 + i * 55, x = -185; if (z > 120) break; box(8, .3, 6, wood, x, .9, z, g); [[-3.6, -2.6], [3.6, -2.6], [-3.6, 2.6], [3.6, 2.6]].forEach(([a, c]) => cyl(.1, .1, 3, wood, x + a, 1.5, z + c, g, 6));
+        const r = new THREE.Mesh(new THREE.ConeGeometry(6, 2.4, 4), thatch); r.rotation.y = Math.PI / 4; r.position.set(x, 4.1, z); g.add(r); xcSolid(x - 4, x + 4, z - 3, z + 3, 3.1, 'h');
+        for (let k = 0; k < 6; k++) box(.5, .5, .5, mat([0xC8462E, 0x1E5AA8, 0xF2C230][k % 3]), x - 6 + (k % 3) * 1.4, .25, z - 2 + Math.floor(k / 3) * 3, g);
+        const um = new THREE.Mesh(new THREE.ConeGeometry(1.6, .6, 10), mat([0xC8462E, 0x1F8A6A, 0xF2C230][i % 3])); um.position.set(x - 12, 2.4, z); g.add(um); cyl(.04, .04, 2.4, wht, x - 12, 1.2, z, g, 6);
+        for (let k = 0; k < 8; k++) sph(.08, lights, x - 4 + k, 3.05, z + 3, g, 1, 1, 1, 6);
+        const s = new THREE.Mesh(new THREE.PlaneGeometry(4, .7), xcSign(['SUNSET SHACK', 'CORAL CAFÉ', 'TIDE & THALI', 'PALM PORCH', 'SEA SPRAY', 'MANGO MOON', 'DRIFTWOOD'][i], '#FFFFFF', '#1F8A6A', 4, .7)); s.position.set(x + 4.05, 2.6, z); s.rotation.y = Math.PI / 2; g.add(s);
+        try { const v = avatar(crowdLook(i * 11 + 2)); v.g.position.set(x + 2, .9, z); g.add(v.g); } catch (e) {} }
+      xcPalms([[-200, -150], [-196, -90], [-202, -30], [-198, 40], [-200, 100], [-176, -120], [-174, 60]], g);
+      // the old quarter: every house gets a terracotta roof and white trim
+      const roofM = mat(0xB8502E, { roughness: .9 }), roofs = [], trims = [];
+      XC.lots.forEach(l => { if (!(l.x0 > 60 && l.z1 < 120 && l.z0 > -120)) return; const w = l.x1 - l.x0, d = l.z1 - l.z0; roofs.push([(l.x0 + l.x1) / 2, l.h + 1.3, (l.z0 + l.z1) / 2, 0, w + .6, 2.6, d + .6]); trims.push([(l.x0 + l.x1) / 2, l.h + .05, (l.z0 + l.z1) / 2, 0, w + .3, .25, d + .3]); });
+      inst(new THREE.ConeGeometry(.7071, 1, 4, 1).rotateY(Math.PI / 4), roofM, roofs, g, true); inst(new THREE.BoxGeometry(1, 1, 1), wht, trims, g);
+      // a white church on its steps, with twin bell towers, and a little chapel
+      const C = new THREE.Group(); C.position.set(138, 0, -60); g.add(C); XC.lm.push(C);
+      for (let k = 0; k < 4; k++) box(22 - k * 2, .4, 4 - k * .5, wht, 0, .2 + k * .4, 10 + k * .5, C);
+      box(18, 16, 14, wht, 0, 8, -2, C); [-7, 7].forEach(x => { box(4, 24, 4, wht, x, 12, 6, C); const d = new THREE.Mesh(new THREE.SphereGeometry(2, 14, 10, 0, Math.PI * 2, 0, Math.PI / 2), wht); d.position.set(x, 24, 6); C.add(d); box(.3, 2, .3, mat(0x8A6A3A), x, 26.8, 6, C); box(1.2, .3, .3, mat(0x8A6A3A), x, 27.2, 6, C); });
+      const tri = new THREE.Mesh(new THREE.ConeGeometry(9, 5, 3), wht); tri.rotation.y = Math.PI / 6; tri.position.set(0, 18.4, 5); tri.scale.z = .2; C.add(tri);
+      box(3.4, 6, .2, mat(0x5A3A2A), 0, 3, 5.05, C); [-4, 4].forEach(x => box(1.6, 3.4, .2, mat(0x5A3A2A), x, 9, 5.05, C)); xcSolid(129, 147, -69, -55, 16, 'c'); xcSolid(129, 135, -56, -52, 24, 'c'); xcSolid(141, 147, -56, -52, 24, 'c');
+      const ch = new THREE.Group(); ch.position.set(180, 0, 60); g.add(ch); box(8, 7, 10, wht, 0, 3.5, 0, ch); box(3, 10, 3, wht, 0, 5, 5, ch); box(.2, 1.6, .2, mat(0x8A6A3A), 0, 10.8, 5, ch); box(1, .2, .2, mat(0x8A6A3A), 0, 11.1, 5, ch); xcSolid(176, 184, 55, 65, 7, 'c');
+      // the river bank: a promenade, fishing boats pulled up, and bridges where the roads cross
+      box(480, .3, 3, mat(0xBDB6A8), 0, .15, 137.5, g); const rail = []; XC_L.forEach(l => [-5.2, 5.2].forEach(o => { for (let z = 141; z <= 171; z += 2) rail.push([l + o, .55, z]); })); inst(new THREE.BoxGeometry(.1, 1.1, .1), mat(0xF4F1E8), rail, g);
+      XC_L.forEach(l => box(10.6, .5, 32, mat(0x8A8A84), l, -.1, 156, g));
+      for (let i = 0; i < 5; i++) { const bt = new THREE.Group(); bt.position.set(-150 + i * 70, 0, 162 - (i % 2) * 6); g.add(bt); box(2.2, .8, 7, mat([0x1E5AA8, 0xC8462E, 0x1F8A6A][i % 3]), 0, .3, 0, bt); XC.anim.push(t => { bt.position.y = Math.sin(t * 1.2 + i) * .1; }); }
+      xcSpaceBuild(g, -82, 195);
+      const [tx, tz] = this.taxi; cyl(.08, .08, 3.4, mat(0x3A3D44), tx + 2, 1.7, tz, g, 8); const ts = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1), xcSign('✈ AIRPORT TAXIS', '#0B0D14', '#FFC93C', 2.6, 1)); ts.position.set(tx + 2, 3.2, tz); ts.rotation.y = Math.PI; g.add(ts);
+    } };
+  // ---------- Delhi: the Avenue and its great gate, the walled Old City with its lanes and market, a red sandstone fort,
+  // the Victory Tower among ruins, the round colonnade of the Circle, and the metro overhead ----------
+  XC_LM.del = {
+    res: [[-108, -57, 112, 163], [168, 217, 58, 107], [-108, -58, -216, -168], [-153, -121, 121, 153], [-210, -174, -26, 26], [178, 234, -26, 26]],
+    taxi: [7, -214], hello: 'Delhi. Wide avenues and old stone, the metro rumbling overhead, and the Old City’s lanes so narrow the sun barely gets in.',
+    secrets: [[206, 31.5, 0, 'A brass plate on top of the Victory Gate, too high for anyone to have polished it in years.'], [-82, 72.6, -200, 'A swift’s nest at the very top of the Victory Tower.'], [192, 12.5, 62, 'An arrowhead wedged between the fort’s red stones.'], [150, 0, 180, 'A shopkeeper’s ledger from 1911, under a loose step in the market lane.'], [-82.5, 0, 137.5, 'A coin dropped in the Circle’s fountain, centuries old.']],
+    build(g){
+      const red = mat(0xA84A32, { roughness: .9 }), sandst = mat(0xD8B88A, { roughness: .95 }), wht = mat(0xF2EEE6, { roughness: .8 }), lawn = mat(0x5E8A3E, { roughness: 1 });
+      // the Avenue: lawns either side, rows of trees, fountains, and the great gate at the east end
+      [-1, 1].forEach(s => { const l = new THREE.Mesh(new THREE.PlaneGeometry(420, 18), lawn); l.rotation.x = -Math.PI / 2; l.position.set(0, .03, s * 16); g.add(l); });
+      const av = []; for (let x = -160; x <= 160; x += 14) [-24, 24].forEach(z => av.push([x, z])); xcTrees(av, g); av.forEach(([x, z]) => xcSolid(x - .3, x + .3, z - .3, z + .3, 5, 't'));
+      [-80, 0, 80].forEach(x => { cyl(4, 4.2, .6, sandst, x, .3, 16, g, 20); cyl(.4, .5, 2, sandst, x, 1.3, 16, g, 10); const w = new THREE.Mesh(new THREE.CircleGeometry(3.7, 20), mat(0x6AA8C8, { roughness: .1 })); w.rotation.x = -Math.PI / 2; w.position.set(x, .62, 16); g.add(w); xcSolid(x - 4, x + 4, 12, 20, .6, 'f'); });
+      const G2 = new THREE.Group(); G2.position.set(206, 0, 0); g.add(G2); XC.lm.push(G2); [-1, 1].forEach(s => box(10, 28, 8, sandst, 0, 14, s * 9, G2)); box(10, 6, 26, sandst, 0, 27, 0, G2); box(8, 2, 22, sandst, 0, 31, 0, G2); cyl(3, 3.4, 2, sandst, 0, 33, 0, G2, 16);
+      xcSolid(201, 211, -13, -5, 28, 'g'); xcSolid(201, 211, 5, 13, 28, 'g'); xcSolid(201, 211, -13, 13, 31, 'g').low = 24;
+      const H = new THREE.Group(); H.position.set(-192, 0, 0); g.add(H); XC.lm.push(H); box(30, 16, 36, sandst, 0, 8, 0, H); box(32, 2, 40, red, 0, 1, 0, H); cyl(8, 9, 6, sandst, 0, 19, 0, H, 24); const dm = new THREE.Mesh(new THREE.SphereGeometry(9, 24, 14, 0, Math.PI * 2, 0, Math.PI / 2), sandst); dm.position.set(0, 22, 0); H.add(dm); xcSolid(-207, -177, -20, 20, 16, 'h');
+      // the Old City walls with their gates, and the market lane: stalls under awnings, people everywhere
+      const wl = (x0, x1, z0, z1) => { box(x1 - x0, 8, z1 - z0, red, (x0 + x1) / 2, 4, (z0 + z1) / 2, g); xcSolid(x0, x1, z0, z1, 8, 'w'); const n = Math.floor(Math.max(x1 - x0, z1 - z0) / 2.4), cr = []; for (let i = 0; i < n; i++) cr.push(x1 - x0 > z1 - z0 ? [x0 + 1.2 + i * 2.4, 8.6, (z0 + z1) / 2] : [(x0 + x1) / 2, 8.6, z0 + 1.2 + i * 2.4]); inst(new THREE.BoxGeometry(1.2, 1.2, 1.2), red, cr, g); };
+      [[102.6, 104.6, 112, 156], [102.6, 104.6, 174, 216], [112, 156, 102.6, 104.6], [174, 216, 102.6, 104.6]].forEach(w => wl(...w));
+      [[103.6, 165, Math.PI / 2], [165, 103.6, 0]].forEach(([x, z, ry]) => { const a = new THREE.Group(); a.position.set(x, 0, z); a.rotation.y = ry; g.add(a); [-7, 7].forEach(o => box(4, 12, 4, red, o, 6, 0, a)); box(18, 3, 4, red, 0, 12.5, 0, a); cyl(1.6, 1.6, 2, sandst, -7, 13, 0, a, 10); cyl(1.6, 1.6, 2, sandst, 7, 13, 0, a, 10); });
+      const stallC = [0xC8462E, 0xF2C230, 0x1E5AA8, 0x1F7A45, 0xE07A1E, 0x8A3A9A];
+      for (let i = 0; i < 16; i++) { const x = 118 + i * 6.4, z = i % 2 ? 169.1 : 160.9; box(3.2, 1, 1.6, mat(0x6A4E3A), x, .5, z, g); const aw = box(3.8, .1, 2.4, mat(stallC[i % 6]), x, 2.6, z, g); aw.rotation.x = i % 2 ? -.2 : .2; for (let k = 0; k < 4; k++) box(.4, .3, .4, mat(stallC[(i + k + 2) % 6]), x - 1.2 + k * .8, 1.15, z, g); xcSolid(x - 1.6, x + 1.6, z - .8, z + .8, 1, 's');
+        if (i % 3 === 0) try { const v = avatar(crowdLook(i * 5 + 1)); v.g.position.set(x, 0, z + (i % 2 ? -1.6 : 1.6)); g.add(v.g); } catch (e) {} }
+      // the red sandstone fort: walls with battlements, bastion towers, a great gate, and white pavilions inside
+      const fx0 = 171, fx1 = 214, fz0 = 61, fz1 = 104;
+      [[fx0, fx1, fz0, fz0 + 2.5], [fx0, fx1, fz1 - 2.5, fz1], [fx0, fx0 + 2.5, fz0, fz1], [fx1 - 2.5, fx1, fz0, fz1]].forEach(([a, b, c, d]) => { box(b - a, 12, d - c, red, (a + b) / 2, 6, (c + d) / 2, g); xcSolid(a, b, c, d, 12, 'f'); });
+      [[fx0, fz0], [fx1, fz0], [fx0, fz1], [fx1, fz1]].forEach(([x, z]) => { cyl(3.4, 3.8, 15, red, x, 7.5, z, g, 14); const d = new THREE.Mesh(new THREE.SphereGeometry(2.6, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), wht); d.position.set(x, 17, z); g.add(d); xcSolid(x - 3.4, x + 3.4, z - 3.4, z + 3.4, 15, 'f'); });
+      const gate = new THREE.Group(); gate.position.set(192.5, 0, fz0); g.add(gate); box(18, 18, 6, red, 0, 9, 0, gate); box(6, 9, 6.2, mat(0x2A1A12), 0, 4.5, 0, gate); [-7, 7].forEach(x => { const d = new THREE.Mesh(new THREE.SphereGeometry(2, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), wht); d.position.set(x, 18, 0); gate.add(d); });
+      XC.B.forEach(b => { if (b.tag === 'f' && b.z0 === fz0 && b.z1 === fz0 + 2.5 && b.x0 === fx0) { b.x1 = 189.5; } }); xcSolid(195.5, fx1, fz0, fz0 + 2.5, 12, 'f');
+      for (let i = 0; i < 2; i++) { const px = 182 + i * 21; box(12, 6, 10, wht, px, 3, 86, g); [-4, 4].forEach(o => { const d = new THREE.Mesh(new THREE.SphereGeometry(1.6, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), wht); d.position.set(px + o, 6, 86); g.add(d); }); xcSolid(px - 6, px + 6, 81, 91, 6, 'p'); }
+      // the Victory Tower: a fluted red-and-buff tower of balconied storeys, among ruined colonnades
+      const T = new THREE.Group(); T.position.set(-82, 0, -192); g.add(T); XC.lm.push(T); let y = 0; [[7, 6, 24], [6, 5.2, 18], [5.2, 4.4, 14], [4.4, 3.8, 9], [3.8, 3.2, 7]].forEach(([r0, r1, h], i) => { const c = cyl(r1, r0, h, i % 2 ? sandst : red, 0, y + h / 2, 0, T, 24); void c; y += h; cyl(r1 + .9, r1 + .9, .5, sandst, 0, y, 0, T, 24); }); cyl(2, 2, 1.6, sandst, 0, y + .8, 0, T, 16);
+      xcSolid(-89, -75, -199, -185, y + 1.6, 't'); for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, cx = -82 + Math.cos(a) * 18, cz = -192 + Math.sin(a) * 14; cyl(.6, .7, 5 + (i % 3) * 1.5, sandst, cx, 2.5, cz, g, 8); xcSolid(cx - .7, cx + .7, cz - .7, cz + .7, 5, 'r'); }
+      // the Circle: a ring of white colonnaded buildings round a park with a fountain
+      const ccx = -82.5, ccz = 137.5; for (let i = 0; i < 12; i++) { if (i % 3 === 0) continue; const a = i / 12 * Math.PI * 2, r = 18, x = ccx + Math.cos(a) * r, z = ccz + Math.sin(a) * r, seg = new THREE.Group(); seg.position.set(x, 0, z); seg.rotation.y = -a + Math.PI / 2; g.add(seg); box(9, 9, 5, wht, 0, 4.5, 0, seg); for (let k = 0; k < 4; k++) cyl(.25, .25, 3.6, wht, -3.3 + k * 2.2, 1.8, -2.9, seg, 8); xcSolid(x - 3.5, x + 3.5, z - 3.5, z + 3.5, 9, 'c'); }
+      const pk = new THREE.Mesh(new THREE.CircleGeometry(13, 32), lawn); pk.rotation.x = -Math.PI / 2; pk.position.set(ccx, .03, ccz); g.add(pk); cyl(3, 3.2, .6, sandst, ccx, .3, ccz, g, 20); xcSolid(ccx - 3, ccx + 3, ccz - 3, ccz + 3, .6, 'f');
+      xcSpaceBuild(g, -137, 137);
+      const [tx, tz] = this.taxi; cyl(.08, .08, 3.4, mat(0x3A3D44), tx + 2, 1.7, tz, g, 8); const ts = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1), xcSign('✈ AIRPORT TAXIS', '#0B0D14', '#FFC93C', 2.6, 1)); ts.position.set(tx + 2, 3.2, tz); ts.rotation.y = Math.PI; g.add(ts);
+    } };
+  function xcBuild(city){
+    xcFree(); const P = XC.P = XC_P[city]; XC.city = city; XC.s = xcLoad(city); XC.s.visits++; xcSave();
+    Object.assign(XC, { lots: [], B: [], grid: new Map(), ims: [], cars: [], peds: [], doors: [], acts: [], lm: [], anim: [], air: false, roof: 0, drv: null, ride: null, near: null, dist: '' });
+    const sc = XC.sc = new THREE.Scene(), g = XC.g = new THREE.Group(); sc.add(g);
+    sc.fog = new THREE.Fog(P.sky[0], P.haze ? 60 : 90, P.haze ? 260 : 330); sc.background = new THREE.Color(P.sky[0]);
+    XC.hemi = new THREE.HemisphereLight(0xDDEBFF, 0x3A3A30, .8); sc.add(XC.hemi); const sun = XC.sun = new THREE.DirectionalLight(0xFFF4E0, 1); sun.position.set(-90, 140, 70); sun.castShadow = fine && !lowFx;
+    if (sun.castShadow) { sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -70, right: 70, top: 70, bottom: -70, near: 10, far: 400 }); } sc.add(sun, sun.target);
+    // ground, roads with dashed centre lines, pavements
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), mat(P.palms ? 0x7A8A56 : 0x6A6A62, { roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; ground.position.y = -.02; g.add(ground);
+    const rt = tex(64, 512, (c, w, h) => { c.fillStyle = '#34373F'; c.fillRect(0, 0, w, h); for (let i = 0; i < 300; i++) { c.fillStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '0,0,0'},.05)`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); } c.fillStyle = '#E8C04A'; for (let y = 0; y < h; y += 64) c.fillRect(w / 2 - 1.5, y, 3, 34); });
+    rt.wrapT = THREE.RepeatWrapping; rt.repeat.set(1, 30); const roadM = new THREE.MeshStandardMaterial({ map: rt, roughness: .95 }), paveM = mat(P.palms ? 0xC8B89A : 0x9A968C, { roughness: .95 });
+    XC_L.forEach(l => [0, 1].forEach(dir => { const len = XC_B * 2 + 20, r = new THREE.Mesh(new THREE.PlaneGeometry(10, len), roadM); r.rotation.x = -Math.PI / 2; if (dir) r.rotation.z = Math.PI / 2; r.position.set(dir ? 0 : l, .02 + dir * .01, dir ? l : 0); r.receiveShadow = true; g.add(r);
+      [-1, 1].forEach(s => { const p = new THREE.Mesh(new THREE.PlaneGeometry(2.6, len), paveM); p.rotation.x = -Math.PI / 2; if (dir) p.rotation.z = Math.PI / 2; p.position.set(dir ? 0 : l + s * 6.3, .05, dir ? l + s * 6.3 : 0); p.receiveShadow = true; g.add(p); }); }));
+    // water: sea, harbour, river; waves move on it
+    P.water.forEach(([x0, x1, z0, z1]) => { const ax = Math.max(x0, -700), bx = Math.min(x1, 700), az = Math.max(z0, -700), bz = Math.min(z1, 700), w = new THREE.Mesh(new THREE.PlaneGeometry(bx - ax, bz - az, 1, 1), new THREE.MeshStandardMaterial({ color: 0x2A6A8A, roughness: .12, metalness: .35, transparent: true, opacity: .94 })); w.rotation.x = -Math.PI / 2; w.position.set((ax + bx) / 2, .06, (az + bz) / 2); g.add(w); XC.anim.push(t => { w.material.color.setHSL(.55, .45, .3 + Math.sin(t * .6) * .015); }); });
+    (XC_LM[city] || {}).pre && XC_LM[city].pre(g);
+    const RES = (XC_LM[city] && XC_LM[city].res) || [];
+    // the buildings: every block split into four lots, heights by district, Bangalore's window shader in this city's tint
+    const lots = []; for (let i = 0; i < XC_L.length - 1; i++) for (let j = 0; j < XC_L.length - 1; j++) { const bx = XC_L[i] + 5, bz = XC_L[j] + 5;
+      [[2, 20], [25, 43]].forEach(([a0, a1]) => [[2, 20], [25, 43]].forEach(([c0, c1]) => { const x0 = bx + a0, x1 = bx + a1, z0 = bz + c0, z1 = bz + c1, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+        if (RES.some(r => x1 > r[0] && x0 < r[1] && z1 > r[2] && z0 < r[3]) || xcInWater(cx, cz) || [[x0, z0], [x1, z0], [x0, z1], [x1, z1]].some(([px, pz]) => xcInWater(px, pz))) return;
+        const r = xcHash(cx, cz), h = P.h(cx, cz, r); if (h < 3) return; lots.push({ x0: x0 + .6, x1: x1 - .6, z0: z0 + .6, z1: z1 - .6, h, k: (r * 3) | 0 }); })); }
+    XC.lots = lots; const unit = new THREE.BoxGeometry(1, 1, 1), m4 = new THREE.Matrix4();
+    [0, 1, 2].forEach(k => { const mine = lots.filter(l => l.k === k); if (!mine.length) return; const im = new THREE.InstancedMesh(unit, xcFacade(k, P.tints[k]), mine.length); im.castShadow = im.receiveShadow = true;
+      mine.forEach((l, i) => { m4.compose(V((l.x0 + l.x1) / 2, l.h / 2, (l.z0 + l.z1) / 2), new THREE.Quaternion(), V(l.x1 - l.x0, l.h, l.z1 - l.z0)); im.setMatrixAt(i, m4); l.im = im; l.i = i; xcSolid(l.x0, l.x1, l.z0, l.z1, l.h, 'b'); }); g.add(im); XC.ims.push(im); });
+    // roof clutter: water tanks and AC units, batched
+    const tankM = mat(0x2A2D33, { roughness: .6 }), acM = mat(0xC9CFD8, { metalness: .4, roughness: .5 }), tk = [], ac = [];
+    lots.forEach((l, i) => { if (i % 2) tk.push([l.x0 + 2, l.h + .7, l.z0 + 2]); if (i % 3 === 0) ac.push([l.x1 - 2, l.h + .4, l.z1 - 2]); });
+    inst(new THREE.CylinderGeometry(.7, .7, 1.4, 10), tankM, tk, g, true); inst(new THREE.BoxGeometry(1.4, .8, 1), acM, ac, g, true);
+    // street lamps (lit at night), and trees or palms along the pavements
+    const lp = []; XC_L.forEach(l => { for (let t = -XC_B; t <= XC_B; t += 30) { if (!xcInWater(l + 7, t) && !xcOnRoad(l + 7, t)) lp.push([l + 7, 2.6, t]); if (!xcInWater(t, l + 7) && !xcOnRoad(t, l + 7)) lp.push([t, 2.6, l + 7]); } });
+    inst(new THREE.CylinderGeometry(.07, .09, 5.2, 6), mat(0x3A3D44, { metalness: .5 }), lp, g); XC.lampM = new THREE.MeshStandardMaterial({ color: 0xFFE0A8, emissive: 0xFFC98A, emissiveIntensity: 0 }); inst(new THREE.SphereGeometry(.26, 8, 6), XC.lampM, lp.map(([x, , z]) => [x, 5.25, z]), g);
+    const tr = []; XC_L.forEach(l => { for (let t = -XC_B + 12; t <= XC_B; t += 22) [[l - 6.9, t], [t, l - 6.9]].forEach(([x, z]) => { if (!xcInWater(x, z) && !xcOnRoad(x, z) && !xcBlocked(x, z, 0, 1.2) && xcHash(x, z) < (P.palms ? .7 : .45)) tr.push([x, z]); }); });
+    if (P.palms) xcPalms(tr, g); else xcTrees(tr, g);
+    tr.forEach(([x, z]) => xcSolid(x - .3, x + .3, z - .3, z + .3, P.palms ? 7 : 5, 't'));
+    // landmarks, parks, the transit line, the space centre
+    if (XC_LM[city] && XC_LM[city].build) XC_LM[city].build(g);
+    xcTransitBuild(g); xcShopsBuild(g); xcBossesBuild(g); xcSecretsBuild(g); xcTrafficBuild(g); xcPedsBuild(g);
+    plats.xc = [{ x0: -1e4, x1: 1e4, z0: -1e4, z1: 1e4 }];
+    XC.mapG = g; g.traverse(o => { if (o.isMesh && !o.isInstancedMesh) o.userData.noPick = true; });
+  }
+  function xcFree(){ if (XC.sc) { disposeDeep(XC.sc); XC.sc = null; } if (XC.isc) { disposeDeep(XC.isc); XC.isc = null; } XC.cars = []; XC.peds = []; XC.doors = []; XC.acts = []; XC.anim = []; XC.lm = []; XC.B = []; XC.grid = new Map(); XC.ims = []; if (XC.rain && XC.rain.parent) XC.rain.parent.remove(XC.rain); XC.rain = null; }
+  // ---------- trees and palms ----------
+  function xcTrees(list, g){ const trunk = mat(0x5A4632, { roughness: 1 }), leaf = new THREE.MeshStandardMaterial({ vertexColors: true, color: 0x5E8A44, roughness: .85 }), crown = cityCrownGeo().clone();
+    inst(new THREE.CylinderGeometry(.14, .26, 3.4, 7), trunk, list.map(([x, z]) => [x, 1.7, z]), g, true); inst(crown, leaf, list.map(([x, z]) => [x, 4.4, z, xcHash(z, x) * 6, 2.1, 1.8, 2.1]), g, true); }
+  function xcPalms(list, g){ const trunk = mat(0x8A6E4E, { roughness: 1 }), frond = mat(0x3E7A34, { roughness: .8, side: THREE.DoubleSide }), fg = new THREE.PlaneGeometry(.8, 3.4).translate(0, 1.7, 0);
+    inst(new THREE.CylinderGeometry(.16, .24, 7, 7), trunk, list.map(([x, z]) => [x + .3, 3.5, z, 0, 1, 1, 1, 0, .06]), g, true);
+    const fr = []; list.forEach(([x, z]) => { for (let k = 0; k < 7; k++) { const a = k / 7 * Math.PI * 2 + xcHash(x, z); fr.push([x + .75, 7, z, a, 1, 1, 1, 1.05, 0]); } }); inst(fg, frond, fr, g, true);
+    inst(new THREE.SphereGeometry(.18, 6, 5), mat(0x6A4A2A), list.map(([x, z]) => [x + .8, 6.7, z + .15]), g); }
+  // ---------- traffic: cars, taxis, autos and scooters keeping left along the grid, turning at junctions ----------
+  const XC_VEH = { bom: [['cab', 0xF2C230], ['cab', 0xF2C230], ['car', 0xEEF1F5], ['auto', 0x1F7A45], ['bus', 0xC8102E], ['car', 0x2A2D33], ['scooter', 0x1E5AA8]],
+    goi: [['scooter', 0xE8462E], ['scooter', 0x1E5AA8], ['scooter', 0xF2C230], ['car', 0xEEF1F5], ['jeep', 0x3A6A3A], ['auto', 0x1F7A45], ['car', 0x8A1A2E]],
+    del: [['auto', 0x1F7A45], ['auto', 0x1F7A45], ['car', 0xEEF1F5], ['bus', 0x2E6A3A], ['car', 0x2A2D33], ['cab', 0xF2C230], ['scooter', 0x8A3A9A]] };
+  function xcTrafficBuild(g){
+    const kinds = XC_VEH[XC.city], N = lowFx ? 12 : 26;
+    for (let i = 0; i < N; i++) { const [t, col] = kinds[i % kinds.length]; let v = null; try { v = makeVehicle(t, col, g); } catch (e) { continue; }
+      const ax = i % 2 ? 'x' : 'z', line = XC_L[1 + (i * 3) % (XC_L.length - 2)], dir = i % 4 < 2 ? 1 : -1; Object.assign(v, { ax, line, dir, s: -200 + (i * 37) % 400, sp0: (t === 'bus' ? 7 : t === 'scooter' ? 11 : 9) + Math.random() * 2, v: 0, kind: t, col });
+      if (xcInWater(...xcCarXZ(v))) v.s = 0; XC.cars.push(v); }
+  }
+  const xcCarXZ = c => c.ax === 'z' ? [c.line + c.dir * 2.5, c.s] : [c.s, c.line - c.dir * 2.5];
+  function xcTrafficStep(dt){
+    const [px, pz] = [pos.x, pos.z];
+    XC.cars.forEach(c => { if (c.driven) return; const [cx, cz] = xcCarXZ(c), fx = c.ax === 'x' ? c.dir : 0, fz = c.ax === 'z' ? c.dir : 0;
+      // stop for you and for the car in front
+      let block = false; const ahead = (x, z, r) => { const dx = x - cx, dz = z - cz, along = dx * fx + dz * fz, side = Math.abs(dx * fz - dz * fx); return along > 0 && along < r && side < 2.2; };
+      if (ahead(px, pz, 7) && !XC.air) block = true; for (const o of XC.cars) if (o !== c && !block) { const [ox, oz] = o.driven ? [o.g.position.x, o.g.position.z] : xcCarXZ(o); if (ahead(ox, oz, 7.5)) block = true; }
+      c.v += ((block ? 0 : c.sp0) - c.v) * Math.min(1, dt * (block ? 4 : 1.2)); const s0 = c.s; c.s += c.dir * c.v * dt;
+      // at a junction, sometimes turn
+      const cross = XC_L.find(l => (s0 - l) * (c.s - l) <= 0 && s0 !== l);
+      if (cross != null && Math.random() < .3) { const old = c.line; c.ax = c.ax === 'x' ? 'z' : 'x'; c.line = cross; c.s = old; c.dir = Math.random() < .5 ? 1 : -1; }
+      if (c.s > XC_B + 10 || c.s < -XC_B - 10 || xcInWater(...xcCarXZ(c))) { c.dir *= -1; c.s = Math.max(-XC_B, Math.min(XC_B, c.s)); }
+      const [x, z] = xcCarXZ(c); c.g.position.set(x, 0, z); c.g.rotation.y = Math.atan2(c.ax === 'x' ? c.dir : 0, c.ax === 'z' ? c.dir : 0); });
+  }
+  // ---------- driving: get in any car, auto or scooter, drive with WASD / the joystick, get out with E ----------
+  function xcDrive(c){ if (XC.drv || XC.air || XC.roof) return; XC.drv = c; c.driven = true; c.v = 0; c.hd = c.g.rotation.y; tone(300, .2, 'sawtooth', .03, 220); say(`You get into ${VNAME[c.kind] || 'the vehicle'}. ${fine ? 'WASD to drive, E to get out.' : 'Joystick to drive, tap Get out to stop.'}`, 3600); }
+  function xcExitCar(){ const c = XC.drv; if (!c) return; XC.drv = null; c.driven = false; const sx = c.g.position.x + Math.cos(c.hd) * 2.6, sz = c.g.position.z - Math.sin(c.hd) * 2.6;
+    pos.set(sx, 1.6, sz); if (!xcValid(pos.x, pos.z)) xcClear(); c.ax = Math.abs(Math.sin(c.hd)) > .7 ? 'x' : 'z'; c.dir = c.ax === 'x' ? Math.sign(Math.sin(c.hd)) || 1 : Math.sign(Math.cos(c.hd)) || 1; const near = XC_L.reduce((a, l) => Math.abs(l - (c.ax === 'x' ? c.g.position.z : c.g.position.x)) < Math.abs(a - (c.ax === 'x' ? c.g.position.z : c.g.position.x)) ? l : a, 0); c.line = near; c.s = c.ax === 'x' ? c.g.position.x : c.g.position.z; tone(200, .15, 'sine', .03); }
+  function xcDriveStep(dt){
+    const c = XC.drv, f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0) + (-joy.y || 0), st = (keys.a || keys.arrowleft ? 1 : 0) - (keys.d || keys.arrowright ? 1 : 0) - (joy.x || 0);
+    const max = c.kind === 'scooter' ? 18 : c.kind === 'auto' ? 13 : c.kind === 'bus' ? 12 : 22; c.v += (f * (f > 0 ? 9 : 14)) * dt; c.v *= Math.pow(.6, dt); c.v = Math.max(-6, Math.min(max, c.v));
+    c.hd += st * dt * 1.7 * Math.min(1, Math.abs(c.v) / 5) * Math.sign(c.v || 1);
+    const nx = c.g.position.x + Math.sin(c.hd) * c.v * dt, nz = c.g.position.z + Math.cos(c.hd) * c.v * dt;
+    if (xcBlocked(nx, nz, 0, 1.1) || xcInWater(nx, nz) || Math.abs(nx) > XC_B || Math.abs(nz) > XC_B) { if (Math.abs(c.v) > 8) { tone(90, .2, 'square', .05, 50); EV0shake(); } c.v *= -.3; } else c.g.position.set(nx, 0, nz);
+    c.g.rotation.y = c.hd;
+    // a chase camera behind and above
+    pos.set(c.g.position.x - Math.sin(c.hd) * 7, 4.2, c.g.position.z - Math.cos(c.hd) * 7); yaw += angDiff(yaw, c.hd + Math.PI) * Math.min(1, dt * 5); pitch = -.22; vy = 0; grounded = true;
+    // knock people out of the way
+    XC.peds.forEach(p => { const d = Math.hypot(p.a.g.position.x - c.g.position.x, p.a.g.position.z - c.g.position.z); if (d < 2.2 && Math.abs(c.v) > 3) { p.jump = .6; p.s += p.dir * 2; } });
+  }
+  const EV0shake = () => { try { if (typeof shake !== 'undefined') shake = .3; } catch (e) {} };
+  // ---------- crowds on the pavements ----------
+  function xcPedsBuild(g){
+    const N = lowFx ? 14 : 34; for (let i = 0; i < N; i++) { let a = null; try { a = avatar(crowdLook(i * 7 + XC.city.length)); } catch (e) { continue; } a.g.userData.noPick = true; g.add(a.g);
+      const ax = i % 2 ? 'x' : 'z', line = XC_L[(i * 5) % XC_L.length] + (i % 3 ? 6.3 : -6.3); XC.peds.push({ a, ax, line, s: -200 + (i * 53) % 400, dir: i % 4 < 2 ? 1 : -1, sp: .9 + Math.random() * .6, wait: 0, jump: 0 }); }
+  }
+  function xcPedsStep(dt, t){
+    XC.peds.forEach(p => { const g = p.a.g; if (p.wait > 0) { p.wait -= dt; p.a.anim(t, 0, 0); return; }
+      const s0 = p.s; p.s += p.dir * p.sp * dt; const x = p.ax === 'z' ? p.line : p.s, z = p.ax === 'z' ? p.s : p.line;
+      if (Math.abs(p.s) > XC_B - 4 || xcInWater(x, z) || xcBlocked(x, z, 0, .1)) { p.dir *= -1; p.s = s0; p.wait = 1 + Math.random() * 3; return; }
+      let corner = null; XC_L.forEach(l => [l - 6.3, l + 6.3].forEach(c => { if ((s0 - c) * (p.s - c) <= 0 && s0 !== c) corner = c; }));
+      if (corner != null && Math.random() < .35) { const old = p.line; p.ax = p.ax === 'z' ? 'x' : 'z'; p.line = corner; p.s = old; p.dir = Math.random() < .5 ? 1 : -1; }
+      if (Math.hypot(x - pos.x, z - pos.z) < 1 && !XC.drv) { p.wait = .8; p.dir *= -1; }
+      g.position.set(x, p.jump > 0 ? Math.sin(p.jump * 5) * .3 : 0, z); p.jump = Math.max(0, p.jump - dt); g.rotation.y = Math.atan2(p.ax === 'x' ? p.dir : 0, p.ax === 'z' ? p.dir : 0); p.a.anim(t * p.sp, .75, 0); });
+  }
+  // ---------- you: walking, on a roof, swinging ----------
+  function xcClear(){ if (xcValid(pos.x, pos.z)) return; for (let r = 1; r <= 60; r += 1) for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, x = pos.x + Math.cos(a) * r, z = pos.z + Math.sin(a) * r; if (xcValid(x, z)) { pos.x = x; pos.z = z; return; } } }
+  function xcAnchor(){
+    const fw = V(-Math.sin(yaw), 0, -Math.cos(yaw));
+    for (const el of [null, .6, .9, .35]) { if (el === null) { ndc.set(0, 0); ray.setFromCamera(ndc, camera); } else ray.set(camera.position, V(fw.x * Math.cos(el), Math.sin(el), fw.z * Math.cos(el)));
+      const hit = ray.intersectObjects(XC.ims.concat(XC.lm), true).find(q => q.distance < 100 + 30 * (UPG2.swing || 0) && q.distance > 4 && q.point.y > pos.y + 3); if (hit) return hit.point.clone(); }
+    return pos.clone().addScaledVector(fw, 22).add(V(0, 24, 0));
+  }
+  function xcWeb(){
+    if (web.p || XC.drv || XC.ride) return; if (!(held === 'web' || inv.includes('web')) || dustedWeapon('web')) return say('You need your web-shooters for that (the weapon rack in the lair).', 2600);
+    if (held !== 'web') hold('web'); web.p = xcAnchor(); web.L = pos.distanceTo(web.p);
+    if (!XC.air) { cityV.set(-Math.sin(yaw) * 3, XC.roof ? 3 : 6, -Math.cos(yaw) * 3); XC.air = true; XC.roof = 0; } else if (Math.hypot(cityV.x, cityV.z) < 4) { cityV.x += -Math.sin(yaw) * 5; cityV.z += -Math.cos(yaw) * 5; }
+    walkTarget = null; tone(1400, .12, 'triangle', .04, 500); drawWeb();
+  }
+  const XC_SW = { top: (x, z, f) => xcTop(x, z, f), topAt: (x, z) => xcTopAt(x, z), ground: 0, wall: (x, z, f) => xcBlocked(x, z, f, .45), wallPt: (x, z, f) => xcBlocked(x, z, f, 0),
+    land: sup => { pos.y = sup + 1.6; cityV.set(0, 0, 0); web.p = null; XC.air = false; XC.roof = sup > .3 ? sup : 0; vy = 0; grounded = true; tone(140, .08, 'sine', .05); if (!XC.roof) { if (xcInWater(pos.x, pos.z)) { say('Splash. You haul yourself out onto the wall.', 2000); } xcClear(); } drawWeb(); } };
+  addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A || !inWorld) return; const k = e.key.toLowerCase();
+    if (k === ' ' && zone === 'xc' && XC.roof && !XC.air) { XC.air = true; XC.roof = 0; cityV.set(-Math.sin(yaw) * 2.5, 7.5, -Math.cos(yaw) * 2.5); tone(420, .08, 'sine', .04, 620); }
+    if (k === 'e' && (zone === 'xc' || zone === 'xin')) { if (XC.drv) return xcExitCar(); if (XC.near) XC.near.go(); } });
+  // ---------- shops along the streets (and one shuttered godown that opens at night) ----------
+  function xcSign(txt, col, bg, w, h){ return new THREE.MeshBasicMaterial({ transparent: true, map: tex(Math.round(w * 64), Math.round(h * 64), (c, W, H) => { c.fillStyle = bg; c.fillRect(0, 0, W, H); c.fillStyle = col; let fs = Math.round(H * .58); c.font = `800 ${fs}px ${DISPLAY}`; while (c.measureText(txt).width > W * .92 && fs > 8) { fs--; c.font = `800 ${fs}px ${DISPLAY}`; } c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, W / 2, H / 2 + 2); }) }); }
+  function xcFront(l){ // the side of a lot that faces a street, its outward normal, and a point on the pavement in front of it
+    const sides = [[l.x0, (l.z0 + l.z1) / 2, -1, 0], [l.x1, (l.z0 + l.z1) / 2, 1, 0], [(l.x0 + l.x1) / 2, l.z0, 0, -1], [(l.x0 + l.x1) / 2, l.z1, 0, 1]];
+    return sides.find(([x, z, nx, nz]) => XC_L.some(r => nx ? Math.abs(x + nx * 7.6 - r) < 1.5 : Math.abs(z + nz * 7.6 - r) < 1.5) && !xcInWater(x + nx * 4, z + nz * 4)) || null; }
+  function xcShopsBuild(g){
+    const P = XC.P, used = [], cand = XC.lots.filter(l => l.h >= 6 && xcFront(l)).sort((a, b) => xcHash(a.x0, b.z0) - .5);
+    const pick = minD => { const l = cand.find(c => !used.includes(c) && used.every(u => Math.hypot(u.x0 - c.x0, u.z0 - c.z0) > minD)); if (l) used.push(l); return l; };
+    P.shops.forEach(([name, kind], i) => { const l = pick(48) || pick(20); if (!l) return; xcDoor(g, l, name, kind, i); });
+    const st = pick(30); if (st) xcDoor(g, st, 'a shuttered godown', 'stash', 99);
+  }
+  function xcDoor(g, l, name, kind, i){
+    const [x, z, nx, nz] = xcFront(l), ry = Math.atan2(nx, nz), col = kind === 'stash' ? 0x3A3D44 : [0xC8462E, 0x1E5AA8, 0x1F7A45, 0xE07A1E, 0x8A3A9A][i % 5];
+    const f = new THREE.Group(); f.position.set(x + nx * .05, 0, z + nz * .05); f.rotation.y = ry; g.add(f);
+    box(1.8, 2.5, .12, kind === 'stash' ? mat(0x5A5E68, { metalness: .6, roughness: .4 }) : glowM(0xFFD9A0, { emissiveIntensity: .6 }), 0, 1.25, .06, f);
+    if (kind === 'stash') { for (let k = 0; k < 8; k++) box(1.9, .05, .14, mat(0x3A3D44), 0, .3 + k * .28, .1, f); }
+    else { box(5.4, .12, 1.4, mat(col, { roughness: .7 }), 0, 3, .7, f).rotation.x = .18; const s = new THREE.Mesh(new THREE.PlaneGeometry(5, 1), xcSign(name.toUpperCase(), '#FFFFFF', '#' + new THREE.Color(col).getHexString(), 5, 1)); s.position.set(0, 3.9, .14); f.add(s);
+      [-1.8, 1.8].forEach(o => box(1.1, 1.3, .1, new THREE.MeshStandardMaterial({ color: 0xBFE0F0, emissive: 0x4A3A20, emissiveIntensity: .5, roughness: .1 }), o, 1.3, .07, f)); }
+    XC.doors.push({ name, kind, x: x + nx * 2.2, z: z + nz * 2.2, nx, nz, l, i });
+  }
+  // ---------- inside: a room made for whatever the shop is, with the shopkeeper and a customer or two ----------
+  function xcInside(d){
+    if (d.kind === 'stash' && !nightNow()) return say('Shutters down and padlocked. Whatever happens in there happens after dark (7 pm).', 3200);
+    if (d.kind === 'stash' && XC.s.raidDay === new Date().toDateString()) return say('Police tape across the shutter. You already cleaned it out today.', 2600);
+    fade(() => { if (XC.isc) disposeDeep(XC.isc); const sc = XC.isc = new THREE.Scene(), W = 12, D = 10; sc.background = new THREE.Color(0x14161C); XC.inside = d; XC.room = { W, D };
+      sc.add(new THREE.HemisphereLight(0xFFF2DC, 0x2A2420, .8)); const L = new THREE.PointLight(0xFFE0B0, 1, 20, 2); L.position.set(0, 2.8, 0); sc.add(L);
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), mat(d.kind === 'stash' ? 0x5A5A56 : 0xB89A6A, { roughness: .8 })); floor.rotation.x = -Math.PI / 2; sc.add(floor); box(W, .1, D, mat(0x3A3D44), 0, 3.2, 0, sc);
+      const wm = mat(d.kind === 'stash' ? 0x6A6A66 : [0xE8DCC0, 0xC8E0D8, 0xF2D2B0][d.i % 3], { roughness: .9 }); [[0, -D / 2, W, .1], [0, D / 2, W, .1], [-W / 2, 0, .1, D], [W / 2, 0, .1, D]].forEach(([x, z, w, dd]) => box(w, 3.2, dd, wm, x, 1.6, z, sc));
+      box(.08, 2.3, 1.6, glowM(0xFFD9A0, { emissiveIntensity: .5 }), -W / 2 + .06, 1.15, 0, sc); XC.blocks = [];
+      const B2 = (w, h, dd, m, x, y, z) => { box(w, h, dd, m, x, y, z, sc); XC.blocks.push([x - w / 2, x + w / 2, z - dd / 2, z + dd / 2]); };
+      if (d.kind === 'stash') { for (let i = 0; i < 9; i++) B2(1.2, 1.2, 1.2, mat(0x8A6A3A, { roughness: .9 }), -2 + (i % 3) * 3, .6, -3 + Math.floor(i / 3) * 3); box(2, .05, 1, mat(0xF4F4F4), 3, 1.25, -3, sc); }
+      else { B2(5, 1.05, 1, mat(0x6A4E3A, { roughness: .6 }), 3, .52, 0); for (let r = 0; r < 3; r++) { B2(.5, 2.4, 3, mat(0x5A4632), W / 2 - .35, 1.2, -3 + r * 3); for (let k = 0; k < 4; k++) box(.35, .3, .5, mat([0xC8462E, 0xF2C230, 0x1E5AA8, 0x1F7A45][(k + r) % 4]), W / 2 - .45, .5 + k * .55, -3.5 + r * 3 + (k % 2) * .5, sc); }
+        if (d.kind === 'food') [[-1.5, -3], [-1.5, 3], [1, -3.2]].forEach(([x, z]) => { B2(1.1, .75, 1.1, mat(0xEDEAE2), x, .38, z); });
+        const sk = avatar(crowdLook(d.i * 13 + 4)); sk.g.position.set(4.6, 0, 0); sk.g.rotation.y = -Math.PI / 2; sc.add(sk.g); XC.keeper = sk;
+        const cu = avatar(crowdLook(d.i * 3 + 9)); cu.g.position.set(-1, 0, -2.4); cu.g.rotation.y = .6; sc.add(cu.g); }
+      plats.xin = [{ x0: -W / 2, x1: W / 2, z0: -D / 2, z1: D / 2 }];
+      web.p = null; drawWeb(); XC.air = false; XC.roof = 0; zone = 'xin'; vy = 0; grounded = true; pos.set(-W / 2 + 1.2, 1.6, 0); yaw = -Math.PI / 2; pitch = -.04; $('#worldBack').textContent = 'Back outside';
+      if (d.kind === 'stash') { XC.s.raidDay = new Date().toDateString(); xcSave(); setTimeout(() => xcFight('xr', 'The Godown Crew'), 900); say('Crates, a counting table, and five very surprised men.', 2600); }
+      else say(`${d.name}. ${d.kind === 'food' ? 'It smells amazing in here.' : 'A bell rings over the door.'}`, 2600); }, '#06070B');
+  }
+  function xinValid(x, z){ const R = XC.room; if (!R) return false; if (Math.abs(x) > R.W / 2 - .35 || Math.abs(z) > R.D / 2 - .35) return false; return !(XC.blocks || []).some(b => x > b[0] - .3 && x < b[1] + .3 && z > b[2] - .3 && z < b[3] + .3); }
+  function xcOutside(){ const d = XC.inside; fade(() => { zone = 'xc'; XC.inside = null; if (XC.isc) { disposeDeep(XC.isc); XC.isc = null; } pos.set(d.x, 1.6, d.z); yaw = Math.atan2(-d.nx, -d.nz) + Math.PI; pitch = -.03; $('#worldBack').textContent = 'Taxi to the airport'; }, '#06070B'); }
+  // ---------- jobs from the people in the shops ----------
+  function xcJob(d){
+    const s = XC.s; if (XC.job) return say(XC.job.kind === 'deliver' ? `“Did you take the parcel to ${XC.job.to.name} yet?” Follow the white beam.` : '“Any luck finding my bag?” The white beam shows where.', 3200);
+    if (Math.random() < .5) { const to = XC.doors.filter(q => q !== d && q.kind !== 'stash').sort(() => Math.random() - .5)[0]; if (!to) return; XC.job = { kind: 'deliver', to, x: to.x, z: to.z, from: d.name };
+      say(`“Could you run this parcel over to ${to.name}? I’d go myself but the shop won’t mind itself.” A white beam of light marks the place.`, 4200); }
+    else { const l = XC.lots.filter(q => q.h > 10 && q.h < 40).sort(() => Math.random() - .5)[0]; if (!l) return; XC.job = { kind: 'find', x: (l.x0 + l.x1) / 2, z: (l.z0 + l.z1) / 2, y: l.h, from: d.name };
+      say('“A boy snatched my bag and threw it up onto a roof. Can you get it?” A white beam of light marks the roof. You’ll need to swing.', 4200); }
+  }
+  function xcJobStep(){ const J = XC.job; if (!J) { if (XC.beam) XC.beam.visible = false; return; }
+    if (!XC.beam) { XC.beam = new THREE.Mesh(new THREE.CylinderGeometry(.5, .5, 70, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xF2EEE6, transparent: true, opacity: .35, depthWrite: false })); XC.sc.add(XC.beam); } XC.beam.visible = true; XC.beam.position.set(J.x, 35, J.z);
+    const done = J.kind === 'deliver' ? Math.hypot(pos.x - J.x, pos.z - J.z) < 2.5 && !XC.roof && !XC.air : Math.hypot(pos.x - J.x, pos.z - J.z) < 6 && Math.abs(pos.y - 1.6 - J.y) < 1.5;
+    if (done) { const r = J.kind === 'deliver' ? 12 : 16; JOB.rep += r; jobSave(); XC.s.jobs++; xcSave(); tone(660, .15, 'triangle', .05, 990); say(J.kind === 'deliver' ? `You hand the parcel over at ${J.to.name}. They knew it was coming. Reputation +${r}.` : `The bag’s on the roof, wedged behind a water tank. You toss it down to ${J.from}. Reputation +${r}.`, 4200); XC.job = null; } }
+  // ---------- street bosses, waiting in their spots ----------
+  function xcBossDefs(){ XC.P.bosses.forEach(B => { if (HEROES[B.id]) return; const [c1, c2] = B.look;
+    OUTFITS[B.id + 'o'] = { hero: 1, c1: '#' + new THREE.Color(c1).getHexString(), c2: '#' + new THREE.Color(c2).getHexString(), hair: 'short', hairCol: '#1A1410', skin: '#9A7050' };
+    HEROES[B.id] = { name: B.name, outfit: B.id + 'o', hp: B.hp, kind: 'melee', dmg: 12, range: 2.3, cd: .8, speed: 4.6, r: .55, grounded: 1 };
+    BODY[B.id] = () => { const R = bdRig({ legM: 0x2A2D33, torM: c1, armM: c1, handM: 0x9A7050, bw: .29, tH: .66 }); bdFace(R, 0x9A7050, 'short', 0x1A1410); R.add(new THREE.CylinderGeometry(.3, .26, .12, 14), c2, 0, R.hip + .05, 0); R.add(new THREE.BoxGeometry(.5, .08, .3), c2, 0, R.sh + .02, 0); return R; }; }); }
+  function xcBossesBuild(g){ xcBossDefs(); XC.bossAv = [];
+    XC.P.bosses.forEach(B => { if (XC.s.bosses.includes(B.id)) return; let av = null; try { av = bodyAv(B.id, 1); } catch (e) {} if (!av) return; av.g.position.set(B.at[0], 0, B.at[1]); g.add(av.g);
+      const beam = new THREE.Mesh(new THREE.CylinderGeometry(.6, .6, 60, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xFF5A4E, transparent: true, opacity: .3, depthWrite: false })); beam.position.set(B.at[0], 30, B.at[1]); g.add(beam); XC.bossAv.push({ B, av, beam }); }); }
+  function xcFight(part, name){ const B = XC.P.bosses.find(q => q.id === part.slice(1) || 'x' + q.id === part); XC.fz = zone; XC.fc = [pos.x, pos.z]; ST_TITLE[part] = name; ST_FRAIL.x = [1, 1, 1];
+    startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part, xc: 1 }); if (B) say(`${B.name}: “${B.line}”`, 3600); }
+  function xcSetup(part){
+    if (!EV.opts || !EV.opts.xc || part[0] !== 'x') return; const S = EV.st;
+    if (part === 'xr') { const W2 = XC.room ? XC.room.W / 2 : 6, b = addUnit({ hero: 'gangBoss', team: 'en' }); b.x = W2 - 1.6; b.z = 0; b.boss = 1; EV.boss = b; S.sb = { B: { name: 'the godown boss' }, b, t: 99, marks: [] };
+      [[W2 - 3.5, -3], [W2 - 3.5, 3], [0, -3.6], [1.5, 3.6]].forEach(([x, z], i) => S.add(i < 3 ? 'gangA' : 'gangB', x, z)); S.xc = { kind: 'raid' }; return; }
+    const id = part.slice(1), B = XC.P.bosses.find(q => q.id === id); if (!B) return; const ent = XC.bossAv.find(q => q.B === B); if (ent) ent.av.g.visible = false;
+    const b = addUnit({ hero: id, team: 'en' }); b.x = B.at[0]; b.z = B.at[1]; b.boss = 1; EV.boss = b; S.sb = { B: { name: B.name }, b, t: 99, marks: [] }; S.xc = { kind: 'boss', B, mv: 5, goons: 0 };
+    pos.set(B.at[0] + 6, 1.6, B.at[1] + 6); yaw = Math.atan2(6, 6); }
+  // their special moves: a slam, a charge, a pull, or a call for help
+  function xcFightStep(dt){ const S = EV && EV.st && EV.st.xc; if (!S || EV.over || S.kind !== 'boss') return; const b = EV.boss; if (!b || b.dead > 0) return; const d = Math.hypot(b.x - pos.x, b.z - pos.z);
+    if (!S.goons && b.hp < b.max * .6) { S.goons = 1; EV.st.add('gangA', b.x + 3, b.z); EV.st.add('gangA', b.x - 3, b.z); say(`${S.B.name} whistles. Two of his men come running.`, 2400); }
+    if (S.tel) { S.tel.t -= dt; if (S.tel.t <= 0) { const T = S.tel; S.tel = null; if (T.k === 'slam' && d < 3.8 && !EV.blocking) hurtMe(14, b); if (T.k === 'dash') { b.kx = (pos.x - b.x) * 3.2; b.kz = (pos.z - b.z) * 3.2; if (d < 9 && !EV.blocking) setTimeout(() => { if (EV && !EV.over && Math.hypot(b.x - pos.x, b.z - pos.z) < 2.2) hurtMe(12, b); }, 350); }
+      if (T.k === 'pull' && d < 12) { pos.x += (b.x - pos.x) * .45; pos.z += (b.z - pos.z) * .45; hurtMe(6, b); } } return; }
+    if ((S.mv -= dt) <= 0) { S.mv = 5 + Math.random() * 3; const k = ['slam', 'dash', 'pull'][Math.floor(Math.random() * 3)]; S.tel = { k, t: .9 }; tone(k === 'slam' ? 80 : 300, .5, 'sawtooth', .04, k === 'slam' ? 50 : 500);
+      say(k === 'slam' ? `${S.B.name} raises both fists. Get clear or block!` : k === 'dash' ? `${S.B.name} lowers his head to charge!` : `${S.B.name} swings a hook and chain at you!`, 1400); } }
+  function xcFightEnd(won){ const S = EV.st.xc || {}; XC.fightDone = true; setTimeout(() => { if (EV) stopEvent(true);
+    if (S.kind === 'raid') { if (won) { JOB.rep += 30; jobSave(); XC.s.raids++; xcSave(); say('The crew’s tied up for the police with their own packing tape. Reputation +30.', 4200); } else say('They throw you out into the lane. Try again another night.', 3200); xcOutside(); return; }
+    const B = S.B; if (won && B) { XC.s.bosses.push(B.id); xcSave(); JOB.rep += 45; jobSave(); say(`${B.win} Reputation +45.`, 5200); const e = XC.bossAv.find(q => q.B === B); if (e) { e.av.g.visible = false; e.beam.visible = false; } }
+    else { const e = XC.bossAv.find(q => q.B === B); if (e) e.av.g.visible = true; say(`${B ? B.name : 'He'} laughs and walks off. He’ll be back in his spot tomorrow.`, 3200); } }, 1800); }
+  function xcArena(){ eventScene = XC.fz === 'xin' ? XC.isc : XC.sc; PILLARS.length = 0; plats.event = [{ x0: -1e4, x1: 1e4, z0: -1e4, z1: 1e4 }]; XC.keep = new Set(eventScene.children); }
+  function xcBack(){ if (XC.keep && eventScene) eventScene.children.slice().forEach(o => { if (!XC.keep.has(o)) { eventScene.remove(o); if (o !== viewG && !(me && o === me.g)) disposeDeep(o); } }); XC.keep = null; XC.fightDone = false; zone = XC.fz || 'xc'; plats.event = []; $('#worldBack').hidden = false; $('#worldBack').textContent = zone === 'xin' ? 'Back outside' : 'Taxi to the airport'; hotEl.hidden = false; }
+  const xcEvValid = (x, z) => XC.fz === 'xin' ? xinValid(x, z) : !xcBlocked(x, z, 0, .3) && !xcInWater(x, z) && Math.hypot(x - XC.fc[0], z - XC.fc[1]) < 34;
+  // ---------- local transport: a train, a ferry or the metro between stations ----------
+  function xcTransitBuild(g){
+    const T = XC.P.transit, alongZ = T.axis === 'z', P2 = (u, y, v) => alongZ ? [T.at + v, y, u] : [u, y, T.at + v];
+    const rail = mat(0x5A5E68, { metalness: .7, roughness: .4 }), conc = mat(0xA8A49A, { roughness: .95 });
+    if (T.kind === 'train') { for (const o of [-.75, .75]) { const r = box(alongZ ? .12 : 480, .14, alongZ ? 480 : .12, rail, ...P2(0, .1, o), g); void r; } const sl = []; for (let u = -238; u <= 238; u += 1.4) sl.push([...P2(u, .05, 0), alongZ ? 0 : Math.PI / 2]); inst(new THREE.BoxGeometry(2.4, .1, .3), mat(0x4A3A2A), sl, g); }
+    if (T.kind === 'metro') { box(alongZ ? 5 : 480, .8, alongZ ? 480 : 5, conc, ...P2(0, 9, 0), g); const pl = []; for (let u = -230; u <= 230; u += 20) pl.push([...P2(u, 4.5, 0)]); inst(new THREE.CylinderGeometry(.7, .9, 9, 10), conc, pl, g, true); pl.forEach(([x, , z]) => xcSolid(x - .9, x + .9, z - .9, z + .9, 9.4, 'p')); }
+    XC.stations = T.st.map(([u, name]) => { const [sx, , sz] = P2(u, 0, T.kind === 'ferry' ? -20 : 4.5), py = T.kind === 'metro' ? 9.4 : .45;
+      if (T.kind === 'ferry') { box(alongZ ? 10 : 6, .4, alongZ ? 6 : 14, mat(0x6A4E3A, { roughness: .9 }), ...P2(u, .25, -11), g); }
+      else { box(alongZ ? 3.4 : 18, T.kind === 'metro' ? .5 : .9, alongZ ? 18 : 3.4, conc, sx, py - .45, sz, g); box(alongZ ? 3.4 : 18, .15, alongZ ? 18 : 3.4, mat(0xC8462E), sx, py + 3.2, sz, g); }
+      const s = new THREE.Mesh(new THREE.PlaneGeometry(6, 1), xcSign(name.toUpperCase(), '#FFFFFF', T.kind === 'metro' ? '#8A3A9A' : T.kind === 'ferry' ? '#1E5AA8' : '#C8462E', 6, 1)); s.position.set(sx, py + 2.6, sz); s.rotation.y = alongZ ? Math.PI / 2 : 0; g.add(s);
+      return { u, name, x: T.kind === 'ferry' ? P2(u, 0, -16)[0] : sx, z: T.kind === 'ferry' ? P2(u, 0, -16)[2] : sz, y: py }; });
+    // metro stairs up to each elevated platform
+    if (T.kind === 'metro') XC.stations.forEach(s => { const st = []; for (let k = 0; k < 14; k++) st.push([s.x - 6 + k * .45, .35 + k * .65, s.z + 2.4]); inst(new THREE.BoxGeometry(.5, .2, 1.8), conc, st, g);
+      XC.acts.push({ x: s.x - 6.5, z: s.z + 2.4, r: 2.4, label: () => 'Take the stairs up to the platform', go: () => { XC.roof = s.y; pos.set(s.x, s.y + 1.6, s.z); tone(300, .1, 'sine', .03); } }); s.down = 1; });
+    // the vehicle itself, running between the end stations
+    const v = XC.tv = new THREE.Group(); g.add(v); XC.lm.push(v);
+    if (T.kind === 'ferry') { box(5, 1.4, 14, mat(0xF2EEE6), 0, .7, 0, v); box(4.6, 1.6, 6, mat(0x1E5AA8), 0, 2.2, -1, v); box(5.2, .2, 14.4, mat(0xC8462E), 0, 1.45, 0, v); if (!alongZ) v.rotation.y = Math.PI / 2; }
+    else { const cars = T.kind === 'metro' ? 4 : 6, body = mat(T.kind === 'metro' ? 0xD8DEE4 : 0x9A3A2A, { metalness: .3, roughness: .4 }), win = new THREE.MeshStandardMaterial({ color: 0x2A3440, emissive: 0x6A5A3A, emissiveIntensity: .3, roughness: .1 });
+      for (let k = 0; k < cars; k++) { const cg = new THREE.Group(); cg.position.z = (k - cars / 2 + .5) * 13; v.add(cg); box(3, 3.2, 12.4, body, 0, 1.9, 0, cg); box(3.05, .9, 11, win, 0, 2.4, 0, cg); box(3.1, .3, 12.4, mat(T.kind === 'metro' ? 0x8A3A9A : 0xF2C230), 0, 1.1, 0, cg); }
+      if (!alongZ) v.rotation.y = Math.PI / 2; }
+    XC.tvU = -200; XC.tvDir = 1; XC.tvWait = 0;
+  }
+  function xcTransitStep(dt){
+    const T = XC.P.transit, alongZ = T.axis === 'z', base = T.kind === 'metro' ? 9.4 : 0;
+    if (XC.ride) { const R = XC.ride; R.t += dt; const k = Math.min(1, R.t / R.dur), e = k * k * (3 - 2 * k); XC.tvU = R.u0 + (R.u1 - R.u0) * e; XC.tvDir = Math.sign(R.u1 - R.u0); }
+    else if (XC.tvWait > 0) XC.tvWait -= dt; else { XC.tvU += XC.tvDir * (T.kind === 'ferry' ? 6 : 14) * dt; const st = XC.stations.find(s => Math.abs(s.u - XC.tvU) < .3); if (st && XC.tvLast !== st) { XC.tvWait = 4; XC.tvLast = st; XC.tvU = st.u + XC.tvDir * .31; } if (Math.abs(XC.tvU) > 215) { XC.tvDir *= -1; XC.tvU = Math.sign(XC.tvU) * 214.9; } }
+    const off = T.kind === 'ferry' ? -16 : 0; XC.tv.position.set(alongZ ? T.at + off : XC.tvU, base + (T.kind === 'ferry' ? Math.sin(performance.now() / 700) * .08 : 0), alongZ ? XC.tvU : T.at + off);
+    if (XC.ride) { const R = XC.ride, [x, z] = alongZ ? [T.at + off + (T.kind === 'ferry' ? 0 : .9), XC.tvU] : [XC.tvU, T.at + off + .9]; pos.set(x, base + (T.kind === 'ferry' ? 3 : 2.4), z); vy = 0; grounded = true;
+      if (!R.looked) { R.looked = 1; yaw = alongZ ? -Math.PI / 2 : Math.PI; pitch = -.05; }
+      if (R.t >= R.dur) { XC.ride = null; const s = R.to; pos.set(s.x + (alongZ ? (T.kind === 'ferry' ? 0 : 3.5) : 0), (s.y || 0) + 1.6 + (T.kind === 'metro' ? 0 : .45), s.z + (alongZ ? 0 : T.kind === 'ferry' ? 0 : 3.5)); if (T.kind !== 'metro') pos.y = 1.6; XC.roof = T.kind === 'metro' ? s.y : 0; XC.s.rides++; xcSave(); say(`${s.name}. Mind the gap.`, 2400); } }
+  }
+  function xcRide(from){ const T = XC.P.transit, list = XC.stations, i = list.indexOf(from), to = list[(i + 1) % list.length];
+    if (XC.drv || XC.air) return; XC.ride = { t: 0, dur: Math.max(8, Math.abs(to.u - from.u) / (T.kind === 'ferry' ? 7 : 16)), u0: from.u, u1: to.u, to }; tone(T.kind === 'ferry' ? 220 : 880, .3, 'sine', .04); say(`You board ${T.name} to ${to.name}.`, 2600); }
+  // ---------- secrets: five things worth finding in every city ----------
+  function xcSecretsBuild(g){ XC.sec = []; ((XC_LM[XC.city] || {}).secrets || []).forEach(([x, y, z, txt], i) => { if (XC.s.secrets.includes(i)) return; const m = new THREE.Mesh(new THREE.OctahedronGeometry(.4, 0), glowM(0x7CF2E8, { emissiveIntensity: 1.4 })); m.position.set(x, (y < 0 ? xcTopAt(x, z) : y) + .9, z); g.add(m); XC.sec.push({ m, i, txt }); }); }
+  // ---------- the space centre and the taxi stand ----------
+  function xcSpaceBuild(g, x, z){ const pad = mat(0xA8A49A, { roughness: .95 }), red = mat(0xC8501E, { roughness: .6 }), wht = mat(0xF4F4F4, { roughness: .4 });
+    box(30, .2, 30, pad, x, .1, z, g); for (let y = 0; y < 26; y += 3) { box(.25, 3, .25, red, x + 4, y + 1.5, z - 2, g); box(.25, 3, .25, red, x + 6, y + 1.5, z - 2, g); box(2.3, .15, 2.3, red, x + 5, y + 3, z - 2, g); }
+    cyl(1.4, 1.4, 18, wht, x, 9.2, z - 2, g, 20); const n = new THREE.Mesh(new THREE.ConeGeometry(1.4, 4, 20), wht); n.position.set(x, 20.2, z - 2); g.add(n); xcSolid(x - 1.6, x + 7, z - 3.6, z - .4, 26, 'r');
+    const s = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.4), xcSign(`${XC.P.name.toUpperCase()} SPACE CENTRE`, '#FFFFFF', '#C8501E', 10, 1.4)); s.position.set(x, 4, z + 10); g.add(s);
+    XC.acts.push({ x, z: z + 8, r: 4, label: () => 'Launch from the space centre', go: () => xcLaunch() }); }
+  function xcLaunch(){ if (typeof xpLaunch === 'function') return xpLaunch(XC.city); say(`${XC.P.name}’s space centre is fuelling up. Its two new worlds open soon.`, 3600); }
+  // ---------- light, weather and the time of day there ----------
+  function xcLight(){ const P = XC.P, h = hourNow(), night = h >= 19 || h < 6, dusk = !night && (h >= 17 || h < 7.5), wet = XC.wx && XC.wx.rain;
+    const sky = new THREE.Color(night ? P.sky[2] : dusk ? P.sky[1] : P.sky[0]); if (wet) sky.lerp(new THREE.Color(0x6A7480), .5); XC.sc.background.copy(sky); XC.sc.fog.color.copy(sky);
+    XC.sun.intensity = night ? .15 : dusk ? .7 : wet ? .45 : 1.05; XC.sun.color.setHex(dusk ? 0xFFB070 : 0xFFF4E0); XC.hemi.intensity = night ? .35 : .8; XC.hemi.color.setHex(night ? 0x5A6A90 : 0xDDEBFF);
+    XC.ims.forEach(im => { im.material.emissiveIntensity = night ? 1 : dusk ? .4 : .04; }); if (XC.lampM) XC.lampM.emissiveIntensity = night || dusk ? 1.8 : 0; XC.night = night; }
+  function xcWeather(){ const P = XC.P; if (XC.wx) return; XC.wx = { rain: 0 };
+    fetch(`https://api.open-meteo.com/v1/forecast?latitude=${P.lat}&longitude=${P.lon}&current=precipitation,rain,weather_code&timezone=Asia%2FKolkata`).then(r => r.json()).then(d => { const c = d.current || {}; XC.wx = { rain: Math.max(+c.rain || 0, +c.precipitation || 0) || (+c.weather_code >= 51 && +c.weather_code <= 99 ? 1 : 0), live: 1 }; }).catch(() => {});
+  }
+  function xcRainStep(){ const wet = XC.wx && XC.wx.rain > 0; if (wet && !XC.rain) { const n = lowFx ? 600 : 1800, p = new Float32Array(n * 3); for (let i = 0; i < n; i++) { p[i * 3] = Math.random() * 80 - 40; p[i * 3 + 1] = Math.random() * 30; p[i * 3 + 2] = Math.random() * 80 - 40; }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(p, 3)); XC.rain = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xBFD8E8, size: .08, transparent: true, opacity: .6 })); XC.sc.add(XC.rain); }
+    if (XC.rain) { XC.rain.visible = wet; XC.rain.position.set(pos.x, 0, pos.z); const a = XC.rain.geometry.attributes.position.array; for (let i = 1; i < a.length; i += 3) { a[i] -= .8; if (a[i] < 0) a[i] += 30; } XC.rain.geometry.attributes.position.needsUpdate = true; } }
+  // ---------- in and out ----------
+  function xcEnter(city){
+    if (A || EV) return; fade(() => { aptFree(); xcBuild(city); xcWeather(); xcLight(); web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'xc'; vy = 0; falling = false; grounded = true; XC.air = false; XC.roof = 0;
+      const [tx, tz] = XC_LM[city].taxi; pos.set(tx, 1.6, tz); xcClear(); yaw = Math.atan2(tx, tz); pitch = -.03;
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Taxi to the airport'; jumpBtn.hidden = fine; uiZone();
+      say(XC_LM[city].hello || `Welcome to ${XC.P.name}.`, 5200); }, '#0B0D14');
+  }
+  function xcLeave(){ if (XC.drv) xcExitCar(); XC.ride = null; web.p = null; drawWeb(); const c = XC.city; aptEnter(c, 'kerb'); setTimeout(() => { if (zone !== 'xc' && zone !== 'xin') xcFree(); }, 1500); }
+  // the headlines the Bugle carries from other cities
+  function xcNews(){ const L = []; Object.keys(XC_P).forEach(c => { let s = null; try { s = JSON.parse(localStorage.getItem('ru-xc-' + c) || 'null'); } catch (e) {} if (!s || !s.visits) return; const P = XC_P[c];
+      (s.bosses || []).forEach(id => { const B = P.bosses.find(q => q.id === id); if (B) L.push(`${P.name.toUpperCase()}: ${B.name.toUpperCase()} BEATEN BY MASKED VISITOR`); }); if (s.raids) L.push(`${P.name.toUpperCase()}: ${s.raids} GODOWN RAID${s.raids > 1 ? 'S' : ''} LEAVE CREWS TAPED UP FOR POLICE`); L.push(P.news[(s.visits - 1) % P.news.length]); }); return L; }
+  XC.btn = document.createElement('button'); XC.btn.type = 'button'; XC.btn.className = 'btn alt drvbtn doorbtn'; XC.btn.hidden = true; document.body.appendChild(XC.btn);
+  XC.btn.addEventListener('click', e => { e.stopPropagation(); if (XC.drv) return xcExitCar(); if (XC.near) XC.near.go(); });
+  // ---------- every frame in another city ----------
+  function xcFrame(dt, now){
+    const t = now / 1000;
+    if (inWorld && zone === 'xin') { XC.near = null; if (XC.keeper) XC.keeper.anim(t, 0, 0); const d = XC.inside;
+      if (pos.x < -XC.room.W / 2 + 1.4) XC.near = { label: 'Back outside', go: xcOutside };
+      else if (d && d.kind !== 'stash' && Math.hypot(pos.x - 2.2, pos.z) < 1.8) XC.near = { label: d.kind === 'food' ? 'Order something (1 rep) · or ask for work' : 'Talk to the shopkeeper', go: () => { if (d.kind === 'food' && JOB.rep >= 1 && !XC.job) { JOB.rep -= 1; jobSave(); try { if (typeof hpNow !== 'undefined') hpNow = Math.min(hpMax, hpNow + 15); } catch (e) {} tone(880, .1, 'sine', .04); say('Delicious. You feel better.', 1800); setTimeout(() => xcJob(d), 1900); } else xcJob(d); } };
+      XC.btn.hidden = !XC.near; if (XC.near) XC.btn.textContent = XC.near.label + (fine ? ' (E)' : ''); return; }
+    if (!(inWorld && zone === 'xc' && XC.sc)) { if (!(inWorld && zone === 'event' && EV && EV.inXc)) XC.btn.hidden = true; else xcFightStep(dt); return; }
+    xcTrafficStep(dt); xcPedsStep(dt, t); xcTransitStep(dt); XC.anim.forEach(f => f(t));
+    // you
+    if (XC.drv) xcDriveStep(dt);
+    else if (XC.ride) {}
+    else if (XC.air) { swingCore(dt, XC_SW); vy = 0; grounded = false; }
+    else if (XC.roof) { const tp = xcTop(pos.x, pos.z, XC.roof); if (tp < XC.roof - .35) { XC.air = true; cityV.set(0, 0, 0); XC.roof = 0; } else { pos.y = XC.roof + 1.6; vy = 0; grounded = true; } }
+    if (pos.y < -5) { pos.y = 1.6; xcClear(); }
+    drawWeb();
+    // the boss figures idle in their spots; secrets spin; the job beam
+    XC.bossAv.forEach(e => { if (e.av.g.visible) { e.av.anim(t, 0, 0); e.av.g.rotation.y = Math.atan2(pos.x - e.B.at[0], pos.z - e.B.at[1]); } });
+    XC.sec.forEach(s => { s.m.rotation.y += dt * 1.6; if (!s.got && s.m.position.distanceTo(pos) < 1.8) { s.got = 1; s.m.visible = false; XC.s.secrets.push(s.i); xcSave(); JOB.rep += 5; jobSave(); tone(990, .2, 'triangle', .05, 1480); say(`Secret ${XC.s.secrets.length} of 5: ${s.txt} Reputation +5.`, 5200); } });
+    xcJobStep();
+    // light and weather every few seconds; the name of the part of town you're in
+    if ((XC.lt = (XC.lt || 0) - dt) <= 0) { XC.lt = 3; xcLight(); const dn = xcDist(pos.x, pos.z); if (dn !== XC.dist) { if (XC.dist) say(dn, 1600); XC.dist = dn; } }
+    xcRainStep();
+    // what's in reach
+    XC.near = null; if (!XC.air && !XC.drv && !XC.ride && !BL.cine) { let bd = 9; const offer = (d, n) => { if (d < bd) { bd = d; XC.near = n; } };
+      if (!XC.roof) { XC.doors.forEach(d => offer(Math.hypot(d.x - pos.x, d.z - pos.z) < 1.9 ? Math.hypot(d.x - pos.x, d.z - pos.z) : 99, { label: d.kind === 'stash' ? (nightNow() ? 'Kick in the godown shutter' : 'A shuttered godown (opens after dark)') : `Go into ${d.name}`, go: () => xcInside(d) }));
+        XC.cars.forEach(c => { const d = Math.hypot(c.g.position.x - pos.x, c.g.position.z - pos.z); if (d < 2.8 && c.v < 2) offer(d + 1, { label: `Get into ${VNAME[c.kind] || 'the vehicle'}`, go: () => xcDrive(c) }); });
+        XC.bossAv.forEach(e => { if (!e.av.g.visible) return; const d = Math.hypot(e.B.at[0] - pos.x, e.B.at[1] - pos.z); if (d < 4) offer(d, { label: `Fight ${e.B.name}`, go: () => xcFight('x' + e.B.id, e.B.name) }); });
+        XC.acts.forEach(a => { const d = Math.hypot(a.x - pos.x, a.z - pos.z); if (d < a.r) offer(d, { label: a.label(), go: a.go }); });
+        const [tx, tz] = XC_LM[XC.city].taxi; offer(Math.hypot(tx - pos.x, tz - pos.z) < 4 ? 2 : 99, { label: 'Taxi to the airport', go: xcLeave }); }
+      XC.stations.forEach(s => { const d = Math.hypot(s.x - pos.x, s.z - pos.z); if (d < 4 && Math.abs(pos.y - 1.6 - (XC.P.transit.kind === 'metro' ? s.y : 0)) < 1.5) { offer(d, { label: `Ride ${XC.P.transit.name} from ${s.name}`, go: () => xcRide(s) }); if (XC.roof && s.down && d > 1.2) offer(d - .5, { label: 'Take the stairs down to the street', go: () => { XC.roof = 0; pos.set(s.x - 7.5, 1.6, s.z + 2.4); xcClear(); } }); } }); }
+    XC.btn.hidden = !XC.near && !XC.drv; XC.btn.textContent = XC.drv ? `Get out${fine ? ' (E)' : ''}` : XC.near ? XC.near.label + (fine ? ' (E)' : '') : '';
   }
   function enterMed(){
     if (inWorld) return;
@@ -16740,7 +17226,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // if the bookshelf is closed, the vault (and the operating table) is sealed off, so come back into the room instead
     fade(() => { inWorld = false; zone = 'hub'; uiZone(); walkTarget = null; vy = 0; pos.copy(saved.pos); yaw = saved.yaw; pitch = saved.pitch; if (region(pos.x) === 'vault' && !vaultOpen) { pos.set(3.2, 1.6, .3); yaw = Math.PI / 2; pitch = 0; } dock.classList.add('on'); $('#worldBack').hidden = true; jumpBtn.hidden = true; $('#worldBack').textContent = 'Back to the room'; });
   }
-  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : inWorld && zone === 'tidy' ? tdExit() : inWorld && zone === 'apt' ? aptLeave() : inWorld && zone === 'fly' ? aptArrive() : inWorld && zone === 'med' ? leaveMed() : inWorld && zone === 'farm' ? leaveFarm() : inWorld && zone === 'mc' ? bzLeave() : inWorld && zone === 'sp' ? spAbort() : inWorld && zone === 'blr' ? leaveBlr() : inWorld && (zone === 'twr' || zone === 'dsp') ? fade(() => travel('room'), '#06070B') : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
+  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : inWorld && zone === 'tidy' ? tdExit() : inWorld && zone === 'apt' ? aptLeave() : inWorld && zone === 'fly' ? aptArrive() : inWorld && zone === 'xc' ? xcLeave() : inWorld && zone === 'xin' ? xcOutside() : inWorld && zone === 'med' ? leaveMed() : inWorld && zone === 'farm' ? leaveFarm() : inWorld && zone === 'mc' ? bzLeave() : inWorld && zone === 'sp' ? spAbort() : inWorld && zone === 'blr' ? leaveBlr() : inWorld && (zone === 'twr' || zone === 'dsp') ? fade(() => travel('room'), '#06070B') : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
   function enterAI(){
     fade(() => {
       if (!aiScene) buildAI();
