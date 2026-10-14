@@ -2087,7 +2087,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const inDoor = (x, z) => vaultOpen && x > 4.2 && x <= 5.7 && z >= -.25 && z <= .85;
   const inVault = (x, z) => vaultOpen && Object.values(VR).some(r => inRect(r, x, z));
   const inHall = (x, z) => entered && ((Math.abs(x) < .45 && z > 4.2 && z <= 5.5) || (Math.abs(x) < 1.2 && z > 5.5 && z < 10.3));
-  const valid = (x, z) => inWorld ? zone === 'med' ? medValid(x, z) : zone === 'tidy' ? tdValid(x, z) : zone === 'farm' ? farmValid(x, z) : zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) || inDeep(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? (SW.roof ? swRoofOK(x, z) : blrValid(x, z)) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
+  const valid = (x, z) => inWorld ? zone === 'med' ? medValid(x, z) : zone === 'tidy' ? tdValid(x, z) : zone === 'apt' ? aptValid(x, z) : zone === 'fly' ? false : zone === 'farm' ? farmValid(x, z) : zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) || inDeep(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? (SW.roof ? swRoofOK(x, z) : blrValid(x, z)) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
   const region = x => x > 4.9 ? 'vault' : 'room';
   function flyTo(target, dir, done){
     if (inWorld) { const a = dir ? lookAngles(target, dir) : null; return moveCam(target, a ? a.yaw : null, a ? a.pitch : null, 1, done); }
@@ -3372,6 +3372,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // shoot a web: it sticks to whatever building you're looking at (or somewhere up in the sky if you miss)
   function webStart(){
     if (inWorld && zone === 'mc') { if (!EV && !A) bzWeb(); return; }
+    if (inWorld && zone === 'apt') { if (!EV && !A) aptWeb(); return; }
     if (held !== 'web' && inv.includes('web') && !dustedWeapon('web') && inWorld && (zone === 'blr' || zone === 'roof' || zone === 'city') && !EV && !A) hold('web');
     const street = inWorld && zone === 'blr' && !EV && !A && !BL.lvl && !DRV.on && !BL.cine && Math.abs(BL.off.y) < .01;
     if (held !== 'web' || dustedWeapon('web') || !inWorld || (zone !== 'roof' && zone !== 'city' && !street) || web.p) return;
@@ -3385,7 +3386,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function webEnd(){ if (inWorld && zone === 'mc') return bzWebEnd(); if (!web.p) return; web.p = null; cityV.y += 2.5; cityV.multiplyScalar(1.08); tone(700, .06, 'sine', .03, 1000); drawWeb(); }
   function drawWeb(){
     if (!web.line) { web.line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(0, 0, 0), V(0, 1, 0)]), new THREE.LineBasicMaterial({ color: 0xF4F4F4 })); web.line.userData.noPick = true; }
-    const wsc = zone === 'blr' ? BL.sc : roofScene;
+    const wsc = zone === 'blr' ? BL.sc : zone === 'apt' ? APT.sc : roofScene;
     if (!web.p || !wsc) { if (web.line.parent) web.line.parent.remove(web.line); return; }
     if (web.line.parent !== wsc) wsc.add(web.line);
     const hand = tmpV.set(.3, -.25, -.4).applyQuaternion(camera.quaternion).add(pos);
@@ -4851,7 +4852,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (menuBtn.hidden) { menuBtn.hidden = false; povBtn.hidden = false; povBtn.textContent = tpv ? '1st person' : '3rd person'; }
     if (!A) idleView();
     // web-shooters on the rooftop (or down in Bangalore): swinging is available
-    const canSwing = (held === 'web' || inv.includes('web') && zone === 'blr') && !dustedWeapon('web') && inWorld && (zone === 'roof' || zone === 'city' || zone === 'blr' && !EV && !BL.lvl && !DRV.on) || inWorld && zone === 'mc' && !EV && !A;
+    const canSwing = (held === 'web' || inv.includes('web') && zone === 'blr') && !dustedWeapon('web') && inWorld && (zone === 'roof' || zone === 'city' || zone === 'blr' && !EV && !BL.lvl && !DRV.on) || inWorld && zone === 'mc' && !EV && !A || inWorld && zone === 'apt' && !EV && !A && (held === 'web' || inv.includes('web')) && !dustedWeapon('web');
     if (swingBtn.hidden === (canSwing && !fine)) swingBtn.hidden = !(canSwing && !fine);
     if (canSwing && !swingHinted) { swingHinted = true; say(fine ? 'Web-shooters: aim at a building and hold Q to swing. Release to let go; land on any roof. Space jumps off a roof.' : 'Web-shooters: aim at a building and hold Swing. Let go to fly; land on any roof.', 4200); }
   }
@@ -12886,7 +12887,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // every couple of seconds: achievements, the real night, and the phone light
   let nightChecked = false;
   function littleStep(dt, now){
-    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now);
+    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.dz) deathStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.fin) finalStep(dt, now);
@@ -13536,7 +13537,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const platformAt = (x, z) => plats[zone].find(p => onPlat(x, z, p)) || null;
   let codeScene = null, chipScene = null, seaScene = null, falling = false;
   let spaceScene = null, eventScene = null; const areaScenes = {};
-  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene, event: eventScene, void: voidScene, blr: BL && BL.sc, twr: TWR && TWR.sc, dsp: DSP && DSP.sc, mc: BZ.sc, sp: SPF.sc, med: MED.sc, farm: FM.sc, tidy: TD.sc })[zone] || areaScenes[zone] : scene;
+  const sceneOf = () => inWorld ? ({ hub: world, ai: aiScene, code: codeScene, chip: chipScene, sea: seaScene, roof: roofScene, city: roofScene, lair: lairScene, space: spaceScene, event: eventScene, void: voidScene, blr: BL && BL.sc, twr: TWR && TWR.sc, dsp: DSP && DSP.sc, mc: BZ.sc, sp: SPF.sc, med: MED.sc, farm: FM.sc, tidy: TD.sc, apt: APT.sc, fly: APT.fsc })[zone] || areaScenes[zone] : scene;
   function radTile(parent, ch, x, y, z){
     const m = new THREE.Mesh(new THREE.PlaneGeometry(.55, .55), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: tex(160, 160, (g, w, h) => { g.fillStyle = '#FFE29A'; g.beginPath(); g.roundRect ? g.roundRect(0, 0, w, h, 34) : g.rect(0, 0, w, h); g.fill(); g.fillStyle = '#24425E'; g.font = `700 110px ${ZH}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, w / 2, h / 2 + 6); }) }));
     m.position.set(x, y, z); m.userData.collect = ch; m.userData.base = y; parent.add(m); worldAnim.tiles.push(m); return m;
@@ -14517,6 +14518,265 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function tdPhoneCard(){ const s = tdLoad(); if (!s.log.length) return ''; return `<div class="phcard"><b>The Tidy Man</b><small>${s.log.slice(0, 4).map(esc).join('<br>')}</small></div>`; }
   function tdNews(){ const s = tdLoad(); return s.state === 'arrested' ? ['POLITE ACCOUNTANT ARRESTED: POLICE FIND “HOUSE OF HORRORS” SPOTLESS', 'NEIGHBOURS SHOCKED: “HE ALWAYS SWEPT THE PAVEMENT”'] : s.state === 'loose' && s.log.length ? ['POLICE SEEK MAN IN OLIVE VEST AFTER TEEN ESCAPES QUIET-STREET HOUSE'] : []; }
   addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'e' && inWorld && zone === 'blr' && TD.near && !doorNear && !DRV.on) TD.near.go(); });
+  // ======================= Airports: a terminal you can walk through, a runway, and flights between cities =======================
+  // Bangalore's airport sits past the east edge of the map (a taxi stand on the edge road takes you there). Every city has its
+  // own airport built from the same plan in its own colours. Only the airport you're in is built; leaving it frees it.
+  // Check in at the departures board, go through security, walk to your gate, board, and watch the flight from a window seat.
+  const APT_CITIES = {
+    blr: { name: 'Bengaluru', code: 'BLR', port: 'Bengaluru International', col: 0x1E5AA8, acc: '#FFC93C', grass: 0x6A7A44, sea: 0, ground: 0x6E7A4E },
+    bom: { name: 'Mumbai', code: 'BOM', port: 'Mumbai Harbour International', col: 0xC8462E, acc: '#FFE08A', grass: 0x5E7048, sea: 1, ground: 0x7A7466 },
+    goi: { name: 'Goa', code: 'GOI', port: 'Goa Coastal Airport', col: 0x1F8A6A, acc: '#FFD27A', grass: 0x4E8A3E, sea: 1, ground: 0x6E8A4A },
+    del: { name: 'Delhi', code: 'DEL', port: 'Delhi Capital International', col: 0x8A3A9A, acc: '#F2C94A', grass: 0x8A8456, sea: 0, ground: 0x9A8A66 } };
+  // which cities you can actually walk into from their airport (the rest are still being built)
+  const APT_OPEN = { blr: 1 };
+  const APT_KEY = 'ru-air', APT_FARE = 15;
+  const APT = { sc: null, fsc: null, city: 'blr', B: [], acts: [], people: [], planes: [], solids: [], air: false, roof: 0, near: null, ticket: null, fly: null, stand: null, standG: null };
+  const APT_T = { x0: -60, x1: 60, z0: -12, z1: 30, h: 14 };
+  const APT_GATES = [-45, -15, 15, 45];
+  function aptLoad(){ let s = null; try { s = JSON.parse(localStorage.getItem(APT_KEY) || 'null'); } catch (e) {} return Object.assign({ v: 1, flights: 0, last: 'blr' }, s && typeof s === 'object' ? s : {}); }
+  function aptSave(s){ try { localStorage.setItem(APT_KEY, JSON.stringify(s)); } catch (e) {} }
+  const aptInside = (x, z) => x > APT_T.x0 && x < APT_T.x1 && z > APT_T.z0 && z < APT_T.z1;
+  // something solid: a box with a top. Walls, counters, the tower, hangars, parked planes
+  const aptBox = (x0, x1, z0, z1, top, out) => { APT.B.push({ x0, x1, z0, z1, top, out: !!out }); };
+  function aptValid(x, z){
+    if (APT.air) return false; if (Math.abs(x) > 280 || z < -260 || z > 120) return false;
+    if (APT.roof) return !APT.B.some(b => b.out && x > b.x0 - .3 && x < b.x1 + .3 && z > b.z0 - .3 && z < b.z1 + .3 && b.top > APT.roof + .5);
+    return !APT.B.some(b => x > b.x0 - .3 && x < b.x1 + .3 && z > b.z0 - .3 && z < b.z1 + .3 && b.top > .5);
+  }
+  // the highest surface under a point that you could be standing on at height f (the terminal roof only from above)
+  function aptTop(x, z, f){ let t = 0; if (aptInside(x, z) && f > APT_T.h - .6) t = APT_T.h; APT.B.forEach(b => { if (b.out && x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1 && b.top <= f + .6 && b.top > t) t = b.top; }); return t; }
+  function aptTopAt(x, z){ let t = aptInside(x, z) ? APT_T.h : 0; APT.B.forEach(b => { if (b.out && x > b.x0 && x < b.x1 && z > b.z0 && z < b.z1 && b.top > t) t = b.top; }); return t; }
+  function aptWall(x, z, f, m){ if (Math.abs(x) > 280 || z < -260 || z > 120) return true;
+    if (f < APT_T.h - .5 && x > APT_T.x0 - m && x < APT_T.x1 + m && z > APT_T.z0 - m && z < APT_T.z1 + m && !(x > APT_T.x0 + m && x < APT_T.x1 - m && z > APT_T.z0 + m && z < APT_T.z1 - m)) return true;
+    return APT.B.some(b => b.out && x > b.x0 - m && x < b.x1 + m && z > b.z0 - m && z < b.z1 + m && b.top > f + .45); }
+  // an airliner: white fuselage, the airline's colour on the tail and a stripe, two engines, windows
+  function aptPlane(col){
+    const g = new THREE.Group(), M = APT.pm || (APT.pm = { w: mat(0xF2F4F6, { roughness: .35, metalness: .2 }), dk: mat(0x1A1D24, { roughness: .3 }), grey: mat(0x9AA3AE, { metalness: .6, roughness: .35 }) }), w = M.w, c = mat(col, { roughness: .4, metalness: .2 }), dk = M.dk, grey = M.grey;
+    const body = cyl(2, 2, 30, w, 0, 3.2, 0, g, 18); body.rotation.x = Math.PI / 2;
+    const nose = sph(2, w, 0, 3.2, 15, g, 1, 1, 1.9, 14); void nose; const tail = new THREE.Mesh(new THREE.ConeGeometry(2, 9, 18), w); tail.rotation.x = -Math.PI / 2; tail.position.set(0, 3.6, -19.5); tail.scale.y = 1; g.add(tail);
+    box(4.06, .5, 26, c, 0, 2.5, 0, g); box(4.07, .38, 24, dk, 0, 3.75, 1, g); box(1.6, .5, .1, dk, 0, 4, 16.7, g).rotation.x = -.5;
+    const wing = box(30, .35, 6, w, 0, 2.3, 1, g); void wing; [-1, 1].forEach(s => { const e = cyl(1, 1, 4, grey, s * 7.5, 1.4, 3, g, 14); e.rotation.x = Math.PI / 2; cyl(.85, .85, .1, dk, s * 7.5, 1.4, 5.02, g, 14).rotation.x = Math.PI / 2; box(.2, 1.2, .3, grey, s * 1.2, .6, -2, g); cyl(.35, .35, .3, dk, s * 1.2, .35, -2, g, 10).rotation.z = Math.PI / 2; });
+    box(.4, 7, 5.5, c, 0, 7.6, -19, g).rotation.x = .35; box(11, .3, 3.2, w, 0, 4.2, -20.5, g); box(.2, 1.4, .3, grey, 0, .8, 12.5, g); cyl(.3, .3, .3, dk, 0, .3, 12.5, g, 10).rotation.z = Math.PI / 2;
+    g.traverse(o => { if (o.isMesh) { o.castShadow = !lowFx; o.userData.noPick = true; } }); return g;
+  }
+  const aptSign = (txt, col, bg, w, h, fs) => new THREE.MeshBasicMaterial({ transparent: true, map: tex(Math.round(w * 64), Math.round(h * 64), (c, W, H) => { c.fillStyle = bg; c.fillRect(0, 0, W, H); c.fillStyle = col; c.font = `800 ${fs || Math.round(H * .55)}px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, W / 2, H / 2 + 2); }) });
+  // the departures board: real flights from this city, gates and times
+  function aptBoardTex(){
+    const here = APT.city, s = aptLoad(), h = hourNow(), list = Object.keys(APT_CITIES).filter(k => k !== here);
+    return tex(1024, 384, (c, W, H) => { c.fillStyle = '#0B0D14'; c.fillRect(0, 0, W, H); c.fillStyle = '#FFC93C'; c.font = `800 44px ${DISPLAY}`; c.fillText('DEPARTURES', 30, 58); c.fillStyle = '#9AA3AE'; c.font = '600 26px sans-serif'; c.fillText('FLIGHT    DESTINATION              GATE    TIME     STATUS', 30, 108);
+      list.forEach((k, i) => { const C = APT_CITIES[k], y = 160 + i * 64, t = (Math.floor(h) + 1 + i) % 24, fl = `RU ${300 + i * 17 + (s.flights % 7)}`; c.fillStyle = i % 2 ? '#141824' : '#10131C'; c.fillRect(20, y - 40, W - 40, 58); c.fillStyle = '#F2EEE6'; c.font = '700 30px monospace';
+        c.fillText(fl.padEnd(10) + C.name.toUpperCase().padEnd(25) + `G${i + 1}`.padEnd(8) + `${String(t).padStart(2, '0')}:${i ? '40' : '15'}`, 30, y); c.fillStyle = APT_OPEN[k] ? '#7CF29A' : '#FFC93C'; c.fillText(APT.ticket && APT.ticket.to === k ? 'BOARDING' : 'ON TIME', 780, y); }); });
+  }
+  function aptBuild(city){
+    aptFree(); const C = APT_CITIES[city], sc = APT.sc = new THREE.Scene(); APT.city = city; APT.B = []; APT.acts = []; APT.people = []; APT.planes = []; APT.solids = []; APT.pm = null;
+    const h = hourNow(), night = h >= 19 || h < 6, dusk = !night && (h >= 17 || h < 7.5), sky = night ? 0x0B1224 : dusk ? 0xE8A070 : 0x9EC8E8;
+    sc.background = new THREE.Color(sky); sc.fog = new THREE.Fog(sky, 120, 480);
+    sc.add(new THREE.HemisphereLight(night ? 0x5A6A90 : 0xDDEBFF, 0x3A3A30, night ? .5 : .9)); const sun = new THREE.DirectionalLight(night ? 0x9AB0E0 : dusk ? 0xFFC890 : 0xFFF4E0, night ? .35 : 1.1); sun.position.set(-80, 120, 60); sun.castShadow = fine && !lowFx;
+    if (sun.castShadow) { sun.shadow.mapSize.set(1024, 1024); Object.assign(sun.shadow.camera, { left: -90, right: 90, top: 90, bottom: -90, near: 10, far: 400 }); } sc.add(sun);
+    const ground = new THREE.Mesh(new THREE.PlaneGeometry(700, 500), mat(C.grass, { roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.set(0, -.02, -70); ground.receiveShadow = true; sc.add(ground);
+    if (C.sea) { const sea = new THREE.Mesh(new THREE.PlaneGeometry(700, 200), mat(0x2A5A7A, { roughness: .15, metalness: .3 })); sea.rotation.x = -Math.PI / 2; sea.position.set(0, -.01, -370); sc.add(sea); }
+    const tarmac = mat(0x3A3D44, { roughness: .95 }), apron = mat(0x6A6D72, { roughness: .9 }), stripe = new THREE.MeshBasicMaterial({ color: 0xF2EEE6 }), yel = new THREE.MeshBasicMaterial({ color: 0xFFC93C });
+    const flat = (w, d, m, x, z, y = .01) => { const p = new THREE.Mesh(new THREE.PlaneGeometry(w, d), m); p.rotation.x = -Math.PI / 2; p.position.set(x, y, z); p.receiveShadow = true; sc.add(p); return p; };
+    // the runway, a taxiway, the apron in front of the gates, and the road and kerb on the city side
+    flat(520, 46, tarmac, 0, -150, .02); for (let x = -240; x <= 240; x += 24) flat(12, 1, stripe, x, -150, .03); [-171.5, -128.5].forEach(z => flat(520, .6, stripe, 0, z, .03));
+    for (let i = 0; i < 8; i++) { flat(1.4, 14, stripe, -248, -164 + i * 4, .03); flat(1.4, 14, stripe, 248, -164 + i * 4, .03); }
+    flat(520, 22, tarmac, 0, -75, .015); flat(520, .4, yel, 0, -75, .025); flat(150, 50, apron, 0, -37, .018); APT_GATES.forEach(x => flat(.4, 30, yel, x, -40, .028));
+    flat(200, 16, tarmac, 0, 54, .02); flat(200, 17, apron, 0, 37.5, .022); for (let x = -90; x <= 90; x += 8) flat(4, .3, stripe, x, 52, .03);
+    // runway lights at night
+    if (night) { const lm = new THREE.MeshBasicMaterial({ color: 0xFFE8A0 }), lg = new THREE.InstancedMesh(new THREE.SphereGeometry(.2, 6, 4), lm, 88), m4 = new THREE.Matrix4(); for (let i = 0; i < 44; i++) { m4.makeTranslation(-258 + i * 12, .2, -127); lg.setMatrixAt(i * 2, m4); m4.makeTranslation(-258 + i * 12, .2, -173); lg.setMatrixAt(i * 2 + 1, m4); } sc.add(lg); }
+    // ===== the terminal: a long glass hall under one wide roof =====
+    const T = APT_T, W = T.x1 - T.x0, D = T.z1 - T.z0, cx = (T.x0 + T.x1) / 2, cz = (T.z0 + T.z1) / 2;
+    const floorM = mat(0xE8E4DC, { roughness: .25, metalness: .1 }), roofM = mat(0xDCD8D0, { roughness: .6 }), steel = mat(0x8A939E, { metalness: .7, roughness: .3 }), glass = new THREE.MeshStandardMaterial({ color: 0x9FC8E0, transparent: true, opacity: .28, roughness: .05, metalness: .3, side: THREE.DoubleSide, depthWrite: false });
+    const fl = flat(W, D, floorM, cx, cz, .03); fl.userData.walk = true;
+    const roof = box(W + 8, .8, D + 8, roofM, cx, T.h - .4, cz, sc); roof.userData.walk = true; APT.solids.push(roof);
+    box(W + 8.4, .5, D + 8.4, new THREE.MeshStandardMaterial({ color: C.col, roughness: .5 }), cx, T.h - 1, cz, sc);
+    { const pm = mat(0xC9C4BA, { roughness: .8 }), um = mat(0x8A939E, { metalness: .5, roughness: .4 }); [[cx, T.z1 + 4, W + 8, .3], [cx, T.z0 - 4, W + 8, .3]].forEach(([x, z, w, d]) => box(w, .9, d, pm, x, T.h + .45, z, sc)); [T.x0 - 4, T.x1 + 4].forEach(x => box(.3, .9, D + 8, pm, x, T.h + .45, cz, sc));
+      [[-50, 22], [-30, -6], [30, 22], [50, -6], [0, -7]].forEach(([x, z]) => { box(5, 2.2, 3.5, um, x, T.h + 1.1, z, sc); aptBox(x - 2.5, x + 2.5, z - 1.75, z + 1.75, T.h + 2.2, true); cyl(.9, .9, .3, mat(0x2A2D33), x, T.h + 2.35, z, sc, 16); });
+      for (let i = 0; i < 8; i++) cyl(.25, .25, 1.2, um, -55 + i * 15, T.h + .6, 26, sc, 8); const hp = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), aptSign('H', '#FFFFFF', 'rgba(0,0,0,0)', 10, 10, 420)); hp.rotation.x = -Math.PI / 2; hp.position.set(45, T.h + .03, 8); sc.add(hp); }
+    for (let i = 0; i < 5; i++) box(10, .3, 6, new THREE.MeshStandardMaterial({ color: 0xBFE0F0, emissive: night ? 0x4A6A8A : 0x000000, transparent: true, opacity: .7 }), -40 + i * 20, T.h + .05, cz, sc);
+    // glass walls with steel mullions; the front has its doors in the middle
+    const wallZ = (z, gap) => { for (let x = T.x0; x < T.x1; x += 6) { const x0 = x, x1 = Math.min(T.x1, x + 6); if (gap && x1 > gap[0] && x0 < gap[1]) continue; const p = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, T.h - 1.2), glass); p.position.set((x0 + x1) / 2, (T.h - 1.2) / 2, z); sc.add(p); box(.25, T.h - 1.2, .25, steel, x0, (T.h - 1.2) / 2, z, sc); } };
+    wallZ(T.z1, [-6, 6]); wallZ(T.z0, null); [T.x0, T.x1].forEach(x => { const p = new THREE.Mesh(new THREE.PlaneGeometry(D, T.h - 1.2), glass); p.rotation.y = Math.PI / 2; p.position.set(x, (T.h - 1.2) / 2, cz); sc.add(p); });
+    aptBox(T.x0 - .2, -6, T.z1 - .2, T.z1 + .2, T.h); aptBox(6, T.x1 + .2, T.z1 - .2, T.z1 + .2, T.h); aptBox(T.x0 - .2, T.x1 + .2, T.z0 - .2, T.z0 + .2, T.h); aptBox(T.x0 - .2, T.x0 + .2, T.z0, T.z1, T.h); aptBox(T.x1 - .2, T.x1 + .2, T.z0, T.z1, T.h);
+    for (let x = -50; x <= 50; x += 20) for (const z of [-2, 18]) { cyl(.35, .35, T.h - .8, steel, x, (T.h - .8) / 2, z, sc, 12); aptBox(x - .4, x + .4, z - .4, z + .4, T.h); }
+    // a canopy over the kerb and the airport's name on it
+    box(30, .4, 10, roofM, 0, 6.5, T.z1 + 5, sc); [-13, 13].forEach(x => cyl(.25, .25, 6.5, steel, x, 3.25, T.z1 + 9.5, sc, 10)); aptBox(-13.3, -12.7, T.z1 + 9.2, T.z1 + 9.8, 6.5); aptBox(12.7, 13.3, T.z1 + 9.2, T.z1 + 9.8, 6.5);
+    const nm = new THREE.Mesh(new THREE.PlaneGeometry(40, 3), aptSign(C.port.toUpperCase(), '#FFFFFF', '#' + new THREE.Color(C.col).getHexString(), 40, 3)); nm.position.set(0, T.h + 1.6, T.z1 + 4.1); sc.add(nm); box(40.4, 3.4, .3, steel, 0, T.h + 1.6, T.z1 + 3.9, sc);
+    const sg = (txt, x, y, z, w, ry) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, .9), aptSign(txt, '#0B0D14', C.acc, w, .9)); m.position.set(x, y, z); m.rotation.y = ry || 0; sc.add(m); return m; };
+    sg('DEPARTURES · CHECK-IN', 0, 7.4, T.z1 - .6, 12, 0); sg('← GATES 1–2', -30, 5, 12.8, 6, 0); sg('GATES 3–4 →', 30, 5, 12.8, 6, 0);
+    // check-in: counters, a bag belt, staff behind each one, and queue posts
+    const desk = mat(0xF2EEE6, { roughness: .4 }), belt = mat(0x2A2D33, { roughness: .5 });
+    [-36, -24, -12, 12, 24, 36].forEach((x, i) => { box(8, 1.1, 1.4, desk, x, .55, 21, sc); box(8, .3, 1.2, belt, x, .3, 22.4, sc); aptBox(x - 4, x + 4, 20.3, 23, 1.1); sg(`${C.code} ${i + 1}`, x, 2.6, 20.25, 2.4, 0);
+      for (let k = 0; k < 5; k++) cyl(.05, .05, 1, steel, x - 3 + k * 1.5, .5, 18.5, sc, 6); });
+    // the departures board, big, over security
+    const bd = APT.board = new THREE.Mesh(new THREE.PlaneGeometry(16, 6), new THREE.MeshBasicMaterial({ map: aptBoardTex() })); bd.position.set(0, 8.2, 13.2); sc.add(bd); box(16.6, 6.6, .3, mat(0x16181D), 0, 8.2, 13.0, sc);
+    APT.acts.push({ k: 'board', x: 0, z: 15.5, r: 4.5, label: () => APT.ticket ? `Your flight to ${APT_CITIES[APT.ticket.to].name}: Gate ${APT.ticket.gate}` : 'Choose a flight on the departures board', go: aptBoardPanel });
+    // security: a barrier with three lanes, each with a scanner arch and an X-ray belt
+    [[T.x0, -14], [-10, -2], [2, 10], [14, T.x1]].forEach(([a, b]) => { box(b - a, 1.2, .4, mat(0xC9CFD8, { metalness: .3 }), (a + b) / 2, .6, 12, sc); aptBox(a, b, 11.8, 12.2, 1.2); });
+    [-12, 0, 12].forEach(x => { [-1.4, 1.4].forEach(o => { box(.3, 2.4, .6, mat(0xD8DEE4), x + o, 1.2, 12, sc); aptBox(x + o - .15, x + o + .15, 11.7, 12.3, 2.4); }); box(3.1, .3, .6, mat(0xD8DEE4), x, 2.5, 12, sc); box(.8, .8, 3, mat(0x5A5E68), x - 2.6, .4, 10, sc); aptBox(x - 3, x - 2.2, 8.5, 11.5, .8); });
+    // airside: cafés and shops in the middle, and the gates along the glass
+    const shops = [['FILTER COFFEE CO.', 0x6A3A2A, 'Buy a filter coffee', 'Strong, sweet, too hot to drink. Perfect.'], ['DOSA EXPRESS', 0xC8462E, 'Buy a masala dosa', 'Crisp, golden, with three chutneys. You feel better.'], ['BOOKS & BITS', 0x1E5AA8, 'Browse the books', 'You flick through a comic. Someone has drawn a masked kid swinging over Bangalore.'], ['SILK STORY', 0x8A3A9A, 'Look at the silk', 'Saris folded like flags. Nobody here is in a hurry.']];
+    shops.forEach(([n, col, lab, msg], i) => { const x = [-45, -22, 22, 45][i], z = 4; box(9, 3, 4, mat(col, { roughness: .6 }), x, 1.5, z, sc); box(9.4, .2, 4.4, mat(0x16181D), x, 3.1, z, sc); sg(n, x, 3.7, z + 2.05, 7, 0); sg(n, x, 3.7, z - 2.05, 7, Math.PI); box(5, 1, .6, desk, x, .5, z + 2.6, sc);
+      aptBox(x - 4.5, x + 4.5, z - 2, z + 2.9, 3); APT.acts.push({ k: 'shop' + i, x, z: z + 4, r: 2, label: () => `${lab} (1 rep)`, go: () => { if (JOB.rep < 1) return say('You don’t have enough reputation.', 1800); JOB.rep -= 1; jobSave(); tone(880, .1, 'sine', .04); say(msg, 3200); if (i < 2) try { if (typeof hpNow !== 'undefined') hpNow = Math.min(hpMax, hpNow + 10); } catch (e) {} } }); });
+    APT_GATES.forEach((x, i) => { box(3, 1.1, 1, desk, x, .55, -8, sc); aptBox(x - 1.5, x + 1.5, -8.5, -7.5, 1.1); sg(`GATE ${i + 1}`, x, 4.2, -11.6, 4, 0);
+      for (let r = 0; r < 2; r++) { box(8, .45, .6, mat(0x3A4A6A), x + (i < 2 ? 7 : -7), .45, -2.5 - r * 2.2, sc); box(8, .6, .1, mat(0x3A4A6A), x + (i < 2 ? 7 : -7), .9, -2.8 - r * 2.2, sc); aptBox(x + (i < 2 ? 3 : -11), x + (i < 2 ? 11 : -3), -3.1 - r * 2.2, -2.2 - r * 2.2, .9); }
+      APT.acts.push({ k: 'gate' + i, x, z: -6.5, r: 2.2, label: () => APT.ticket && APT.ticket.gate === i + 1 ? `Board your flight to ${APT_CITIES[APT.ticket.to].name}` : APT.ticket ? `This is Gate ${i + 1}. Yours is Gate ${APT.ticket.gate}.` : 'Gate desk: you need a ticket from the departures board', go: () => { if (APT.ticket && APT.ticket.gate === i + 1) aptBoard(); } });
+      // the jet bridge out to the plane
+      box(3, 3, 14, mat(0xC9CFD8, { metalness: .3, roughness: .4 }), x, 4.5, T.z0 - 7, sc); aptBox(x - 1.5, x + 1.5, T.z0 - 14, T.z0, 6, true); });
+    // the kerb outside: taxis, an auto, and the way back into the city
+    [[-20, 'cab', 0xF2C230], [-10, 'auto', 0x1F7A45], [16, 'cab', 0xF2C230], [26, 'car', 0xEEF1F5]].forEach(([x, t, col]) => { try { const v = makeVehicle(t, col, sc); v.g.position.set(x, 0, 44); v.g.rotation.y = Math.PI / 2; aptBox(x - 2.3, x + 2.3, 43, 45, 1.6, true); } catch (e) {} });
+    APT.acts.push({ k: 'kerb', x: 0, z: 40, r: 4, label: () => APT_OPEN[city] ? `Take a taxi into ${C.name}` : `${C.name}’s streets aren’t open yet`, go: aptLeave });
+    // ===== outside: parked planes at the gates, one taxiing, one taking off and landing; a tower and hangars =====
+    const livery = [C.col, 0xC8102E, 0x1F7A45, 0xE07A1E];
+    APT_GATES.forEach((x, i) => { if (lowFx && i % 2) return; const p = aptPlane(livery[i]); p.position.set(x, 0, -42); p.rotation.y = 0; sc.add(p); APT.solids.push(p); aptBox(x - 2.2, x + 2.2, -62, -26, 5.4, true); aptBox(x - 15, x + 15, -42, -38, 2.6, true); });
+    const tx = aptPlane(0x1E5AA8); sc.add(tx); APT.planes.push({ g: tx, kind: 'taxi', t: Math.random() * 60 });
+    const rw = aptPlane(livery[1]); sc.add(rw); APT.planes.push({ g: rw, kind: 'runway', t: Math.random() * 50 });
+    const tw = new THREE.Group(); tw.position.set(95, 0, -45); sc.add(tw); cyl(2.4, 3.2, 34, mat(0xD8D4CC), 0, 17, 0, tw, 18); cyl(5, 4, 4, glass, 0, 36, 0, tw, 18); cyl(5.2, 5.2, .6, mat(0x3A3D44), 0, 38.3, 0, tw, 18); cyl(.1, .1, 4, steel, 0, 40.5, 0, tw, 6); aptBox(91, 99, -49, -41, 38.6, true); APT.solids.push(tw);
+    [[-140, -45], [-190, -45]].forEach(([x, z]) => { const hg = box(40, 18, 30, mat(0xBFC4CC, { metalness: .4, roughness: .5 }), x, 9, z, sc); APT.solids.push(hg); aptBox(x - 20, x + 20, z - 15, z + 15, 18, true); box(28, 14, .2, mat(0x2A2D33), x, 7, z + 15.05, sc); });
+    // lights inside, brighter at night
+    [-40, 0, 40].forEach(x => { const L = new THREE.PointLight(0xFFF2DC, night ? 1 : .5, 46, 2); L.position.set(x, T.h - 2, 9); sc.add(L); });
+    // people: travellers wandering between check-in, the board, the cafés and the gates, and staff at the counters
+    const spots = [[0, 25], [-30, 24], [30, 24], [0, 16], [-20, 16], [20, 16], [-45, 8], [-22, 8], [22, 8], [45, 8], [-45, -5], [-15, -5], [15, -5], [45, -5], [0, 1], [-30, 1], [30, 1]];
+    const N = lowFx ? 10 : 26; for (let i = 0; i < N; i++) { try { const a = avatar(crowdLook(i * 5 + 3)); a.g.userData.noPick = true; const p = spots[i % spots.length]; a.g.position.set(p[0] + Math.random() * 4 - 2, 0, p[1] + Math.random() * 2 - 1); sc.add(a.g); APT.people.push({ a, to: null, wait: Math.random() * 4, sp: .9 + Math.random() * .5, spots }); } catch (e) {} }
+    [-36, -24, -12, 12, 24, 36].forEach((x, i) => { if (lowFx && i % 2) return; try { const a = avatar(crowdLook(i * 11 + 1)); a.g.position.set(x, 0, 22.6); a.g.rotation.y = Math.PI; sc.add(a.g); APT.people.push({ a, staff: 1 }); } catch (e) {} });
+    plats.apt = [{ x0: -300, x1: 300, z0: -280, z1: 140 }];
+  }
+  function aptFree(){ if (APT.sc) { APT.people.forEach(p => { if (p.a && p.a.g.parent) p.a.g.parent.remove(p.a.g); }); disposeDeep(APT.sc); APT.sc = null; APT.people = []; APT.planes = []; APT.solids = []; APT.B = []; APT.acts = []; APT.pm = null; } }
+  function aptBoardPanel(){
+    const here = APT.city, list = Object.keys(APT_CITIES).filter(k => k !== here);
+    panelBody.innerHTML = `<div class="sec"><p class="meta">${esc(APT_CITIES[here].port)} · departures</p><h2 class="display">Where to?</h2><p class="sub">A ticket costs ${APT_FARE} reputation. You have ${JOB.rep}.</p>${list.map((k, i) => `<p><button class="open" type="button" data-fly="${k}" data-gate="${i + 1}">${esc(APT_CITIES[k].name)} · Gate ${i + 1}${APT_OPEN[k] ? '' : ' · city still being built (airport only)'}</button></p>`).join('')}</div>`;
+    panel.scrollTop = 0; panel.classList.add('on'); tone(880, .08, 'sine', .04);
+  }
+  panelBody.addEventListener('click', e => { const b = e.target.closest('[data-fly]'); if (!b) return; const k = b.dataset.fly;
+    if (JOB.rep < APT_FARE) return say(`A ticket costs ${APT_FARE} reputation. Do some jobs around the city first.`, 3000);
+    JOB.rep -= APT_FARE; jobSave(); APT.ticket = { to: k, gate: +b.dataset.gate }; closePanel(); tone(660, .12, 'triangle', .05, 990);
+    if (APT.board) { APT.board.material.map.dispose(); APT.board.material.map = aptBoardTex(); APT.board.material.needsUpdate = true; }
+    say(`Ticket to ${APT_CITIES[k].name}. Through security, then Gate ${b.dataset.gate}. Follow the signs.`, 4200); });
+  // in from the city: the taxi drops you at the kerb
+  function aptEnter(city, at){
+    if (A || EV) return; if (DRV.on) getOut(true);
+    fade(() => { if (APT.fsc) { disposeDeep(APT.fsc); APT.fsc = null; APT.fly = null; } aptBuild(city); web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'apt'; vy = 0; falling = false; grounded = true; APT.air = false; APT.roof = 0; cityV.set(0, 0, 0);
+      if (at === 'gate' && APT.arrGate) { const x = APT_GATES[APT.arrGate - 1]; pos.set(x, 1.6, -5); yaw = Math.PI; } else { pos.set(0, 1.6, 40); yaw = 0; } pitch = -.03;
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = APT_OPEN[city] ? `Back to ${APT_CITIES[city].name}` : 'Look around'; jumpBtn.hidden = fine; uiZone();
+      say(at === 'gate' ? `Welcome to ${APT_CITIES[city].name}. ${APT_OPEN[city] ? 'Taxis into the city are out the front.' : `${APT_CITIES[city].name}’s streets aren’t open yet, so explore the airport, or fly on from the departures board.`}` : `${APT_CITIES[city].port}. The departures board is over security.`, 5200); }, '#0B0D14');
+  }
+  function aptLeave(){
+    if (!APT_OPEN[APT.city]) return say(`${APT_CITIES[APT.city].name}’s streets aren’t open yet. The departures board can fly you on or home.`, 3600);
+    APT.ticket = null; APT.air = false; APT.roof = 0; web.p = null; drawWeb();
+    if (APT.city === 'blr') { const s = APT.stand || [330, 0]; enterBlr([s[0] - 4, s[1], -Math.PI / 2]); }
+    setTimeout(() => { if (zone !== 'apt' && zone !== 'fly') aptFree(); }, 1500);
+  }
+  // ---------- the taxi stand on Bangalore's east edge ----------
+  function aptStand(){
+    if (APT.standG || !BL.mapG || !BLC.built || !BL.bld) return;
+    let at = null; for (const x of [330, 334, 326]) { for (let z = 0; z <= 60 && !at; z += 4) for (const zz of [z, -z]) { if (!at && !swBlocked(x, zz, 0) && blrValid(...toLocal(x, zz))) at = [x, zz]; } if (at) break; }
+    if (!at) return; APT.stand = at; const g = APT.standG = new THREE.Group(); g.position.set(at[0] + 4, 0, at[1]); BL.mapG.add(g);
+    cyl(.08, .08, 3.4, mat(0x3A3D44, { metalness: .6 }), 0, 1.7, 0, g, 8); const s = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1), aptSign('✈ AIRPORT TAXIS', '#0B0D14', '#FFC93C', 2.6, 1)); s.position.set(0, 3.2, 0); s.rotation.y = -Math.PI / 2; g.add(s); const s2 = s.clone(); s2.rotation.y = Math.PI / 2; g.add(s2);
+    try { const v = makeVehicle('cab', 0xF2C230, g); v.g.position.set(-1.5, 0, 5); } catch (e) {}
+    g.traverse(o => { if (o.isMesh) o.userData.noPick = true; });
+  }
+  APT.btn = document.createElement('button'); APT.btn.type = 'button'; APT.btn.className = 'btn alt drvbtn doorbtn'; APT.btn.hidden = true; document.body.appendChild(APT.btn);
+  APT.btn.addEventListener('click', e => { e.stopPropagation(); if (APT.near) APT.near.go(); });
+  addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A || !inWorld) return; const k = e.key.toLowerCase();
+    if (k === 'e' && APT.near && (zone === 'apt' || zone === 'blr' && !doorNear && !(TD.near && !TD.btn.hidden))) APT.near.go();
+    if (k === ' ' && zone === 'apt' && APT.roof && !APT.air) { APT.air = true; APT.roof = 0; cityV.set(-Math.sin(yaw) * 2.5, 7.5, -Math.cos(yaw) * 2.5); tone(420, .08, 'sine', .04, 620); } });
+  // ---------- swinging at the airport: over the apron, the planes and onto the terminal roof ----------
+  function aptAnchor(){
+    const fw = V(-Math.sin(yaw), 0, -Math.cos(yaw));
+    for (const el of [null, .6, .9, .35]) { if (el === null) { ndc.set(0, 0); ray.setFromCamera(ndc, camera); } else ray.set(camera.position, V(fw.x * Math.cos(el), Math.sin(el), fw.z * Math.cos(el)));
+      const hit = ray.intersectObjects(APT.solids, true).find(q => q.distance < 110 && q.distance > 4 && q.point.y > pos.y + 3); if (hit) return hit.point.clone(); }
+    return pos.clone().addScaledVector(fw, 22).add(V(0, 24, 0));
+  }
+  function aptWeb(){
+    if (web.p) return; if (!(held === 'web' || inv.includes('web')) || dustedWeapon('web')) return say('You need your web-shooters for that (the weapon rack in the lair).', 2600);
+    if (aptInside(pos.x, pos.z) && pos.y < APT_T.h + .5) return say('No room to swing in here. Go outside, or up on the roof.', 2000);
+    if (held !== 'web') hold('web'); web.p = aptAnchor(); web.L = pos.distanceTo(web.p);
+    if (!APT.air) { cityV.set(-Math.sin(yaw) * 3, APT.roof ? 3 : 6, -Math.cos(yaw) * 3); APT.air = true; APT.roof = 0; } else if (Math.hypot(cityV.x, cityV.z) < 4) { cityV.x += -Math.sin(yaw) * 5; cityV.z += -Math.cos(yaw) * 5; }
+    walkTarget = null; tone(1400, .12, 'triangle', .04, 500); drawWeb();
+  }
+  function aptClear(){ if (aptValid(pos.x, pos.z)) return; for (let r = 1; r <= 40; r += 1) for (let k = 0; k < 16; k++) { const a = k / 16 * Math.PI * 2, x = pos.x + Math.cos(a) * r, z = pos.z + Math.sin(a) * r; if (aptValid(x, z)) { pos.x = x; pos.z = z; return; } } }
+  const APT_SW = { top: (x, z, f) => aptTop(x, z, f), topAt: (x, z) => aptTopAt(x, z), ground: 0, wall: (x, z, f) => aptWall(x, z, f, .45), wallPt: (x, z, f) => aptWall(x, z, f, 0),
+    land: sup => { pos.y = sup + 1.6; cityV.set(0, 0, 0); web.p = null; APT.air = false; APT.roof = sup > .3 ? sup : 0; vy = 0; grounded = true; tone(140, .08, 'sine', .05); if (!APT.roof) aptClear(); drawWeb(); } };
+  // ---------- every frame ----------
+  function aptFrame(dt, now){
+    try { aptStand(); } catch (e) {}
+    const t = now / 1000;
+    if (inWorld && zone === 'fly') { APT.btn.hidden = true; return aptFlyStep(dt, now); }
+    if (!(inWorld && zone === 'apt' && APT.sc)) {
+      // the taxi stand in the city
+      APT.near = null; if (inWorld && zone === 'blr' && APT.stand && onGround() && !DRV.on && !EV && !A && !BL.cine && !BL.lvl && Math.abs(BL.off.y) < .01) { const [mx, mz] = toMap(pos.x, pos.z); if (Math.hypot(mx - APT.stand[0] - 4, mz - APT.stand[1]) < 5) APT.near = { label: 'Take a taxi to the airport', go: () => aptEnter('blr', 'kerb') }; }
+      APT.btn.hidden = !APT.near; if (APT.near) APT.btn.textContent = APT.near.label + (fine ? ' (E)' : ''); return; }
+    // planes: one trundling along the taxiway, one taking off and landing on the runway
+    APT.planes.forEach(p => { p.t += dt; const g = p.g; g.rotation.order = 'YXZ';
+      if (p.kind === 'taxi') { const T2 = p.t % 80, k = T2 < 40 ? T2 / 40 : 1 - (T2 - 40) / 40; g.position.set(-200 + 400 * k, 0, -75); g.rotation.set(0, T2 < 40 ? Math.PI / 2 : -Math.PI / 2, 0); }
+      else { const T2 = p.t % 52; if (T2 < 22) { const x = -230 + T2 * T2, y = Math.max(0, (x - 10) * .16); g.visible = true; g.position.set(x, y, -150); g.rotation.set(-Math.min(.22, y * .02), Math.PI / 2, 0); if (T2 < .05) tone(70, 2.5, 'sawtooth', .015, 120); }
+        else if (T2 < 26) g.visible = false; else if (T2 < 48) { const u = T2 - 26, x = 320 - u * (34 - u * .75), y = Math.max(0, 42 - u * 3.4); g.visible = true; g.position.set(x, y, -150); g.rotation.set(y > 0 ? -.06 : 0, -Math.PI / 2, 0); } else g.visible = false; } });
+    // people
+    APT.people.forEach(p => { const g = p.a.g; if (p.staff) { p.a.anim(t, 0, 0); return; }
+      if (!p.to) { if ((p.wait -= dt) > 0) { p.a.anim(t, 0, 0); return; } const s = p.spots[Math.random() * p.spots.length | 0]; p.to = [s[0] + Math.random() * 4 - 2, s[1] + Math.random() * 2 - 1]; }
+      if ((g.position.z - 12) * (p.to[1] - 12) < 0 && !p.via) { const lane = [-12, 0, 12].sort((a, b) => Math.abs(a - g.position.x) - Math.abs(b - g.position.x))[0]; p.via = [lane, g.position.z > 12 ? 13.5 : 10.5]; p.via2 = [lane, g.position.z > 12 ? 10.5 : 13.5]; }
+      const tg = p.via || p.to, dx = tg[0] - g.position.x, dz = tg[1] - g.position.z, d = Math.hypot(dx, dz);
+      if (d < .35) { if (p.via) { p.via = p.via2 || null; p.via2 = null; } else { p.to = null; p.wait = 2 + Math.random() * 7; } p.a.anim(t, 0, 0); return; }
+      g.position.x += dx / d * p.sp * dt; g.position.z += dz / d * p.sp * dt; g.rotation.y += angDiff(g.rotation.y, Math.atan2(dx, dz)) * Math.min(1, dt * 6); p.a.anim(t * p.sp, .7, 0); });
+    // you: swinging, standing on a roof, or walking
+    if (APT.air) { swingCore(dt, APT_SW); vy = 0; grounded = false; }
+    else if (APT.roof) { const tp = aptTop(pos.x, pos.z, APT.roof); if (tp < APT.roof - .35) { APT.air = true; cityV.set(0, 0, 0); APT.roof = 0; } else { pos.y = APT.roof + 1.6; vy = 0; grounded = true; } }
+    if (pos.y < -5) { pos.set(0, 1.6, 40); APT.air = false; APT.roof = 0; }
+    drawWeb();
+    // what's in reach: the board, the shops, the gates, the kerb
+    APT.near = null; if (!APT.air && !APT.roof && !BL.cine) { let bd = 9; APT.acts.forEach(a => { const d = Math.hypot(a.x - pos.x, a.z - pos.z); if (d < a.r && d < bd) { bd = d; APT.near = { label: a.label(), go: a.go }; } }); }
+    APT.btn.hidden = !APT.near; if (APT.near) APT.btn.textContent = APT.near.label + (fine ? ' (E)' : '');
+    // walking through a scanner
+    const lane = [-12, 0, 12].find(x => Math.abs(pos.x - x) < 1.2 && Math.abs(pos.z - 12) < .4); if (lane != null && !APT.beep) { APT.beep = 1; tone(1320, .08, 'square', .03); setTimeout(() => tone(1760, .1, 'square', .03), 120); say(APT.ticket ? 'Security: all clear. Have a good flight.' : 'Security: all clear.', 1800); } if (lane == null) APT.beep = 0;
+  }
+  // ---------- the flight: a window seat, the take-off, the clouds, and the landing ----------
+  function aptBoard(){
+    const tk = APT.ticket; if (!tk || A || EV) return; tone(523, .2, 'sine', .04); setTimeout(() => tone(659, .3, 'sine', .04), 220);
+    fade(() => { aptFlyBuild(tk.to); web.p = null; drawWeb(); APT.air = false; APT.roof = 0; inWorld = true; zone = 'fly'; vy = 0; grounded = true; pos.set(-1.45, 1.6, 0); yaw = Math.PI / 2 - .55; pitch = -.18;
+      hotEl.hidden = true; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Skip the flight'; jumpBtn.hidden = true; uiZone(); setTimeout(() => { if (zone !== 'apt') aptFree(); }, 800);
+      say(`Window seat, row 14. “Good ${hourNow() < 12 ? 'morning' : hourNow() < 17 ? 'afternoon' : 'evening'}, and welcome aboard this flight to ${APT_CITIES[tk.to].name}. Cabin crew, doors to automatic.”`, 5200); }, '#000000');
+  }
+  function aptFlyBuild(to){
+    if (APT.fsc) disposeDeep(APT.fsc); const D = APT_CITIES[to], O = APT_CITIES[APT.city], sc = APT.fsc = new THREE.Scene(); sc.background = new THREE.Color(0x9EC8E8); sc.fog = new THREE.Fog(0xB8D4E8, 200, 480);
+    sc.add(new THREE.HemisphereLight(0xDDEBFF, 0x5A5A50, .9)); const sun = new THREE.DirectionalLight(0xFFF4E0, .9); sun.position.set(-50, 80, 20); sc.add(sun);
+    // the cabin: rows of seats, overhead bins, a wall with little windows, people in the seats ahead
+    const cab = new THREE.Group(); sc.add(cab); const panel2 = mat(0xEEF0F2, { roughness: .6 }), seatM = mat(0x2E4A7A, { roughness: .8 }), headM = mat(0xF2F4F6);
+    box(4.6, .1, 40, mat(0x4A5060, { roughness: .9 }), 0, .4, 0, cab); box(4.6, .1, 40, panel2, 0, 2.75, 0, cab);
+    [-1, 1].forEach(s => { box(.1, .9, 40, panel2, s * 2.2, .85, 0, cab); box(.1, .9, 40, panel2, s * 2.2, 2.3, 0, cab); box(.7, .5, 40, panel2, s * 1.85, 2.4, 0, cab);
+      for (let z = -19.5; z < 20; z += 1) box(.1, .55, .55, panel2, s * 2.2, 1.57, z, cab); });
+    const glassM = new THREE.MeshStandardMaterial({ color: 0xBFE0F0, transparent: true, opacity: .15, roughness: .05 }); for (let z = -19; z < 20; z += 1) { const w = new THREE.Mesh(new THREE.PlaneGeometry(.45, .55), glassM); w.position.set(-2.18, 1.57, z); w.rotation.y = Math.PI / 2; cab.add(w); }
+    for (let z = -18; z <= 18; z += .9) [-1.5, -.9, .9, 1.5].forEach(x => { if (Math.abs(z) < .5 && x === -1.5) return; box(.55, .5, .5, seatM, x, .7, z, cab); box(.55, .8, .12, seatM, x, 1.25, z + .25, cab); box(.4, .12, .05, headM, x, 1.55, z + .32, cab); });
+    for (let i = 0; i < (lowFx ? 6 : 14); i++) { try { const a = avatar(crowdLook(i * 7 + 2)); const z = -1 - Math.floor(i / 2) * 1.8, x = [-.9, .9, 1.5, -1.5][i % 4]; a.g.position.set(x, .05, z); a.g.rotation.y = Math.PI; a.g.scale.setScalar(.92); cab.add(a.g); } catch (e) {} }
+    const L = new THREE.PointLight(0xFFF2DC, .6, 20, 2); L.position.set(0, 2.5, 0); cab.add(L);
+    // outside: the ground slides past, then drops away; clouds; then the other city
+    const out = new THREE.Group(); sc.add(out); const fieldT = tex(256, 256, (c, w, h) => { c.fillStyle = '#' + new THREE.Color(O.ground).getHexString(); c.fillRect(0, 0, w, h); for (let i = 0; i < 40; i++) { c.fillStyle = ['#7A8A4E', '#5E7040', '#8A7A56', '#6A6A5A'][i % 4]; c.fillRect(Math.random() * w, Math.random() * h, 20 + Math.random() * 60, 20 + Math.random() * 50); } c.fillStyle = '#4A4A48'; c.fillRect(0, 120, w, 6); c.fillRect(120, 0, 6, h); });
+    fieldT.wrapS = fieldT.wrapT = THREE.RepeatWrapping; fieldT.repeat.set(30, 30); const gnd = new THREE.Mesh(new THREE.PlaneGeometry(6000, 6000), new THREE.MeshStandardMaterial({ map: fieldT, roughness: 1 })); gnd.rotation.x = -Math.PI / 2; out.add(gnd);
+    const rwy = new THREE.Mesh(new THREE.PlaneGeometry(46, 700), mat(0x3A3D44, { roughness: .95 })); rwy.rotation.x = -Math.PI / 2; rwy.position.set(-30, .05, -200); out.add(rwy);
+    const sea = new THREE.Mesh(new THREE.PlaneGeometry(6000, 3000), mat(0x2A5A7A, { roughness: .15, metalness: .3 })); sea.rotation.x = -Math.PI / 2; sea.position.set(-3000, .1, 0); sea.visible = false; out.add(sea);
+    const cl = []; const cm = new THREE.SpriteMaterial({ map: tex(128, 64, (c, w, h) => { const g2 = c.createRadialGradient(64, 32, 4, 64, 32, 60); g2.addColorStop(0, 'rgba(255,255,255,.95)'); g2.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = g2; c.fillRect(0, 0, w, h); }), depthWrite: false, transparent: true });
+    for (let i = 0; i < (lowFx ? 30 : 70); i++) { const s = new THREE.Sprite(cm); s.scale.set(90 + Math.random() * 120, 30 + Math.random() * 30, 1); s.position.set(-60 - Math.random() * 420, 200 + Math.random() * 130, -900 + Math.random() * 1800); out.add(s); cl.push(s); }
+    APT.fly = { t: 0, to, out, gnd, rwy, sea, cl, fieldT, speed: 0, alt: 0, said: {}, D, cab };
+    plats.fly = [{ x0: -50, x1: 50, z0: -50, z1: 50 }];
+  }
+  function aptFlyStep(dt, now){
+    const F = APT.fly; if (!F) return; F.t += dt; const T2 = F.t, D = F.D;
+    const tgtV = T2 < 6 ? 8 : T2 < 14 ? 8 + (T2 - 6) * 9 : T2 < 38 ? 80 : T2 < 44 ? Math.max(8, 80 - (T2 - 38) * 13) : 0; F.speed += (tgtV - F.speed) * Math.min(1, dt * 1.5);
+    F.alt = T2 < 14 ? 0 : T2 < 24 ? (T2 - 14) * 30 : T2 < 30 ? 300 : T2 < 38 ? Math.max(0, 300 - (T2 - 30) * 38) : 0;
+    const climb = T2 > 13 && T2 < 24 ? .12 : T2 > 30 && T2 < 37 ? -.05 : 0; F.out.rotation.x += (climb - F.out.rotation.x) * Math.min(1, dt * 1.2);
+    F.out.position.y = -F.alt - .8 + (F.alt < 1 ? Math.sin(now / 90) * .015 * (F.speed > 2 ? 1 : 0) : 0);
+    F.fieldT.offset.y -= F.speed * dt / 200; F.rwy.position.z += F.speed * dt; if (T2 > 30 && !F.swapped) { F.swapped = 1; F.rwy.position.z = -1400; F.gnd.material.color.set(D.ground).lerp(new THREE.Color(0xFFFFFF), .55); F.sea.visible = !!D.sea; }
+    F.cl.forEach(s => { s.position.z += F.speed * dt * .6; if (s.position.z > 1200) s.position.z -= 2400; });
+    const k = Math.min(1, F.alt / 300); APT.fsc.background.setRGB(.62 - .22 * k, .78 - .08 * k, .91);
+    const msg = (at, txt) => { if (T2 > at && !F.said[at]) { F.said[at] = 1; say(txt, 4200); } };
+    msg(6.5, 'The engines wind up to a roar, and the runway lights start to blur.'); if (T2 > 6.5 && !F.said.roar) { F.said.roar = 1; tone(70, 6, 'sawtooth', .025, 110); }
+    msg(15, 'Wheels up. The ground tips away, fields and roads and tiny cars.'); msg(24, '“Ladies and gentlemen, we’ve reached our cruising altitude. Sit back and enjoy the view.”');
+    msg(31, `“We’re beginning our descent into ${D.name}. Please return to your seats.”`); msg(38, `Touchdown. “Welcome to ${D.name}.”`);
+    if (T2 > 46) aptArrive();
+  }
+  function aptArrive(){
+    const tk = APT.ticket; if (!tk || APT.arriving) return; APT.arriving = true; const s = aptLoad(); s.flights++; s.last = tk.to; aptSave(s); APT.arrGate = tk.gate;
+    APT.ticket = null; aptEnter(tk.to, 'gate'); setTimeout(() => { APT.arriving = false; }, 1500);
+  }
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
@@ -16480,7 +16740,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // if the bookshelf is closed, the vault (and the operating table) is sealed off, so come back into the room instead
     fade(() => { inWorld = false; zone = 'hub'; uiZone(); walkTarget = null; vy = 0; pos.copy(saved.pos); yaw = saved.yaw; pitch = saved.pitch; if (region(pos.x) === 'vault' && !vaultOpen) { pos.set(3.2, 1.6, .3); yaw = Math.PI / 2; pitch = 0; } dock.classList.add('on'); $('#worldBack').hidden = true; jumpBtn.hidden = true; $('#worldBack').textContent = 'Back to the room'; });
   }
-  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : inWorld && zone === 'tidy' ? tdExit() : inWorld && zone === 'med' ? leaveMed() : inWorld && zone === 'farm' ? leaveFarm() : inWorld && zone === 'mc' ? bzLeave() : inWorld && zone === 'sp' ? spAbort() : inWorld && zone === 'blr' ? leaveBlr() : inWorld && (zone === 'twr' || zone === 'dsp') ? fade(() => travel('room'), '#06070B') : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
+  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : inWorld && zone === 'tidy' ? tdExit() : inWorld && zone === 'apt' ? aptLeave() : inWorld && zone === 'fly' ? aptArrive() : inWorld && zone === 'med' ? leaveMed() : inWorld && zone === 'farm' ? leaveFarm() : inWorld && zone === 'mc' ? bzLeave() : inWorld && zone === 'sp' ? spAbort() : inWorld && zone === 'blr' ? leaveBlr() : inWorld && (zone === 'twr' || zone === 'dsp') ? fade(() => travel('room'), '#06070B') : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
   function enterAI(){
     fade(() => {
       if (!aiScene) buildAI();
