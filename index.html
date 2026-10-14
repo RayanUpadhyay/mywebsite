@@ -13967,7 +13967,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       .sort((a, c) => Math.hypot((a.x0 + a.x1) / 2 + 150, (a.z0 + a.z1) / 2 - 110) - Math.hypot((c.x0 + c.x1) / 2 + 150, (c.z0 + c.z1) / 2 - 110));
   }
   // reserve his plot before the city adds balconies, ledges and shopfronts, so nothing of the old building is left floating over his house
-  function tdReserve(){ if (TD.lot || !BL.bld) return; const b = tdCands()[0]; if (!b) return; hideLot(b); b.keep = true; b.h = 7.6; TD.lot = b; }
+  function tdReserve(){ if (TD.lot || !BL.bld) return; const b = tdCands()[0]; if (!b) return; hideLot(b); b.keep = true; b.h = 7.6; TD.lot = b;
+    if (BL.fireG) BL.fireG.children.slice().forEach(f => { if (f.position.x > b.x0 - 1 && f.position.x < b.x1 + 1 && f.position.z > b.z0 - 1 && f.position.z < b.z1 + 1) BL.fireG.remove(f); }); }
   function tdHouseBuild(){
     if (TD.house || !BL.bld || !BL.mapG) return; const s = tdLoad();
     // a small plot on a quiet street, away from the busy middle of the map
@@ -13989,7 +13990,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   // the places he turns up: outside a shop, by his car (always the same grey hatchback, always spotless)
   function tdSpot(){
-    const s = tdLoad(), L = DOORS.filter(d => ['tiffin', 'kirana', 'medicals', 'tailor'].includes(d.type) && !d.b.hide && Math.hypot(d.front[0], d.front[1]) < 240); if (!L.length) return null;
+    const s = tdLoad(), L = DOORS.filter(d => d.type !== 'stash' && d.type !== 'tidy' && d.F && d.F.street !== false && !d.b.hide && !offMap(d.front[0], d.front[1])); if (!L.length) return null;
     const [px, pz] = inWorld && zone === 'blr' ? toMap(pos.x, pos.z) : [0, 0], near = L.map(q => [q, Math.hypot(q.front[0] - px, q.front[1] - pz)]).filter(([, dd]) => dd > 18).sort((a, c) => a[1] - c[1]);
     const d = near.length ? near[Math.min(near.length - 1, s.sightings % 3)][0] : L[0], [nx, nz] = d.n, x = d.front[0] + nx * 2.4, z = d.front[1] + nz * 2.4;
     return { x, z, ry: Math.atan2(-nx, -nz) + Math.PI, cx: d.front[0] + nx * 5.6 - nz * 2.5, cz: d.front[1] + nz * 5.6 + nx * 2.5, cry: Math.atan2(-nz, nx), d };
@@ -14048,6 +14049,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (s.meet >= 2 && s.meet < 4 && s.firstDay >= 0 && s.day - s.firstDay >= 3) { s.meet = 4; tdSave(); }
     // turned him down twice: a phone call, at night, from a woman who says someone's in her house (it's his house)
     if (s.state === 'met' && s.declined >= 2 && !s.call && nightNow()) { s.call = 1; s.state = 'trap'; tdSave(); tone(880, .2, 'sine', .05); setTimeout(() => tone(880, .2, 'sine', .05), 300); say('Your phone rings. A woman, whispering: “Please, there’s a man in the house, he’s been here for days, I can hear him downstairs…” She gives an address. A white beam of light marks the house.', 6500); }
+    if (TD.npc && !TD.talking && !BL.cine && Math.hypot(mx - TD.npc.P.x, mz - TD.npc.P.z) > 150) { tdNpcClear(); return; }
     if (TD.npc) { const P = TD.npc.P, d = Math.hypot(mx - P.x, mz - P.z); TD.npc.av.anim(performance.now() / 1000, 0, 0); TD.npc.av.g.rotation.y += angDiff(TD.npc.av.g.rotation.y, Math.atan2(mx - P.x, mz - P.z)) * Math.min(1, dt * 3);
       if (d < 30 && !TD.npc.waved) { TD.npc.waved = 1; say(s.meet ? 'A polite man by a grey hatchback raises a hand. It’s Mr. Varadan.' : 'A neat, polite-looking man is struggling with boxes by a grey hatchback.', 3200); }
       TD.near = d < 2.6 && onGround() && !BL.cine ? { label: s.state === 'loose' ? `Confront ${TD_NAME}` : `Talk to ${s.meet ? 'Mr. Varadan' : 'the polite man'}`, go: () => s.state === 'loose' ? tdConfront() : tdTalk() } : null; }
