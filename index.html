@@ -14531,7 +14531,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     goi: { name: 'Goa', code: 'GOI', port: 'Goa Coastal Airport', col: 0x1F8A6A, acc: '#FFD27A', grass: 0x4E8A3E, sea: 1, ground: 0x6E8A4A },
     del: { name: 'Delhi', code: 'DEL', port: 'Delhi Capital International', col: 0x8A3A9A, acc: '#F2C94A', grass: 0x8A8456, sea: 0, ground: 0x9A8A66 } };
   // which cities you can actually walk into from their airport (the rest are still being built)
-  const APT_OPEN = { blr: 1, bom: 1, goi: 1 };
+  const APT_OPEN = { blr: 1, bom: 1, goi: 1, del: 1 };
   const APT_KEY = 'ru-air', APT_FARE = 15;
   const APT = { sc: null, fsc: null, city: 'blr', B: [], acts: [], people: [], planes: [], solids: [], air: false, roof: 0, near: null, ticket: null, fly: null, stand: null, standG: null };
   const APT_T = { x0: -60, x1: 60, z0: -12, z1: 30, h: 14 };
@@ -15172,10 +15172,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const T = XC.P.transit, alongZ = T.axis === 'z', P2 = (u, y, v) => alongZ ? [T.at + v, y, u] : [u, y, T.at + v];
     const rail = mat(0x5A5E68, { metalness: .7, roughness: .4 }), conc = mat(0xA8A49A, { roughness: .95 });
     if (T.kind === 'train') { for (const o of [-.75, .75]) { const r = box(alongZ ? .12 : 480, .14, alongZ ? 480 : .12, rail, ...P2(0, .1, o), g); void r; } const sl = []; for (let u = -238; u <= 238; u += 1.4) sl.push([...P2(u, .05, 0), alongZ ? 0 : Math.PI / 2]); inst(new THREE.BoxGeometry(2.4, .1, .3), mat(0x4A3A2A), sl, g); }
-    if (T.kind === 'metro') { box(alongZ ? 5 : 480, .8, alongZ ? 480 : 5, conc, ...P2(0, 9, 0), g); const pl = []; for (let u = -230; u <= 230; u += 20) pl.push([...P2(u, 4.5, 0)]); inst(new THREE.CylinderGeometry(.7, .9, 9, 10), conc, pl, g, true); pl.forEach(([x, , z]) => xcSolid(x - .9, x + .9, z - .9, z + .9, 9.4, 'p')); }
+    if (T.kind === 'metro') { box(alongZ ? 5 : 480, .8, alongZ ? 480 : 5, conc, ...P2(0, 9, 0), g); const pl = []; for (let u = -230; u <= 230; u += 20) pl.push([...P2(u, 4.5, 0)]); inst(new THREE.CylinderGeometry(.7, .9, 9, 10), conc, pl, g, true); pl.forEach(([x, , z]) => xcSolid(x - .9, x + .9, z - .9, z + .9, 8.6, 'p')); const dk = alongZ ? xcSolid(T.at - 2.5, T.at + 2.5, -240, 240, 9.4, 'd') : xcSolid(-240, 240, T.at - 2.5, T.at + 2.5, 9.4, 'd'); dk.low = 8.5; }
     XC.stations = T.st.map(([u, name]) => { const [sx, , sz] = P2(u, 0, T.kind === 'ferry' ? -20 : 4.5), py = T.kind === 'metro' ? 9.4 : .45;
       if (T.kind === 'ferry') { box(alongZ ? 10 : 6, .4, alongZ ? 6 : 14, mat(0x6A4E3A, { roughness: .9 }), ...P2(u, .25, -11), g); }
-      else { box(alongZ ? 3.4 : 18, T.kind === 'metro' ? .5 : .9, alongZ ? 18 : 3.4, conc, sx, py - .45, sz, g); box(alongZ ? 3.4 : 18, .15, alongZ ? 18 : 3.4, mat(0xC8462E), sx, py + 3.2, sz, g); }
+      else { box(alongZ ? 3.4 : 18, T.kind === 'metro' ? .5 : .9, alongZ ? 18 : 3.4, conc, sx, py - .45, sz, g); box(alongZ ? 3.4 : 18, .15, alongZ ? 18 : 3.4, mat(0xC8462E), sx, py + 3.2, sz, g); if (T.kind === 'metro') { const pb = alongZ ? xcSolid(sx - 1.7, sx + 1.7, sz - 9, sz + 9, py, 'pl') : xcSolid(sx - 9, sx + 9, sz - 1.7, sz + 1.7, py, 'pl'); pb.low = py - .6; } }
       const s = new THREE.Mesh(new THREE.PlaneGeometry(6, 1), xcSign(name.toUpperCase(), '#FFFFFF', T.kind === 'metro' ? '#8A3A9A' : T.kind === 'ferry' ? '#1E5AA8' : '#C8462E', 6, 1)); s.position.set(sx, py + 2.6, sz); s.rotation.y = alongZ ? Math.PI / 2 : 0; g.add(s);
       return { u, name, x: T.kind === 'ferry' ? P2(u, 0, -16)[0] : sx, z: T.kind === 'ferry' ? P2(u, 0, -16)[2] : sz, y: py }; });
     // metro stairs up to each elevated platform
@@ -15265,6 +15265,75 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         const [tx, tz] = XC_LM[XC.city].taxi; offer(Math.hypot(tx - pos.x, tz - pos.z) < 4 ? 2 : 99, { label: 'Taxi to the airport', go: xcLeave }); }
       XC.stations.forEach(s => { const d = Math.hypot(s.x - pos.x, s.z - pos.z); if (d < 4 && Math.abs(pos.y - 1.6 - (XC.P.transit.kind === 'metro' ? s.y : 0)) < 1.5) { offer(d, { label: `Ride ${XC.P.transit.name} from ${s.name}`, go: () => xcRide(s) }); if (XC.roof && s.down && d > 1.2) offer(d - .5, { label: 'Take the stairs down to the street', go: () => { XC.roof = 0; pos.set(s.x - 7.5, 1.6, s.z + 2.4); xcClear(); } }); } }); }
     XC.btn.hidden = !XC.near && !XC.drv; XC.btn.textContent = XC.drv ? `Get out${fine ? ' (E)' : ''}` : XC.near ? XC.near.label + (fine ? ' (E)' : '') : '';
+  }
+  // ======================= Six new worlds, two from each new city's space centre =======================
+  // Built on the Moon colony engine (colonies, berserkers, drones, jobs, secrets and all), each with its own land, sky and colour.
+  // They can only be reached from their own city: Mumbai flies to Varuna and Kesari, Goa to Coralis and Verdana, Delhi to Lalgarh and Hima.
+  const XP = { from: null };
+  function xpMake(o){
+    const W = Object.assign({ half: 280, step: 4, instant: true, celH: 480, celAt: [0, 235], celMode: 'rise', tubes: MC_TUBES, pads: MC_PADS, mines: MC_MINES, solar: MC_SOLAR, facs: MC_FACS, beac: MC_BEAC, shuttle: MC_SHUTTLE, towers: MC_TOWERS, flat: MC_FLAT, roads: MC_ROADS,
+      probes: [[-220, -40], [-60, 120], [170, -40], [80, -220], [-230, 230], [230, 230]] }, o);
+    W.domes = MC_DOMES.map(d => Object.assign({}, d, { name: (o.names || {})[d.id] || d.name, doors: d.doors.slice() })); W.N = W.half * 2 / W.step + 1;
+    W.craters = () => W.mines.map(([x, z, R]) => [x, z, R, 1]);
+    W.height = (x, z) => { let h = o.shape(x, z);
+      for (const [cx, cz, R, pit] of BZ.crat) { const d = Math.hypot(x - cx, z - cz) / R; if (d > 1.5) continue; h += d < 1 ? -R * (pit ? .35 : .08) * (1 - d * d) : 0; }
+      for (const [fx, fz, fr] of W.flat) { const d = Math.hypot(x - fx, z - fz); if (d < fr + 26) { const k = d < fr ? 1 : 1 - (d - fr) / 26, s = k * k * (3 - 2 * k); h = h * (1 - s) + (o.base || 0) * s; } }
+      const e = Math.max(Math.abs(x), Math.abs(z)) - 226; if (e > 0) h += e * e * .012 + bzFbm(x / 18, z / 18, 5, 2) * e * .3; return h; };
+    W.tex = () => { const t = tex(512, 512, (c, w, h) => { const r = rng(W.seed); c.fillStyle = o.texBase; c.fillRect(0, 0, w, h); for (let i = 0; i < 2400; i++) { const v = r(); c.fillStyle = o.texDot(v); c.fillRect(r() * w, r() * h, 2 + r() * 4, 1 + r() * 3); } }); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; };
+    W.skyBuild = sc => { const sunS = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex(128, 128, (c, w, h) => { const g = c.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, 'rgba(255,255,250,1)'); g.addColorStop(.12, 'rgba(255,240,220,.9)'); g.addColorStop(1, 'rgba(255,230,200,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); }), transparent: true, depthWrite: false, toneMapped: false, fog: false })); sunS.scale.set(70, 70, 1); sunS.position.set(-700, 480, -900); sc.add(sunS);
+      if (o.moon) { const m = new THREE.Mesh(new THREE.SphereGeometry(o.moon[0], 32, 20), new THREE.MeshStandardMaterial({ color: o.moon[1], roughness: 1, emissive: o.moon[1], emissiveIntensity: .25, fog: false })); m.position.set(500, 420, -1000); sc.add(m); }
+      if (o.sea != null) { const s = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), new THREE.MeshStandardMaterial({ color: o.seaCol, roughness: .08, metalness: .3, transparent: true, opacity: .85 })); s.rotation.x = -Math.PI / 2; s.position.y = o.sea; s.userData.noPick = true; sc.add(s); W._sea = s; }
+      if (o.decor) { const r = rng(W.seed + 7), L = []; let n = 0; while (L.length < (lowFx ? o.decor.n / 2 : o.decor.n) && n++ < 4000) { const x = (r() - .5) * 440, z = (r() - .5) * 440; if (W.flat.some(([fx, fz, fr]) => Math.hypot(x - fx, z - fz) < fr + 10)) continue; const y = W.height(x, z); if (o.sea != null && y < o.sea + .3) continue; L.push([x, y, z, r() * 6.28, 1 + r() * o.decor.sv]); }
+        const P = []; L.forEach(([x, y, z, ry, s]) => o.decor.parts(P, x, y, z, ry, s)); if (P.length) { const m = new THREE.Mesh(bake(P), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .8, emissive: o.decor.glow || 0x000000, emissiveIntensity: o.decor.glow ? .5 : 0 })); m.userData.noPick = true; m.castShadow = !lowFx; sc.add(m); } } };
+    W.weather = dt => { if (W._sea) W._sea.position.y = o.sea + Math.sin(performance.now() / 1400) * .08; };
+    BZ_WORLDS[W.id] = W; return W;
+  }
+  const xpTerr = (x, z, s, a, b) => (bzFbm(x / a + s, z / a + s * 2, s, 4) - .5) * b;
+  // made the first time a space centre is used (the Moon engine's tables exist by then)
+  function xpInit(){ if (XP.ready) return; XP.ready = true;
+  xpMake({ id: 'xp_varuna', name: 'Varuna', title: 'Varuna Float Colony', seed: 7101, G: 9, celName: 'Celestial-class “Samudra”', base: 1.2, sea: -.8, seaCol: 0x1E6A8A,
+    shape: (x, z) => xpTerr(x, z, 3, 110, 22) - 3 + (bzFbm(x / 30, z / 30, 9, 2) - .5) * 3, names: { hub: 'Float Hub', canteen: 'Galley', lab: 'Tide Lab', crew: 'Crew Deck', gh1: 'Kelp Dome 1', gh2: 'Kelp Dome 2', gh3: 'Kelp Dome 3' },
+    colors: (x, z, h) => h < -.4 ? [.62, .58, .42] : [.38 + h * .005, .52, .34], texBase: '#6A7A54', texDot: v => `rgba(${60 + v * 60 | 0},${90 + v * 50 | 0},${60 + v * 30 | 0},.35)`,
+    sky: { bg: 0x8AC0E0, fog: 0x9AC8E0, near: 180, far: 1100, sun: 0xFFF4E0, sunI: 1.6, hemi: [0xC8E4FF, 0x2A4A5A, .8] }, moon: [60, 0xE8E4DC],
+    decor: { n: 40, sv: .6, parts: (P, x, y, z, ry, s) => { P.push([new THREE.CylinderGeometry(.2 * s, .35 * s, 5 * s, 6), 0x5A4632, x, y + 2.5 * s, z]); for (let k = 0; k < 6; k++) P.push([new THREE.BoxGeometry(.5 * s, .05, 3 * s), 0x3E7A34, x + Math.cos(k + ry) * 1.2 * s, y + 5 * s, z + Math.sin(k + ry) * 1.2 * s, 0, k + ry, .4]); } },
+    arrive: 'Varuna Float Colony. A world that is almost all ocean, with a handful of green islands. The colony domes stand on the biggest one. Wade carefully.' });
+  xpMake({ id: 'xp_kesari', name: 'Kesari', title: 'Kesari Dig Site', seed: 7202, G: 7, celName: 'Celestial-class “Agni”',
+    shape: (x, z) => Math.sin(x / 26 + Math.sin(z / 40) * 2) * 3.5 + xpTerr(x, z, 5, 140, 16), names: { hub: 'Dig HQ', canteen: 'Mess Tent', lab: 'Relic Lab', crew: 'Diggers’ Bunks' },
+    colors: (x, z, h) => [.86, .5 + h * .006, .22], texBase: '#C87A3A', texDot: v => `rgba(${200 + v * 50 | 0},${110 + v * 50 | 0},${50 + v * 20 | 0},.4)`,
+    sky: { bg: 0xF0B070, fog: 0xE8A060, near: 140, far: 900, sun: 0xFFE0B0, sunI: 2, hemi: [0xFFD8A0, 0x6A3A1A, .7] }, moon: [36, 0xC8A080],
+    decor: { n: 30, sv: .8, parts: (P, x, y, z, ry, s) => { for (let k = 0; k < 4; k++) P.push([new THREE.CylinderGeometry(.6, .7, (4 + k % 3 * 2) * s, 8), 0xD8B080, x + Math.cos(ry + k * 1.57) * 4, y + 2 * s, z + Math.sin(ry + k * 1.57) * 4]); P.push([new THREE.BoxGeometry(9, .9, 1.6), 0xC8A070, x, y + 6 * s, z, 0, ry]); } },
+    arrive: 'Kesari Dig Site. Orange dunes, an orange sky, and the broken columns of whoever lived here before. The diggers say something under the sand is still awake.' });
+  xpMake({ id: 'xp_coralis', name: 'Coralis', title: 'Coralis Reef Station', seed: 7303, G: 6, celName: 'Celestial-class “Prawaal”', base: .6, sea: -.6, seaCol: 0x2AA8A0,
+    shape: (x, z) => xpTerr(x, z, 7, 90, 7) - 1 + Math.max(0, bzFbm(x / 20, z / 20, 11, 2) - .55) * 10, names: { hub: 'Reef Hub', canteen: 'Shell Café', lab: 'Bioluminescence Lab', crew: 'Reef Quarters' },
+    colors: (x, z, h) => h > 1.5 ? [.9, .55, .65] : [.7, .82, .78], texBase: '#B8D8D0', texDot: v => `rgba(${220 + v * 30 | 0},${140 + v * 60 | 0},${160 + v * 40 | 0},.35)`,
+    sky: { bg: 0x6A9AC8, fog: 0x7AA8C8, near: 160, far: 1000, sun: 0xF0F4FF, sunI: 1.5, hemi: [0xB8E0FF, 0x2A6A6A, .8] }, moon: [80, 0xD8A0C8],
+    decor: { n: 60, sv: 1.2, glow: 0x6AE0D8, parts: (P, x, y, z, ry, s) => { for (let k = 0; k < 5; k++) P.push([new THREE.ConeGeometry(.4 * s, (2 + k % 3) * s, 6), [0xFF7AA8, 0x6AE0D8, 0xFFC86A][k % 3], x + Math.cos(ry + k) * 1.4, y + (1 + k % 3 * .5) * s, z + Math.sin(ry + k) * 1.4]); } },
+    arrive: 'Coralis Reef Station. Tidal flats of living coral that glow after dark, and shallow lagoons warm as bathwater. Something big moves out past the reef.' });
+  xpMake({ id: 'xp_verdana', name: 'Verdana', title: 'Verdana Canopy Camp', seed: 7404, G: 9.5, celName: 'Celestial-class “Vanadevi”',
+    shape: (x, z) => xpTerr(x, z, 9, 120, 26) + (bzFbm(x / 25, z / 25, 13, 3) - .5) * 4, names: { hub: 'Camp Hub', canteen: 'Cook Hut', lab: 'Spore Lab', crew: 'Hammock Hall', gh1: 'Seed Dome 1', gh2: 'Seed Dome 2', gh3: 'Seed Dome 3' },
+    colors: (x, z, h) => [.24, .46 + bzNoise(x / 9, z / 9, 3) * .1, .2], texBase: '#3E6A2E', texDot: v => `rgba(${40 + v * 40 | 0},${90 + v * 60 | 0},${30 + v * 30 | 0},.4)`,
+    sky: { bg: 0xA8C8A0, fog: 0x9AB890, near: 90, far: 620, sun: 0xF8FFE0, sunI: 1.4, hemi: [0xD8F0C8, 0x1A3A1A, .8] }, moon: [50, 0xB8D8A8],
+    decor: { n: 140, sv: 1.5, parts: (P, x, y, z, ry, s) => { P.push([new THREE.CylinderGeometry(.3 * s, .5 * s, 9 * s, 7), 0x4A3A22, x, y + 4.5 * s, z]); for (let k = 0; k < 7; k++) P.push([new THREE.BoxGeometry(1.2 * s, .08, 6 * s), [0x2E6A2A, 0x3E8A34][k % 2], x + Math.cos(k * .9 + ry) * 2.6 * s, y + 8.6 * s, z + Math.sin(k * .9 + ry) * 2.6 * s, -.35, k * .9 + ry, 0]); } },
+    arrive: 'Verdana Canopy Camp. Ferns as tall as towers, air thick enough to chew, and the sound of things moving in the leaves. Stay near the lights.' });
+  xpMake({ id: 'xp_lalgarh', name: 'Lalgarh', title: 'Lalgarh Outpost', seed: 7505, G: 8, celName: 'Celestial-class “Rakta”',
+    shape: (x, z) => { const m = bzFbm(x / 70, z / 70, 15, 3); return m > .58 ? Math.round((m - .58) * 120 / 6) * 6 + 2 : xpTerr(x, z, 15, 100, 6); }, names: { hub: 'Outpost Hub', canteen: 'Chai Stop', lab: 'Ruin Lab', crew: 'Barracks' },
+    colors: (x, z, h) => h > 4 ? [.62, .26, .18] : [.72, .38, .26], texBase: '#9A4A30', texDot: v => `rgba(${150 + v * 60 | 0},${60 + v * 40 | 0},${40 + v * 20 | 0},.4)`,
+    sky: { bg: 0xD8946A, fog: 0xC8805A, near: 160, far: 950, sun: 0xFFE8D0, sunI: 1.9, hemi: [0xF0B890, 0x5A2010, .7] }, moon: [44, 0xA8786A],
+    decor: { n: 18, sv: .4, parts: (P, x, y, z, ry, s) => { P.push([new THREE.BoxGeometry(12 * s, 7 * s, 2), 0xA84A32, x, y + 3.5 * s, z, 0, ry]); for (let k = -2; k <= 2; k++) P.push([new THREE.BoxGeometry(1.4, 1.4, 2.2), 0xA84A32, x + Math.cos(ry) * k * 2.4 * s, y + 7.6 * s, z - Math.sin(ry) * k * 2.4 * s, 0, ry]); P.push([new THREE.SphereGeometry(2 * s, 10, 6, 0, Math.PI * 2, 0, Math.PI / 2), 0xE8E0D0, x, y + 7 * s, z]); } },
+    arrive: 'Lalgarh Outpost. Red mesas stepped like stairs for giants, and the walls of a fortress nobody on Earth built. The outpost keeps its lights low.' });
+  xpMake({ id: 'xp_hima', name: 'Hima', title: 'Hima Ice Camp', seed: 7606, G: 5, celName: 'Celestial-class “Himavat”',
+    shape: (x, z) => xpTerr(x, z, 17, 130, 20) - Math.max(0, .08 - Math.abs(bzNoise(x / 40, z / 40, 19) - .5)) * 60, names: { hub: 'Ice Hub', canteen: 'Hot Kitchen', lab: 'Core Lab', crew: 'Warm Bunks', gh1: 'Glasshouse 1', gh2: 'Glasshouse 2', gh3: 'Glasshouse 3' },
+    colors: (x, z, h) => h < -3 ? [.5, .62, .8] : [.88, .92, .98], texBase: '#D8E4F0', texDot: v => `rgba(${200 + v * 50 | 0},${220 + v * 30 | 0},255,.35)`,
+    sky: { bg: 0xB8D0E8, fog: 0xC8DCF0, near: 120, far: 800, sun: 0xF4F8FF, sunI: 1.5, hemi: [0xE8F4FF, 0x5A6A8A, .9] }, moon: [70, 0x8AA8D8],
+    decor: { n: 50, sv: 1.4, glow: 0x8AD8FF, parts: (P, x, y, z, ry, s) => { for (let k = 0; k < 4; k++) P.push([new THREE.ConeGeometry(.6 * s, (4 + k * 2) * s, 5), 0xBFE8FF, x + Math.cos(ry + k * 1.6) * 1.2, y + (2 + k) * s, z + Math.sin(ry + k * 1.6) * 1.2, (k - 1.5) * .15, 0, (k - 1.5) * .12]); } },
+    arrive: 'Hima Ice Camp. Low gravity, blinding snow, and crystal spires that sing when the wind goes through them. Watch the crevasses.' });
+  }
+  const XP_FROM = { bom: ['xp_varuna', 'xp_kesari'], goi: ['xp_coralis', 'xp_verdana'], del: ['xp_lalgarh', 'xp_hima'] };
+  function xpLaunch(city){
+    xpInit(); const L = XP_FROM[city]; if (!L || EV || A) return;
+    askChoice('xp', v => { if (!BZ_WORLDS[v]) return; XP.from = city; tone(60, 3, 'sawtooth', .05, 30); say('Countdown: 3… 2… 1… The rocket shakes the whole pad, and the city drops away under you.', 3600);
+      setTimeout(() => { if (XC.drv) xcExitCar(); web.p = null; drawWeb(); bzEnter(v); setTimeout(() => { if (zone === 'mc') xcFree(); }, 4000); }, 2400); },
+      { h: `${XC_P[city].name} Space Centre`, q: 'Two worlds can be reached from here, and only from here. Where to?', a: L.map(id => [id, `${BZ_WORLDS[id].name}: ${BZ_WORLDS[id].title}`]).concat([['stay', 'Not today']]) });
   }
   function enterMed(){
     if (inWorld) return;
@@ -19688,13 +19757,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       web.p = null; drawWeb(); walkTarget = null; exitTelescope(); inWorld = true; zone = 'mc'; vy = 0; grounded = true; BZ.v.set(0, 0, 0); BZ.web = null; BZ.bug = null; BZ.dead = false; BZ.hp = bzHpMax(); BZ.jet = bzJetMax(); BZ.eye = 1.6; BZ.crouch = false; BZ.noise = 0;
       pos.set(BZ.P.shuttle[0] - 4, 0, BZ.P.shuttle[1] + 5.5); yaw = Math.PI / 2 + .25; { const SP = (BZ.P.story && bkSpawn()) || BZ.P.spawn; if (SP) { pos.set(SP[0], 0, SP[1]); yaw = SP[2]; } } BZ.feet = bzSupport(pos.x, pos.z, 5); pos.y = BZ.feet + 1.6; pitch = -.05;
       camera.near = .1; camera.far = BZ.P.id === 'moon' ? 3000 : 2600; camera.updateProjectionMatrix(); STA.btn.hidden = true; if (BZ.P.arrive && !BZ.ws.seenHere) { BZ.ws.seenHere = 1; setTimeout(() => say(BZ.P.arrive, 6000), 400); }
-      closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = BZ.P.story ? 'Pause the book' : 'Back to the station'; jumpBtn.hidden = fine; uiZone(); bzHudShow(true); bzMusic(BZ.P.music || (BZ.ws.out && !BZ.ws.clear ? 'tense' : 'calm')); if (BZ.P.story) setTimeout(bkStepBegin, 400); BZ.offers = []; bzOffers(); BZ.busy = false; BZ.sightK = BZ.P.sightK || 1; BZ.safe = [pos.x, pos.z]; if (BZ.P.onEnter) BZ.P.onEnter();
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = BZ.P.story ? 'Pause the book' : XP.from ? `Fly back to ${XC_P[XP.from].name}` : 'Back to the station'; jumpBtn.hidden = fine; uiZone(); bzHudShow(true); bzMusic(BZ.P.music || (BZ.ws.out && !BZ.ws.clear ? 'tense' : 'calm')); if (BZ.P.story) setTimeout(bkStepBegin, 400); BZ.offers = []; bzOffers(); BZ.busy = false; BZ.sightK = BZ.P.sightK || 1; BZ.safe = [pos.x, pos.z]; if (BZ.P.onEnter) BZ.P.onEnter();
       if (BZ.P.id !== 'moon') {}
       else if (!BZ.s.seen) { BZ.s.seen = 1; bzSave(); setTimeout(() => say('Tranquility Colony, the Moon. Gravity is one-sixth of Earth’s: you jump a lot higher here.', 5000), 300); setTimeout(() => say(fine ? 'Space jumps (hold it in the air for the jetpack), Q swings a web off anything tall, E uses things. Phone (M) for colony jobs.' : 'Jump (hold it in the air for the jetpack), Swing to web off anything tall. The phone has colony jobs.', 6000), 5600); }
       else say(BZ.ws.out && !BZ.ws.clear ? 'Back on the Moon. Keep your head down.' : 'Back on the Moon.', 2600);
     }, '#000000');
   }
-  function bzLeave(){ if (BZ.busy) return; BZ.busy = true; bzSave(); const wasMoon = BZ.P.id === 'moon'; fade(() => { if (BZ.bug) bzBugOut(true); BZ.web = null; bzHudShow(false); bzMusicStop(); bzFree(); BZ.busy = false; enterStation(true); say(wasMoon ? 'The shuttle docks with Orbital Station Kalpana.' : 'The ship brings you home to Orbital Station Kalpana.', 2600); }, '#000000'); }
+  function bzLeave(){ if (BZ.busy) return; if (XP.from) { const c = XP.from; XP.from = null; bzSave(); if (BZ.bug) bzBugOut(true); BZ.web = null; bzHudShow(false); bzMusicStop(); xcEnter(c); setTimeout(() => { if (zone !== 'mc') bzFree(); }, 2500); return; } BZ.busy = true; bzSave(); const wasMoon = BZ.P.id === 'moon'; fade(() => { if (BZ.bug) bzBugOut(true); BZ.web = null; bzHudShow(false); bzMusicStop(); bzFree(); BZ.busy = false; enterStation(true); say(wasMoon ? 'The shuttle docks with Orbital Station Kalpana.' : 'The ship brings you home to Orbital Station Kalpana.', 2600); }, '#000000'); }
   function bzFree(){
     const sc = BZ.sc; if (!sc) return; bzSave(); [viewG, me && me.g, beacon, web.line].forEach(o => { if (o && o.parent === sc) sc.remove(o); });
     const keep = new Set([propM()]); sc.traverse(o => { if (o.geometry) o.geometry.dispose(); const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach(m => { if (keep.has(m)) return; if (m.map) m.map.dispose(); m.dispose(); }); });
