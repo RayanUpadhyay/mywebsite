@@ -8139,7 +8139,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (t === 'truth') return bzTruthTab(B);
     if (bzPhone(t, B)) return;
     if (t === 'map') return phMap();
-    if (t === 'story') { const s = curStep(); B.innerHTML = bkPhoneCard() + tdPhoneCard() + `<div class="phcard"><b>${SG.active ? `Chapter ${SG.ch + 1}: ${esc(nmT(SAGA[SG.ch].title))}` : SG.sagaDone ? 'The story is finished' : 'The story is waiting'}</b><small>${SG.active && s ? esc(nmT(stepText(s))) : 'Open the comic in the story vault, under the lair (a loose brick by the scoreboard).'}</small></div>`
+    if (t === 'story') { const s = curStep(); B.innerHTML = stPhone() + `<div class="phcard"><b>${SG.active ? `Chapter ${SG.ch + 1}: ${esc(nmT(SAGA[SG.ch].title))}` : SG.sagaDone ? 'The story is finished' : 'The story is waiting'}</b><small>${SG.active && s ? esc(nmT(stepText(s))) : 'Open the comic in the story vault, under the lair (a loose brick by the scoreboard).'}</small></div>`
       + SAGA.map((C, i) => { const done = SG.done.includes(i), cur = SG.ch === i && !done; return done || cur ? `<div class="phcard"><b>${i + 1}. ${esc(nmT(C.title))}${cur ? ' · now' : ''}</b><small>${esc(nmT(done ? RECAP[C.id] || C.tag : C.tag))}</small></div>` : ''; }).join(''); return; }
     if (t === 'jobs') { const q = JOB.q; B.innerHTML = `<div class="phcard"><b>Reputation: ${JOB.rep}</b><small>${JOB.done} job${JOB.done === 1 ? '' : 's'} done · ${JOB.sealed.size} stash house${JOB.sealed.size === 1 ? '' : 's'} shut down · ${Object.keys(SBK).length} of ${SBOSS.length} street bosses beaten</small></div>`
       + (q ? `<div class="phcard"><b>Now: ${esc(q.title)}</b><small>${esc(jobHud.textContent.replace(/^Job · reputation \d+/, '').replace(q.title, ''))}</small><div class="phrow"><button type="button" data-a="drop">Give up this job</button></div></div>` : '<div class="phcard"><b>No job right now</b><small>Look for people with a yellow ! inside the buildings, or call one of your contacts.</small></div>')
@@ -21802,6 +21802,123 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const bkSkipFightBtn = document.createElement('button'); bkSkipFightBtn.type = 'button'; bkSkipFightBtn.className = 'btn alt'; bkSkipFightBtn.textContent = 'Skip fight'; bkSkipFightBtn.hidden = true; bkSkipFightBtn.style.cssText = 'position:fixed;top:170px;left:50%;transform:translateX(-50%);z-index:40;padding:8px 16px;font-size:14px'; document.body.appendChild(bkSkipFightBtn);
   bkSkipFightBtn.addEventListener('click', e => { e.stopPropagation(); if (!EV || !EV.opts || !EV.opts.bk || EV.over) return; const E0 = EV; bkConfirm('Skip this fight? It counts as a win, and you keep whatever it would have given you. Skipping never counts towards the hidden ending.', () => { if (EV !== E0 || EV.over) return; BK.s.flags.skips = (BK.s.flags.skips || 0) + 1; bkSave(); EV.slowMe = 0; if (canvas.style.filter === BK_SEPIA) canvas.style.filter = ''; endMatch(true); }); });
   setInterval(() => { const on = !!(EV && EV.opts && EV.opts.bk && !EV.over && !EV.intro); if (bkSkipFightBtn.hidden === on) bkSkipFightBtn.hidden = !on; }, 300);
+  // ---------- every story, on the phone: see where you are in each one, open it, or skip a chapter or the whole thing ----------
+  // A skip always counts as finishing: you keep what it would have given you, and it counts towards what comes after the stories.
+  const SX = { arm: '' };
+  const sxSaga = () => !!SG.sagaDone;
+  const sxBooks = () => !!(BK.s.flags && BK.s.flags.end9);
+  const sxCb = () => CB.s.ch >= CBCH.length;
+  const sxSf = () => !!SF.s.done;
+  const sxMk = () => MK.ch >= MKCH.length;
+  const sxTd = () => tdLoad().state === 'arrested';
+  const SX_MODES = [['saga', 'The Multiverse Saga', sxSaga], ['books', 'The Books (Six to Nine)', sxBooks], ['cb', 'Code Black', sxCb], ['sf', 'System Failure', sxSf], ['mk', '猴王闹海岛 · The Monkey King', sxMk], ['td', 'The Tidy Man', sxTd]];
+  function storiesDone(){ try { return SX_MODES.every(m => m[2]()); } catch (e) { return false; } }
+  function sxBtn(a, t, y){ return `<button type="button" data-sx="${a}"${y ? ' class="y"' : ''}>${t}</button>`; }
+  function sxCard(k, name, status, sub, btns){ const done = SX_MODES.find(m => m[0] === k)[2](); return `<div class="phcard"><b>${done ? '✓ ' : ''}${esc(name)}</b><small>${status}</small>${sub ? `<small>${sub}</small>` : ''}${btns ? `<div class="phrow">${btns}</div>` : ''}</div>`; }
+  function stPhone(){
+    const n = SX_MODES.filter(m => m[2]()).length;
+    let h = `<div class="phcard"><b>Stories: ${n} of ${SX_MODES.length} finished</b><small>${n === SX_MODES.length ? 'Every story is done. Something is coming for Bangalore.' : 'Finish (or skip) every story to unlock what comes after them. Skipping counts as finishing, and you keep everything a chapter would have given you.'}</small></div>`;
+    // the Multiverse Saga
+    { const st = SG.active || SG.resume || SG.done.length || SG.ch > 0, C = SAGA[SG.ch];
+      h += sxCard('saga', 'The Multiverse Saga', SG.sagaDone ? `All ${SAGA.length} chapters done.` : `Chapter ${SG.ch + 1} of ${SAGA.length}: ${esc(nmT(C.title))}${SG.active ? ' · playing' : st ? ' · paused' : ' · not started'}`, '',
+        sxBtn('saga-open', 'Open the story menu') + (SG.sagaDone ? '' : sxBtn('saga-ch', 'Skip this chapter') + sxBtn('saga-all', 'Skip the whole saga'))); }
+    // the Books
+    { const B = BK_BOOKS[BK.s.book] || BK_BOOKS[6], C = B.chs[BK.s.ch], open = BK.s.started || bkUnlocked();
+      h += sxCard('books', 'The Books (Six to Nine)', sxBooks() ? 'Finished: you wrote the last page.' : !open ? 'Locked until you reach Page One in the saga, or clear the forge world in Berserker. You can skip straight to the end anyway.' : BK.s.started ? `${esc(B.name)}, chapter ${BK.s.ch + 1}${C ? ': ' + esc(C.title) : ''}` : 'A black hole called The Quiet waits on the station’s star map.', '',
+        (sxBooks() ? '' : (BK.s.started && C ? sxBtn('bk-open', 'Resume the book') + sxBtn('bk-ch', 'Skip this chapter') : '') + sxBtn('bk-all', 'Skip all the Books'))); }
+    // Code Black, then System Failure
+    { const C = CBCH[CB.s.ch];
+      h += sxCard('cb', 'Code Black', sxCb() ? `All ${CBCH.length} crises done.` : `${C.n}: ${esc(C.t)} (${CB.s.ch} of ${CBCH.length} done)`, 'Plays at Meridian General: the pager on the reception desk.',
+        (zone === 'med' ? sxBtn('cb-open', 'Open the pager') : '') + (sxCb() ? '' : sxBtn('cb-ch', 'Skip this crisis') + sxBtn('cb-all', 'Skip all of Code Black'))); }
+    { const i = Math.max(0, SF.s.st - 1), G = SF_STAGES[Math.min(i, SF_STAGES.length - 1)];
+      h += sxCard('sf', 'System Failure', sxSf() ? 'Finished. Ultron is gone, and every world kept a trace.' : !sxCb() ? 'Starts after Code Black.' : `${G.n}: ${esc(G.t)} (${esc(G.where)})`, sxCb() && !sxSf() ? 'Also on the pager at Meridian General.' : '',
+        (zone === 'med' && sxCb() ? sxBtn('cb-open', 'Open the pager') : '') + (sxSf() ? '' : (sxCb() ? sxBtn('sf-ch', 'Skip this stage') : '') + sxBtn('sf-all', sxCb() ? 'Skip all of System Failure' : 'Skip Code Black and System Failure'))); }
+    // the Monkey King story lives in Mandalink; it can be skipped from here but it's played there
+    { const C = MKCH[MK.ch];
+      h += sxCard('mk', '猴王闹海岛 · The Monkey King', sxMk() ? `全书完! All ${MKCH.length} chapters done.` : `${esc(C.n)} ${esc(C.t)} · ${esc(C.en || '')} (${MK.ch} of ${MKCH.length} done)`, 'Played in Mandalink: talk to Wukong on the islands.',
+        sxMk() ? '' : sxBtn('mk-ch', 'Skip this chapter') + sxBtn('mk-all', 'Skip the whole story')); }
+    // the Tidy Man
+    { const s = tdLoad();
+      h += sxCard('td', 'The Tidy Man', sxTd() ? 'Hari Varadan is in prison.' : { none: 'Not met yet. He shops in the city in the evenings.', met: 'You’ve met him. He wants help at his house.', trap: 'You agreed to help him. His house is marked with a white beam.', captive: 'You’re in his basement.', loose: 'You got out. He’s still out there.' }[s.state] || 'Out there, somewhere.', s.log.length ? s.log.slice(0, 2).map(esc).join('<br>') : '',
+        sxTd() ? '' : sxBtn('td-all', 'Skip: he’s arrested')); }
+    return h;
+  }
+  // skipping, mode by mode
+  function sxSagaAll(){
+    if (EV || A || RUN || VOID) return say('Finish or leave this fight first.', 2400);
+    if (normalView) { if (lastComic) { scene.remove(lastComic); disposeDeep(lastComic); lastComic = null; } exitNormal(); }
+    if (BL.cine) { BL.cine = null; DLG = null; dlgEl.hidden = true; document.body.classList.remove('cine'); }
+    if (CARDS) cardSkip();
+    for (let i = SG.ch; i < SAGA.length; i++) { const C = SAGA[i];
+      if (C.id === 'beyond' && instab >= 6) { instab = 0; saveInstab(); try { buildBreach(); } catch (e) {} canvas.style.filter = ''; }
+      if (C.id === 'ultron') { try { localStorage.setItem('ru-ultronred', '1'); } catch (e) {} if (!recap.includes('ultron')) { recap.push('ultron'); saveInstab(); } }
+      if (!SG.done.includes(i)) SG.done.push(i); SG.w = SG.w || {};
+      try { if (C.end) C.end(); } catch (e) {} try { if (CH_END[C.id]) CH_END[C.id](); } catch (e) {} }
+    Object.assign(SG, { active: false, resume: false, sagaDone: true, gold: true, ch: SAGA.length - 1, step: 0, flags: {} }); saveSG();
+    goalKey = ''; goalEl.hidden = true; if (beacon) beacon.visible = false;
+    say('Skipped the rest of the Multiverse Saga. It counts as finished.', 3200);
+  }
+  const SX_BKASK = ['fellfirst', 'nordics', 'restore', 'exam', 'lastpage'];
+  function sxBooksAll(){
+    if (EV || A) return say('Finish or leave this fight first.', 2400);
+    BK.s.started = 1; let n = 0;
+    for (let guard = 0; guard < 200; guard++) { const B = BK_BOOKS[BK.s.book]; if (!B) break; const C = B.chs[BK.s.ch];
+      if (!C) { if (B.final || !BK_BOOKS[B.next] || !BK_BOOKS[B.next].chs.length) break; if (!BK.s.done.includes('book' + BK.s.book)) BK.s.done.push('book' + BK.s.book); BK.s.book = B.next; BK.s.ch = 0; continue; }
+      if (C.id === 'lastpage') break;
+      if (!SX_BKASK.includes(C.id) && BK_SKIP[C.id]) try { BK_SKIP[C.id](() => {}); } catch (e) {}
+      try { if (C.end) C.end(); } catch (e) {} if (!BK.s.done.includes(`${BK.s.book}:${C.id}`)) BK.s.done.push(`${BK.s.book}:${C.id}`); BK.s.ch++; BK.s.step = 0; n++; }
+    BK.s.flags.skips = (BK.s.flags.skips || 0) + n; BK.blocked = false; BK.greysCatch = false; BK.memory = false; bkSave();
+    const C = bkCh(); if (C && C.id === 'lastpage') { say('Skipped to the last page. One choice left: how it ends.', 3200); setTimeout(bkSkipChapter, 600); }
+    else { BK.s.flags.end9 = BK.s.flags.end9 || 'close'; bkSave(); say('Skipped the Books. They count as finished.', 3000); }
+  }
+  function sxCbCh(then){
+    const i = CB.s.ch, C = CBCH[i]; if (!C) return then && then();
+    const fin = () => { CB.s.ch = i + 1; cbSave(); if (then) then(); else say(`Skipped ${C.n}: ${C.t}.`, 2400); };
+    if (C.choice && !CB.s.choice) return askChoice('cb_doses', v => { CB.s.choice = v; fin(); }, { h: 'Three doses. Five patients.', q: 'You skipped ahead, but this choice is still yours. Who gets the doses?', a: [['staff', 'Staff first, as Hale ordered'], ['kids', 'Kai and the two ER patients'], ['split', 'Split: Kai, Ama, bed 6']] });
+    fin();
+  }
+  function sxCbAll(then){ if (CB.busy) return say('Finish what’s happening at the hospital first.', 2400); const go = () => CB.s.ch >= CBCH.length ? (then ? then() : say('Skipped Code Black. It counts as finished.', 2600)) : sxCbCh(go); go(); }
+  const SX_ART = ['visor', 'core', 'clock', 'staff', 'pen'];
+  function sxSfStage(){
+    const i = Math.max(0, SF.s.st - 1); if (SF.s.done || i >= SF_STAGES.length) return;
+    if (!SF.s.arts.includes(SX_ART[i])) SF.s.arts.push(SX_ART[i]); sfStageDone(i);
+    if (i === SF_STAGES.length - 1) { SF.s.done = 1; sfSave(); try { sfTraces(); } catch (e) {} }
+    sfSave(); return SF_STAGES[i];
+  }
+  function sxSfAll(){ if (CB.busy || SF.busy) return say('Finish what’s happening at the hospital first.', 2400); sxCbAll(() => { for (let k = 0; k < 6 && !SF.s.done; k++) sxSfStage(); say('Skipped System Failure. It counts as finished.', 2800); }); }
+  function sxMkCh(quiet){
+    if (MK.busy) return say('Finish the chapter you’re playing first.', 2400);
+    const i = MK.ch, C = MKCH[i]; if (!C) return; MK.ch = i + 1;
+    try { mkNewStuff(i); } catch (e) {} if (C.unlock === 'cloud') MK.cloud = true; if (C.unlock === 'eyes') MK.eyes = true;
+    try { mloRefreshWall(); } catch (e) {} mkSave(); if (!quiet) say(`Skipped ${C.n} ${C.t}. Anything it unlocks is in 🎒 宝贝.`, 2800);
+  }
+  function sxMkAll(){ if (MK.busy) return say('Finish the chapter you’re playing first.', 2400); while (MK.ch < MKCH.length) sxMkCh(true); say('Skipped the Monkey King story. It counts as finished.', 2800); }
+  function sxTdAll(){ if (inWorld && (zone === 'tidy' || zone === 'event' && EV && EV.inTdy)) return say('Get out of his house first.', 2400); tdArrest('street'); }
+  phEl.addEventListener('click', e => { const b = e.target.closest('[data-sx]'); if (!b) return; e.stopPropagation(); const a = b.dataset.sx;
+    const opens = { 'saga-open': 1, 'bk-open': 1, 'cb-open': 1 };
+    if (!opens[a] && SX.arm !== a) { SX.arm = a; b.textContent = 'Sure? Tap again to skip'; b.classList.add('y'); setTimeout(() => { if (SX.arm === a) SX.arm = ''; }, 4000); return; }
+    SX.arm = '';
+    if (a === 'saga-open') { phoneClose(); return openSaga(); }
+    if (a === 'bk-open') { phoneClose(); return bkResume(); }
+    if (a === 'cb-open') { phoneClose(); return cbMenu(); }
+    if (a === 'saga-ch') { phoneClose(); if (!SG.active && !SG.resume) SG.resume = true; return skipChapter(); }
+    if (a === 'saga-all') { phoneClose(); return sxSagaAll(); }
+    if (a === 'bk-ch') { phoneClose(); return bkSkipChapter(); }
+    if (a === 'bk-all') { phoneClose(); return sxBooksAll(); }
+    if (a === 'cb-ch') { if (CB.busy) return say('Finish what’s happening at the hospital first.', 2400); phoneClose(); return sxCbCh(); }
+    if (a === 'cb-all') { phoneClose(); return sxCbAll(); }
+    if (a === 'sf-ch') { if (CB.busy || SF.busy) return say('Finish what’s happening at the hospital first.', 2400); const G = sxSfStage(); if (G) say(`Skipped ${G.n}: ${G.t}.`, 2400); return phShow('story'); }
+    if (a === 'sf-all') { phoneClose(); return sxSfAll(); }
+    if (a === 'mk-ch') { sxMkCh(); return phShow('story'); }
+    if (a === 'mk-all') { sxMkAll(); return phShow('story'); }
+    if (a === 'td-all') { phoneClose(); return sxTdAll(); }
+  });
+  // a skip button in every story and boss fight (the Books have their own)
+  const sxFightBtn = document.createElement('button'); sxFightBtn.type = 'button'; sxFightBtn.className = 'btn alt'; sxFightBtn.textContent = 'Skip fight'; sxFightBtn.hidden = true; sxFightBtn.style.cssText = 'position:fixed;top:170px;left:50%;transform:translateX(-50%);z-index:40;padding:8px 16px;font-size:14px'; document.body.appendChild(sxFightBtn);
+  const sxFightOk = () => !!(EV && !EV.over && !EV.intro && !(EV.opts && EV.opts.bk) && (EV.k === 'st' || EV.opts && (EV.opts.cb || EV.opts.sf || EV.opts.xc || EV.opts.tdy)));
+  sxFightBtn.addEventListener('click', e => { e.stopPropagation(); if (!sxFightOk()) return; if (!sxFightBtn.dataset.armed) { sxFightBtn.dataset.armed = '1'; sxFightBtn.textContent = 'Sure? Tap again: it counts as a win'; setTimeout(() => { delete sxFightBtn.dataset.armed; sxFightBtn.textContent = 'Skip fight'; }, 3500); return; }
+    delete sxFightBtn.dataset.armed; sxFightBtn.textContent = 'Skip fight'; EV.slowMe = 0; endMatch(true); });
+  setInterval(() => { const on = sxFightOk(); if (sxFightBtn.hidden === on) sxFightBtn.hidden = !on; }, 300);
   // ---------- the phone, on the Moon ----------
   function bzPhMapBase(){
     const S = 1024, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), k = S / 560, X = x => (x + 280) * k, N = BZ.P.N, H = BZ.H, img = g.createImageData(N, N);
