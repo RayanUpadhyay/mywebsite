@@ -4803,6 +4803,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       <h3>Status</h3>
       <div class="prow"><b>Adamantium poisoning<br><small>${poison >= .8 ? 'Severe: you\u2019re losing hearts in fights. Put the claws away.' : poison >= .5 ? 'Your healing factor has stopped working.' : 'Builds up while you hold Wolverine\u2019s claws, fades when you don\u2019t.'}</small></b>${bar(poison, '#3CE870')}<small>${Math.round(poison * 100)}%</small></div>
       ${armHurt() ? `<div class="prow"><b>Burned arm<br><small>The Infinity Stones burned your right arm when you snapped everyone back, like Hulk’s. Your hits do ${Math.round((1 - armFactor()) * 100)}% less damage. Heals in ${Math.floor(armLeft() / 864e5)}d ${Math.floor(armLeft() % 864e5 / 36e5)}h.</small></b>${bar(1 - armLeft() / ARM_TIME, '#FF8A2E')}<small>${Math.round((1 - armLeft() / ARM_TIME) * 100)}%</small></div>` : ''}
+      ${afStatusRow()}
       ${isUnlocked('necro') ? '<div class="prow"><b>Necrosword<br><small>Drains a heart every 15 seconds in a fight while you hold it.</small></b></div>' : ''}
       ${extrasMenu()}
       ${achMenu()}
@@ -5265,7 +5266,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   let arm = null; try { arm = JSON.parse(localStorage.getItem('ru-arm') || 'null'); } catch (e) {}
   const armLeft = () => arm ? Math.max(0, arm.until - Date.now()) : 0;
   const armHurt = () => !normalView && armLeft() > 0;
-  const armFactor = () => armHurt() ? 1 - .4 * armLeft() / ARM_TIME : 1;
+  const armFactor = () => (armHurt() ? 1 - .4 * armLeft() / ARM_TIME : 1) * afArmF();
   function snapBack(){
     storyFlag('snapback');
     Q.got.add('time'); Q.on = false; spaceHud.hidden = true;
@@ -5892,7 +5893,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     checkGoal();
   }
   function hurtMe(d, from){
-    if (EV.dead > 0 || EV.inv > 0 || EV.over) return;
+    d = afHurt(d, from); if (EV.dead > 0 || EV.inv > 0 || EV.over) return;
     if (from && from.hero && HEROES[from.hero]) EV.lastMove = { kind: from.boss && from.act ? from.act.k : HEROES[from.hero].kind === 'ranged' ? 'shot' : 'punch', who: nmT(HEROES[from.hero].name) };
     if (EV.k === 'st' && EV.st && EV.st.part === 'd4' && from && from.boss && SG.flags.dl) SG.flags.dl = Math.max(30, SG.flags.dl - 8);
     if (!(from && from.remote)) d *= EV.diffIn;
@@ -8138,6 +8139,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const B = phEl.querySelector('#phBody'), h = cityHour(); phEl.querySelector('#phClock').textContent = `${String(Math.floor(h)).padStart(2, '0')}:${String(Math.floor(h % 1 * 60)).padStart(2, '0')}`;
     if (t === 'truth') return bzTruthTab(B);
     if (bzPhone(t, B)) return;
+    if (afPhone(t, B)) return;
     if (t === 'map') return phMap();
     if (t === 'story') { const s = curStep(); B.innerHTML = stPhone() + `<div class="phcard"><b>${SG.active ? `Chapter ${SG.ch + 1}: ${esc(nmT(SAGA[SG.ch].title))}` : SG.sagaDone ? 'The story is finished' : 'The story is waiting'}</b><small>${SG.active && s ? esc(nmT(stepText(s))) : 'Open the comic in the story vault, under the lair (a loose brick by the scoreboard).'}</small></div>`
       + SAGA.map((C, i) => { const done = SG.done.includes(i), cur = SG.ch === i && !done; return done || cur ? `<div class="phcard"><b>${i + 1}. ${esc(nmT(C.title))}${cur ? ' · now' : ''}</b><small>${esc(nmT(done ? RECAP[C.id] || C.tag : C.tag))}</small></div>` : ''; }).join(''); return; }
@@ -11017,7 +11019,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   };
   const HOURS = [[0, 'night'], [5.2, 'night'], [6.3, 'dawn'], [8, 'day'], [16.6, 'day'], [18.1, 'dusk'], [19.3, 'night'], [24, 'night']], MOON = [-.35, .6, .45];
   // the city's clock: your own, unless a debug hour is set (ru-hour); the Act 5 montage is always mid-morning
-  function hourNow(){ try { const o = localStorage.getItem('ru-hour'); if (o !== null && o !== '' && !isNaN(+o)) return +o; } catch (e) {} const d = new Date(); return d.getHours() + d.getMinutes() / 60; }
+  function hourNow(){ if (typeof AF !== 'undefined' && AF && AF.on && AF.s.act === 'del' && AF.s.del && XC.city === 'del') return AF.s.del.hr; if (typeof AF !== 'undefined' && AF && AF.on && AF.s.act === 'goa' && XC.city === 'goi' && !AF.s.goaFree) return 6.3; try { const o = localStorage.getItem('ru-hour'); if (o !== null && o !== '' && !isNaN(+o)) return +o; } catch (e) {} const d = new Date(); return d.getHours() + d.getMinutes() / 60; }
   const cityHour = () => SG.active && newTL() ? 10 : hourNow();
   const dayNow = () => { const h = cityHour(); return h >= 6.3 && h < 17.8; };
   function palMix(a, b, f){ const A = PAL[a], B = PAL[b], C = h => new THREE.Color(h), L = (x, y) => x + (y - x) * f;
@@ -15071,7 +15073,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       const hit = ray.intersectObjects(XC.ims.concat(XC.lm), true).find(q => q.distance < 100 + 30 * (UPG2.swing || 0) && q.distance > 4 && q.point.y > pos.y + 3); if (hit) return hit.point.clone(); }
     return pos.clone().addScaledVector(fw, 22).add(V(0, 24, 0));
   }
-  function xcWeb(){
+  function xcWeb(){ if (!afCanSwing()) return afNoWeb();
     if (web.p || XC.drv || XC.ride) return; if (!(held === 'web' || inv.includes('web')) || dustedWeapon('web')) return say('You need your web-shooters for that (the weapon rack in the lair).', 2600);
     if (held !== 'web') hold('web'); web.p = xcAnchor(); web.L = pos.distanceTo(web.p);
     if (!XC.air) { cityV.set(-Math.sin(yaw) * 3, XC.roof ? 3 : 6, -Math.cos(yaw) * 3); XC.air = true; XC.roof = 0; } else if (Math.hypot(cityV.x, cityV.z) < 4) { cityV.x += -Math.sin(yaw) * 5; cityV.z += -Math.cos(yaw) * 5; }
@@ -15104,6 +15106,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   // ---------- inside: a room made for whatever the shop is, with the shopkeeper and a customer or two ----------
   function xcInside(d){
+    if (d.kind === 'flat' || d.kind === 'home') return afFlat(d);
     if (d.kind === 'stash' && !nightNow()) return say('Shutters down and padlocked. Whatever happens in there happens after dark (7 pm).', 3200);
     if (d.kind === 'stash' && XC.s.raidDay === new Date().toDateString()) return say('Police tape across the shutter. You already cleaned it out today.', 2600);
     fade(() => { if (XC.isc) disposeDeep(XC.isc); const sc = XC.isc = new THREE.Scene(), W = 12, D = 10; sc.background = new THREE.Color(0x14161C); XC.inside = d; XC.room = { W, D };
@@ -15123,7 +15126,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       else say(`${d.name}. ${d.kind === 'food' ? 'It smells amazing in here.' : 'A bell rings over the door.'}`, 2600); }, '#06070B');
   }
   function xinValid(x, z){ const R = XC.room; if (!R) return false; if (Math.abs(x) > R.W / 2 - .35 || Math.abs(z) > R.D / 2 - .35) return false; return !(XC.blocks || []).some(b => x > b[0] - .3 && x < b[1] + .3 && z > b[2] - .3 && z < b[3] + .3); }
-  function xcOutside(){ const d = XC.inside; fade(() => { zone = 'xc'; XC.inside = null; if (XC.isc) { disposeDeep(XC.isc); XC.isc = null; } pos.set(d.x, 1.6, d.z); yaw = Math.atan2(-d.nx, -d.nz) + Math.PI; pitch = -.03; $('#worldBack').textContent = 'Taxi to the airport'; }, '#06070B'); }
+  function xcOutside(){ const d = XC.inside; fade(() => { zone = 'xc'; XC.inside = null; if (XC.isc) { disposeDeep(XC.isc); XC.isc = null; } pos.set(d.x, 1.6, d.z); yaw = Math.atan2(-d.nx, -d.nz) + Math.PI; pitch = -.03; $('#worldBack').textContent = xcBackLabel(); }, '#06070B'); }
   // ---------- jobs from the people in the shops ----------
   function xcJob(d){
     const s = XC.s; if (XC.job) return say(XC.job.kind === 'deliver' ? `“Did you take the parcel to ${XC.job.to.name} yet?” Follow the white beam.` : '“Any luck finding my bag?” The white beam shows where.', 3200);
@@ -15135,7 +15138,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function xcJobStep(){ const J = XC.job; if (!J) { if (XC.beam) XC.beam.visible = false; return; }
     if (!XC.beam) { XC.beam = new THREE.Mesh(new THREE.CylinderGeometry(.5, .5, 70, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xF2EEE6, transparent: true, opacity: .35, depthWrite: false })); XC.sc.add(XC.beam); } XC.beam.visible = true; XC.beam.position.set(J.x, 35, J.z);
     const done = J.kind === 'deliver' ? Math.hypot(pos.x - J.x, pos.z - J.z) < 2.5 && !XC.roof && !XC.air : Math.hypot(pos.x - J.x, pos.z - J.z) < 6 && Math.abs(pos.y - 1.6 - J.y) < 1.5;
-    if (done) { const r = J.kind === 'deliver' ? 12 : 16; JOB.rep += r; jobSave(); XC.s.jobs++; xcSave(); tone(660, .15, 'triangle', .05, 990); say(J.kind === 'deliver' ? `You hand the parcel over at ${J.to.name}. They knew it was coming. Reputation +${r}.` : `The bag’s on the roof, wedged behind a water tank. You toss it down to ${J.from}. Reputation +${r}.`, 4200); XC.job = null; } }
+    if (done) { const r = J.kind === 'deliver' ? 12 : 16; JOB.rep += r; jobSave(); XC.s.jobs++; xcSave(); tone(660, .15, 'triangle', .05, 990); say(J.kind === 'deliver' ? `You hand the parcel over at ${J.to.name}. They knew it was coming. Reputation +${r}.` : `The bag’s on the roof, wedged behind a water tank. You toss it down to ${J.from}. Reputation +${r}.`, 4200); afJobDone(J); XC.job = null; } }
   // ---------- street bosses, waiting in their spots ----------
   function xcBossDefs(){ XC.P.bosses.forEach(B => { if (HEROES[B.id]) return; const [c1, c2] = B.look;
     OUTFITS[B.id + 'o'] = { hero: 1, c1: '#' + new THREE.Color(c1).getHexString(), c2: '#' + new THREE.Color(c2).getHexString(), hair: 'short', hairCol: '#1A1410', skin: '#9A7050' };
@@ -15147,25 +15150,25 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function xcFight(part, name){ const B = XC.P.bosses.find(q => q.id === part.slice(1) || 'x' + q.id === part); XC.fz = zone; XC.fc = [pos.x, pos.z]; ST_TITLE[part] = name; ST_FRAIL.x = [1, 1, 1];
     startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part, xc: 1 }); if (B) say(`${B.name}: “${B.line}”`, 3600); }
   function xcSetup(part){
-    if (!EV.opts || !EV.opts.xc || part[0] !== 'x') return; const S = EV.st;
+    if (!EV.opts || !EV.opts.xc || part[0] !== 'x') return; const S = EV.st; if (part.startsWith('xq')) return afSetup(part, S);
     if (part === 'xr') { const W2 = XC.room ? XC.room.W / 2 : 6, b = addUnit({ hero: 'gangBoss', team: 'en' }); b.x = W2 - 1.6; b.z = 0; b.boss = 1; EV.boss = b; S.sb = { B: { name: 'the godown boss' }, b, t: 99, marks: [] };
       [[W2 - 3.5, -3], [W2 - 3.5, 3], [0, -3.6], [1.5, 3.6]].forEach(([x, z], i) => S.add(i < 3 ? 'gangA' : 'gangB', x, z)); S.xc = { kind: 'raid' }; return; }
     const id = part.slice(1), B = XC.P.bosses.find(q => q.id === id); if (!B) return; const ent = XC.bossAv.find(q => q.B === B); if (ent) ent.av.g.visible = false;
     const b = addUnit({ hero: id, team: 'en' }); b.x = B.at[0]; b.z = B.at[1]; b.boss = 1; EV.boss = b; S.sb = { B: { name: B.name }, b, t: 99, marks: [] }; S.xc = { kind: 'boss', B, mv: 5, goons: 0 };
     pos.set(B.at[0] + 6, 1.6, B.at[1] + 6); yaw = Math.atan2(6, 6); }
   // their special moves: a slam, a charge, a pull, or a call for help
-  function xcFightStep(dt){ const S = EV && EV.st && EV.st.xc; if (!S || EV.over || S.kind !== 'boss') return; const b = EV.boss; if (!b || b.dead > 0) return; const d = Math.hypot(b.x - pos.x, b.z - pos.z);
+  function xcFightStep(dt){ if (EV && EV.st && EV.st.af) return afFightStep(dt); const S = EV && EV.st && EV.st.xc; if (!S || EV.over || S.kind !== 'boss') return; const b = EV.boss; if (!b || b.dead > 0) return; const d = Math.hypot(b.x - pos.x, b.z - pos.z);
     if (!S.goons && b.hp < b.max * .6) { S.goons = 1; EV.st.add('gangA', b.x + 3, b.z); EV.st.add('gangA', b.x - 3, b.z); say(`${S.B.name} whistles. Two of his men come running.`, 2400); }
     if (S.tel) { S.tel.t -= dt; if (S.tel.t <= 0) { const T = S.tel; S.tel = null; if (T.k === 'slam' && d < 3.8 && !EV.blocking) hurtMe(14, b); if (T.k === 'dash') { b.kx = (pos.x - b.x) * 3.2; b.kz = (pos.z - b.z) * 3.2; if (d < 9 && !EV.blocking) setTimeout(() => { if (EV && !EV.over && Math.hypot(b.x - pos.x, b.z - pos.z) < 2.2) hurtMe(12, b); }, 350); }
       if (T.k === 'pull' && d < 12) { pos.x += (b.x - pos.x) * .45; pos.z += (b.z - pos.z) * .45; hurtMe(6, b); } } return; }
     if ((S.mv -= dt) <= 0) { S.mv = 5 + Math.random() * 3; const k = ['slam', 'dash', 'pull'][Math.floor(Math.random() * 3)]; S.tel = { k, t: .9 }; tone(k === 'slam' ? 80 : 300, .5, 'sawtooth', .04, k === 'slam' ? 50 : 500);
       say(k === 'slam' ? `${S.B.name} raises both fists. Get clear or block!` : k === 'dash' ? `${S.B.name} lowers his head to charge!` : `${S.B.name} swings a hook and chain at you!`, 1400); } }
-  function xcFightEnd(won){ const S = EV.st.xc || {}; XC.fightDone = true; setTimeout(() => { if (EV) stopEvent(true);
+  function xcFightEnd(won){ if (EV.st.af) return afFightEnd(won); const S = EV.st.xc || {}; XC.fightDone = true; setTimeout(() => { if (EV) stopEvent(true);
     if (S.kind === 'raid') { if (won) { JOB.rep += 30; jobSave(); XC.s.raids++; xcSave(); say('The crew’s tied up for the police with their own packing tape. Reputation +30.', 4200); } else say('They throw you out into the lane. Try again another night.', 3200); xcOutside(); return; }
     const B = S.B; if (won && B) { XC.s.bosses.push(B.id); xcSave(); JOB.rep += 45; jobSave(); say(`${B.win} Reputation +45.`, 5200); const e = XC.bossAv.find(q => q.B === B); if (e) { e.av.g.visible = false; e.beam.visible = false; } }
     else { const e = XC.bossAv.find(q => q.B === B); if (e) e.av.g.visible = true; say(`${B ? B.name : 'He'} laughs and walks off. He’ll be back in his spot tomorrow.`, 3200); } }, 1800); }
   function xcArena(){ eventScene = XC.fz === 'xin' ? XC.isc : XC.sc; PILLARS.length = 0; plats.event = [{ x0: -1e4, x1: 1e4, z0: -1e4, z1: 1e4 }]; XC.keep = new Set(eventScene.children); }
-  function xcBack(){ if (XC.keep && eventScene) eventScene.children.slice().forEach(o => { if (!XC.keep.has(o)) { eventScene.remove(o); if (o !== viewG && !(me && o === me.g)) disposeDeep(o); } }); XC.keep = null; XC.fightDone = false; zone = XC.fz || 'xc'; plats.event = []; $('#worldBack').hidden = false; $('#worldBack').textContent = zone === 'xin' ? 'Back outside' : 'Taxi to the airport'; hotEl.hidden = false; }
+  function xcBack(){ if (XC.keep && eventScene) eventScene.children.slice().forEach(o => { if (!XC.keep.has(o)) { eventScene.remove(o); if (o !== viewG && !(me && o === me.g)) disposeDeep(o); } }); XC.keep = null; XC.fightDone = false; zone = XC.fz || 'xc'; plats.event = []; $('#worldBack').hidden = false; $('#worldBack').textContent = zone === 'xin' ? 'Back outside' : xcBackLabel(); hotEl.hidden = false; }
   const xcEvValid = (x, z) => XC.fz === 'xin' ? xinValid(x, z) : !xcBlocked(x, z, 0, .3) && !xcInWater(x, z) && Math.hypot(x - XC.fc[0], z - XC.fc[1]) < 34;
   // ---------- local transport: a train, a ferry or the metro between stations ----------
   function xcTransitBuild(g){
@@ -15208,7 +15211,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     cyl(1.4, 1.4, 18, wht, x, 9.2, z - 2, g, 20); const n = new THREE.Mesh(new THREE.ConeGeometry(1.4, 4, 20), wht); n.position.set(x, 20.2, z - 2); g.add(n); xcSolid(x - 1.6, x + 7, z - 3.6, z - .4, 26, 'r');
     const s = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.4), xcSign(`${XC.P.name.toUpperCase()} SPACE CENTRE`, '#FFFFFF', '#C8501E', 10, 1.4)); s.position.set(x, 4, z + 10); g.add(s);
     XC.acts.push({ x, z: z + 8, r: 4, label: () => 'Launch from the space centre', go: () => xcLaunch() }); }
-  function xcLaunch(){ if (typeof xpLaunch === 'function') return xpLaunch(XC.city); say(`${XC.P.name}’s space centre is fuelling up. Its two new worlds open soon.`, 3600); }
+  function xcLaunch(){ if (AF.on) return say('Not this time. You have rent to pay.', 2400); if (typeof xpLaunch === 'function') return xpLaunch(XC.city); say(`${XC.P.name}’s space centre is fuelling up. Its two new worlds open soon.`, 3600); }
   // ---------- light, weather and the time of day there ----------
   function xcLight(){ const P = XC.P, h = hourNow(), night = h >= 19 || h < 6, dusk = !night && (h >= (P.warm > .3 ? 16 : 17) || h < 7.5), wet = XC.wx && XC.wx.rain;
     const sky = new THREE.Color(night ? P.sky[2] : dusk ? P.sky[1] : P.sky[0]); if (wet) sky.lerp(new THREE.Color(0x6A7480), .5); XC.sc.background.copy(sky); XC.sc.fog.color.copy(sky);
@@ -15227,18 +15230,18 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Taxi to the airport'; jumpBtn.hidden = fine; uiZone();
       say(XC_LM[city].hello || `Welcome to ${XC.P.name}.`, 5200); }, '#0B0D14');
   }
-  function xcLeave(){ if (XC.drv) xcExitCar(); XC.ride = null; web.p = null; drawWeb(); const c = XC.city; aptEnter(c, 'kerb'); setTimeout(() => { if (zone !== 'xc' && zone !== 'xin') xcFree(); }, 1500); }
+  function xcLeave(){ if (AF.on) return afPause(); if (XC.drv) xcExitCar(); XC.ride = null; web.p = null; drawWeb(); const c = XC.city; aptEnter(c, 'kerb'); setTimeout(() => { if (zone !== 'xc' && zone !== 'xin') xcFree(); }, 1500); }
   // the headlines the Bugle carries from other cities
-  function xcNews(){ const L = []; Object.keys(XC_P).forEach(c => { let s = null; try { s = JSON.parse(localStorage.getItem('ru-xc-' + c) || 'null'); } catch (e) {} if (!s || !s.visits) return; const P = XC_P[c];
+  function xcNews(){ const L = []; Object.keys(XC_P).filter(c => c !== 'bfa').forEach(c => { let s = null; try { s = JSON.parse(localStorage.getItem('ru-xc-' + c) || 'null'); } catch (e) {} if (!s || !s.visits) return; const P = XC_P[c];
       (s.bosses || []).forEach(id => { const B = P.bosses.find(q => q.id === id); if (B) L.push(`${P.name.toUpperCase()}: ${B.name.toUpperCase()} BEATEN BY MASKED VISITOR`); }); if (s.raids) L.push(`${P.name.toUpperCase()}: ${s.raids} GODOWN RAID${s.raids > 1 ? 'S' : ''} LEAVE CREWS TAPED UP FOR POLICE`); L.push(P.news[(s.visits - 1) % P.news.length]); }); return L; }
   XC.btn = document.createElement('button'); XC.btn.type = 'button'; XC.btn.className = 'btn alt drvbtn doorbtn'; XC.btn.hidden = true; document.body.appendChild(XC.btn);
   XC.btn.addEventListener('click', e => { e.stopPropagation(); if (XC.drv) return xcExitCar(); if (XC.near) XC.near.go(); });
   // ---------- every frame in another city ----------
   function xcFrame(dt, now){
-    const t = now / 1000;
-    if (inWorld && zone === 'xin') { XC.near = null; if (XC.keeper) XC.keeper.anim(t, 0, 0); const d = XC.inside;
+    afFrame(dt, now); const t = now / 1000;
+    if (inWorld && zone === 'xin') { XC.near = null; if (XC.inside && ['flat', 'cell', 'lab', 'home'].includes(XC.inside.kind)) return afInStep(); if (XC.keeper) XC.keeper.anim(t, 0, 0); const d = XC.inside;
       if (pos.x < -XC.room.W / 2 + 1.4) XC.near = { label: 'Back outside', go: xcOutside };
-      else if (d && d.kind !== 'stash' && Math.hypot(pos.x - 2.2, pos.z) < 1.8) XC.near = { label: d.kind === 'food' ? 'Order something (1 rep) · or ask for work' : 'Talk to the shopkeeper', go: () => { if (d.kind === 'food' && JOB.rep >= 1 && !XC.job) { JOB.rep -= 1; jobSave(); try { if (typeof hpNow !== 'undefined') hpNow = Math.min(hpMax, hpNow + 15); } catch (e) {} tone(880, .1, 'sine', .04); say('Delicious. You feel better.', 1800); setTimeout(() => xcJob(d), 1900); } else xcJob(d); } };
+      else if (d && d.kind !== 'stash' && Math.hypot(pos.x - 2.2, pos.z) < 1.8) XC.near = { label: d.kind === 'food' ? 'Order something (1 rep) · or ask for work' : 'Talk to the shopkeeper', go: () => { if (d.kind === 'food' && JOB.rep >= 1 && !XC.job) { JOB.rep -= 1; jobSave(); try { if (typeof hpNow !== 'undefined') hpNow = Math.min(hpMax, hpNow + 15); } catch (e) {} tone(880, .1, 'sine', .04); afAte(); say('Delicious. You feel better.', 1800); setTimeout(() => xcJob(d), 1900); } else xcJob(d); } };
       XC.btn.hidden = !XC.near; if (XC.near) XC.btn.textContent = XC.near.label + (fine ? ' (E)' : ''); return; }
     if (!(inWorld && zone === 'xc' && XC.sc)) { if (!(inWorld && zone === 'event' && EV && EV.inXc)) XC.btn.hidden = true; else xcFightStep(dt); return; }
     xcTrafficStep(dt); xcPedsStep(dt, t); xcTransitStep(dt); XC.anim.forEach(f => f(t));
@@ -15261,8 +15264,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (!XC.roof) { XC.doors.forEach(d => offer(Math.hypot(d.x - pos.x, d.z - pos.z) < 1.9 ? Math.hypot(d.x - pos.x, d.z - pos.z) : 99, { label: d.kind === 'stash' ? (nightNow() ? 'Kick in the godown shutter' : 'A shuttered godown (opens after dark)') : `Go into ${d.name}`, go: () => xcInside(d) }));
         XC.cars.forEach(c => { const d = Math.hypot(c.g.position.x - pos.x, c.g.position.z - pos.z); if (d < 2.8 && c.v < 2) offer(d + 1, { label: `Get into ${VNAME[c.kind] || 'the vehicle'}`, go: () => xcDrive(c) }); });
         XC.bossAv.forEach(e => { if (!e.av.g.visible) return; const d = Math.hypot(e.B.at[0] - pos.x, e.B.at[1] - pos.z); if (d < 4) offer(d, { label: `Fight ${e.B.name}`, go: () => xcFight('x' + e.B.id, e.B.name) }); });
-        XC.acts.forEach(a => { const d = Math.hypot(a.x - pos.x, a.z - pos.z); if (d < a.r) offer(d, { label: a.label(), go: a.go }); });
-        const [tx, tz] = XC_LM[XC.city].taxi; offer(Math.hypot(tx - pos.x, tz - pos.z) < 4 ? 2 : 99, { label: 'Taxi to the airport', go: xcLeave }); }
+        XC.acts.forEach(a => { if (a.on && !a.on()) return; const d = Math.hypot(a.x - pos.x, a.z - pos.z); if (d < a.r) offer(d, { label: a.label(), go: a.go }); });
+        const [tx, tz] = AF.on ? [9e3, 9e3] : XC_LM[XC.city].taxi; offer(Math.hypot(tx - pos.x, tz - pos.z) < 4 ? 2 : 99, { label: 'Taxi to the airport', go: xcLeave }); }
       XC.stations.forEach(s => { const d = Math.hypot(s.x - pos.x, s.z - pos.z); if (d < 4 && Math.abs(pos.y - 1.6 - (XC.P.transit.kind === 'metro' ? s.y : 0)) < 1.5) { offer(d, { label: `Ride ${XC.P.transit.name} from ${s.name}`, go: () => xcRide(s) }); if (XC.roof && s.down && d > 1.2) offer(d - .5, { label: 'Take the stairs down to the street', go: () => { XC.roof = 0; pos.set(s.x - 7.5, 1.6, s.z + 2.4); xcClear(); } }); } }); }
     XC.btn.hidden = !XC.near && !XC.drv; XC.btn.textContent = XC.drv ? `Get out${fine ? ' (E)' : ''}` : XC.near ? XC.near.label + (fine ? ' (E)' : '') : '';
   }
@@ -15335,6 +15338,681 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       setTimeout(() => { if (XC.drv) xcExitCar(); web.p = null; drawWeb(); bzEnter(v); setTimeout(() => { if (zone === 'mc') xcFree(); }, 4000); }, 2400); },
       { h: `${XC_P[city].name} Space Centre`, q: 'Two worlds can be reached from here, and only from here. Where to?', a: L.map(id => [id, `${BZ_WORLDS[id].name}: ${BZ_WORLDS[id].title}`]).concat([['stay', 'Not today']]) });
   }
+  // ======================= After the stories: Bangalore falls, then Delhi =======================
+  // A separate mode with its own save (ru-after). Bangalore here is its own city, built on the other-cities engine with
+  // its own save (ru-xc-bfa), so the real Bangalore, your room, the lair, story mode and Mandalink are never touched.
+  XC_P.bfa = { name: 'Bangalore', lat: 12.97, lon: 77.59, tints: [0xE8E4DC, 0xE0D4BC, 0xD8C8B0], sky: [0xA8B8C8, 0xE89A6A, 0x0A0E1C], warm: .15, haze: 1,
+    water: [[-215, -120, 120, 215]], bridges: [[-215, -120, 120, 215]],
+    h: (x, z, r) => Math.abs(x) < 70 && Math.abs(z) < 70 ? 18 + r * 26 : x < 0 && z > 0 ? 8 + r * 10 : 12 + r * 22,
+    dists: [['Tower Road', (x, z) => Math.abs(x) < 70 && Math.abs(z) < 70], ['Shivajinagar', (x, z) => x < 0 && z < 0], ['Koramangala', (x, z) => x >= 0 && z < 0], ['Malleshwaram', (x, z) => x < 0 && z >= 0], ['Indiranagar', () => true]],
+    shops: [['Darshini Idli House', 'food'], ['Filter Coffee Corner', 'food'], ['Military Hotel', 'food'], ['Bombay Hardware', 'shop'], ['Avenue Road Books', 'shop'], ['SP Road Electronics', 'shop'], ['Sagar Chemist', 'shop'], ['Bakery & Condiments', 'food'], ['Kirana Store', 'shop'], ['Mobile Repairs', 'shop']],
+    transit: { kind: 'metro', name: 'the metro', axis: 'z', at: 82, st: [[-150, 'Koramangala Road'], [10, 'MG Road'], [170, 'Indiranagar']] },
+    // the six who walked out of the cells under the tower while it burned
+    bosses: [
+      { id: 'af_pothole', name: 'Pothole', d: 'Tower Road', at: [61.3, 30], line: 'They dropped a building on you. I’m just finishing the job.', win: 'Pothole is chained to a lamp post until the van comes. Tower Road breathes out.' },
+      { id: 'af_rust', name: 'Rustbolt', d: 'Shivajinagar', at: [-171.3, -80], line: 'Your tower’s scrap now. So are you.', win: 'Rustbolt’s scrap army falls into a heap. The market stalls open again in the morning.' },
+      { id: 'af_gridlock', name: 'Gridlock', d: 'Shivajinagar', at: [-80, -103.7], line: 'No webs today? Then nothing moves. Not you, not anyone.', win: 'Gridlock goes down across two lanes. The traffic starts moving around him.' },
+      { id: 'af_static', name: 'Static', d: 'Koramangala', at: [171.3, -140], line: 'I felt the bomb from three streets away. Beautiful.', win: 'Static is cuffed in rubber. Koramangala’s lights stop flickering.' },
+      { id: 'af_monsoon', name: 'Monsoon', d: 'Malleshwaram', at: [-90, 103.7], line: 'Your little flat floods first.', win: 'The rain stops over Malleshwaram. Monsoon is carried out of the puddles.' },
+      { id: 'af_smog', name: 'The Smog', d: 'Indiranagar', at: [190, 103.7], line: 'Breathe in. It’s the last thing you’ll do in this city.', win: 'The green fog clears off Indiranagar. The Smog is sealed in a police van.' }],
+    news: [] };
+  XC_VEH.bfa = [['auto', 0x2A8A3A], ['auto', 0x2A8A3A], ['car', 0xEEF1F5], ['scooter', 0x1E5AA8], ['bus', 0x2A6AC8], ['car', 0x8A1A2E], ['scooter', 0x2A2D33]];
+  // the tower, burnt to a shell; the market lane; your new flat; the agency's front; the lake
+  XC_LM.bfa = {
+    res: [[5, 50, -50, -5], [-50, -5, 60, 105], [-160, -115, -50, -5], [115, 160, 115, 160]],
+    taxi: [9e3, 9e3], hello: '',
+    secrets: [[27.5, 0, -12, 'Your old doormat, half burnt, still says WELCOME.'], [-35, 14.5, 71, 'A pigeon’s nest on your new roof, made out of web-shooter wire.'], [-140, 0, -27.5, 'A stall-holder’s photo of you swinging past, taped to a pillar.'], [-167, .4, 165, 'A cricket ball floating at the edge of the lake.'], [137.5, -1, 137.5, 'Agency bootprints on a roof, leading nowhere.']],
+    build(g){
+      const conc = mat(0x5E5C58, { roughness: 1 }), burnt = mat(0x1C1B1A, { roughness: 1 }), scorch = mat(0x34302C, { roughness: 1 }), yb = mat(0xF2C230, { roughness: .7 }), blk = mat(0x16181D, { roughness: .7 });
+      // the tower: a blackened frame, slabs hanging off it, fire still glowing low down, smoke
+      const T = new THREE.Group(); T.position.set(27.5, 0, -27.5); g.add(T); XC.lm.push(T);
+      [[-10, -10], [10, -10], [-10, 10], [10, 10]].forEach(([x, z], i) => { box(2, 62 - i * 6, 2, i % 2 ? burnt : scorch, x, (62 - i * 6) / 2, z, T); xcSolid(27.5 + x - 1, 27.5 + x + 1, -27.5 + z - 1, -27.5 + z + 1, 62 - i * 6, 'tw'); });
+      box(6, 30, 6, scorch, 0, 15, 0, T); xcSolid(24.5, 30.5, -30.5, -24.5, 30, 'tw');
+      for (let f = 1; f < 15; f++) { const y = f * 4, r = xcHash(f, 3); if (r < .2) continue;
+        const parts = [[-5.5, -5.5], [5.5, -5.5], [-5.5, 5.5], [5.5, 5.5]].filter((_, k) => xcHash(f, k) > .35);
+        parts.forEach(([x, z], k) => { const s = box(11, .4, 11, f % 3 ? conc : burnt, x, y, z, T); if (xcHash(k, f) < .25) { s.rotation.z = (xcHash(f + k, 9) - .5) * .5; s.position.y -= .8; } }); }
+      const rub = []; for (let i = 0; i < 70; i++) { const a = xcHash(i, 1) * Math.PI * 2, r = 4 + xcHash(i, 2) * 12; rub.push([27.5 + Math.cos(a) * r, .3, -27.5 + Math.sin(a) * r, a, .6 + xcHash(i, 3) * 1.6, .4 + xcHash(i, 4), .6 + xcHash(i, 5)]); } inst(new THREE.BoxGeometry(1, 1, 1), conc, rub, g, true);
+      const fireM = new THREE.MeshBasicMaterial({ color: 0xFF7A2A, transparent: true, opacity: .8, depthWrite: false }), fires = [[-6, 2.5, 3], [4, 6.5, -6], [7, 2.2, 6]].map(([x, y, z]) => { const m = new THREE.Mesh(new THREE.ConeGeometry(.6, 1.6, 8), fireM); m.position.set(x, y, z); T.add(m); return m; });
+      const fl = new THREE.PointLight(0xFF7A2A, 1.4, 22, 2); fl.position.set(0, 4, 0); T.add(fl);
+      const smokeM = new THREE.MeshBasicMaterial({ color: 0x3A3A3A, transparent: true, opacity: .35, depthWrite: false }), smoke = []; for (let i = 0; i < 6; i++) { const m = new THREE.Mesh(new THREE.SphereGeometry(4, 10, 8), smokeM.clone()); T.add(m); smoke.push(m); }
+      XC.anim.push(t => { fires.forEach((m, i) => { m.scale.set(1, .8 + Math.sin(t * 9 + i * 2) * .25, 1); }); fl.intensity = 1.1 + Math.sin(t * 13) * .3 + Math.sin(t * 7.3) * .2;
+        smoke.forEach((m, i) => { const k = (t * .05 + i / 6) % 1; m.position.set(Math.sin(i * 2.1) * 4 + k * 8, 50 + k * 50, Math.cos(i * 1.7) * 4); m.scale.setScalar(1 + k * 2.5); m.material.opacity = .35 * (1 - k); }); });
+      // the police cordon all the way round, with a jeep and its lights
+      const tape = new THREE.MeshBasicMaterial({ color: 0xF2C230 }), bars = [];
+      for (let k = 0; k < 4; k++) for (let i = 0; i < 9; i++) { if (k === 1 && i === 4) continue; const u = -20 + i * 5, [x, z] = [[u, -21], [u, 21], [-21, u], [21, u]][k]; bars.push([27.5 + x, .5, -27.5 + z, k > 1 ? Math.PI / 2 : 0]); }
+      inst(new THREE.BoxGeometry(2.4, 1, .25), yb, bars, g); inst(new THREE.BoxGeometry(2.5, .12, .27), blk, bars.map(b => [b[0], .55, b[2], b[3]]), g);
+      [[-21, 1], [21, 1]].forEach(([o]) => { const t2 = box(.04, .04, 42, tape, 27.5 + o, 1.05, -27.5, g); void t2; if (o < 0) box(42, .04, .04, tape, 27.5, 1.05, -27.5 + o, g); else [16.75, 38.75].forEach(x => box(19.5, .04, .04, tape, x, 1.05, -27.5 + o, g)); });
+      [[5.4, -48.5, 5.4, -6.5], [49.6, -48.5, 49.6, -6.5]].forEach(() => {}); xcSolid(5.5, 49.5, -49.5, -48, 1, 'c'); xcSolid(5.5, 25, -7, -5.5, 1, 'c'); xcSolid(30, 49.5, -7, -5.5, 1, 'c'); xcSolid(5.5, 7, -49.5, -5.5, 1, 'c'); xcSolid(48, 49.5, -49.5, -5.5, 1, 'c');
+      try { const j = makeVehicle('jeep', 0xF2F2EE, g); j.position.set(20, 0, -2.6); j.rotation.y = Math.PI / 2; const red = glowM(0xFF2A2A, { emissiveIntensity: 2 }), blu = glowM(0x2A6AFF, { emissiveIntensity: 2 }); const r1 = box(.3, .15, .3, red, .3, 1.95, 0, j), b1 = box(.3, .15, .3, blu, -.3, 1.95, 0, j); XC.anim.push(t => { const on = Math.floor(t * 4) % 2; r1.material.emissiveIntensity = on ? 3 : .2; b1.material.emissiveIntensity = on ? .2 : 3; }); } catch (e) {}
+      // your new flat: a tired yellow building in Malleshwaram, flat 2B
+      const F = new THREE.Group(); F.position.set(-35, 0, 71); g.add(F); XC.lm.push(F); box(20, 14, 18, mat(0xE8C86A, { roughness: .95 }), 0, 7, 0, F); box(20.6, .5, 18.6, mat(0xB8A070), 0, 14.25, 0, F);
+      const win = []; for (let fl2 = 0; fl2 < 3; fl2++) for (let i = 0; i < 5; i++) win.push([-8 + i * 4, 3 + fl2 * 4, -9.05]); inst(new THREE.BoxGeometry(1.6, 1.8, .1), new THREE.MeshStandardMaterial({ color: 0x2A3440, emissive: 0xFFC98A, emissiveIntensity: .25, roughness: .2 }), win, F);
+      const bal = []; for (let fl2 = 1; fl2 < 3; fl2++) for (let i = 0; i < 5; i += 2) bal.push([-8 + i * 4, 2.1 + fl2 * 4, -9.6]); inst(new THREE.BoxGeometry(2.6, .9, 1.1), mat(0x8A8F99, { metalness: .4 }), bal, F);
+      box(2, 2.6, .2, mat(0x5A3A2A), 0, 1.3, -9.05, F); const s = new THREE.Mesh(new THREE.PlaneGeometry(3.4, .7), xcSign('SAI KRUPA APTS', '#16181D', '#F2EEE6', 3.4, .7)); s.position.set(0, 3.1, -9.12); s.rotation.y = Math.PI; F.add(s);
+      box(2, 2, 2, mat(0x2A2D33), 7, 15.5, 4, F); cyl(.8, .8, 1.6, mat(0x2A2D33), -6, 15.3, 5, F, 12); xcSolid(-45, -25, 62, 80, 14, 'flat');
+      XC.doors.push({ name: 'your flat', kind: 'flat', x: -35, z: 59.8, nx: 0, nz: -1, i: 7 });
+      try { const sc = makeVehicle('scooter', 0x1E5AA8, g); sc.position.set(-39, 0, 58.8); sc.rotation.y = Math.PI / 2; } catch (e) {}
+      // the market lane in Shivajinagar: stalls both sides, people, bulbs strung across
+      const stallC = [0xC8462E, 0xF2C230, 0x1E5AA8, 0x1F7A45, 0xE07A1E, 0x8A3A9A]; XC.stalls = [];
+      for (let i = 0; i < 12; i++) { const x = -156 + (i >> 1) * 6.6, z = i % 2 ? -21 : -34; box(3.4, 1, 1.8, mat(0x6A4E3A), x, .5, z, g); const aw = box(4, .1, 2.6, mat(stallC[i % 6]), x, 2.6, z, g); aw.rotation.x = i % 2 ? .2 : -.2; for (let k = 0; k < 4; k++) box(.4, .3, .4, mat(stallC[(i + k + 2) % 6]), x - 1.2 + k * .8, 1.15, z, g); xcSolid(x - 1.7, x + 1.7, z - .9, z + .9, 1, 's'); XC.stalls.push([x, z + (i % 2 ? -1.8 : 1.8)]);
+        if (i % 3 === 0) try { const v = avatar(crowdLook(i * 7 + 3)); v.g.position.set(x, 0, z + (i % 2 ? 1.1 : -1.1)); v.g.rotation.y = i % 2 ? 0 : Math.PI; g.add(v.g); } catch (e) {} }
+      const bulbM = new THREE.MeshStandardMaterial({ color: 0xFFE0A0, emissive: 0xFFC060, emissiveIntensity: 0 }); XC.anim.push(() => { bulbM.emissiveIntensity = XC.night ? 2 : 0; }); const bl = []; for (let x = -158; x < -118; x += 1.6) bl.push([x, 3.3, -27.5 + Math.sin(x) * .3]); inst(new THREE.SphereGeometry(.09, 6, 5), bulbM, bl, g);
+      box(46, .06, 22, mat(0x8A847A, { roughness: 1 }), -137.5, .04, -27.5, g);
+      // the agency's front: a windowless block behind a fence, called something boring
+      const L = new THREE.Group(); L.position.set(137.5, 0, 137.5); g.add(L); box(30, 12, 26, mat(0x7A7E86, { roughness: .6, metalness: .2 }), 0, 6, 0, L); box(30.4, .4, 26.4, mat(0x3A3D44), 0, 12.2, 0, L);
+      const fen = []; for (let k = 0; k < 4; k++) for (let i = 0; i < 22; i++) { const u = -21 + i * 2, [x, z] = [[u, -21], [u, 21], [-21, u], [21, u]][k]; fen.push([x, 1.6, z]); } inst(new THREE.CylinderGeometry(.05, .05, 3.2, 6), mat(0x8A8F99, { metalness: .6 }), fen, L);
+      [[0, -21, 42, .05], [0, 21, 42, .05], [-21, 0, .05, 42], [21, 0, .05, 42]].forEach(([x, z, w, d]) => { const m = box(w, 3, d, new THREE.MeshStandardMaterial({ color: 0x8A8F99, transparent: true, opacity: .25, metalness: .5 }), x, 1.6, z, L); void m; });
+      const ls = new THREE.Mesh(new THREE.PlaneGeometry(6, 1), xcSign('HALCYON LOGISTICS', '#F2F2EE', '#3A3D44', 6, 1)); ls.position.set(0, 8, -13.05); ls.rotation.y = Math.PI; L.add(ls);
+      xcSolid(116.5, 158.5, 116, 117, 3.2, 'fence'); xcSolid(116.5, 158.5, 158, 159, 3.2, 'fence'); xcSolid(116, 117, 116.5, 158.5, 3.2, 'fence'); xcSolid(158, 159, 116.5, 158.5, 3.2, 'fence'); xcSolid(122.5, 152.5, 124.5, 150.5, 12, 'lab');
+      // the lake, with a promenade along the south shore
+      box(95, .3, 3, mat(0xBDB6A8), -167.5, .15, 118, g); xcTrees([[-205, 112], [-185, 112], [-150, 112], [-130, 112]], g);
+      xcPedsWanted(g);
+    } };
+  // wanted posters for the six, pasted all over town
+  function xcPedsWanted(g){ const names = XC_P.bfa.bosses.map(b => b.name), m = names.map(n => xcSign('WANTED · ' + n.toUpperCase(), '#16181D', '#F2E6C8', 1.2, .5));
+    for (let i = 0; i < 16; i++) { const l = XC.lots[(i * 37) % Math.max(1, XC.lots.length)]; if (!l) continue; const f = xcFront(l); if (!f) continue; const [x, z, nx, nz] = f, p = new THREE.Mesh(new THREE.PlaneGeometry(1.2, .5), m[i % m.length]); p.position.set(x + nx * .06, 1.7, z + nz * .06); p.rotation.y = Math.atan2(nx, nz); g.add(p); } }
+  // the six fight on their feet here (no flying), looking exactly like themselves
+  ['pothole', 'rust', 'gridlock', 'static', 'monsoon', 'smog'].forEach(k => { const h = HEROES['sb_' + k]; if (!h) return; HEROES['af_' + k] = Object.assign({}, h, { grounded: 1 }); if (BODY['sb_' + k]) BODY['af_' + k] = BODY['sb_' + k]; if (KIT_TRAITS['sb_' + k]) KIT_TRAITS['af_' + k] = KIT_TRAITS['sb_' + k]; });
+  // ---------- the save, and what it changes about you while you're in it ----------
+  var AF = { s: null, on: false, beam: null, busy: false, key: '', noWebT: 0 };
+  const AF_KEY = 'ru-after';
+  function afFresh(){ return { v: 1, started: 0, ch: 0, st: 0, act: 'blr', web: { parts: [], fixed: 0 }, symb: { on: 0, hunger: 0 }, dist: [], log: [], blrLocked: 0, seen: {} }; }
+  function afLoad(){ let s = null; try { s = JSON.parse(localStorage.getItem(AF_KEY) || 'null'); } catch (e) {} const f = afFresh(); if (!s || typeof s !== 'object' || s.v !== 1) return f;
+    return Object.assign(f, s, { web: Object.assign(f.web, s.web || {}), symb: Object.assign(f.symb, s.symb || {}), seen: Object.assign({}, s.seen || {}), log: Array.isArray(s.log) ? s.log : [], dist: Array.isArray(s.dist) ? s.dist : [] }); }
+  function afSave(){ try { localStorage.setItem(AF_KEY, JSON.stringify(AF.s)); } catch (e) {} }
+  AF.s = afLoad();
+  function afLog(t){ AF.s.log.unshift(t); AF.s.log = AF.s.log.slice(0, 30); afSave(); }
+  // the bad arm never heals in this story; the symbiote, later, more than makes up for it
+  function afArmF(){ if (typeof AF === 'undefined' || !AF || !AF.on) return 1; const D = AF.s.del, Y = AF.s.symb; if (Y.on && !Y.gone) return 1.1; return (.7 + Math.min(.15, (D ? D.physio : 0) * .03)) * (D && D.tired > 18 ? .85 : 1); }
+  function afCanSwing(){ return !AF.on || XC.city !== 'bfa' || !!AF.s.web.fixed || !!AF.s.symb.on; }
+  function afNoWeb(){ const n = performance.now(); if (n < AF.noWebT) return; AF.noWebT = n + 3000; tone(180, .25, 'square', .03, 90); say('Your web-shooters spit sparks and a grey string that falls short. They’re broken. You’ll have to rebuild them.', 3000); }
+  function xcBackLabel(){ return AF.on ? 'Pause the story (back to your room)' : 'Taxi to the airport'; }
+  const afWait = ms => new Promise(r => setTimeout(r, ms));
+  const afNear = (x, z, r) => zone === 'xc' && Math.hypot(pos.x - x, pos.z - z) < r;
+  // ---------- the goal line, and a gold beam over where to go ----------
+  const afHud = document.createElement('div'); afHud.className = 'afhud'; afHud.hidden = true; afHud.setAttribute('aria-live', 'polite'); document.body.appendChild(afHud);
+  { const s = document.createElement('style'); s.textContent = `.afhud{position:fixed;left:50%;transform:translateX(-50%);top:calc(72px + env(safe-area-inset-top,0px));z-index:7;background:rgba(11,13,20,.84);color:#EEF1F5;border-left:3px solid #C8102E;border-radius:10px;padding:7px 12px;font:600 13px/1.35 system-ui,sans-serif;width:max-content;max-width:min(520px,calc(100% - 32px));pointer-events:none}.afhud small{display:block;color:#FF8A7A;font-weight:800;letter-spacing:.06em;font-size:10px}@media (max-width:640px){.afhud{top:calc(240px + env(safe-area-inset-top,0px))}}`; document.head.appendChild(s); }
+  // ---------- the chapters ----------
+  const AF_RETAKE = 3;
+  const AF_CH = [
+    { n: 'Chapter 1', t: 'The Fall', sub: 'Bangalore. The night it all came down.', steps: [
+      { g: '', go: () => afFallCine(), chk: () => !!AF.s.seen.fall },
+      { g: 'Walk to the police cordon around what’s left of the tower', at: () => [27.5, -3], chk: () => afNear(27.5, -3, 9) },
+      { g: '', go: () => afCordon(), chk: () => !!AF.s.seen.cordon },
+      { g: 'Find your new flat: Sai Krupa Apartments, the yellow building in Malleshwaram. On foot, by metro, or grab an auto', at: () => [-35, 59.8], chk: () => zone === 'xin' && !!XC.inside && XC.inside.kind === 'flat' },
+      { g: 'Look around the flat. The workbench is under the window', chk: () => !!AF.s.seen.bench },
+      { g: '', go: () => afBroken(), chk: () => !!AF.s.seen.broken },
+      { g: 'To be continued: your web-shooters need parts, and the next chapter is on its way', chk: () => false }
+    ] }
+  ];
+  function afFrame(dt, now){
+    if (!AF.on) { if (!afHud.hidden) afHud.hidden = true; return; }
+    AF.dt = dt; afLife(dt); afWebCol(); afDelStep(dt);
+    const here = inWorld && (zone === 'xc' || zone === 'xin'), C = AF_CH[AF.s.ch], S = C && C.steps[AF.s.st], k = AF.s.ch + ':' + AF.s.st;
+    if (here && S && AF.key !== k && !AF.busy && !EV && !A) { AF.key = k; if (S.go) S.go(); }
+    const gt = S ? (typeof S.g === 'function' ? S.g() : S.g) : '', show = here && !!gt && !EV && !AF.busy; if (afHud.hidden === show) afHud.hidden = !show;
+    if (show) { const h = `<small>${esc(C.n.toUpperCase())} · ${esc(C.t.toUpperCase())}</small>${esc(gt)}`; if (afHud.dataset.h !== h) { afHud.dataset.h = h; afHud.innerHTML = h; } }
+    const at = S && S.at && zone === 'xc' && XC.sc ? S.at() : null;
+    if (at) { if (!AF.beam || AF.beam.parent !== XC.sc) { AF.beam = new THREE.Mesh(new THREE.CylinderGeometry(.7, .7, 80, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFC93C, transparent: true, opacity: .32, depthWrite: false })); AF.beam.userData.noPick = true; XC.sc.add(AF.beam); } AF.beam.visible = true; AF.beam.position.set(at[0], 40, at[1]); }
+    else if (AF.beam) AF.beam.visible = false;
+    if (S && here && !AF.busy && !EV && !A && S.auto) S.auto();
+    if (S && here && !AF.busy && !EV && !A && S.chk()) afNext();
+  }
+  function afNext(){ AF.s.st++; AF.key = ''; const C = AF_CH[AF.s.ch];
+    if (AF.s.st >= C.steps.length) { AF.s.ch++; AF.s.st = 0; afSave(); afLooks(); const N = AF_CH[AF.s.ch]; if (N) { AF.busy = true; cbCard(N.n, N.t, N.sub || '').then(() => { AF.busy = false; }); } return; }
+    afSave(); tone(880, .1, 'triangle', .04); }
+  // ---------- in and out: it starts from your phone, and pausing takes you home ----------
+  function afEnter(){
+    if (A || EV) return;
+    if (!(storiesDone() || AF.s.started)) return say('Finish (or skip) every story first.', 2600);
+    if (AF.s.blrLocked && AF.s.act !== 'del') return say('Bangalore is behind you now. The Delhi part of the story is on its way.', 3400);
+    if (!inWorld || !['blr', 'xc', 'xin', 'apt'].includes(zone)) return say('Head out into the city first, then start it from your phone.', 3000);
+    if (DRV.on) getOut(true); if (XC.drv) xcExitCar(); XC.ride = null;
+    if (zone === 'xin' && XC.isc) { disposeDeep(XC.isc); XC.isc = null; XC.inside = null; }
+    const first = !AF.s.started; AF.s.started = 1; AF.on = true; AF.key = ''; afSave(); const city = AF.s.act === 'del' ? 'del' : AF.s.act === 'goa' ? 'goi' : 'bfa';
+    fade(() => { aptFree(); xcBuild(city); afAfterBuild(); xcWeather(); xcLight(); web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'xc'; vy = 0; falling = false; grounded = true; XC.air = false; XC.roof = 0; cityV.set(0, 0, 0);
+      const known = city === 'bfa' && AF.s.seen.flatKnown, sp = city === 'bfa' ? (known ? [-35, 57] : [27.5, 6]) : city === 'goi' ? [-196, 10] : (afWhere('home') || XC_LM.del.taxi); pos.set(sp[0], 1.6, sp[1]); xcClear(); yaw = city === 'bfa' && !known ? 0 : Math.atan2(sp[0], sp[1]); pitch = -.03;
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = xcBackLabel(); jumpBtn.hidden = fine; uiZone();
+      if (!first) say(city === 'bfa' ? 'Bangalore. What’s left of it.' : city === 'goi' ? 'Goa.' : 'Delhi.', 2600); }, '#000000');
+  }
+  function afLooks(){ (XC.bossAv || []).forEach(e => { const on = XC.city === 'bfa' && AF.s.ch >= AF_RETAKE && !(XC.s.bosses || []).includes(e.B.id) && !(EV && EV.boss && EV.boss.hero === e.B.id); e.av.g.visible = on; e.beam.visible = on; }); afCornerLook(); afVilLook(); }
+  function afAfterBuild(){ AF.beam = null; AF.rally = null; AF.aBeam = null; AF.corners = []; AF.vilAv = []; afActs(); afActsDel(); afVilBuild(); afPressPlace(); afLooks(); }
+  function afPause(){ if (XC.drv) xcExitCar(); XC.ride = null; web.p = null; drawWeb(); AF.on = false; afSave(); afHud.hidden = true;
+    fade(() => { travel('room'); xcFree(); AF.beam = null; say('The story waits. Pick it up again from the Story tab on your phone.', 3600); }, '#000000'); }
+  // ---------- chapter 1: the fall ----------
+  async function afFallCine(){
+    AF.busy = true; walkTarget = null; Object.keys(keys).forEach(k => keys[k] = false); pos.set(27.5, 1.6, 30); yaw = 0; pitch = .14;
+    await cbCard('After the stories', 'The Fall', 'Bangalore, 3:12 a.m.');
+    const fl = new THREE.PointLight(0xFFB060, 6, 320, 1.4); fl.position.set(27.5, 30, -27.5); if (XC.sc) XC.sc.add(fl);
+    tone(50, 2.6, 'sawtooth', .09, 30); setTimeout(() => tone(90, 1.4, 'square', .05, 40), 200);
+    const flash = document.createElement('div'); flash.style.cssText = `position:fixed;inset:0;background:#FFE8C0;opacity:${reduce ? .4 : .92};z-index:59;pointer-events:none;transition:opacity 1.8s`; document.body.appendChild(flash); requestAnimationFrame(() => requestAnimationFrame(() => { flash.style.opacity = '0'; })); setTimeout(() => flash.remove(), 2000);
+    let k = 0; const iv = setInterval(() => { k++; fl.intensity = Math.max(0, 6 - k * .25); if (k > 24) { clearInterval(iv); if (fl.parent) fl.parent.remove(fl); } }, 80);
+    await afWait(1900);
+    await cbTalk([['Narrator', 'They came at 3 a.m. Black vans, no plates. They didn’t knock.'], ['Narrator', 'They wanted what was in the cells under your lair. When they couldn’t get in, they brought the whole tower down instead.'], ['Narrator', 'Your room. The lair. The vault. Almost everything, gone in four seconds.'], ['Narrator', 'And while it burned, six people walked out of the cells under the tower.'], ['You', 'My arm… I can’t close my hand properly.']]);
+    AF.s.seen.fall = 1; afLog('The night the tower fell. Six villains walked out of the cells under it.'); afSave(); AF.busy = false;
+    say('Your right arm won’t grip properly, and it isn’t going to get better. (Menu → Status)', 4600);
+  }
+  async function afCordon(){
+    AF.busy = true;
+    await cbTalk([['Inspector Gowda', 'Stay behind the tape, please. …Oh. It’s you.'], ['Inspector Gowda', 'Officially it was a gas leak. Unofficially, nobody will tell me who sent those vans, and I’ve been told to stop asking.'], ['Inspector Gowda', 'Your basement. The cells. Gridlock, Monsoon, Static, the Smog, Pothole and Rustbolt are all out, and every one of them knows your face now.'],
+      ['Shanthi Aunty', '(from the crowd) Beta! You’re alive! Everyone from the building is being put up in Malleshwaram. They gave me your key: flat 2B, Sai Krupa Apartments.'], ['Shanthi Aunty', 'The firemen pulled out your computer, and that big map board of yours. I had them carried over. Don’t thank me. Just eat something.'], ['You', 'Thank you, Aunty.']]);
+    AF.s.seen.cordon = 1; AF.s.seen.flatKnown = 1; afLog('Flat 2B, Sai Krupa Apartments, Malleshwaram. Home now.'); afSave(); AF.busy = false;
+  }
+  async function afBroken(){
+    AF.busy = true;
+    await cbTalk([['Narrator', 'You lay your web-shooters on the bench and try them.'], ['Narrator', 'The left one sparks and dies. The right one coughs out a grey string that falls on the floor.'], ['You', 'The nozzles have melted shut. Both cartridges are cracked, and the pressure valve is just gone.'], ['You', 'No swinging, then. Feet, the metro, an auto if the meter’s honest. And a lot of parts.']]);
+    AF.s.seen.broken = 1; afLog('The web-shooters are broken. No swinging until they’re rebuilt.'); afSave(); AF.busy = false;
+  }
+  // ---------- flat 2B: your PC and the AgriBridge board made it; a workbench, a bed, a kitchen corner ----------
+  function afFlat(d){
+    fade(() => { if (XC.isc) disposeDeep(XC.isc); const sc = XC.isc = new THREE.Scene(), W = 10, D = 8; sc.background = new THREE.Color(0x14161C); XC.inside = d; XC.room = { W, D }; XC.keeper = null; XC.blocks = [];
+      sc.add(new THREE.HemisphereLight(0xFFF2DC, 0x2A2420, .7)); const L = new THREE.PointLight(0xFFE0B0, .9, 16, 2); L.position.set(0, 2.7, 0); sc.add(L);
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), mat(0xA89A86, { roughness: .9 })); floor.rotation.x = -Math.PI / 2; sc.add(floor); box(W, .1, D, mat(0xE8E4DC), 0, 3, 0, sc);
+      const wm = mat(0xD8D0BC, { roughness: .95 }); [[0, -D / 2, W, .1], [0, D / 2, W, .1], [-W / 2, 0, .1, D], [W / 2, 0, .1, D]].forEach(([x, z, w, dd]) => box(w, 3, dd, wm, x, 1.5, z, sc));
+      box(.08, 2.2, 1.2, mat(0x5A3A2A), -W / 2 + .06, 1.1, 0, sc);
+      const B2 = (w, h, dd, m, x, y, z) => { const o = box(w, h, dd, m, x, y, z, sc); XC.blocks.push([x - w / 2, x + w / 2, z - dd / 2, z + dd / 2]); return o; };
+      B2(2, .45, 1.3, mat(0x5A4632), 3.6, .22, -2.9); box(1.9, .18, 1.2, mat(0xE8E4DC), 3.6, .54, -2.9, sc); box(.5, .14, .9, mat(0xF4F1E8), 4.3, .68, -2.9, sc); box(1.2, .1, 1.22, mat(0x1E5AA8), 3.3, .66, -2.9, sc);
+      B2(1.8, .75, .8, mat(0x6A4E3A), -1.2, .38, -3.5); box(.9, .55, .05, mat(0x16181D), -1.2, 1.1, -3.66, sc);
+      const scr = new THREE.Mesh(new THREE.PlaneGeometry(.84, .48), new THREE.MeshBasicMaterial({ map: tex(256, 146, (c, w, h) => { c.fillStyle = '#0B1A2A'; c.fillRect(0, 0, w, h); c.fillStyle = '#FFC93C'; c.font = `800 30px ${DISPLAY}`; c.textAlign = 'center'; c.fillText('MANDALINK', w / 2, h / 2 + 10); }) })); scr.position.set(-1.2, 1.1, -3.63); sc.add(scr);
+      box(.5, .03, .18, mat(0x2A2D33), -1.2, .77, -3.25, sc); box(.6, .9, .6, mat(0x3A3D44), .1, .45, -3.4, sc);
+      drawMap(28); const bd = new THREE.Mesh(new THREE.PlaneGeometry(1.9, 1.5), new THREE.MeshBasicMaterial({ map: mapTex })); bd.position.set(W / 2 - .08, 1.6, .6); bd.rotation.y = -Math.PI / 2; sc.add(bd); box(.04, 1.62, 2.02, mat(0x3A2A1A), W / 2 - .04, 1.6, .6, sc); box(.05, .42, .5, mat(0x1A1410), W / 2 - .1, 2.18, 1.42, sc);
+      B2(2.2, .9, .8, mat(0x7A5A3A), 2, .45, 3.5); AF.benchG = new THREE.Group(); AF.benchG.position.set(2, .92, 3.45); sc.add(AF.benchG); afBenchLook();
+      const night = nightNow(), wnd = new THREE.Mesh(new THREE.PlaneGeometry(2, 1.2), new THREE.MeshBasicMaterial({ map: tex(200, 120, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, night ? '#0A0E1C' : '#A8C8E8'); gr.addColorStop(1, night ? '#3A2A3A' : '#E8D8C0'); c.fillStyle = gr; c.fillRect(0, 0, w, h); c.fillStyle = '#2A2D33'; for (let i = 0; i < 9; i++) { const bh = 20 + xcHash(i, 5) * 60; c.fillRect(i * 23, h - bh, 18, bh); } c.fillStyle = '#FFC98A'; for (let i = 0; i < 30; i++) c.fillRect(xcHash(i, 7) * w, h - xcHash(i, 8) * 60, 2, 3); }) }));
+      wnd.position.set(2, 1.9, D / 2 - .07); wnd.rotation.y = Math.PI; sc.add(wnd); box(2.2, .1, .2, mat(0xE8E4DC), 2, 1.25, D / 2 - .1, sc);
+      B2(1.6, .9, .7, mat(0xC8C2B4), -3.6, .45, 3.5); box(.5, .1, .4, mat(0x2A2D33), -3.9, .95, 3.5, sc); cyl(.15, .12, .2, mat(0x8A8F99, { metalness: .6 }), -3.2, 1.0, 3.5, sc, 12);
+      plats.xin = [{ x0: -W / 2, x1: W / 2, z0: -D / 2, z1: D / 2 }];
+      web.p = null; drawWeb(); XC.air = false; XC.roof = 0; zone = 'xin'; vy = 0; grounded = true; pos.set(-W / 2 + 1.2, 1.6, 0); yaw = -Math.PI / 2; pitch = -.04; $('#worldBack').textContent = 'Back outside';
+      say(XC.city === 'del' ? 'Your room above the Malhotras. The same PC, the same board, a different city.' : 'Flat 2B. Somebody has swept it, and left a steel tiffin on the counter.', 3200); }, '#06070B');
+  }
+  function afBenchLook(){ const g = AF.benchG; if (!g) return; g.children.slice().forEach(o => { g.remove(o); disposeDeep(o); }); const W = AF.s.web, dark = mat(0x2A2D33, { metalness: .5, roughness: .5 }), red = mat(0xC8102E, { roughness: .6 });
+    [-.35, .35].forEach((x, i) => { box(.22, .12, .3, W.fixed ? red : dark, x, .06, 0, g); if (!W.fixed) box(.08, .06, .1, mat(0x1A1A1A), x + (i ? .05 : -.05), .14, -.12, g); });
+    W.parts.forEach((p, i) => { box(.12, .08, .12, mat([0xC9CFD8, 0xB8860B, 0x8A8F99, 0x3CB0E8, 0xE8E4DC][i % 5], { metalness: .6, roughness: .4 }), -.8 + i * .2, .05, .22, g); }); box(.5, .02, .3, mat(0x5A3A2A), .75, .01, -.05, g); }
+  function afFlatStep(){ const W = XC.room.W, at = (x, z, r) => Math.hypot(pos.x - x, pos.z - z) < r; let n = null;
+    if (pos.x < -W / 2 + 1.4) n = { label: 'Back outside', go: xcOutside };
+    else if (at(-1.2, -2.7, 1.3)) n = { label: 'Use your PC: Mandalink', go: () => openPC() };
+    else if (at(4.1, .6, 1.4)) n = { label: 'The AgriBridge board', go: () => { say('The AgriBridge board. Singed at one corner, still lit up in every state.', 2600); setTimeout(apkPanel, 900); } };
+    else if (at(2, 2.7, 1.4)) n = { label: 'The workbench', go: afBench };
+    else if (at(3.6, -1.8, 1.5)) n = { label: XC.city === 'del' ? 'The bed: sleep until morning' : 'The bed', go: () => XC.city === 'del' ? afSleep() : say('Not now. The city isn’t going to wait.', 2000) };
+    else if (at(-3.6, 2.7, 1.4)) n = { label: 'The kitchen', go: afEat };
+    XC.near = n; XC.btn.hidden = !n; if (n) XC.btn.textContent = n.label + (fine ? ' (E)' : ''); }
+  function afBench(){ AF.s.seen.bench = 1; afSave(); const W = AF.s.web; if (W.fixed) return say('Your rebuilt web-shooters. Taped, ugly, and they work.', 2600); say(`Your web-shooters, in pieces. Parts found: ${W.parts.length} of 5.`, 2800); }
+  function afEat(){ tone(880, .1, 'sine', .04); if (!AF.s.seen.ate) { AF.s.seen.ate = 1; afSave(); say('Shanthi Aunty’s tiffin: lemon rice, and a note that just says EAT. You eat.', 3200); } else say('Eggs, rice, whatever’s left. You eat standing up.', 2600); afAte(); }
+  // ---------- the menu, the phone and the Bugle ----------
+  function afStatusRow(){ if (!AF.on) return ''; const W = AF.s.web, Y = AF.s.symb;
+    return `<div class="prow"><b>Bad arm (permanent)<br><small>Since the night the tower fell, your right arm won’t grip properly. ${Y.on && !Y.gone ? 'The symbiote holds it together now: your hits land harder than ever, but it isn’t your strength.' : `'${AF.s.del ? `Physio helps a little: ${Math.round(afArmF() * 100)}% strength.` : 'Your hits do 30% less damage, and it won’t heal.'}`}</small></b></div>${Y.on || Y.gone ? `<div class="prow"><b>The symbiote<br><small>${Y.gone ? 'Gone. It died taking a bullet meant for someone else. Your arm is only an arm again.' : `It armours you, hits harder, and swings on black tendrils. It’s hungry (${Math.round(Y.hunger)}%), it talks, and it hates loud noise and fire.${AF.s.del ? ' In Delhi it’s fading.' : ''}`}</small></b>${Y.gone ? '' : bar(Y.hunger / 100, Y.hunger > 75 ? '#FF5A6E' : '#9AA3AD')}</div>` : ''}${AF.s.anti ? '<div class="prow"><b>The scrap suit<br><small>Criminals run from it. People cross the road. The police are hunting you. You never kill.</small></b></div>' : ''}<div class="prow"><b>Web-shooters<br><small>${W.fixed ? 'Rebuilt by hand. They work.' : `Broken: no swinging until you rebuild them (${W.parts.length} of 5 parts).`}</small></b></div>`; }
+  function afNews(){ if (AF.s.act !== 'blr') { const D = AF.s.del || {}, n = Object.values(D.vil || {}).length; return [AF.s.seen.rally ? 'RATHORE LEDGER: MLA EXPOSED LIVE AT HIS OWN RALLY' : 'DILLI DARPAN: “WHO IS D.R.?”', AF.s.anti ? 'SCRAP-METAL VIGILANTE: HERO OR THUG? POLICE ON THE HUNT' : 'MASKED HELPER SEEN IN THE OLD CITY AGAIN', n ? `SMALL-TIME CROOKS ON THE RUN: ${n} RACKETS BROKEN` : 'CHAIN SNATCHINGS UP NEAR THE PALACE', 'QUICKDROP RIDERS DEMAND HELMETS, RAISE']; } let s = {}; try { s = XC.city === 'bfa' && XC.s ? XC.s : JSON.parse(localStorage.getItem('ru-xc-bfa') || '{}'); } catch (e) {} const n = (s.bosses || []).length;
+    const H = ['TOWER COLLAPSE: OFFICIALS BLAME “GAS LEAK”. RESIDENTS DON’T BUY IT', 'SIX DANGEROUS INMATES LOOSE AFTER TOWER BLAZE', 'TOWER RESIDENTS REHOUSED IN MALLESHWARAM'];
+    if (AF.s.web.fixed) H.unshift('WEB-SLINGER SEEN SWINGING AGAIN OVER MG ROAD'); if (n) H.unshift(`RETAKING THE CITY: ${n} OF 6 ESCAPED VILLAINS BACK BEHIND BARS`); return H; }
+  function afPhone(t, B){ if (AF.on && t === 'plan') { afPlanner(B); return true; } if (!AF.on || t !== 'news') return false; B.innerHTML = afNews().map(h => `<div class="phnews">${esc(h)}</div>`).join('') + '<div class="phcard"><b>The Bugle</b><small>Bangalore edition, printed from a borrowed office since the fire.</small></div>'; return true; }
+  function afPhoneCard(){ if (!storiesDone() && !AF.s.started) return ''; const C = AF_CH[AF.s.ch], S = C && C.steps[AF.s.st];
+    return `<div class="phcard" style="border-left:3px solid #C8102E"><b>After the stories</b><small>${AF.s.started ? (C ? `${esc(C.n)}: ${esc(C.t)}${S && S.g ? ' · ' + esc(typeof S.g === 'function' ? S.g() : S.g) : ''}` : 'To be continued.') : 'Bangalore is about to fall. A story with its own save: nothing else you’ve done is touched.'}</small><div class="phrow">${AF.on ? '<button type="button" data-sx="af-pause">Pause it (back to your room)</button>' : `<button type="button" class="y" data-sx="af-go">${AF.s.started ? 'Continue' : 'Start'}</button>`}${AF.s.started && AF_SKIP[AF.s.ch] && AF.on ? '<button type="button" data-sx="af-skip">Skip this chapter</button>' : ''}</div></div>`; }
+  // ---------- chapter 2: parts. Three from the market, two from what's left of the tower, then the workbench ----------
+  const AF_PARTS = {
+    coil: { name: 'a spring coil', at: () => XC.stalls && XC.stalls[1], who: 'the hardware stall', label: 'Ask the hardware stall about a spring coil' },
+    valve: { name: 'a pressure valve', at: () => XC.stalls && XC.stalls[4], who: 'the scrap dealer', label: 'Ask the scrap dealer about a pressure valve' },
+    nozzle: { name: 'two nozzles', at: () => XC.stalls && XC.stalls[9], who: 'the phone-repair stall', label: 'Ask the phone-repair stall about nozzles' },
+    housing: { name: 'a cartridge housing', at: () => [22, -20], label: 'Dig through the rubble' },
+    plate: { name: 'your old wrist plate', at: () => [34, -35], label: 'Looters in the ruins! Take your wrist plate back' } };
+  const afHas = id => AF.s.web.parts.includes(id);
+  function afGetPart(id){ if (afHas(id)) return; AF.s.web.parts.push(id); afSave(); afBenchLook(); tone(990, .15, 'triangle', .05, 1320); say(`Got ${AF_PARTS[id].name}. Parts: ${AF.s.web.parts.length} of 5.`, 3000); }
+  function afPartAsk(id){ const P = AF_PARTS[id];
+    if (id === 'nozzle') return cbTalk([['Phone-repair uncle', 'You! You pulled my daughter out of that bus on Hosur Road. Don’t argue: take these. Two nozzles off a perfume factory line, the finest in Bangalore.'], ['You', 'I can pay—'], ['Phone-repair uncle', 'Go. Before I start crying in front of customers.']]).then(() => afGetPart('nozzle'));
+    const cost = id === 'coil' ? 15 : 25;
+    askChoice('afpart', v => { if (v === 'pay') { if (JOB.rep < cost) return say(`You don’t have ${cost} reputation to spend. Run the errand instead.`, 2800); JOB.rep -= cost; jobSave(); return afGetPart(id); }
+      const to = XC.doors.filter(q => q.kind !== 'stash' && q.kind !== 'flat').sort(() => Math.random() - .5)[0]; if (!to) return; XC.job = { kind: 'deliver', to, x: to.x, z: to.z, from: P.who, afPart: id };
+      say(`“Take this box to ${to.name} and it’s yours.” A white beam marks the shop.`, 3600); },
+      { h: P.who[0].toUpperCase() + P.who.slice(1), q: id === 'coil' ? '“A spring coil that strong? Fifteen, or run a delivery for me and call it even.”' : '“A valve like that? Rustbolt’s boys took most of my stock. Twenty-five. Or, I’ve got a crate that needs carrying…”', a: [['pay', `Pay ${cost} reputation`], ['run', 'Run the errand']] });
+  }
+  function afDig(){ if (afHas('housing') || AF.busy) return; AF.busy = true; say('You dig through the wet ash and concrete with your good hand…', 1800); tone(220, .3, 'sine', .03);
+    setTimeout(() => { AF.busy = false; afGetPart('housing'); say('Under a slab: the cartridge housing from your old bench, black but whole.', 3200); }, 1900); }
+  async function afBenchBuild(){ AF.busy = true; walkTarget = null;
+    for (const [m, f] of [['You lay everything out on the bench.', 330], ['Spring into the housing. Valve. The nozzles, one at a time, with your left hand.', 440], ['The right one sticks. You hit it. It stops sticking.', 520]]) { say(m, 2200); tone(f, .2, 'triangle', .04); await afWait(2300); }
+    AF.s.web.fixed = 1; afSave(); afBenchLook(); tone(660, .2, 'triangle', .05, 990); afLog('You rebuilt the web-shooters by hand. They work. Mostly.');
+    await cbTalk([['You', 'Ugly. Taped together. Shorter range than before.'], ['You', 'But they work.']]); AF.busy = false; }
+  function afBench(){ AF.s.seen.bench = 1; afSave(); const W = AF.s.web; if (W.fixed) return say('Your rebuilt web-shooters. Taped, ugly, and they work.', 2600);
+    if (W.parts.length >= 5 && AF.s.ch >= 1) return afBenchBuild();
+    if (XC.city === 'del') return AF.s.seen.scrap && !AF.s.seen.suit ? afSuit() : say(AF.s.anti ? 'The scrap suit hangs over the bench. You don’t like looking at it.' : 'Your web-shooters, and a mess of tools.', 2600); say(`Your web-shooters, in pieces. Parts found: ${W.parts.length} of 5.`, 2800); }
+  // ---------- forced losses, a kidnapping, and fights of the story's own ----------
+  const AF_CORNERS = [[-30, -6.3, 'Tower Road'], [-140, -61.3, 'Shivajinagar'], [116.3, -80, 'Koramangala'], [-61.3, 140, 'Malleshwaram'], [140, 61.3, 'Indiranagar']];
+  function afSetup(part, S){
+    const c = [pos.x, pos.z], spot = (r, a) => { for (let k = 0; k < 8; k++) { const x = c[0] + Math.cos(a + k) * r, z = c[1] + Math.sin(a + k) * r; if (evValid(x, z)) return [x, z]; } return [c[0] + (Math.random() - .5) * 3, c[1] + (Math.random() - .5) * 3]; };
+    const crew = (n, r, name, boss) => { for (let i = 0; i < n; i++) S.add(i % 3 === 2 ? 'gangB' : 'gangA', ...spot(r, i / n * Math.PI * 2)); const b = addUnit({ hero: boss || 'gangBoss', team: 'en' }); [b.x, b.z] = spot(r + 2, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name }, b, t: 99, marks: [] }; return b; };
+    S.af = { part, t: 0, n: 0, sp: 0 };
+    if (part === 'xqlab') return afLabSetup(S, crew); if (part === 'xqagency') return afAgencySetup(S);
+    if (part === 'xqambush' || part === 'xqsmog') { S.af.lose = 1; crew(8, 7, part === 'xqsmog' ? 'the Smog’s whole crew' : 'Rustbolt’s crew', part === 'xqsmog' ? 'gangBoss' : 'gangBoss'); return; }
+    if (part === 'xqloot') { crew(3, 6, 'the looters'); return; }
+    if (part === 'xqout') { const W2 = XC.room.W / 2, D2 = XC.room.D / 2; [[W2 - 2, -D2 + 1.5], [W2 - 2, D2 - 1.5], [0, -D2 + 1.4]].forEach(([x, z]) => S.add('gangA', x, z)); const b = addUnit({ hero: 'gangBoss', team: 'en' }); b.x = W2 - 1.4; b.z = 0; b.boss = 1; EV.boss = b; S.sb = { B: { name: 'the godown guards' }, b, t: 99, marks: [] }; return; }
+    if (part.startsWith('xqg')) { const C = AF_CORNERS[+part.slice(3)]; crew(5, 6, `the ${C[2]} crew`); return; }
+    if (part === 'xqcrime') { crew(3, 5, 'the crooks'); return; }
+    afAntiFight(S);
+    if (part.startsWith('xqv')) return afVilSetup(part, S, crew);
+    if (part === 'xqrec' || part.startsWith('xqw')) { crew(4, 5, 'Rathore’s men', 'dv_guard'); return; }
+    if (part.startsWith('xqop')) { crew(5, 5, 'Rathore’s crew'); return; }
+    if (part === 'xqrath') { const b = addUnit({ hero: 'dv_rath', team: 'en' }); [b.x, b.z] = spot(6, 0); b.boss = 1; EV.boss = b; S.sb = { B: { name: 'Dinesh Rathore' }, b, t: 99, marks: [] }; S.add('dv_guard', ...spot(4, 2)); S.add('dv_guard', ...spot(4, 4)); return; }
+  }
+  function afFightStep(dt){ const S = EV.st, F = S.af; if (!F || EV.over) return; F.t += dt; if (F.agency) afAgencyStep(dt); if (!F.lose) return;
+    const b = EV.boss; if (b) b.hp = Math.max(b.hp, b.max * .6);
+    const alive = EV.units.filter(u => u.team === 'en' && u.hp > 0).length;
+    if (alive < 6 && F.n < 24 && (F.sp -= dt) <= 0) { F.sp = 2.2; F.n += 2; for (let k = 0; k < 2; k++) { const a = Math.random() * Math.PI * 2, x = pos.x + Math.cos(a) * 10, z = pos.z + Math.sin(a) * 10; S.add(Math.random() < .5 ? 'gangA' : 'gangB', evValid(x, z) ? x : pos.x + Math.cos(a) * 3, evValid(x, z) ? z : pos.z + Math.sin(a) * 3); } if (F.n === 2) say('More of them pour out of the lanes.', 1600); }
+    if (!F.told && F.t > 16) { F.told = 1; say('There are too many. You can’t win this one.', 2800); }
+    if (F.t > 34 && !F.down) { F.down = 1; say('Something heavy hits you from behind. The street tilts…', 2200); setTimeout(() => { if (EV && EV.st === S && !EV.over) endMatch(false); }, 1500); } }
+  function afFightEnd(won){ const F = EV.st.af || {}; XC.fightDone = true; setTimeout(() => { if (EV) stopEvent(true); afAfterFight(F.part, won, F); }, 1800); }
+  function afAfterFight(part, won, F){
+    if (part.startsWith('xqv')) { afVilEnd(F, won); if (won) afHuntStart(); return; }
+    if (part === 'xqrec') { if (won) { AF.s.seen.records = 1; afSave(); say('In a filing cabinet the fire didn’t reach: bank statements, every rupee from all seven, all into one account. Rathore’s.', 4600); } else say('They get away with half the files. Some are still there. Try again.', 2600); return; }
+    if (part.startsWith('xqw')) { const i = +part.slice(3); if (won) { AF.s.seen['w' + i] = 1; afSave(); say(`${AF_WIT[i][2][0].toUpperCase() + AF_WIT[i][2].slice(1)} is safe, and will talk to Dilli Darpan on camera.`, 3600); } else say('They scare the witness off. Go back and try again.', 2600); return; }
+    if (part.startsWith('xqop')) { const i = +part.slice(4); if (won) { AF.s.seen['op' + i] = 1; afSave(); askChoice('afop', v => { say(v === 'hang' ? 'You hold him off the edge of the roof by his collar until he tells you everything. You pull him back up. You always pull them back up.' : 'You lean in close. You don’t have to say much. He tells you everything.', 4200); afLog(`Broke up ${AF_OPS[i][2]}.`); afHuntStart(); }, { h: 'One of them is still conscious', q: `${AF_OPS[i][2][0].toUpperCase() + AF_OPS[i][2].slice(1)}. He knows where the money goes. How do you ask?`, a: [['lean', 'Lean on him'], ['hang', 'Hang him off the roof (and pull him back)']] }); } else say('They hold the place. For now.', 2400); return; }
+    if (part === 'xqrath') { if (won) { AF.s.seen.caught = 1; afSave(); } else say('He gets away down the lane. Go after him!', 2400); return; }
+    if (part === 'xqloot') { if (won) { afGetPart('plate'); say('The looters drop everything and run. Your old wrist plate is in the pile, scratched but straight.', 3600); } else say('They knock you into the ash and run. They’ll be back tonight.', 3000); return; }
+    if (part === 'xqambush') return afKidnap();
+    if (part === 'xqout') { if (won) return afFreed(); say('They tie you back up, tighter.', 2600); AF.s.seen.ropes = 0; AF.rope = 0; AF.tied = true; afSave(); return; }
+    if (part === 'xqsmog') return afDumped();
+    if (part === 'xqlab') { AF.s.seen.labOut = 1; afSave(); if (!won) say('They pin you down, but the black arm throws three of them across the room. You run for the door.', 3600); else say('The last agent goes down. The alarm is still screaming.', 2600); return; }
+    if (part === 'xqcrime') { afCrimeEnd(won); if (won) afHuntStart(); return; }
+    if (part === 'xqagency') { AF.s.seen.agency = 1; afSave(); return afEscapeStart(); }
+    if (part.startsWith('xqg')) { if (won) { const i = +part.slice(3); if (!AF.s.dist.includes(i)) AF.s.dist.push(i); afSave(); JOB.rep += 20; jobSave(); afCornerLook(); say(`The ${AF_CORNERS[i][2]} crew scatters. People come back out onto the corner. Reputation +20.`, 3600); } else say('They laugh you off the corner. Try again.', 2600); }
+  }
+  // taken: a godown, a chair, a rope, and Shanthi Aunty tied up across from you
+  function afKidnap(){ AF.busy = true; fade(() => { afCell(); AF.s.seen.taken = 1; AF.tied = true; AF.rope = 0; afSave(); }, '#000000');
+    setTimeout(async () => { await cbTalk([['Narrator', 'You wake up in the dark. Concrete floor. A bulb swinging. Your hands are tied behind a chair.'], ['Shanthi Aunty', '(across the room, tied too) Beta… they took me from my stall. They wanted to know where you live now.'], ['Rustbolt’s man', '(on a phone) Yeah, we’ve got him. No webs, one bad arm. Boss says leave him till morning.'], ['You', 'Aunty. Don’t worry. I’ve got this.']]); AF.busy = false; afLog('Taken from the market by Rustbolt’s crew. Woke up in a godown, tied to a chair.'); }, 1200); }
+  function afCell(){ if (XC.isc) disposeDeep(XC.isc); const sc = XC.isc = new THREE.Scene(), W = 12, D = 10; sc.background = new THREE.Color(0x0A0B0E); XC.inside = { kind: 'cell', name: 'the godown', x: -137.5, z: -14, nx: 0, nz: 1, i: 0 }; XC.room = { W, D }; XC.keeper = null; XC.blocks = [];
+    sc.add(new THREE.HemisphereLight(0xB0B8C8, 0x101010, .35)); const L = new THREE.PointLight(0xFFD9A0, 1.2, 12, 2); L.position.set(1.5, 2.6, 0); sc.add(L); const bulb = sph(.08, glowM(0xFFE0A0, { emissiveIntensity: 2 }), 1.5, 2.5, 0, sc); AF.bulb = { L, bulb };
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), mat(0x4A4A46, { roughness: 1 })); floor.rotation.x = -Math.PI / 2; sc.add(floor); box(W, .1, D, mat(0x2A2A28), 0, 3.4, 0, sc);
+    const wm = mat(0x5A5A56, { roughness: 1 }); [[0, -D / 2, W, .1], [0, D / 2, W, .1], [-W / 2, 0, .1, D], [W / 2, 0, .1, D]].forEach(([x, z, w, dd]) => box(w, 3.4, dd, wm, x, 1.7, z, sc));
+    box(.1, 2.6, 2, mat(0x3A3D44, { metalness: .6 }), -W / 2 + .07, 1.3, 0, sc); for (let k = 0; k < 8; k++) box(.12, .05, 2, mat(0x2A2D33), -W / 2 + .1, .3 + k * .3, 0, sc);
+    const B2 = (w, h, dd, m, x, y, z) => { box(w, h, dd, m, x, y, z, sc); XC.blocks.push([x - w / 2, x + w / 2, z - dd / 2, z + dd / 2]); };
+    for (let i = 0; i < 6; i++) B2(1.2, 1.2, 1.2, mat(0x7A5A3A, { roughness: .9 }), 3.5 + (i % 2) * 1.3, .6 + Math.floor(i / 4) * 1.2, -3.6 + (i % 3) * 1.3);
+    const ch = new THREE.Group(); ch.position.set(1.5, 0, 0); sc.add(ch); box(.5, .05, .5, mat(0x5A4632), 0, .48, 0, ch); box(.5, .55, .05, mat(0x5A4632), 0, .78, .25, ch); [[-.22, -.22], [.22, -.22], [-.22, .22], [.22, .22]].forEach(([x, z]) => box(.04, .48, .04, mat(0x3A2A1A), x, .24, z, ch));
+    try { const a = avatar(crowdLook(61)); a.g.position.set(1.5, 0, 3.2); a.g.rotation.y = Math.PI; sc.add(a.g); AF.aunty = a; box(.6, .05, .6, mat(0x5A4632), 1.5, .48, 3.2, sc); } catch (e) {}
+    plats.xin = [{ x0: -W / 2, x1: W / 2, z0: -D / 2, z1: D / 2 }]; web.p = null; drawWeb(); XC.air = false; XC.roof = 0; zone = 'xin'; vy = 0; grounded = true; pos.set(1.5, 1.25, 0); yaw = Math.PI; pitch = -.08; $('#worldBack').textContent = 'Back outside'; }
+  function afJobDone(J){ if (J.afPart) afGetPart(J.afPart); if (J.afCash) afPaid(J); }
+  function afInStep(){ if (XC.inside.kind === 'flat' || XC.inside.kind === 'home') return afFlatStep(); if (XC.inside.kind === 'lab') return afLabStep(); const t = performance.now() / 1000; if (AF.bulb && !reduce) { AF.bulb.bulb.position.x = 1.5 + Math.sin(t * 1.3) * .25; AF.bulb.L.position.x = AF.bulb.bulb.position.x; }
+    let n = null;
+    if (AF.tied) { pos.set(1.5, 1.25, 0); vy = 0; n = { label: `Work the ropes loose (${Math.max(0, 12 - (AF.rope || 0))} more)`, go: () => { AF.rope = (AF.rope || 0) + 1; tone(200 + AF.rope * 30, .06, 'square', .03); if (AF.rope >= 12) { AF.tied = false; AF.s.seen.ropes = 1; afSave(); pos.set(1.5, 1.6, -1); say('The rope gives. Your hands are free. Two guards at the door, and two more by the crates…', 3000); setTimeout(() => { if (!EV && zone === 'xin') xcFight('xqout', 'The godown guards'); }, 1600); } } }; }
+    else if (AF.s.seen.ropes && !AF.s.seen.out && !EV && !AF.busy) { if (!AF.outT || t - AF.outT > 3) { AF.outT = t; setTimeout(() => { if (!EV && zone === 'xin' && XC.inside && XC.inside.kind === 'cell' && !AF.s.seen.out) xcFight('xqout', 'The godown guards'); }, 900); } }
+    else if (AF.s.seen.out && pos.x < -XC.room.W / 2 + 1.4) n = { label: 'Out into the lane', go: xcOutside };
+    XC.near = n; XC.btn.hidden = !n; if (n) XC.btn.textContent = n.label + (fine ? ' (E)' : ''); }
+  async function afFreed(){ AF.s.seen.out = 1; afSave(); AF.busy = true;
+    await cbTalk([['Shanthi Aunty', '(as you untie her) Beta, your arm. You fought them with one arm.'], ['You', 'One and a half.'], ['Shanthi Aunty', 'They said a name. Not Rustbolt’s. Halcyon. They kept saying Halcyon will pay double for you alive.'], ['You', 'Halcyon Logistics. The grey building in Indiranagar with no windows.']]);
+    AF.busy = false; afLog('You got yourself and Shanthi Aunty out of the godown. The crew kept saying a name: Halcyon.'); }
+  async function afDumped(){ AF.busy = true; AF.s.seen.smog = 1; afSave(); fade(() => { if (zone === 'xin') { zone = 'xc'; XC.inside = null; if (XC.isc) { disposeDeep(XC.isc); XC.isc = null; } } pos.set(-160, 1.6, 112); yaw = Math.PI; pitch = .05; XC.roof = 0; XC.air = false; }, '#000000');
+    await afWait(1200); await cbTalk([['Narrator', 'You wake at the edge of the lake at dawn, soaked, with a gull standing on your chest.'], ['You', 'They could have finished it. Why didn’t they?'], ['Narrator', 'Pinned to your jacket: a card. HALCYON LOGISTICS. And under it, in pen: “Not yet.”']]);
+    AF.busy = false; afLog('The Smog’s whole crew put you down. You woke by the lake with a card pinned to you: Halcyon. “Not yet.”'); }
+  // ---------- chapter 4: the corners, the six, and the five districts ----------
+  const afCaught = () => (XC.s && XC.city === 'bfa' ? XC.s.bosses : []).length;
+  const afDistDone = () => AF_CORNERS.filter((C, i) => AF.s.dist.includes(i) && XC_P.bfa.bosses.filter(B => B.d === C[2]).every(B => XC.s && XC.s.bosses.includes(B.id))).length;
+  function afNextTarget(){ const L = []; XC_P.bfa.bosses.forEach(B => { if (!(XC.s.bosses || []).includes(B.id)) L.push(B.at); }); AF_CORNERS.forEach((C, i) => { if (!AF.s.dist.includes(i)) L.push([C[0], C[1]]); }); return L.sort((a, b) => Math.hypot(a[0] - pos.x, a[1] - pos.z) - Math.hypot(b[0] - pos.x, b[1] - pos.z))[0] || null; }
+  function afCornerLook(){ (AF.corners || []).forEach((g, i) => { if (g) g.visible = AF.s.ch >= AF_RETAKE && !AF.s.dist.includes(i); }); }
+  // ---------- what the chapters add to the city each time it's built ----------
+  function afActs(){ if (XC.city !== 'bfa') return;
+    Object.keys(AF_PARTS).forEach(id => { const P = AF_PARTS[id], at = P.at(); if (!at) return;
+      XC.acts.push({ x: at[0], z: at[1], r: id === 'plate' ? 5 : 2.6, on: () => AF.on && AF.s.ch === 1 && !afHas(id) && !AF.busy && !(XC.job && XC.job.afPart === id), label: () => P.label, go: () => id === 'housing' ? afDig() : id === 'plate' ? xcFight('xqloot', 'The looters') : afPartAsk(id) }); });
+    AF.corners = AF_CORNERS.map(([x, z, d], i) => { const g = new THREE.Group(); g.position.set(x, 0, z); XC.g.add(g); for (let k = 0; k < 4; k++) { try { const a = avatar(crowdLook(80 + i * 5 + k)); a.g.position.set(Math.cos(k * 1.6) * 1.6, 0, Math.sin(k * 1.6) * 1.6); a.g.rotation.y = k * 1.6 + Math.PI; g.add(a.g); } catch (e) {} }
+      XC.acts.push({ x, z, r: 4, on: () => AF.on && AF.s.ch >= AF_RETAKE && !AF.s.dist.includes(i), label: () => `Break up the ${d} crew on this corner`, go: () => xcFight('xqg' + i, `The ${d} crew`) }); return g; });
+    XC.acts.push({ x: 137.5, z: 113.5, r: 4, on: () => AF.on && AF.s.ch === 4 && !AF.s.seen.labOut, label: () => nightNow() ? 'Climb the fence into Halcyon Logistics' : 'Halcyon Logistics: guards everywhere. Come back after dark', go: afLabEnter });
+    afCornerLook(); }
+  // the chapters themselves
+  AF_CH[0].steps.pop();
+  AF_CH.push(
+    { n: 'Chapter 2', t: 'Parts', sub: 'Three from the market. Two from the ashes.', steps: [
+      { g: () => `Find parts for your web-shooters (${AF.s.web.parts.length} of 5): three at the Shivajinagar market stalls, two in the tower ruins`, at: () => { const m = Object.keys(AF_PARTS).filter(id => !afHas(id)).map(id => AF_PARTS[id].at()).filter(Boolean); return XC.job && XC.job.afPart ? null : m.sort((a, b) => Math.hypot(a[0] - pos.x, a[1] - pos.z) - Math.hypot(b[0] - pos.x, b[1] - pos.z))[0]; }, chk: () => AF.s.web.parts.length >= 5 },
+      { g: 'Take the parts back to the workbench in your flat', at: () => [-35, 59.8], chk: () => !!AF.s.web.fixed },
+      { g: 'Your web-shooters work again. Try them out: swing across the city', chk: () => !!(XC.air || XC.roof > 3) || !!AF.s.seen.swung, go: () => {} } ] },
+    { n: 'Chapter 3', t: 'Taken', sub: 'They know your face. They know you can’t swing far.', steps: [
+      { g: 'Shanthi Aunty hasn’t answered her phone all day. Check her vegetable stall at the market', at: () => XC.stalls && XC.stalls[6], auto: () => { const s = XC.stalls && XC.stalls[6]; if (s && afNear(s[0], s[1], 7)) { say('Rustbolt’s men step out from behind every stall at once.', 2200); xcFight('xqambush', 'Rustbolt’s crew'); } }, chk: () => !!AF.s.seen.taken },
+      { g: 'You’re tied to a chair. Work the ropes loose', chk: () => !!AF.s.seen.ropes },
+      { g: 'Get out of the godown', chk: () => !!AF.s.seen.out },
+      { g: 'Get Shanthi Aunty out to the lane', chk: () => zone === 'xc' } ] },
+    { n: 'Chapter 4', t: 'Retake the City', sub: 'Six escaped. Five districts. One bad arm.', steps: [
+      { g: () => `Take Bangalore back: ${afDistDone()} of 5 districts safe, ${afCaught()} of 6 villains caught. Break up the gang on each corner, and catch the villains in their spots`, at: () => afNextTarget(),
+        auto: () => { if (afCaught() >= 3 && !AF.s.seen.smog && nightNow() && zone === 'xc' && !XC.drv && !XC.ride) { say('Green fog rolls down the street. Then the Smog’s whole crew steps out of it.', 2600); xcFight('xqsmog', 'The Smog’s whole crew'); } }, chk: () => afDistDone() >= 5 && afCaught() >= 6 },
+      { g: 'To be continued: the city is yours again, but Halcyon is still out there. The next chapter is on its way', chk: () => false } ] });
+  // ---------- Halcyon: the agency. Black tactical kit, visors, batons, sonic emitters and flamethrowers ----------
+  OUTFITS.af_agent = { hero: 1, c1: '#1A1C22', c2: '#3A3D44', gloves: 1, mask: 'visor' };
+  OUTFITS.af_lead = { hero: 1, c1: '#2A2D33', c2: '#C9CFD8', gloves: 1 };
+  HEROES.af_agent = { name: 'Halcyon agent', outfit: 'af_agent', hp: 240, kind: 'ranged', dmg: 6, cd: 1.1, col: 0x7AE8FF, speed: 4.4, r: .5, grounded: 1 };
+  HEROES.af_burner = { name: 'Halcyon burner', outfit: 'af_agent', hp: 300, kind: 'ranged', dmg: 7, cd: 1.3, col: 0xFF7A2A, speed: 3.6, r: .55, grounded: 1 };
+  HEROES.af_lead = { name: 'Director Vale', outfit: 'af_lead', hp: 1400, kind: 'boss', bk: .2, dmg: 11, range: 2.4, cd: 1, speed: 4.2, r: .6, grounded: 1 };
+  Object.assign(BODY, {
+    af_agent(){ const R = bdRig({ legM: 0x1A1C22, torM: 0x23262C, armM: 0x23262C, handM: 0x16181D, bw: .27, tH: .64 }); bdFace(R, 0x8A6A4A, 'short', 0x16181D);
+      R.add(new THREE.BoxGeometry(.3, .09, .05), R.glow(0x7AE8FF, 1.6), 0, .04, -.15, R.head); R.add(new THREE.BoxGeometry(.42, .32, .26), 0x2E3138, 0, R.sh - .2, 0); R.add(new THREE.BoxGeometry(.06, .06, .5), 0x16181D, 0, -.3, -.1, R.arms[1].hand); return R; },
+    af_burner(){ const R = BODY.af_agent(); R.add(new THREE.CylinderGeometry(.12, .12, .5, 10), 0xC8462E, 0, R.sh - .2, .2); return R; },
+    af_lead(){ const R = bdRig({ legM: 0x2A2D33, torM: 0x2A2D33, armM: 0x2A2D33, handM: 0x8A6A4A, bw: .28, tH: .66 }); bdFace(R, 0x8A6A4A, 'short', 0x8A8F99); R.add(new THREE.BoxGeometry(.5, .05, .3), 0xC9CFD8, 0, R.sh + .02, 0); R.add(new THREE.BoxGeometry(.04, .3, .02), 0x16181D, 0, R.sh - .15, -.16); return R; } });
+  function afLabSetup(S, crew){ crew(4, 5, 'the Halcyon agents', 'af_agent'); S.add('af_burner', pos.x + 4, pos.z + 2); }
+  // ---------- the lab behind the fence ----------
+  function afLabEnter(){ if (!nightNow()) return say('Guards at the gate, cameras on every corner. Come back after dark.', 3000); fade(() => afLab(), '#000000'); }
+  function afLab(){ if (XC.isc) disposeDeep(XC.isc); const sc = XC.isc = new THREE.Scene(), W = 16, D = 10; sc.background = new THREE.Color(0x0C0E12); XC.inside = { kind: 'lab', name: 'Halcyon Logistics', x: 137.5, z: 112, nx: 0, nz: -1, i: 0 }; XC.room = { W, D }; XC.keeper = null; XC.blocks = [];
+    sc.add(new THREE.HemisphereLight(0xC8E0FF, 0x101418, .55)); [-4, 4].forEach(x => { const L = new THREE.PointLight(0xC8E8FF, .8, 14, 2); L.position.set(x, 2.8, 0); sc.add(L); });
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), mat(0xD8DCE0, { roughness: .4, metalness: .1 })); floor.rotation.x = -Math.PI / 2; sc.add(floor); box(W, .1, D, mat(0xE8ECF0), 0, 3.2, 0, sc);
+    const wm = mat(0xC8CCD2, { roughness: .6 }); [[0, -D / 2, W, .1], [0, D / 2, W, .1], [-W / 2, 0, .1, D], [W / 2, 0, .1, D]].forEach(([x, z, w, dd]) => box(w, 3.2, dd, wm, x, 1.6, z, sc));
+    box(.1, 2.4, 1.6, mat(0x5A5E68, { metalness: .6 }), -W / 2 + .07, 1.2, 0, sc);
+    const B2 = (w, h, dd, m, x, y, z) => { box(w, h, dd, m, x, y, z, sc); XC.blocks.push([x - w / 2, x + w / 2, z - dd / 2, z + dd / 2]); };
+    const glass = new THREE.MeshStandardMaterial({ color: 0x9AD8F0, transparent: true, opacity: .22, roughness: .05, metalness: .2, depthWrite: false });
+    [[-3, -3.2], [0, -3.2], [3, -3.2], [-3, 3.2], [3, 3.2]].forEach(([x, z], i) => { cyl(.6, .6, 2.2, glass, x, 1.1, z, sc, 20); cyl(.65, .65, .2, mat(0x3A3D44, { metalness: .7 }), x, .1, z, sc, 20); cyl(.65, .65, .2, mat(0x3A3D44, { metalness: .7 }), x, 2.3, z, sc, 20); XC.blocks.push([x - .65, x + .65, z - .65, z + .65]);
+      if (i !== 2) box(.35, .8, .35, mat([0x5A6A4A, 0x6A4A5A, 0x4A5A6A, 0x6A5A4A][i % 4], { roughness: .7 }), x, .9, z, sc); });
+    // the one in the middle: black, and moving
+    cyl(1, 1, 2.6, glass, 5, 1.3, 0, sc, 24); cyl(1.05, 1.05, .25, mat(0x2A2D33, { metalness: .7 }), 5, .12, 0, sc, 24); cyl(1.05, 1.05, .25, mat(0x2A2D33, { metalness: .7 }), 5, 2.72, 0, sc, 24); XC.blocks.push([4, 6, -1, 1]);
+    const goo = new THREE.MeshStandardMaterial({ color: 0x050507, roughness: .15, metalness: .6 }), blobs = []; for (let k = 0; k < 6; k++) blobs.push(sph(.32, goo, 5, .7 + k * .25, 0, sc));
+    AF.goo = { blobs, t: 0 };
+    [[-6, -4.4], [-1.5, 4.4], [1.5, -4.4]].forEach(([x, z], i) => { B2(1.1, 1, .6, mat(0x3A3D44, { metalness: .5 }), x, .5, z); const s = new THREE.Mesh(new THREE.PlaneGeometry(.9, .5), new THREE.MeshBasicMaterial({ map: tex(180, 100, (c, w, h) => { c.fillStyle = '#04121A'; c.fillRect(0, 0, w, h); c.fillStyle = '#7AE8FF'; c.font = '700 14px monospace'; ['HALCYON // ANOMALY', 'SUBJECT FILE ' + (i + 1), '████ ███ ██████'].forEach((t, k) => c.fillText(t, 8, 22 + k * 22)); }) })); s.position.set(x, 1.35, z + (z < 0 ? .31 : -.31)); s.rotation.y = z < 0 ? 0 : Math.PI; sc.add(s); });
+    plats.xin = [{ x0: -W / 2, x1: W / 2, z0: -D / 2, z1: D / 2 }]; web.p = null; drawWeb(); XC.air = false; XC.roof = 0; zone = 'xin'; vy = 0; grounded = true; pos.set(-W / 2 + 1.2, 1.6, 0); yaw = -Math.PI / 2; pitch = -.04; $('#worldBack').textContent = 'Back outside';
+    say('Inside. Cold air, white light, and the hum of something that is very much alive.', 3200); }
+  const AF_FILES = [
+    [['File 1', 'HALCYON. A private contractor. Its clients are never named. Its job: find anything in India that shouldn’t exist, and own it.'], ['File 1', 'Target list, Bangalore: one tower. Basement cells. Six inmates with abilities. One masked resident. Recover all. Collateral approved.']],
+    [['File 2', 'Specimen H-0. Recovered from a meteorite crater, Rann of Kutch. Black, liquid, alive. Bonds to living tissue. Seeks damaged tissue first.'], ['File 2', 'It gives the host strength, armour and reach. It takes food, sleep and, over time, judgement. Hates high-pitched sound. Fears fire.']],
+    [['File 3', 'Director Vale: “The masked one is the ideal host. Already broken. Already alone. Bring him in alive.”'], ['You', 'They didn’t bomb the tower for the villains. They bombed it for me.']]];
+  function afLabStep(){ const t = performance.now() / 1000; if (AF.goo && !AF.s.seen.bond) AF.goo.blobs.forEach((b, k) => { b.position.x = 5 + Math.sin(t * 1.3 + k) * .35; b.position.z = Math.cos(t * 1.1 + k * 2) * .35; b.position.y = .6 + k * .27 + Math.sin(t * 2 + k) * .08; b.scale.setScalar(.8 + Math.sin(t * 3 + k) * .2); if (pos.x > 1.5) b.position.x -= .25; });
+    const at = (x, z, r) => Math.hypot(pos.x - x, pos.z - z) < r; let n = null;
+    if (AF.s.seen.bond && !AF.s.seen.labOut) { if (!EV && !AF.busy && (!AF.labT || t - AF.labT > 3)) { AF.labT = t; setTimeout(() => { if (!EV && zone === 'xin' && XC.inside && XC.inside.kind === 'lab' && !AF.s.seen.labOut) xcFight('xqlab', 'Halcyon agents'); }, 900); } }
+    else if (pos.x < -XC.room.W / 2 + 1.4) n = { label: 'Back out over the fence', go: xcOutside };
+    else if (!AF.s.seen.bond) { [[-6, -3.6], [-1.5, 3.6], [1.5, -3.6]].forEach(([x, z], i) => { if (!n && at(x, z, 1.3)) n = { label: `Read the terminal (file ${i + 1})`, go: () => { AF.busy = true; cbTalk(AF_FILES[i]).then(() => { AF.s.seen['t' + i] = 1; afSave(); AF.busy = false; }); } }; });
+      if (!n && at(5, 0, 2.2)) n = { label: 'The tank in the middle', go: afBond }; }
+    XC.near = n; XC.btn.hidden = !n; if (n) XC.btn.textContent = n.label + (fine ? ' (E)' : ''); }
+  async function afBond(){ if (AF.busy) return; AF.busy = true; walkTarget = null;
+    await cbTalk([['Narrator', 'The black stuff in the tank presses itself against the glass, right where your hand is.'], ['Narrator', 'The glass cracks. Not from your side.']]);
+    tone(60, 1.6, 'sawtooth', .07, 30); canvas.style.filter = reduce ? '' : 'contrast(1.4) saturate(.2) brightness(.6)'; if (AF.goo) AF.goo.blobs.forEach(b => b.visible = false);
+    await afWait(900); canvas.style.filter = '';
+    await cbTalk([['Narrator', 'It pours out over your bad arm and in, under the skin, cold as river water.'], ['Voice', '…broken… hungry… you are broken too…'], ['You', 'Get. Off.'], ['Voice', 'Broken arm. Broken city. We can fix both. Let us stay.'], ['Narrator', 'Your right hand closes into a fist. For the first time since the fall, it closes all the way.'], ['Narrator', 'Somewhere above, an alarm starts.']]);
+    AF.s.symb.on = 1; AF.s.symb.hunger = 20; AF.s.seen.bond = 1; afSave(); afLog('In the Halcyon lab, something black bonded to your bad arm. It talks.'); AF.busy = false; }
+  // ---------- living with it: hunger, the voice, noise and fire ----------
+  const AF_VOICE = ['Hungry.', 'They are watching from the roofs. We could make them stop.', 'That man in the blue shirt. He lies. We can smell it.', 'Your arm is ours now. Be grateful.', 'Swing higher. We like the wind.', 'Sleep. We will keep watch. We always keep watch.', 'Why do you protect them? They never protect you.'];
+  function afLife(dt){ const Y = AF.s.symb; if (!Y.on || Y.gone) return;
+    Y.hunger = Math.min(100, Y.hunger + dt / 9); AF.saveT = (AF.saveT || 0) - dt; if (AF.saveT <= 0) { AF.saveT = 10; afSave(); }
+    if ((AF.voiceT = (AF.voiceT === undefined ? 70 : AF.voiceT) - dt) <= 0) { AF.voiceT = 80 + Math.random() * 60; say(`The voice: “${Y.hunger > 80 ? 'FEED US.' : AF_VOICE[Math.floor(Math.random() * AF_VOICE.length)]}”`, 3400); tone(90, .5, 'sine', .04, 70); }
+    if (Y.hunger >= 75 && !AF.hungerTold) { AF.hungerTold = 1; say('It’s starving, and so are you. Eat: any food stall, darshini, or the kitchen at home.', 3800); } if (Y.hunger < 60) AF.hungerTold = 0;
+    if (zone === 'xc' && XC.air && !AF.s.seen.tendril) { AF.s.seen.tendril = 1; afSave(); say('Black tendrils whip out of your wrist instead of web. Faster. Further. It laughs.', 3400); }
+    AF.noise = Math.max(0, (AF.noise || 0) - dt); AF.noiseCd = Math.max(0, (AF.noiseCd || 0) - dt);
+    if (zone === 'xc' && XC.tv && !AF.noiseCd && XC.tv.position.distanceTo(pos) < 24 && !XC.ride) { AF.noiseCd = 25; AF.noise = 3; tone(2600, .8, 'square', .03, 3200); say('The metro’s brakes scream. The symbiote convulses and your whole body locks up.', 2600); Object.keys(keys).forEach(k => keys[k] = false); cityV.multiplyScalar(.2); }
+    if (zone === 'xc' && XC.city === 'bfa' && !AF.fireCd && Math.hypot(pos.x - 27.5, pos.z + 27.5) < 9) { AF.fireCd = 1; say('The fires in the ruins make it shrink back up your arm, hissing.', 2600); setTimeout(() => { AF.fireCd = 0; }, 15000); } }
+  function afAte(){ if (!AF.on) return; const Y = AF.s.symb; if (Y.on && !Y.gone) { Y.hunger = Math.max(0, Y.hunger - 45); AF.s.seen.fed = 1; afSave(); setTimeout(() => say('The voice, quieter: “More, next time.”', 2400), 2000); } }
+  function afHurt(d, from){ if (!AF.on) return d; const Y = AF.s.symb; let k = 1; if (Y.on && !Y.gone) { k *= .7; const H = from && from.hero && HEROES[from.hero];
+      if (H && H.col === 0xFF7A2A) { k *= 2.2; if (!AF.fireSay) { AF.fireSay = 1; say('Fire! The symbiote shrieks and peels away from you where it hits.', 2200); setTimeout(() => { AF.fireSay = 0; }, 6000); } }
+      if (AF.noise > 0) k *= 1.6; if (Y.hunger >= 100) k *= 1.3; } return d * k; }
+  function afWebCol(){ if (web.line) web.line.material.color.setHex(AF.on && AF.s.symb.on && !AF.s.symb.gone ? 0x0A0A0C : 0xF4F4F4); }
+  // ---------- they come back: the flat, the door, the emitters ----------
+  function afAgencySetup(S){ const W2 = XC.room.W / 2, D2 = XC.room.D / 2; [[W2 - 1.5, -D2 + 1.2, 'af_agent'], [W2 - 1.5, D2 - 1.2, 'af_burner'], [0, -D2 + 1.2, 'af_agent'], [1, D2 - 1.2, 'af_agent']].forEach(([x, z, h]) => S.add(h, x, z));
+    const b = addUnit({ hero: 'af_lead', team: 'en' }); b.x = W2 - 1.2; b.z = 0; b.boss = 1; EV.boss = b; S.sb = { B: { name: 'Director Vale' }, b, t: 99, marks: [] }; S.af.lose = 1; S.af.agency = 1; S.af.pulse = 5; }
+  function afAgencyStep(dt){ const S = EV.st, F = S.af; if (!F.agency) return;
+    if ((F.pulse -= dt) <= 0) { F.pulse = 6; const b = EV.boss; say('An agent raises a sonic emitter. Get away from it!', 1400); tone(3000, .6, 'square', .02, 3400); setTimeout(() => { if (!EV || EV.over || EV.st !== S) return; const near = EV.units.some(u => u.team === 'en' && u.hp > 0 && Math.hypot(u.x - pos.x, u.z - pos.z) < 5); if (near) { AF.noise = 2.5; hurtMe(9, b); say('The sound goes through it like a nail. It screams, and so do you.', 1800); } }, 900); } }
+  async function afEscapeStart(){ AF.busy = true; fade(() => { if (zone === 'xin') { zone = 'xc'; XC.inside = null; if (XC.isc) { disposeDeep(XC.isc); XC.isc = null; } } pos.set(-35, 1.6, 57.5); yaw = Math.PI; pitch = 0; XC.roof = 0; XC.air = false; $('#worldBack').textContent = xcBackLabel(); }, '#000000');
+    await afWait(1000); await cbTalk([['Narrator', 'You go through the window with half of Halcyon behind you, and land in the lane in a rain of glass.'], ['Voice', 'RUN. We cannot win this. Not here. Not yet.'], ['You', 'The airport. Shanthi Aunty’s nephew drives an auto from the east end of the city. If I can get there…']]);
+    AF.s.seen.escape = 1; AF.escT = 150; afSave(); AF.busy = false; }
+  function afEscapeAuto(){ if (!AF.s.seen.escape || AF.s.seen.escaped) return; AF.escT = (AF.escT === undefined ? 150 : AF.escT) - (AF.dt || 0);
+    if (!AF.spot && XC.sc) { const m = new THREE.Mesh(new THREE.ConeGeometry(6, 60, 20, 1, true), new THREE.MeshBasicMaterial({ color: 0xF2F6FF, transparent: true, opacity: .1, depthWrite: false })); m.userData.noPick = true; XC.sc.add(m); AF.spot = m; AF.spot.position.set(pos.x, 30, pos.z); }
+    if (AF.spot) { AF.spot.position.x += (pos.x - AF.spot.position.x) * .02; AF.spot.position.z += (pos.z - AF.spot.position.z) * .02; }
+    if (AF.escT <= 0) { AF.escT = 150; say('Black vans box you in at a junction. You get away over a wall, but you’re back where you started. Try again: faster this time.', 4200); fade(() => { pos.set(-35, 1.6, 57.5); XC.roof = 0; XC.air = false; }, '#000000'); } }
+  async function afEscaped(){ AF.busy = true; if (AF.spot && AF.spot.parent) AF.spot.parent.remove(AF.spot); AF.spot = null;
+    await cbTalk([['Imran', '(Shanthi Aunty’s nephew, at the wheel of his auto) Get in! Get in! Aunty said you’d come running. She didn’t say you’d be on fire.'], ['You', 'Airport. Please.'], ['Narrator', 'Behind you, the city you grew up in shrinks to a smear of orange light. The tower is a black tooth against it.'], ['Voice', 'We will come back.'], ['You', 'No. We won’t.']]);
+    AF.s.seen.escaped = 1; AF.s.blrLocked = 1; afLog('You ran from Bangalore with Halcyon behind you. You can’t go back.'); afSave(); AF.busy = false;
+    await cbCard('Bangalore', 'Gone', 'You can never go back to this Bangalore. Its streets are saved just as you left them.'); }
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push(
+    { n: 'Chapter 5', t: 'Halcyon', sub: 'The grey building with no windows.', steps: [
+      { g: () => nightNow() ? 'Get into Halcyon Logistics, the grey block behind the fence in Indiranagar' : 'Halcyon Logistics, the grey block in Indiranagar. Go after dark (7 pm)', at: () => [137.5, 112], chk: () => zone === 'xin' && !!XC.inside && XC.inside.kind === 'lab' },
+      { g: () => `Find out what Halcyon is: read the terminals (${['t0', 't1', 't2'].filter(k => AF.s.seen[k]).length} of 3)`, chk: () => !!(AF.s.seen.t0 && AF.s.seen.t1 && AF.s.seen.t2) },
+      { g: 'The tank in the middle of the room', chk: () => !!AF.s.seen.bond },
+      { g: 'Fight your way out', chk: () => !!AF.s.seen.labOut },
+      { g: 'Get out of the building', chk: () => zone === 'xc' },
+      { g: 'It’s hungry. So are you. Eat something: any food stall, a darshini, or the kitchen at home', chk: () => !!AF.s.seen.fed },
+      { g: 'Try the tendrils: swing across the city', chk: () => !!AF.s.seen.tendril } ] },
+    { n: 'Chapter 6', t: 'They Come Back', sub: 'It was always going to lead them to you.', steps: [
+      { g: 'Go home and get some sleep', at: () => [-35, 59.8], chk: () => zone === 'xin' && !!XC.inside && XC.inside.kind === 'flat' },
+      { g: '', go: async () => { AF.busy = true; await afWait(1500); await cbTalk([['Voice', 'Wake up. Wake UP. They are on the stairs.'], ['Narrator', 'The door comes off its hinges.'], ['Director Vale', 'There it is. Both of you. Come quietly and nobody else in this building gets hurt.'], ['You', 'You blew up my home with my neighbours in it.'], ['Director Vale', 'And I’d do it twice. Take them.']]); AF.busy = false; xcFight('xqagency', 'Halcyon'); }, auto: () => { if (!AF.s.seen.agency && zone === 'xin' && !AF.busy && (!AF.agT || performance.now() - AF.agT > 4000)) { AF.agT = performance.now(); xcFight('xqagency', 'Halcyon'); } }, chk: () => !!AF.s.seen.agency },
+      { g: () => `RUN. Get to Imran’s auto at the east edge of the city before Halcyon closes the roads (${Math.max(0, Math.ceil(AF.escT || 0))} s)`, at: () => [226.3, 0], go: () => { AF.escT = 150; }, auto: () => afEscapeAuto(), chk: () => afNear(226.3, 0, 7) },
+      { g: '', go: () => afEscaped(), chk: () => !!AF.s.seen.escaped },
+      { g: 'To be continued: Delhi. The next part of the story is on its way', chk: () => false } ] });
+  // ======================= Delhi: Double Life =======================
+  // No agency here. A rented room above the Malhotras, a delivery job that pays the rent, four people who notice when
+  // you don't show up, a physio for the arm, and a phone planner where your life and the city's emergencies collide.
+  // Time runs on its own clock here: one hour every 30 seconds, and sleeping skips the night.
+  const AF_DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  const AF_WHO = { fam: 'the Malhotras', kabir: 'Kabir', meher: 'Meher', boss: 'Mr Bhalla' };
+  function afDelOn(){ return AF.on && AF.s.act === 'del' && XC.city === 'del'; }
+  function afDelInit(){ const s = AF.s; if (s.del) return s.del; s.del = { day: 1, hr: 8, cash: 1500, rent: 3000, rel: { fam: 50, kabir: 55, meher: 35, boss: 50 }, risk: 0, tired: 0, physio: 0, deliv: 0, ev: {}, alerts: [], alertsDay: 0, debt: 0, knows: [], saved: 0, missedAlerts: 0 }; afSave(); return s.del; }
+  // the places that matter, found on whatever lots Delhi's grid gives us
+  function afLotNear(x, z, used){ return XC.lots.filter(l => xcFront(l) && l.h >= 6 && !used.includes(l) && !XC.doors.some(d => d.l === l)).sort((a, b) => Math.hypot((a.x0 + a.x1) / 2 - x, (a.z0 + a.z1) / 2 - z) - Math.hypot((b.x0 + b.x1) / 2 - x, (b.z0 + b.z1) / 2 - z))[0]; }
+  function afDelPlaces(){ const used = [], P = AF.delP = {};
+    [['home', 'Malhotra House', -140, -80], ['hub', 'QuickDrop', 10, 70], ['clinic', 'Physio Clinic', -40, -120]].forEach(([k, name, x, z], i) => { const l = afLotNear(x, z, used); if (!l) return; used.push(l); xcDoor(XC.g, l, name, k === 'home' ? 'home' : k, 20 + i); const d = XC.doors[XC.doors.length - 1]; P[k] = d; if (k !== 'home') XC.doors.pop(); });
+    const bk = XC.doors.find(d => /Book/.test(d.name)); P.meher = bk ? [bk.x, bk.z] : [-82.5, 112]; P.cricket = [-40, 22]; P.chai = [150, 160]; }
+  function afWhere(k){ const P = AF.delP || {}, d = P[k]; return k === 'home' || k === 'hub' || k === 'clinic' ? (d ? [d.x, d.z] : null) : P[k] || null; }
+  // the week: shifts, physio, dinners, cricket, a date, chai, and rent
+  const AF_WEEK = [
+    { w: [1, 2, 3, 4, 5, 6], h: 10, dur: 4, who: 'boss', name: 'QuickDrop shift', at: 'hub', shift: 1 }, { w: [1, 2, 3, 4, 5, 6], h: 18, dur: 3, who: 'boss', name: 'QuickDrop evening shift', at: 'hub', shift: 1 },
+    { w: [1, 4], h: 8.5, dur: 1.5, who: 'physio', name: 'Physio for your arm', at: 'clinic' },
+    { w: [2], h: 20, dur: 1.5, who: 'fam', name: 'Dinner with the Malhotras', at: 'home' }, { w: [4], h: 16, dur: 1, who: 'fam', name: 'Help Chintu with his maths homework', at: 'home' },
+    { w: [3], h: 17, dur: 1.5, who: 'kabir', name: 'Cricket with Kabir on the Avenue lawns', at: 'cricket' }, { w: [6], h: 16, dur: 1.5, who: 'kabir', name: 'Chai with Kabir in the Old City', at: 'chai' },
+    { w: [5], h: 20, dur: 1.5, who: 'meher', name: 'Meher, at the bookshop by the Circle', at: 'meher' }, { w: [0], h: 20, dur: 2, who: 'fam', name: 'Rent is due (₹3000), Mrs Malhotra', at: 'home', rent: 1 }];
+  const afToday = D => AF_WEEK.map((E, i) => Object.assign({ id: D.day + ':' + i }, E)).filter(E => E.w.includes(D.day % 7));
+  function afAlertsFor(D){ if (D.alertsDay === D.day) return D.alerts; const ev = afToday(D).filter(E => !E.shift), L = [], kinds = [['A chain-snatching on', 'mug'], ['A man trapped in a burning shop on', 'fire'], ['Two cars racing through', 'race'], ['A woman being followed on', 'mug']];
+    for (let k = 0; k < 2; k++) { const base = ev[k] ? ev[k].h + .2 : 12 + k * 7 + Math.floor(xcHash(D.day, k) * 3), K = kinds[Math.floor(xcHash(k, D.day) * kinds.length)], lot = XC.lots[Math.floor(xcHash(D.day * 3, k) * XC.lots.length)] || { x0: 0, x1: 0, z0: 0, z1: 0 }, f = xcFront(lot) || [0, 0, 0, 1];
+      L.push({ id: D.day + 'a' + k, h: base, dur: 1.2, txt: `${K[0]} ${xcDist(f[0], f[1])}`, kind: K[1], at: [f[0] + f[2] * 4, f[1] + f[3] * 4] }); }
+    D.alerts = L; D.alertsDay = D.day; afSave(); return L; }
+  const afHM = h => `${String(Math.floor(h) % 24).padStart(2, '0')}:${String(Math.floor(h % 1 * 60)).padStart(2, '0')}`;
+  function afRel(k, n, why){ const D = AF.s.del; if (!D.rel[k] && D.rel[k] !== 0) return; D.rel[k] = Math.max(0, Math.min(100, D.rel[k] + n)); afSave(); if (why) say(why, 3600); }
+  // ---------- the clock, and everything that happens on it ----------
+  function afDelStep(dt){ if (!afDelOn()) return; const D = afDelInit(); if (EV || AF.busy || A) return;
+    D.hr += dt / 30; D.tired += dt / 30; if (D.hr >= 24) { D.hr -= 24; D.day++; afNewDay(D); }
+    const here = afHere();
+    afToday(D).forEach(E => { const st = D.ev[E.id]; if (st) return; const at = afWhere(E.at);
+      if (D.hr >= E.h && D.hr <= E.h + E.dur) { if (E.shift) { if (!D.ev[E.id + 'n']) { D.ev[E.id + 'n'] = 1; say(`${E.name} starts now. Pick up orders at the QuickDrop counter.`, 3000); } return; }
+        if (here === E.at || at && Math.hypot(pos.x - at[0], pos.z - at[1]) < 10 && zone === 'xc') afAttend(E); }
+      else if (D.hr > E.h + E.dur) afMiss(E); });
+    afAlertsFor(D).forEach(L => { if (D.ev[L.id]) return; if (D.hr > L.h + L.dur) { D.ev[L.id] = 'missed'; D.missedAlerts++; afSave(); say(`Too late. ${L.txt}: someone else got there, or nobody did.`, 3200); }
+      else if (D.hr >= L.h && !D.ev[L.id + 'n']) { D.ev[L.id + 'n'] = 1; tone(1200, .2, 'square', .04); say(`📱 Crime alert: ${L.txt}. It’s on your Planner.`, 3600); afSave(); }
+      else if (D.hr >= L.h && zone === 'xc' && Math.hypot(pos.x - L.at[0], pos.z - L.at[1]) < 7 && !EV) { D.ev[L.id] = 'going'; AF.alert = L; xcFight('xqcrime', L.txt); } });
+    if (D.tired > 18 && !AF.tiredTold) { AF.tiredTold = 1; say('You’re exhausted. Your hits are weaker and you keep yawning. Go home and sleep.', 3600); } if (D.tired < 10) AF.tiredTold = 0;
+    const on = (D.alerts || []).find(L => D.hr >= L.h && !D.ev[L.id]);
+    if (on && zone === 'xc' && XC.sc) { if (!AF.aBeam || AF.aBeam.parent !== XC.sc) { AF.aBeam = new THREE.Mesh(new THREE.CylinderGeometry(.7, .7, 80, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xFF3030, transparent: true, opacity: .3, depthWrite: false })); AF.aBeam.userData.noPick = true; XC.sc.add(AF.aBeam); } AF.aBeam.visible = true; AF.aBeam.position.set(on.at[0], 40, on.at[1]); } else if (AF.aBeam) AF.aBeam.visible = false;
+    afHuntStep(dt); if (D.risk >= 100) afFound(D); }
+  const afHere = () => zone === 'xin' && XC.inside && XC.inside.kind === 'home' ? 'home' : '';
+  function afAttend(E){ const D = AF.s.del; D.ev[E.id] = 'done'; const busy = (D.alerts || []).some(L => D.ev[L.id + 'n'] && !D.ev[L.id] && D.hr < L.h + L.dur);
+    if (E.who === 'physio') { D.physio++; D.tired = Math.max(0, D.tired - 2); afSave(); return say(`Physio. Dr Anand bends your arm until you swear, then says it’s improving. (Arm: ${Math.round(afArmF() * 100)}% strength)`, 4200); }
+    if (E.rent) { if (D.cash >= D.rent) { D.cash -= D.rent; afRel('fam', 4, `You pay Mrs Malhotra ₹${D.rent}. She counts it twice and then gives you a box of laddoos.`); } else { D.debt += D.rent - D.cash; D.cash = 0; afRel('fam', -15, '“Short again, beta? This is a house, not a charity.” She takes what you have.'); } return; }
+    const L = { fam: ['Mrs Malhotra piles your plate twice. Chintu shows you his cricket bat.', 'Chintu gets every sum right the second time. Mrs Malhotra pretends not to listen.'], kabir: ['Kabir bowls you out first ball and won’t let you forget it.', 'Kabir talks for an hour about his new job. It’s good to just listen.'], meher: ['Meher closes the bookshop early. You walk round the Circle twice without noticing.', 'Meher reads you the first page of a book she loves. You ask for the second.'] }[E.who] || ['You show up.'];
+    afRel(E.who, 8, L[(D.day >> 1) % L.length] + (busy ? ' Your phone buzzes the whole time. You leave it in your pocket.' : '')); if (E.who === 'meher') D.dates = (D.dates || 0) + 1; afSave(); }
+  function afMiss(E){ const D = AF.s.del; D.ev[E.id] = 'missed'; const vanished = (D.alerts || []).some(L => D.ev[L.id] === 'done' && Math.abs(L.h - E.h) < 2);
+    if (E.shift) { const n = D.ev[E.id + 'd'] || 0; if (n) afRel('boss', 2, `Shift over: ${n} deliver${n === 1 ? 'y' : 'ies'}. Mr Bhalla grunts, which is good.`); else afRel('boss', -10, 'Mr Bhalla on the phone: “No-show? Do it again and don’t come back.”'); return; }
+    if (E.who === 'physio') return say('You missed physio. Your arm aches all evening.', 2600);
+    if (E.rent) { D.debt += D.rent; afRel('fam', -20, 'You didn’t pay the rent. There’s a note under your door in Mrs Malhotra’s handwriting. It’s not friendly.'); return; }
+    if (vanished) D.risk = Math.min(100, D.risk + 12);
+    afRel(E.who, -10, { fam: `You missed ${E.name.toLowerCase()}. Mrs Malhotra doesn’t say anything, which is worse.`, kabir: '“Again, yaar? Where do you even GO?” Kabir stops texting for a while.', meher: 'Meher waited an hour. Her message just says “ok.”' }[E.who] + (vanished ? ' (People are starting to notice how often you vanish.)' : '')); }
+  function afNewDay(D){ D.tired = Math.max(D.tired, 0); D.ev = Object.fromEntries(Object.entries(D.ev).filter(([k]) => +k.split(/[:a]/)[0] >= D.day - 1)); D.alertsDay = 0; afAlertsFor(D);
+    if (AF.s.symb.on && !AF.s.symb.gone) AF.s.symb.life = Math.max(0, (AF.s.symb.life === undefined ? 100 : AF.s.symb.life) - 7); afSave(); say(`${AF_DAYS[D.day % 7]}, day ${D.day} in Delhi.`, 2400); }
+  function afSleep(){ const D = AF.s.del; if (!D) return say('Not now.', 1600); if (D.hr > 7 && D.hr < 20 && D.tired < 14) return say('You’re not tired enough to sleep yet.', 2000);
+    fade(() => { const to = D.hr >= 7 ? 24 + 7 : 7; for (let h = D.hr; h < to; h += .5) { D.hr = h % 24; if (h >= 24 && !D.slept) { D.slept = 1; D.day++; afNewDay(D); } afToday(D).forEach(E => { if (!D.ev[E.id] && D.hr > E.h + E.dur) afMiss(E); }); } D.slept = 0; D.hr = 7; D.tired = 0; afSave(); }, '#000000'); setTimeout(() => say('You sleep like you’ve been switched off. 07:00.', 2600), 700); }
+  function afPaid(J){ const D = AF.s.del; if (!D) return; D.cash += J.afCash; D.deliv++; if (J.afShift) D.ev[J.afShift + 'd'] = (D.ev[J.afShift + 'd'] || 0) + 1; afSave(); say(`Delivered. ₹${J.afCash} on the QuickDrop app. (₹${D.cash})`, 2600); }
+  function afHub(){ const D = afDelInit(), E = afToday(D).find(E => E.shift && D.hr >= E.h && D.hr <= E.h + E.dur); if (!E) return say('QuickDrop: “Shifts are 10 to 2 and 6 to 9. Come back then.”', 2600); if (XC.job) return say('You’re already carrying an order. Follow the white beam.', 2200);
+    const to = XC.doors.filter(q => q.kind !== 'stash' && q.kind !== 'home').sort(() => Math.random() - .5)[0]; if (!to) return; XC.job = { kind: 'deliver', to, x: to.x, z: to.z, from: 'QuickDrop', afCash: 250, afShift: E.id }; say(`Order for ${to.name}. ₹250. Go!`, 2400); }
+  function afFound(D){ D.risk = 45; D.knows.push('fam'); afSave(); AF.busy = true;
+    cbTalk([['Chintu', '(holding your mask) Bhaiya… is this yours? I found it in the laundry.'], ['Mrs Malhotra', 'Chintu, go upstairs. …So. That’s where you go.'], ['You', 'Please. If anyone finds out, they’ll come for you too.'], ['Mrs Malhotra', 'My husband marched in 1975 with a cloth over his face. I know what a mask is for. We never saw it.']]).then(() => { AF.busy = false; afRel('fam', -5); afLog('Chintu found your mask. The Malhotras know, and say they never saw it.'); }); }
+  // a small fight wherever the alert is
+  function afCrimeEnd(won){ const D = AF.s.del, L = AF.alert; AF.alert = null; if (!L) return; D.ev[L.id] = won ? 'done' : 'missed'; if (won) { D.saved++; JOB.rep += 15; jobSave(); say('Done. You’re gone before anyone can thank you, or take a photo.', 3000); } else say('They get away. You limp off before the police arrive.', 2600);
+    const ev = afToday(D).find(E => !E.shift && D.hr >= E.h && D.hr <= E.h + E.dur && !D.ev[E.id]); if (ev) D.risk = Math.min(100, D.risk + 6); if (afNearHome(pos.x, pos.z)) D.risk = Math.min(100, D.risk + 4); afSave(); }
+  const afNearHome = (x, z) => { const h = afWhere('home'); return h && Math.hypot(x - h[0], z - h[1]) < 40; };
+  // ---------- the planner on your phone ----------
+  function afPlanner(B){ const D = afDelInit(), mk = (h, t, st, red) => `<div class="phcard"${red ? ' style="border-left:3px solid #C8102E"' : ''}><b>${afHM(h)} · ${esc(t)}</b><small>${st}</small></div>`, now = D.hr;
+    const L = afToday(D).map(E => [E.h, E.name, D.ev[E.id] === 'done' ? '✓ You were there' : D.ev[E.id] === 'missed' ? '✗ Missed' : now >= E.h && now <= E.h + E.dur ? 'Now!' : `${AF_WHO[E.who] || ''}`, 0]).concat(afAlertsFor(D).map(L => [L.h, '🚨 ' + L.txt, D.ev[L.id] === 'done' ? '✓ Handled' : D.ev[L.id] === 'missed' ? '✗ Nobody came' : now >= L.h ? 'Happening now: follow the red beam' : 'Predicted by the police scanner app', 1])).sort((a, b) => a[0] - b[0]);
+    const bar = (n, c) => `<span class="pbar" style="display:inline-block;width:90px;vertical-align:middle"><i style="width:${n}%;background:${c}"></i></span>`;
+    B.innerHTML = `<div class="phcard"><b>${AF_DAYS[D.day % 7]}, day ${D.day} · ${afHM(now)}</b><small>Cash ₹${D.cash}${D.debt ? ` · owe ₹${D.debt}` : ''} · rent ₹${D.rent} due Sunday 8 pm · ${D.deliv} deliveries done</small></div>`
+      + L.map(r => mk(r[0], r[1], r[2], r[3])).join('')
+      + `<div class="phcard"><b>People</b><small>${Object.keys(AF_WHO).map(k => `${AF_WHO[k][0].toUpperCase() + AF_WHO[k].slice(1)} ${bar(D.rel[k], D.rel[k] > 60 ? '#7CF29A' : D.rel[k] > 30 ? '#FFC93C' : '#FF5A6E')}`).join('<br>')}</small></div>`
+      + `<div class="phcard"><b>Your secret</b><small>${bar(D.risk, D.risk > 70 ? '#FF5A6E' : '#FFC93C')} ${D.risk > 70 ? 'People are close to working it out.' : D.risk > 35 ? 'People have noticed you vanish.' : 'Safe, for now.'}${D.knows.includes('fam') ? ' The Malhotras know.' : ''}</small></div>`
+      + `<div class="phcard"><b>You</b><small>Awake ${Math.floor(D.tired)} h${D.tired > 16 ? ' (exhausted)' : ''} · physio sessions: ${D.physio} · arm ${Math.round(afArmF() * 100)}%</small></div>`; }
+  PH_TABS.push(['plan', 'Planner']); phEl.querySelector('#phTabs').insertAdjacentHTML('beforeend', '<button type="button" data-t="plan" hidden>Planner</button>');
+  setInterval(() => { const b = phEl.querySelector('[data-t="plan"]'), on = !!(AF.on && AF.s.act === 'del'); if (b && b.hidden === on) b.hidden = !on; }, 1000);
+  // ---------- getting there ----------
+  async function afToDelhi(){ AF.busy = true; AF.s.act = 'del'; AF.s.ch = AF_CH.findIndex(C => C.del); AF.s.st = 0; AF.key = ''; afSave();
+    fade(() => { if (XC.drv) xcExitCar(); XC.ride = null; xcBuild('del'); afAfterBuild(); xcWeather(); xcLight(); web.p = null; drawWeb(); zone = 'xc'; XC.air = false; XC.roof = 0; const h = afWhere('home') || [7, -214]; pos.set(h[0], 1.6, h[1]); xcClear(); yaw = 0; pitch = -.03; $('#worldBack').textContent = xcBackLabel(); AF.busy = false; }, '#000000'); }
+  async function afDelhiArrive(){ AF.busy = true; afDelInit();
+    await cbCard('Chapter 7', 'Double Life', 'Delhi. Six months later.');
+    await cbTalk([['Narrator', 'Six months. A rented room above a family called Malhotra. A job on a scooter that smells of everyone else’s dinner.'], ['Narrator', 'No agency here. Nobody looking for you. Just rent, and a city that never stops needing help.'], ['Voice', '(fainter than it used to be) …we are tired… this city is too loud…'], ['You', 'Rest, then. I’ve got this.']]);
+    AF.s.seen.delhi = 1; afSave(); AF.busy = false; afLog('Delhi. A room above the Malhotras, a QuickDrop job, and rent every Sunday.'); }
+  async function afMeetFam(){ AF.busy = true; await cbTalk([['Mrs Malhotra', 'So you’re the new tenant. Rent on Sunday, no loud music, no girls after ten, and you eat with us on Tuesdays. That last one isn’t optional.'], ['Chintu', '(from behind her) Do you play cricket? Kabir bhaiya from the corner says you’re rubbish.'], ['You', 'Kabir’s been talking about me already?'], ['Kabir', '(leaning on the gate) Since school, yaar. Welcome to Delhi. Wednesday, cricket, the Avenue. Don’t be late.']]);
+    AF.s.seen.metFam = 1; afSave(); AF.busy = false; }
+  // ---------- hooking it into the city ----------
+  function afActsDel(){ if (XC.city !== 'del' || !AF.on || AF.s.act !== 'del') return; afDelInit(); afDelPlaces(); const P = AF.delP;
+    if (P.hub) XC.acts.push({ x: P.hub.x, z: P.hub.z, r: 2.6, on: () => afDelOn(), label: () => 'QuickDrop counter: pick up an order', go: afHub });
+    if (P.clinic) XC.acts.push({ x: P.clinic.x, z: P.clinic.z, r: 2.6, on: () => afDelOn(), label: () => 'Physio Clinic (Mondays and Thursdays, 8:30)', go: () => say('Dr Anand’s clinic. Mondays and Thursdays at 8:30. Don’t be late, she says, or she’ll make it hurt more.', 3200) }); }
+  AF_CH[AF_CH.length - 1].steps.splice(-1, 1, { g: '', go: () => afToDelhi(), chk: () => AF.s.act === 'del' });
+  AF_CH.push({ n: 'Chapter 7', t: 'Double Life', sub: 'Delhi. Six months later.', del: 1, steps: [
+    { g: '', go: () => afDelhiArrive(), chk: () => !!AF.s.seen.delhi },
+    { g: 'Meet your landlords, the Malhotras: Malhotra House, the door with the brass sign', at: () => afWhere('home'), auto: () => { const h = afWhere('home'); if (h && afNear(h[0], h[1], 4) && !AF.s.seen.metFam) afMeetFam(); }, chk: () => !!AF.s.seen.metFam },
+    { g: () => `Do your first QuickDrop shift: pick up orders at the counter and deliver them (${AF.s.del ? AF.s.del.deliv : 0} of 3). Shifts are 10–2 and 6–9`, at: () => XC.job ? null : afWhere('hub'), chk: () => !!AF.s.del && AF.s.del.deliv >= 3 },
+    { g: () => `Get through your first week in Delhi: work, Sunday’s rent, and the people in your life. Your phone’s Planner has every time (${AF.s.del ? AF_DAYS[AF.s.del.day % 7] + ' ' + afHM(AF.s.del.hr) : ''})`, chk: () => !!AF.s.del && AF.s.del.day >= 8 },
+    { g: 'To be continued: Delhi’s small-time villains are next. The story is on its way', chk: () => false } ] });
+  // ---------- Delhi's small-time villains: two or three jobs each, then a small boss fight in their own spot ----------
+  // Every one of them pays someone. The ledger pages they carry all end in the same initials: D.R.
+  const AF_VIL = [
+    { id: 'dv_chain', name: 'Bullet Bunty', gang: 'the Chain-Snatcher Gang', at: [-171.3, 80], look: [0x2A2D33, 0xE8B04A], line: 'Nice chain, hero. Oh wait, you don’t have one.', win: 'Bullet Bunty’s scooters are impounded. Twelve gold chains go back to twelve aunties.',
+      m: [{ g: 'The Chain-Snatcher Gang hit three women near the Palace this week. Talk to the chaiwala who saw them', at: [-160, 61.3], t: [['Chaiwala', 'Two on a red scooter. Pillion rider grabs, driver guns it. Always near the bus stop. They call the driver Bullet.'], ['You', 'Where do they sell the chains?'], ['Chaiwala', 'Ask at Kashmere Jewellers. Ask nicely. Or don’t.']] },
+        { g: 'Catch two of Bullet’s riders at the bus stop', at: [-140, 48.7], f: 2 },
+        { g: 'Bullet Bunty waits at his scooter garage. Take him down', boss: 1 }] },
+    { id: 'dv_landlord', name: 'Mr Gulati', gang: 'the Landlord from Hell', at: [130, 116.3], look: [0xF2EEE6, 0x8A1A2E], line: 'Every tenant in this lane pays me double, or sleeps on the street. You want to be a tenant?', win: 'Mr Gulati’s hired muscle walks away unpaid. The water comes back on in every flat in the lane.',
+      m: [{ g: 'The tenants in the Old City lane have had no water for nine days. Talk to them', at: [150, 116.3], t: [['Mrs Bedi', 'Gulati cuts the water till we pay double. Then the electricity. Then he sends the boys.'], ['Mrs Bedi', 'My husband went to the police station. The officer laughed and said Gulati has friends higher up.']] },
+        { g: 'Gulati’s boys are throwing a family’s things into the street. Stop them', at: [170, 116.3], f: 3 },
+        { g: 'Mr Gulati is collecting rent with a cricket bat. Have a word', boss: 1 }] },
+    { id: 'dv_cop', name: '“Inspector” Kaul', gang: 'the Fake Cop', at: [-48.7, -61.3], look: [0xC8B48A, 0x5A4632], line: 'Papers. Licence. Wallet. Especially the wallet.', win: '“Inspector” Kaul’s badge turns out to be from a fancy-dress shop. The real police are not amused.',
+      m: [{ g: 'Delivery riders say a “policeman” fines them in cash near the Secretariat. Ask the QuickDrop riders', at: () => afWhere('hub'), t: [['Rider', 'Kaul. Fake moustache, real lathi. Five hundred a stop, no receipt.'], ['Rider', 'Last week he took my phone because I asked for his badge number.']] },
+        { g: 'Kaul’s “checkpoint” has two more fake cops tonight. Bust it', at: [-30, -48.7], f: 2 },
+        { g: '“Inspector” Kaul runs from his checkpoint to his booth. End it', boss: 1 }] },
+    { id: 'dv_park', name: 'Pinky Parking', gang: 'the Parking Mafia', at: [61.3, -171.3], look: [0xF2C230, 0x16181D], line: 'Every metre of kerb in this city is mine. That includes the bit you’re standing on.', win: 'Pinky Parking’s tow trucks are parked, for good. You can leave a scooter on the street again.',
+      m: [{ g: 'Your QuickDrop scooter has been towed. Find it at the parking lot by the Victory Tower', at: [40, -171.3], t: [['Tow-yard boy', 'Two thousand to get it back. Plus “service”. Plus Pinky’s mood.'], ['You', 'That’s more than my rent.'], ['Tow-yard boy', 'Then you’d better be nicer to Pinky.']] },
+        { g: 'Take the tow yard back from Pinky’s crew', at: [55, -160], f: 3 },
+        { g: 'Pinky Parking is clamping cars on her own street. Clamp her', boss: 1 }] },
+    { id: 'dv_pick', name: 'The Pickpocket Queen', gang: 'the Pickpocket Queen', at: [10, 61.3], look: [0x8A3A9A, 0xF2EEE6], line: 'You’re missing something, darling. Check your back pocket.', win: 'The Pickpocket Queen’s trunk of wallets goes to the metro lost-and-found. Kabir gets his back, minus a sweet wrapper.',
+      m: [{ g: 'Kabir’s wallet was lifted at Central Secretariat metro. Meet him at the station', at: [-6, 58], t: [['Kabir', 'Gone, yaar. Wallet, metro card, Meher’s friend’s number, everything. I didn’t even feel it.'], ['You', 'Nobody ever feels it. That’s the point.'], ['Kabir', 'Station guard says it’s her again. The Queen. Works the evening rush.']] },
+        { g: 'Catch her lookouts at the bottom of the metro stairs', at: [0, 48.7], f: 2 },
+        { g: 'The Pickpocket Queen holds court under the metro. Take her crown', boss: 1 }] },
+    { id: 'dv_gym', name: 'Tiger Tomar', gang: 'the Gym Bully', at: [116.3, -40], look: [0xC8102E, 0xF2EEE6], line: 'You’ve got a bad arm. I’ve got two good ones. Do the maths.', win: 'Tiger Tomar taps out in front of his whole gym. Kabir’s brother trains in peace.',
+      m: [{ g: 'Kabir’s little brother Rohan came home from the gym with a black eye again. Talk to him', at: [116.3, -20], t: [['Rohan', 'Tiger runs the gym like his kingdom. You pay him, or you get “sparring practice”.'], ['Rohan', 'He says he trains the MLA’s bodyguards. So nobody complains.']] },
+        { g: 'Tiger’s gym boys are waiting outside for Rohan. Get there first', at: [116.3, -60], f: 3 },
+        { g: 'Tiger Tomar wants a “friendly spar”. Make it unfriendly', boss: 1 }] },
+    { id: 'dv_scam', name: 'Sir Sanjeev', gang: 'the Scam Call Centre', at: [-116.3, -140], look: [0x1E5AA8, 0xF2EEE6], line: 'Hello, sir, this is your bank calling. Your account has been… punched.', win: 'Sir Sanjeev’s call centre goes quiet. Mrs Malhotra’s savings are frozen in his account, and then unfrozen, back into hers.',
+      m: [{ g: 'Mrs Malhotra got a call from “her bank” and lost her savings. Talk to her', at: () => afWhere('home'), t: [['Mrs Malhotra', '(very quietly) He knew my name. My late husband’s name. He said the account was being hacked and I had to move it. So I did.'], ['Chintu', 'I wrote the number down! Here.'], ['You', 'Good boy, Chintu.']] },
+        { g: 'Trace the number to a building near the Victory Tower. Clear out the guards downstairs', at: [-116.3, -120], f: 3 },
+        { g: 'Sir Sanjeev is in the call centre upstairs, headset still on. Hang up on him', boss: 1 }] }];
+  function afVilDefs(){ AF_VIL.forEach(V => { if (HEROES[V.id]) return; const [c1, c2] = V.look;
+    OUTFITS[V.id] = { hero: 1, c1: '#' + new THREE.Color(c1).getHexString(), c2: '#' + new THREE.Color(c2).getHexString(), hair: 'short', hairCol: '#1A1410', skin: '#9A7050' };
+    HEROES[V.id] = { name: V.name, outfit: V.id, hp: 520, kind: 'melee', dmg: 11, range: 2.3, cd: .85, speed: 4.4, r: .55, grounded: 1 };
+    BODY[V.id] = () => { const R = bdRig({ legM: 0x2A2D33, torM: c1, armM: c1, handM: 0x9A7050, bw: .29, tH: .66 }); bdFace(R, 0x9A7050, 'short', 0x1A1410); R.add(new THREE.BoxGeometry(.5, .08, .3), c2, 0, R.sh + .02, 0); R.add(new THREE.CylinderGeometry(.3, .26, .12, 14), c2, 0, R.hip + .05, 0); return R; }; }); }
+  const afVS = () => { const D = AF.s.del; D.vil = D.vil || {}; return D.vil; };
+  const afVilDone = () => AF_VIL.filter(V => afVS()[V.id] >= V.m.length).length;
+  function afVilAt(V, M){ return M.boss ? V.at : typeof M.at === 'function' ? M.at() : M.at; }
+  function afVilTargets(){ const S = afVS(); return AF_VIL.filter(V => (S[V.id] || 0) < V.m.length).map(V => { const M = V.m[S[V.id] || 0]; return { V, M, at: afVilAt(V, M) }; }).filter(o => o.at); }
+  function afVilBuild(){ if (XC.city !== 'del' || !AF.on || AF.s.act !== 'del') return; afVilDefs(); AF.vilAv = [];
+    AF_VIL.forEach(V => { let av = null; try { av = bodyAv(V.id, 1); } catch (e) {} if (!av) return; av.g.position.set(V.at[0], 0, V.at[1]); XC.g.add(av.g); AF.vilAv.push({ V, av }); }); afVilLook(); }
+  function afVilLook(){ (AF.vilAv || []).forEach(e => { const S = afVS(); e.av.g.visible = AF.s.ch >= AF_CH.findIndex(C => C.vil) && (S[e.V.id] || 0) === e.V.m.length - 1; }); }
+  function afVilStep(){ if (!afDelOn() || EV || AF.busy || A || zone !== 'xc' || AF.s.ch !== AF_CH.findIndex(C => C.vil)) return; const S = afVS();
+    (AF.vilAv || []).forEach(e => { if (e.av.g.visible) { e.av.anim(performance.now() / 1000, 0, 0); e.av.g.rotation.y = Math.atan2(pos.x - e.V.at[0], pos.z - e.V.at[1]); } });
+    for (const o of afVilTargets()) { if (Math.hypot(pos.x - o.at[0], pos.z - o.at[1]) > (o.M.boss ? 4 : 5)) continue; const i = AF_VIL.indexOf(o.V), k = S[o.V.id] || 0;
+      if (o.M.t) { AF.busy = true; cbTalk(o.M.t).then(() => { S[o.V.id] = k + 1; afSave(); AF.busy = false; afVilLook(); }); return; }
+      if (o.M.f || o.M.boss) { if (o.M.boss) say(`${o.V.name}: “${o.V.line}”`, 3200); xcFight(`xqv${i}_${k}`, o.M.boss ? o.V.name : o.V.gang); return; } } }
+  function afVilSetup(part, S, crew){ const [i, k] = part.slice(3).split('_').map(Number), V = AF_VIL[i], M = V && V.m[k]; if (!M) return;
+    S.af.vil = [i, k]; if (M.boss) { const b = addUnit({ hero: V.id, team: 'en' }); b.x = V.at[0]; b.z = V.at[1]; b.boss = 1; EV.boss = b; S.sb = { B: { name: V.name }, b, t: 99, marks: [] }; S.add('gangA', V.at[0] + 3, V.at[1]); S.add('gangA', V.at[0] - 3, V.at[1]); (AF.vilAv || []).forEach(e => { if (e.V === V) e.av.g.visible = false; }); }
+    else crew(M.f, 5, V.gang); }
+  function afVilEnd(F, won){ const [i, k] = F.vil, V = AF_VIL[i], S = afVS(); if (!won) { afVilLook(); return say(`${V.gang[0].toUpperCase() + V.gang.slice(1)} get${/s$/.test(V.gang) ? '' : 's'} away this time.`, 2600); }
+    S[V.id] = Math.max(S[V.id] || 0, k + 1); JOB.rep += 20; jobSave();
+    if (k === V.m.length - 1) { const D = AF.s.del; D.ledger = (D.ledger || 0) + 1; afSave(); say(`${V.win} In ${V.name.replace(/^the /i, '')}’s pocket: a ledger page. Payments, every week, to “D.R.”`, 6000); afLog(`${V.name} is done. Another ledger page for D.R.`); }
+    else { afSave(); say(`${V.gang[0].toUpperCase() + V.gang.slice(1)}: one step closer.`, 2400); } afVilLook(); }
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push({ n: 'Chapter 8', t: 'Small Fish', sub: 'Seven of them. Every one pays somebody.', vil: 1, steps: [
+    { g: () => `Delhi’s small-time villains: ${afVilDone()} of 7 finished. Follow the gold beams, and keep living your life: the Planner still runs`, at: () => { const L = afVilTargets(); return L.sort((a, b) => Math.hypot(a.at[0] - pos.x, a.at[1] - pos.z) - Math.hypot(b.at[0] - pos.x, b.at[1] - pos.z))[0]?.at || null; }, auto: afVilStep, chk: () => afVilDone() >= 7 },
+    { g: 'To be continued: seven ledger pages, all paying “D.R.” The last part of the Delhi story is on its way', chk: () => false } ] });
+  // ---------- D.R.: the man all seven paid. MLA Dinesh Rathore ----------
+  OUTFITS.dv_rath = { hero: 1, c1: '#F2EEE6', c2: '#E8A040', hair: 'short', hairCol: '#C9CFD8', skin: '#9A7050' };
+  HEROES.dv_rath = { name: 'Dinesh Rathore, MLA', outfit: 'dv_rath', hp: 700, kind: 'melee', dmg: 9, range: 2.2, cd: 1, speed: 4, r: .6, grounded: 1 };
+  HEROES.dv_guard = { name: 'Rathore’s bodyguard', outfit: 'af_agent', hp: 300, kind: 'melee', dmg: 9, range: 2.3, cd: .9, speed: 4.6, r: .55, grounded: 1 };
+  BODY.dv_rath = () => { const R = bdRig({ legM: 0xF2EEE6, torM: 0xF2EEE6, armM: 0xF2EEE6, handM: 0x9A7050, bw: .33, tH: .66 }); bdFace(R, 0x9A7050, 'short', 0xC9CFD8); R.add(new THREE.BoxGeometry(.56, .06, .34), 0xE8A040, 0, R.sh - .05, 0); R.add(new THREE.CylinderGeometry(.13, .14, .1, 14), 0xF2EEE6, 0, .2, 0, R.head); return R; };
+  BODY.dv_guard = () => { const R = bdRig({ legM: 0x16181D, torM: 0x16181D, armM: 0x16181D, handM: 0x8A6A4A, bw: .31, tH: .66 }); bdFace(R, 0x8A6A4A, 'short', 0x16181D); R.add(new THREE.BoxGeometry(.3, .06, .05), 0x16181D, 0, .05, -.15, R.head); return R; };
+  const AF_WIT = [[-160, 61.3, 'the chaiwala'], [150, 116.3, 'Mrs Bedi'], [116.3, -20, 'Rohan']];
+  const AF_OPS = [[-60, 103.7, 'a protection racket out of a sweet shop'], [61.3, 80, 'a fake ration-card office'], [-171.3, -34, 'a lorry of stolen medicine']];
+  const afD = () => AF.s.del || afDelInit();
+  function afPressPlace(){ if (XC.city !== 'del' || !AF.on || AF.s.act !== 'del' || !AF.delP) return; const l = afLotNear(120, -100, []); if (!l) return; xcDoor(XC.g, l, 'Dilli Darpan', 'press', 30); const d = XC.doors.pop(); AF.delP.press = d; }
+  // the antihero: a scrap suit, a braced arm, and a city that starts to be afraid of you
+  function afAnti(){ return !!AF.s.anti; }
+  function afAntiFight(S){ if (!afAnti() || !EV) return; const g = EV.units.filter(u => u.team === 'en' && !u.boss && u.hp > 0); const n = Math.min(2, Math.floor(g.length / 2)); if (!n) return; setTimeout(() => { if (!EV || EV.st !== S) return; g.slice(0, n).forEach(u => { try { dropUnit(u); } catch (e) {} }); say(`${n === 1 ? 'One of them sees' : 'Two of them see'} who it is, and run.`, 2400); }, 1200); }
+  function afHuntStart(){ if (!afAnti() || Math.random() > .4) return; AF.hunt = { x: pos.x, z: pos.z, t: 40 }; tone(700, .3, 'square', .04, 900); say('Sirens. The police want the masked man now, not just the crooks. Get 80 m away!', 3400); }
+  function afHuntStep(dt){ const H = AF.hunt; if (!H || EV) return; H.t -= dt; if (Math.hypot(pos.x - H.x, pos.z - H.z) > 80) { AF.hunt = null; return say('You lose them in the lanes.', 2200); }
+    if (H.t <= 0) { AF.hunt = null; const D = afD(); D.cash = Math.max(0, D.cash - 1000); D.risk = Math.min(100, D.risk + 10); afSave(); say('They corner you. You get away, but you leave your wallet behind: ₹1000 gone, and they’ve seen your face, almost.', 4200); } }
+  // ---------- the finale: rally night, the lane, the court, the gate, the train ----------
+  function afRallyBuild(){ if (AF.rally || !XC.g) return; const g = AF.rally = new THREE.Group(); g.position.set(172, 0, 0); XC.g.add(g); box(10, 1.2, 6, mat(0x5A3A2A), 0, .6, 0, g); box(12, 3, .2, mat(0xE8A040), 0, 4, -3, g);
+    const s = new THREE.Mesh(new THREE.PlaneGeometry(11, 2.4), xcSign('RATHORE FOR DELHI', '#FFFFFF', '#1F7A45', 11, 2.4)); s.position.set(0, 4, -2.88); g.add(s);
+    for (let i = 0; i < 26; i++) { try { const a = avatar(crowdLook(120 + i)); a.g.position.set(-12 + (i % 9) * 3 + xcHash(i, 1), 0, 8 + Math.floor(i / 9) * 2.5); a.g.rotation.y = Math.PI; g.add(a.g); } catch (e) {} } }
+  async function afRally(){ AF.busy = true; walkTarget = null; pos.set(172, 1.6, 22); yaw = 0; pitch = .05;
+    await cbTalk([['Narrator', 'Rally night. Ten thousand people on the Avenue, a band, marigolds, and Dinesh Rathore on a stage under his own face.'], ['Rathore', '(on the mic) Delhi! Who keeps your streets safe? Who keeps your water running? Who—'], ['Narrator', 'Every phone in the crowd buzzes at once. Dilli Darpan has gone live: seven ledger pages, the bank records, three witnesses on camera.'], ['Narrator', 'Behind Rathore, the big screen flickers, and his own ledger fills it, page by page.'], ['Rathore', 'Lies! Fabricated! Turn that off!']]);
+    canvas.style.filter = reduce ? '' : 'brightness(1.6)'; tone(80, .6, 'sawtooth', .07, 50); await afWait(300); canvas.style.filter = '';
+    const Y = AF.s.symb;
+    await cbTalk([['Narrator', 'A crack from the rooftops. One of Rathore’s men, aiming into the crowd, at the one person standing next to you.'], ['Meher', '…oh—'],
+      ['Narrator', Y.on && !Y.gone ? 'Your arm moves before you do. The last of the black pours out of your skin and across Meher like a sheet of night. The bullet stops in it.' : 'You throw yourself across her. Something black, the last of it, tears itself out of your arm and takes the hit for both of you.'],
+      ['Voice', '(barely there) …we liked… the wind…'], ['Narrator', 'And then it is just dust on Meher’s dupatta, and your arm is only an arm again.'], ['You', 'No. No, no—'], ['Narrator', 'On stage, Rathore is gone. A white car is pulling away towards the Old City.']]);
+    Y.gone = 1; Y.on = 0; AF.s.seen.rally = 1; afLog('Rally night. The ledger went out live. The symbiote died taking a bullet for Meher.'); afSave(); AF.busy = false; }
+  async function afBeating(){ AF.busy = true; walkTarget = null; const low = goreLow(), calm = scaresLow();
+    await cbTalk([['Narrator', 'You catch him alone in a lane behind the market. No bodyguards left. No stage. Just a frightened old man in a white kurta.'], ['Rathore', 'You think anyone will thank you? They’ll vote for me again in five years. They always do.']]);
+    for (let k = 0; k < 4; k++) { canvas.style.filter = reduce || calm ? 'brightness(.6)' : low ? 'brightness(.35) contrast(1.4)' : 'sepia(1) saturate(4) hue-rotate(-30deg) brightness(.7)'; tone(70 + k * 10, .25, 'square', .06, 40); await afWait(calm ? 500 : 350); canvas.style.filter = ''; await afWait(450); }
+    await cbTalk([['Narrator', low ? 'You keep going after he stops talking.' : 'You keep going after he stops talking. Your knuckles split. His face is not a face any more.'], ['Narrator', 'You raise your fist one more time.']]);
+    fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); await afWait(2200);
+    await cbTalk([['Narrator', 'You stop. You never kill. Not once, not even him.'], ['Narrator', 'Sirens. You don’t run.']]);
+    fadeEl.classList.remove('on'); AF.s.seen.beat = 1; afSave(); AF.busy = false; }
+  async function afAfter(){ AF.busy = true; const D = afD(), close = Object.keys(D.rel).filter(k => k !== 'boss' && D.rel[k] >= 60);
+    fadeEl.style.background = '#000000'; fadeEl.classList.add('on');
+    await cbCard('Arrested', 'The mask comes off', 'On every channel by morning: your face, your name.');
+    await cbTalk([['News anchor', 'The masked vigilante who exposed MLA Rathore has been identified. The MLA is in hospital and under arrest. So is the vigilante.'], ['Kabir', '(on TV, outside the station) I’ve known him since we were nine. He’s the best person I know. That’s all I’m saying.']]);
+    await cbCard('Court', 'Two years', 'A short trial. Assault. Guilty. Rathore gets twelve.');
+    await cbTalk([['Judge', 'You exposed a great wrong. Then you did one. The law cannot pretend it didn’t see the second because it liked the first.'], ['You', 'I know.']]);
+    await cbCard('Tihar', 'Twenty-two months', close.length ? `Letters, at first. From ${close.map(k => AF_WHO[k]).join(', ')}. Then fewer.` : 'Nobody writes.');
+    await cbCard('Release day', 'The gate', 'Nobody is waiting.');
+    await cbTalk([['Narrator', 'One bag. The clothes you went in with. A train ticket south, bought with the last of what QuickDrop owed you.'], ['Narrator', 'The train runs all night along the coast.']]);
+    AF.s.seen.after = 1; afSave(); afGoaDawn(); }
+  function afGoaDawn(){ fade(() => { fadeEl.classList.remove('on'); if (XC.drv) xcExitCar(); XC.ride = null; AF.s.act = 'goa'; afSave(); xcBuild('goi'); afAfterBuild(); xcWeather(); xcLight(); web.p = null; drawWeb(); zone = 'xc'; XC.air = false; XC.roof = 0; pos.set(-196, 1.6, 10); yaw = Math.PI / 2; pitch = .02; $('#worldBack').textContent = xcBackLabel(); }, '#000000');
+    setTimeout(async () => { await cbCard('', 'Goa', 'Sunrise.'); await afWait(1600); await cbCard('', 'Some years later.', ''); AF.s.seen.goa = 1; afLog('Goa, at sunrise. Some years later.'); afSave(); AF.busy = false; }, 1600); }
+  // ---------- chapter skipping for this story, from the phone ----------
+  function afXcS(c, f){ if (XC.city === c && XC.s) { f(XC.s); return xcSave(); } let s = null; try { s = JSON.parse(localStorage.getItem('ru-xc-' + c) || 'null'); } catch (e) {} s = Object.assign({ v: 1, visits: 1, secrets: [], bosses: [], raids: 0, jobs: 0, rides: 0, seen: [] }, s || {}); f(s); try { localStorage.setItem('ru-xc-' + c, JSON.stringify(s)); } catch (e) {} }
+  const AF_SKIP = [
+    () => Object.assign(AF.s.seen, { fall: 1, cordon: 1, flatKnown: 1, bench: 1, broken: 1 }),
+    () => { AF.s.web.parts = Object.keys(AF_PARTS); AF.s.web.fixed = 1; AF.s.seen.swung = 1; afBenchLook(); },
+    () => { Object.assign(AF.s.seen, { taken: 1, ropes: 1, out: 1 }); AF.tied = false; if (zone === 'xin' && XC.inside && XC.inside.kind === 'cell') xcOutside(); },
+    () => { afXcS('bfa', s => { XC_P.bfa.bosses.forEach(B => { if (!s.bosses.includes(B.id)) s.bosses.push(B.id); }); }); AF.s.dist = [0, 1, 2, 3, 4]; AF.s.seen.smog = 1; afAfterBuild(); },
+    () => { Object.assign(AF.s.seen, { t0: 1, t1: 1, t2: 1, bond: 1, labOut: 1, fed: 1, tendril: 1 }); Object.assign(AF.s.symb, { on: 1, hunger: 20 }); if (zone === 'xin' && XC.inside && XC.inside.kind === 'lab') xcOutside(); },
+    () => { Object.assign(AF.s.seen, { agency: 1, escape: 1, escaped: 1 }); AF.s.blrLocked = 1; afSave(); afToDelhi(); return 1; },
+    () => { AF.s.seen.delhi = 1; AF.s.seen.metFam = 1; const D = afD(); D.deliv = Math.max(3, D.deliv); D.day = Math.max(8, D.day); },
+    () => { const S = afVS(); AF_VIL.forEach(V => { S[V.id] = V.m.length; }); afD().ledger = 7; afVilLook(); },
+    () => { Object.assign(AF.s.seen, { press: 1, records: 1, w0: 1, w1: 1, w2: 1, firebomb: 1 }); },
+    () => { Object.assign(AF.s.seen, { suit: 1, op0: 1, op1: 1, op2: 1, meher: 1 }); AF.s.anti = 1; },
+    () => { Object.assign(AF.s.seen, { rally: 1, caught: 1, beat: 1 }); AF.s.symb.gone = 1; AF.s.symb.on = 0; afSave(); afAfter(); return 1; }];
+  function afSkipCh(){ if (EV || A || AF.busy) return say('Finish what’s happening first.', 2400); const f = AF_SKIP[AF.s.ch]; if (!f) return say('Nothing to skip here yet.', 2000);
+    const moved = f(); if (moved) return; AF.s.ch++; AF.s.st = 0; AF.key = ''; afSave(); afLooks(); const N = AF_CH[AF.s.ch]; say('Chapter skipped. It counts as done.', 2400); if (N) { AF.busy = true; cbCard(N.n, N.t, N.sub || '').then(() => { AF.busy = false; }); } }
+  // ---------- the last three chapters ----------
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push(
+    { n: 'Chapter 9', t: 'D.R.', sub: 'Seven ledger pages. One set of initials.', steps: [
+      { g: 'Take the ledger pages to Dilli Darpan, the local paper', at: () => AF.delP && AF.delP.press ? [AF.delP.press.x, AF.delP.press.z] : null, auto: () => { const p = AF.delP && AF.delP.press; if (p && afNear(p.x, p.z, 4) && !AF.s.seen.press) { AF.busy = true; cbTalk([['Farida Qureshi', '(editor, three phones ringing) D.R. Dinesh Rathore, MLA. Everyone in this city knows. Nobody has ever proved it.'], ['Farida Qureshi', 'Ledger pages aren’t enough. Bring me his money on paper, and people who’ll say it on camera. Then we print, and we print big.'], ['You', 'The call centre’s bank records. And the people those seven hurt.']]).then(() => { AF.s.seen.press = 1; afSave(); AF.busy = false; }); } }, chk: () => !!AF.s.seen.press },
+      { g: 'Get the bank records from Sir Sanjeev’s old call centre: Rathore’s men are clearing it out', at: () => [-116.3, -120], auto: () => { if (afNear(-116.3, -120, 5)) xcFight('xqrec', 'Rathore’s men'); }, chk: () => !!AF.s.seen.records },
+      { g: () => `Protect the witnesses before Rathore’s men get to them (${['w0', 'w1', 'w2'].filter(k => AF.s.seen[k]).length} of 3)`, at: () => { const w = AF_WIT.find((W, i) => !AF.s.seen['w' + i]); return w ? [w[0], w[1]] : null; }, auto: () => { AF_WIT.forEach((W, i) => { if (!AF.s.seen['w' + i] && !EV && afNear(W[0], W[1], 5)) xcFight('xqw' + i, 'Rathore’s men'); }); }, chk: () => !!(AF.s.seen.w0 && AF.s.seen.w1 && AF.s.seen.w2) },
+      { g: 'Go home. It’s been a long day', at: () => afWhere('home'), auto: () => { const h = afWhere('home'); if (h && (afHere() === 'home' || afNear(h[0], h[1], 5)) && !AF.s.seen.firebomb) afFirebomb(); }, chk: () => !!AF.s.seen.firebomb } ] },
+    { n: 'Chapter 10', t: 'Scrap', sub: 'The system failed. So you stop asking it.', steps: [
+      { g: 'Build something harder. Scrap from Pinky’s old tow yard, then the bench at home', at: () => AF.s.seen.scrap ? afWhere('home') : [55, -160], auto: () => { if (!AF.s.seen.scrap && afNear(55, -160, 5)) { AF.s.seen.scrap = 1; afSave(); say('Car doors, a seat-belt reel, a motorbike chain, the steel brace off a wrecked lorry. It’ll do.', 3600); } }, chk: () => !!AF.s.seen.suit },
+      { g: () => `Make Rathore’s people afraid: break up his operations (${['op0', 'op1', 'op2'].filter(k => AF.s.seen[k]).length} of 3). The police are looking for you now too`, at: () => { const o = AF_OPS.find((O, i) => !AF.s.seen['op' + i]); return o ? [o[0], o[1]] : null; }, auto: () => { AF_OPS.forEach((O, i) => { if (!AF.s.seen['op' + i] && !EV && afNear(O[0], O[1], 5)) xcFight('xqop' + i, 'Rathore’s crew'); }); }, chk: () => !!(AF.s.seen.op0 && AF.s.seen.op1 && AF.s.seen.op2) },
+      { g: 'Meher wants to see you. The bookshop by the Circle', at: () => afWhere('meher'), auto: () => { const m = afWhere('meher'); if (m && afNear(m[0], m[1], 5) && !AF.s.seen.meher) afMeher(); }, chk: () => !!AF.s.seen.meher } ] },
+    { n: 'Chapter 11', t: 'Rally Night', sub: 'The paper goes to print at eight.', steps: [
+      { g: () => afD().hr >= 19 || afD().hr < 2 ? 'Rally night. Get to the Avenue, by the stage under the Victory Gate' : `Rally night is tonight at 8 pm on the Avenue (now ${afHM(afD().hr)}). Rest, eat, or wait it out`, at: () => [172, 18], go: () => afRallyBuild(), auto: () => { afRallyBuild(); const h = afD().hr; if ((h >= 19 || h < 2) && afNear(172, 18, 9) && !AF.s.seen.rally) afRally(); }, chk: () => !!AF.s.seen.rally },
+      { g: 'Rathore’s car is heading into the Old City. Catch him', at: () => [165, 150], auto: () => { if (afNear(165, 150, 6)) xcFight('xqrath', 'Dinesh Rathore'); }, chk: () => !!AF.s.seen.caught },
+      { g: '', go: () => afBeating(), chk: () => !!AF.s.seen.beat },
+      { g: '', go: () => afAfter(), chk: () => !!AF.s.seen.goa },
+      { g: 'Goa. Some years later. This part of the story is still being written', chk: () => false } ] });
+  async function afFirebomb(){ AF.busy = true; AF.s.seen.firebomb = 1; afSave();
+    await cbTalk([['Narrator', 'The witnesses gave statements. The police took Rathore’s men in at noon.'], ['Narrator', 'By four, they were out on bail. By six, the case file was “lost”.'], ['Narrator', 'At eleven, someone threw a bottle of petrol through the Malhotras’ front window.']]);
+    canvas.style.filter = reduce ? '' : 'sepia(.6) saturate(2) brightness(.8)'; tone(90, 1.2, 'sawtooth', .06, 50); await afWait(900); canvas.style.filter = '';
+    await cbTalk([['Mrs Malhotra', '(outside, in a blanket) Chintu was asleep on the sofa. The doctors say his arm will heal. His arm. Like yours.'], ['Kabir', 'The police came, wrote two lines, and left. That’s the system, yaar. That’s all it is.'], ['You', 'Then I’m done asking it.']]);
+    afLog('Rathore’s men firebombed the Malhotras’ house. Chintu was hurt. The police did nothing.'); AF.busy = false; }
+  async function afMeher(){ AF.busy = true; const D = afD();
+    await cbTalk([['Meher', 'Your hands. Your face. Kabir says you’re never home. There’s a man in a scrap-metal mask on the news who breaks people’s legs.'], ['Meher', 'Tell me that isn’t you.']]);
+    const v = await new Promise(r => askChoice('afmeher', r, { h: 'Meher', q: 'She already knows. She wants you to say it.', a: [['truth', 'Tell her the truth'], ['lie', 'Lie to her']] }));
+    if (v === 'truth') { await cbTalk([['You', 'It’s me. It’s been me since Bangalore. Since before.'], ['Meher', '(a long time later) Don’t make me watch you turn into one of them.']]); afRel('meher', -5); D.knows.push('meher'); }
+    else { await cbTalk([['You', 'It isn’t me. I work nights, that’s all.'], ['Meher', 'Okay. (She doesn’t believe you. She lets you see that she doesn’t.)']]); afRel('meher', -15); }
+    afRel('kabir', -8); AF.s.seen.meher = 1; afSave(); AF.busy = false; }
+  async function afSuit(){ AF.busy = true; for (const [m, f] of [['Car-door steel for the chest. Seat-belt webbing for the joints.', 300], ['The lorry brace goes on your right arm, bolted tight. It hurts. It holds.', 260], ['A mask cut from a welding hood. You don’t look at it for long.', 220]]) { say(m, 2400); tone(f, .3, 'square', .04); await afWait(2500); }
+    AF.s.anti = 1; AF.s.seen.suit = 1; afSave(); afRel('meher', -10); afRel('kabir', -10); afRel('fam', -5); afLog('You built a scrap suit with a braced arm. Criminals fear it. So does everyone else.');
+    await cbTalk([['You', 'No more asking nicely.'], ['Narrator', 'You never kill. You tell yourself that every night. It’s the only rule left.']]); AF.busy = false; }
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
@@ -21817,7 +22495,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function sxCard(k, name, status, sub, btns){ const done = SX_MODES.find(m => m[0] === k)[2](); return `<div class="phcard"><b>${done ? '✓ ' : ''}${esc(name)}</b><small>${status}</small>${sub ? `<small>${sub}</small>` : ''}${btns ? `<div class="phrow">${btns}</div>` : ''}</div>`; }
   function stPhone(){
     const n = SX_MODES.filter(m => m[2]()).length;
-    let h = `<div class="phcard"><b>Stories: ${n} of ${SX_MODES.length} finished</b><small>${n === SX_MODES.length ? 'Every story is done. Something is coming for Bangalore.' : 'Finish (or skip) every story to unlock what comes after them. Skipping counts as finishing, and you keep everything a chapter would have given you.'}</small></div>`;
+    let h = afPhoneCard() + `<div class="phcard"><b>Stories: ${n} of ${SX_MODES.length} finished</b><small>${n === SX_MODES.length ? 'Every story is done. Something is coming for Bangalore.' : 'Finish (or skip) every story to unlock what comes after them. Skipping counts as finishing, and you keep everything a chapter would have given you.'}</small></div>`;
     // the Multiverse Saga
     { const st = SG.active || SG.resume || SG.done.length || SG.ch > 0, C = SAGA[SG.ch];
       h += sxCard('saga', 'The Multiverse Saga', SG.sagaDone ? `All ${SAGA.length} chapters done.` : `Chapter ${SG.ch + 1} of ${SAGA.length}: ${esc(nmT(C.title))}${SG.active ? ' · playing' : st ? ' · paused' : ' · not started'}`, '',
@@ -21895,7 +22573,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function sxMkAll(){ if (MK.busy) return say('Finish the chapter you’re playing first.', 2400); while (MK.ch < MKCH.length) sxMkCh(true); say('Skipped the Monkey King story. It counts as finished.', 2800); }
   function sxTdAll(){ if (inWorld && (zone === 'tidy' || zone === 'event' && EV && EV.inTdy)) return say('Get out of his house first.', 2400); tdArrest('street'); }
   phEl.addEventListener('click', e => { const b = e.target.closest('[data-sx]'); if (!b) return; e.stopPropagation(); const a = b.dataset.sx;
-    const opens = { 'saga-open': 1, 'bk-open': 1, 'cb-open': 1 };
+    const opens = { 'saga-open': 1, 'bk-open': 1, 'cb-open': 1, 'af-go': 1, 'af-pause': 1 };
+    if (a === 'af-go') { phoneClose(); return afEnter(); }
+    if (a === 'af-pause') { phoneClose(); return afPause(); }
+    if (a === 'af-skip') { phoneClose(); return afSkipCh(); }
     if (!opens[a] && SX.arm !== a) { SX.arm = a; b.textContent = 'Sure? Tap again to skip'; b.classList.add('y'); setTimeout(() => { if (SX.arm === a) SX.arm = ''; }, 4000); return; }
     SX.arm = '';
     if (a === 'saga-open') { phoneClose(); return openSaga(); }
