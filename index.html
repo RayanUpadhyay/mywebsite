@@ -8171,7 +8171,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       B.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { phoneClose(); openPanel(b.dataset.p); }); return; }
     if (t === 'camera') { B.innerHTML = '<div class="phcard"><b>Camera</b><small>Switches to third person and photo mode. Use the shutter at the bottom, change filters, and press P or Esc when you’re done.</small><div class="phrow"><button type="button" class="y" data-a="cam">Take a selfie</button></div></div>'; B.querySelector('[data-a="cam"]').onclick = () => { phoneClose(); if (!tpv) setPov(true); setTimeout(() => setPhoto(true), 200); }; return; }
   }
-  function phStep(){ phBtn.hidden = !(inWorld && (zone === 'blr' || zone === 'twr' || zone === 'lair' || zone === 'mc') && !EV && !A); if (!phBtn.hidden || !phOpen()) {} if (phOpen() && (EV || A || !inWorld)) phoneClose(); if (phOpen() && PH.tab === 'map' && PH.draw && (performance.now() | 0) % 3 === 0) PH.draw();
+  function phStep(){ phBtn.hidden = !(inWorld && ['blr', 'twr', 'lair', 'mc', 'xc', 'xin', 'apt'].includes(zone) && !EV && !A); if (!phBtn.hidden || !phOpen()) {} if (phOpen() && (EV || A || !inWorld)) phoneClose(); if (phOpen() && PH.tab === 'map' && PH.draw && (performance.now() | 0) % 3 === 0) PH.draw();
     if (PH.wp && inWorld && zone === 'blr') { const [mx, mz] = toMap(pos.x, pos.z); if (Math.hypot(PH.wp[0] - mx, PH.wp[1] - mz) < 8) { PH.wp = null; say('You’ve reached your pin.', 1600); } } }
   function phContact(o){ const who = (BIN.ppl[0] && BIN.ppl[0].who) || 'Someone', where = o.d.name; if (!PH.contacts.some(c => c.where === where)) { PH.contacts.push({ who, where }); try { localStorage.setItem('ru-contacts', JSON.stringify(PH.contacts)); } catch (e) {} } }
   // the office's hiring board: a way back to the real Rayan
@@ -15235,7 +15235,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     cyl(1.4, 1.4, 18, wht, x, 9.2, z - 2, g, 20); const n = new THREE.Mesh(new THREE.ConeGeometry(1.4, 4, 20), wht); n.position.set(x, 20.2, z - 2); g.add(n); xcSolid(x - 1.6, x + 7, z - 3.6, z - .4, 26, 'r');
     const s = new THREE.Mesh(new THREE.PlaneGeometry(10, 1.4), xcSign(`${XC.P.name.toUpperCase()} SPACE CENTRE`, '#FFFFFF', '#C8501E', 10, 1.4)); s.position.set(x, 4, z + 10); g.add(s);
     XC.acts.push({ x, z: z + 8, r: 4, label: () => 'Launch from the space centre', go: () => xcLaunch() }); }
-  function xcLaunch(){ if (AF.on) return say('Not this time. You have rent to pay.', 2400); if (typeof xpLaunch === 'function') return xpLaunch(XC.city); say(`${XC.P.name}’s space centre is fuelling up. Its two new worlds open soon.`, 3600); }
+  function xcLaunch(){ if (typeof xpLaunch === 'function') return xpLaunch(XC.city); say(`${XC.P.name}’s space centre is fuelling up. Its two new worlds open soon.`, 3600); }
   // ---------- light, weather and the time of day there ----------
   function xcLight(){ const P = XC.P, h = hourNow(), night = h >= 19 || h < 6, dusk = !night && (h >= (P.warm > .3 ? 16 : 17) || h < 7.5), wet = XC.wx && XC.wx.rain;
     const sky = new THREE.Color(night ? P.sky[2] : dusk ? P.sky[1] : P.sky[0]); if (wet) sky.lerp(new THREE.Color(0x6A7480), .5); XC.sc.background.copy(sky); XC.sc.fog.color.copy(sky);
@@ -15501,6 +15501,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function afLooks(){ (XC.bossAv || []).forEach(e => { const on = XC.city === 'bfa' && AF.s.ch >= AF_RETAKE && !(XC.s.bosses || []).includes(e.B.id) && !(EV && EV.boss && EV.boss.hero === e.B.id); e.av.g.visible = on; e.beam.visible = on; }); afCornerLook(); afVilLook(); }
   function afAfterBuild(){ AF.beam = null; AF.rally = null; AF.aBeam = null; AF.corners = []; AF.vilAv = []; afActs(); afActsDel(); afVilBuild(); afPressPlace(); afLooks(); }
+  // back from a planet launched from a city's space centre, straight back into the story
+  function afCityBack(c){ fade(() => { aptFree(); xcBuild(c); afAfterBuild(); xcWeather(); xcLight(); web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'xc'; vy = 0; falling = false; grounded = true; XC.air = false; XC.roof = 0; cityV.set(0, 0, 0);
+      const sp = XC.acts.find(a => /space centre/i.test(a.label())), at = sp ? [sp.x, sp.z + 4] : afWhere('home') || XC_LM[c].taxi; pos.set(at[0], 1.6, at[1]); xcClear(); yaw = 0; pitch = -.03;
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = xcBackLabel(); jumpBtn.hidden = fine; uiZone(); AF.key = ''; say(`Back in ${XC.P.name}.`, 2200); }, '#000000'); }
   function afPause(){ if (XC.drv) xcExitCar(); XC.ride = null; web.p = null; drawWeb(); AF.on = false; afSave(); afHud.hidden = true;
     fade(() => { travel('room'); xcFree(); AF.beam = null; say('The story waits. Pick it up again from the Story tab on your phone.', 3600); }, '#000000'); }
   // ---------- chapter 1: the fall ----------
@@ -20583,7 +20587,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       else say(BZ.ws.out && !BZ.ws.clear ? 'Back on the Moon. Keep your head down.' : 'Back on the Moon.', 2600);
     }, '#000000');
   }
-  function bzLeave(){ if (BZ.busy) return; if (XP.from) { const c = XP.from; XP.from = null; bzSave(); if (BZ.bug) bzBugOut(true); BZ.web = null; bzHudShow(false); bzMusicStop(); xcEnter(c); setTimeout(() => { if (zone !== 'mc') bzFree(); }, 2500); return; } BZ.busy = true; bzSave(); const wasMoon = BZ.P.id === 'moon'; fade(() => { if (BZ.bug) bzBugOut(true); BZ.web = null; bzHudShow(false); bzMusicStop(); bzFree(); BZ.busy = false; enterStation(true); say(wasMoon ? 'The shuttle docks with Orbital Station Kalpana.' : 'The ship brings you home to Orbital Station Kalpana.', 2600); }, '#000000'); }
+  function bzLeave(){ if (BZ.busy) return; if (XP.from) { const c = XP.from; XP.from = null; bzSave(); if (BZ.bug) bzBugOut(true); BZ.web = null; bzHudShow(false); bzMusicStop(); if (AF.on) afCityBack(c); else xcEnter(c); setTimeout(() => { if (zone !== 'mc') bzFree(); }, 2500); return; } BZ.busy = true; bzSave(); const wasMoon = BZ.P.id === 'moon'; fade(() => { if (BZ.bug) bzBugOut(true); BZ.web = null; bzHudShow(false); bzMusicStop(); bzFree(); BZ.busy = false; enterStation(true); say(wasMoon ? 'The shuttle docks with Orbital Station Kalpana.' : 'The ship brings you home to Orbital Station Kalpana.', 2600); }, '#000000'); }
   function bzFree(){
     const sc = BZ.sc; if (!sc) return; bzSave(); [viewG, me && me.g, beacon, web.line].forEach(o => { if (o && o.parent === sc) sc.remove(o); });
     const keep = new Set([propM()]); sc.traverse(o => { if (o.geometry) o.geometry.dispose(); const ms = o.material ? (Array.isArray(o.material) ? o.material : [o.material]) : []; ms.forEach(m => { if (keep.has(m)) return; if (m.map) m.map.dispose(); m.dispose(); }); });
