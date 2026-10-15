@@ -15548,13 +15548,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function afEnter(auto){
     if (A || EV) return;
     if (!(storiesDone() || AF.s.started)) return say('Finish (or skip) every story first.', 2600);
-    if (AF.s.blrLocked && !['del', 'goa', 'kblr', 'kbom', 'kalt'].includes(AF.s.act)) return say('Bangalore is behind you now. The Delhi part of the story is on its way.', 3400);
+    if (AF.s.blrLocked && !['del', 'goa', 'kblr', 'kbom', 'kalt', 'kcore'].includes(AF.s.act)) return say('Bangalore is behind you now. The Delhi part of the story is on its way.', 3400);
     if (!auto && (!inWorld || !['blr', 'xc', 'xin', 'apt'].includes(zone))) return say('Head out into the city first, then start it from your phone.', 3000);
     if (DRV.on) getOut(true); if (XC.drv) xcExitCar(); XC.ride = null;
     if (zone === 'xin' && XC.isc) { disposeDeep(XC.isc); XC.isc = null; XC.inside = null; }
-    const first = !AF.s.started; AF.s.started = 1; AF.on = true; AF.key = ''; afSave(); const city = ({ del: 'del', goa: 'goi', kbom: 'bom', kalt: 'kal' })[AF.s.act] || 'bfa';
+    const first = !AF.s.started; AF.s.started = 1; AF.on = true; AF.key = ''; afSave(); const city = ({ del: 'del', goa: 'goi', kbom: 'bom', kalt: 'kal', kcore: 'core' })[AF.s.act] || 'bfa';
     fade(() => { aptFree(); xcBuild(city); afAfterBuild(); xcWeather(); xcLight(); web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'xc'; vy = 0; falling = false; grounded = true; XC.air = false; XC.roof = 0; cityV.set(0, 0, 0);
-      const known = city === 'bfa' && AF.s.seen.flatKnown && AF.s.act !== 'kblr', sp = city === 'bfa' ? (known ? [-35, 57] : [27.5, 6]) : city === 'goi' ? [-196, 10] : city === 'bom' ? XC_LM.bom.taxi : city === 'kal' ? [27.5, 3] : (afWhere('home') || XC_LM.del.taxi); pos.set(sp[0], 1.6, sp[1]); xcClear(); yaw = city === 'bfa' && !known ? 0 : Math.atan2(sp[0], sp[1]); pitch = -.03;
+      const known = city === 'bfa' && AF.s.seen.flatKnown && AF.s.act !== 'kblr', sp = city === 'bfa' ? (known ? [-35, 57] : [27.5, 6]) : city === 'goi' ? [-196, 10] : city === 'bom' ? XC_LM.bom.taxi : city === 'kal' ? [27.5, 3] : city === 'core' ? [0, 80] : (afWhere('home') || XC_LM.del.taxi); pos.set(sp[0], 1.6, sp[1]); xcClear(); yaw = city === 'bfa' && !known ? 0 : Math.atan2(sp[0], sp[1]); pitch = -.03;
       closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = xcBackLabel(); jumpBtn.hidden = fine; uiZone();
       if (!first) say(city === 'bfa' ? 'Bangalore. What’s left of it.' : city === 'goi' ? 'Goa.' : 'Delhi.', 2600); }, '#000000');
   }
@@ -15676,6 +15676,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const crew = (n, r, name, boss) => { for (let i = 0; i < n; i++) S.add(i % 3 === 2 ? 'gangB' : 'gangA', ...spot(r, i / n * Math.PI * 2)); const b = addUnit({ hero: boss || 'gangBoss', team: 'en' }); [b.x, b.z] = spot(r + 2, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name }, b, t: 99, marks: [] }; return b; };
     S.af = { part, t: 0, n: 0, sp: 0 };
     if (afTowerSetup(part, S, crew)) return;
+    if (['xqkhb', 'xqkhg', 'xqkhm'].includes(part)) { const n = part === 'xqkhm' ? 4 : 5; for (let i = 0; i < n; i++) S.add('af_deep', ...spot(6, i)); const b = addUnit({ hero: part === 'xqkhm' ? 'af_deeph' : 'af_deep', team: 'en' }); [b.x, b.z] = spot(8, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name: part === 'xqkhm' ? 'The Deepkin herald' : 'The Deepkin' }, b, t: 99, marks: [] }; return; }
+    if (part === 'xqkruler') { const b = addUnit({ hero: 'af_ruler', team: 'en' }); [b.x, b.z] = spot(9, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name: 'The Pale Sovereign' }, b, t: 99, marks: [] }; for (let i = 0; i < 3; i++) S.add('af_deep', ...spot(6, i)); S.af.ruler = 1; S.af.shell = 3; return; }
     if (part === 'xqkward') { crew(5, 7, 'Warden Saal', 'af_warden'); S.add('af_burner', pos.x - 5, pos.z + 3); S.add('af_burner', pos.x + 5, pos.z + 3); S.af.agency = 1; S.af.pulse = 6; return; }
     if (part === 'xqkferal') { for (let i = 0; i < 6; i++) S.add('af_feral', ...spot(6, i)); const b = addUnit({ hero: 'af_feralq', team: 'en' }); [b.x, b.z] = spot(9, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name: 'The Drain Mother' }, b, t: 99, marks: [] }; return; }
     if (part === 'xqkduo') { crew(5, 6, 'the rogue bonded', 'gangBoss'); return; }
@@ -15720,6 +15722,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (part === 'xqsmog') return afDumped();
     if (part.startsWith('xqt_')) return afTrFightEnd(part, won);
     if (part === 'xqkid') return afKidAfter();
+    if (['xqkhb', 'xqkhg', 'xqkhm'].includes(part)) { if (won) { AF.s.seen[part.slice(2)] = 1; afSave(); say({ xqkhb: 'The Deepkin fall back into the hole. Mrs. Rao’s forty families cheer from behind the cordon.', xqkhg: 'The last Deepkin crumbles into crystal sand on the beach. The sea fills the crack back in.', xqkhm: 'The herald is down.' }[part], 3600); } else say('Too many. Switch (V): Dad’s Slam breaks crystal, Kiran’s Harden stops their blows.', 3200); return; }
+    if (part === 'xqkruler') { if (won) { AF.s.seen.kruler = 1; afSave(); } else say('The Sovereign throws you across the crystal. Slam the shell three times as Dad, then switch and bite as Kiran.', 3600); return; }
     if (part === 'xqkward') { if (won) { AF.s.seen.kward = 1; afSave(); say('Warden Saal goes down hard and doesn’t get up. Her Wardens drag her away into the white vans. They’ll be back.', 4000); } else say('The Wardens push you back inside. Switch (V) when one of you is hurt; Dad’s Shield (3) soaks their burners.', 3600); return; }
     if (part === 'xqkferal') { if (won) { AF.s.seen.kferalWon = 1; afSave(); } else say('The ferals drag you down into the dark water. Dad’s Stun web (2) holds them; Kiran’s Harden (5) stops the bites.', 3600); return; }
     if (part === 'xqkduo') { if (won) { AF.s.seen.kduo = 1; afSave(); say('The rogue bonded are down. Their black slides off them and lies on the ground like spilt oil, then crawls away into the drains.', 4200); } else say('Too many. Switch (V) when one of you is hurt; each of you keeps your own health.', 3200); return; }
@@ -16658,7 +16662,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       else if (v === 'goa') afKidTravel('goi'); },
       { h: afKTowerName().replace(/\b\w+/g, w => w[0] + w.slice(1).toLowerCase()), q: 'Your base. Forty families downstairs, a workshop on the top floor, the whole city out of the windows.', a: [['rest', 'Eat and sleep until morning'], ['roof', 'Take the lift to the roof'], ['goa', 'Take the night bus to Goa (the boat shed)'], ['stay', 'Back outside']] }); }
   function afKCrewPlaces(){ if (XC.city !== 'bfa' || AF.s.act !== 'kblr' || !AF.on) return; const K = afKT();
-    if (AF.s.kTower) { XC.acts.push({ x: AF_KT[0], z: AF_KT[1] + 14, r: 3.4, on: () => !AF.busy && !EV, label: () => `Go inside ${afKTowerName().replace(/\b\w+/g, w => w[0] + w.slice(1).toLowerCase())} (your base)`, go: () => afKTIn('lobby') });
+    if (AF.s.kTower) { XC.acts.push({ x: AF_KT[0], z: AF_KT[1] + 14, r: 3.4, on: () => !AF.busy && !EV && !AF.s.kSink, label: () => `Go inside ${afKTowerName().replace(/\b\w+/g, w => w[0] + w.slice(1).toLowerCase())} (your base)`, go: () => afKTIn('lobby') });
       XC.acts.push({ x: AF_KT[0], z: AF_KT[1] + 3, r: 3, roofOk: 1, on: () => XC.roof > 40, label: () => 'Take the lift back down', go: afKLift }); }
     const av = !XC.g.userData.kcAv; XC.g.userData.kcAv = 1;
     AF_KCREW.forEach(([id, name, at, desc, line]) => { if (av) try { const a = avatar(crowdLook(id.length * 13)); a.g.position.set(at[0], 0, at[1]); a.g.rotation.y = Math.atan2(AF_KT[0] - at[0], AF_KT[1] - at[1]); XC.g.add(a.g); } catch (e) {}
@@ -16835,9 +16839,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // travel, generalised: Goa, Bangalore, Mumbai (and, later, somewhere much further)
   const AF_KACT = { bfa: 'kblr', goi: 'goa', bom: 'kbom', kal: 'kalt' };
   afKidTravel = function(c){ if (EV || A || AF.busy) return; AF.busy = true;
-    say({ bfa: 'The night bus up the ghats to Bangalore. You sleep with your hood up.', goi: 'The night bus back down to the coast. The voice hums the whole way.', bom: 'The overnight train to Mumbai. Anand’s cousin is the guard; he finds you a whole bench.', kal: '' }[c] || '', 3600);
+    say({ bfa: 'The night bus up the ghats to Bangalore. You sleep with your hood up.', goi: 'The night bus back down to the coast. The voice hums the whole way.', bom: 'The overnight train to Mumbai. Anand’s cousin is the guard; he finds you a whole bench.', kal: '', core: 'You hold on to each other and step off the rim. Down, and down, and down.' }[c] || '', 3600);
     fade(() => { XC.inside = null; AF.s.act = AF_KACT[c] || 'goa'; if (c === 'bfa') AF.s.seen.kbus = 1; if (c === 'bom') AF.s.seen.kbomGo = 1; afSave(); if (XC.drv) xcExitCar(); XC.ride = null; aptFree(); xcBuild(c); afAfterBuild(); xcWeather(); xcLight(); web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'xc'; vy = 0; falling = false; grounded = true; XC.air = false; XC.roof = 0; cityV.set(0, 0, 0);
-      const h = afWhere('home'), sp = c === 'bfa' || c === 'kal' ? AF_KT_SPAWN : c === 'bom' ? XC_LM.bom.taxi : h ? [h[0], h[1] + 3] : [-196, 10]; pos.set(sp[0], 1.6, sp[1]); xcClear(); yaw = c === 'bfa' || c === 'kal' ? 0 : c === 'bom' ? Math.atan2(sp[0], sp[1]) : Math.PI; pitch = -.03; $('#worldBack').textContent = xcBackLabel(); AF.key = ''; AF.busy = false; }, '#000000'); };
+      const h = afWhere('home'), sp = c === 'core' ? [0, 80] : c === 'bfa' || c === 'kal' ? AF_KT_SPAWN : c === 'bom' ? XC_LM.bom.taxi : h ? [h[0], h[1] + 3] : [-196, 10]; pos.set(sp[0], 1.6, sp[1]); xcClear(); yaw = c === 'bfa' || c === 'kal' ? 0 : c === 'bom' ? Math.atan2(sp[0], sp[1]) : Math.PI; pitch = -.03; $('#worldBack').textContent = xcBackLabel(); AF.key = ''; AF.busy = false; }, '#000000'); };
   function afKTrips(){ if (EV || A || AF.busy) return; const a = [['goi', 'The night bus to Goa (the boat shed)']]; if (AF.s.kFree) a.push(['bom', 'The overnight train to Mumbai']); a.push(['stay', 'Not now']);
     askChoice('ktrip', v => { if (v && v !== 'stay') afKidTravel(v); }, { h: 'Anand', q: '“Where to? No meter. Never a meter.”', a }); }
   // Halcyon House: a black glass tower on the Mumbai waterfront, with a helipad on the roof
@@ -17081,6 +17085,91 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { g: 'To be continued: something is knocking from underneath', chk: () => false } ] });
   AF_SKIP[AF_CH.findIndex(C => C.id === 'khunt')] = () => { Object.assign(AF.s.seen, { kward0: 1, kward: 1, kferalWon: 1, kferal: 1, krifts: 1 }); AF.s.krf = [1, 1, 1]; afSave(); afRiftLook(); };
   afKidPlaces = (o => function(){ o(); afRiftPlaces(); })(afKidPlaces);
+  // ======================= Kiran, part 2: the finale. Underneath, and the Core =======================
+  // the Deepkin: an old civilisation inside the hollow Earth, armoured in living crystal
+  HEROES.af_deep = { name: 'Deepkin', outfit: 'af_lead', hp: 210, kind: 'melee', dmg: 8, range: 2.2, cd: .8, speed: 5, r: .5, grounded: 1 };
+  HEROES.af_deeph = { name: 'Deepkin herald', outfit: 'af_lead', hp: 1100, kind: 'boss', bk: .25, dmg: 11, range: 2.6, cd: 1, speed: 4.2, r: .7, grounded: 1 };
+  HEROES.af_ruler = { name: 'The Pale Sovereign', outfit: 'af_lead', hp: 3200, kind: 'boss', bk: .1, dmg: 14, range: 3.4, cd: 1.1, speed: 3.6, r: 1.1, grounded: 1 };
+  const afDeepBody = s => () => { const R = bdRig({ legL: .9 * s, tH: .7 * s, bw: .27 * s, legM: 0x2A3A44, torM: 0x3A4E5A, armM: 0x3A4E5A, handM: 0x2A3A44 }); bdFace(R, 0x8AA8B8, null, 0); bdEyes(R, R.head, 0x7CF2E8, .05, .02, -.15, .06);
+    const cry = R.M(0x7CF2E8, { emissive: 0x3AB8C8, emissiveIntensity: 1.1, roughness: .1, metalness: .3, transparent: true, opacity: .9 }); [[.18, .1, -.1], [-.2, .05, .05], [.05, .2, .15], [-.08, .28, -.05]].forEach(([x, y, z], i) => { const c = new THREE.Mesh(new THREE.ConeGeometry(.08 * s, .45 * s, 5), cry); c.position.set(x * s, R.sh + y * s, z * s); c.rotation.set(z * 3, i, x * 3); R.body.add(c); });
+    if (s > 1.5) { const crown = new THREE.Mesh(new THREE.TorusGeometry(.2, .03, 6, 12), cry); crown.rotation.x = Math.PI / 2; crown.position.y = .22; R.head.add(crown); } return R; };
+  BODY.af_deep = afDeepBody(1); BODY.af_deeph = afDeepBody(1.35); BODY.af_ruler = afDeepBody(2.2);
+  // the inner world: its own small sun, giant fungus forests, cities of crystal
+  XC_P.core = Object.assign({}, XC_P.bfa, { name: 'The Core', tints: [0x6A8A80, 0x6A8A80, 0x6A8A80], sky: [0x2E5A52, 0x2E5A52, 0x1E3A38], warm: 0, haze: 1, water: [], bridges: [], bosses: [], news: [], shops: [], h: () => 0, transit: { kind: 'metro', name: '', axis: 'z', at: 5000, st: [] } });
+  XC_VEH.core = [['car', 0x16181D]];
+  XC_LM.core = { res: [], taxi: [0, 90], hello: '', secrets: [],
+    build(g){ g.children.slice().forEach(o => g.remove(o)); XC.B = []; XC.grid = new Map();
+      const moss = new THREE.Mesh(new THREE.PlaneGeometry(1400, 1400), mat(0x2A4A3A, { roughness: 1 })); moss.rotation.x = -Math.PI / 2; g.add(moss);
+      const sun = new THREE.Mesh(new THREE.SphereGeometry(18, 24, 16), new THREE.MeshBasicMaterial({ color: 0xFFE8A8, fog: false })); sun.position.set(0, 260, -40); g.add(sun); const sl = new THREE.PointLight(0xFFE0A0, 1.4, 900, 1); sl.position.copy(sun.position); g.add(sl);
+      const stalk = mat(0xD8CCB0, { roughness: .9 }), cap = new THREE.MeshStandardMaterial({ color: 0x8A3A6A, emissive: 0x6A2A8A, emissiveIntensity: .35, roughness: .7 }), gill = glowM(0x7CF2E8, { emissiveIntensity: 1.4 });
+      for (let i = 0; i < 46; i++) { const a = xcHash(i, 3) * Math.PI * 2, r = 50 + xcHash(i, 5) * 170, x = Math.cos(a) * r, z = Math.sin(a) * r, h = 16 + xcHash(i, 7) * 34, w = 1.2 + xcHash(i, 9) * 1.6;
+        if (Math.hypot(x, z - 90) < 18 || Math.hypot(x, z + 120) < 40) continue; cyl(w * .7, w, h, stalk, x, h / 2, z, g, 10); const c = new THREE.Mesh(new THREE.SphereGeometry(w * 4.5, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), cap); c.position.set(x, h, z); c.scale.y = .5; g.add(c); const u = new THREE.Mesh(new THREE.CircleGeometry(w * 4.3, 16), gill); u.rotation.x = Math.PI / 2; u.position.set(x, h - .05, z); g.add(u); xcSolid(x - w, x + w, z - w, z + w, h, 'f'); }
+      // the crystal city, and the Sovereign's throne at its heart
+      const cry = new THREE.MeshStandardMaterial({ color: 0x9AF2E8, emissive: 0x3AB8C8, emissiveIntensity: .7, roughness: .05, metalness: .2, transparent: true, opacity: .88 });
+      for (let i = 0; i < 40; i++) { const a = i / 40 * Math.PI * 2 + xcHash(i, 2), r = 14 + xcHash(i, 4) * 26, x = Math.cos(a) * r, z = -120 + Math.sin(a) * r, h = 10 + xcHash(i, 6) * 40, m = new THREE.Mesh(new THREE.CylinderGeometry(0, 2.2 + xcHash(i, 8) * 2, h, 6), cry); m.position.set(x, h / 2, z); m.rotation.y = i; g.add(m); xcSolid(x - 1.6, x + 1.6, z - 1.6, z + 1.6, h, 'c'); }
+      const th = new THREE.Mesh(new THREE.CylinderGeometry(6, 9, 3, 6), cry); th.position.set(0, 1.5, -120); g.add(th); const core = new THREE.Mesh(new THREE.OctahedronGeometry(3.5, 0), glowM(0xFFFFFF, { emissiveIntensity: 2 })); core.position.set(0, 16, -120); g.add(core); AF.kCore = core;
+      XC.anim.push(t => { core.rotation.y = t * .6; core.position.y = 16 + Math.sin(t) * .8; });
+      // the way back up: a column of light where the sinkhole comes through the ceiling of the world
+      const up = new THREE.Mesh(new THREE.CylinderGeometry(4, 4, 300, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFF2C0, transparent: true, opacity: .18, depthWrite: false, side: THREE.DoubleSide, fog: false })); up.position.set(0, 150, 90); g.add(up); } };
+  // Kiran's tower, swallowed: the sinkhole where it stood
+  afKTowerBuild = (o => function(){ o(); if (XC.city !== 'bfa' || AF.s.act !== 'kblr' || !AF.s.kSink) return;
+    XC.lm.forEach(q => { if (q.isGroup && Math.abs(q.position.x - AF_KT[0]) < .1 && Math.abs(q.position.z - AF_KT[1]) < .1) q.visible = false; });
+    const gone = b => ['tw', 'c', 'kt', 'kp'].includes(b.tag) && b.x0 >= 4 && b.x1 <= 51 && b.z0 >= -51 && b.z1 <= -4; XC.B = XC.B.filter(b => !gone(b)); XC.grid.forEach((L, k) => XC.grid.set(k, L.filter(b => !gone(b))));
+    const pit = new THREE.Mesh(new THREE.CircleGeometry(15, 40), new THREE.MeshBasicMaterial({ color: 0x020203 })); pit.rotation.x = -Math.PI / 2; pit.position.set(AF_KT[0], .12, AF_KT[1]); XC.g.add(pit);
+    const rim = []; for (let i = 0; i < 40; i++) { const a = i / 40 * Math.PI * 2; rim.push([AF_KT[0] + Math.cos(a) * 15.5, .5, AF_KT[1] + Math.sin(a) * 15.5, a, 2.2, 1 + xcHash(i, 3), 1.4]); } inst(new THREE.BoxGeometry(1, 1, 1), mat(0x4A4440, { roughness: 1 }), rim, XC.g);
+    const L = new THREE.PointLight(0x7CF2E8, 2, 40, 2); L.position.set(AF_KT[0], -2, AF_KT[1]); XC.g.add(L); const glow = new THREE.Mesh(new THREE.CylinderGeometry(14, 14, 30, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0x7CF2E8, transparent: true, opacity: .12, depthWrite: false, side: THREE.DoubleSide })); glow.position.set(AF_KT[0], 15, AF_KT[1]); XC.g.add(glow);
+    xcSolid(AF_KT[0] - 11, AF_KT[0] + 11, AF_KT[1] - 11, AF_KT[1] + 11, 60, 'pit'); })(afKTowerBuild);
+  afKTIn = (o => function(fl){ if (AF.s.kSink && XC.city === 'bfa') return say('The tower is gone. There is only the hole, and the light coming up out of it.', 2800); return o(fl); })(afKTIn);
+  AF_KACT.core = 'kcore';
+  function afCorePlaces(){ if (!AF.on) return;
+    if (XC.city === 'core') { (XC.cars || []).forEach(c => { c.g.visible = false; }); XC.cars = []; (XC.peds || []).forEach(p => { p.a.g.visible = false; }); XC.peds = []; return; }
+    if (XC.city === 'bfa' && AF.s.kSink && !AF.s.seen.kseal) XC.acts.push({ x: AF_KT[0], z: AF_KT[1] + 14, r: 4, on: () => !!AF.s.seen.kmum && !AF.busy && !EV, label: () => 'Go down into the sinkhole, together', go: () => afKidTravel('core') }); }
+  async function afKCrossBack(){ AF.busy = true;
+    await cbTalk([['Dad', '(at the workshop window, a tablet full of numbers) The knocking. It isn’t here. It’s coming through the tear from your side. Bangalore. Your Bangalore.'], ['Narrator', 'On the tablet: a satellite picture of your city, a day old. Where the new tower stood, there is a hole. A perfect circle. Light coming up out of it.'], ['Kiran', 'Forty families live in that tower.'], ['Dad', 'Lived. Mrs. Rao got them out. They’re in the street. (he picks up his gauntlets) The tear’s stable now. We can cross. Both of us.'], ['Meher', 'Bring each other back. That’s all I’m asking.']]);
+    AF.s.kSink = 1; AF.s.seen.kcross = 1; afLog('Something under the Earth swallowed Kiran’s tower. Kiran and the dad crossed back through the tear together.'); afSave(); AF.busy = false; afKidTravel('bfa'); }
+  async function afKHome(){ AF.busy = true;
+    await cbTalk([['Narrator', 'Your Bangalore. The sky the right colour again. And where your tower stood, a hole you can’t see the bottom of, breathing cold air and a pale green light.'], ['Mrs. Rao', '(in a blanket in the street, forty families around her) Kiran! It just… went down. Like a lift. Everyone got out. Farooq carried my plants.'], ['Mrs. Rao', '(she sees who’s standing behind you, and her cup falls out of her hand) …you.'], ['Dad', 'Not quite. But hello, Mrs. Rao.'], ['Narrator', 'Something climbs over the rim of the sinkhole. Pale. Crystal growing out of its shoulders. Then another. Then ten.']]);
+    AF.s.seen.khome = 1; afSave(); AF.busy = false; }
+  const AF_DEF = { bfa: [AF_KT[0], AF_KT[1] + 22], goi: [-190, -20], bom: [7, 200] };
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push({ n: 'Chapter 25', t: 'Underneath', sub: 'Something is knocking from below.', id: 'kunder', steps: [
+    { g: '', go: () => afKCrossBack(), chk: () => !!AF.s.seen.kcross },
+    { g: '', go: () => { if (XC.city !== 'bfa') return afKidTravel('bfa'); afKHome(); }, chk: () => !!AF.s.seen.khome },
+    { g: 'They’re climbing out of the sinkhole. Defend Bangalore (switch with V)', at: () => AF_DEF.bfa, auto: () => { if (XC.city === 'bfa' && afNear(AF_DEF.bfa[0], AF_DEF.bfa[1], 9) && (!AF.fT || performance.now() - AF.fT > 3500)) { AF.fT = performance.now(); xcFight('xqkhb', 'The Deepkin'); } }, chk: () => !!AF.s.seen.khb },
+    { g: () => XC.city === 'goi' ? 'The beach is cracking open. Defend Goa' : 'Goa next: the radio says the beach is cracking open. Take the night bus (outside the tower)', at: () => XC.city === 'goi' ? AF_DEF.goi : [AF_KT_SPAWN[0] + 3, AF_KT_SPAWN[1] + 2], auto: () => { if (XC.city === 'goi' && afNear(AF_DEF.goi[0], AF_DEF.goi[1], 9) && (!AF.fT || performance.now() - AF.fT > 3500)) { AF.fT = performance.now(); xcFight('xqkhg', 'The Deepkin'); } }, chk: () => !!AF.s.seen.khg },
+    { g: () => XC.city === 'bom' ? 'The Deepkin are coming up under the station. Defend Mumbai' : 'Mumbai last. Back to Bangalore, then the overnight train', at: () => XC.city === 'bom' ? AF_DEF.bom : XC.city === 'goi' ? (() => { const h = afWhere('home'); return h ? [h[0], h[1] + 2.5] : null; })() : [AF_KT_SPAWN[0] - 3, AF_KT_SPAWN[1] + 2], auto: () => { if (XC.city === 'bom' && afNear(AF_DEF.bom[0], AF_DEF.bom[1], 9) && (!AF.fT || performance.now() - AF.fT > 3500)) { AF.fT = performance.now(); xcFight('xqkhm', 'The Deepkin herald'); } }, chk: () => !!AF.s.seen.khm },
+    { g: '', go: async () => { AF.busy = true; await cbTalk([['Narrator', 'The herald goes down on the platform. Before the light leaves its eyes it speaks, in a voice like stones grinding: “The Sovereign wakes. The surface was ours before it was yours.”'], ['Dad', 'Then we go and tell the Sovereign it isn’t.'], ['Kiran', 'Down the hole.'], ['Voice', 'Down the hole.']]); AF.s.seen.kmum = 1; afSave(); AF.busy = false; }, chk: () => !!AF.s.seen.kmum },
+    { g: () => XC.city === 'bfa' ? 'The sinkhole where your tower stood. Go down, together' : 'Back to Bangalore, to the sinkhole', at: () => XC.city === 'bfa' ? [AF_KT[0], AF_KT[1] + 14] : XC.city === 'bom' ? [XC_LM.bom.taxi[0] + 3, XC_LM.bom.taxi[1] - 2] : null, chk: () => XC.city === 'core' || !!AF.s.seen.kcore },
+    { g: 'To be continued', chk: () => false } ] });
+  AF_SKIP[AF_CH.findIndex(C => C.id === 'kunder')] = () => { AF.s.kSink = 1; Object.assign(AF.s.seen, { kcross: 1, khome: 1, khb: 1, khg: 1, khm: 1, kmum: 1 }); afSave(); if (XC.city !== 'core') afKidTravel('core'); };
+  // the Core: the Sovereign, who needs both of you
+  async function afKCoreArrive(){ AF.busy = true;
+    await cbTalk([['Narrator', 'You fall for a long time. Then the dark opens, and there is a sky. Underground. A small hot sun hanging in the middle of the world.'], ['Narrator', 'Forests of mushrooms taller than towers, their undersides glowing. And far off, a city of crystal, singing very quietly to itself.'], ['Dad', '(very softly) Your father would’ve loved this. I mean me. The other me. You know what I mean.'], ['Kiran', 'I know what you mean.']]);
+    AF.s.seen.kcore = 1; afSave(); AF.busy = false; }
+  async function afKSeal(){ AF.busy = true;
+    await cbTalk([['Narrator', 'The Pale Sovereign’s shell lies in pieces around the throne. At the centre of the crystal city the white heart still turns, and with every turn the ground above shakes.'], ['Dad', 'That’s the breach. It’s holding every hole open, in every city.'], ['Voice', 'We can close it. Wrap it. Hold it still. It will take a little of us to do it.'], ['Kiran', 'How much is a little?'], ['Voice', 'Enough to remember. Not enough to forget.']]);
+    for (let k = 0; k < 3; k++) { canvas.style.filter = reduce ? '' : 'brightness(1.5) saturate(.6)'; tone(200 + k * 120, .8, 'sine', .05, 80); await afWait(500); canvas.style.filter = ''; await afWait(400); }
+    await cbTalk([['Narrator', 'Black pours out of your hands and wraps the heart, and Dad’s gauntlets lock round the black, and the turning stops.'], ['Narrator', 'Far above, under Bangalore and Goa and Mumbai, the ground goes quiet.']]);
+    AF.s.seen.kseal = 1; afSave();
+    const v = await new Promise(r => askChoice('kfinal', r, { h: 'After', q: 'The breach is sealed. The tear will stay open a little longer. Where do you go?', a: [['stay', 'Stay. This is your world: the tower, the forty families, Goa'], ['go', 'Go back with him. Meher, the gap at the table, the other Bangalore']] }));
+    AF.s.kEnd = v; AF.s.kSink = 0; afSave();
+    if (v === 'stay') await cbTalk([['Kiran', 'I have to stay. Somebody has to rebuild the tower. Again.'], ['Dad', '(a long time) He’d be proud of you. I am.'], ['Kiran', 'Tell Mum I’ll visit. The tear owes me.'], ['Narrator', 'He hugs you like he’s been saving it for seventeen years. Then he walks into the light, and it closes behind him, almost all the way.']]);
+    else await cbTalk([['Kiran', 'Mrs. Rao will rebuild it. She’s got forty families and a deed. I’ve got a mum I’ve never met properly.'], ['Dad', '(grinning, for the first time) Then let’s go home.'], ['Narrator', 'You look back once, the way you looked back once on a beach, a long time ago. Then you follow him into the light.']]);
+    await cbCard('The End', 'We remember him', v === 'stay' ? 'Kiran stayed.' : 'Kiran went home.');
+    afLog(v === 'stay' ? 'Kiran and the dad sealed the breach at the core. Kiran stayed in their own world.' : 'Kiran and the dad sealed the breach at the core. Kiran went back with him to the other Earth.'); AF.busy = false; afKidTravel(v === 'stay' ? 'bfa' : 'kal'); }
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push({ n: 'Chapter 26', t: 'The Core', sub: 'The world has a heart. It is waking up.', id: 'kcore', steps: [
+    { g: '', go: () => { if (XC.city !== 'core') return afKidTravel('core'); afKCoreArrive(); }, chk: () => !!AF.s.seen.kcore },
+    { g: 'The crystal city. The Pale Sovereign waits on its throne. Dad’s Slam cracks the shell; only Kiran’s black can hurt what’s inside', at: () => [0, -100], auto: () => { if (XC.city === 'core' && afNear(0, -100, 9) && (!AF.fT || performance.now() - AF.fT > 3500)) { AF.fT = performance.now(); xcFight('xqkruler', 'The Pale Sovereign'); } }, chk: () => !!AF.s.seen.kruler },
+    { g: '', go: () => afKSeal(), chk: () => !!AF.s.kEnd },
+    { g: () => AF.s.kEnd === 'go' ? 'The end. Live a little on the other Earth (switch with V)' : 'The end. The forty families are already rebuilding', chk: () => false } ] });
+  AF_SKIP[AF_CH.findIndex(C => C.id === 'kcore')] = () => { Object.assign(AF.s.seen, { kcore: 1, kruler: 1, kseal: 1 }); AF.s.kEnd = AF.s.kEnd || 'stay'; AF.s.kSink = 0; afSave(); afKidTravel(AF.s.kEnd === 'go' ? 'kal' : 'bfa'); };
+  // the Sovereign: a crystal shell only Dad's Slam can crack (three times), then a core only Kiran's black can bite
+  afFightStep = (o => function(dt){ const S = EV && EV.st, F = S && S.af; if (!F || !F.ruler || EV.over) return o(dt); F.t += dt; const b = EV.boss; if (!b) return;
+    if (F.shell > 0) { b.hp = Math.max(b.hp, b.max * .85); if (AF.lastAb && AF.lastAb[0] === 'dslam' && AF.lastAb[1] !== F.lastSlam && Math.hypot(b.x - pos.x, b.z - pos.z) < 5.5) { F.lastSlam = AF.lastAb[1]; F.shell--; tone(300 - F.shell * 60, .4, 'square', .06, 90); say(F.shell ? `The shell cracks. (${3 - F.shell} of 3)` : 'The shell shatters! Now switch to Kiran (V): only the black can bite what’s inside.', 3200); } if (!F.tShell && F.t > 3) { F.tShell = 1; say('Your hits slide off its shell. Dad’s Slam (1), up close, can crack it.', 3200); } }
+    else { if (afDadOn()) { if (F.floor === undefined || b.hp < F.floor) b.hp = F.floor === undefined ? b.hp : F.floor; F.floor = b.hp; if (!F.tDad) { F.tDad = 1; say('The light inside heals every gauntlet blow. Only Kiran’s black can hurt it.', 3000); } } else F.floor = undefined; }
+    if ((F.sp = (F.sp || 0) - dt) <= 0 && EV.units.filter(u => u.team === 'en' && u.hp > 0).length < 4) { F.sp = 6; for (let k = 0; k < 2; k++) { const a = Math.random() * Math.PI * 2, x = pos.x + Math.cos(a) * 9, z = pos.z + Math.sin(a) * 9; S.add('af_deep', evValid(x, z) ? x : pos.x + 2, evValid(x, z) ? z : pos.z + 2); } } })(afFightStep);
+  afKidPlaces = (o => function(){ o(); afCorePlaces(); })(afKidPlaces);
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
