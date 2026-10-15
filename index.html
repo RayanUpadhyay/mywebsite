@@ -16560,6 +16560,77 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { g: 'To be continued: Kiran’s Bangalore', chk: () => false } ] });
   AF_SKIP[AF_CH.findIndex(C => C.id === 'kblr')] = () => { Object.assign(AF.s.seen, { kbus: 1, karr: 1, ksense: 1, kpat: 1, krao: 1 }); if (XC.city !== 'bfa') afKidTravel('bfa'); else { AF.s.act = 'kblr'; afSave(); } };
   afKidPlaces = (o => function(){ o(); afKBlrPlaces(); })(afKidPlaces);
+  // ======================= Kiran, part 2: the new tower =======================
+  const AF_KCREW = [['farooq', 'Farooq', [-48.7, 40], 'A welder. Grew up on the ninth floor of the old tower.', ['Farooq', 'Your father carried my mother down nine flights the night it burned. I was eleven. I’ll weld for you for free, as long as I live.']],
+    ['lakshmi', 'Lakshmi', [61.3, -20], 'An architect. Her family had flat 14C.', ['Lakshmi', 'I’ve been drawing that tower since I was fourteen. Every version. (she unrolls a tube of plans) This one. With proper fire stairs.']],
+    ['anand', 'Anand', [-103.7, -30], 'Runs the auto stand. Knows every truck driver in the city.', ['Anand', 'Concrete, sand, trucks at night past the checkpoints? Leave that to the autowallahs. Halcyon never looks at us.']]];
+  const afKT = () => AF.s.kt || (AF.s.kt = { steel: 0, power: 0, crew: [] });
+  function afKTowerName(){ return { meher: 'MEHER HEIGHTS', boat: 'THE BOATMAN’S TOWER', forty: 'FORTY FAMILIES TOWER' }[AF.s.ktName] || 'THE NEW TOWER'; }
+  function afKTowerBuild(){ if (XC.city !== 'bfa' || AF.s.act !== 'kblr' || !AF.s.kTower) return;
+    // the ruin, its fire and its cordon go; the new tower stands in their place
+    XC.lm.forEach(o => { if (o.isGroup && Math.abs(o.position.x - AF_KT[0]) < .1 && Math.abs(o.position.z - AF_KT[1]) < .1) o.visible = false; });
+    XC.g.children.forEach(o => { if (!o.isInstancedMesh) return; const p = o.geometry.parameters || {}; if ((p.width === 2.4 && p.depth === .25) || (p.width === 2.5 && p.depth === .27) || (o.count === 70 && p.width === 1)) o.visible = false; });
+    XC.g.children.forEach(o => { if (o.isMesh && !o.isInstancedMesh && o.material && o.material.color && o.material.color.getHex() === 0xF2C230 && o.position.x > 4 && o.position.x < 51 && o.position.z > -51 && o.position.z < -4 && o.position.y > 1 && o.position.y < 1.1) o.visible = false; });
+    const gone = b => (b.tag === 'tw' || b.tag === 'c') && b.x0 >= 4 && b.x1 <= 51 && b.z0 >= -51 && b.z1 <= -4; XC.B = XC.B.filter(b => !gone(b)); XC.grid.forEach((L, k) => XC.grid.set(k, L.filter(b => !gone(b))));
+    const T = new THREE.Group(); T.position.set(AF_KT[0], 0, AF_KT[1]); XC.g.add(T); XC.lm.push(T);
+    const conc = mat(0xD8D4CC, { roughness: .8 }), glass = new THREE.MeshStandardMaterial({ color: 0x1A2A3A, roughness: .15, metalness: .6 }), lit = new THREE.MeshStandardMaterial({ color: 0x2A3440, emissive: 0xFFD08A, emissiveIntensity: .5, roughness: .3 }), goo = afGoo();
+    box(24, 3, 24, conc, 0, 1.5, 0, T); box(18, 44, 18, glass, 0, 25, 0, T);
+    const bands = [], wins = []; for (let f = 1; f < 15; f++) { bands.push([0, 3 + f * 3, 0, 0, 18.4, .35, 18.4]); for (let k = 0; k < 4; k++) if (xcHash(f, k) > .35) wins.push([[-5, 0, 9.25], [5, 0, -9.25], [9.25, 0, 4], [-9.25, 0, -4]][k].map((v, i) => i === 1 ? 4.6 + f * 3 : v)); }
+    inst(new THREE.BoxGeometry(1, 1, 1), conc, bands, T); inst(new THREE.BoxGeometry(3.4, 1.8, .3), lit, wins, T);
+    [[-9, -9], [9, -9], [-9, 9], [9, 9]].forEach(([x, z]) => box(1.2, 46, 1.2, conc, x, 24, z, T));
+    // the crown: a ring that glows at night, and a black sculpture the residents call "the tide"
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(7, .35, 8, 40), glowM(0xFFC93C, { emissiveIntensity: 1.2 })); ring.rotation.x = Math.PI / 2; ring.position.y = 47.6; T.add(ring);
+    box(18.4, .6, 18.4, conc, 0, 47.2, 0, T); for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2, s = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([V(0, 47.5, 0), V(Math.cos(a) * 2.5, 50, Math.sin(a) * 2.5), V(Math.cos(a + .6) * 1.2, 53, Math.sin(a + .6) * 1.2)]), 16, .22, 6), goo); T.add(s); }
+    const sg = new THREE.Mesh(new THREE.PlaneGeometry(12, 1.6), xcSign(afKTowerName(), '#FFFFFF', '#16181D', 12, 1.6)); sg.position.set(0, 4.4, 12.05); T.add(sg);
+    box(4, 3, .3, mat(0x3A3D44, { metalness: .5 }), 0, 4.5, 9.1, T);
+    XC.anim.push(() => { ring.material.emissiveIntensity = XC.night ? 2.4 : .6; lit.emissiveIntensity = XC.night ? 1.4 : .35; });
+    xcSolid(AF_KT[0] - 9.3, AF_KT[0] + 9.3, AF_KT[1] - 9.3, AF_KT[1] + 9.3, 47.5, 'kt'); xcSolid(AF_KT[0] - 12, AF_KT[0] + 12, AF_KT[1] - 12, AF_KT[1] + 12, 3, 'kp');
+    // the residents moved back in: a few of them out front
+    [[-5, 14], [4, 15], [8, 13.5]].forEach(([x, z], i) => { try { const a = avatar(crowdLook(140 + i)); a.g.position.set(AF_KT[0] + x, 0, AF_KT[1] + z); a.g.rotation.y = i; XC.g.add(a.g); } catch (e) {} }); }
+  function afKBaseMenu(){ if (EV || A || AF.busy) return;
+    askChoice('kbase', v => { if (v === 'rest') { AF.s.symb.hunger = 0; afSave(); fade(() => { try { skipTo(7); } catch (e) {} }, '#000000'); say('A hot meal from Farooq’s wife, eight hours on a real mattress. The voice is quiet all night. (Hunger reset; it’s morning.)', 4200); }
+      else if (v === 'roof') fade(() => { pos.set(AF_KT[0], 47.5 + 1.6, AF_KT[1] + 3); XC.roof = 47.5; vy = 0; yaw = 0; }, '#000000');
+      else if (v === 'goa') afKidTravel('goi'); },
+      { h: afKTowerName().replace(/\b\w+/g, w => w[0] + w.slice(1).toLowerCase()), q: 'Your base. Forty families downstairs, a workshop on the top floor, the whole city out of the windows.', a: [['rest', 'Eat and sleep until morning'], ['roof', 'Take the lift to the roof'], ['goa', 'Take the night bus to Goa (the boat shed)'], ['stay', 'Back outside']] }); }
+  function afKCrewPlaces(){ if (XC.city !== 'bfa' || AF.s.act !== 'kblr' || !AF.on) return; const K = afKT();
+    if (AF.s.kTower) { XC.acts.push({ x: AF_KT[0], z: AF_KT[1] + 14, r: 3.4, on: () => !AF.busy && !EV, label: () => `Go inside ${afKTowerName().replace(/\b\w+/g, w => w[0] + w.slice(1).toLowerCase())} (your base)`, go: afKBaseMenu });
+      XC.acts.push({ x: AF_KT[0], z: AF_KT[1] + 3, r: 3, roofOk: 1, on: () => XC.roof > 40, label: () => 'Take the lift back down', go: () => fade(() => { XC.roof = 0; pos.set(AF_KT[0], 1.6, AF_KT[1] + 15); vy = 0; yaw = 0; }, '#000000') }); }
+    const av = !XC.g.userData.kcAv; XC.g.userData.kcAv = 1;
+    AF_KCREW.forEach(([id, name, at, desc, line]) => { if (av) try { const a = avatar(crowdLook(id.length * 13)); a.g.position.set(at[0], 0, at[1]); a.g.rotation.y = Math.atan2(AF_KT[0] - at[0], AF_KT[1] - at[1]); XC.g.add(a.g); } catch (e) {}
+      XC.acts.push({ x: at[0], z: at[1], r: 3, on: () => !!AF.s.seen.kplan && !AF.busy, label: () => K.crew.includes(id) ? `Talk to ${name}` : `Ask ${name} to help build the tower`, go: () => { if (K.crew.includes(id)) return say(`${name}: “Whenever you’re ready, we’re ready.”`, 2600); AF.busy = true; cbTalk([['Narrator', desc], line, ['Kiran', 'Thank you.']]).then(() => { K.crew.push(id); afSave(); AF.busy = false; say(`${name} is on the crew (${K.crew.length} of 3).`, 2600); }); } }); });
+    // the steel: tear the burnt frame down with your tendrils
+    XC.acts.push({ x: AF_KT[0], z: AF_KT[1] + 12, r: 3.4, on: () => !!AF.s.seen.kplan && !K.steel && !AF.s.kTower && !AF.busy, label: () => 'Tear down the burnt frame with your tendrils (Grab)', go: afKSteel });
+    // the power: a generator in Halcyon's depot
+    XC.acts.push({ x: 137.5, z: 113.5, r: 4.5, on: () => !!AF.s.seen.kplan && !K.power && !AF.busy, label: () => afK().blend ? 'Walk into Halcyon’s depot like you work there' : 'Halcyon’s depot: guards on the gate (Blend in first, 2, or go in fighting)', go: () => { if (afK().blend) afKPower(); else xcFight('xqkdepot', 'Halcyon’s depot'); } }); }
+  async function afKSteel(){ AF.busy = true; const K = afKT(); afK().used.grab = 1;
+    for (const [m, f] of [['Black ropes pour out of your arms and wrap round the first column. You pull.', 110], ['It groans, leans, and comes down in a long slow roar of dust. The voice laughs, delighted.', 70], ['Column after column. By evening, the ruin is a neat stack of steel, and half the street has come out to watch.', 140]]) { say(m, 2600); tone(f, .6, 'sawtooth', .05, f * .6); await afWait(2700); }
+    K.steel = 1; afSave(); AF.busy = false; say(`Steel: done. ${afKNeeds()}`, 3400); }
+  async function afKPower(){ AF.busy = true; const K = afKT();
+    await cbTalk([['Narrator', 'Hoodie, lanyard, a clipboard you took off a bench. You walk through the gate. Nobody looks at you twice.'], ['Narrator', 'In the yard: a trailer generator, Halcyon grey. You hitch it to a depot truck and drive it out of the front gate.'], ['Voice', 'The guard waved.'], ['Kiran', 'People wave at clipboards.']]);
+    K.power = 1; afSave(); AF.busy = false; say(`Power: done. ${afKNeeds()}`, 3400); }
+  function afKNeeds(){ const K = afKT(), n = []; if (!K.steel) n.push('steel from the ruin'); if (!K.power) n.push('a generator from Halcyon’s depot'); if (K.crew.length < 3) n.push(`a crew (${K.crew.length} of 3)`); return n.length ? 'Still needed: ' + n.join(', ') + '.' : 'Everything’s ready. Go back to the tower site.'; }
+  async function afKPlan(){ AF.busy = true;
+    await cbTalk([['Mrs. Rao', 'Forty families signed that deed. Half of them are still in this city, renting in Peenya, sleeping in their cousins’ houses.'], ['Mrs. Rao', 'You need three things. Steel. Power, because the grid in this city belongs to Halcyon now. And people who know how.'], ['Kiran', 'The steel’s already standing there. It’s just burnt.'], ['Voice', 'We can pull it down. We are very strong.'], ['Mrs. Rao', 'Farooq the welder. Lakshmi, who draws buildings. Anand from the auto stand. Start with them.']]);
+    AF.s.seen.kplan = 1; afSave(); AF.busy = false; }
+  async function afKRaise(){ AF.busy = true;
+    const v = await new Promise(r => askChoice('ktname', r, { h: 'The name', q: 'Lakshmi wants a name for the sign over the door. What do you call it?', a: [['meher', '“Meher Heights”, for your mother'], ['boat', '“The Boatman’s Tower”, for him'], ['forty', '“Forty Families Tower”, for the people who kept the deed']] }));
+    AF.s.ktName = v; afSave();
+    for (const [a, b, c] of [['Week one', 'The frame comes down', 'Farooq cuts the last of the burnt steel into clean lengths.'], ['Week three', 'Steel goes up', 'At night, so the drones only see trucks full of “vegetables”.'], ['Month two', 'Forty families', 'Everyone who can lift something, lifts something.'], ['Month four', 'Lights', 'The generator coughs, catches, and every window comes on at once.']]) await cbCard(a, b, c);
+    await cbTalk([['Mrs. Rao', '(at the door, the deed framed behind glass in the lobby) Halcyon sent a lawyer. I showed him the deed. He went away.'], ['Voice', 'They will send more than lawyers.'], ['Kiran', 'Let them. We’re home.']]);
+    AF.s.kTower = 1; AF.s.seen.kraise = 1; afLog(`Kiran and forty families built a new tower on the old site: ${afKTowerName()}. It’s Kiran’s base now.`); afSave();
+    fade(() => { afKTowerBuild(); afKCrewRefresh(); }, '#000000'); AF.busy = false; }
+  function afKCrewRefresh(){ XC.acts = XC.acts.filter(a => !a.kc); const n = XC.acts.length; afKCrewPlaces(); XC.acts.slice(n).forEach(a => { a.kc = 1; }); }
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push({ n: 'Chapter 18', t: 'The New Tower', sub: 'Forty families and one deed.', id: 'ktower', steps: [
+    { g: 'Mrs. Rao wants to talk about the deed. Sai Krupa Apartments', at: () => [-35, 58], auto: () => { if (afNear(-35, 59, 5)) afKPlan(); }, chk: () => !!AF.s.seen.kplan },
+    { g: () => `Gather what the tower needs: steel from the ruin ${afKT().steel ? '✓' : '○'}, a generator from Halcyon’s depot ${afKT().power ? '✓' : '○'}, a crew of three ${afKT().crew.length >= 3 ? '✓' : afKT().crew.length + '/3'} (Farooq, Lakshmi, Anand)`,
+      at: () => { const K = afKT(); if (!K.steel) return [AF_KT[0], AF_KT[1] + 12]; if (!K.power) return [137.5, 113.5]; const c = AF_KCREW.find(c => !K.crew.includes(c[0])); return c ? c[2] : null; },
+      chk: () => { const K = afKT(); return !!(K.steel && K.power && K.crew.length >= 3); } },
+    { g: 'Everything’s ready. Go back to the tower site and raise the new tower', at: () => [AF_KT[0], AF_KT[1] + 13], auto: () => { if (afNear(AF_KT[0], AF_KT[1] + 13, 4) && !AF.s.kTower) afKRaise(); }, chk: () => !!AF.s.kTower },
+    { g: 'Your new base. Go inside (the door under the sign)', at: () => [AF_KT[0], AF_KT[1] + 14], auto: () => { if (afNear(AF_KT[0], AF_KT[1] + 14, 3.4) && !AF.s.seen.kbase) { AF.s.seen.kbase = 1; afSave(); AF.busy = true; cbTalk([['Narrator', 'The top floor is still bare concrete. Farooq has welded you a workbench out of the old tower’s steel. Lakshmi has pinned her plans to the wall.'], ['Narrator', 'Someone has put a chair by the window, facing the city. On the seat: an old cricket bat, a turtle-shell keyring from Goa, and a photo of a man you never got to know.'], ['Voice', 'He would have liked it here.'], ['Kiran', 'He did. Before.']]).then(() => { AF.busy = false; say('This is your base now: rest, the roof, and the night bus to Goa are all inside.', 4200); }); } }, chk: () => !!AF.s.seen.kbase },
+    { g: 'To be continued: Halcyon still runs the rest of Bangalore', chk: () => false } ] });
+  AF_SKIP[AF_CH.findIndex(C => C.id === 'ktower')] = () => { const K = afKT(); Object.assign(K, { steel: 1, power: 1, crew: ['farooq', 'lakshmi', 'anand'] }); AF.s.ktName = AF.s.ktName || 'forty'; AF.s.kTower = 1; Object.assign(AF.s.seen, { kplan: 1, kraise: 1, kbase: 1 }); afSave(); if (XC.city !== 'bfa') afKidTravel('bfa'); else fade(() => { afKTowerBuild(); afKCrewRefresh(); }, '#000000'); };
+  afKidPlaces = (o => function(){ o(); afKTowerBuild(); const n = XC.acts.length; afKCrewPlaces(); XC.acts.slice(n).forEach(a => { a.kc = 1; }); })(afKidPlaces);
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
