@@ -15676,6 +15676,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const crew = (n, r, name, boss) => { for (let i = 0; i < n; i++) S.add(i % 3 === 2 ? 'gangB' : 'gangA', ...spot(r, i / n * Math.PI * 2)); const b = addUnit({ hero: boss || 'gangBoss', team: 'en' }); [b.x, b.z] = spot(r + 2, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name }, b, t: 99, marks: [] }; return b; };
     S.af = { part, t: 0, n: 0, sp: 0 };
     if (afTowerSetup(part, S, crew)) return;
+    if (part === 'xqkward') { crew(5, 7, 'Warden Saal', 'af_warden'); S.add('af_burner', pos.x - 5, pos.z + 3); S.add('af_burner', pos.x + 5, pos.z + 3); S.af.agency = 1; S.af.pulse = 6; return; }
+    if (part === 'xqkferal') { for (let i = 0; i < 6; i++) S.add('af_feral', ...spot(6, i)); const b = addUnit({ hero: 'af_feralq', team: 'en' }); [b.x, b.z] = spot(9, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name: 'The Drain Mother' }, b, t: 99, marks: [] }; return; }
     if (part === 'xqkduo') { crew(5, 6, 'the rogue bonded', 'gangBoss'); return; }
     if (part === 'xqkswarm') { crew(5, 6, 'Protocol Omega', 'af_burner'); S.af.swarm = 1; return; }
     if (part === 'xqkhq') { crew(4, 6, 'Halcyon House security', 'af_agent'); S.add('af_burner', pos.x + 5, pos.z - 3); S.af.agency = 1; S.af.pulse = 7; return; }
@@ -15718,6 +15720,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (part === 'xqsmog') return afDumped();
     if (part.startsWith('xqt_')) return afTrFightEnd(part, won);
     if (part === 'xqkid') return afKidAfter();
+    if (part === 'xqkward') { if (won) { AF.s.seen.kward = 1; afSave(); say('Warden Saal goes down hard and doesn’t get up. Her Wardens drag her away into the white vans. They’ll be back.', 4000); } else say('The Wardens push you back inside. Switch (V) when one of you is hurt; Dad’s Shield (3) soaks their burners.', 3600); return; }
+    if (part === 'xqkferal') { if (won) { AF.s.seen.kferalWon = 1; afSave(); } else say('The ferals drag you down into the dark water. Dad’s Stun web (2) holds them; Kiran’s Harden (5) stops the bites.', 3600); return; }
     if (part === 'xqkduo') { if (won) { AF.s.seen.kduo = 1; afSave(); say('The rogue bonded are down. Their black slides off them and lies on the ground like spilt oil, then crawls away into the drains.', 4200); } else say('Too many. Switch (V) when one of you is hurt; each of you keeps your own health.', 3200); return; }
     if (part === 'xqkswarm') { AF.s.seen.kswarm = 1; afSave(); return; }
     if (part === 'xqkhq') { if (won) { AF.s.seen.khqIn = 1; afSave(); say('Security is down. You take the lift to floor thirty, then go out a window. The rest is up the glass.', 3600); } else say('They throw you back out on the street. Blend in (2) next time.', 3000); return; }
@@ -17033,6 +17037,50 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     afLog('Kiran found an unbonded girl hiding in Malleshwaram. Not everyone here chose the bond.'); AF.busy = false; }
   AF_SKIP[AF_CH.findIndex(C => C.id === 'kduo')] = () => { AF.s.duo = 1; AF.s.as = AF.s.as || 'kid'; afPl(); Object.assign(AF.s.seen, { kswapDad: 1, kslab: 1, ksense2: 1, kduo: 1 }); afSave(); if (AF.kSlab) AF.kSlab.visible = false; if (AF.kTrapped) AF.kTrapped.g.visible = false; };
   afKidPlaces = (o => function(){ o(); afDuoPlaces(); })(afKidPlaces);
+  // ======================= Kiran, part 2: things that hunt on the other Earth =======================
+  // the Wardens (this world's agency, enforcing the bond), feral symbiotes that never bonded, and the tear coming apart
+  HEROES.af_warden = { name: 'Warden Saal', outfit: 'af_lead', hp: 1300, kind: 'boss', bk: .25, dmg: 11, range: 2.5, cd: 1, speed: 4.6, r: .6, grounded: 1 };
+  BODY.af_warden = () => { const R = bdRig({ legL: .92, tH: .66, bw: .28, legM: 0xE8E4DC, torM: 0xF2EEE6, armM: 0xF2EEE6, handM: 0x050507 }); bdFace(R, 0x8A5A3A, 'short', 0x16181D); const goo = R.M(0x050507, { roughness: .15, metalness: .6 }); R.add(new THREE.BoxGeometry(.5, .14, .32), goo, 0, R.sh - .05, 0); R.add(new THREE.BoxGeometry(.08, .5, .02), goo, 0, R.sh - .35, -.2); return R; };
+  HEROES.af_feral = { name: 'Feral symbiote', outfit: 'af_suit', hp: 170, kind: 'melee', dmg: 7, range: 2.1, cd: .75, speed: 5.8, r: .5, grounded: 1 };
+  HEROES.af_feralq = { name: 'The Drain Mother', outfit: 'af_suit', hp: 1500, kind: 'boss', bk: .3, dmg: 12, range: 3, cd: 1.1, speed: 3.8, r: .9, grounded: 1 };
+  const afFeralBody = big => () => { const s = big ? 1.6 : 1, R = bdRig({ legL: .45 * s, tH: .8 * s, bw: .42 * s, bd: .36 * s, armL: .8 * s, legM: 0x050507, torM: 0x050507, armM: 0x050507, handM: 0x050507, footM: 0x050507 }); const goo = R.M(0x050507, { roughness: .1, metalness: .7 });
+    for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2, b = V(Math.cos(a) * .3 * s, R.sh - .2 * s, Math.sin(a) * .3 * s), e = b.clone().add(V(Math.cos(a) * .7 * s, (Math.random() - .3) * .6 * s, Math.sin(a) * .7 * s)); R.body.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([b, b.clone().lerp(e, .5).add(V(0, .25 * s, 0)), e]), 10, .05 * s, 5), goo)); }
+    R.add(new THREE.SphereGeometry(.2 * s, 12, 10), goo, 0, 0, 0, R.head); bdEyes(R, R.head, 0xF2F2F2, .06, .03, -.17 * s, .07); return R; };
+  BODY.af_feral = afFeralBody(0); BODY.af_feralq = afFeralBody(1);
+  // the rifts: three tears in the street, and the big one in the sky they came through
+  const AF_RIFTS = [[110, 60], [-110, -60], [-55, 140]];
+  const afRf = () => AF.s.krf || (AF.s.krf = [0, 0, 0]);
+  function afRiftPlaces(){ if (XC.city !== 'kal' || !AF.on) return; AF.kRiftM = [];
+    if (AF.s.seen.kward0 && !AF.s.seen.krifts) { const sky = new THREE.Mesh(new THREE.PlaneGeometry(90, 46), new THREE.MeshBasicMaterial({ map: tearTex(), transparent: true, opacity: .85, depthWrite: false, side: THREE.DoubleSide, fog: false })); sky.position.set(0, 140, -160); XC.g.add(sky); AF.kSkyTear = sky; }
+    AF_RIFTS.forEach(([x, z], i) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(4, 7), new THREE.MeshBasicMaterial({ map: tearTex(), transparent: true, depthWrite: false, side: THREE.DoubleSide })); m.position.set(x, 3.6, z); XC.g.add(m); const L = new THREE.PointLight(0xB86AFF, 1.2, 14, 2); L.position.set(x, 3, z); XC.g.add(L); m.visible = L.visible = !!AF.s.seen.kferal && !afRf()[i]; XC.anim.push(t => { m.rotation.y = t * .4 + i; m.scale.set(1 + Math.sin(t * 3 + i) * .08, 1 + Math.sin(t * 2.3 + i) * .1, 1); }); AF.kRiftM.push([m, L]); }); }
+  function afRiftLook(){ (AF.kRiftM || []).forEach(([m, L], i) => { m.visible = L.visible = !!AF.s.seen.kferal && !afRf()[i]; }); if (AF.kSkyTear) AF.kSkyTear.visible = !AF.s.seen.krifts; }
+  const afRiftNear = () => AF_RIFTS.findIndex(([x, z], i) => !afRf()[i] && afNear(x, z, 6));
+  // closing a rift takes both of you: Dad's scan reads its shape, then Kiran's tendrils pull it shut
+  afDadAbility = (o => function(k){ o(k); if (k === 'scan' && afDadOn()) { const i = afRiftNear(); if (i >= 0 && AF.s.seen.kferal) { AF.dScan = [i, performance.now()]; say('The visor reads the rift: a shape like a torn seam, folding and refolding. Quick, switch to Kiran (V) and grab it shut.', 4200); } } })(afDadAbility);
+  afAbility = (o => function(k){ const i = AF.on && XC.city === 'kal' && !EV && k === 'grab' ? afRiftNear() : -1;
+    if (i >= 0 && AF.s.seen.kferal) { if (AF.dScan && AF.dScan[0] === i && performance.now() - AF.dScan[1] < 25000) { afRf()[i] = 1; AF.dScan = null; afK().used.grab = 1; afSave(); afRiftLook(); tone(900, .8, 'sine', .05, 120); const n = afRf().filter(Boolean).length; say(n < 3 ? `Your tendrils sink into the seam and pull. It closes like a mouth. (${n} of 3)` : 'The last rift closes. Up in the sky, the big tear shivers.', 3600); }
+      else say('Your tendrils slide straight through it. It keeps changing shape. Dad’s visor could read it: switch (V) and Scan first.', 3600); return; }
+    return o(k); })(afAbility);
+  async function afWardens(){ AF.busy = true;
+    await cbTalk([['Narrator', 'Morning. Over the city, the sky splits open again: the tear you came through, wider now, crawling at the edges.'], ['Narrator', 'And at the tower door: people in white, with black at their collars, standing very still. A woman at the front with silver in her hair.'], ['Warden Saal', 'The scout came home with an opinion. That has never happened before. It is not permitted.'], ['Warden Saal', 'Kiran will come to the Pool and be joined properly. All of them. One voice, like everyone else.'], ['Dad', '(stepping in front of you) No.'], ['Warden Saal', 'Then we will take them. And the tear will take the rest of the city, while you are busy arguing with me.']]);
+    AF.s.seen.kward0 = 1; afSave(); AF.busy = false; fade(() => afRiftPlaces(), '#000000'); }
+  async function afFeralTalk(){ AF.busy = true;
+    await cbTalk([['Dad', '(wiping black off his visor) The Wardens never tell anyone about the ferals. Symbiotes that never found a host. They live in the drains and they eat light.'], ['Voice', '(very quiet) They are what we would be. Without you.'], ['Narrator', 'Behind them, in the street, the air tears open like paper: one rift, then another, then a third, all pouring a violet light.'], ['Dad', 'The big tear is pulling smaller ones open. My visor can read them. Your black can close them. Neither of us can do both.']]);
+    AF.s.seen.kferal = 1; afSave(); afRiftLook(); AF.busy = false; }
+  async function afRiftsDone(){ AF.busy = true; AF.s.seen.krifts = 1; afSave(); afRiftLook();
+    await cbTalk([['Narrator', 'The last rift seals. The tear in the sky stops crawling, and holds.'], ['Meher', '(on the tower roof, a hand on each of your shoulders) That’s my family.'], ['Narrator', 'Then, under your feet, very far down, something knocks. Three times. Slow. Like someone at a door.'], ['Voice', '(frightened, for the first time ever) …that is not from this world. Or yours.'], ['Dad', 'That came from underneath.']]);
+    afLog('Kiran and the dad beat the Wardens, the ferals and the rifts. Then something knocked from deep underground.'); AF.busy = false; }
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push({ n: 'Chapter 24', t: 'Things That Hunt', sub: 'Every world has its own monsters.', id: 'khunt', steps: [
+    { g: '', go: () => afWardens(), chk: () => !!AF.s.seen.kward0 },
+    { g: 'The Wardens are at the tower door. They want Kiran. Hold the door', at: () => [AF_KT[0], AF_KT[1] + 14], auto: () => { if (afNear(AF_KT[0], AF_KT[1] + 14, 8) && (!AF.fT || performance.now() - AF.fT > 3500)) { AF.fT = performance.now(); xcFight('xqkward', 'Warden Saal'); } }, chk: () => !!AF.s.seen.kward },
+    { g: 'Something is crawling out of the drains by the lake. Ferals', at: () => [-150, 100], auto: () => { if (afNear(-150, 100, 9) && (!AF.fT || performance.now() - AF.fT > 3500)) { AF.fT = performance.now(); xcFight('xqkferal', 'The Drain Mother'); } }, chk: () => !!AF.s.seen.kferalWon },
+    { g: '', go: () => afFeralTalk(), chk: () => !!AF.s.seen.kferal },
+    { g: () => `Close the rifts (${afRf().filter(Boolean).length} of 3): as Dad, Scan (4) a rift to read its shape, then switch (V) and, as Kiran, Grab (4) it shut`, at: () => { const i = afRf().findIndex(v => !v); return i >= 0 ? AF_RIFTS[i] : null; }, chk: () => afRf().every(Boolean) },
+    { g: '', go: () => afRiftsDone(), chk: () => !!AF.s.seen.krifts },
+    { g: 'To be continued: something is knocking from underneath', chk: () => false } ] });
+  AF_SKIP[AF_CH.findIndex(C => C.id === 'khunt')] = () => { Object.assign(AF.s.seen, { kward0: 1, kward: 1, kferalWon: 1, kferal: 1, krifts: 1 }); AF.s.krf = [1, 1, 1]; afSave(); afRiftLook(); };
+  afKidPlaces = (o => function(){ o(); afRiftPlaces(); })(afKidPlaces);
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
