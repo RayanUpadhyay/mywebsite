@@ -15526,8 +15526,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   ];
   function afFrame(dt, now){
     afTendStep(); afKidFrame(dt); afClaws();
-    // once you've left Bangalore for good, opening the site puts you straight back in your city
-    if (!AF.on && !AF.autoIn && entered && !entering && !inWorld && !A && !EV && AF.s.blrLocked && ['del', 'goa', 'kblr'].includes(AF.s.act)) { AF.autoIn = 1; setTimeout(() => afEnter(1), 600); }
+    // remember where you are (story city, free-play city, Bangalore or your room), so a refresh puts you back there
+    { const P = afPlace(); if (P && P !== AF.lastP) { AF.lastP = P; try { localStorage.setItem('ru-last', P); } catch (e) {} } }
     if (!AF.on) { if (!afHud.hidden) afHud.hidden = true; return; }
     AF.dt = dt; afLife(dt); afWebCol(); afDelStep(dt); if (AF.pinned) { pos.x = AF.pinned[0]; pos.z = AF.pinned[1]; vy = 0; }
     const here = inWorld && (zone === 'xc' || zone === 'xin'), C = AF_CH[AF.s.ch], S = C && C.steps[AF.s.st], k = AF.s.ch + ':' + AF.s.st;
@@ -15564,10 +15564,16 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function afCityBack(c){ fade(() => { aptFree(); xcBuild(c); afAfterBuild(); xcWeather(); xcLight(); web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'xc'; vy = 0; falling = false; grounded = true; XC.air = false; XC.roof = 0; cityV.set(0, 0, 0);
       const sp = XC.acts.find(a => /space centre/i.test(a.label())), at = sp ? [sp.x, sp.z + 4] : afWhere('home') || XC_LM[c].taxi; pos.set(at[0], 1.6, at[1]); xcClear(); yaw = 0; pitch = -.03;
       closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = xcBackLabel(); jumpBtn.hidden = fine; uiZone(); AF.key = ''; say(`Back in ${XC.P.name}.`, 2200); }, '#000000'); }
-  // opening the door after you've left Bangalore: straight to black, then your city, no room in between
-  function afResumeCity(){ if (!(AF.s.blrLocked && ['del', 'goa', 'kblr'].includes(AF.s.act))) return false;
-    fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); entered = true; entering = false; enterUI.style.display = 'none'; badge.hidden = false; if (!fine) joyEl.classList.add('on');
-    AF.autoIn = 1; afEnter(1); if (!AF.on) { fadeEl.classList.remove('on'); dock.classList.add('on'); } return true; }
+  // where you are right now, as one short string; null for places a refresh shouldn't restore
+  function afPlace(){ if (!entered || entering || A || EV) return null; if (!inWorld) return zone === 'hub' ? 'room' : null;
+    if (zone === 'xc' && XC.city) return (AF.on ? 'arc:' : 'xc:') + XC.city; if (zone === 'blr' || zone === 'city') return 'blr'; return null; }
+  // opening the door: straight to black, then wherever you were last, with no room in between
+  function afResumeCity(){ let L = ''; try { L = localStorage.getItem('ru-last') || ''; } catch (e) {} if (!L || L === 'room') return false;
+    if (L.startsWith('arc:') && !(AF.s.started || storiesDone())) return false;
+    fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); entered = true; entering = false; enterUI.style.display = 'none'; badge.hidden = false; if (!fine) joyEl.classList.add('on'); AF.lastP = L;
+    const back = () => { fadeEl.classList.remove('on'); dock.classList.add('on'); };
+    try { if (L.startsWith('arc:')) { afEnter(1); if (!AF.on) back(); } else if (L.startsWith('xc:')) { xcEnter(L.slice(3)); setTimeout(() => fadeEl.classList.remove('on'), 900); } else if (L === 'blr') { travel('city'); setTimeout(() => fadeEl.classList.remove('on'), 700); } else back(); } catch (e) { console.error(e); back(); }
+    return true; }
   function afPause(){ if (XC.drv) xcExitCar(); XC.ride = null; web.p = null; drawWeb(); AF.on = false; afSave(); afHud.hidden = true;
     fade(() => { travel('room'); xcFree(); AF.beam = null; say('The story waits. Pick it up again from the Story tab on your phone.', 3600); }, '#000000'); }
   // ---------- chapter 1: the fall ----------
