@@ -15597,7 +15597,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     for (const [m, f] of [['You lay everything out on the bench.', 330], ['Spring into the housing. Valve. The nozzles, one at a time, with your left hand.', 440], ['The right one sticks. You hit it. It stops sticking.', 520]]) { say(m, 2200); tone(f, .2, 'triangle', .04); await afWait(2300); }
     AF.s.web.fixed = 1; afSave(); afBenchLook(); tone(660, .2, 'triangle', .05, 990); afLog('You rebuilt the web-shooters by hand. They work. Mostly.');
     await cbTalk([['You', 'Ugly. Taped together. Shorter range than before.'], ['You', 'But they work.']]); AF.busy = false; }
-  function afBench(){ AF.s.seen.bench = 1; afSave(); const W = AF.s.web; if (XC.city === 'del' && AF.s.seen.scrap && !AF.s.seen.suit) return afSuit(); if (W.fixed) return say(XC.city === 'del' && AF.s.anti ? 'The scrap suit hangs over the bench. You don’t like looking at it.' : 'Your rebuilt web-shooters. Taped, ugly, and they work.', 2600);
+  function afBench(){ AF.s.seen.bench = 1; afSave(); const W = AF.s.web; if (XC.city === 'del' && AF.s.seen.scrap && !AF.s.seen.suit) return afSuit(); if (XC.city === 'goi' && AF.s.seen.joel && !AF.s.seen.goaMask) return afGoaMask(); if (W.fixed) return say(XC.city === 'del' && AF.s.anti ? 'The scrap suit hangs over the bench. You don’t like looking at it.' : 'Your rebuilt web-shooters. Taped, ugly, and they work.', 2600);
     if (W.parts.length >= 5 && AF.s.ch >= 1) return afBenchBuild();
     if (XC.city === 'del') return AF.s.seen.scrap && !AF.s.seen.suit ? afSuit() : say(AF.s.anti ? 'The scrap suit hangs over the bench. You don’t like looking at it.' : 'Your web-shooters, and a mess of tools.', 2600); say(`Your web-shooters, in pieces. Parts found: ${W.parts.length} of 5.`, 2800); }
   // ---------- forced losses, a kidnapping, and fights of the story's own ----------
@@ -16281,6 +16281,45 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { g: 'To be continued: the Goa story is still being written', chk: () => false } ] });
   AF_SKIP[AF_CH.findIndex(C => C.id === 'drift')] = () => { const D = afDelInit(); AF.s.seen.metAna = 1; D.rel.love = Math.max(D.rel.love, 75); D.beats = 3; const S = afVS(); S.gv_kamat = 3; S.gv_tide = Math.max(S.gv_tide || 0, 2); afLooks(); };
   afActsGoa = (o => function(){ o(); afActsGoa2(); })(afActsGoa);
+  // ======================= Goa: The Mask =======================
+  async function afJoelHurt(){ AF.busy = true;
+    await cbCard('Chapter 14', 'The Mask', 'Some things you swore you’d never do again.');
+    await cbTalk([['Narrator', 'Ana’s phone, at six in the morning. You can hear her breathing before she says anything.'], ['Ana', 'It’s Joel. My little brother. He told the Tide Crew to stop selling by the nests.'], ['Ana', 'They found him on the rocks below the fort. He’s in the hospital in Panjim. They broke his jaw. He’s seventeen.'], ['Inspector Naik', '(at the hospital, not looking up from his phone) Party fights happen. Without a statement, there’s nothing I can do.'], ['Joel', '(through the wires) Wasn’t a fight. Rocky held me down. Laughed.']]);
+    const v = await new Promise(r => askChoice('afmask', r, { h: 'The mask', q: 'You promised yourself, at the prison gate, that the mask was finished. What now?', a: [['mask', 'Put it back on. Tonight.'], ['wait', 'Give the police one more day']] }));
+    if (v === 'wait') await cbTalk([['Narrator', 'You give them a day. That night, another boy is carried off the beach, shaking, and the police don’t come at all.'], ['You', '(to nobody) One more day was a day too many.']]);
+    else await cbTalk([['You', '(to nobody) Just this once. Just him.'], ['Narrator', 'You’ve said that before. You remember exactly where.']]);
+    AF.s.seen.joel = v; afLog(`Joel was beaten by the Tide Crew. You decided to put the mask back on${v === 'wait' ? ', a day too late' : ''}.`); afSave(); AF.busy = false; }
+  async function afGoaMask(){ AF.busy = true;
+    for (const [m, f] of [['An old diving mask from Agnelo’s scrap box. You tape the strap.', 330], ['Black cloth from a torn sail, wrapped tight. A brace of boat cable for the arm.', 280], ['It isn’t a costume. It’s just enough that nobody will know your face.', 240]]) { say(m, 2300); tone(f, .25, 'square', .04); await afWait(2400); }
+    AF.s.seen.goaMask = 1; afSave(); AF.busy = false; say('The mask is on. Rocky Vaz will be at his party spot on the north beach.', 3200); }
+  // telling Ana: a full scene, with your choices
+  async function afTellAna(){ AF.busy = true; const D = afL();
+    await cbTalk([['Narrator', 'Night. The hatchery. Ana is sitting on the upturned bucket, waiting. She’s seen the bruises. She’s seen the news about Rocky.'], ['Ana', 'The man in the diving mask who put Rocky Vaz in the sea. That was you.'], ['Ana', 'You said you’d give me an answer. Where did you come from? Tell me now, or don’t come to the nests again.']]);
+    const how = await new Promise(r => askChoice('aftell', r, { h: 'Your past', q: 'How much do you tell her?', a: [['all', 'Everything: Bangalore, the tower, the black thing in your arm, Delhi, prison'], ['some', 'The mask, Delhi, prison. Not the black thing.'], ['lie', 'A story. Something easier.']] }));
+    if (how === 'all') await cbTalk([['You', 'I grew up in a tower in Bangalore. I wore a mask there too. People called it a hero. Then men in black vans blew the tower up with my neighbours in it.'], ['You', 'Something lived in my arm for a while. It talked to me. It died taking a bullet for a woman called Meher.'], ['You', 'In Delhi I went too far. I beat a man so badly I don’t remember stopping. I did two years for it. Nobody was waiting when I came out.'], ['Ana', '(very still) …and now you’re doing it again.']]);
+    else if (how === 'some') await cbTalk([['You', 'In Delhi I wore a mask. I took down a lot of bad people. The last one I nearly killed. Two years in Tihar.'], ['You', 'Before that there was Bangalore. I don’t talk about Bangalore.'], ['Ana', 'You just did. A little.']]);
+    else await cbTalk([['You', 'I was a security guard in Delhi. There was a fight. Somebody got hurt. That’s all.'], ['Ana', '(looking at your arm, your hands, the scars) That’s not all. You know it isn’t.']]);
+    const why = await new Promise(r => askChoice('afwhy', r, { h: 'Ana', q: '“Why did you put it back on?”', a: [['joel', '“Because of Joel. Because nobody else would.”'], ['me', '“Because I don’t know how to be anything else.”'], ['you', '“Because of you.”']] }));
+    await cbTalk([['You', { joel: 'Because of Joel. Because the police were never going to, and I could.', me: 'Because I don’t know how to be anything else. I tried. I fixed boats for a year. It wasn’t enough.', you: 'Because they hurt your brother. Because they’d hurt you next. Because of you.' }[why]]]);
+    const L = D.rel.love + (how === 'all' ? 15 : how === 'some' ? 5 : -25) + (why === 'joel' ? 5 : why === 'you' ? 3 : -5);
+    const end = how === 'lie' || L < 70 ? 'back' : how === 'all' && L >= 90 ? 'stay' : 'rules';
+    D.anaEnd = end; D.told = how; AF.s.seen.told = 1;
+    if (end === 'stay') { await cbTalk([['Ana', '(after a long time) Okay.'], ['Ana', 'Then you don’t do it alone. Next time you go out, you tell me where. And you come back.'], ['Narrator', 'She takes your bad hand, the one that doesn’t close properly, and holds it anyway.']]); afRel('love', 10); }
+    else if (end === 'rules') { await cbTalk([['Ana', 'I’m not going anywhere. But there are rules.'], ['Ana', 'One: you never lie to me again. Two: you don’t go out on nights we have plans. Three: if you ever stop coming back, I won’t come looking.'], ['You', 'Three rules. I can do three rules.'], ['Ana', '(almost smiling) You’ll break the second one by Friday.']]); afRel('love', 4); }
+    else { await cbTalk([['Ana', 'I need you to not be here for a while.'], ['Ana', 'Not forever. I don’t know how long. I just need to not be looking at you.'], ['Narrator', 'She walks back along the tideline without the torch. You let her go.']]); afRel('love', -20); D.leftDay = D.day; }
+    afLog(end === 'back' ? 'You told Ana. She left.' : `You told Ana ${how === 'all' ? 'everything' : 'part of it'}. She stayed${end === 'rules' ? ', with rules' : ''}.`); afSave(); AF.busy = false; }
+  async function afAnaBack(){ AF.busy = true; const D = afL();
+    await cbTalk([['Narrator', 'Three days later, there’s a knock on the boat-shed door at dawn. Ana, with two coffees and a face that hasn’t slept.'], ['Ana', 'I hated you for a day. Then I was scared of you for a day. Then I missed you, and I hated that most.'], ['Ana', 'No more stories. The real one. All of it.'], ['Narrator', 'You tell her everything, sitting on the shed floor, while the coffee goes cold.']]);
+    D.anaBack = 1; D.rel.love = Math.max(D.rel.love, 70); afLog('Ana came back.'); afSave(); AF.busy = false; }
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push({ n: 'Chapter 14', t: 'The Mask', sub: 'Some things you swore you’d never do again.', id: 'mask', del: 1, vil: 1, steps: [
+    { g: '', go: () => afJoelHurt(), chk: () => !!AF.s.seen.joel },
+    { g: 'Make a mask: the workbench in your room above the shed', at: () => afWhere('home'), chk: () => !!AF.s.seen.goaMask },
+    { g: 'Rocky Vaz is at his party spot on the north beach. Mask on', at: () => { const t = afVilTargets().find(o => o.V.id === 'gv_tide'); return t ? t.at : null; }, auto: afVilStep, chk: () => afVilStage('gv_tide') >= 3 },
+    { g: 'Ana is waiting at the hatchery. She knows. Tell her', at: () => afWhere('ana'), auto: () => { const a = afWhere('ana'); if (a && afNear(a[0], a[1], 6) && !AF.s.seen.told) afTellAna(); }, chk: () => !!AF.s.seen.told },
+    { g: () => afL() && afL().anaEnd === 'back' && !afL().anaBack ? `Ana needs time. Live your life: boats, the shack (${Math.max(0, (afL().leftDay || 0) + 3 - afL().day)} more days; skip ahead on the Planner)` : '', auto: () => { const D = afL(); if (D.anaEnd === 'back' && !D.anaBack && D.day >= (D.leftDay || 0) + 3 && zone === 'xc') afAnaBack(); }, chk: () => afL().anaEnd !== 'back' || !!afL().anaBack },
+    { g: 'To be continued: the Goa story is still being written', chk: () => false } ] });
+  AF_SKIP[AF_CH.findIndex(C => C.id === 'mask')] = () => { const D = afDelInit(); AF.s.seen.joel = AF.s.seen.joel || 'mask'; AF.s.seen.goaMask = 1; AF.s.seen.told = 1; afVS().gv_tide = 3; D.anaEnd = D.anaEnd || 'rules'; D.anaBack = 1; afLooks(); };
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
