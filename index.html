@@ -15471,6 +15471,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   ];
   function afFrame(dt, now){
     afTendStep(); afKidFrame(dt); afClaws();
+    // once you've left Bangalore for good, opening the site puts you straight back in your city
+    if (!AF.on && !AF.autoIn && entered && !entering && !inWorld && !A && !EV && AF.s.blrLocked && ['del', 'goa'].includes(AF.s.act)) { AF.autoIn = 1; setTimeout(() => afEnter(1), 600); }
     if (!AF.on) { if (!afHud.hidden) afHud.hidden = true; return; }
     AF.dt = dt; afLife(dt); afWebCol(); afDelStep(dt); if (AF.pinned) { pos.x = AF.pinned[0]; pos.z = AF.pinned[1]; vy = 0; }
     const here = inWorld && (zone === 'xc' || zone === 'xin'), C = AF_CH[AF.s.ch], S = C && C.steps[AF.s.st], k = AF.s.ch + ':' + AF.s.st;
@@ -15486,11 +15488,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (AF.s.st >= C.steps.length) { AF.s.ch++; AF.s.st = 0; afSave(); afLooks(); const N = AF_CH[AF.s.ch]; if (N) { AF.busy = true; cbCard(N.n, N.t, N.sub || '').then(() => { AF.busy = false; }); } return; }
     afSave(); tone(880, .1, 'triangle', .04); }
   // ---------- in and out: it starts from your phone, and pausing takes you home ----------
-  function afEnter(){
+  function afEnter(auto){
     if (A || EV) return;
     if (!(storiesDone() || AF.s.started)) return say('Finish (or skip) every story first.', 2600);
-    if (AF.s.blrLocked && AF.s.act !== 'del') return say('Bangalore is behind you now. The Delhi part of the story is on its way.', 3400);
-    if (!inWorld || !['blr', 'xc', 'xin', 'apt'].includes(zone)) return say('Head out into the city first, then start it from your phone.', 3000);
+    if (AF.s.blrLocked && !['del', 'goa'].includes(AF.s.act)) return say('Bangalore is behind you now. The Delhi part of the story is on its way.', 3400);
+    if (!auto && (!inWorld || !['blr', 'xc', 'xin', 'apt'].includes(zone))) return say('Head out into the city first, then start it from your phone.', 3000);
     if (DRV.on) getOut(true); if (XC.drv) xcExitCar(); XC.ride = null;
     if (zone === 'xin' && XC.isc) { disposeDeep(XC.isc); XC.isc = null; XC.inside = null; }
     const first = !AF.s.started; AF.s.started = 1; AF.on = true; AF.key = ''; afSave(); const city = AF.s.act === 'del' ? 'del' : AF.s.act === 'goa' ? 'goi' : 'bfa';
