@@ -2150,7 +2150,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   badge.textContent = `Secrets 0/${TOTAL}`;
   let toastT;
   // the story's hero is whoever is playing: {N} in any story text becomes their name
-  function heroName(){ if (typeof AF !== 'undefined' && AF && AF.on && AF.s && AF.s.child) return 'Kiran'; try { return (localStorage.getItem('ru-heroname') || '').trim() || 'Hero'; } catch (e) { return 'Hero'; } }
+  function heroName(){ if (typeof AF !== 'undefined' && AF && AF.on && AF.s && AF.s.child && !(AF.s.duo && AF.s.as === 'dad')) return 'Kiran'; try { return (localStorage.getItem('ru-heroname') || '').trim() || 'Hero'; } catch (e) { return 'Hero'; } }
   function hasHeroName(){ try { return !!(localStorage.getItem('ru-heroname') || '').trim(); } catch (e) { return false; } }
   function nmT(t){ return typeof t === 'string' ? t.replace(/\{N\}/g, heroName()) : t; }
   function say(text, ms = 3200){
@@ -5411,7 +5411,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 
   // ---------- third person, and the character screen ----------
   let EV = null;   // the event you're playing, if any (it can put you in a hero's suit)
-  const curLook = () => { if (EV && EV.look) return EV.look; if (afKidOn()) return afKidLook(); try { if (SG.active && chId() === 'echo') return Object.assign({}, look, { outfit: 'copycat', mask: 1, cape: 1 }, SG.flags.old ? { hairC: 5, mask: 0 } : {}); } catch (e) {} return look; };
+  const curLook = () => { if (EV && EV.look) return EV.look; if (afKidOn()) return afKidLook(); if (typeof afDadOn === 'function' && afDadOn()) return afDadLook(); try { if (SG.active && chId() === 'echo') return Object.assign({}, look, { outfit: 'copycat', mask: 1, cape: 1 }, SG.flags.old ? { hairC: 5, mask: 0 } : {}); } catch (e) {} return look; };
   let tpv = false; try { tpv = localStorage.getItem('ru-pov') === '3'; } catch (e) {}
   let mirror = false, me = null, meKey = '', meHeld, meLast = V(0, 0, 0), meMv = 0;
   const povBtn = $('#povBtn');
@@ -15676,6 +15676,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const crew = (n, r, name, boss) => { for (let i = 0; i < n; i++) S.add(i % 3 === 2 ? 'gangB' : 'gangA', ...spot(r, i / n * Math.PI * 2)); const b = addUnit({ hero: boss || 'gangBoss', team: 'en' }); [b.x, b.z] = spot(r + 2, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name }, b, t: 99, marks: [] }; return b; };
     S.af = { part, t: 0, n: 0, sp: 0 };
     if (afTowerSetup(part, S, crew)) return;
+    if (part === 'xqkduo') { crew(5, 6, 'the rogue bonded', 'gangBoss'); return; }
     if (part === 'xqkswarm') { crew(5, 6, 'Protocol Omega', 'af_burner'); S.af.swarm = 1; return; }
     if (part === 'xqkhq') { crew(4, 6, 'Halcyon House security', 'af_agent'); S.add('af_burner', pos.x + 5, pos.z - 3); S.af.agency = 1; S.af.pulse = 7; return; }
     if (part === 'xqkvale') { const b = addUnit({ hero: 'af_vale2', team: 'en' }); b.x = pos.x - Math.sin(yaw) * 8; b.z = pos.z - Math.cos(yaw) * 8; b.boss = 1; EV.boss = b; S.sb = { B: { name: 'Director Vale' }, b, t: 99, marks: [] }; [[-3, -2], [3, -2], [-5, 1]].forEach(([dx, dz], i) => S.add(i === 2 ? 'af_burner' : 'af_agent', b.x + dx, b.z + dz)); S.af.agency = 1; S.af.pulse = 6; return; }
@@ -15717,6 +15718,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (part === 'xqsmog') return afDumped();
     if (part.startsWith('xqt_')) return afTrFightEnd(part, won);
     if (part === 'xqkid') return afKidAfter();
+    if (part === 'xqkduo') { if (won) { AF.s.seen.kduo = 1; afSave(); say('The rogue bonded are down. Their black slides off them and lies on the ground like spilt oil, then crawls away into the drains.', 4200); } else say('Too many. Switch (V) when one of you is hurt; each of you keeps your own health.', 3200); return; }
     if (part === 'xqkswarm') { AF.s.seen.kswarm = 1; afSave(); return; }
     if (part === 'xqkhq') { if (won) { AF.s.seen.khqIn = 1; afSave(); say('Security is down. You take the lift to floor thirty, then go out a window. The rest is up the glass.', 3600); } else say('They throw you back out on the street. Blend in (2) next time.', 3000); return; }
     if (part === 'xqkvale') { if (won) { AF.s.seen.kvaleWon = 1; afSave(); } else say('Vale’s burners pin you to the stone. Harden (5) when they fire; grab (4) their guns. Again.', 3200); return; }
@@ -16970,6 +16972,67 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { g: 'To be continued: a life on the other side', chk: () => false } ] });
   AF_SKIP[AF_CH.findIndex(C => C.id === 'kalt')] = () => { Object.assign(AF.s.seen, { kalt: 1, kbonded: 1, kdad: 1, ksettle: 1 }); AF.s.kdadFirst = AF.s.kdadFirst || 'dad'; afSave(); if (XC.city !== 'kal') afKidTravel('kal'); else fade(() => afKAltPlaces2(), '#000000'); };
   afKidPlaces = (o => function(){ o(); afKAltPlaces(); })(afKidPlaces);
+  // ======================= Kiran and the dad: two people, one button =======================
+  // V (or the button) swaps who you are. Each keeps their own health; Kiran keeps the symbiote kit, the dad has his rigs.
+  const afDuoOn = () => typeof AF !== 'undefined' && AF && AF.on && AF.s && AF.s.child && !!AF.s.duo;
+  const afDadOn = () => afDuoOn() && AF.s.as === 'dad';
+  const afPl = () => AF.s.pl || (AF.s.pl = { kid: 1, dad: 1 });
+  afKidOn = (o => function(){ return o() && !(AF.s.duo && AF.s.as === 'dad'); })(afKidOn);
+  function afDadLook(){ return Object.assign({}, look, { outfit: 'af_dad2', mask: 1, cape: 0, hair: 'short' }); }
+  afArmF = (o => function(){ return afDadOn() ? 1.7 : o(); })(afArmF);
+  afHurt = (o => function(d, from){ if (!afDadOn()) return o(d, from); d *= .7; if ((AF.dShieldT || 0) > performance.now() / 1000) d *= .1; return d; })(afHurt);
+  // the dad's rigs
+  const AF_DAB = [['slam', 'Slam'], ['stun', 'Stun web'], ['shield', 'Shield'], ['scan', 'Scan']];
+  const afDBar = document.createElement('div'); afDBar.className = 'afkbar'; afDBar.hidden = true; document.body.appendChild(afDBar);
+  afDBar.innerHTML = AF_DAB.map(([k, n], i) => `<button type="button" data-dab="${k}"><kbd>${i + 1}</kbd>${n}</button>`).join('');
+  afDBar.addEventListener('click', e => { const b = e.target.closest('[data-dab]'); if (b) { e.stopPropagation(); afDadAbility(b.dataset.dab); } });
+  const afSwapBtn = document.createElement('button'); afSwapBtn.type = 'button'; afSwapBtn.hidden = true; document.body.appendChild(afSwapBtn);
+  Object.assign(afSwapBtn.style, { position: 'fixed', right: '14px', bottom: 'calc(150px + env(safe-area-inset-bottom,0px))', zIndex: 7, background: 'rgba(11,13,20,.9)', color: '#EEF1F5', border: '1px solid #5AC8FF', borderRadius: '12px', padding: '8px 12px', font: '700 12px system-ui,sans-serif' });
+  afSwapBtn.addEventListener('click', e => { e.stopPropagation(); afSwap(); });
+  { const s = document.createElement('style'); s.textContent = 'button[hidden]{display:none!important}'; document.head.appendChild(s); }
+  addEventListener('keydown', e => { if (!afDuoOn() || e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; const k = e.key.toLowerCase();
+    if (k === 'v') { e.preventDefault(); afSwap(); return; } if (afDadOn()) { const n = +e.key; if (n >= 1 && n <= 4) { e.preventDefault(); e.stopImmediatePropagation(); afDadAbility(AF_DAB[n - 1][0]); } } }, true);
+  function afSwap(){ if (!afDuoOn() || AF.busy) return; const P = afPl(), from = AF.s.as === 'dad' ? 'dad' : 'kid', to = from === 'dad' ? 'kid' : 'dad';
+    if (EV && !EV.over && EV.max) { P[from] = Math.max(.05, EV.hp / EV.max); EV.hp = Math.max(1, EV.max * P[to]); EV.look = null; }
+    AF.s.as = to; afSave(); meKey = ''; held = null; idleShown = undefined; tone(to === 'dad' ? 330 : 660, .2, 'triangle', .04, to === 'dad' ? 220 : 880);
+    say(to === 'dad' ? 'You’re Dad now: heavy hands, web rigs, a suit that takes a beating. 1 Slam · 2 Stun web · 3 Shield · 4 Scan.' : 'You’re Kiran again: fast, and the black is awake. Keys 1–6 for the kit.', 3400); afDuoUI(true); }
+  function afDadAbility(k){ if (!afDadOn()) return; const now = performance.now() / 1000; AF.dcd = AF.dcd || {}; if ((AF.dcd[k] || 0) > now) return say(`${k[0].toUpperCase() + k.slice(1)} is recharging.`, 1200); AF.lastAb = ['d' + k, performance.now()];
+    const foes = () => EV ? EV.units.filter(u => u.team === 'en' && u.hp > 0 && Math.hypot(u.x - pos.x, u.z - pos.z) < (k === 'slam' ? 5 : 9)) : [];
+    if (k === 'slam') { AF.dcd[k] = now + 6; tone(60, .5, 'square', .07, 40); try { if (typeof shake !== 'undefined') shake = .4; } catch (e) {} const F = foes(); F.forEach(u => { u.hp -= u.max * (u.boss ? .12 : .4); }); say(F.length ? `Gauntlet slam. ${F.length} of them go flying.` : 'You slam the ground. The street shakes.', 1800); }
+    else if (k === 'stun') { AF.dcd[k] = now + 10; tone(1400, .3, 'sawtooth', .04, 400); const F = foes(); F.forEach(u => { u.stun = Math.max(u.stun || 0, 3); }); say(F.length ? `A crackling web net. ${F.length} of them lock up.` : 'The stun web snaps out at nothing.', 1800); }
+    else if (k === 'shield') { AF.dcd[k] = now + 12; AF.dShieldT = now + 4; tone(220, .6, 'sine', .05, 330); say('The suit’s shield hums up around you. Four seconds.', 1800); }
+    else if (k === 'scan') { AF.dcd[k] = now + 8; tone(1800, .3, 'sine', .03, 1200); try { afSense(); } catch (e) {} say('The visor scans through the walls. Heat, weapons, heartbeats. (It can’t see the bond. Only Kiran can.)', 3000); } }
+  function afDuoUI(force){ const on = afDuoOn() && inWorld && ['xc', 'xin', 'event'].includes(zone) && !AF.busy; if (afSwapBtn.hidden === on || force) { afSwapBtn.hidden = !on; afSwapBtn.textContent = (AF.s.as === 'dad' ? 'Switch to Kiran' : 'Switch to Dad') + (fine ? ' (V)' : ''); }
+    const d = on && afDadOn(); if (afDBar.hidden === d) afDBar.hidden = !d; }
+  // health of whoever isn't fighting comes back slowly; rest at the tower brings both back
+  function afDuoFrame(dt){ afDuoUI(); if (!afDuoOn()) return; const P = afPl(); if (!EV) ['kid', 'dad'].forEach(k => { P[k] = Math.min(1, P[k] + dt * .01); }); else if (EV.max && !EV.over) { const who = AF.s.as === 'dad' ? 'kid' : 'dad'; P[who] = Math.min(1, P[who] + dt * .01); } }
+  afSetup = (o => function(part, S){ const r = o(part, S); if (afDuoOn() && EV && EV.max) EV.hp = Math.max(1, EV.max * afPl()[AF.s.as === 'dad' ? 'dad' : 'kid']); return r; })(afSetup);
+  afFightEnd = (o => function(won){ if (afDuoOn() && EV && EV.max) afPl()[AF.s.as === 'dad' ? 'dad' : 'kid'] = won ? Math.max(.2, EV.hp / EV.max) : .35; return o(won); })(afFightEnd);
+  afKidFrame = (o => function(dt){ o(dt); afDuoFrame(dt); })(afKidFrame);
+  // missions that need one or the other
+  const AF_SLAB = [61.3, -60], AF_HIDE = [-60, 61.3];
+  function afDuoPlaces(){ if (XC.city !== 'kal' || !AF.on) return;
+    const sl = new THREE.Group(); sl.position.set(AF_SLAB[0], 0, AF_SLAB[1]); XC.g.add(sl); const c = mat(0x8A8680, { roughness: 1 }); const slab = box(9, 1.2, 4, c, 0, .9, 0, sl); slab.rotation.z = .25; AF.kSlab = slab; slab.visible = !AF.s.seen.kslab; box(1.2, 2.4, 1.2, c, -4, 1.2, 0, sl);
+    try { const p = avatar(crowdLook(222)); p.g.position.set(AF_SLAB[0] + 1, 0, AF_SLAB[1] + 2.6); p.g.rotation.x = -Math.PI / 2; p.g.position.y = .2; sl.parent.add(p.g); AF.kTrapped = p; p.g.visible = !AF.s.seen.kslab; } catch (e) {}
+    XC.acts.push({ x: AF_SLAB[0], z: AF_SLAB[1] + 3, r: 3.5, on: () => !!AF.s.seen.kswapDad && !AF.s.seen.kslab && !AF.busy, label: () => afDadOn() ? 'Lift the slab (Slam rigs)' : 'A man is trapped under a slab', go: afSlab });
+    const hd = afLotNear(AF_HIDE[0], AF_HIDE[1], []); if (hd) { const f = xcFront(hd); AF.kHide = [f[0] + f[2] * 2, f[1] + f[3] * 2]; } }
+  async function afSlab(){ if (!afDadOn()) return say('You get the black under it and heave. It doesn’t move. Too heavy, even for the two of you in one body. Switch to Dad (V).', 3600);
+    AF.busy = true; tone(50, 1.2, 'sawtooth', .07, 35); say('You plant your feet, the gauntlets whine, and the slab comes up off him like a lid.', 3000); await afWait(1600); if (AF.kSlab) AF.kSlab.visible = false; if (AF.kTrapped) AF.kTrapped.g.visible = false;
+    await cbTalk([['Bonded man', '(sitting up, the black at his throat already knitting his ribs) Thank you. It would have healed me, slowly. But thank you.'], ['Dad', 'Everyone heals here. Nobody likes waiting for it.']]); AF.s.seen.kslab = 1; afSave(); AF.busy = false; }
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push({ n: 'Chapter 23', t: 'Two of Us', sub: 'One button. Two people.', id: 'kduo', steps: [
+    { g: '', go: async () => { AF.busy = true; await cbTalk([['Dad', '(at breakfast, in the workshop) The bond lets us do something here. You and me. We can trade places in a heartbeat: you in my rigs, me in your black. Same fight, two of us.'], ['Kiran', 'That’s the weirdest thing anyone’s ever said to me.'], ['Meher', 'He means: take turns. He’s bad at saying normal things.']]); AF.s.duo = 1; AF.s.as = AF.s.as || 'kid'; afPl(); afSave(); AF.busy = false; say('Press V (or the button on the right) to switch between Kiran and Dad.', 4200); }, chk: () => !!AF.s.duo },
+    { g: 'Switch to your father: press V, or the button on the right', auto: () => { if (AF.s.as === 'dad') { AF.s.seen.kswapDad = 1; afSave(); } }, chk: () => !!AF.s.seen.kswapDad },
+    { g: () => `Help out around the city: a slab has come down on someone near the flyover (needs Dad’s strength) ${AF.s.seen.kslab ? '✓' : '○'} · somebody unbonded is hiding in Malleshwaram, frightened (only Kiran can feel who has no bond: use Sense) ${AF.s.seen.ksense2 ? '✓' : '○'}`,
+      at: () => !AF.s.seen.kslab ? [AF_SLAB[0], AF_SLAB[1] + 3] : AF.kHide, auto: () => { if (!AF.s.seen.ksense2 && AF.kHide && afNear(AF.kHide[0], AF.kHide[1], 14)) { if (!afDadOn() && (afK().senseT || 0) > performance.now() / 1000) afHidden(); else if (afDadOn() && AF.lastAb && AF.lastAb[0] === 'dscan' && performance.now() - AF.lastAb[1] < 1500) { AF.lastAb = null; say('The visor shows a dozen heat shapes in the building. All of them look the same. Kiran could tell the difference.', 3400); } } },
+      chk: () => !!(AF.s.seen.kslab && AF.s.seen.ksense2) },
+    { g: 'Rogue bonded are smashing up the market. Take them on together: switch mid-fight (V)', at: () => [-137.5, -20], auto: () => { if (afNear(-137.5, -20, 7) && (!AF.fT || performance.now() - AF.fT > 3500)) { AF.fT = performance.now(); xcFight('xqkduo', 'The rogue bonded'); } }, chk: () => !!AF.s.seen.kduo },
+    { g: 'To be continued: something on this Earth is hunting the two of you', chk: () => false } ] });
+  async function afHidden(){ AF.busy = true; AF.s.seen.ksense2 = 1; afSave();
+    await cbTalk([['Narrator', 'Through the wall, every heartbeat in the building has a second, slower beat wrapped around it. Except one. Under the stairs, alone, a single heartbeat, very fast.'], ['Girl', '(hiding, maybe twelve, no black on her at all) Don’t. Please don’t make me. My mum says it doesn’t hurt but I don’t want it.'], ['Kiran', 'Nobody’s making you do anything.'], ['Voice', '(uneasy) …everyone joins. Everyone always joins.'], ['Kiran', 'Not her.']]);
+    afLog('Kiran found an unbonded girl hiding in Malleshwaram. Not everyone here chose the bond.'); AF.busy = false; }
+  AF_SKIP[AF_CH.findIndex(C => C.id === 'kduo')] = () => { AF.s.duo = 1; AF.s.as = AF.s.as || 'kid'; afPl(); Object.assign(AF.s.seen, { kswapDad: 1, kslab: 1, ksense2: 1, kduo: 1 }); afSave(); if (AF.kSlab) AF.kSlab.visible = false; if (AF.kTrapped) AF.kTrapped.g.visible = false; };
+  afKidPlaces = (o => function(){ o(); afDuoPlaces(); })(afKidPlaces);
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
