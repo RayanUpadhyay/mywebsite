@@ -15676,6 +15676,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const crew = (n, r, name, boss) => { for (let i = 0; i < n; i++) S.add(i % 3 === 2 ? 'gangB' : 'gangA', ...spot(r, i / n * Math.PI * 2)); const b = addUnit({ hero: boss || 'gangBoss', team: 'en' }); [b.x, b.z] = spot(r + 2, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name }, b, t: 99, marks: [] }; return b; };
     S.af = { part, t: 0, n: 0, sp: 0 };
     if (afTowerSetup(part, S, crew)) return;
+    if (part === 'xqkswarm') { crew(5, 6, 'Protocol Omega', 'af_burner'); S.af.swarm = 1; return; }
     if (part === 'xqkhq') { crew(4, 6, 'Halcyon House security', 'af_agent'); S.add('af_burner', pos.x + 5, pos.z - 3); S.af.agency = 1; S.af.pulse = 7; return; }
     if (part === 'xqkvale') { const b = addUnit({ hero: 'af_vale2', team: 'en' }); b.x = pos.x - Math.sin(yaw) * 8; b.z = pos.z - Math.cos(yaw) * 8; b.boss = 1; EV.boss = b; S.sb = { B: { name: 'Director Vale' }, b, t: 99, marks: [] }; [[-3, -2], [3, -2], [-5, 1]].forEach(([dx, dz], i) => S.add(i === 2 ? 'af_burner' : 'af_agent', b.x + dx, b.z + dz)); S.af.agency = 1; S.af.pulse = 6; return; }
     if (part.startsWith('xqkd_')) { crew(part === 'xqkd_gate' ? 4 : 3, 6, { xqkd_mall: 'Halcyon Processing', xqkd_gate: 'the checkpoint', xqkd_rel: 'the relay crew', xqkd_cvy: 'the convoy' }[part], 'af_agent'); S.add('af_burner', pos.x + 5, pos.z - 3); S.af.agency = 1; S.af.pulse = 8; return; }
@@ -15716,6 +15717,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (part === 'xqsmog') return afDumped();
     if (part.startsWith('xqt_')) return afTrFightEnd(part, won);
     if (part === 'xqkid') return afKidAfter();
+    if (part === 'xqkswarm') { AF.s.seen.kswarm = 1; afSave(); return; }
     if (part === 'xqkhq') { if (won) { AF.s.seen.khqIn = 1; afSave(); say('Security is down. You take the lift to floor thirty, then go out a window. The rest is up the glass.', 3600); } else say('They throw you back out on the street. Blend in (2) next time.', 3000); return; }
     if (part === 'xqkvale') { if (won) { AF.s.seen.kvaleWon = 1; afSave(); } else say('Vale’s burners pin you to the stone. Harden (5) when they fire; grab (4) their guns. Again.', 3200); return; }
     if (part.startsWith('xqkd_') || part === 'xqkboss') return afKDAfter(part, won);
@@ -16783,7 +16785,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // travel, generalised: Goa, Bangalore, Mumbai (and, later, somewhere much further)
   const AF_KACT = { bfa: 'kblr', goi: 'goa', bom: 'kbom', kal: 'kalt' };
   afKidTravel = function(c){ if (EV || A || AF.busy) return; AF.busy = true;
-    say({ bfa: 'The night bus up the ghats to Bangalore. You sleep with your hood up.', goi: 'The night bus back down to the coast. The voice hums the whole way.', bom: 'The overnight train to Mumbai. Anand’s cousin is the guard; he finds you a whole bench.' }[c] || '', 3600);
+    say({ bfa: 'The night bus up the ghats to Bangalore. You sleep with your hood up.', goi: 'The night bus back down to the coast. The voice hums the whole way.', bom: 'The overnight train to Mumbai. Anand’s cousin is the guard; he finds you a whole bench.', kal: '' }[c] || '', 3600);
     fade(() => { XC.inside = null; AF.s.act = AF_KACT[c] || 'goa'; if (c === 'bfa') AF.s.seen.kbus = 1; if (c === 'bom') AF.s.seen.kbomGo = 1; afSave(); if (XC.drv) xcExitCar(); XC.ride = null; aptFree(); xcBuild(c); afAfterBuild(); xcWeather(); xcLight(); web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'xc'; vy = 0; falling = false; grounded = true; XC.air = false; XC.roof = 0; cityV.set(0, 0, 0);
       const h = afWhere('home'), sp = c === 'bfa' || c === 'kal' ? AF_KT_SPAWN : c === 'bom' ? XC_LM.bom.taxi : h ? [h[0], h[1] + 3] : [-196, 10]; pos.set(sp[0], 1.6, sp[1]); xcClear(); yaw = c === 'bfa' || c === 'kal' ? 0 : c === 'bom' ? Math.atan2(sp[0], sp[1]) : Math.PI; pitch = -.03; $('#worldBack').textContent = xcBackLabel(); AF.key = ''; AF.busy = false; }, '#000000'); };
   function afKTrips(){ if (EV || A || AF.busy) return; const a = [['goi', 'The night bus to Goa (the boat shed)']]; if (AF.s.kFree) a.push(['bom', 'The overnight train to Mumbai']); a.push(['stay', 'Not now']);
@@ -16822,6 +16824,108 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { g: 'To be continued: Vale’s thumb is still on the switch', chk: () => false } ] });
   AF_SKIP[AF_CH.findIndex(C => C.id === 'kbom')] = () => { Object.assign(AF.s.seen, { kbomGo: 1, kbomArr: 1, khqSense: 1, khqIn: 1, kvaleMeet: 1, kvaleWon: 1, kvale: 1 }); afSave(); if (XC.city !== 'bom') afKidTravel('bom'); };
   afKidPlaces = (o => function(){ o(); afKHQPlaces(); })(afKidPlaces);
+  // ======================= Kiran, part 2: the dead-man's switch, the capsule, and the tear =======================
+  async function afKSwitch(){ AF.busy = true;
+    await cbTalk([['Director Vale', 'Protocol Omega. If I ever go down, the specimen goes somewhere it can never hurt anyone again.'], ['Director Vale', '(he lifts his thumb) Up.'], ['Narrator', 'Every Halcyon screen in the plaza goes red. Somewhere across the city, a siren starts. Then the sky over the sea fills with black drones, hundreds of them, all turning towards you.'], ['Voice', 'Run. RUN.']]);
+    AF.s.seen.kswitch = 1; afLog('Vale’s dead-man’s switch: Protocol Omega. The containment drones came for Kiran.'); afSave(); AF.busy = false; }
+  // the capsule: a cramped steel can with one window, a hatch, and a console
+  function afKCapTex(ph){ if (ph === 'tear') return tearTex(); return tex(256, 192, (c, w, h) => {
+    if (ph === 'pad') { const g = c.createLinearGradient(0, 0, 0, h); g.addColorStop(0, '#6A8AB8'); g.addColorStop(1, '#E8B880'); c.fillStyle = g; c.fillRect(0, 0, w, h); c.fillStyle = '#C8501E'; for (let y = 0; y < h; y += 22) c.fillRect(30, y, 10, 14); c.fillRect(30, 0, 4, h); c.fillRect(72, 0, 4, h); c.fillStyle = '#3A3D44'; c.fillRect(0, h - 26, w, 26); }
+    else { c.fillStyle = '#020308'; c.fillRect(0, 0, w, h); c.fillStyle = '#FFFFFF'; for (let i = 0; i < 60; i++) c.fillRect(xcHash(i, 1) * w, xcHash(i, 2) * h * .6, 1.5, 1.5); const g = c.createRadialGradient(w / 2, h * 1.9, h * .9, w / 2, h * 1.9, h * 1.35); g.addColorStop(0, '#1E5AA8'); g.addColorStop(.8, '#5AA8E8'); g.addColorStop(1, 'rgba(90,168,232,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h); c.fillStyle = '#C9CFD8'; c.fillRect(w * .72, h * .2, 26, 4); c.fillRect(w * .72 + 11, h * .2 - 9, 4, 22); } }); }
+  function afKCapSet(ph){ AF.s.kcap = ph; afSave(); if (AF.kWin) { const m = AF.kWin.material; if (m.map) m.map.dispose(); m.map = afKCapTex(ph); m.needsUpdate = true; } }
+  function afKCapIn(){ fade(() => { if (XC.isc) disposeDeep(XC.isc); const sc = XC.isc = new THREE.Scene(), W = 4.4, D = 4.4; sc.background = new THREE.Color(0x0A0B10);
+      XC.inside = { kind: 'ktw', fl: 'cap', x: XC_LM.bom.taxi[0], z: XC_LM.bom.taxi[1], nx: 0, nz: 1 }; XC.room = { W, D }; XC.keeper = null; XC.blocks = []; AF.ktSpots = [];
+      sc.add(new THREE.HemisphereLight(0xC8D8FF, 0x101014, .5)); const L = new THREE.PointLight(0xFF5A3A, .9, 8, 2); L.position.set(0, 2.4, 0); sc.add(L); AF.kCapL = L;
+      const steel = mat(0x5A5E66, { metalness: .7, roughness: .4 }); const fl = new THREE.Mesh(new THREE.CircleGeometry(2.4, 24), mat(0x2A2D33)); fl.rotation.x = -Math.PI / 2; sc.add(fl);
+      const wall = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, 3, 24, 1, true), new THREE.MeshStandardMaterial({ color: 0x4A4E56, metalness: .6, roughness: .5, side: THREE.BackSide })); wall.position.y = 1.5; sc.add(wall); const top = new THREE.Mesh(new THREE.ConeGeometry(2.3, 1.2, 24, 1, true), new THREE.MeshStandardMaterial({ color: 0x3A3D44, side: THREE.BackSide })); top.position.y = 3.6; sc.add(top);
+      AF.kWin = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.05), new THREE.MeshBasicMaterial({ map: afKCapTex(AF.s.kcap || 'pad') })); AF.kWin.position.set(0, 1.8, -2.22); sc.add(AF.kWin); box(1.6, .1, .1, steel, 0, 2.35, -2.2, sc); box(1.6, .1, .1, steel, 0, 1.25, -2.2, sc);
+      box(1, .6, .5, mat(0x2A2D33), 1.4, .9, -1.4, sc); for (let i = 0; i < 6; i++) box(.1, .06, .02, glowM([0xE84A3C, 0x3CE8A0, 0xFFC93C][i % 3], { emissiveIntensity: 1.5 }), 1.15 + (i % 3) * .2, 1.12 - Math.floor(i / 3) * .12, -1.14, sc); XC.blocks.push([.9, 1.9, -1.65, -1.15]);
+      const hatch = new THREE.Mesh(new THREE.CircleGeometry(.6, 20), steel); hatch.position.set(-2.2, 1.2, 0); hatch.rotation.y = Math.PI / 2; sc.add(hatch); box(.06, .2, .9, mat(0xC8501E), -2.18, 1.2, 0, sc);
+      box(.7, .9, .7, mat(0x2A2D33), 0, .45, 1.2, sc); box(.7, .9, .1, mat(0x2A2D33), 0, 1.1, 1.55, sc); XC.blocks.push([-.35, .35, .85, 1.6]);
+      AF.ktSpots.push([-1.4, 0, 1.2, () => ({ label: 'The hatch', go: () => { tone(110, .3, 'square', .05); afK().used.grab = 1; say(AF.s.kcap === 'pad' ? 'Tendrils, claws, everything you’ve got. The hatch is welded shut from outside. Halcyon welds.' : 'Outside the hatch there is nothing. Literally nothing. You take your hand off it.', 3200); } })]);
+      AF.ktSpots.push([1.3, -.8, 1.2, () => ({ label: 'The console', go: afKConsole })]);
+      AF.ktSpots.push([0, -1.4, 1.1, () => ({ label: 'The window', go: () => say({ pad: 'The Mumbai space centre gantry, red and white, and the sea beyond it. Someone outside is counting down on a loudspeaker.', orbit: 'The whole curve of the Earth, blue and impossibly thin. And a little silver station hanging in the dark: Kalpana.', tear: 'A tear in the black, like torn paper. Light comes through it. The voice is very, very quiet.' }[AF.s.kcap || 'pad'], 3600) })]);
+      plats.xin = [{ x0: -W / 2, x1: W / 2, z0: -D / 2, z1: D / 2 }]; web.p = null; drawWeb(); XC.air = false; XC.roof = 0; zone = 'xin'; vy = 0; grounded = true; pos.set(0, 1.6, .6); yaw = 0; pitch = .05; $('#worldBack').textContent = 'Back outside'; }, '#000000'); }
+  async function afKConsole(){ if (AF.busy) return; const ph = AF.s.kcap || 'pad';
+    if (ph === 'pad') { AF.busy = true; const v = await new Promise(r => askChoice('kcons', r, { h: 'The console', q: 'Two buttons you understand. Everything else is in Halcyon code.', a: [['radio', 'The radio: call for help'], ['abort', 'ABORT, in big red letters']] }));
+      await cbTalk(v === 'radio' ? [['Kiran', 'This is— I’m in the capsule! Somebody—'], ['Loudspeaker', '…four… three… two…']] : [['Narrator', 'You hit ABORT. The console beeps, very politely. ABORT NOT AVAILABLE: PROTOCOL OMEGA.'], ['Loudspeaker', '…three… two…']]);
+      for (let k = 0; k < 4; k++) { canvas.style.filter = reduce ? '' : `brightness(${1.4 - k * .1})`; tone(50 + k * 6, .5, 'sawtooth', .07, 30); await afWait(450); canvas.style.filter = ''; await afWait(250); }
+      await cbCard('Liftoff', 'Up', 'Mumbai drops away under you. Then the sea. Then the sky.'); afKCapSet('orbit'); AF.s.seen.klaunch = 1; afSave();
+      await cbTalk([['Radio', '(crackling) Unidentified capsule, this is Orbital Station Kalpana. You are not on any flight plan. Respond.'], ['Kiran', 'Kalpana! I’m inside! Halcyon put me in here—'], ['Radio', 'Capsule, your trajectory is… that isn’t possible. Your course is taking you into the anomaly.'], ['Voice', '(barely) We know that light.']]);
+      AF.busy = false; return; }
+    if (ph === 'orbit') { AF.busy = true; afKCapSet('tear'); tone(200, 2, 'sine', .05, 900);
+      const v = await new Promise(r => askChoice('ktear', r, { h: 'The tear', q: 'Ahead of the capsule, space is torn open like paper. The thrusters still answer. What do you do?', a: [['in', 'Steer into it. The voice knows this light'], ['brace', 'Brace, and hope the station can catch you']] }));
+      await cbTalk(v === 'in' ? [['Kiran', 'You want to go in there.'], ['Voice', 'We want to go home.'], ['Kiran', '…Okay. Okay. Hold on to me.']] : [['Radio', 'Capsule, we can’t reach you. I’m sorry. I’m so sorry.'], ['Narrator', 'The tear doesn’t care what you hope. It opens wider, and swallows the capsule whole.']]);
+      fadeEl.style.background = '#FFFFFF'; fadeEl.classList.add('on'); tone(1200, 1.5, 'sine', .05, 200); await afWait(1800);
+      AF.s.seen.ktear = 1; afLog('Protocol Omega put Kiran in a capsule and fired it into orbit, past Station Kalpana, into a tear in the sky.'); afSave(); fadeEl.classList.remove('on'); AF.busy = false; return; }
+    say('The console is dead. Every light on it is white.', 2400); }
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push({ n: 'Chapter 21', t: 'Dead Man’s Switch', sub: 'Up.', id: 'kswitch', steps: [
+    { g: '', go: () => afKSwitch(), chk: () => !!AF.s.seen.kswitch },
+    { g: 'The drones are coming. Fight them off for as long as you can', auto: () => { if (!AF.fT || performance.now() - AF.fT > 3500) { AF.fT = performance.now(); xcFight('xqkswarm', 'Protocol Omega'); } }, chk: () => !!AF.s.seen.kswarm },
+    { g: '', go: () => { AF.s.kcap = 'pad'; afSave(); AF.busy = true; cbTalk([['Narrator', 'Black. Then a hum. Then cold steel against your back, and straps across your chest.'], ['Voice', '(far away) …they wrapped us… in metal… we can’t reach…'], ['Narrator', 'You are inside a capsule, on a launch pad, in the Mumbai space centre.']]).then(() => { AF.s.seen.kcapIn = 1; afSave(); afKCapIn(); AF.busy = false; }); }, chk: () => !!AF.s.seen.kcapIn },
+    { g: () => ({ pad: 'Get out of the capsule. Try the hatch, the window, the console', orbit: 'Orbit. The console still works. Talk to Kalpana, look out of the window', tear: 'The tear' }[AF.s.kcap || 'pad']), auto: () => { if (!(zone === 'xin' && XC.inside && XC.inside.fl === 'cap') && !AF.s.seen.ktear && !AF.busy) afKCapIn(); }, chk: () => !!AF.s.seen.ktear },
+    { g: 'To be continued: the other side of the tear', chk: () => false } ] });
+  AF_SKIP[AF_CH.findIndex(C => C.id === 'kswitch')] = () => { Object.assign(AF.s.seen, { kswitch: 1, kswarm: 1, kcapIn: 1, klaunch: 1, ktear: 1 }); AF.s.kcap = 'tear'; afSave(); };
+  // the swarm: a fight you can't win, that ends when they finally pile on
+  afFightStep = (o => function(dt){ const S = EV && EV.st, F = S && S.af; if (F && F.swarm && !EV.over) { F.t += dt; if (EV.boss) EV.boss.hp = Math.max(EV.boss.hp, EV.boss.max * .7); if ((F.wv = (F.wv || 0) - dt) <= 0 && EV.units.filter(u => u.team === 'en' && u.hp > 0).length < 7) { F.wv = 3; for (let i = 0; i < 2; i++) S.add('af_agent', pos.x + (Math.random() - .5) * 14, pos.z + (Math.random() - .5) * 14); }
+      if (F.t > 14 && !F.down) { F.down = 1; say('There are too many of them. A net of black wire, a needle in your neck, and the sky goes out.', 3000); setTimeout(() => { if (EV && EV.st === S && !EV.over) endMatch(false); }, 1600); } return; } return o(dt); })(afFightStep);
+  xcOutside = (o => function(){ if (XC.inside && XC.inside.fl === 'cap') return say('The hatch is welded shut from outside. (You can pause the story from your phone.)', 2800); return o(); })(xcOutside);
+  // ======================= Kiran, part 2: the other Earth, where the symbiote won =======================
+  XC_P.kal = Object.assign({}, XC_P.bfa, { name: 'Bangalore', tints: [0xB8B0C0, 0xA8A0B4, 0x9890A8], sky: [0x8A7AA8, 0xC87A9A, 0x0A0614], warm: .05, bosses: [], news: [] });
+  XC_VEH.kal = XC_VEH.bfa;
+  XC_LM.kal = { res: [[5, 50, -50, -5]], taxi: [9e3, 9e3], hello: '', secrets: [],
+    build(g){ const goo = afGoo(), dark = mat(0x0A0A0E, { roughness: .25, metalness: .4 });
+      // the tower that never fell: whole, lived in, and laced with black
+      const T = new THREE.Group(); T.position.set(27.5, 0, -27.5); g.add(T); XC.lm.push(T); box(20, 52, 20, mat(0xD8CCB4, { roughness: .85 }), 0, 26, 0, T);
+      const win = [], bal = []; for (let f = 1; f < 17; f++) for (let k = 0; k < 4; k++) { win.push([-6 + k * 4, f * 3, 10.05]); win.push([10.05, f * 3, -6 + k * 4]); if (k % 2 === 0) bal.push([-6 + k * 4, f * 3 - 1.1, 10.6]); }
+      inst(new THREE.BoxGeometry(1.8, 1.6, .1), new THREE.MeshStandardMaterial({ color: 0x2A3440, emissive: 0xFFD08A, emissiveIntensity: .4 }), win, T); inst(new THREE.BoxGeometry(2.6, .9, 1.1), mat(0x8A8F99, { metalness: .4 }), bal, T);
+      for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2, pts = []; for (let y = 0; y <= 52; y += 6) pts.push(V(Math.cos(a + y * .03) * 10.3, y, Math.sin(a + y * .03) * 10.3)); T.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, .35, 6), goo)); }
+      const sg = new THREE.Mesh(new THREE.PlaneGeometry(8, 1.2), xcSign('THE TOWER', '#FFFFFF', '#16181D', 8, 1.2)); sg.position.set(0, 4, 10.08); T.add(sg);
+      xcSolid(17.5, 37.5, -37.5, -17.5, 52, 'at');
+      // living black over the whole city: veins down the buildings, tendril bridges over the roads, slow dark pools
+      const veins = []; for (let i = 0; i < 70; i++) { const x = -220 + xcHash(i, 3) * 440, z = -220 + xcHash(i, 7) * 440, h = 10 + xcHash(i, 9) * 30; veins.push([x, h / 2, z, xcHash(i, 1) * 3, .5, h, .5]); } inst(new THREE.BoxGeometry(1, 1, 1), goo, veins, g);
+      for (let i = 0; i < 9; i++) { const l = XC_L[1 + (i % 7)], z = -180 + i * 45, a = V(l - 9, 14 + (i % 3) * 4, z), b = V(l + 9, 14 + (i % 3) * 4, z); g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([a, a.clone().lerp(b, .5).add(V(0, -3, 0)), b]), 16, .3, 6), goo)); }
+      const pools = []; for (let i = 0; i < 40; i++) pools.push([-200 + xcHash(i, 11) * 400, .07, -200 + xcHash(i, 13) * 400, 0, 2 + xcHash(i, 4) * 4, .02, 2 + xcHash(i, 5) * 4]); inst(new THREE.BoxGeometry(1, 1, 1), dark, pools, g);
+      const flo = []; for (let i = 0; i < 30; i++) flo.push([-200 + xcHash(i, 21) * 400, 6 + xcHash(i, 22) * 20, -200 + xcHash(i, 23) * 400]); const fm = glowM(0xB89AE8, { emissiveIntensity: 1.2 }); const fl = inst(new THREE.SphereGeometry(.25, 8, 6), fm, flo, g); void fl; } };
+  // the dad, here: never in prison, two good arms, and kit to match
+  OUTFITS.af_dad2 = { hero: 1, c1: '#22305A', c2: '#C9CFD8', hair: 'short', hairCol: '#2A2A2A', skin: '#A87050' };
+  HEROES.af_dad2 = { name: 'Dad', outfit: 'af_dad2', hp: 1400, kind: 'melee', dmg: 10, range: 2.4, cd: .8, speed: 5.6, r: .55, grounded: 1 };
+  BODY.af_dad2 = () => { const R = bdRig({ legL: .9, tH: .66, bw: .3, legM: 0x1A2238, torM: 0x22305A, armM: 0x22305A, handM: 0xC9CFD8 }); bdFace(R, 0xA87050, 'short', 0x2A2A2A); const lit = R.M(0x5AC8FF, { emissive: 0x5AC8FF, emissiveIntensity: 1.4 });
+    R.add(new THREE.BoxGeometry(.16, .16, .03), lit, 0, R.sh - .2, -.17); R.add(new THREE.BoxGeometry(.5, .06, .3), R.M(0xC9CFD8, { metalness: .7, roughness: .3 }), 0, R.sh - .55, 0); return R; };
+  function afKAltPlaces(){ if (XC.city !== 'kal' || !AF.on) return; AF.kAlt = {};
+    // the crowds are bonded and calm: a black sash on every one of them, and nobody hurries
+    (XC.peds || []).forEach(p => { p.sp *= .5; try { const s = new THREE.Mesh(new THREE.BoxGeometry(.42, .5, .3), afGoo()); s.position.set(0, 1.15, 0); s.userData.noPick = true; p.a.g.add(s); } catch (e) {} });
+    try { const b = avatar(crowdLook(201)); b.g.position.set(40, 0, 4); b.g.rotation.y = -Math.PI / 2; XC.g.add(b.g); const s = new THREE.Mesh(new THREE.BoxGeometry(.42, .5, .3), afGoo()); s.position.set(0, 1.15, 0); b.g.add(s); } catch (e) {}
+    XC.acts.push({ x: 39, z: 4, r: 3, on: () => !!AF.s.seen.kalt && !AF.s.seen.kbonded && !AF.busy, label: () => 'Talk to the woman with the black on her shoulders', go: afKBonded });
+    const at = [AF_KT[0] - 3, AF_KT[1] + 14]; AF.kAlt.dadAt = at;
+    if (AF.s.seen.kdad) { try { const d = bodyAv('af_dad2', 1); d.g.position.set(at[0], 0, at[1]); d.g.rotation.y = 0; XC.g.add(d.g); AF.kAlt.dad = d; } catch (e) {} try { const m = avatar(crowdLook(17)); m.g.position.set(at[0] + 2.4, 0, at[1] + .4); XC.g.add(m.g); } catch (e) {} } }
+  async function afKAltArrive(){ AF.busy = true; walkTarget = null;
+    await cbTalk([['Narrator', 'The capsule is lying on its side in a park, cracked open like an egg. The sky is the wrong colour: violet, with lights floating in it like slow fireflies.'], ['Narrator', 'Black runs down the side of every building. Not like damage. Like ivy. Like veins.'], ['Kiran', 'Hey. Are you there? Say something.'], ['Narrator', 'Nothing. For the first time in your whole life, the voice is completely silent.'], ['Kiran', '(very quietly) …please.'], ['Voice', '(soft, wondering, like someone walking into their childhood house) We’re home.']]);
+    AF.s.seen.kalt = 1; afLog('Kiran came through the tear into another Earth. Bangalore, overgrown with living black. The voice said: “We’re home.”'); afSave(); AF.busy = false; say('Walk among them. They don’t seem frightened of you at all.', 3200); }
+  async function afKBonded(){ AF.busy = true;
+    await cbTalk([['Narrator', 'She has a cup of tea in one hand. The black sits on her shoulders like a shawl, and breathes with her.'], ['Woman', 'Oh. Oh, you’re the little scout. We felt it the moment you came through. Everybody did.'], ['Kiran', 'Scout?'], ['Woman', 'Twenty years ago we sent seeds through the thin places, to see what was on the other side. Most never came back. One did, a little. It said: a man on a staircase. A fire. A child.'], ['Voice', 'That was us. We were the seed. We went looking. We found him.'], ['Woman', 'Here, we bonded. Everyone, after the first year. No wars since. No one is ever alone.'], ['Kiran', '(looking at the calm faces going past, every one of them with a little black at the throat) Did anyone get a choice?'], ['Woman', '(smiling, not answering) Your father’s waiting for you. He always knew this day would come.']]);
+    AF.s.seen.kbonded = 1; afLog('Kiran’s symbiote was a scout from this world, sent through the thin places twenty years ago.'); afSave(); AF.busy = false; }
+  async function afKDad(){ AF.busy = true; walkTarget = null;
+    await cbTalk([['Narrator', 'A sound you know from his stories: the hiss of a web-line. A man drops off the roof of the tower and lands in front of you, light as anything. A navy-and-silver suit, glowing wrist rigs, both arms working perfectly.'], ['Narrator', 'He pulls the mask off. He’s older. He’s strong. He has your jaw.']]);
+    const v = await new Promise(r => askChoice('kdad', r, { h: 'Him', q: 'What do you say first?', a: [['dad', '“…Dad?”'], ['him', '“You’re him. You’re actually him.”'], ['none', 'Say nothing. You can’t.']] }));
+    await cbTalk([{ dad: ['Kiran', '…Dad?'], him: ['Kiran', 'You’re him. You’re actually him.'], none: ['Narrator', 'You open your mouth. Nothing comes out.'] }[v],
+      ['Dad', 'Kiran. (he says your name like he’s practised it for years) Our scout came back through the tear once, twenty years ago, for about a second. Long enough to show me a beach, and a kid, and the other me, going down.'], ['Dad', 'I’ve been watching that tear every night since. I knew you were real. I didn’t know if you’d ever come.'], ['Kiran', 'You never went to prison. Your arm—'], ['Dad', 'Never broke it. Never put anyone in hospital who didn’t put themselves there. I got luckier than him. That’s all it is. Luck.'],
+      ['Meher', '(running across the park, out of breath, alive) Is it— is it them?'], ['Narrator', 'Your mother. Not a letter, not a photo. Alive, and staring at you like you’re the sun coming up.'], ['Meher', 'We never had a child here. We had a gap at the table where one should be. (she touches your face) There you are.'], ['Voice', 'Home.']]);
+    AF.s.kdadFirst = v; AF.s.seen.kdad = 1; afLog('Kiran met their father, alive and stronger on this Earth, and their mother Meher, alive. He already knew about Kiran’s world.'); afSave(); AF.busy = false; fade(() => afKAltPlaces2(), '#000000'); }
+  function afKAltPlaces2(){ if (XC.city !== 'kal' || !AF.kAlt || AF.kAlt.dad) return; const at = AF.kAlt.dadAt; try { const d = bodyAv('af_dad2', 1); d.g.position.set(at[0], 0, at[1]); XC.g.add(d.g); AF.kAlt.dad = d; } catch (e) {} try { const m = avatar(crowdLook(17)); m.g.position.set(at[0] + 2.4, 0, at[1] + .4); XC.g.add(m.g); } catch (e) {} }
+  async function afKSettle(){ AF.busy = true;
+    await cbTalk([['Narrator', 'The tower, the real one, the one that never burned. The lift works. Mrs. Rao still lives on the ninth floor here; she pinches your cheek like she’s known you for years.'], ['Narrator', 'Your father has a whole floor for his workshop: web-shooters on the bench that make his old ones look like toys, a suit on a stand, gadgets you don’t have names for.'], ['Dad', 'Your room’s next to the workshop. Meher painted it last spring. Don’t ask why. She just did.'], ['Meher', 'I had a feeling.'], ['Narrator', 'That night you lie in a bed in a tower in a city where nobody is ever alone, and the voice hums you to sleep, and for the first time in your life it sounds completely happy.'], ['Kiran', '(to the ceiling, very quietly) So what happens now?'], ['Voice', 'Now we live.']]);
+    AF.s.seen.ksettle = 1; afLog('Kiran moved into this world’s tower with their father and mother.'); afSave(); AF.busy = false; }
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push({ n: 'Chapter 22', t: 'We’re Home', sub: 'The other side of the tear.', id: 'kalt', steps: [
+    { g: '', go: () => { if (XC.city !== 'kal') { afKidTravel('kal'); return; } afKAltArrive(); }, chk: () => !!AF.s.seen.kalt },
+    { g: 'Walk among them. Talk to the woman with the black on her shoulders', at: () => [39, 4], chk: () => !!AF.s.seen.kbonded },
+    { g: 'Someone is swinging towards you over the rooftops. The tower', at: () => AF.kAlt && AF.kAlt.dadAt, auto: () => { const a = AF.kAlt && AF.kAlt.dadAt; if (a && afNear(a[0], a[1], 7)) afKDad(); }, chk: () => !!AF.s.seen.kdad },
+    { g: 'Go home with them. The tower door', at: () => [AF_KT[0], AF_KT[1] + 11.5], auto: () => { if (afNear(AF_KT[0], AF_KT[1] + 11.5, 3.5)) afKSettle(); }, chk: () => !!AF.s.seen.ksettle },
+    { g: 'To be continued: a life on the other side', chk: () => false } ] });
+  AF_SKIP[AF_CH.findIndex(C => C.id === 'kalt')] = () => { Object.assign(AF.s.seen, { kalt: 1, kbonded: 1, kdad: 1, ksettle: 1 }); AF.s.kdadFirst = AF.s.kdadFirst || 'dad'; afSave(); if (XC.city !== 'kal') afKidTravel('kal'); else fade(() => afKAltPlaces2(), '#000000'); };
+  afKidPlaces = (o => function(){ o(); afKAltPlaces(); })(afKidPlaces);
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
