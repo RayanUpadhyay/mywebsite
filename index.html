@@ -8115,8 +8115,15 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     g.fillStyle = '#9AA3AD'; g.beginPath(); g.arc(X(TW.x), X(TW.z), TW.r * k, 0, 7); g.fill(); g.fillStyle = '#6A3A9A'; g.fillRect(X(-260), X(MZ - 1.5), 520 * k, 3 * k);
     PH.base = c;
   }
+  // "Go to the airport" on the phone: from Bangalore or another city, straight to the terminal (not in fights or the post-story story)
+  function aptPhoneOk(){ return !EV && !A && !(typeof AF !== 'undefined' && AF && AF.on) && inWorld && ['blr', 'xc', 'xin', 'apt', 'city', 'roof'].includes(zone); }
+  function aptPhoneGo(){ if (!aptPhoneOk()) return say('You can’t get to the airport from here right now.', 2400); phoneClose();
+    if (zone === 'apt') return say('You’re already at the airport.', 2000);
+    if (zone === 'xc' || zone === 'xin') { if (zone === 'xin') { if (XC.isc) { disposeDeep(XC.isc); XC.isc = null; } XC.inside = null; zone = 'xc'; } return xcLeave(); }
+    if (DRV.on) getOut(true); aptEnter('blr', 'kerb'); }
+  phEl.addEventListener('click', e => { if (e.target.closest('[data-apt]')) { e.stopPropagation(); aptPhoneGo(); } });
   function phMap(){
-    const B = phEl.querySelector('#phBody'); B.innerHTML = '<canvas id="phCv" width="640" height="640"></canvas><div class="phrow"><button type="button" data-z="1">＋ Zoom in</button><button type="button" data-z="-1">－ Zoom out</button><button type="button" data-z="0">Centre on me</button><button type="button" data-z="x">Clear pin</button></div><div class="phleg"><span><i style="background:#FFC93C"></i>You / job</span><span><i style="background:#35C8F0"></i>Pin / help needed</span><span><i style="background:#FF3C3C"></i>Street boss</span><span><i style="background:#7A2A2A"></i>Stash house</span><span><i style="background:#fff"></i>Place found</span><span><i style="background:#2A6AFF"></i>Police</span></div><p style="color:#9AA3AD;font-size:12px">Tap the map to drop a pin. A beacon will show you the way.</p><div class="phrow"><button type="button" class="y" data-st="1">🚀 Fly up to the space station</button></div>';
+    const B = phEl.querySelector('#phBody'); B.innerHTML = `<canvas id="phCv" width="640" height="640"></canvas><div class="phrow"><button type="button" data-z="1">＋ Zoom in</button><button type="button" data-z="-1">－ Zoom out</button><button type="button" data-z="0">Centre on me</button><button type="button" data-z="x">Clear pin</button></div><div class="phleg"><span><i style="background:#FFC93C"></i>You / job</span><span><i style="background:#35C8F0"></i>Pin / help needed</span><span><i style="background:#FF3C3C"></i>Street boss</span><span><i style="background:#7A2A2A"></i>Stash house</span><span><i style="background:#fff"></i>Place found</span><span><i style="background:#2A6AFF"></i>Police</span><span><i style="background:#FFC93C"></i>✈ Airport taxis</span></div><p style="color:#9AA3AD;font-size:12px">Tap the map to drop a pin. A beacon will show you the way.</p><div class="phrow">${aptPhoneOk() ? '<button type="button" class="y" data-apt="1">✈ Go to the airport</button>' : ''}<button type="button" class="y" data-st="1">🚀 Fly up to the space station</button></div>`;
     if (!PH.base && BL.bld && BLC.built) phMapBase();
     const cv = B.querySelector('#phCv'), [mx, mz] = BL.sc ? toMap(pos.x, pos.z) : [0, 0]; if (PH.cx == null || zone !== 'blr') { PH.cx = zone === 'blr' ? mx : -20; PH.cz = zone === 'blr' ? mz : -20; }
     const draw = () => { const g = cv.getContext('2d'), W = cv.width, span = 780 / PH.zoom, sc = W / span, P = (x, z) => [(x - PH.cx) * sc + W / 2, (z - PH.cz) * sc + W / 2];
@@ -8128,6 +8135,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       SBOSS.forEach(Bq => { dot(Bq.at[0], Bq.at[1], SBK[Bq.id] ? '#3CE870' : '#FF3C3C', 9, '#16181D'); lbl(Bq.at[0], Bq.at[1], Bq.name); });
       dot(HOUSE.door[0], HOUSE.door[1], '#FFC93C', 8, '#16181D'); lbl(HOUSE.door[0], HOUSE.door[1], 'Home');
       HEAT.cops.forEach(v => dot(v.x, v.z, '#2A6AFF', 6, '#fff')); MET.st.forEach(S => { dot(S.x, S.z, '#1F9A4A', 8, '#fff'); lbl(S.x, S.z, S.name + ' Metro'); }); dot(SPC.x, SPC.z, '#E8501E', 10, '#fff'); lbl(SPC.x, SPC.z, 'Space Centre');
+      if (APT.stand) { const [px, py] = P(APT.stand[0], APT.stand[1]); g.fillStyle = '#FFC93C'; g.strokeStyle = '#16181D'; g.lineWidth = 3; g.beginPath(); g.arc(px, py - 16, 13, Math.PI * .8, Math.PI * .2); g.lineTo(px, py); g.closePath(); g.fill(); g.stroke(); g.fillStyle = '#16181D'; g.font = '900 14px system-ui'; g.textAlign = 'center'; g.fillText('✈', px, py - 11); g.font = '800 15px system-ui'; g.lineWidth = 4; g.strokeStyle = '#FFFFFF'; g.strokeText('Airport Taxis', px, py - 34); g.fillText('Airport Taxis', px, py - 34); }
       const rt = reTarget(); if (rt) dot(rt[0], rt[1], '#35C8F0', 9, '#fff'); if (PH.wp) dot(PH.wp[0], PH.wp[1], '#35C8F0', 10, '#16181D'); const jt = jobTarget(); if (jt) { dot(jt[0], jt[1], '#FFC93C', 11, '#16181D'); const [px, py] = P(jt[0], jt[1]); g.fillStyle = '#16181D'; g.font = '900 14px system-ui'; g.textAlign = 'center'; g.fillText('!', px, py + 5); }
       if (zone === 'blr' && BL.sc) { const [px, py] = P(...toMap(pos.x, pos.z)), a = Math.atan2(-Math.sin(yaw), -Math.cos(yaw)); g.save(); g.translate(px, py); g.rotate(a + Math.PI / 2); g.fillStyle = '#FFC93C'; g.strokeStyle = '#16181D'; g.lineWidth = 3; g.beginPath(); g.moveTo(14, 0); g.lineTo(-9, -9); g.lineTo(-4, 0); g.lineTo(-9, 9); g.closePath(); g.fill(); g.stroke(); g.restore(); } };
     draw(); PH.draw = draw;
@@ -14668,16 +14676,27 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function aptLeave(){
     if (!APT_OPEN[APT.city]) return say(`${APT_CITIES[APT.city].name}’s streets aren’t open yet. The departures board can fly you on or home.`, 3600);
     APT.ticket = null; APT.air = false; APT.roof = 0; web.p = null; drawWeb();
-    if (APT.city === 'blr') { const s = APT.stand || [330, 0]; enterBlr([s[0] - 4, s[1], -Math.PI / 2]); } else { xcEnter(APT.city); return; }
+    if (APT.city === 'blr') { const s = APT.stand || [330, 0]; enterBlr([s[0], s[1] + 2, 0]); } else { xcEnter(APT.city); return; }
     setTimeout(() => { if (zone !== 'apt' && zone !== 'fly') aptFree(); }, 1500);
   }
   // ---------- the taxi stand on Bangalore's east edge ----------
   function aptStand(){
     if (APT.standG || !BL.mapG || !BLC.built || !BL.bld) return;
-    let at = null; for (const x of [330, 334, 326]) { for (let z = 0; z <= 60 && !at; z += 4) for (const zz of [z, -z]) { if (!at && !swBlocked(x, zz, 0) && blrValid(...toLocal(x, zz))) at = [x, zz]; } if (at) break; }
-    if (!at) return; APT.stand = at; const g = APT.standG = new THREE.Group(); g.position.set(at[0] + 4, 0, at[1]); BL.mapG.add(g);
-    cyl(.08, .08, 3.4, mat(0x3A3D44, { metalness: .6 }), 0, 1.7, 0, g, 8); const s = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1), aptSign('✈ AIRPORT TAXIS', '#0B0D14', '#FFC93C', 2.6, 1)); s.position.set(0, 3.2, 0); s.rotation.y = -Math.PI / 2; g.add(s); const s2 = s.clone(); s2.rotation.y = Math.PI / 2; g.add(s2);
-    try { const v = makeVehicle('cab', 0xF2C230, g); v.g.position.set(-1.5, 0, 5); } catch (e) {}
+    // the nearest good pavement spot to home, on a street you can walk straight to
+    const ok = (x, z) => Math.abs(x) < 250 && Math.abs(z) < 250 && !swBlocked(x, z, 0) && blrValid(...toLocal(x, z)) && !swBlocked(x + 1.5, z, 0) && !swBlocked(x - 1.5, z, 0) && !swBlocked(x, z + 1.5, 0) && !swBlocked(x, z - 1.5, 0);
+    const C = []; ROADS.filter(l => Math.abs(l) < 240).forEach(l => { for (let t = -230; t <= 230; t += 5) { [[l + 7.5, t, l, 'z'], [l - 7.5, t, l, 'z'], [t, l + 7.5, l, 'x'], [t, l - 7.5, l, 'x']].forEach(c => { if (!ROADS.some(r => Math.abs(c[c[3] === 'z' ? 1 : 0] - r) < 9)) C.push(c); }); } });
+    const d0 = (x, z) => Math.hypot(x - HOUSE.door[0], z - HOUSE.door[1]);
+    C.sort((a, b) => Math.abs(d0(a[0], a[1]) - 45) - Math.abs(d0(b[0], b[1]) - 45)); const c = C.find(c => ok(c[0], c[1])); if (!c) return;
+    const at = [c[0], c[1]], alongZ = c[3] === 'z', side = alongZ ? Math.sign(c[0] - c[2]) : Math.sign(c[1] - c[2]); APT.stand = at; const g = APT.standG = new THREE.Group(); g.position.set(at[0], 0, at[1]); BL.mapG.add(g);
+    // a tall gold beam you can see from anywhere in the city
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(.9, .9, 90, 14, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFC93C, transparent: true, opacity: .32, depthWrite: false, side: THREE.DoubleSide })); beam.position.y = 45; g.add(beam); APT.standBeam = beam;
+    // a big sign on two posts, readable from both sides of the street
+    const post = mat(0x3A3D44, { metalness: .6 }), ry = alongZ ? Math.PI / 2 : 0, sg = new THREE.Group(); sg.rotation.y = ry; g.add(sg);
+    [-2.2, 2.2].forEach(o => cyl(.1, .1, 4.6, post, o, 2.3, 0, sg, 8)); const s = new THREE.Mesh(new THREE.PlaneGeometry(5, 1.6), aptSign('✈ AIRPORT TAXIS', '#0B0D14', '#FFC93C', 5, 1.6)); s.position.set(0, 4.1, .03); sg.add(s); const s2 = s.clone(); s2.rotation.y = Math.PI; s2.position.z = -.03; sg.add(s2);
+    const lamp = box(5.2, .12, .3, glowM(0xFFE0A0, { emissiveIntensity: 1.4 }), 0, 4.95, 0, sg); void lamp;
+    box(alongZ ? 1.4 : 7, .12, alongZ ? 7 : 1.4, mat(0xFFC93C, { roughness: .8 }), alongZ ? -side * 1.9 : 0, .03, alongZ ? 0 : -side * 1.9, g);
+    // three yellow-top taxis parked at the kerb, nose to tail
+    for (let k = 0; k < 3; k++) { try { const v = makeVehicle('cab', 0xF2C230, g); v.g.position.set(alongZ ? -side * 4.8 : (k - 1) * 5.4, 0, alongZ ? (k - 1) * 5.4 : -side * 4.8); v.g.rotation.y = alongZ ? 0 : Math.PI / 2; } catch (e) {} }
     g.traverse(o => { if (o.isMesh) o.userData.noPick = true; });
   }
   APT.btn = document.createElement('button'); APT.btn.type = 'button'; APT.btn.className = 'btn alt drvbtn doorbtn'; APT.btn.hidden = true; document.body.appendChild(APT.btn);
@@ -14709,7 +14728,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (inWorld && zone === 'fly') { APT.btn.hidden = true; return aptFlyStep(dt, now); }
     if (!(inWorld && zone === 'apt' && APT.sc)) {
       // the taxi stand in the city
-      APT.near = null; if (inWorld && zone === 'blr' && APT.stand && onGround() && !DRV.on && !EV && !A && !BL.cine && !BL.lvl && Math.abs(BL.off.y) < .01) { const [mx, mz] = toMap(pos.x, pos.z); if (Math.hypot(mx - APT.stand[0] - 4, mz - APT.stand[1]) < 5) APT.near = { label: 'Take a taxi to the airport', go: () => aptEnter('blr', 'kerb') }; }
+      APT.near = null; if (inWorld && zone === 'blr' && APT.stand && onGround() && !DRV.on && !EV && !A && !BL.cine && !BL.lvl && Math.abs(BL.off.y) < .01) { const [mx, mz] = toMap(pos.x, pos.z); if (Math.hypot(mx - APT.stand[0], mz - APT.stand[1]) < 5) APT.near = { label: 'Take a taxi to the airport', go: () => aptEnter('blr', 'kerb') }; }
       APT.btn.hidden = !APT.near; if (APT.near) APT.btn.textContent = APT.near.label + (fine ? ' (E)' : ''); return; }
     // planes: one trundling along the taxiway, one taking off and landing on the runway
     APT.planes.forEach(p => { p.t += dt; const g = p.g; g.rotation.order = 'YXZ';
