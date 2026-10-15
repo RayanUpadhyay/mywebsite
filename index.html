@@ -15676,6 +15676,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const crew = (n, r, name, boss) => { for (let i = 0; i < n; i++) S.add(i % 3 === 2 ? 'gangB' : 'gangA', ...spot(r, i / n * Math.PI * 2)); const b = addUnit({ hero: boss || 'gangBoss', team: 'en' }); [b.x, b.z] = spot(r + 2, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name }, b, t: 99, marks: [] }; return b; };
     S.af = { part, t: 0, n: 0, sp: 0 };
     if (afTowerSetup(part, S, crew)) return;
+    if (part.startsWith('xqkd_')) { crew(part === 'xqkd_gate' ? 4 : 3, 6, { xqkd_mall: 'Halcyon Processing', xqkd_gate: 'the checkpoint', xqkd_rel: 'the relay crew', xqkd_cvy: 'the convoy' }[part], 'af_agent'); S.add('af_burner', pos.x + 5, pos.z - 3); S.af.agency = 1; S.af.pulse = 8; return; }
+    if (part === 'xqkboss') { crew(4, 7, 'Commander Dastur', 'af_lead'); S.add('af_burner', pos.x - 5, pos.z + 3); S.add('af_burner', pos.x + 5, pos.z + 3); S.af.agency = 1; S.af.pulse = 7; return; }
     if (part === 'xqkdepot') { crew(3, 6, 'Halcyon’s depot', 'af_agent'); S.add('af_burner', pos.x + 5, pos.z - 3); S.af.agency = 1; S.af.pulse = 8; return; }
     if (part === 'xqkpat') { crew(2, 6, 'the Halcyon patrol', 'af_agent'); S.add('af_burner', pos.x - 5, pos.z + 3); S.af.agency = 1; S.af.pulse = 8; return; }
     if (part === 'xqwatch') { crew(1, 5, 'the watchers', 'af_agent'); return; } if (part === 'xqsafe') { crew(3, 5, 'Halcyon’s safehouse', 'af_agent'); S.add('af_burner', pos.x + 5, pos.z + 3); S.af.agency = 1; S.af.pulse = 8; return; }
@@ -15712,6 +15714,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (part === 'xqsmog') return afDumped();
     if (part.startsWith('xqt_')) return afTrFightEnd(part, won);
     if (part === 'xqkid') return afKidAfter();
+    if (part.startsWith('xqkd_') || part === 'xqkboss') return afKDAfter(part, won);
     if (part === 'xqkdepot') { if (won) { afKT().power = 1; afSave(); say(`You drive the generator out through what’s left of the gate. ${afKNeeds()}`, 3600); } else say('They throw you out. Next time, Blend in first (2): nobody stops someone with a clipboard.', 3200); return; }
     if (part === 'xqkpat') { if (won) { AF.s.seen.kpat = 1; afSave(); (AF.kPat || []).forEach(av => { if (av.g.parent) av.g.parent.remove(av.g); }); say('The patrol is down. Their radio keeps asking for the Site B check-in. Nobody answers.', 3600); } else say('They push you back out past the cordon. Harden (5) when the burner fires, grab (4) their guns.', 3200); return; }
     if (part === 'xqwatch') { if (won) { AF.s.seen.passed = 1; afSave(); say('The watchers are down, and nobody inside heard a thing. You’re at the door.', 3000); } else say('They chase you off. Come back in normal clothes (Blend, 2).', 3000); return; }
@@ -16708,6 +16711,70 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function afKTStep(){ let n = null, bd = 9; (AF.ktSpots || []).forEach(([x, z, r, f]) => { const d = Math.hypot(pos.x - x, pos.z - z); if (d < r && d < bd) { bd = d; n = f(); } });
     XC.near = n; XC.btn.hidden = !n; if (n) XC.btn.textContent = n.label + (fine ? ' (E)' : ''); }
   afInStep = (o => function(){ if (XC.inside && XC.inside.kind === 'ktw') return afKTStep(); return o(); })(afInStep);
+  // ======================= Kiran, part 2: taking Bangalore back, district by district =======================
+  // Malleshwaram: sense through the walls of a processing centre, then break them out
+  // Shivajinagar: blend through the scanner checkpoint, then tear the drone-control antenna off with a tendril
+  // Peenya: wall-crawl up the relay mast and cut it, then fight the crew that comes running
+  // The ring road: tendril-swing through the convoy's three drone gates, then stop the convoy (harden when the burners fire)
+  const AF_KDN = { mall: 'Malleshwaram', mkt: 'Shivajinagar', rel: 'Peenya', ring: 'the ring road' };
+  const AF_KMKT = { gate: [-137.5, -8], van: [-137.5, -32] }, AF_KMAST = [-11, 94], AF_KRINGS = [[-55, 14, -60], [-55, 15, -115], [-55, 14, -170]], AF_KCVY = [-55, -200], AF_KCMD = [137.5, 113.5];
+  const afKD = () => AF.s.kd || (AF.s.kd = { mall: 0, mkt: 0, rel: 0, ring: 0, rings: 0 });
+  const afKDDone = () => ['mall', 'mkt', 'rel', 'ring'].filter(k => afKD()[k] >= 2).length;
+  const afAbRecent = (k, ms) => AF.lastAb && AF.lastAb[0] === k && performance.now() - AF.lastAb[1] < (ms || 1500);
+  function afKDPlaces(){ if (XC.city !== 'bfa' || AF.s.act !== 'kblr' || !AF.s.child || !AF.on) return; const D = afKD();
+    const l = afLotNear(-60, 40, []); if (l) { xcDoor(XC.g, l, 'Halcyon Processing, Site B', 'kproc', 0); const d = XC.doors.pop(); AF.kProc = [d.x, d.z]; }
+    // a black Halcyon pylon with a red eye in every district they still hold
+    AF.kPyl = {}; const pm = mat(0x16181D, { metalness: .6, roughness: .4 }); [['mall', AF.kProc || [-60, 30]], ['mkt', AF_KMKT.gate], ['rel', AF_KMAST], ['ring', AF_KCVY]].forEach(([k, [x, z]]) => { const g = new THREE.Group(); g.position.set(x + 4, 0, z + 4); XC.g.add(g); cyl(.25, .4, 9, pm, 0, 4.5, 0, g, 8); sph(.45, glowM(0xE84A3C, { emissiveIntensity: 2.2 }), 0, 9.3, 0, g, 1, 1, 1, 10); const f = new THREE.Group(); f.position.set(0, 0, 0); g.add(f); AF.kPyl[k] = g; g.visible = D[k] < 2; });
+    // the market checkpoint: a scanner arch and a drone-control van with an antenna
+    const ck = new THREE.Group(); ck.position.set(AF_KMKT.gate[0], 0, AF_KMKT.gate[1]); XC.g.add(ck); box(.5, 4, .5, pm, -3, 2, 0, ck); box(.5, 4, .5, pm, 3, 2, 0, ck); box(6.5, .5, .6, pm, 0, 4, 0, ck); const scan = box(5.4, .06, .3, glowM(0xE84A3C, { emissiveIntensity: 1.6 }), 0, 3.6, 0, ck); XC.anim.push(t => { scan.position.y = 2 + Math.sin(t * 2) * 1.6; });
+    const vn = new THREE.Group(); vn.position.set(AF_KMKT.van[0], 0, AF_KMKT.van[1]); XC.g.add(vn); box(2.2, 2.2, 5, mat(0x3A3D44), 0, 1.3, 0, vn); AF.kAnt = new THREE.Group(); AF.kAnt.position.set(0, 2.4, -1); vn.add(AF.kAnt); cyl(.06, .06, 4, pm, 0, 2, 0, AF.kAnt, 6); box(1.4, .08, .08, pm, 0, 3.6, 0, AF.kAnt); AF.kAnt.visible = D.mkt < 2; xcSolid(AF_KMKT.van[0] - 1.1, AF_KMKT.van[0] + 1.1, AF_KMKT.van[1] - 2.5, AF_KMKT.van[1] + 2.5, 2.4, 'v');
+    // the relay mast in Peenya: a lattice tower with a platform you can stand on
+    const ms = new THREE.Group(); ms.position.set(AF_KMAST[0], 0, AF_KMAST[1]); XC.g.add(ms); XC.lm.push(ms); for (let y = 0; y < 26; y += 2.6) { [[-1.6, -1.6], [1.6, -1.6], [-1.6, 1.6], [1.6, 1.6]].forEach(([x, z]) => box(.2, 2.6, .2, pm, x, y + 1.3, z, ms)); box(3.4, .12, .12, pm, 0, y + 2.6, -1.6, ms); }
+    box(4.4, .3, 4.4, pm, 0, 26, 0, ms); AF.kDish = box(1.6, 1.6, .2, glowM(0xE84A3C, { emissiveIntensity: 1 }), 0, 27.4, 0, ms); AF.kDish.visible = D.rel < 1; xcSolid(AF_KMAST[0] - 2.2, AF_KMAST[0] + 2.2, AF_KMAST[1] - 2.2, AF_KMAST[1] + 2.2, 26.1, 'mast');
+    // the ring road's drone gates: three red hoops in the air, gone as you swing through them
+    AF.kRings = AF_KRINGS.map(([x, y, z], i) => { const r = new THREE.Mesh(new THREE.TorusGeometry(4, .3, 8, 30), glowM(0xE84A3C, { emissiveIntensity: 1.6 })); r.position.set(x, y, z); XC.g.add(r); r.visible = D.ring < 1 && i >= D.rings; XC.anim.push(t => { r.rotation.y = Math.sin(t) * .2; }); return r; });
+    // the convoy, parked where the gates end
+    const cv = new THREE.Group(); cv.position.set(AF_KCVY[0] + 3, 0, AF_KCVY[1]); XC.g.add(cv); [0, 7, 14].forEach(z => box(2.4, 2.6, 6, mat(0x2A2D33), 0, 1.3, -z, cv)); AF.kCvy = cv; cv.visible = D.ring < 2;
+    // Site B command at the old logistics yard
+    const cm = new THREE.Group(); cm.position.set(AF_KCMD[0], 0, AF_KCMD[1] + 6); XC.g.add(cm); box(8, 3, 4, mat(0x2A2D33), 0, 1.5, 0, cm); const sg = new THREE.Mesh(new THREE.PlaneGeometry(6, .8), xcSign('HALCYON · SITE B COMMAND', '#E84A3C', '#16181D', 6, .8)); sg.position.set(0, 3.4, 2.05); cm.add(sg); AF.kCmd = cm; cm.visible = !AF.s.kFree; }
+  function afKDLook(){ const D = afKD(); Object.keys(AF.kPyl || {}).forEach(k => { AF.kPyl[k].visible = D[k] < 2; }); if (AF.kAnt) AF.kAnt.visible = D.mkt < 2; if (AF.kDish) AF.kDish.visible = D.rel < 1; (AF.kRings || []).forEach((r, i) => { r.visible = D.ring < 1 && i >= D.rings; }); if (AF.kCvy) AF.kCvy.visible = D.ring < 2; if (AF.kCmd) AF.kCmd.visible = !AF.s.kFree; }
+  function afKDFree(k, lines){ const D = afKD(); D[k] = 2; afSave(); afKDLook(); AF.busy = true; cbTalk(lines.concat([['Narrator', `${AF_KDN[k][0].toUpperCase() + AF_KDN[k].slice(1)} is free. The red eye on the pylon goes dark. (${afKDDone()} of 4 districts)`]])).then(() => { AF.busy = false; }); afLog(`Kiran freed ${AF_KDN[k]} from Halcyon.`); }
+  function afKDStep(){ if (XC.city !== 'bfa' || AF.busy || EV) return; const D = afKD(), now = performance.now(), K = afK(), sensing = (K.senseT || 0) > now / 1000;
+    // Malleshwaram
+    if (D.mall === 0 && AF.kProc && sensing && afNear(AF.kProc[0], AF.kProc[1], 16)) { D.mall = 1; afSave(); say('Through the walls: twelve heat shapes sitting very still on the floor, and four walking up and down between them.', 4200); }
+    if (D.mall === 1 && AF.kProc && afNear(AF.kProc[0], AF.kProc[1], 4) && (!AF.fT || now - AF.fT > 3500)) { AF.fT = now; xcFight('xqkd_mall', 'Halcyon Processing'); return; }
+    // Shivajinagar
+    if (D.mkt === 0 && afNear(AF_KMKT.gate[0], AF_KMKT.gate[1], 4)) { if (K.blend) { D.mkt = 1; afSave(); say('The scanner sweeps over you. GREEN. A bored guard waves you through. The van is just ahead.', 3400); } else if (!AF.fT || now - AF.fT > 6000) { AF.fT = now; say('The scanner sweeps over you and screams. Every guard turns round.', 2400); xcFight('xqkd_gate', 'The checkpoint'); return; } }
+    // Peenya
+    if (D.rel === 0 && XC.roof >= 25 && afNear(AF_KMAST[0], AF_KMAST[1], 4)) { D.rel = 1; afSave(); afKDLook(); tone(70, .8, 'sawtooth', .06, 40); say('You find the relay box and rip the cables out with your claws. Over the east of the city, three drones drop out of the sky. Below you, boots on the ladder.', 4200); }
+    if (D.rel === 1 && !XC.roof && afNear(AF_KMAST[0], AF_KMAST[1], 9) && (!AF.fT || now - AF.fT > 3500)) { AF.fT = now; xcFight('xqkd_rel', 'The relay crew'); return; }
+    // the ring road
+    if (D.ring === 0) { const R = AF_KRINGS[D.rings]; if (R && XC.air && Math.hypot(pos.x - R[0], pos.y - R[1], pos.z - R[2]) < 5.5) { D.rings++; afSave(); afKDLook(); tone(660 + D.rings * 120, .15, 'triangle', .05); say(D.rings < 3 ? `Gate ${D.rings} of 3. Keep swinging south.` : 'All three gates down. The convoy is blind. It’s stopped at the end of the road.', 2600); if (D.rings >= 3) { D.ring = 1; afSave(); } } }
+    if (D.ring === 1 && afNear(AF_KCVY[0], AF_KCVY[1], 9) && !XC.air && (!AF.fT || now - AF.fT > 3500)) { AF.fT = now; xcFight('xqkd_cvy', 'The convoy'); return; } }
+  // tendril grab works on things, not just people: the antenna on the market van
+  afAbility = (o => function(k){ AF.lastAb = [k, performance.now()]; if (k === 'grab' && !EV && AF.on && XC.city === 'bfa' && afKD().mkt === 1 && afNear(AF_KMKT.van[0], AF_KMKT.van[1], 6)) { afK().used.grab = 1; afSave(); tone(90, .6, 'sawtooth', .06, 50); say('A black rope whips out of your palm, wraps the antenna, and you tear it clean off the roof. Every drone over the market spins, and lands.', 3600);
+      return afKDFree('mkt', [['Stall-holder', '(coming out from behind his shutter) The drones… they just sat down. Like birds.'], ['Kiran', 'Tell everyone. Shivajinagar’s yours again.']]); } return o(k); })(afAbility);
+  function afKDAfter(part, won){ const D = afKD();
+    if (part === 'xqkd_mall') { if (!won) return say('They push you out. Harden (5) when the burners fire.', 2600); afKDFree('mall', [['Narrator', 'You open the cages. Twelve people: students, an auto driver, a grandmother who threw a slipper at a drone.'], ['Grandmother', 'Twenty years they said they were protecting us from your kind. (she looks at the black on your arms) You don’t look so terrible.']]); }
+    else if (part === 'xqkd_gate') { if (won) { D.mkt = 1; afSave(); say('The checkpoint is down. Next time, Blend (2) and they won’t even look. The van is just ahead: tear its antenna off (Grab, 4).', 3600); } else say('Too many of them. Blend in first (2): the scanner only looks for black.', 3000); }
+    else if (part === 'xqkd_rel') { if (!won) return say('They hold the mast. Try again; harden when the burners fire.', 2600); afKDFree('rel', [['Narrator', 'The relay crew is zip-tied to their own ladder. Peenya’s factories start their machines again, one by one, like nothing ever happened.']]); }
+    else if (part === 'xqkd_cvy') { if (!won) return say('The convoy crew pins you. Harden (5) when the burners fire, grab (4) their guns.', 2800); afKDFree('ring', [['Narrator', 'The trucks are full of drone parts and files: names, addresses, “Site B residents of interest”. Mrs. Rao’s name is on page one.'], ['Voice', 'They were never going to leave.']]); }
+    else if (part === 'xqkboss') { if (!won) return say('Dastur’s men drag you out of the yard. Harden, grab, and go again.', 2800); AF.s.seen.kcmd = 1; afSave(); } }
+  async function afKFree(){ AF.busy = true; AF.s.kFree = 1; afSave(); afKDLook();
+    await cbTalk([['Commander Dastur', '(on her knees in the yard, still smiling) You think Bangalore was ever the point? Site B was a cage for one specimen. You walked out of the cage.'], ['Commander Dastur', 'Vale has Mumbai. Vale has the switch. If he goes, everything goes with him.'], ['Kiran', 'What switch?'], ['Commander Dastur', '(she just laughs)']]);
+    await cbCard('Site B', 'Closed', 'The last Halcyon truck leaves the city at dawn. Nobody waves.');
+    await cbTalk([['Narrator', 'By evening, someone has painted over every Halcyon logo on the ring road. Someone else has painted a black tide, and a boat, on the pillar under the flyover.'], ['Mrs. Rao', '(on the tower roof, a cup of tea in each hand) Forty families. One kid. One very strange voice. And they ran.'], ['Voice', 'Mumbai.'], ['Kiran', 'Mumbai.']]);
+    afLog('Bangalore is free. Halcyon’s Site B is closed. Vale is in Mumbai, and he has a “switch”.'); AF.s.seen.kfree = 1; afSave(); AF.busy = false; }
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push({ n: 'Chapter 19', t: 'Site B', sub: 'Four districts. One city. No more cages.', id: 'ksiteb', steps: [
+    { g: () => { const D = afKD(), m = (k, t) => `${AF_KDN[k]} ${D[k] >= 2 ? '✓' : '(' + t + ')'}`; return `Take Bangalore back (${afKDDone()} of 4): ` + [m('mall', D.mall ? 'break them out' : 'sense through the processing centre walls'), m('mkt', D.mkt ? 'tear off the van’s antenna, Grab' : 'Blend through the checkpoint'), m('rel', D.rel ? 'beat the relay crew at the mast' : 'wall-crawl up the relay mast'), m('ring', D.ring ? 'stop the convoy' : `swing through the drone gates ${D.rings}/3`)].join(' · '); },
+      at: () => { const D = afKD(); if (D.mall < 2 && AF.kProc) return AF.kProc; if (D.mkt < 2) return D.mkt ? AF_KMKT.van : AF_KMKT.gate; if (D.rel < 2) return AF_KMAST; if (D.ring < 2) { const R = AF_KRINGS[D.rings]; return D.ring || !R ? AF_KCVY : [R[0], R[2]]; } return null; },
+      auto: afKDStep, chk: () => afKDDone() >= 4 },
+    { g: 'Halcyon’s Site B command, at the old logistics yard. End it', at: () => AF_KCMD, auto: () => { if (afNear(AF_KCMD[0], AF_KCMD[1], 7) && (!AF.fT || performance.now() - AF.fT > 3500)) { AF.fT = performance.now(); xcFight('xqkboss', 'Commander Dastur'); } }, chk: () => !!AF.s.seen.kcmd },
+    { g: '', go: () => afKFree(), chk: () => !!AF.s.seen.kfree },
+    { g: 'To be continued: Vale, in Mumbai', chk: () => false } ] });
+  AF_SKIP[AF_CH.findIndex(C => C.id === 'ksiteb')] = () => { Object.assign(afKD(), { mall: 2, mkt: 2, rel: 2, ring: 2, rings: 3 }); AF.s.kFree = 1; Object.assign(AF.s.seen, { kcmd: 1, kfree: 1 }); afSave(); afKDLook(); };
+  afKidPlaces = (o => function(){ o(); afKDPlaces(); })(afKidPlaces);
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
