@@ -3388,10 +3388,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function drawWeb(){
     if (!web.line) { web.line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(0, 0, 0), V(0, 1, 0)]), new THREE.LineBasicMaterial({ color: 0xF4F4F4 })); web.line.userData.noPick = true; }
     const wsc = zone === 'blr' ? BL.sc : zone === 'apt' ? APT.sc : zone === 'xc' ? XC.sc : roofScene;
-    if (!web.p || !wsc) { if (web.line.parent) web.line.parent.remove(web.line); return; }
+    if (!web.p || !wsc) { if (web.line.parent) web.line.parent.remove(web.line); afWebDraw(null, null, null); return; }
     if (web.line.parent !== wsc) wsc.add(web.line);
     const hand = tmpV.set(.3, -.25, -.4).applyQuaternion(camera.quaternion).add(pos);
-    web.line.geometry.setFromPoints([hand.clone(), web.p]);
+    const hp = afHandPoint(hand); web.line.geometry.setFromPoints([hp.clone(), web.p]); afWebDraw(wsc, hp, web.p);
   }
   addEventListener('keydown', e => { if (e.key.toLowerCase() === 'q' && !e.repeat && entered) webStart(); });
   addEventListener('keyup', e => { if (e.key.toLowerCase() === 'q') webEnd(); });
@@ -5813,7 +5813,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const bodies = () => [EV.me].concat(EV.units);
   function evAttack(){
     if (!EV || EV.over || EV.dead > 0 || EV.cd > 0 || EV.lockT > 0 || EV.intro || EV.blocking || EV.flinch > 0) return; const H = HEROES[EV.hero];
-    EV.hitTool = EV.wpn; if (kitAttack()) return;
+    EV.hitTool = EV.wpn; afTendBurst(); if (kitAttack()) return;
     EV.cd = H.cd * (EV.rage > 0 ? .6 : 1) * (EV.wpn === 'claws' ? .85 : 1) * (EV.slowMe > 0 ? 2 : 1); EV.swing = .3; EV.punchSide = -(EV.punchSide || -1);
     const dm = H.dmg * armFactor() * (EV.rage > 0 ? 1.6 : 1) * (EV.wpn === 'claws' ? 1.4 : 1) * (EV.pain ? .9 : 1) * (EV.laststand ? 2.5 : 1) * upgEdge();
     if (H.kind === 'melee') { const f = evFwd(); let hit = 0;
@@ -15098,8 +15098,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     return pos.clone().addScaledVector(fw, 22).add(V(0, 24, 0));
   }
   function xcWeb(){ if (!afCanSwing()) return afNoWeb();
-    if (web.p || XC.drv || XC.ride) return; if (!(held === 'web' || inv.includes('web')) || dustedWeapon('web')) return say('You need your web-shooters for that (the weapon rack in the lair).', 2600);
-    if (held !== 'web') hold('web'); web.p = xcAnchor(); web.L = pos.distanceTo(web.p);
+    if (web.p || XC.drv || XC.ride) return; if (!AF.on && (!(held === 'web' || inv.includes('web')) || dustedWeapon('web'))) return say('You need your web-shooters for that (the weapon rack in the lair).', 2600);
+    if (held !== 'web' && inv.includes('web')) hold('web'); web.p = xcAnchor(); web.L = pos.distanceTo(web.p);
     if (!XC.air) { cityV.set(-Math.sin(yaw) * 3, XC.roof ? 3 : 6, -Math.cos(yaw) * 3); XC.air = true; XC.roof = 0; } else if (Math.hypot(cityV.x, cityV.z) < 4) { cityV.x += -Math.sin(yaw) * 5; cityV.z += -Math.cos(yaw) * 5; }
     walkTarget = null; tone(1400, .12, 'triangle', .04, 500); drawWeb();
   }
@@ -15470,6 +15470,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     ] }
   ];
   function afFrame(dt, now){
+    afTendStep();
     if (!AF.on) { if (!afHud.hidden) afHud.hidden = true; return; }
     AF.dt = dt; afLife(dt); afWebCol(); afDelStep(dt); if (AF.pinned) { pos.x = AF.pinned[0]; pos.z = AF.pinned[1]; vy = 0; }
     const here = inWorld && (zone === 'xc' || zone === 'xin'), C = AF_CH[AF.s.ch], S = C && C.steps[AF.s.st], k = AF.s.ch + ':' + AF.s.st;
@@ -16115,6 +16116,40 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { g: 'They’re going for the basement. Get down there and defend the cells', auto: afTwrAuto('xqt3', 'Halcyon', () => pos.x > 5), chk: () => !!(AF.s.seen.fall || AF.s.seen.cells) },
     { g: '', go: () => afBlast(), chk: () => !!AF.s.seen.fall });
   { const sk = AF_SKIP[0]; AF_SKIP[0] = () => { sk(); Object.assign(AF.s.seen, { towerIn: 1, stairs: 1, rescued: 1, cells: 1 }); AF.pinned = null; if (afInTwr()) { if (XC.isc) { disposeDeep(XC.isc); XC.isc = null; } XC.inside = null; zone = 'xc'; pos.set(27.5, 1.6, 4); $('#worldBack').textContent = xcBackLabel(); } }; }
+  // ---------- the symbiote you can see: on your arm (first and third person), as your web line, and out of every weapon ----------
+  const afGoo = () => afTendOn.m || (afTendOn.m = new THREE.MeshStandardMaterial({ color: 0x050507, roughness: .18, metalness: .55 }));
+  function afTendOn(){ return typeof AF !== 'undefined' && AF && AF.on && AF.s.symb && AF.s.symb.on && !AF.s.symb.gone; }
+  // a cluster of wavy black strands that wraps an arm or a hand and keeps moving
+  function afTendCluster(n, len, r){ const g = new THREE.Group(); g.userData.afT = 1; g.userData.noPick = true; const m = afGoo();
+    for (let i = 0; i < n; i++) { const a0 = i / n * Math.PI * 2, pts = []; for (let k = 0; k <= 6; k++) { const t = k / 6, a = a0 + t * 2.6; pts.push(V(Math.cos(a) * r * (1 - t * .3), -t * len, Math.sin(a) * r * (1 - t * .3))); }
+      const s = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 18, r * .16, 5), m); s.userData.ph = i * 1.7; s.userData.noPick = true; g.add(s); }
+    return g; }
+  function afTendWiggle(g, t){ g.children.forEach(s => { const p = s.userData.ph; s.rotation.y = Math.sin(t * 2.2 + p) * .35; s.rotation.x = Math.sin(t * 3.1 + p) * .12; s.scale.setScalar(1 + Math.sin(t * 4 + p) * .08); }); }
+  function afTendStep(){ const on = afTendOn(), t = performance.now() / 1000;
+    // first person: around the right hand (and whatever it's holding)
+    viewG.children.forEach(h => { const right = h.userData.base && h.userData.base.x > 0; let c = h.children.find(q => q.userData.afT);
+      if (on && right && !c) { c = afTendCluster(5, .3, .07); c.position.set(0, .1, .06); c.rotation.x = .9; h.add(c); }
+      if (c) { c.visible = on; if (on) afTendWiggle(c, t); } });
+    if (on && !viewG.children.some(h => h.userData.base && h.userData.base.x > 0) && viewG.children[0]) { const h = viewG.children[0]; if (!h.children.some(q => q.userData.afT)) { const c = afTendCluster(5, .3, .07); c.position.set(0, .1, .06); c.rotation.x = .9; h.add(c); } }
+    // third person: up the whole right arm
+    if (me && me.arms && me.arms[1]) { const A2 = me.arms[1].a; let c = A2.children.find(q => q.userData.afT);
+      if (on && !c) { c = afTendCluster(7, .74, .065); c.position.y = .02; A2.add(c); }
+      if (c) { c.visible = on; if (on) afTendWiggle(c, t); } } }
+  // the web line becomes a writhing black tendril, from your actual hand in third person too
+  function afHandPoint(fallback){ if (tpv && me && me.g.parent && me.arms && me.arms[1]) return me.arms[1].hand.getWorldPosition(V(0, 0, 0)); return fallback; }
+  function afWebDraw(wsc, hand, p){ const on = afTendOn() && !!p && !!wsc;
+    if (!on) { if (typeof AF === 'undefined' || !AF) return; if (AF.webT) { if (AF.webT.parent) AF.webT.parent.remove(AF.webT); AF.webT.geometry.dispose(); AF.webT = null; } if (web.line) web.line.visible = true; return; }
+    web.line.visible = false; const t = performance.now() / 1000, d = p.clone().sub(hand), L = d.length(), side = V(-d.z, 0, d.x).normalize(), pts = [];
+    for (let k = 0; k <= 10; k++) { const u = k / 10, w = Math.sin(u * Math.PI) * Math.min(1.4, L * .06); pts.push(hand.clone().addScaledVector(d, u).addScaledVector(side, Math.sin(u * 9 - t * 12) * w * .5).add(V(0, Math.cos(u * 7 - t * 9) * w * .35, 0))); }
+    const geo = new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 40, .07, 6);
+    if (!AF.webT) { AF.webT = new THREE.Mesh(geo, afGoo()); AF.webT.userData.noPick = true; AF.webT.frustumCulled = false; } else { AF.webT.geometry.dispose(); AF.webT.geometry = geo; }
+    if (AF.webT.parent !== wsc) wsc.add(AF.webT); }
+  // every attack, with any weapon or none: black tendrils lash out of your hand
+  function afTendBurst(){ if (!afTendOn()) return; const sc = sceneOf(); if (!sc) return; const fwd = V(-Math.sin(yaw), 0, -Math.cos(yaw)), h = afHandPoint(camera.position.clone().add(V(.3, -.3, -.4).applyQuaternion(camera.quaternion))), g = new THREE.Group(); g.userData.noPick = true;
+    for (let i = 0; i < 4; i++) { const sp = V((Math.random() - .5) * .9, (Math.random() - .3) * .5, (Math.random() - .5) * .9), end = h.clone().addScaledVector(fwd, 1.8 + Math.random() * .9).add(sp), mid = h.clone().lerp(end, .5).add(V((Math.random() - .5) * .6, .3, (Math.random() - .5) * .6));
+      const s = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([h.clone(), mid, end]), 16, .045, 5), afGoo()); s.userData.noPick = true; g.add(s); }
+    sc.add(g); const t0 = performance.now(); const tick = () => { const k = (performance.now() - t0) / 320; if (k >= 1 || !g.parent) { if (g.parent) g.parent.remove(g); g.children.forEach(s => s.geometry.dispose()); return; } g.children.forEach(s => s.scale.setScalar(k < .4 ? .3 + k * 1.75 : 1 - (k - .4) * 1.4)); requestAnimationFrame(tick); }; tick();
+    tone(160, .12, 'sawtooth', .03, 90); }
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
