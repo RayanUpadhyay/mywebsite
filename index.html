@@ -7957,7 +7957,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (q.k === 'roof' && q.stage === 'go' && JOB.item && SW.roof && Math.hypot(JOB.item.position.x - mx, JOB.item.position.z - mz) < 3) { q.stage = 'back'; if (JOB.item.parent) JOB.item.parent.remove(JOB.item); JOB.item = null; tone(990, .2, 'triangle', .05); say(q.pet === 'cat' ? 'You scoop her up. She’s purring. Take her home.' : 'You untangle the kite. Not a scratch on it. Take it back.', 3600); }
     }
     if (show) { const t = jobTarget(); let dist = ''; if (t && inB) { const [mx, mz] = toMap(pos.x, pos.z); dist = ` · ${Math.round(Math.hypot(t[0] - mx, t[1] - mz))} m`; }
-      const step = q.stage === 'back' ? `Go back to ${q.d.name}` : q.k === 'deliver' ? `Take it to ${q.to.name}` : q.k === 'raid' ? (nightNow() ? 'Go to the stash house and go in' : 'Wait for dark (7 pm), then go in') : q.k === 'roof' ? `Get onto the roof with the ${q.pet}` : 'Chase the thief down';
+      const step = q.stage === 'back' ? `Go back to ${q.d.name}` : q.k === 'deliver' ? `Take it to ${q.to.name}` : q.k === 'raid' ? (nightNow() ? 'Go to the stash house and go in' : 'Go to the stash house (it opens at 7 pm; skip ahead from the Jobs tab on your phone)') : q.k === 'roof' ? `Get onto the roof with the ${q.pet}` : 'Chase the thief down';
       jobHud.innerHTML = `<b>Job · reputation ${JOB.rep}</b>${esc(q.title)}<small>${esc(step)}${dist}</small>`; }
   }
   // walking into a building: deliveries arrive, returns finish, stash houses fight back
@@ -8122,6 +8122,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (zone === 'xc' || zone === 'xin') { if (zone === 'xin') { if (XC.isc) { disposeDeep(XC.isc); XC.isc = null; } XC.inside = null; zone = 'xc'; } return xcLeave(); }
     if (DRV.on) getOut(true); aptEnter('blr', 'kerb'); }
   phEl.addEventListener('click', e => { if (e.target.closest('[data-apt]')) { e.stopPropagation(); aptPhoneGo(); } });
+  phEl.addEventListener('click', e => { const b = e.target.closest('[data-dk]'); if (!b) return; e.stopPropagation(); if (EV || A) return; phoneClose(); skipTo(+b.dataset.dk); });
   function phMap(){
     const B = phEl.querySelector('#phBody'); B.innerHTML = `<canvas id="phCv" width="640" height="640"></canvas><div class="phrow"><button type="button" data-z="1">＋ Zoom in</button><button type="button" data-z="-1">－ Zoom out</button><button type="button" data-z="0">Centre on me</button><button type="button" data-z="x">Clear pin</button></div><div class="phleg"><span><i style="background:#FFC93C"></i>You / job</span><span><i style="background:#35C8F0"></i>Pin / help needed</span><span><i style="background:#FF3C3C"></i>Street boss</span><span><i style="background:#7A2A2A"></i>Stash house</span><span><i style="background:#fff"></i>Place found</span><span><i style="background:#2A6AFF"></i>Police</span><span><i style="background:#FFC93C"></i>✈ Airport taxis</span></div><p style="color:#9AA3AD;font-size:12px">Tap the map to drop a pin. A beacon will show you the way.</p><div class="phrow">${aptPhoneOk() ? '<button type="button" class="y" data-apt="1">✈ Go to the airport</button>' : ''}<button type="button" class="y" data-st="1">🚀 Fly up to the space station</button></div>`;
     if (!PH.base && BL.bld && BLC.built) phMapBase();
@@ -8151,7 +8152,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (t === 'map') return phMap();
     if (t === 'story') { const s = curStep(); B.innerHTML = stPhone() + `<div class="phcard"><b>${SG.active ? `Chapter ${SG.ch + 1}: ${esc(nmT(SAGA[SG.ch].title))}` : SG.sagaDone ? 'The story is finished' : 'The story is waiting'}</b><small>${SG.active && s ? esc(nmT(stepText(s))) : 'Open the comic in the story vault, under the lair (a loose brick by the scoreboard).'}</small></div>`
       + SAGA.map((C, i) => { const done = SG.done.includes(i), cur = SG.ch === i && !done; return done || cur ? `<div class="phcard"><b>${i + 1}. ${esc(nmT(C.title))}${cur ? ' · now' : ''}</b><small>${esc(nmT(done ? RECAP[C.id] || C.tag : C.tag))}</small></div>` : ''; }).join(''); return; }
-    if (t === 'jobs') { const q = JOB.q; B.innerHTML = `<div class="phcard"><b>Reputation: ${JOB.rep}</b><small>${JOB.done} job${JOB.done === 1 ? '' : 's'} done · ${JOB.sealed.size} stash house${JOB.sealed.size === 1 ? '' : 's'} shut down · ${Object.keys(SBK).length} of ${SBOSS.length} street bosses beaten</small></div>`
+    if (t === 'jobs') { const q = JOB.q; B.innerHTML = `<div class="phrow"><button type="button" data-dk="20">🌙 Skip to night (8 pm)</button><button type="button" data-dk="9">☀ Skip to morning (9 am)</button></div>` + `<div class="phcard"><b>Reputation: ${JOB.rep}</b><small>${JOB.done} job${JOB.done === 1 ? '' : 's'} done · ${JOB.sealed.size} stash house${JOB.sealed.size === 1 ? '' : 's'} shut down · ${Object.keys(SBK).length} of ${SBOSS.length} street bosses beaten</small></div>`
       + (q ? `<div class="phcard"><b>Now: ${esc(q.title)}</b><small>${esc(jobHud.textContent.replace(/^Job · reputation \d+/, '').replace(q.title, ''))}</small><div class="phrow"><button type="button" data-a="drop">Give up this job</button></div></div>` : '<div class="phcard"><b>No job right now</b><small>Look for people with a yellow ! inside the buildings, or call one of your contacts.</small></div>')
       + (RE.cur && !RE.cur.done ? `<div class="phcard"><b>Help needed: ${esc(RE.cur.title)}</b><small>Follow the blue beacon.</small></div>` : '')
       + `<div class="phcard"><b>${nightNow() ? 'Night' : 'Daytime'}${festNow() ? ' · festival!' : ''}</b><small>${nightNow() ? 'Stash houses are open for business. Thieves are out.' : 'Stash houses stay shut until 7 pm. Shops need deliveries.'}</small></div>`
@@ -11027,7 +11028,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   };
   const HOURS = [[0, 'night'], [5.2, 'night'], [6.3, 'dawn'], [8, 'day'], [16.6, 'day'], [18.1, 'dusk'], [19.3, 'night'], [24, 'night']], MOON = [-.35, .6, .45];
   // the city's clock: your own, unless a debug hour is set (ru-hour); the Act 5 montage is always mid-morning
-  function hourNow(){ if (typeof AF !== 'undefined' && AF && AF.on && AF.s.act === 'del' && AF.s.del && XC.city === 'del') return AF.s.del.hr; if (typeof AF !== 'undefined' && AF && AF.on && AF.s.act === 'goa' && XC.city === 'goi' && !AF.s.goaFree) return 6.3; try { const o = localStorage.getItem('ru-hour'); if (o !== null && o !== '' && !isNaN(+o)) return +o; } catch (e) {} const d = new Date(); return d.getHours() + d.getMinutes() / 60; }
+  function hourNow(){ if (typeof AF !== 'undefined' && AF && AF.on && AF.s.act === 'del' && AF.s.del && XC.city === 'del') return AF.s.del.hr; if (typeof AF !== 'undefined' && AF && AF.on && AF.s.act === 'goa' && XC.city === 'goi' && !AF.s.goaFree) return 6.3; try { const o = localStorage.getItem('ru-hour'); if (o !== null && o !== '' && !isNaN(+o)) return +o; } catch (e) {} const d = new Date(); return (d.getHours() + d.getMinutes() / 60 + darkOff()) % 24; }
+  function darkOff(){ try { const v = +localStorage.getItem('ru-hoff'); return isFinite(v) ? v : 0; } catch (e) { return 0; } }
+  function skipTo(h, then){ if (typeof AF !== 'undefined' && AF && AF.on && AF.s.act === 'del' && AF.s.del && XC.city === 'del') { const D = AF.s.del; if (h < D.hr) { D.day++; } D.hr = h; } else { const now = hourNow(), add = ((h - now) % 24 + 24) % 24; try { localStorage.setItem('ru-hoff', String((darkOff() + add) % 24)); } catch (e) {} }
+    fade(() => { try { if (XC.sc) xcLight(); } catch (e) {} if (then) then(); }, '#05070F'); say(h >= 19 || h < 5 ? 'Hours pass. It’s dark now.' : 'Hours pass. It’s morning.', 2400); }
+  function askDark(then){ if (nightNow()) return then && then(); askChoice('dark', v => { if (v === 'wait') skipTo(20, then); }, { h: 'It’s still daytime', q: 'This only happens after dark. Skip ahead to 8 pm?', a: [['wait', 'Wait until dark (8 pm)'], ['no', 'Not now']] }); }
   const cityHour = () => SG.active && newTL() ? 10 : hourNow();
   const dayNow = () => { const h = cityHour(); return h >= 6.3 && h < 17.8; };
   function palMix(a, b, f){ const A = PAL[a], B = PAL[b], C = h => new THREE.Color(h), L = (x, y) => x + (y - x) * f;
@@ -15126,7 +15131,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ---------- inside: a room made for whatever the shop is, with the shopkeeper and a customer or two ----------
   function xcInside(d){
     if (d.kind === 'flat' || d.kind === 'home') return afFlat(d);
-    if (d.kind === 'stash' && !nightNow()) return say('Shutters down and padlocked. Whatever happens in there happens after dark (7 pm).', 3200);
+    if (d.kind === 'stash' && !nightNow()) return askDark(() => xcInside(d));
     if (d.kind === 'stash' && XC.s.raidDay === new Date().toDateString()) return say('Police tape across the shutter. You already cleaned it out today.', 2600);
     fade(() => { if (XC.isc) disposeDeep(XC.isc); const sc = XC.isc = new THREE.Scene(), W = 12, D = 10; sc.background = new THREE.Color(0x14161C); XC.inside = d; XC.room = { W, D };
       sc.add(new THREE.HemisphereLight(0xFFF2DC, 0x2A2420, .8)); const L = new THREE.PointLight(0xFFE0B0, 1, 20, 2); L.position.set(0, 2.8, 0); sc.add(L);
@@ -15280,7 +15285,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     xcRainStep();
     // what's in reach
     XC.near = null; if (!XC.air && !XC.drv && !XC.ride && !BL.cine) { let bd = 9; const offer = (d, n) => { if (d < bd) { bd = d; XC.near = n; } };
-      if (!XC.roof) { XC.doors.forEach(d => offer(Math.hypot(d.x - pos.x, d.z - pos.z) < 1.9 ? Math.hypot(d.x - pos.x, d.z - pos.z) : 99, { label: d.kind === 'stash' ? (nightNow() ? 'Kick in the godown shutter' : 'A shuttered godown (opens after dark)') : `Go into ${d.name}`, go: () => xcInside(d) }));
+      if (!XC.roof) { XC.doors.forEach(d => offer(Math.hypot(d.x - pos.x, d.z - pos.z) < 1.9 ? Math.hypot(d.x - pos.x, d.z - pos.z) : 99, { label: d.kind === 'stash' ? (nightNow() ? 'Kick in the godown shutter' : 'A shuttered godown (opens after dark: wait?)') : `Go into ${d.name}`, go: () => xcInside(d) }));
         XC.cars.forEach(c => { const d = Math.hypot(c.g.position.x - pos.x, c.g.position.z - pos.z); if (d < 2.8 && c.v < 2) offer(d + 1, { label: `Get into ${VNAME[c.kind] || 'the vehicle'}`, go: () => xcDrive(c) }); });
         XC.bossAv.forEach(e => { if (!e.av.g.visible) return; const d = Math.hypot(e.B.at[0] - pos.x, e.B.at[1] - pos.z); if (d < 4) offer(d, { label: `Fight ${e.B.name}`, go: () => xcFight('x' + e.B.id, e.B.name) }); });
         XC.acts.forEach(a => { if (a.on && !a.on()) return; const d = Math.hypot(a.x - pos.x, a.z - pos.z); if (d < a.r) offer(d, { label: a.label(), go: a.go }); });
@@ -15670,7 +15675,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       XC.acts.push({ x: at[0], z: at[1], r: id === 'plate' ? 5 : 2.6, on: () => AF.on && AF.s.ch === 1 && !afHas(id) && !AF.busy && !(XC.job && XC.job.afPart === id), label: () => P.label, go: () => id === 'housing' ? afDig() : id === 'plate' ? xcFight('xqloot', 'The looters') : afPartAsk(id) }); });
     AF.corners = AF_CORNERS.map(([x, z, d], i) => { const g = new THREE.Group(); g.position.set(x, 0, z); XC.g.add(g); for (let k = 0; k < 4; k++) { try { const a = avatar(crowdLook(80 + i * 5 + k)); a.g.position.set(Math.cos(k * 1.6) * 1.6, 0, Math.sin(k * 1.6) * 1.6); a.g.rotation.y = k * 1.6 + Math.PI; g.add(a.g); } catch (e) {} }
       XC.acts.push({ x, z, r: 4, on: () => AF.on && AF.s.ch >= AF_RETAKE && !AF.s.dist.includes(i), label: () => `Break up the ${d} crew on this corner`, go: () => xcFight('xqg' + i, `The ${d} crew`) }); return g; });
-    XC.acts.push({ x: 137.5, z: 113.5, r: 4, on: () => AF.on && AF.s.ch === 4 && !AF.s.seen.labOut, label: () => nightNow() ? 'Climb the fence into Halcyon Logistics' : 'Halcyon Logistics: guards everywhere. Come back after dark', go: afLabEnter });
+    XC.acts.push({ x: 137.5, z: 113.5, r: 4, on: () => AF.on && AF.s.ch === 4 && !AF.s.seen.labOut, label: () => nightNow() ? 'Climb the fence into Halcyon Logistics' : 'Halcyon Logistics: guards everywhere by day. Wait for dark?', go: afLabEnter });
     afCornerLook(); }
   // the chapters themselves
   AF_CH[0].steps.pop();
@@ -15686,7 +15691,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       { g: 'Get Shanthi Aunty out to the lane', chk: () => zone === 'xc' } ] },
     { n: 'Chapter 4', t: 'Retake the City', sub: 'Six escaped. Five districts. One bad arm.', steps: [
       { g: () => `Take Bangalore back: ${afDistDone()} of 5 districts safe, ${afCaught()} of 6 villains caught. Break up the gang on each corner, and catch the villains in their spots`, at: () => afNextTarget(),
-        auto: () => { if (afCaught() >= 3 && !AF.s.seen.smog && nightNow() && zone === 'xc' && !XC.drv && !XC.ride) { say('Green fog rolls down the street. Then the Smog’s whole crew steps out of it.', 2600); xcFight('xqsmog', 'The Smog’s whole crew'); } }, chk: () => afDistDone() >= 5 && afCaught() >= 6 },
+        auto: () => { if (afCaught() >= 3 && !AF.s.seen.smog && zone === 'xc' && !XC.drv && !XC.ride) { say('Green fog rolls down the street. Then the Smog’s whole crew steps out of it.', 2600); xcFight('xqsmog', 'The Smog’s whole crew'); } }, chk: () => afDistDone() >= 5 && afCaught() >= 6 },
       { g: 'To be continued: the city is yours again, but Halcyon is still out there. The next chapter is on its way', chk: () => false } ] });
   // ---------- Halcyon: the agency. Black tactical kit, visors, batons, sonic emitters and flamethrowers ----------
   OUTFITS.af_agent = { hero: 1, c1: '#1A1C22', c2: '#3A3D44', gloves: 1, mask: 'visor' };
@@ -15701,7 +15706,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     af_lead(){ const R = bdRig({ legM: 0x2A2D33, torM: 0x2A2D33, armM: 0x2A2D33, handM: 0x8A6A4A, bw: .28, tH: .66 }); bdFace(R, 0x8A6A4A, 'short', 0x8A8F99); R.add(new THREE.BoxGeometry(.5, .05, .3), 0xC9CFD8, 0, R.sh + .02, 0); R.add(new THREE.BoxGeometry(.04, .3, .02), 0x16181D, 0, R.sh - .15, -.16); return R; } });
   function afLabSetup(S, crew){ crew(4, 5, 'the Halcyon agents', 'af_agent'); S.add('af_burner', pos.x + 4, pos.z + 2); }
   // ---------- the lab behind the fence ----------
-  function afLabEnter(){ if (!nightNow()) return say('Guards at the gate, cameras on every corner. Come back after dark.', 3000); fade(() => afLab(), '#000000'); }
+  function afLabEnter(){ if (!nightNow()) return askDark(afLabEnter); fade(() => afLab(), '#000000'); }
   function afLab(){ if (XC.isc) disposeDeep(XC.isc); const sc = XC.isc = new THREE.Scene(), W = 16, D = 10; sc.background = new THREE.Color(0x0C0E12); XC.inside = { kind: 'lab', name: 'Halcyon Logistics', x: 137.5, z: 112, nx: 0, nz: -1, i: 0 }; XC.room = { W, D }; XC.keeper = null; XC.blocks = [];
     sc.add(new THREE.HemisphereLight(0xC8E0FF, 0x101418, .55)); [-4, 4].forEach(x => { const L = new THREE.PointLight(0xC8E8FF, .8, 14, 2); L.position.set(x, 2.8, 0); sc.add(L); });
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), mat(0xD8DCE0, { roughness: .4, metalness: .1 })); floor.rotation.x = -Math.PI / 2; sc.add(floor); box(W, .1, D, mat(0xE8ECF0), 0, 3.2, 0, sc);
@@ -15769,7 +15774,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   AF_CH[AF_CH.length - 1].steps.pop();
   AF_CH.push(
     { n: 'Chapter 5', t: 'Halcyon', sub: 'The grey building with no windows.', steps: [
-      { g: () => nightNow() ? 'Get into Halcyon Logistics, the grey block behind the fence in Indiranagar' : 'Halcyon Logistics, the grey block in Indiranagar. Go after dark (7 pm)', at: () => [137.5, 112], chk: () => zone === 'xin' && !!XC.inside && XC.inside.kind === 'lab' },
+      { g: () => nightNow() ? 'Get into Halcyon Logistics, the grey block behind the fence in Indiranagar' : 'Halcyon Logistics, the grey block in Indiranagar. Go there; you can wait for dark when you arrive', at: () => [137.5, 112], chk: () => zone === 'xin' && !!XC.inside && XC.inside.kind === 'lab' },
       { g: () => `Find out what Halcyon is: read the terminals (${['t0', 't1', 't2'].filter(k => AF.s.seen[k]).length} of 3)`, chk: () => !!(AF.s.seen.t0 && AF.s.seen.t1 && AF.s.seen.t2) },
       { g: 'The tank in the middle of the room', chk: () => !!AF.s.seen.bond },
       { g: 'Fight your way out', chk: () => !!AF.s.seen.labOut },
