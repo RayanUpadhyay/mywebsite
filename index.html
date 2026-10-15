@@ -15548,13 +15548,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function afEnter(auto){
     if (A || EV) return;
     if (!(storiesDone() || AF.s.started)) return say('Finish (or skip) every story first.', 2600);
-    if (AF.s.blrLocked && !['del', 'goa', 'kblr'].includes(AF.s.act)) return say('Bangalore is behind you now. The Delhi part of the story is on its way.', 3400);
+    if (AF.s.blrLocked && !['del', 'goa', 'kblr', 'kbom', 'kalt'].includes(AF.s.act)) return say('Bangalore is behind you now. The Delhi part of the story is on its way.', 3400);
     if (!auto && (!inWorld || !['blr', 'xc', 'xin', 'apt'].includes(zone))) return say('Head out into the city first, then start it from your phone.', 3000);
     if (DRV.on) getOut(true); if (XC.drv) xcExitCar(); XC.ride = null;
     if (zone === 'xin' && XC.isc) { disposeDeep(XC.isc); XC.isc = null; XC.inside = null; }
-    const first = !AF.s.started; AF.s.started = 1; AF.on = true; AF.key = ''; afSave(); const city = AF.s.act === 'del' ? 'del' : AF.s.act === 'goa' ? 'goi' : 'bfa';
+    const first = !AF.s.started; AF.s.started = 1; AF.on = true; AF.key = ''; afSave(); const city = ({ del: 'del', goa: 'goi', kbom: 'bom', kalt: 'kal' })[AF.s.act] || 'bfa';
     fade(() => { aptFree(); xcBuild(city); afAfterBuild(); xcWeather(); xcLight(); web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'xc'; vy = 0; falling = false; grounded = true; XC.air = false; XC.roof = 0; cityV.set(0, 0, 0);
-      const known = city === 'bfa' && AF.s.seen.flatKnown && AF.s.act !== 'kblr', sp = city === 'bfa' ? (known ? [-35, 57] : [27.5, 6]) : city === 'goi' ? [-196, 10] : (afWhere('home') || XC_LM.del.taxi); pos.set(sp[0], 1.6, sp[1]); xcClear(); yaw = city === 'bfa' && !known ? 0 : Math.atan2(sp[0], sp[1]); pitch = -.03;
+      const known = city === 'bfa' && AF.s.seen.flatKnown && AF.s.act !== 'kblr', sp = city === 'bfa' ? (known ? [-35, 57] : [27.5, 6]) : city === 'goi' ? [-196, 10] : city === 'bom' ? XC_LM.bom.taxi : city === 'kal' ? [27.5, 3] : (afWhere('home') || XC_LM.del.taxi); pos.set(sp[0], 1.6, sp[1]); xcClear(); yaw = city === 'bfa' && !known ? 0 : Math.atan2(sp[0], sp[1]); pitch = -.03;
       closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = xcBackLabel(); jumpBtn.hidden = fine; uiZone();
       if (!first) say(city === 'bfa' ? 'Bangalore. What’s left of it.' : city === 'goi' ? 'Goa.' : 'Delhi.', 2600); }, '#000000');
   }
@@ -15676,6 +15676,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const crew = (n, r, name, boss) => { for (let i = 0; i < n; i++) S.add(i % 3 === 2 ? 'gangB' : 'gangA', ...spot(r, i / n * Math.PI * 2)); const b = addUnit({ hero: boss || 'gangBoss', team: 'en' }); [b.x, b.z] = spot(r + 2, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name }, b, t: 99, marks: [] }; return b; };
     S.af = { part, t: 0, n: 0, sp: 0 };
     if (afTowerSetup(part, S, crew)) return;
+    if (part === 'xqkhq') { crew(4, 6, 'Halcyon House security', 'af_agent'); S.add('af_burner', pos.x + 5, pos.z - 3); S.af.agency = 1; S.af.pulse = 7; return; }
+    if (part === 'xqkvale') { const b = addUnit({ hero: 'af_vale2', team: 'en' }); b.x = pos.x - Math.sin(yaw) * 8; b.z = pos.z - Math.cos(yaw) * 8; b.boss = 1; EV.boss = b; S.sb = { B: { name: 'Director Vale' }, b, t: 99, marks: [] }; [[-3, -2], [3, -2], [-5, 1]].forEach(([dx, dz], i) => S.add(i === 2 ? 'af_burner' : 'af_agent', b.x + dx, b.z + dz)); S.af.agency = 1; S.af.pulse = 6; return; }
     if (part.startsWith('xqkd_')) { crew(part === 'xqkd_gate' ? 4 : 3, 6, { xqkd_mall: 'Halcyon Processing', xqkd_gate: 'the checkpoint', xqkd_rel: 'the relay crew', xqkd_cvy: 'the convoy' }[part], 'af_agent'); S.add('af_burner', pos.x + 5, pos.z - 3); S.af.agency = 1; S.af.pulse = 8; return; }
     if (part === 'xqkboss') { crew(4, 7, 'Commander Dastur', 'af_lead'); S.add('af_burner', pos.x - 5, pos.z + 3); S.add('af_burner', pos.x + 5, pos.z + 3); S.af.agency = 1; S.af.pulse = 7; return; }
     if (part === 'xqkdepot') { crew(3, 6, 'Halcyon’s depot', 'af_agent'); S.add('af_burner', pos.x + 5, pos.z - 3); S.af.agency = 1; S.af.pulse = 8; return; }
@@ -15714,6 +15716,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (part === 'xqsmog') return afDumped();
     if (part.startsWith('xqt_')) return afTrFightEnd(part, won);
     if (part === 'xqkid') return afKidAfter();
+    if (part === 'xqkhq') { if (won) { AF.s.seen.khqIn = 1; afSave(); say('Security is down. You take the lift to floor thirty, then go out a window. The rest is up the glass.', 3600); } else say('They throw you back out on the street. Blend in (2) next time.', 3000); return; }
+    if (part === 'xqkvale') { if (won) { AF.s.seen.kvaleWon = 1; afSave(); } else say('Vale’s burners pin you to the stone. Harden (5) when they fire; grab (4) their guns. Again.', 3200); return; }
     if (part.startsWith('xqkd_') || part === 'xqkboss') return afKDAfter(part, won);
     if (part === 'xqkdepot') { if (won) { afKT().power = 1; afSave(); say(`You drive the generator out through what’s left of the gate. ${afKNeeds()}`, 3600); } else say('They throw you out. Next time, Blend in first (2): nobody stops someone with a clipboard.', 3200); return; }
     if (part === 'xqkpat') { if (won) { AF.s.seen.kpat = 1; afSave(); (AF.kPat || []).forEach(av => { if (av.g.parent) av.g.parent.remove(av.g); }); say('The patrol is down. Their radio keeps asking for the Site B check-in. Nobody answers.', 3600); } else say('They push you back out past the cordon. Harden (5) when the burner fires, grab (4) their guns.', 3200); return; }
@@ -16678,7 +16682,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         [[-6.5, 5.5], [6.5, 5.5]].forEach(([x, z]) => { cyl(.35, .3, .6, mat(0x8A5A3A), x, .3, z, sc, 10); sph(.6, mat(0x3E7A34), x, 1.1, z, sc, 1, 1.3, 1, 10); });
         npc(3.5, 2, Math.PI, 151, 'anand'); npc(-3, 3, .6, 152, 'kid');
         spot(-W / 2 + 1.2, -2, 1.6, () => ({ label: 'The deed, framed', go: () => say('Forty signatures. Some of them shaky, some of them in pencil, one of them just a thumbprint. Mrs. Rao’s is the biggest.', 3800) }));
-        spot(3.5, 2.2, 1.6, () => ({ label: 'Ask Anand for the night bus to Goa', go: () => afKidTravel('goi') }));
+        spot(3.5, 2.2, 1.6, () => ({ label: AF.s.kFree ? 'Ask Anand for a bus or a train' : 'Ask Anand for the night bus to Goa', go: afKTrips }));
         spot(0, D / 2 - 1, 1.4, () => ({ label: 'Back outside', go: xcOutside }));
       } else if (fl === 'f4') {
         [[-3, -2, 8], [3, -2, 8]].forEach(([x, z, d]) => { box(.12, 3.2, d, wm, x, 1.6, z + 1, sc); XC.blocks.push([x - .06, x + .06, z - 3, z + 3]); });
@@ -16775,6 +16779,49 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { g: 'To be continued: Vale, in Mumbai', chk: () => false } ] });
   AF_SKIP[AF_CH.findIndex(C => C.id === 'ksiteb')] = () => { Object.assign(afKD(), { mall: 2, mkt: 2, rel: 2, ring: 2, rings: 3 }); AF.s.kFree = 1; Object.assign(AF.s.seen, { kcmd: 1, kfree: 1 }); afSave(); afKDLook(); };
   afKidPlaces = (o => function(){ o(); afKDPlaces(); })(afKidPlaces);
+  // ======================= Kiran, part 2: Halcyon House, Mumbai =======================
+  // travel, generalised: Goa, Bangalore, Mumbai (and, later, somewhere much further)
+  const AF_KACT = { bfa: 'kblr', goi: 'goa', bom: 'kbom', kal: 'kalt' };
+  afKidTravel = function(c){ if (EV || A || AF.busy) return; AF.busy = true;
+    say({ bfa: 'The night bus up the ghats to Bangalore. You sleep with your hood up.', goi: 'The night bus back down to the coast. The voice hums the whole way.', bom: 'The overnight train to Mumbai. Anand’s cousin is the guard; he finds you a whole bench.' }[c] || '', 3600);
+    fade(() => { XC.inside = null; AF.s.act = AF_KACT[c] || 'goa'; if (c === 'bfa') AF.s.seen.kbus = 1; if (c === 'bom') AF.s.seen.kbomGo = 1; afSave(); if (XC.drv) xcExitCar(); XC.ride = null; aptFree(); xcBuild(c); afAfterBuild(); xcWeather(); xcLight(); web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'xc'; vy = 0; falling = false; grounded = true; XC.air = false; XC.roof = 0; cityV.set(0, 0, 0);
+      const h = afWhere('home'), sp = c === 'bfa' || c === 'kal' ? AF_KT_SPAWN : c === 'bom' ? XC_LM.bom.taxi : h ? [h[0], h[1] + 3] : [-196, 10]; pos.set(sp[0], 1.6, sp[1]); xcClear(); yaw = c === 'bfa' || c === 'kal' ? 0 : c === 'bom' ? Math.atan2(sp[0], sp[1]) : Math.PI; pitch = -.03; $('#worldBack').textContent = xcBackLabel(); AF.key = ''; AF.busy = false; }, '#000000'); };
+  function afKTrips(){ if (EV || A || AF.busy) return; const a = [['goi', 'The night bus to Goa (the boat shed)']]; if (AF.s.kFree) a.push(['bom', 'The overnight train to Mumbai']); a.push(['stay', 'Not now']);
+    askChoice('ktrip', v => { if (v && v !== 'stay') afKidTravel(v); }, { h: 'Anand', q: '“Where to? No meter. Never a meter.”', a }); }
+  // Halcyon House: a black glass tower on the Mumbai waterfront, with a helipad on the roof
+  const AF_KHQH = 72;
+  function afKHQPlaces(){ if (!AF.on || !AF.s.child) return;
+    if (XC.city === 'bfa' && AF.s.act === 'kblr') XC.acts.push({ x: AF_KT_SPAWN[0] - 3, z: AF_KT_SPAWN[1] + 2, r: 3, on: () => !!AF.s.kFree && !AF.busy && !EV, label: () => 'Take the overnight train to Mumbai', go: () => afKidTravel('bom') });
+    if (XC.city === 'bom' && AF.s.act === 'kbom') { XC.acts.push({ x: XC_LM.bom.taxi[0] + 3, z: XC_LM.bom.taxi[1] - 2, r: 3, on: () => !AF.busy && !EV, label: () => 'The overnight train back to Bangalore', go: () => afKidTravel('bfa') });
+      const l = afLotNear(-120, 40, []); if (!l) return; const cx = (l.x0 + l.x1) / 2, cz = (l.z0 + l.z1) / 2, w = l.x1 - l.x0 + 1.2, d = l.z1 - l.z0 + 1.2; AF.kHQ = { x: cx, z: cz, w, d, l };
+      const H = new THREE.Group(); H.position.set(cx, 0, cz); XC.g.add(H); XC.lm.push(H); const gl = new THREE.MeshStandardMaterial({ color: 0x0E1016, roughness: .12, metalness: .8 });
+      box(w, AF_KHQH, d, gl, 0, AF_KHQH / 2, 0, H); const red = glowM(0xE84A3C, { emissiveIntensity: 1.4 }); for (let y = 6; y < AF_KHQH; y += 6) box(w + .1, .12, d + .1, red, 0, y, 0, H);
+      box(Math.min(w, d) * .6, .3, Math.min(w, d) * .6, mat(0x3A3D44), 0, AF_KHQH + .15, 0, H); const hp = new THREE.Mesh(new THREE.RingGeometry(2.2, 2.6, 24), glowM(0xFFC93C, { emissiveIntensity: 1 })); hp.rotation.x = -Math.PI / 2; hp.position.y = AF_KHQH + .32; H.add(hp);
+      const sg = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(w, 12), 1.6), xcSign('HALCYON', '#E84A3C', '#0E1016', Math.min(w, 12), 1.6)); const fr = xcFront(l); sg.position.set(fr[2] * (w / 2 + .08), 8, fr[3] * (d / 2 + .08)); sg.rotation.y = Math.atan2(fr[2], fr[3]); H.add(sg);
+      xcSolid(cx - w / 2, cx + w / 2, cz - d / 2, cz + d / 2, AF_KHQH, 'hq'); AF.kHQDoor = [cx + fr[2] * (w / 2 + 2), cz + fr[3] * (d / 2 + 2)]; AF.kHQFront = [cx + fr[2] * (w / 2 + 9), cz + fr[3] * (d / 2 + 9)];
+      if (!AF.s.seen.kvale) [[-2, 0], [2, 0]].forEach(([o]) => { try { const av = bodyAv('af_agent', 1); av.g.position.set(AF.kHQDoor[0] + o * (fr[3] ? 1 : 0), 0, AF.kHQDoor[1] + o * (fr[2] ? 1 : 0)); av.g.rotation.y = Math.atan2(fr[2], fr[3]); XC.g.add(av.g); } catch (e) {} }); } }
+  async function afKBomArrive(){ AF.busy = true;
+    await cbTalk([['Narrator', 'Mumbai. Salt air, a million people, and on the waterfront, a black glass tower with no windows you can see into.'], ['Voice', 'The cane is in there. We can smell the cane.'], ['Kiran', 'Halcyon House. Their whole world, one building.'], ['Voice', 'Then we go through it, floor by floor.'], ['Kiran', 'No. We go round it. Sense first.']]);
+    AF.s.seen.kbomArr = 1; afLog('Kiran reached Mumbai. Halcyon’s headquarters, Halcyon House, is on the waterfront.'); afSave(); AF.busy = false; }
+  async function afKValeMeet(){ AF.busy = true;
+    await cbTalk([['Narrator', 'The roof. Wind off the sea. A helicopter idling on the pad. And an old man in a perfect suit, leaning on a cane, as if he’s been waiting for a bus.'], ['Director Vale', 'You climbed. He used to climb. Twenty years and the specimen still prefers the outside of a building.'], ['Kiran', 'You killed him on a beach.'], ['Director Vale', 'I contained him on a beach. The difference matters to people like me.'], ['Director Vale', 'Shall we go down to the plaza? I’d like my people to see this. Whichever way it goes.']]);
+    fade(() => { XC.roof = 0; XC.air = false; vy = 0; const f = AF.kHQFront || XC_LM.bom.taxi; pos.set(f[0], 1.6, f[1]); xcClear(); yaw = Math.atan2(pos.x - AF.kHQ.x, pos.z - AF.kHQ.z); }, '#000000');
+    AF.s.seen.kvaleMeet = 1; afSave(); setTimeout(() => { AF.busy = false; }, 900); }
+  async function afKValeDown(){ AF.busy = true;
+    await cbTalk([['Narrator', 'Vale is on his knees on the wet stone, the cane in two pieces beside him. His people have stopped fighting. Some have taken their badges off.'], ['Kiran', 'It’s over. Every file, every site, every name. Farida Qureshi’s paper in Delhi has had them since this morning.'], ['Director Vale', '(laughing, very softly) Your father said something like that once. On a staircase.'], ['Kiran', 'Halcyon is finished.'], ['Director Vale', '(he opens his right hand: a small grey switch, held down by his thumb this whole time) Yes. And so, I’m afraid, are you.']]);
+    AF.s.seen.kvale = 1; afLog('Kiran beat Director Vale in front of Halcyon House. Halcyon is finished for good. Vale was holding a switch.'); afSave(); AF.busy = false; }
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push({ n: 'Chapter 20', t: 'Halcyon House', sub: 'Their whole world, one building.', id: 'kbom', steps: [
+    { g: 'Mumbai. Ask Anand in the tower lobby for the overnight train (or take it from outside the tower)', at: () => XC.city === 'bfa' ? [AF_KT_SPAWN[0] - 3, AF_KT_SPAWN[1] + 2] : null, chk: () => !!AF.s.seen.kbomGo },
+    { g: '', go: () => afKBomArrive(), chk: () => !!AF.s.seen.kbomArr },
+    { g: 'Halcyon House, on the waterfront. Get close and use your sense (6): find Vale', at: () => AF.kHQFront, auto: () => { if (AF.kHQ && afNear(AF.kHQ.x, AF.kHQ.z, 45) && (afK().senseT || 0) > performance.now() / 1000 && !AF.s.seen.khqSense) { AF.s.seen.khqSense = 1; afSave(); say('Seventy floors of heat shapes, all of them armed. And one on the roof: old, slow, very still. Vale.', 4200); } }, chk: () => !!AF.s.seen.khqSense },
+    { g: 'The front door is guarded. Blend in (2) and walk up to it like you work there, or go in fighting', at: () => AF.kHQDoor, auto: () => { if (!AF.kHQDoor || !afNear(AF.kHQDoor[0], AF.kHQDoor[1], 4)) return; if (afK().blend) { AF.s.seen.khqIn = 1; afSave(); say('A tired guard looks at your lanyard, not your face. Lift to floor thirty. The rest is outside: out of a window and up the glass.', 4200); } else if (!AF.fT || performance.now() - AF.fT > 5000) { AF.fT = performance.now(); xcFight('xqkhq', 'Halcyon House security'); } }, chk: () => !!AF.s.seen.khqIn },
+    { g: 'Wall-crawl (3) up the outside of Halcyon House to the roof. Face the glass and climb', at: () => AF.kHQFront, auto: () => { if (AF.kHQ && XC.roof >= AF_KHQH - 1 && Math.abs(pos.x - AF.kHQ.x) < AF.kHQ.w / 2 + 1 && Math.abs(pos.z - AF.kHQ.z) < AF.kHQ.d / 2 + 1) afKValeMeet(); }, chk: () => !!AF.s.seen.kvaleMeet },
+    { g: 'Director Vale, in front of his own building. End Halcyon', auto: () => { if (!AF.fT || performance.now() - AF.fT > 3500) { AF.fT = performance.now(); xcFight('xqkvale', 'Director Vale'); } }, chk: () => !!AF.s.seen.kvaleWon },
+    { g: '', go: () => afKValeDown(), chk: () => !!AF.s.seen.kvale },
+    { g: 'To be continued: Vale’s thumb is still on the switch', chk: () => false } ] });
+  AF_SKIP[AF_CH.findIndex(C => C.id === 'kbom')] = () => { Object.assign(AF.s.seen, { kbomGo: 1, kbomArr: 1, khqSense: 1, khqIn: 1, kvaleMeet: 1, kvaleWon: 1, kvale: 1 }); afSave(); if (XC.city !== 'bom') afKidTravel('bom'); };
+  afKidPlaces = (o => function(){ o(); afKHQPlaces(); })(afKidPlaces);
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
