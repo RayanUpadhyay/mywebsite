@@ -15317,7 +15317,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ---------- every frame in another city ----------
   function xcFrame(dt, now){
     afFrame(dt, now); const t = now / 1000;
-    if (inWorld && zone === 'xin') { XC.near = null; if (XC.inside && ['flat', 'cell', 'lab', 'home', 'twr'].includes(XC.inside.kind)) return afInStep(); if (XC.keeper) XC.keeper.anim(t, 0, 0); const d = XC.inside;
+    if (inWorld && zone === 'xin') { XC.near = null; if (XC.inside && ['flat', 'cell', 'lab', 'home', 'twr', 'ktw'].includes(XC.inside.kind)) return afInStep(); if (XC.keeper) XC.keeper.anim(t, 0, 0); const d = XC.inside;
       if (pos.x < -XC.room.W / 2 + 1.4) XC.near = { label: 'Back outside', go: xcOutside };
       else if (d && d.kind !== 'stash' && Math.hypot(pos.x - 2.2, pos.z) < 1.8) XC.near = { label: d.kind === 'food' ? 'Order something (1 rep) · or ask for work' : 'Talk to the shopkeeper', go: () => { if (d.kind === 'food' && JOB.rep >= 1 && !XC.job) { JOB.rep -= 1; jobSave(); try { if (typeof hpNow !== 'undefined') hpNow = Math.min(hpMax, hpNow + 15); } catch (e) {} tone(880, .1, 'sine', .04); afAte(); say('Delicious. You feel better.', 1800); setTimeout(() => xcJob(d), 1900); } else xcJob(d); } };
       XC.btn.hidden = !XC.near; if (XC.near) XC.btn.textContent = XC.near.label + (fine ? ' (E)' : ''); return; }
@@ -16538,7 +16538,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const AF_KT = [27.5, -27.5], AF_KT_SPAWN = [27.5, 3];
   function afKidTravel(c){ if (EV || A || AF.busy) return; const to = c === 'bfa'; AF.busy = true;
     say(to ? 'The night bus from Panjim. Nine hours of ghats and loud films. You sleep with your hood up.' : 'The night bus back down to the coast. The voice hums the whole way.', 3600);
-    fade(() => { AF.s.act = to ? 'kblr' : 'goa'; if (to) AF.s.seen.kbus = 1; afSave(); if (XC.drv) xcExitCar(); XC.ride = null; aptFree(); xcBuild(c); afAfterBuild(); xcWeather(); xcLight(); web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'xc'; vy = 0; falling = false; grounded = true; XC.air = false; XC.roof = 0; cityV.set(0, 0, 0);
+    fade(() => { XC.inside = null; AF.s.act = to ? 'kblr' : 'goa'; if (to) AF.s.seen.kbus = 1; afSave(); if (XC.drv) xcExitCar(); XC.ride = null; aptFree(); xcBuild(c); afAfterBuild(); xcWeather(); xcLight(); web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'xc'; vy = 0; falling = false; grounded = true; XC.air = false; XC.roof = 0; cityV.set(0, 0, 0);
       const h = afWhere('home'), sp = to ? AF_KT_SPAWN : h ? [h[0], h[1] + 3] : [-196, 10]; pos.set(sp[0], 1.6, sp[1]); xcClear(); yaw = to ? 0 : Math.PI; pitch = -.03; $('#worldBack').textContent = xcBackLabel(); AF.key = ''; AF.busy = false; }, '#000000'); }
   const afKBusOk = () => AF.on && AF.s.child && !!AF.s.seen.intel && !AF.busy && !EV;
   function afKBlrPlaces(){ if (!AF.on) return;
@@ -16599,8 +16599,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       else if (v === 'goa') afKidTravel('goi'); },
       { h: afKTowerName().replace(/\b\w+/g, w => w[0] + w.slice(1).toLowerCase()), q: 'Your base. Forty families downstairs, a workshop on the top floor, the whole city out of the windows.', a: [['rest', 'Eat and sleep until morning'], ['roof', 'Take the lift to the roof'], ['goa', 'Take the night bus to Goa (the boat shed)'], ['stay', 'Back outside']] }); }
   function afKCrewPlaces(){ if (XC.city !== 'bfa' || AF.s.act !== 'kblr' || !AF.on) return; const K = afKT();
-    if (AF.s.kTower) { XC.acts.push({ x: AF_KT[0], z: AF_KT[1] + 14, r: 3.4, on: () => !AF.busy && !EV, label: () => `Go inside ${afKTowerName().replace(/\b\w+/g, w => w[0] + w.slice(1).toLowerCase())} (your base)`, go: afKBaseMenu });
-      XC.acts.push({ x: AF_KT[0], z: AF_KT[1] + 3, r: 3, roofOk: 1, on: () => XC.roof > 40, label: () => 'Take the lift back down', go: () => fade(() => { XC.roof = 0; pos.set(AF_KT[0], 1.6, AF_KT[1] + 15); vy = 0; yaw = 0; }, '#000000') }); }
+    if (AF.s.kTower) { XC.acts.push({ x: AF_KT[0], z: AF_KT[1] + 14, r: 3.4, on: () => !AF.busy && !EV, label: () => `Go inside ${afKTowerName().replace(/\b\w+/g, w => w[0] + w.slice(1).toLowerCase())} (your base)`, go: () => afKTIn('lobby') });
+      XC.acts.push({ x: AF_KT[0], z: AF_KT[1] + 3, r: 3, roofOk: 1, on: () => XC.roof > 40, label: () => 'Take the lift back down', go: afKLift }); }
     const av = !XC.g.userData.kcAv; XC.g.userData.kcAv = 1;
     AF_KCREW.forEach(([id, name, at, desc, line]) => { if (av) try { const a = avatar(crowdLook(id.length * 13)); a.g.position.set(at[0], 0, at[1]); a.g.rotation.y = Math.atan2(AF_KT[0] - at[0], AF_KT[1] - at[1]); XC.g.add(a.g); } catch (e) {}
       XC.acts.push({ x: at[0], z: at[1], r: 3, on: () => !!AF.s.seen.kplan && !AF.busy, label: () => K.crew.includes(id) ? `Talk to ${name}` : `Ask ${name} to help build the tower`, go: () => { if (K.crew.includes(id)) return say(`${name}: “Whenever you’re ready, we’re ready.”`, 2600); AF.busy = true; cbTalk([['Narrator', desc], line, ['Kiran', 'Thank you.']]).then(() => { K.crew.push(id); afSave(); AF.busy = false; say(`${name} is on the crew (${K.crew.length} of 3).`, 2600); }); } }); });
@@ -16637,6 +16637,77 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { g: 'To be continued: Halcyon still runs the rest of Bangalore', chk: () => false } ] });
   AF_SKIP[AF_CH.findIndex(C => C.id === 'ktower')] = () => { const K = afKT(); Object.assign(K, { steel: 1, power: 1, crew: ['farooq', 'lakshmi', 'anand'] }); AF.s.ktName = AF.s.ktName || 'forty'; AF.s.kTower = 1; Object.assign(AF.s.seen, { kplan: 1, kraise: 1, kbase: 1 }); afSave(); if (XC.city !== 'bfa') afKidTravel('bfa'); else fade(() => { afKTowerBuild(); afKCrewRefresh(); }, '#000000'); };
   afKidPlaces = (o => function(){ o(); afKTowerBuild(); const n = XC.acts.length; afKCrewPlaces(); XC.acts.slice(n).forEach(a => { a.kc = 1; }); })(afKidPlaces);
+  // ======================= Kiran's tower, inside: lobby, lift, two residents' floors, the workshop, the roof =======================
+  const AF_KTF = [['lobby', 'Lobby'], ['f4', 'Floor 4: Mrs. Rao and Farooq'], ['f9', 'Floor 9: Lakshmi and Anand'], ['top', 'Top floor: your workshop'], ['roof', 'The roof']];
+  const AF_KTALK = { rao: ['Mrs. Rao', ['A lift that works. Forty years I waited for a lift that works.', 'Eat something. You’re all bones and black goo.', 'Your father used to carry my shopping up nine floors and pretend it was no trouble. It was trouble. I could see.']],
+    farooq: ['Farooq', ['I welded the stair rails twice. Fire stairs on every floor. Lakshmi checked them herself.', 'My mother lives on this floor again. First time in twenty years she’s said the word “home” without crying.']],
+    lakshmi: ['Lakshmi', ['Floor nine has the best light. I gave it to myself. Architect’s privilege.', 'Every flat has two ways out. Nobody in this building is ever getting trapped on a staircase again.']],
+    anand: ['Anand', ['Halcyon trucks went past the gate three times today. My drivers counted. They always count.', 'Need a ride anywhere in this city, you tell me. No meter. Never a meter.']],
+    kid: ['A kid from Floor 4', ['Are you the one with the black stuff? Can you do the thing? Do the thing!', 'My dadi says your dad saved her life. Is that true? She says it like ten times a day.']] };
+  const afKTalk = k => { const [who, L] = AF_KTALK[k]; return { label: `Talk to ${who}`, go: () => { say(`${who}: “${L[Math.floor(Math.random() * L.length)]}”`, 4200); tone(520, .1, 'sine', .04); } }; };
+  function afKRest(){ AF.s.symb.hunger = 0; afSave(); fade(() => { try { skipTo(7); } catch (e) {} }, '#000000'); say('A hot meal from Farooq’s mother, eight hours on a real mattress. The voice is quiet all night. (Hunger reset; it’s morning.)', 4200); }
+  function afKLift(){ if (EV || A || AF.busy) return; const here = XC.inside && XC.inside.fl;
+    askChoice('klift', v => { if (v && v !== 'stay' && v !== here) afKTIn(v); }, { h: 'The lift', q: 'Which floor?', a: AF_KTF.filter(([k]) => k !== here).map(([k, n]) => [k, n]).concat([['stay', 'Stay here']]) }); }
+  function afKWinTex(){ const night = nightNow(); return tex(256, 128, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, night ? '#0A0E1C' : '#9CC4E8'); gr.addColorStop(1, night ? '#2A2238' : '#E8D8C0'); c.fillStyle = gr; c.fillRect(0, 0, w, h);
+    for (let i = 0; i < 18; i++) { const bw = 10 + xcHash(i, 2) * 12, bh = 20 + xcHash(i, 5) * 70, x = i * 15 - 6; c.fillStyle = night ? '#141824' : '#5A6270'; c.fillRect(x, h - bh, bw, bh); if (night) { c.fillStyle = '#FFD08A'; for (let k = 0; k < 6; k++) if (xcHash(i, k) > .55) c.fillRect(x + 3, h - bh + 6 + k * 10, 3, 3); } } }); }
+  function afKTIn(fl){ if (EV || A) return;
+    if (fl === 'roof') return fade(() => { if (XC.isc) { disposeDeep(XC.isc); XC.isc = null; } XC.inside = null; zone = 'xc'; XC.air = false; XC.roof = 47.5; vy = 0; pos.set(AF_KT[0], 47.5 + 1.6, AF_KT[1] + 3); yaw = 0; pitch = -.03; $('#worldBack').textContent = xcBackLabel(); say('The roof. The ring of lights, the black sculpture, and all of Bangalore. The lift is right behind you.', 3400); }, '#000000');
+    fade(() => { if (XC.isc) disposeDeep(XC.isc); const sc = XC.isc = new THREE.Scene(), W = 16, D = 14; sc.background = new THREE.Color(0x14161C);
+      XC.inside = { kind: 'ktw', fl, x: AF_KT[0], z: AF_KT[1] + 13.5, nx: 0, nz: 1 }; XC.room = { W, D }; XC.keeper = null; XC.blocks = []; AF.ktSpots = [];
+      sc.add(new THREE.HemisphereLight(0xFFF2DC, 0x2A2420, .75)); [[-4, 0], [4, 0]].forEach(([x, z]) => { const L = new THREE.PointLight(0xFFE0B0, .7, 14, 2); L.position.set(x, 2.8, z); sc.add(L); });
+      const fc = { lobby: 0xC8C2B4, f4: 0xA89A86, f9: 0xB8A890, top: 0x7A7A78 }[fl] || 0xA89A86, floor = new THREE.Mesh(new THREE.PlaneGeometry(W, D), mat(fc, { roughness: .85 })); floor.rotation.x = -Math.PI / 2; sc.add(floor); box(W, .1, D, mat(0xE8E4DC), 0, 3.2, 0, sc);
+      const wm = mat(0xE2DACA, { roughness: .95 }), wt = afKWinTex(); [[0, D / 2, W, .1], [-W / 2, 0, .1, D], [W / 2, 0, .1, D]].forEach(([x, z, w, dd]) => box(w, 3.2, dd, wm, x, 1.6, z, sc)); box(W, 3.2, .1, wm, 0, 1.6, -D / 2, sc);
+      // windows on three sides (the lobby only gets the glass front)
+      const win = (x, z, ry, w) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, 1.6), new THREE.MeshBasicMaterial({ map: wt })); m.position.set(x, 1.8, z); m.rotation.y = ry; sc.add(m); };
+      if (fl === 'lobby') win(0, D / 2 - .07, Math.PI, 10); else { win(-W / 2 + .07, 0, Math.PI / 2, 10); win(W / 2 - .07, 0, -Math.PI / 2, 10); win(0, D / 2 - .07, Math.PI, 12); }
+      const B2 = (w, h, dd, m, x, y, z) => { const o = box(w, h, dd, m, x, y, z, sc); XC.blocks.push([x - w / 2, x + w / 2, z - dd / 2, z + dd / 2]); return o; };
+      const npc = (x, z, ry, look, k) => { try { const a = avatar(crowdLook(look)); a.g.position.set(x, 0, z); a.g.rotation.y = ry; sc.add(a.g); } catch (e) {} XC.blocks.push([x - .3, x + .3, z - .3, z + .3]); if (k) AF.ktSpots.push([x, z + .9, 1.4, () => afKTalk(k)]); };
+      const spot = (x, z, r, f) => AF.ktSpots.push([x, z, r, f]);
+      // the lift, on the back wall, with a floor number over it
+      const steel = mat(0x8A8F99, { metalness: .7, roughness: .3 }); box(2.4, 2.6, .12, steel, 0, 1.3, -D / 2 + .08, sc); box(.04, 2.6, .14, mat(0x2A2D33), 0, 1.3, -D / 2 + .09, sc);
+      const lbl = new THREE.Mesh(new THREE.PlaneGeometry(1.6, .4), xcSign({ lobby: 'G', f4: '4', f9: '9', top: '15' }[fl], '#FFC93C', '#16181D', 1.6, .4)); lbl.position.set(0, 2.85, -D / 2 + .16); sc.add(lbl);
+      spot(0, -D / 2 + 1.2, 1.5, () => ({ label: 'Take the lift', go: afKLift }));
+      if (fl === 'lobby') {
+        B2(4, 1.1, 1, mat(0x5A3A2A), 3.5, .55, 1, sc); box(4.2, .08, 1.2, mat(0xE8E4DC), 3.5, 1.14, 1, sc);
+        const deed = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.4), new THREE.MeshBasicMaterial({ map: tex(220, 140, (c, w, h) => { c.fillStyle = '#F2EAD8'; c.fillRect(0, 0, w, h); c.fillStyle = '#3A2A1A'; c.font = '700 16px serif'; c.textAlign = 'center'; c.fillText('DEED OF LAND', w / 2, 26); c.font = '11px serif'; for (let i = 0; i < 6; i++) c.fillText('— — — — — — — — — — —', w / 2, 46 + i * 12); c.fillStyle = '#8A1A1A'; c.beginPath(); c.arc(w - 34, h - 26, 14, 0, 7); c.fill(); }) }));
+        deed.position.set(-W / 2 + .08, 1.7, -2); deed.rotation.y = Math.PI / 2; sc.add(deed); box(.05, 1.5, 2.3, mat(0x3A2A1A), -W / 2 + .05, 1.7, -2, sc);
+        const mb = []; for (let i = 0; i < 8; i++) for (let j = 0; j < 5; j++) mb.push([W / 2 - .1, .8 + j * .3, -4 + i * .32]); inst(new THREE.BoxGeometry(.06, .26, .28), mat(0x8A8F99, { metalness: .5 }), mb, sc);
+        [[-6.5, 5.5], [6.5, 5.5]].forEach(([x, z]) => { cyl(.35, .3, .6, mat(0x8A5A3A), x, .3, z, sc, 10); sph(.6, mat(0x3E7A34), x, 1.1, z, sc, 1, 1.3, 1, 10); });
+        npc(3.5, 2, Math.PI, 151, 'anand'); npc(-3, 3, .6, 152, 'kid');
+        spot(-W / 2 + 1.2, -2, 1.6, () => ({ label: 'The deed, framed', go: () => say('Forty signatures. Some of them shaky, some of them in pencil, one of them just a thumbprint. Mrs. Rao’s is the biggest.', 3800) }));
+        spot(3.5, 2.2, 1.6, () => ({ label: 'Ask Anand for the night bus to Goa', go: () => afKidTravel('goi') }));
+        spot(0, D / 2 - 1, 1.4, () => ({ label: 'Back outside', go: xcOutside }));
+      } else if (fl === 'f4') {
+        [[-3, -2, 8], [3, -2, 8]].forEach(([x, z, d]) => { box(.12, 3.2, d, wm, x, 1.6, z + 1, sc); XC.blocks.push([x - .06, x + .06, z - 3, z + 3]); });
+        // Mrs. Rao's flat (left): the cricket bat on the wall, plants everywhere; Farooq's (right): a welding mask and his mother's chair
+        box(.08, .9, .12, mat(0xC8A060), -W / 2 + .12, 1.6, -2, sc); for (let i = 0; i < 5; i++) { cyl(.18, .14, .3, mat(0x8A5A3A), -7 + i * .8, .15, 4.8, sc, 8); sph(.3, mat(0x4E8A3E), -7 + i * .8, .55, 4.8, sc, 1, 1, 1, 8); }
+        B2(1.6, .8, .8, mat(0x6A4E3A), -5.5, .4, -1, sc); B2(1.2, .5, .6, mat(0x3A3D44), 5.6, .25, -1.5, sc); box(.4, .4, .3, mat(0x2A2D33, { metalness: .6 }), 5.6, .7, -1.5, sc);
+        npc(-5.5, 1, 0, 160, 'rao'); npc(5.5, 1, 0, 161, 'farooq'); npc(0, 3.5, Math.PI, 162, 'kid');
+      } else if (fl === 'f9') {
+        [[-3, -2, 8], [3, -2, 8]].forEach(([x, z, d]) => { box(.12, 3.2, d, wm, x, 1.6, z + 1, sc); XC.blocks.push([x - .06, x + .06, z - 3, z + 3]); });
+        // Lakshmi's drafting table and her plans; Anand's family and a shelf of toy autos
+        const dt = B2(1.8, .9, 1, mat(0xD8D4CC), -5.5, .45, -1, sc); dt.rotation.z = .02; box(1.6, .02, .9, mat(0xF2F2EE), -5.5, .92, -1, sc);
+        for (let i = 0; i < 6; i++) box(.3, .2, .16, mat([0xF2C230, 0x1F6A3A][i % 2]), 5 + (i % 3) * .5, 1.2 + Math.floor(i / 3) * .4, -3.8, sc); box(1.8, .06, .3, mat(0x5A3A2A), 5.5, 1.08, -3.8, sc); box(1.8, .06, .3, mat(0x5A3A2A), 5.5, 1.48, -3.8, sc);
+        npc(-5.5, .4, 0, 170, 'lakshmi'); npc(5.5, 1, 0, 171, 'anand'); npc(4.5, 3, -.6, 172); npc(-1, 4, 2.4, 173);
+      } else if (fl === 'top') {
+        // the workshop: Farooq's bench from the old steel, Lakshmi's plans, a mattress, and the chair by the window
+        B2(3.4, .9, 1.1, mat(0x3A3D44, { metalness: .6, roughness: .5 }), -4.5, .45, -4.5, sc); [[-5.6, 1.05], [-4.6, 1.02], [-3.4, 1.0]].forEach(([x, y], i) => box(.3, .14, .3, mat([0x16181D, 0xC9CFD8, 0xC8102E][i], { metalness: .5 }), x, y, -4.4, sc));
+        for (let i = 0; i < 4; i++) { const p = new THREE.Mesh(new THREE.PlaneGeometry(1, .7), new THREE.MeshBasicMaterial({ color: 0xDCE8F2 })); p.position.set(-6 + i * 1.2, 2.2, -D / 2 + .12); sc.add(p); }
+        B2(2, .25, 1.4, mat(0xE8E4DC), 5.6, .12, -4.6, sc); box(1.9, .1, 1.3, mat(0x2A4A7A), 5.6, .3, -4.6, sc);
+        B2(.8, .5, .8, mat(0x6A4E3A), 4, .25, 5, sc); box(.8, .9, .1, mat(0x6A4E3A), 4, .9, 5.38, sc); box(.06, .9, .1, mat(0xC8A060), 3.75, .9, 4.9, sc); sph(.06, mat(0x2A6A4A), 4.2, .55, 4.9, sc, 1, .6, 1.2, 8); box(.18, .24, .02, mat(0xF2EAD8), 4.1, .62, 4.8, sc);
+        B2(1, .5, .7, mat(0x5A3A2A), -5.5, .25, 4.6, sc); box(.6, .1, .4, mat(0x16181D), -5.5, .55, 4.6, sc); box(.4, .12, .2, mat(0xC8102E), -5.2, .56, 4.4, sc);
+        spot(-4.5, -3.6, 1.6, () => ({ label: 'Your workbench', go: () => say('Farooq welded it out of the old tower’s steel. You can still see scorch under the paint. The voice likes to rest your hands on it.', 3800) }));
+        spot(-4.5, -6, 1.6, () => ({ label: 'Lakshmi’s plans', go: () => say('Every floor, every fire stair. In the corner of the last sheet, in pencil: “for the boatman”.', 3200) }));
+        spot(5.6, -3.4, 1.6, () => ({ label: 'The mattress: eat and sleep until morning', go: afKRest }));
+        spot(4, 4, 1.6, () => ({ label: 'The chair by the window', go: () => { AF.busy = true; cbTalk([['Narrator', 'On the seat: an old cricket bat, a turtle-shell keyring from Goa, and a photo of a man you never got to know, squinting into the sun on a boat.'], ['Voice', 'He sat like this. Facing the city. Every night.'], ['Kiran', 'Then so will I. Sometimes.']]).then(() => { AF.busy = false; }); } }));
+        spot(-5.5, 3.8, 1.6, () => ({ label: 'His things', go: () => say('What came up from the boat shed in Goa: his toolbox, a QuickDrop jacket with the logo half picked off, and one taped-up web-shooter that still fires, once, if you hit it.', 4200) }));
+      }
+      plats.xin = [{ x0: -W / 2, x1: W / 2, z0: -D / 2, z1: D / 2 }];
+      web.p = null; drawWeb(); XC.air = false; XC.roof = 0; zone = 'xin'; vy = 0; grounded = true; pos.set(0, 1.6, -D / 2 + 2); yaw = Math.PI; pitch = -.04; $('#worldBack').textContent = 'Back outside';
+      say({ lobby: `The lobby of ${afKTowerName().replace(/\b\w+/g, w => w[0] + w.slice(1).toLowerCase())}. The deed on the wall, kids on the stairs, Anand on the desk.`, f4: 'Floor 4. Cooking smells, a pressure cooker whistling somewhere, two doors wide open.', f9: 'Floor 9. The best light in the building, and Lakshmi’s music coming down the corridor.', top: 'The top floor. Your workshop. The whole city in the windows.' }[fl], 3200); }, '#06070B'); }
+  function afKTStep(){ let n = null, bd = 9; (AF.ktSpots || []).forEach(([x, z, r, f]) => { const d = Math.hypot(pos.x - x, pos.z - z); if (d < r && d < bd) { bd = d; n = f(); } });
+    XC.near = n; XC.btn.hidden = !n; if (n) XC.btn.textContent = n.label + (fine ? ' (E)' : ''); }
+  afInStep = (o => function(){ if (XC.inside && XC.inside.kind === 'ktw') return afKTStep(); return o(); })(afInStep);
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
