@@ -2150,7 +2150,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   badge.textContent = `Secrets 0/${TOTAL}`;
   let toastT;
   // the story's hero is whoever is playing: {N} in any story text becomes their name
-  function heroName(){ try { return (localStorage.getItem('ru-heroname') || '').trim() || 'Hero'; } catch (e) { return 'Hero'; } }
+  function heroName(){ if (typeof AF !== 'undefined' && AF && AF.on && AF.s && AF.s.child) return 'Kiran'; try { return (localStorage.getItem('ru-heroname') || '').trim() || 'Hero'; } catch (e) { return 'Hero'; } }
   function hasHeroName(){ try { return !!(localStorage.getItem('ru-heroname') || '').trim(); } catch (e) { return false; } }
   function nmT(t){ return typeof t === 'string' ? t.replace(/\{N\}/g, heroName()) : t; }
   function say(text, ms = 3200){
@@ -5411,7 +5411,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 
   // ---------- third person, and the character screen ----------
   let EV = null;   // the event you're playing, if any (it can put you in a hero's suit)
-  const curLook = () => { if (EV && EV.look) return EV.look; try { if (SG.active && chId() === 'echo') return Object.assign({}, look, { outfit: 'copycat', mask: 1, cape: 1 }, SG.flags.old ? { hairC: 5, mask: 0 } : {}); } catch (e) {} return look; };
+  const curLook = () => { if (EV && EV.look) return EV.look; if (afKidOn()) return afKidLook(); try { if (SG.active && chId() === 'echo') return Object.assign({}, look, { outfit: 'copycat', mask: 1, cape: 1 }, SG.flags.old ? { hairC: 5, mask: 0 } : {}); } catch (e) {} return look; };
   let tpv = false; try { tpv = localStorage.getItem('ru-pov') === '3'; } catch (e) {}
   let mirror = false, me = null, meKey = '', meHeld, meLast = V(0, 0, 0), meMv = 0;
   const povBtn = $('#povBtn');
@@ -15447,7 +15447,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   AF.s = afLoad();
   function afLog(t){ AF.s.log.unshift(t); AF.s.log = AF.s.log.slice(0, 30); afSave(); }
   // the bad arm never heals in this story; the symbiote, later, more than makes up for it
-  function afArmF(){ if (typeof AF === 'undefined' || !AF || !AF.on) return 1; if (AF.s.child) return 1.3; const goa = AF.s.act === 'goa', D = goa ? AF.s.goa : AF.s.del, Y = AF.s.symb; if (Y.on && !Y.gone) return 1.1; return (goa ? (AF.s.oldArm ? .4 : .55) : .7 + Math.min(.15, (D ? D.physio : 0) * .03)) * (D && D.tired > 18 ? .85 : 1); }
+  function afArmF(){ if (typeof AF === 'undefined' || !AF || !AF.on) return 1; if (AF.s.child) return 1.3 * (AF.s.kid && AF.s.kid.suit && !AF.s.kid.blend ? 1.15 : 1); const goa = AF.s.act === 'goa', D = goa ? AF.s.goa : AF.s.del, Y = AF.s.symb; if (Y.on && !Y.gone) return 1.1; return (goa ? (AF.s.oldArm ? .4 : .55) : .7 + Math.min(.15, (D ? D.physio : 0) * .03)) * (D && D.tired > 18 ? .85 : 1); }
   function afCanSwing(){ return !AF.on || XC.city !== 'bfa' || !!AF.s.web.fixed || !!AF.s.symb.on; }
   function afNoWeb(){ const n = performance.now(); if (n < AF.noWebT) return; AF.noWebT = n + 3000; tone(180, .25, 'square', .03, 90); say('Your web-shooters spit sparks and a grey string that falls short. They’re broken. You’ll have to rebuild them.', 3000); }
   function xcBackLabel(){ return AF.on ? 'Pause the story (back to your room)' : 'Taxi to the airport'; }
@@ -15470,7 +15470,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     ] }
   ];
   function afFrame(dt, now){
-    afTendStep();
+    afTendStep(); afKidFrame(dt); afClaws();
     if (!AF.on) { if (!afHud.hidden) afHud.hidden = true; return; }
     AF.dt = dt; afLife(dt); afWebCol(); afDelStep(dt); if (AF.pinned) { pos.x = AF.pinned[0]; pos.z = AF.pinned[1]; vy = 0; }
     const here = inWorld && (zone === 'xc' || zone === 'xin'), C = AF_CH[AF.s.ch], S = C && C.steps[AF.s.st], k = AF.s.ch + ':' + AF.s.st;
@@ -15500,7 +15500,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (!first) say(city === 'bfa' ? 'Bangalore. What’s left of it.' : city === 'goi' ? 'Goa.' : 'Delhi.', 2600); }, '#000000');
   }
   function afLooks(){ (XC.bossAv || []).forEach(e => { const on = XC.city === 'bfa' && AF.s.ch >= AF_RETAKE && !(XC.s.bosses || []).includes(e.B.id) && !(EV && EV.boss && EV.boss.hero === e.B.id); e.av.g.visible = on; e.beam.visible = on; }); afCornerLook(); afVilLook(); }
-  function afAfterBuild(){ AF.beam = null; AF.rally = null; AF.aBeam = null; AF.corners = []; AF.vilAv = []; afActs(); afActsDel(); afActsGoa(); afVilBuild(); afPressPlace(); afLooks(); }
+  function afAfterBuild(){ AF.beam = null; AF.rally = null; AF.aBeam = null; AF.corners = []; AF.vilAv = []; afActs(); afActsDel(); afActsGoa(); afKidPlaces(); afVilBuild(); afPressPlace(); afLooks(); }
   // back from a planet launched from a city's space centre, straight back into the story
   function afCityBack(c){ fade(() => { aptFree(); xcBuild(c); afAfterBuild(); xcWeather(); xcLight(); web.p = null; drawWeb(); walkTarget = null; inWorld = true; zone = 'xc'; vy = 0; falling = false; grounded = true; XC.air = false; XC.roof = 0; cityV.set(0, 0, 0);
       const sp = XC.acts.find(a => /space centre/i.test(a.label())), at = sp ? [sp.x, sp.z + 4] : afWhere('home') || XC_LM[c].taxi; pos.set(at[0], 1.6, at[1]); xcClear(); yaw = 0; pitch = -.03;
@@ -15607,6 +15607,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const crew = (n, r, name, boss) => { for (let i = 0; i < n; i++) S.add(i % 3 === 2 ? 'gangB' : 'gangA', ...spot(r, i / n * Math.PI * 2)); const b = addUnit({ hero: boss || 'gangBoss', team: 'en' }); [b.x, b.z] = spot(r + 2, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name }, b, t: 99, marks: [] }; return b; };
     S.af = { part, t: 0, n: 0, sp: 0 };
     if (afTowerSetup(part, S, crew)) return;
+    if (part === 'xqwatch') { crew(1, 5, 'the watchers', 'af_agent'); return; } if (part === 'xqsafe') { crew(3, 5, 'Halcyon’s safehouse', 'af_agent'); S.add('af_burner', pos.x + 5, pos.z + 3); S.af.agency = 1; S.af.pulse = 8; return; }
+    if (part === 'xqkid') return afKidSetup(S); if (part === 'xqlast') return afLastSetup(S);
     if (part.startsWith('xqt_')) { crew(3, 5, ST_TITLE[part] || 'the crew'); return; }
     if (part === 'xqlab') return afLabSetup(S, crew); if (part === 'xqagency') return afAgencySetup(S);
     if (part === 'xqambush' || part === 'xqsmog') { S.af.lose = 1; crew(8, 7, part === 'xqsmog' ? 'the Smog’s whole crew' : 'Rustbolt’s crew', part === 'xqsmog' ? 'gangBoss' : 'gangBoss'); return; }
@@ -15620,12 +15622,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (part.startsWith('xqop')) { crew(5, 5, 'Rathore’s crew'); return; }
     if (part === 'xqrath') { const b = addUnit({ hero: 'dv_rath', team: 'en' }); [b.x, b.z] = spot(6, 0); b.boss = 1; EV.boss = b; S.sb = { B: { name: 'Dinesh Rathore' }, b, t: 99, marks: [] }; S.add('dv_guard', ...spot(4, 2)); S.add('dv_guard', ...spot(4, 4)); return; }
   }
-  function afFightStep(dt){ const S = EV.st, F = S.af; if (!F || EV.over) return; F.t += dt; if (F.agency) afAgencyStep(dt); if (!F.lose) return;
+  function afFightStep(dt){ const S = EV.st, F = S.af; if (!F || EV.over) return; F.t += dt; if (F.kid) return afKidStep(dt); if (F.agency) afAgencyStep(dt); if (!F.lose) return;
     const b = EV.boss; if (b) b.hp = Math.max(b.hp, b.max * .6);
     const alive = EV.units.filter(u => u.team === 'en' && u.hp > 0).length;
     if (alive < 6 && F.n < 24 && (F.sp -= dt) <= 0) { F.sp = 2.2; F.n += 2; for (let k = 0; k < 2; k++) { const a = Math.random() * Math.PI * 2, x = pos.x + Math.cos(a) * 10, z = pos.z + Math.sin(a) * 10; S.add(F.agency ? (Math.random() < .7 ? 'af_agent' : 'af_burner') : Math.random() < .5 ? 'gangA' : 'gangB', evValid(x, z) ? x : pos.x + Math.cos(a) * 3, evValid(x, z) ? z : pos.z + Math.sin(a) * 3); } if (F.n === 2) say('More of them pour out of the lanes.', 1600); }
     if (!F.told && F.t > 16) { F.told = 1; say('There are too many. You can’t win this one.', 2800); }
-    if (F.t > 34 && !F.down) { F.down = 1; say(F.part === 'xqt3' ? 'Director Vale, on the radio: “Pull back. All teams, pull back.”' : 'Something heavy hits you from behind. The street tilts…', 2200); setTimeout(() => { if (EV && EV.st === S && !EV.over) endMatch(false); }, 1500); } }
+    if (F.t > 34 && !F.down) { F.down = 1; say(F.part === 'xqlast' ? 'There are too many of them. Your legs go. Then everything else.' : F.part === 'xqt3' ? 'Director Vale, on the radio: “Pull back. All teams, pull back.”' : 'Something heavy hits you from behind. The street tilts…', 2200); setTimeout(() => { if (EV && EV.st === S && !EV.over) endMatch(false); }, 1500); } }
   function afFightEnd(won){ const F = EV.st.af || {}; XC.fightDone = true; setTimeout(() => { if (EV) stopEvent(true); afAfterFight(F.part, won, F); }, 1800); }
   function afAfterFight(part, won, F){
     if (part.startsWith('xqv')) { afVilEnd(F, won); if (won) afHuntStart(); return; }
@@ -15638,6 +15640,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (part === 'xqout') { if (won) return afFreed(); say('They tie you back up, tighter.', 2600); AF.s.seen.ropes = 0; AF.rope = 0; AF.tied = true; afSave(); return; }
     if (part === 'xqsmog') return afDumped();
     if (part.startsWith('xqt_')) return afTrFightEnd(part, won);
+    if (part === 'xqkid') return afKidAfter();
+    if (part === 'xqwatch') { if (won) { AF.s.seen.passed = 1; afSave(); say('The watchers are down, and nobody inside heard a thing. You’re at the door.', 3000); } else say('They chase you off. Come back in normal clothes (Blend, 2).', 3000); return; }
+    if (part === 'xqsafe') { if (won) { AF.s.seen.safe = 1; afSave(); } else { AF.s.seen.inside = 0; afSave(); say('They throw you out into the lane. Harden (5) when the burners fire.', 3000); } return; }
+    if (part === 'xqlast') { AF.s.seen.last = 1; afSave(); return; }
     if (part === 'xqt1') { if (won) { AF.s.seen.stairs = 1; afSave(); say('The first team goes down the stairs a lot faster than they came up. Smoke is pouring up behind them.', 3600); } else say('They push you back to your door. Get up. Hold the landing.', 2600); return; }
     if (part === 'xqt3') { AF.s.seen.cells = 1; afSave(); return; }
     if (part === 'xqlab') { AF.s.seen.labOut = 1; afSave(); if (!won) say('They pin you down, but the black arm throws three of them across the room. You run for the door.', 3600); else say('The last agent goes down. The alarm is still screaming.', 2600); return; }
@@ -15750,7 +15756,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ---------- living with it: hunger, the voice, noise and fire ----------
   const AF_VOICE = ['Hungry.', 'They are watching from the roofs. We could make them stop.', 'That man in the blue shirt. He lies. We can smell it.', 'Your arm is ours now. Be grateful.', 'Swing higher. We like the wind.', 'Sleep. We will keep watch. We always keep watch.', 'Why do you protect them? They never protect you.'];
   function afLife(dt){ const Y = AF.s.symb; if (!Y.on || Y.gone) return;
-    Y.hunger = Math.min(100, Y.hunger + dt / 9); AF.saveT = (AF.saveT || 0) - dt; if (AF.saveT <= 0) { AF.saveT = 10; afSave(); }
+    Y.hunger = Math.min(100, Y.hunger + dt / 9 * (AF.s.child && AF.s.kid && AF.s.kid.suit && !AF.s.kid.blend ? 2.5 : 1)); AF.saveT = (AF.saveT || 0) - dt; if (AF.saveT <= 0) { AF.saveT = 10; afSave(); }
     if ((AF.voiceT = (AF.voiceT === undefined ? 70 : AF.voiceT) - dt) <= 0) { AF.voiceT = 80 + Math.random() * 60; say(`The voice: “${Y.hunger > 80 ? 'FEED US.' : AF_VOICE[Math.floor(Math.random() * AF_VOICE.length)]}”`, 3400); tone(90, .5, 'sine', .04, 70); }
     if (Y.hunger >= 75 && !AF.hungerTold) { AF.hungerTold = 1; say('It’s starving, and so are you. Eat: any food stall, darshini, or the kitchen at home.', 3800); } if (Y.hunger < 60) AF.hungerTold = 0;
     if (zone === 'xc' && XC.air && !AF.s.seen.tendril) { AF.s.seen.tendril = 1; afSave(); say('Black tendrils whip out of your wrist instead of web. Faster. Further. It laughs.', 3400); }
@@ -15758,7 +15764,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (zone === 'xc' && XC.tv && !AF.noiseCd && XC.tv.position.distanceTo(pos) < 24 && !XC.ride) { AF.noiseCd = 25; AF.noise = 3; tone(2600, .8, 'square', .03, 3200); say('The metro’s brakes scream. The symbiote convulses and your whole body locks up.', 2600); Object.keys(keys).forEach(k => keys[k] = false); cityV.multiplyScalar(.2); }
     if (zone === 'xc' && XC.city === 'bfa' && !AF.fireCd && Math.hypot(pos.x - 27.5, pos.z + 27.5) < 9) { AF.fireCd = 1; say('The fires in the ruins make it shrink back up your arm, hissing.', 2600); setTimeout(() => { AF.fireCd = 0; }, 15000); } }
   function afAte(){ if (!AF.on) return; const Y = AF.s.symb; if (Y.on && !Y.gone) { Y.hunger = Math.max(0, Y.hunger - 45); AF.s.seen.fed = 1; afSave(); setTimeout(() => say('The voice, quieter: “More, next time.”', 2400), 2000); } }
-  function afHurt(d, from){ if (!AF.on) return d; const Y = AF.s.symb; let k = 1; if (Y.on && !Y.gone) { k *= .7; const H = from && from.hero && HEROES[from.hero];
+  function afHurt(d, from){ if (!AF.on) return d; if (AF.s.child && AF.s.kid && (AF.s.kid.hardT || 0) > performance.now() / 1000) return d * .05; if (AF.s.child && AF.s.kid && AF.s.kid.suit && !AF.s.kid.blend) d *= .85; const Y = AF.s.symb; let k = 1; if (Y.on && !Y.gone) { k *= .7; const H = from && from.hero && HEROES[from.hero];
       if (H && H.col === 0xFF7A2A) { k *= 2.2; if (!AF.fireSay) { AF.fireSay = 1; say('Fire! The symbiote shrieks and peels away from you where it hits.', 2200); setTimeout(() => { AF.fireSay = 0; }, 6000); } }
       if (AF.noise > 0) k *= 1.6; if (Y.hunger >= 100) k *= 1.3; } return d * k; }
   function afWebCol(){ if (web.line) web.line.material.color.setHex(AF.on && AF.s.symb.on && !AF.s.symb.gone ? 0x0A0A0C : 0xF4F4F4); }
@@ -15819,7 +15825,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { w: [2], h: 20, dur: 1.5, who: 'fam', name: 'Dinner with the Malhotras', at: 'home' }, { w: [4], h: 16, dur: 1, who: 'fam', name: 'Help Chintu with his maths homework', at: 'home' },
     { w: [3], h: 17, dur: 1.5, who: 'kabir', name: 'Cricket with Kabir on the Avenue lawns', at: 'cricket' }, { w: [6], h: 16, dur: 1.5, who: 'kabir', name: 'Chai with Kabir in the Old City', at: 'chai' },
     { w: [5], h: 20, dur: 1.5, who: 'meher', name: 'Meher, at the bookshop by the Circle', at: 'meher' }, { w: [0], h: 20, dur: 2, who: 'fam', name: 'Rent is due (₹3000), Mrs Malhotra', at: 'home', rent: 1 }];
-  const afToday = D => (AF.s.act === 'goa' ? AF_GWEEK.filter(E => !E.ch || AF.s.ch >= AF_CH.findIndex(C => C.id === E.ch)) : AF_WEEK).map((E, i) => Object.assign({ id: D.day + ':' + i }, E)).filter(E => E.w.includes(D.day % 7));
+  const afToday = D => (AF.s.act === 'goa' ? AF_GWEEK.filter(E => (!E.ch || AF.s.ch >= AF_CH.findIndex(C => C.id === E.ch)) && (!E.until || (i => i < 0 || AF.s.ch < i)(AF_CH.findIndex(C => C.id === E.until)))) : AF_WEEK).map((E, i) => Object.assign({ id: D.day + ':' + i }, E)).filter(E => E.w.includes(D.day % 7));
   function afAlertsFor(D){ if (D.alertsDay === D.day) return D.alerts; const ev = afToday(D).filter(E => !E.shift), L = [], kinds = [['A chain-snatching in', 'mug'], ['A man trapped in a burning shop in', 'fire'], ['Two cars racing through', 'race'], ['A woman being followed in', 'mug']];
     for (let k = 0; k < 2; k++) { const base = ev[k] ? ev[k].h + .2 : 12 + k * 7 + Math.floor(xcHash(D.day, k) * 3), K = kinds[Math.floor(xcHash(k, D.day) * kinds.length)], lot = XC.lots[Math.floor(xcHash(D.day * 3, k) * XC.lots.length)] || { x0: 0, x1: 0, z0: 0, z1: 0 }, f = xcFront(lot) || [0, 0, 0, 1];
       L.push({ id: D.day + 'a' + k, h: base, dur: 1.2, txt: `${K[0]} ${xcDist(f[0], f[1])}`, kind: K[1], at: [f[0] + f[2] * 4, f[1] + f[3] * 4] }); }
@@ -16320,6 +16326,136 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { g: () => afL() && afL().anaEnd === 'back' && !afL().anaBack ? `Ana needs time. Live your life: boats, the shack (${Math.max(0, (afL().leftDay || 0) + 3 - afL().day)} more days; skip ahead on the Planner)` : '', auto: () => { const D = afL(); if (D.anaEnd === 'back' && !D.anaBack && D.day >= (D.leftDay || 0) + 3 && zone === 'xc') afAnaBack(); }, chk: () => afL().anaEnd !== 'back' || !!afL().anaBack },
     { g: 'To be continued: the Goa story is still being written', chk: () => false } ] });
   AF_SKIP[AF_CH.findIndex(C => C.id === 'mask')] = () => { const D = afDelInit(); AF.s.seen.joel = AF.s.seen.joel || 'mask'; AF.s.seen.goaMask = 1; AF.s.seen.told = 1; afVS().gv_tide = 3; D.anaEnd = D.anaEnd || 'rules'; D.anaBack = 1; afLooks(); };
+  // ======================= Goa: Some Years Later =======================
+  // Kiran: your child with Meher. A sliver of the symbiote survived rally night inside Meher, and passed to them.
+  OUTFITS.af_kid = { hero: 1, c1: '#2A2D33', c2: '#0A0A0C', hair: 'short', hairCol: '#16181D', skin: '#9A7050' };
+  HEROES.af_kid = { name: 'Kiran', outfit: 'af_kid', hp: 900, kind: 'melee', dmg: 6, range: 2.3, cd: .7, speed: 6.4, r: .5, grounded: 1 };
+  HEROES.af_vale2 = { name: 'Director Vale', outfit: 'af_lead', hp: 1600, kind: 'boss', bk: .2, dmg: 10, range: 2.4, cd: 1.1, speed: 3.4, r: .6, grounded: 1 };
+  BODY.af_kid = () => { const R = bdRig({ legL: .84, tH: .6, bw: .25, legM: 0x2A2D33, torM: 0x3A3D44, armM: 0x3A3D44, handM: 0x9A7050 }); bdFace(R, 0x9A7050, 'short', 0x16181D); const goo = R.M(0x050507, { roughness: .2, metalness: .5 });
+    [[.12, R.sh - .15, -.13], [-.08, R.sh - .3, -.13], [.02, R.sh - .45, -.13]].forEach(([x, y, z]) => R.add(new THREE.BoxGeometry(.05, .26, .02), goo, x, y, z)); R.add(new THREE.BoxGeometry(.03, .14, .01), goo, .06, .02, -.151, R.head); return R; };
+  BODY.af_vale2 = () => { const R = BODY.af_lead(); R.add(new THREE.BoxGeometry(.24, .05, .2), 0xE8E4DC, 0, .17, 0, R.head); return R; };
+  const AF_KID_ROUNDS = [
+    ['Kiran', 'Seventeen years. Mum said you were a hero. Then she said you were in prison. Then she stopped saying anything.'],
+    ['You', 'I didn’t know about you. If I’d known—'], ['Kiran', 'You’d what? Come back? You never came back for anyone!'],
+    ['Kiran', 'Since I was little there’s been a voice. And these. (black streaks crawl up their neck) Mum said it was from you. From that night.'],
+    ['You', 'It’s not from me. It’s from something that saved your mother’s life. It saved mine first.']];
+  async function afYearsLater(){ AF.busy = true;
+    await cbCard('Chapter 15', 'Some Years Later', 'The river is the same. You aren’t.');
+    await cbTalk([['Narrator', 'Years. The shed is yours now; Agnelo retired to his sister’s village and left you the keys and a list of every boat on the river.'], ['Narrator', 'You walk slower. Your right arm barely closes at all. You fix boats with one hand and a lot of patience.'], ['Narrator', 'The mask is in a drawer you don’t open.']]);
+    AF.s.oldArm = 1; AF.s.seen.later = 1; afLog('Years later. Older, slower, and the arm barely works.'); afSave(); AF.busy = false; }
+  async function afKidArrive(){ AF.busy = true;
+    await cbTalk([['Narrator', 'Someone is sitting on the step of the boat shed. Seventeen, maybe. Your jaw. Meher’s eyes.'], ['Kiran', 'You’re him.'], ['You', 'I… who—'], ['Kiran', 'Kiran. Meher’s. Yours, apparently. She died in March. She left me a letter with your address in it and nothing else.'], ['Kiran', 'I didn’t come to meet you. I came to see what kind of man leaves.'], ['Narrator', 'Black streaks, like ink under the skin, crawl up Kiran’s wrist and vanish.'], ['Kiran', 'The beach. Now. I want to see what you’ve got.']]);
+    AF.s.seen.kid = 1; afLog('Kiran, your child with Meher, found you.'); afSave(); AF.busy = false; }
+  // the beach fight: slow, a loss, with talk between rounds; their tendrils get out once by accident
+  function afKidSetup(S){ const b = addUnit({ hero: 'af_kid', team: 'en' }); b.x = pos.x - Math.sin(yaw) * 5; b.z = pos.z - Math.cos(yaw) * 5; b.boss = 1; EV.boss = b; S.sb = { B: { name: 'Kiran' }, b, t: 99, marks: [] }; S.af.kid = 1; S.af.r = 0; }
+  function afKidStep(dt){ const S = EV.st, F = S.af, b = EV.boss; if (b) b.hp = Math.max(b.hp, b.max * .7);
+    if (F.t > 7 + F.r * 7 && F.r < AF_KID_ROUNDS.length) { const [w, l] = AF_KID_ROUNDS[F.r]; say(`${w}: “${l}”`, 5200); F.r++; EV.slowMe = 1.5;
+      if (F.r === 3 && b) { const g = new THREE.Group(), h = V(b.x, 1.3, b.z); for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2, e = h.clone().add(V(Math.cos(a) * 2.6, (Math.random() - .3) * 1.6, Math.sin(a) * 2.6)); g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([h.clone(), h.clone().lerp(e, .5).add(V(0, .6, 0)), e]), 14, .06, 5), afGoo())); } (sceneOf() || XC.sc).add(g); setTimeout(() => { if (g.parent) g.parent.remove(g); g.children.forEach(s => s.geometry.dispose()); }, 1600); hurtMe(8, b); tone(70, 1, 'sawtooth', .06, 40); setTimeout(() => say('Kiran (horrified, staring at their own hands): “I didn’t— that wasn’t me—”', 3600), 1700); } }
+    if (F.t > 42 && !F.down) { F.down = 1; say('You go down in the wet sand. You don’t get up. You don’t want to.', 2600); setTimeout(() => { if (EV && EV.st === S && !EV.over) endMatch(false); }, 1600); } }
+  async function afKidAfter(){ AF.busy = true;
+    await cbTalk([['Kiran', '(standing over you, shaking) Get up. Fight back. Why won’t you fight back?'], ['You', 'Because I’ve done enough damage to the people I love.'], ['Kiran', '(the tendrils slide back under their skin) It talks to me. Every night. It says it remembers a tower. A rally. It says it remembers you.'], ['You', 'Then it remembers that I’m sorry.'], ['Narrator', 'Headlights along the beach road. Black vans, no plates. More than you can count. You’ve seen this before.']]);
+    AF.s.seen.kidFight = 1; afSave(); AF.busy = false; }
+  async function afVans(){ AF.busy = true;
+    await cbTalk([['Director Vale', '(older, grey, walking with a cane, still in a perfect suit) Twenty years I’ve looked for the rest of that specimen. And it walked into a boat shed in Goa.'], ['Director Vale', 'The child comes with us. You can come too, if you like. You won’t be useful for long.'], ['You', '(to Kiran) Run. North, along the river, and don’t stop.'], ['Kiran', 'I’m not leaving you—'], ['You', 'I left you once. This time I’m staying. Go.']]);
+    AF.s.seen.vans = 1; afSave(); AF.busy = false; }
+  function afLastSetup(S){ const b = addUnit({ hero: 'af_vale2', team: 'en' }); b.x = pos.x - Math.sin(yaw) * 9; b.z = pos.z - Math.cos(yaw) * 9; b.boss = 1; EV.boss = b; S.sb = { B: { name: 'Director Vale' }, b, t: 99, marks: [] };
+    [[-3, -2], [3, -2], [0, -4], [-5, 0]].forEach(([dx, dz], i) => S.add(i === 3 ? 'af_burner' : 'af_agent', b.x + dx, b.z + dz)); S.af.lose = 1; S.af.agency = 1; S.af.pulse = 7; S.af.last = 1; }
+  async function afDeath(){ AF.busy = true; walkTarget = null; const low = goreLow(), calm = scaresLow();
+    await cbTalk([['Narrator', 'You hold the beach the way you held the tower stairs, a lifetime ago. With one arm. With nothing.'], ['Narrator', 'Behind you, far up the river, a small figure is running. You keep them looking at you, not at it.'], ['Director Vale', 'Enough.']]);
+    for (let k = 0; k < 3; k++) { canvas.style.filter = reduce || calm ? 'brightness(.55)' : low ? 'brightness(.35) contrast(1.3)' : 'sepia(1) saturate(4) hue-rotate(-30deg) brightness(.65)'; tone(60 - k * 8, .4, 'sawtooth', calm ? .03 : .06, 30); await afWait(calm ? 600 : 420); canvas.style.filter = ''; await afWait(500); }
+    await cbTalk([['Narrator', low ? 'The sand is cold. The sky is very far away.' : 'The sand is cold and wet and getting warmer underneath you. The sky is very far away.'], ['Narrator', 'You think about a tower, and a train, and a turtle finding the moon on the water.']]);
+    fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); await afWait(2400);
+    await cbTalk([['Narrator', 'Somewhere up the river, Kiran stops running.'], ['Narrator', 'The black under their skin comes up all at once, like a tide. It doesn’t hurt. It feels like being held.'], ['Voice', '(clear now, fully awake) We remember him.']]);
+    await cbCard('', 'We remember him.', ''); fadeEl.classList.remove('on');
+    AF.s.seen.dead = 1; afLog('You held the beach so Kiran could escape. You didn’t get up. The symbiote woke fully in Kiran: “We remember him.”'); afSave(); AF.busy = false; }
+  const AF_KID_SPOT = [-195, -10];
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push({ n: 'Chapter 15', t: 'Some Years Later', sub: 'The river is the same. You aren’t.', id: 'later', del: 1, steps: [
+    { g: '', go: () => afYearsLater(), chk: () => !!AF.s.seen.later },
+    { g: 'Someone is waiting on the step of the boat shed', at: () => afWhere('home'), auto: () => { const h = afWhere('home'); if (h && afNear(h[0], h[1], 6)) afKidArrive(); }, chk: () => !!AF.s.seen.kid },
+    { g: 'Kiran wants to fight you on the beach', at: () => AF_KID_SPOT, auto: () => { if (afNear(AF_KID_SPOT[0], AF_KID_SPOT[1], 7) && (!AF.fT || performance.now() - AF.fT > 3500)) { AF.fT = performance.now(); xcFight('xqkid', 'Kiran'); } }, chk: () => !!AF.s.seen.kidFight },
+    { g: '', go: () => afVans(), chk: () => !!AF.s.seen.vans },
+    { g: 'Hold the beach. Keep them looking at you, not at Kiran', auto: () => { if (!AF.fT || performance.now() - AF.fT > 3500) { AF.fT = performance.now(); xcFight('xqlast', 'Halcyon'); } }, chk: () => !!AF.s.seen.last },
+    { g: '', go: () => afDeath(), chk: () => !!AF.s.seen.dead },
+    { g: 'To be continued: Kiran’s story is still being written', chk: () => false } ] });
+  AF_SKIP[AF_CH.findIndex(C => C.id === 'later')] = () => { Object.assign(AF.s.seen, { later: 1, kid: 1, kidFight: 1, vans: 1, last: 1, dead: 1 }); AF.s.oldArm = 1; };
+  AF_GWEEK.forEach(E => { if (E.who === 'love') E.until = 'later'; });
+  // ======================= Kiran =======================
+  // Same save, new person: younger, faster, no bad arm, fully bonded. No old weapons; black claws, a living suit,
+  // and six abilities on keys 1–6 (or the buttons). The old room above the boat shed is home.
+  OUTFITS.af_kidwear = { c1: '#3A3D44', c2: '#2A4A6A', hairCol: '#16181D' };
+  OUTFITS.af_suit = { hero: 1, c1: '#050507', c2: '#1A1C22', gloves: 1, mask: 'helmet', glow: 1 };
+  function afKidOn(){ return typeof AF !== 'undefined' && !!AF && AF.on && !!AF.s && !!AF.s.child; }
+  const afK = () => { AF.s.kid = AF.s.kid || { suit: 0, blend: 0, used: {} }; return AF.s.kid; };
+  function afKidLook(){ const K = afK(); return Object.assign({}, look, { outfit: K.suit && !K.blend ? 'af_suit' : 'af_kidwear', mask: K.suit && !K.blend ? 1 : 0, cape: 0, hair: 'short', hairC: 0 }); }
+  const AF_KVOICE = ['Why do you stop? He would have killed you.', 'One bite. Just one. We remember how.', 'He held them off for you. If he had let us bite, he would still be here.', 'The one with the cane. We remember the cane.', 'You are kinder than him. That is not a compliment.', 'Hungry. You are always hungry now. That is us.'];
+  // the ability bar
+  const afKBar = document.createElement('div'); afKBar.className = 'afkbar'; afKBar.hidden = true; document.body.appendChild(afKBar);
+  const AF_KAB = [['suit', 'Suit'], ['blend', 'Blend'], ['climb', 'Climb'], ['grab', 'Grab'], ['harden', 'Harden'], ['sense', 'Sense']];
+  afKBar.innerHTML = AF_KAB.map(([k, n], i) => `<button type="button" data-kab="${k}"><kbd>${i + 1}</kbd>${n}</button>`).join('');
+  { const s = document.createElement('style'); s.textContent = `.afkbar{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(84px + env(safe-area-inset-bottom,0px));z-index:7;display:flex;gap:6px;flex-wrap:wrap;justify-content:center;max-width:calc(100% - 24px)}.afkbar button{background:rgba(11,13,20,.86);color:#EEF1F5;border:1px solid #3A3D44;border-radius:10px;padding:6px 10px;font:700 12px/1.1 system-ui,sans-serif;cursor:pointer}.afkbar button.on{background:#EEF1F5;color:#0B0D14}.afkbar button.cd{opacity:.45}.afkbar kbd{font:800 10px/1 system-ui;margin-right:5px;opacity:.7}`; document.head.appendChild(s); }
+  afKBar.addEventListener('click', e => { const b = e.target.closest('[data-kab]'); if (b) { e.stopPropagation(); afAbility(b.dataset.kab); } });
+  addEventListener('keydown', e => { if (!afKidOn() || e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; const n = +e.key; if (n >= 1 && n <= 6) { e.preventDefault(); e.stopImmediatePropagation(); afAbility(AF_KAB[n - 1][0]); } }, true);
+  function afAbility(k){ const K = afK(), now = performance.now() / 1000; K.used = K.used || {}; K.cd = K.cd || {}; if (K.cd[k] && K.cd[k] > now) return say(`${k[0].toUpperCase() + k.slice(1)} isn’t ready yet.`, 1200);
+    if (k === 'suit') { K.suit = K.suit ? 0 : 1; if (K.suit) K.blend = 0; tone(K.suit ? 90 : 300, .4, 'sawtooth', .04, K.suit ? 60 : 200); say(K.suit ? 'The black comes up over you like water. The suit. Hunger burns faster in it.' : 'The suit sinks back under your skin.', 2400); }
+    else if (k === 'blend') { if (!K.suit) { K.suit = 1; } K.blend = K.blend ? 0 : 1; say(K.blend ? 'The suit reshapes itself into a T-shirt and jeans. To anyone looking, you’re just a kid.' : 'The clothes melt back into black.', 2400); }
+    else if (k === 'climb') { if (!afClimb()) return; }
+    else if (k === 'grab') { if (!afGrab()) return; K.cd[k] = now + 4; }
+    else if (k === 'harden') { K.hardT = now + 3; K.cd[k] = now + 12; tone(140, .5, 'square', .05, 80); say('The suit goes hard as stone. For three seconds, nothing gets through.', 2000); canvas.style.filter = reduce ? '' : 'contrast(1.25) brightness(.85)'; setTimeout(() => { canvas.style.filter = ''; }, 3000); }
+    else if (k === 'sense') { K.senseT = now + 4; K.cd[k] = now + 10; tone(1600, .5, 'sine', .03, 900); afSense(); }
+    K.used[k] = 1; afSave(); afKBarDraw(); }
+  function afKBarDraw(){ const K = afK(), now = performance.now() / 1000; afKBar.querySelectorAll('[data-kab]').forEach(b => { const k = b.dataset.kab; b.classList.toggle('on', k === 'suit' ? !!K.suit && !K.blend : k === 'blend' ? !!K.blend : k === 'harden' ? (K.hardT || 0) > now : k === 'sense' ? (K.senseT || 0) > now : false); b.classList.toggle('cd', !!(K.cd && K.cd[k] > now)); }); }
+  // wall-crawling: walk up to a building and climb straight up it
+  function afClimb(){ if (!(inWorld && zone === 'xc') || XC.drv || XC.ride || XC.air) { say('Find a wall to climb.', 1400); return false; }
+    const f = V(-Math.sin(yaw), 0, -Math.cos(yaw)); let top = 0, hx = 0, hz = 0; for (let d = .8; d <= 3.2 && !top; d += .4) { const x = pos.x + f.x * d, z = pos.z + f.z * d, t = xcTopAt(x, z); if (t > pos.y) { top = t; hx = x + f.x * 1.4; hz = z + f.z * 1.4; } }
+    if (!top) { say('Nothing to climb here. Face a wall and get close.', 1600); return false; }
+    AF.climb = { t: 0, y0: pos.y, top, x: pos.x, z: pos.z, hx, hz }; tone(220, .6, 'sawtooth', .03, 440); say('Your hands stick to the wall. Up you go.', 1400); return true; }
+  function afClimbStep(dt){ const C = AF.climb; if (!C) return; C.t += dt; const k = Math.min(1, C.t / Math.max(.6, (C.top - C.y0) / 14));
+    pos.set(C.x, C.y0 + (C.top + 1.6 - C.y0) * k, C.z); vy = 0; pitch = Math.max(pitch, .5 * (1 - k)); if (k >= 1) { AF.climb = null; XC.roof = C.top; XC.air = false; pos.set(C.hx, C.top + 1.6, C.hz); if (xcTopAt(C.hx, C.hz) < C.top - .35) pos.set(C.x + (C.hx - C.x) * .4, C.top + 1.6, C.z + (C.hz - C.z) * .4); } }
+  // tendril grab: pull the nearest enemy in, and yank guns out of hands
+  function afGrab(){ if (!EV || EV.over) { say('Nothing to grab.', 1200); return false; } const f = V(-Math.sin(yaw), 0, -Math.cos(yaw));
+    const u = EV.units.filter(u => u.team === 'en' && u.hp > 0).map(u => [u, Math.hypot(u.x - pos.x, u.z - pos.z)]).filter(([u, d]) => d < 16 && ((u.x - pos.x) * f.x + (u.z - pos.z) * f.z) / d > .3).sort((a, b) => a[1] - b[1])[0];
+    if (!u) { say('No one in reach.', 1200); return false; } const [t] = u, H = HEROES[t.hero] || {}; const from = V(pos.x, 1.3, pos.z), to = V(t.x, 1.3, t.z);
+    t.x = pos.x + f.x * 1.6; t.z = pos.z + f.z * 1.6; t.cd = Math.max(t.cd || 0, H.kind === 'ranged' ? 4 : 1.4); if (!t.boss) t.stun = 1.2;
+    const g = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3([from, from.clone().lerp(to, .5).add(V(0, .7, 0)), to]), 18, .06, 5), afGoo()); (sceneOf() || XC.sc).add(g); setTimeout(() => { if (g.parent) g.parent.remove(g); g.geometry.dispose(); }, 380);
+    tone(180, .25, 'sawtooth', .05, 400); say(H.kind === 'ranged' ? 'A tendril snaps out, rips the weapon out of their hands and drags them in.' : 'A tendril wraps them and drags them in.', 1800); return true; }
+  // the sense: enemies light up through walls for a few seconds
+  function afSense(){ const sc = sceneOf(); if (!sc) return; const pts = []; if (EV) EV.units.forEach(u => { if (u.team === 'en' && u.hp > 0) pts.push([u.x, u.z, () => [u.x, u.z]]); }); (AF.watch || []).forEach(w => pts.push([w.x, w.z, () => [w.x, w.z]])); if (AF.safeAt) pts.push([AF.safeAt[0], AF.safeAt[1], () => AF.safeAt]);
+    const g = new THREE.Group(), m = new THREE.SpriteMaterial({ color: 0xFF2A2A, depthTest: false, transparent: true, opacity: .9 }); pts.forEach(p => { const s = new THREE.Sprite(m); s.scale.set(.9, .9, 1); s.renderOrder = 999; s.userData.f = p[2]; g.add(s); }); sc.add(g); const t0 = performance.now();
+    const tick = () => { if (performance.now() - t0 > 4000 || !g.parent) { if (g.parent) g.parent.remove(g); return; } g.children.forEach(s => { const [x, z] = s.userData.f(); s.position.set(x, 2.4 + Math.sin(performance.now() / 200) * .1, z); }); requestAnimationFrame(tick); }; tick();
+    say(pts.length ? `You feel ${pts.length} heartbeat${pts.length === 1 ? '' : 's'} through the walls.` : 'Nothing. Just the sea.', 2000);
+    if (AF.safeAt && Math.hypot(pos.x - AF.safeAt[0], pos.z - AF.safeAt[1]) < 70) { AF.s.seen.safeFound = 1; afSave(); } }
+  // every frame as Kiran
+  function afKidFrame(dt){ const on = afKidOn() && inWorld && ['xc', 'xin', 'event'].includes(zone) && !AF.busy; if (afKBar.hidden === on) afKBar.hidden = !on; if (!afKidOn()) return;
+    if (held) { held = null; idleShown = undefined; try { renderHotbar(); } catch (e) {} }
+    afClimbStep(dt); if ((AF.kbT = (AF.kbT || 0) - dt) <= 0) { AF.kbT = .5; afKBarDraw(); }
+    if (EV && !EV.over && (AF.kvT = (AF.kvT === undefined ? 14 : AF.kvT) - dt) <= 0) { AF.kvT = 16 + Math.random() * 10; say(`The voice: “${AF_KVOICE[Math.floor(Math.random() * AF_KVOICE.length)]}”`, 3000); } }
+  // claws: three black blades out of each hand, in both views
+  function afClawSet(h, on){ let c = h.children.find(q => q.userData.afC); if (on && !c) { c = new THREE.Group(); c.userData.afC = 1; [-.03, 0, .03].forEach(x => { const b = new THREE.Mesh(new THREE.ConeGeometry(.012, .2, 6), afGoo()); b.position.set(x, .02, -.14); b.rotation.x = -Math.PI / 2; b.userData.noPick = true; c.add(b); }); h.add(c); } if (c) c.visible = on; }
+  function afClaws(){ const on = afKidOn(); viewG.children.forEach(h => { if (h.userData.base) afClawSet(h, on); }); if (me && me.arms) me.arms.forEach(A2 => { let c = A2.hand.children.find(q => q.userData.afC); if (on && !c) { c = new THREE.Group(); c.userData.afC = 1; [-.04, 0, .04].forEach(x => { const b = new THREE.Mesh(new THREE.ConeGeometry(.018, .26, 6), afGoo()); b.position.set(x, -.16, 0); b.rotation.x = Math.PI; c.add(b); }); A2.hand.add(c); } if (c) c.visible = on; }); }
+  // becoming Kiran
+  async function afBecomeKiran(){ AF.busy = true; AF.s.child = 1; AF.s.oldArm = 0; Object.assign(AF.s.symb, { on: 1, gone: 0, hunger: 30 }); afK(); AF.s.kid.suit = 0; AF.s.kid.blend = 0; afSave(); held = null; idleShown = undefined; meKey = '';
+    await cbCard('Chapter 16', 'Kiran', 'The tide comes in. It always does.');
+    await cbTalk([['Narrator', 'Three days later. The room above the boat shed. The PC hums. The AgriBridge board is still lit. Everything smells of diesel and him.'], ['Voice', 'This is where he lived. We remember the shed. We remember the boats.'], ['Kiran', 'Stop saying “we”.'], ['Voice', 'No.'], ['Kiran', '(looking at their hands, the black moving just under the skin) Halcyon took him. They’re still in Goa, looking for me.'], ['Voice', 'Good. Let them look. We know how to hide. We know how to bite.'], ['Kiran', 'We don’t bite. Not yet. First we find out where they are.']]);
+    afLog('Kiran. The symbiote is awake. Halcyon is still in Goa.'); AF.busy = false; say('You’re Kiran now. Keys 1–6 (or the buttons): suit, blend, climb, grab, harden, sense. Swing with Q.', 6000); }
+  // Halcyon's Goa safehouse, two watchers outside, and a door
+  function afKidPlaces(){ if (XC.city !== 'goi' || !AF.on || !AF.s.child) return; const l = afLotNear(150, -100, []); if (!l) return; xcDoor(XC.g, l, 'Konkan Cold Storage', 'safe', 50); const d = XC.doors.pop(); AF.safeAt = [d.x, d.z];
+    AF.watch = [[d.x + 7, d.z + 4], [d.x - 7, d.z + 4]].map(([x, z], i) => { let av = null; try { av = bodyAv('af_agent', 1); av.g.position.set(x, 0, z); XC.g.add(av.g); } catch (e) {} return { x, z, av }; }); }
+  function afWatchStep(){ if (!AF.watch || !AF.s.child || AF.s.seen.inside || EV || AF.busy || zone !== 'xc') return; const K = afK();
+    AF.watch.forEach(w => { if (w.av) w.av.g.rotation.y = Math.atan2(pos.x - w.x, pos.z - w.z); });
+    const near = AF.watch.some(w => Math.hypot(pos.x - w.x, pos.z - w.z) < 11); if (!near) return;
+    if (!K.blend) { if (!AF.spotT || performance.now() - AF.spotT > 6000) { AF.spotT = performance.now(); say('One of the watchers looks right at you, and reaches for his radio. They’ve made you!', 2600); xcFight('xqwatch', 'The watchers'); } return; }
+    if (AF.safeAt && Math.hypot(pos.x - AF.safeAt[0], pos.z - AF.safeAt[1]) < 3.5 && !AF.s.seen.passed) { AF.s.seen.passed = 1; afSave(); say('You walk right past them in a T-shirt and jeans. One of them even nods. You’re at the door.', 3200); } }
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push({ n: 'Chapter 16', t: 'Kiran', sub: 'The tide comes in. It always does.', id: 'kid', steps: [
+    { g: '', go: () => afBecomeKiran(), chk: () => !!AF.s.child },
+    { g: () => { const u = afK().used || {}; return `Learn what you are (keys 1–6 or the buttons): put the suit on ${u.suit ? '✓' : '○'}, climb a wall ${u.climb ? '✓' : '○'}, use the sense ${u.sense ? '✓' : '○'}, harden ${u.harden ? '✓' : '○'}, swing on a tendril ${AF.s.seen.kswing ? '✓' : '○'}`; }, auto: () => { if (XC.air) { AF.s.seen.kswing = 1; } }, chk: () => { const u = afK().used || {}; return !!(u.suit && u.climb && u.sense && u.harden && AF.s.seen.kswing); } },
+    { g: 'Halcyon has a safehouse somewhere in the old quarter. Get close and use your sense to find it', at: () => [120, -60], chk: () => !!AF.s.seen.safeFound },
+    { g: 'Two Halcyon watchers outside the cold-storage building. Blend in (2) and walk right past them to the door', at: () => AF.safeAt, auto: afWatchStep, chk: () => !!AF.s.seen.passed },
+    { g: 'Take the safehouse. Grab their guns away, harden when the burners fire', auto: () => { if (!AF.s.seen.inside && (!AF.fT || performance.now() - AF.fT > 3500)) { AF.fT = performance.now(); AF.s.seen.inside = 1; afSave(); xcFight('xqsafe', 'Halcyon’s safehouse'); } }, chk: () => !!AF.s.seen.safe },
+    { g: '', go: async () => { AF.busy = true; await cbTalk([['Narrator', 'In the back room: a map of India with pins in it. Bangalore, crossed out. Delhi, crossed out. Goa, circled. And a new pin, in red: Mumbai. “HQ”.'], ['Voice', 'That is where the cane lives.'], ['Kiran', 'Then that’s where we’re going.']]); AF.s.seen.intel = 1; afLog('Kiran took Halcyon’s Goa safehouse. Their headquarters is in Mumbai.'); afSave(); AF.busy = false; }, chk: () => !!AF.s.seen.intel },
+    { g: 'To be continued: Kiran’s story begins. Halcyon’s headquarters is in Mumbai', chk: () => false } ] });
+  AF_SKIP[AF_CH.findIndex(C => C.id === 'kid')] = () => { AF.s.child = 1; Object.assign(AF.s.symb, { on: 1, gone: 0 }); afK().used = { suit: 1, climb: 1, sense: 1, harden: 1 }; Object.assign(AF.s.seen, { kiran: 1, kswing: 1, safeFound: 1, passed: 1, inside: 1, safe: 1, intel: 1 }); meKey = ''; };
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
