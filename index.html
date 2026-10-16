@@ -4880,7 +4880,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { id: 'hub', name: 'Mandalink island' },
     { id: 'roof', name: 'The rooftop' },
     { id: 'city', name: 'Bangalore streets' },
-    { id: 'lair', name: 'The lair', need: () => found.has('lair') }
+    { id: 'lair', name: 'The lair', need: () => found.has('lair') && !afUndone() }
   ];
   const ringFx = $('#ringFx'), rctx = ringFx.getContext('2d');
   let ringAnim = null;
@@ -4911,6 +4911,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   // puts you straight into a place, whichever place you were in
   function travel(dest){
+    if (dest === 'lair' && afUndone()) return say('There is no lair. There never was. Just a storeroom full of old cricket gear.', 3200);
     if (AREAS[dest]) return enterArea(dest);
     web.p = null; drawWeb(); walkTarget = null; vy = 0; falling = false; exitTelescope();
     if (dest === 'room') {
@@ -17333,6 +17334,24 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { g: 'To be continued', chk: () => false } ] });
   AF_SKIP[AF_CH.findIndex(C => C.id === 'kgod')] = () => { Object.assign(AF.s.seen, { kgodWon: 1, kgod: 1 }); AF.s.godEnd = AF.s.godEnd || 'end'; afSave(); };
   afKidPlaces = (o => function(){ o(); afMarginPlaces(); })(afKidPlaces);
+  // ======================= Undo: back to the first page =======================
+  // the save is not wiped: the lair is simply gone, and this Bangalore never burned. Only the two of them remember.
+  function afUndone(){ try { return localStorage.getItem('ru-undone') === '1'; } catch (e) { return false; } }
+  async function afUndo(){ AF.busy = true;
+    await cbTalk([['Narrator', 'Behind the Creator’s door there is no throne. Just a long white corridor, and at the end of it, a page.'], ['Narrator', 'The first page. A boy in a room in Bangalore, years ago, before any of it. Before the tower burned. Before the beach.'], ['Dad', 'We could go back. Put it all back the way it was before it went wrong.'], ['Kiran', 'If you undo it, I’m never born. You never meet Mum in the bookshop. The black never finds you.'], ['Dad', 'And Mrs. Rao keeps her tower. And Meher keeps her life. And nobody in two worlds pays any fee.'], ['Voice', '(very quietly) We will not be there either. That is all right. We remember. That has to be enough for someone.'], ['Kiran', '(taking his hand) Then do it.']]);
+    fadeEl.style.background = '#FFFFFF'; fadeEl.classList.add('on'); tone(880, 2.4, 'sine', .04, 440); await afWait(2200);
+    await cbCard('', 'The first page', 'Bangalore. The year it didn’t burn.');
+    await cbTalk([['Narrator', 'A room. Your room. Morning light, a fan going round, somebody frying something downstairs.'], ['Narrator', 'Out of the window: the tower, whole, with Mrs. Rao on her balcony shouting at a pigeon. No smoke. No vans. No black.'], ['Narrator', 'There is no lair under the house any more. There never was. Just a storeroom full of old cricket gear and your grandfather’s scooter.'], ['Narrator', 'You go to college. You get a job. One afternoon, years from now, you will walk into a bookshop by the Circle and a woman with ink on her fingers will laugh at your shirt.'], ['Narrator', 'It is a good life. A normal one. Happy, mostly.'], ['Narrator', 'And every so often, for no reason at all, you stop on the stairs of the tower and hold the rail very tight, and you can’t explain why.'], ['Narrator', 'Only two people remember any of it.']]);
+    await cbCard('', 'Only they remember', '');
+    try { localStorage.setItem('ru-undone', '1'); localStorage.setItem('ru-last', 'room'); } catch (e) {}
+    AF.s.undone = 1; AF.s.seen.kundo = 1; afLog('They went back to the first page and undid everything. The lair is gone; this Bangalore never burned. Only they remember.'); afSave(); fadeEl.classList.remove('on'); AF.busy = false;
+    AF.on = false; afSave(); fade(() => { if (XC.drv) xcExitCar(); XC.ride = null; web.p = null; drawWeb(); travel('room'); xcFree(); AF.beam = null; }, '#FFFFFF'); }
+  AF_CH[AF_CH.length - 1].steps.pop();
+  AF_CH.push({ n: 'Chapter 31', t: 'The First Page', sub: 'Undo it. All of it.', id: 'kundo', steps: [
+    { g: '', go: () => afUndo(), chk: () => !!AF.s.seen.kundo },
+    { g: 'The end. Only they remember', chk: () => false } ] });
+  AF_SKIP[AF_CH.findIndex(C => C.id === 'kundo')] = () => { AF.s.undone = 1; AF.s.seen.kundo = 1; try { localStorage.setItem('ru-undone', '1'); localStorage.setItem('ru-last', 'room'); } catch (e) {} afSave(); AF.on = false; fade(() => { travel('room'); xcFree(); }, '#FFFFFF'); return 1; };
+  afEnter = (o => function(a){ if (AF.s.undone && !AF.s.kNew) return say('That story is over. They went back to the first page, and undid it. Only they remember.', 3600); return o(a); })(afEnter);
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
