@@ -17371,16 +17371,37 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       const win = [], bal = []; for (let f = 1; f < 17; f++) for (let k = 0; k < 4; k++) { win.push([-6 + k * 4, f * 3, 10.05]); win.push([10.05, f * 3, -6 + k * 4]); if (k % 2 === 0) bal.push([-6 + k * 4, f * 3 - 1.1, 10.6]); }
       inst(new THREE.BoxGeometry(1.8, 1.6, .1), new THREE.MeshStandardMaterial({ color: 0x2A3440, emissive: 0xFFD08A, emissiveIntensity: .35 }), win, T); inst(new THREE.BoxGeometry(2.6, .9, 1.1), mat(0x8A8F99, { metalness: .4 }), bal, T);
       for (let k = 0; k < 6; k++) box(.5, .6 + (k % 2) * .3, .5, mat(k % 2 ? 0x2E7A3A : 0xB85A3A), -8 + k * 1.4, 3 * 6 - .3, 11.2, T);   // Mrs. Rao's pots, sixth floor
-      const sg = new THREE.Mesh(new THREE.PlaneGeometry(8, 1.2), xcSign('THE TOWER', '#16181D', '#F2EEE6', 8, 1.2)); sg.position.set(0, 4, 10.08); T.add(sg); xcSolid(17.5, 37.5, -37.5, -17.5, 52, 'at');
-      // Shanthamma's tea stall, and the lodger's door across the road
-      const st = new THREE.Group(); st.position.set(AF_RB.stall[0], 0, AF_RB.stall[1] + 3); g.add(st); box(3.2, 1.1, 1.4, mat(0x7A4A2A), 0, .55, 0, st); box(3.6, .12, 2, mat(0x2A6AC8), 0, 2.5, 0, st); [-1.6, 1.6].forEach(x => box(.1, 2.5, .1, mat(0x5A5A5A), x, 1.25, -.8, st));
-      const ss = new THREE.Mesh(new THREE.PlaneGeometry(3, .7), xcSign('SHANTHAMMA TEA', '#FFFFFF', '#2A6AC8', 3, .7)); ss.position.set(0, 2.9, -1.01); ss.rotation.y = Math.PI; st.add(ss);
-      const dr = new THREE.Group(); dr.position.set(AF_RB.room[0], 0, AF_RB.room[1] + 3); g.add(dr); box(1.4, 2.4, .2, mat(0x3A5A4A), 0, 1.2, 0, dr); const rs = new THREE.Mesh(new THREE.PlaneGeometry(2, .5), xcSign('ROOM FOR RENT', '#16181D', '#F2C230', 2, .5)); rs.position.set(0, 2.8, -.12); rs.rotation.y = Math.PI; dr.add(rs);
-      // the quiet street where the polite man lives: bins and a dark doorway to hide in, and his gate at the end
-      const bin = mat(0x2E5A3A, { roughness: .8 }); AF_RBHIDE.forEach(([x, z]) => { box(1.2, 1.3, 1.2, bin, x, .65, z, g); box(1.2, 1.3, 1.2, bin, x, .65, z + 1.4, g); });
-      box(4, 2.2, .3, mat(0x16181D), AF_RB.gate[0], 1.1, AF_RB.gate[1] + 2, g); box(.3, 2.6, .3, mat(0xE9E6DE), AF_RB.gate[0] - 2.1, 1.3, AF_RB.gate[1] + 2, g); box(.3, 2.6, .3, mat(0xE9E6DE), AF_RB.gate[0] + 2.1, 1.3, AF_RB.gate[1] + 2, g);
-      const np = new THREE.Mesh(new THREE.PlaneGeometry(2.4, .5), xcSign('H. VARADAN', '#16181D', '#E9E6DE', 2.4, .5)); np.position.set(AF_RB.gate[0], 2.4, AF_RB.gate[1] + 1.8); np.rotation.y = Math.PI; g.add(np); } };
+      const sg = new THREE.Mesh(new THREE.PlaneGeometry(8, 1.2), xcSign('THE TOWER', '#16181D', '#F2EEE6', 8, 1.2)); sg.position.set(0, 4, 10.08); T.add(sg); xcSolid(17.5, 37.5, -37.5, -17.5, 52, 'at'); } };
   Object.assign(AF_KACT, { rbl: 'krb' });
+  // ---------- story spots never sit on a shop, a quest door or a building: each finds free pavement near where it was meant to be ----------
+  const AF_RB0 = JSON.parse(JSON.stringify(AF_RB));
+  function afBlocked(x, z, taken){ const m = 1.6;
+    return Math.abs(x) > XC_B - 8 || Math.abs(z) > XC_B - 8 || xcInWater(x, z) || XC.lots.some(l => x > l.x0 - m && x < l.x1 + m && z > l.z0 - m && z < l.z1 + m)
+      || (XC.B || []).some(b => x > b.x0 - m && x < b.x1 + m && z > b.z0 - m && z < b.z1 + m) || (XC.doors || []).some(d => Math.hypot(d.x - x, d.z - z) < 7)
+      || (XC.acts || []).some(a => Math.hypot(a.x - x, a.z - z) < 6) || taken.some(([a, b]) => Math.hypot(a - x, b - z) < 7); }
+  function afFreeSpot([x, z], taken){ for (let r = 0; r <= 60; r += 2) for (let k = 0; k < (r ? 16 : 1); k++) { const a = k / 16 * Math.PI * 2, px = x + Math.cos(a) * r, pz = z + Math.sin(a) * r; if (!afBlocked(px, pz, taken)) return [px, pz]; } return [x, z]; }
+  function afResolve(P, P0, keys, taken = []){ keys.forEach(k => { P[k] = afFreeSpot(P0[k], taken); taken.push(P[k]); }); return taken; }
+  // which way the nearest street is from a spot, so stalls and people face it
+  function afRoadDir(x, z){ const n = v => XC_L.reduce((a, r) => Math.abs(r - v) < Math.abs(a - v) ? r : a, 1e9), bx = n(x), bz = n(z); return Math.abs(bx - x) < Math.abs(bz - z) ? [Math.sign(bx - x) || 1, 0] : [0, Math.sign(bz - z) || 1]; }
+  const afBack = ([x, z], d) => { const [fx, fz] = afRoadDir(x, z); return [x - fx * d, z - fz * d]; };
+  const afFaceRy = ([x, z]) => { const [fx, fz] = afRoadDir(x, z); return Math.atan2(fx, fz); };
+  // a stall: a counter, a striped awning and a sign, facing the street
+  function afStall(at, name, col){ const st = new THREE.Group(); st.position.set(at[0], 0, at[1]); st.rotation.y = afFaceRy(at); XC.g.add(st);
+    box(3.2, 1.1, 1.4, mat(0x7A4A2A), 0, .55, 0, st); box(3.6, .12, 2, mat(col), 0, 2.5, -.2, st); [-1.6, 1.6].forEach(x => box(.1, 2.5, .1, mat(0x5A5A5A), x, 1.25, -.9, st));
+    const ss = new THREE.Mesh(new THREE.PlaneGeometry(3, .7), xcSign(name, '#FFFFFF', '#' + new THREE.Color(col).getHexString(), 3, .7)); ss.position.set(0, 2.95, .82); st.add(ss); return st; }
+  // his house: an ordinary building on the quiet street, with a neat white iron gate and a hedge in front
+  function afHariLot(){ return XC.lots.filter(l => { const f = xcFront(l); if (!f || !f[2]) return false; const cz = (l.z0 + l.z1) / 2; return Math.abs(f[0] + f[2] * 7.6 - AF_RB0.lane[0]) < 1.5 && cz > 62 && cz < 108 && !(XC.doors || []).some(d => d.l === l); }).sort((a, b) => (a.z0 + a.z1) - (b.z0 + b.z1))[0] || null; }
+  function afHariGate(l){ let x, z, nx, nz; if (l) [x, z, nx, nz] = xcFront(l); else { [x, z] = afFreeSpot(AF_RB0.gate, []); [nx, nz] = afRoadDir(x, z); }
+    const G = new THREE.Group(); G.position.set(x + nx * .3, 0, z + nz * .3); G.rotation.y = Math.atan2(nx, nz); XC.g.add(G); const wh = mat(0xE9E6DE, { roughness: .5 }), hedge = mat(0x2E5A2E, { roughness: 1 });
+    [-1.7, 1.7].forEach(px => box(.45, 1.9, .45, wh, px, .95, 0, G)); box(3, .08, .08, wh, 0, 1.45, 0, G); box(3, .08, .08, wh, 0, .25, 0, G); for (let i = 0; i < 11; i++) box(.05, 1.3, .05, wh, -1.4 + i * .28, .85, 0, G);
+    box(5, 1, .8, hedge, -4.5, .5, 0, G); box(5, 1, .8, hedge, 4.5, .5, 0, G);
+    const np = new THREE.Mesh(new THREE.PlaneGeometry(.9, .32), xcSign('H. VARADAN', '#16181D', '#E9E6DE', .9, .32)); np.position.set(-1.7, 1.55, .24); G.add(np);
+    AF_RB.gate = [x + nx * 2.4, z + nz * 2.4]; }
+  function afRbProps(){ afStall(AF_RB.stall, 'SHANTHAMMA TEA', 0x2A6AC8);
+    const dr = new THREE.Group(); dr.position.set(AF_RB.room[0], 0, AF_RB.room[1]); dr.rotation.y = afFaceRy(AF_RB.room); XC.g.add(dr); box(1.4, 2.4, .2, mat(0x3A5A4A), 0, 1.2, -1.2, dr); const rs = new THREE.Mesh(new THREE.PlaneGeometry(2, .5), xcSign('ROOM FOR RENT', '#16181D', '#F2C230', 2, .5)); rs.position.set(0, 2.8, -1.08); dr.add(rs);
+    const bin = mat(0x2E5A3A, { roughness: .8 }); AF_RBHIDE.forEach(([x, z]) => { box(1.2, 1.3, 1.2, bin, x, .65, z, XC.g); box(1.2, 1.3, 1.2, bin, x, .65, z + 1.4, XC.g); });
+    afHariGate(afHariLot()); }
+
   HEROES.af_tidy = Object.assign({}, HEROES.tidy, { grounded: 1, hp: 980, dmg: 12 }); BODY.af_tidy = BODY.tidy;
   // ---------- people: the boy, Mrs. Rao, Shanthamma, the leads ----------
   const AF_RBT = {
@@ -17412,9 +17433,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   afBBtn.addEventListener('click', () => afBoardOpen());
   function afBoardBtnUp(){ afBBtn.hidden = !(AF.on && zone === 'xc' && XC.city === 'rbl' && AF.s.seen.rb_board && !EV); if (afBBtn.hidden) afBoard.hidden = true; }
   // ---------- places ----------
-  function afRbPlaces(){ AF.rbAv = []; if (XC.city !== 'rbl') return; const se = AF.s.seen, day = () => !AF.stk, put = (av, [x, z], ry) => { av.g.position.set(x, 0, z); av.g.rotation.y = ry || 0; XC.g.add(av.g); AF.rbAv.push(av); return av; };
+  function afRbPlaces(){ AF.rbAv = []; if (XC.city !== 'rbl') return; afResolve(AF_RB, AF_RB0, ['dad', 'room', 'stall', 'guard', 'dev', 'paan', 'notice'], AF_RBHIDE.map(p => p.slice())); afRbProps(); const se = AF.s.seen, day = () => !AF.stk, put = (av, [x, z], ry) => { av.g.position.set(x, 0, z); av.g.rotation.y = ry || 0; XC.g.add(av.g); AF.rbAv.push(av); return av; };
     try { AF.rbDad = put(avatar(Object.assign({}, look, { outfit: 'casual', mask: 0, cape: 0, hair: 'short' })), AF_RB.dad, 0); } catch (e) { AF.rbDad = null; }
-    [['stall', 71, 'Shanthamma', Math.PI], ['guard', 33, 'Prakash', Math.PI], ['dev', 47, 'Dev Kumar', Math.PI], ['paan', 12, 'Imran', Math.PI]].forEach(([k, n]) => { try { put(avatar(crowdLook(n)), [AF_RB[k][0], AF_RB[k][1] + 2.2], Math.PI); } catch (e) {} });
+    [['stall', 71, 'Shanthamma', Math.PI], ['guard', 33, 'Prakash', Math.PI], ['dev', 47, 'Dev Kumar', Math.PI], ['paan', 12, 'Imran', Math.PI]].forEach(([k, n]) => { try { put(avatar(crowdLook(n)), afBack(AF_RB[k], k === 'stall' ? 1.4 : 2.2), afFaceRy(AF_RB[k])); } catch (e) {} });
     const A2 = (k, label, on, go) => XC.acts.push({ x: AF_RB[k][0], z: AF_RB[k][1], r: 3, on: () => !AF.busy && !EV && on(), label: () => label, go });
     A2('dad', `Say hello to the boy from the tower`, () => day() && !se.rb_dad, () => afRbTalk('dad'));
     A2('dad', `Wave up at Mrs. Rao’s balcony`, () => day() && !!se.rb_dad && !se.rb_rao, () => afRbTalk('rao'));
@@ -17513,16 +17534,17 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const afManBody = (shirt, pants, skin, hair, extra) => () => { const R = bdRig({ legM: pants, torM: shirt, armM: shirt, handM: skin, bw: .27, tH: .66 }); bdFace(R, skin, 'short', hair); if (extra) extra(R); return R; };
   BODY.af_cel = afManBody(0x2A5A7A, 0x3A3A34, 0x8A5A3A, 0x1A1410, R => { R.add(new THREE.CylinderGeometry(.2, .22, .06, 14), 0xC8B070, 0, .14, 0, R.head); });
   BODY.af_khan = afManBody(0xF2F2F2, 0x16181D, 0xB88A64, 0x5A5A5A, R => { R.add(new THREE.BoxGeometry(.5, .5, .32), 0x16181D, 0, R.hip + .45, 0); R.add(new THREE.BoxGeometry(.1, .14, .02), 0xF2F2F2, 0, R.sh - .05, -.17); });
-  function afColPlaces(){ const c = XC.city, P = AF_CL[c]; if (!P) return; const se = AF.s.seen, A2 = (at, label, on, go) => XC.acts.push({ x: at[0], z: at[1], r: 3, on: () => !AF.busy && !EV && on(), label: () => typeof label === 'function' ? label() : label, go });
+  const AF_CL0 = JSON.parse(JSON.stringify(AF_CL));
+  function afColPlaces(){ const c = XC.city; if (!AF_CL[c] || AF.s.act !== 'c' + c) return; afResolve(AF_CL[c], AF_CL0[c], Object.keys(AF_CL0[c])); const P = AF_CL[c]; const se = AF.s.seen, A2 = (at, label, on, go) => XC.acts.push({ x: at[0], z: at[1], r: 3, on: () => !AF.busy && !EV && on(), label: () => typeof label === 'function' ? label() : label, go });
     const man = (n, [x, z], ry) => { try { const a = avatar(crowdLook(n)); a.g.position.set(x, 0, z); a.g.rotation.y = ry || 0; XC.g.add(a.g); return a; } catch (e) { return null; } };
-    if (c === 'bom' && AF.s.act === 'cbom') { const st = new THREE.Group(); st.position.set(P.stall[0], 0, P.stall[1] + 3); XC.g.add(st); box(3, 1.1, 1.4, mat(0x5A3A2A), 0, .55, 0, st); box(3.4, .12, 2, mat(0xC8302E), 0, 2.5, 0, st); const sg = new THREE.Mesh(new THREE.PlaneGeometry(3, .7), xcSign('NAIDU TEA', '#FFFFFF', '#C8302E', 3, .7)); sg.position.set(0, 2.9, -1.01); sg.rotation.y = Math.PI; st.add(sg);
-      AF.clMan = man(88, [P.stall[0], P.stall[1] + 4.4], Math.PI); man(23, [P.widow[0], P.widow[1] + 2.2], Math.PI); man(54, [P.clerk[0], P.clerk[1] + 2.2], Math.PI);
+    if (c === 'bom' && AF.s.act === 'cbom') { afStall(P.stall, 'NAIDU TEA', 0xC8302E);
+      AF.clMan = man(88, afBack(P.stall, 1.4), afFaceRy(P.stall)); man(23, afBack(P.widow, 2.2), afFaceRy(P.widow)); man(54, afBack(P.clerk, 2.2), afFaceRy(P.clerk));
       A2(P.paper, 'The newspaper office: the obituaries', () => !se.cl_paper, () => afClTalk('paper')); A2(P.widow, 'Mrs. D’Souza, whose husband died last month', () => !se.cl_widow, () => afClTalk('widow')); A2(P.clerk, 'The railway hospital clerk', () => !se.cl_clerk, () => afClTalk('clerk'));
       A2(P.stall, () => afSwapOpen() ? 'Swap the cups (he’s turned to the stove)' : 'Swap the cups (wait: he’s watching his tray)', () => !!se.cl_watch && !se.cl_swap, () => afSwap1()); }
     if (c === 'goi' && AF.s.act === 'cgoi') { const F = new THREE.Group(); F.position.set(P.fort[0], 0, P.fort[1]); XC.g.add(F); const st = mat(0x8A7A5A, { roughness: 1 }); box(16, 4, 1.2, st, 0, 2, -6, F); box(1.2, 4, 12, st, -8, 2, 0, F); box(1.2, 4, 12, st, 8, 2, 0, F); box(3, 7, 3, st, -8, 3.5, -6, F); box(3, 7, 3, st, 8, 3.5, -6, F);
-      man(61, [P.posters[0], P.posters[1] + 2.2], Math.PI); AF.clMan = man(130, [P.jetty[0], P.jetty[1] + 2.2], Math.PI);
+      man(61, afBack(P.posters, 2.2), afFaceRy(P.posters)); AF.clMan = man(130, afBack(P.jetty, 2.2), afFaceRy(P.jetty));
       A2(P.posters, 'The police station wall: missing tourists', () => !se.cl_posters, () => afClTalk('posters')); A2(P.jetty, 'The boat bookings at the jetty', () => !!se.cl_posters && !se.cl_jetty, () => afClTalk('jetty')); A2(P.tide, 'The tide table on the harbour office door', () => !!se.cl_jetty && !se.cl_tide, () => afClTalk('tide')); }
-    if (c === 'del' && AF.s.act === 'cdel') { man(40, [P.court[0], P.court[1] + 2.2], Math.PI);
+    if (c === 'del' && AF.s.act === 'cdel') { man(40, afBack(P.court, 2.2), afFaceRy(P.court));
       A2(P.court, () => `The district court records room (${['f1', 'f2', 'f3'].filter(k => se['cl_' + k]).length} of 3 files)`, () => !(se.cl_f1 && se.cl_f2 && se.cl_f3), () => { const k = ['f1', 'f2', 'f3'].find(k => !se['cl_' + k]); afClTalk(k); }); }
   }
   // ---------- talk ----------
