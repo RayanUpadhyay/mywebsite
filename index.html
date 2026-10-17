@@ -17998,6 +17998,84 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { g: '', go: () => afRemand(), chk: () => !!AF.s.seen.j_rem } ] });
   AF_SKIP[AF_CH.length - 1] = () => { const J = afJ(); AF_JQ.forEach(Q => { if (!J.ans[Q.k]) J.ans[Q.k] = 'silent'; if (afJProven(J.ans[Q.k], Q.str) && !J.proven.includes(Q.k)) J.proven.push(Q.k); }); J.n = J.proven.length; ['j0', 'j_int', 'j_rem'].forEach(k => { AF.s.seen[k] = 1; }); afSave(); };
   afKidFrame = (o => function(dt){ o(dt); if (TWR.sc && !TWR.floors.pstn) try { afJBuild(); } catch (e) { console.error(e); } })(afKidFrame);
+  // ---------- Bangalore Central Prison: cell block, mess hall, workshop, yard ----------
+  BODY.af_basav = afManBody(0xEEEEE8, 0xEEEEE8, 0x6A4630, 0x2A2A2A, R => { R.add(new THREE.BoxGeometry(.56, .3, .36), 0xEEEEE8, 0, R.hip + .55, 0); R.add(new THREE.TorusGeometry(.07, .012, 6, 16), 0xD8B040, 0, R.sh - .02, -.14); });
+  BODY.af_inm = afManBody(0xEEEEE8, 0xEEEEE8, 0x9A7050, 0x1A1410);
+  HEROES.af_gundu = { name: 'Gundu', outfit: 'casual', hp: 420, kind: 'melee', dmg: 9, range: 2.1, cd: .9, speed: 4.6, r: .5, grounded: 1 }; BODY.af_gundu = afManBody(0xEEEEE8, 0xEEEEE8, 0x5A3A2A, 0x16181D, R => { R.add(new THREE.BoxGeometry(.6, .32, .4), 0xEEEEE8, 0, R.hip + .5, 0); });
+  HEROES.af_inmate = { name: 'Inmate', outfit: 'casual', hp: 160, kind: 'melee', dmg: 6, range: 2, cd: 1, speed: 4.4, r: .5, grounded: 1 }; BODY.af_inmate = BODY.af_inm;
+  const AF_JCELL = { door: [-11.5, 5.2], bunk: [-11.4, 10.4], mate: [-13.2, 11.4] };
+  function afBuildJail(){ const { g, R, wall } = afRoomFloor('jail', -19.2, 19.4, -13.2, 13.2, 0x7A7A72, 0xB8B4A8, 4.4); AF.jailL = [];
+    const bar = mat(0x4A4D52, { metalness: .7, roughness: .4 }), bars = (a0, a1, z) => { R.push([a0, a1, z - .1, z + .1]); const L = []; for (let x = a0 + .12; x < a1; x += .26) L.push([x, 1.6, z, 0, .05, 3.2, .05]); inst(new THREE.BoxGeometry(1, 1, 1), bar, L, g); box(a1 - a0, .1, .12, bar, (a0 + a1) / 2, 3.2, z, g); };
+    // cells: three on each side of the corridor, barred fronts with a door gap
+    [[-4, -1], [4, 1]].forEach(([z, s]) => { [[-19.2, -17.2], [-15.8, -12.2], [-10.8, -7.2], [-5.8, -4]].forEach(([a, b]) => bars(a, b, z)); [-14, -9].forEach(x => wall(x - .1, x + .1, s < 0 ? -13.2 : 4, s < 0 ? -4 : 13.2, 3.4));
+      [-16.5, -11.5, -6.5].forEach(x => { const zb = s < 0 ? -11.8 : 11.8; box(1.1, .5, 2.2, mat(0x6A6E74), x - 1.4, .25, zb, g); box(1, .08, 2.1, mat(0xD8D2C0), x - 1.4, .54, zb, g); R.push([x - 2, x - .85, zb - 1.15, zb + 1.15]); }); });
+    // Kiran's cell: the far bunk is his, the near one his cellmate's
+    box(1.1, .5, 2.2, mat(0x6A6E74), -9.9, .25, 10.4, g); box(1, .08, 2.1, mat(0xD8D2C0), -9.9, .54, 10.4, g); R.push([-10.5, -9.2, 9.2, 11.6]);
+    wall(-4.1, -3.9, -13.2, -1.6); wall(-4.1, -3.9, 1.6, 13.2);
+    const sg = new THREE.Mesh(new THREE.PlaneGeometry(3, .6), xcSign('BLOCK C', '#16181D', '#E8DCC8', 3, .6)); sg.position.set(-3.75, 3, 0); sg.rotation.y = Math.PI / 2; g.add(sg);
+    // the warder's office at the end of the corridor (the north-west cell, with a real door)
+    box(1.4, 2.4, .1, mat(0x5A4632), -16.5, 1.2, -3.95, g); const of = new THREE.Mesh(new THREE.PlaneGeometry(2, .45), xcSign('OFFICE', '#FFFFFF', '#5A4632', 2, .45)); of.position.set(-16.5, 2.8, -3.82); g.add(of);
+    // mess hall
+    wall(-4, -.2, -1.1, -.9); wall(1.8, 11, -1.1, -.9); wall(13, 19.4, -1.1, -.9); wall(6.9, 7.1, -13.2, -6.2); wall(6.9, 7.1, -4.2, -1);
+    [[-1, -6], [3.5, -6], [-1, -9.5], [3.5, -9.5]].forEach(([x, z]) => { box(3, .08, .9, mat(0x8A6B4A), x, .78, z, g); box(3, .4, .3, mat(0x6A4E3A), x, .22, z - .7, g); box(3, .4, .3, mat(0x6A4E3A), x, .22, z + .7, g); R.push([x - 1.5, x + 1.5, z - .5, z + .5]); });
+    box(6, 1, .8, mat(0x8A8F99, { metalness: .5 }), 1.5, .5, -12.6, g); R.push([-1.5, 4.5, -13.2, -12.2]); const ms = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .5), xcSign('MESS', '#FFFFFF', '#3A5A4A', 2.6, .5)); ms.position.set(1.5, 3.4, -13.08); g.add(ms);
+    // workshop
+    [[10, -10], [15.5, -10], [10, -5.5], [15.5, -5.5]].forEach(([x, z]) => { box(3.2, .9, 1.2, mat(0x6A4E3A), x, .45, z, g); box(3.2, .06, 1.2, mat(0x8A8F99, { metalness: .5 }), x, .93, z, g); R.push([x - 1.6, x + 1.6, z - .6, z + .6]); });
+    box(.1, 2.4, 3, mat(0x3A3D44), 19.3, 1.6, -9, g); for (let i = 0; i < 6; i++) box(.06, .5, .1, mat(0x8A8F99, { metalness: .7 }), 19.2, 1.2 + (i % 3) * .5, -10 + Math.floor(i / 3) * 1.6, g);
+    const ws = new THREE.Mesh(new THREE.PlaneGeometry(3, .5), xcSign('WORKSHOP', '#16181D', '#F2C230', 3, .5)); ws.position.set(13, 3.4, -13.08); g.add(ws);
+    // the yard: concrete, a wall with wire on top, floodlights, crates stacked where the lift would be, and the storm drain
+    const yd = new THREE.Mesh(new THREE.PlaneGeometry(23.4, 14.2), mat(0x9A968C, { roughness: 1 })); yd.rotation.x = -Math.PI / 2; yd.position.set(7.7, .01, 6.1); g.add(yd);
+    box(23.4, 6, .3, mat(0x8A8478), 7.7, 3, 13.35, g); for (let x = -3.5; x < 19.4; x += 1.2) box(.04, .8, .04, bar, x, 6.4, 13.35, g); box(23.4, .03, .03, bar, 7.7, 6.6, 13.35, g);
+    box(3, 2.6, 3.4, mat(0x6A4E3A), 18.2, 1.3, .7, g); R.push([16.6, 20, -1.2, 2.4]);
+    const dr = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4), mat(0x2A2D33, { metalness: .6 })); dr.rotation.x = -Math.PI / 2; dr.position.set(15, .03, 11.9); g.add(dr); for (let i = 0; i < 5; i++) box(1.3, .02, .06, bar, 15, .04, 11.4 + i * .25, g); AF.jDrain = [15, 11.9];
+    [[-2.5, 12.4], [18, 12.4]].forEach(([x, z]) => { box(.2, 7, .2, bar, x, 3.5, z, g); box(.8, .4, .5, glowM(0xFFF4D0, { emissiveIntensity: 1 }), x, 7, z - .4, g); const l = new THREE.PointLight(0xFFF4D0, .9, 22, 2); l.position.set(x, 6.5, z - 1); g.add(l); AF.jailL.push([l, .9]); });
+    [[-11.5, 8.5], [-11.5, -8.5], [-11.5, 0], [-16.5, 8.5], [-6.5, 8.5], [1.5, -7], [13, -7]].forEach(([x, z]) => { const l = new THREE.PointLight(0xFFF0D8, .7, 12, 2); l.position.set(x, 3.6, z); g.add(l); AF.jailL.push([l, .7]); });
+    // people
+    const P = (id, x, z, ry) => { const a = afMk(() => bodyAv(id, 1)); if (a) { a.g.position.set(x, 0, z); a.g.rotation.y = ry || 0; g.add(a.g); } return a; };
+    AF.basav = P('af_basav', 4.5, -3, Math.PI); AF.jmate = P('af_inm', AF_JCELL.mate[0], AF_JCELL.mate[1], Math.PI / 2);
+    AF.jcrowd = [[-1, -7.2, 0], [3.5, -7.2, 0], [-1, -4.8, Math.PI], [10, -6.7, Math.PI], [15.5, -11.2, 0], [4, 5, 2], [9, 9, -1], [12, 3, 1]].map(([x, z, r]) => P('af_inm', x, z, r));
+    AF.jguards = [[-5, 2.4, -Math.PI / 2], [1, -1.8, 0], [12, -1.8, 0]].map(([x, z, r]) => P('af_cop', x, z, r)); }
+  function afJNight(on){ (AF.jailL || []).forEach(([l, i]) => { l.intensity = on ? i * .18 : i; }); }
+  // ---------- the routine ----------
+  const AF_JR = [['count', 'Head count: stand at your cell door', AF_JCELL.door, 6.5], ['meal', 'Breakfast: queue at the mess counter', [1.5, -11.4], 7.5], ['work', 'Work duty: your bench in the workshop', [10, -8], 10],
+    ['yard', 'Yard time', [6, 6], 16], ['dinner', 'Dinner at the mess counter', [1.5, -11.4], 19], ['out', 'Lights out: your bunk', AF_JCELL.bunk, 21.5]];
+  const AF_JFLAV = { count: ['“Two-one-four-seven.” “Present.” The warder doesn’t look up.', 'Head count. Somebody two cells down coughs his number.', 'The count is wrong, then right. Everyone stands for twenty minutes while they find a pencil.'],
+    meal: ['Ragi mudde and a thin dal. You eat all of it.', 'Upma that tastes of the pot. Tea that tastes of the upma.', 'Someone has stolen the pickle again. Nobody looks at anyone.'],
+    work: ['Eight hours of sanding chair legs. Your hands stop shaking by the third.', 'Stitching cloth bags for a government office. Four hundred. Then four hundred more.', 'You plane a table top until it’s perfectly smooth. Nobody tells you to stop, so you don’t.'],
+    yard: ['Forty minutes of sky. You walk the wall and count the bricks.', 'A cricket game with a ball made of rags. You’re not invited. Yet.', 'Pigeons on the wire. You think of Mrs. Rao, and stop yourself.'],
+    dinner: ['Rice, sambar, a boiled egg on Thursdays. It’s Thursday.', 'Chapatis like cardboard. You eat them.', 'Basavaraj’s table laughs at something. Everyone else waits to see if they should.'],
+    out: ['Lights out. Your cellmate turns a page by the corridor light, very quietly.', 'Lights out. Somebody down the block is singing an old film song, badly, and nobody shouts.', 'Lights out. You lie on your back and write tomorrow’s date in your head, very small.'] };
+  const AF_JEV = [];   // { id, day, ph, on(), run() }: things that happen at a point in the routine
+  const afJPh = () => AF_JR[afJ().ph % AF_JR.length];
+  async function afJPhase(){ if (AF.busy) return; const J = afJ(), [k] = afJPh(); AF.busy = true;
+    const ev = AF_JEV.find(e => (e.day == null || e.day === J.day || e.day === 'any') && e.ph === k && !J.ev[e.id] && (!e.on || e.on()));
+    if (ev) { const r = await ev.run(); if (r === 'hold') { AF.busy = false; return; } } else { const F = AF_JFLAV[k]; say(F[(J.day + J.ph) % F.length], 3200); }
+    J.ph++; if (J.ph >= AF_JR.length) { J.ph = 0; J.day++; afJNight(false); await cbCard('', `Day ${J.day}`, 'Bangalore Central Prison'); }
+    AF.s.rbHr = afJPh()[3]; if (afJPh()[0] === 'out') afJNight(true); afSave(); AF.busy = false; }
+  AF_BACTS.push({ L: () => afLc('twr', afJPh()[2], 'jail'), r: 1.8, on: () => !!afSt().rt, label: () => afJPh()[1], go: afJPhase });
+  const afJGoal = extra => afGh(() => `Day ${afJ().day} · ${afJPh()[1]}${extra ? extra() : ''}`);
+  const afJAt = () => afLc('twr', afJPh()[2], 'jail');
+  function afTwFight(part, name){ if (EV || A) return; ST_TITLE[part] = name; ST_FRAIL.x = [1, 1, 1]; AF.fT = performance.now(); startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part, xc: 1, twr: true }); }
+  afSetup = (o => function(part, S){ if (!part.startsWith('xqj')) return o(part, S); S.af = { part, t: 0, n: 0, sp: 0 };
+    const sp = (r, a) => { for (let k = 0; k < 8; k++) { const x = pos.x + Math.cos(a + k) * r, z = pos.z + Math.sin(a + k) * r; if (evValid(x, z)) return [x, z]; } return [pos.x + 2, pos.z + 2]; };
+    if (part === 'xqjyard') { S.add('af_inmate', ...sp(5, 1)); const b = addUnit({ hero: 'af_gundu', team: 'en' }); [b.x, b.z] = sp(6, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name: 'Gundu' }, b, t: 99, marks: [] }; return; }
+    if (part === 'xqjnight') { const b = addUnit({ hero: 'af_gundu', team: 'en' }); [b.x, b.z] = sp(5, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name: 'Head Warder Mahadev' }, b, t: 99, marks: [] }; return; } })(afSetup);
+  afAfterFight = (o => function(part, won, F){ if (!part.startsWith('xqj')) return o(part, won, F); const J = afJ();
+    if (won) { J.ev['won_' + part] = 1; afSave(); } else say(part === 'xqjyard' ? 'Gundu’s bigger, and the yard is watching. Keep your hands up and move. Try again at yard time.' : 'He’s armed and you aren’t. Get inside his reach. Try again.', 3600); })(afAfterFight);
+  // ---------- Ch47 events ----------
+  AF_JEV.push(
+    { id: 'basav', day: 1, ph: 'meal', run: async () => { await cbTalk([['Narrator', 'The mess. Every bench full except one end of one table, where a big man in a gold chain he isn’t supposed to have eats alone, slowly, with his hands.'], ['Basavaraj', '(not looking up) Sit.'], ['Narrator', 'You sit. The hall gets quieter around you, the way a room does when a cricket ball is in the air.'],
+        ['Basavaraj', 'Tidy Streets. You’re in the papers more than the Chief Minister. Six men. A lawyer.'], ['Basavaraj', '(finally looking up) I run C block. Not the warders, not the superintendent. Me. Here, you’re nobody until I say you’re somebody. Eat your mudde.'],
+        ['Narrator', 'Everybody who walks past your table that morning looks at you for exactly as long as they dare.']]); afJ().ev.basav = 1; } },
+    { id: 'yard1', day: 1, ph: 'yard', run: async () => { const J = afJ(); if (J.ev.won_xqjyard) { J.ev.yard1 = 1; await cbTalk([['Narrator', 'Gundu is sitting on the bench with ice on his face. Basavaraj, from across the yard, raises one finger. That’s all.']]); return; }
+        await cbTalk([['Narrator', 'The yard. The rag-ball cricket stops. A man the size of a door walks over, cracking his knuckles: Gundu, Basavaraj’s.'], ['Gundu', 'Tidy Streets. Show us. Six men, and a boy like you? Show us.'], ['Narrator', 'No weapons. No black. Everyone is watching, and the warders have decided to look at the sky.']]); afTwFight('xqjyard', 'Gundu'); return 'hold'; } },
+    { id: 'out1', day: 1, ph: 'out', run: async () => { await cbTalk([['Narrator', 'Lights out. Your cellmate, Devraj, a soft-spoken man of fifty with a schoolteacher’s glasses, turns a page in a library book.'], ['Devraj', 'You did well in the yard. People here will leave you alone now. That’s worth a lot.'], ['Kiran', 'What are you in for?'], ['Devraj', '(a small smile, turning the page) A misunderstanding. Goodnight, Kiran.']]); afJ().ev.out1 = 1; } });
+  AF_CH.push({ n: 'Chapter 47', t: 'Inside', sub: 'Bangalore Central Prison. Block C.', id: 'jl2', room: ['jail', [-6, 0], Math.PI / 2], steps: [
+    { g: '', go: () => { AF.busy = true; const J = afJ(); if (!J.day) { J.day = 1; J.ph = 0; } afRoom('jail', [-6, 0], Math.PI / 2); setTimeout(() => cbTalk([['Narrator', 'A white kurta and pyjama with a number stencilled on the back: 2147. A steel plate, a steel tumbler, a blanket that smells of other people.'], ['Narrator', 'Block C. Six cells either side of a long corridor, three to a cell. Yours is the middle one on the south side. A man is already sitting on the near bunk, reading.'], ['Warder', 'Count at six. Breakfast at seven. Work at ten. Yard at four. Lights out at nine-thirty. You learn it, or you learn it the other way.']]).then(() => { AF.s.seen.jl2a = 1; AF.s.rbHr = AF_JR[afJ().ph][3]; afSave(); AF.busy = false; }), 900); }, chk: () => !!AF.s.seen.jl2a },
+    { rt: 1, g: afJGoal(() => afJ().day === 1 && afJPh()[0] === 'yard' && !afJ().ev.won_xqjyard ? ' (Gundu is waiting)' : ''), at: afJAt, chk: () => { const J = afJ(); return !!J.ev.yard1 && !!J.ev.out1 && J.day >= 2; } },
+    { g: '', go: () => { AF.busy = true; cbTalk([['Narrator', 'Day two. At breakfast someone puts an extra spoon of pickle on your plate without a word. At work, nobody takes your plane. In the yard, they throw you the rag ball.'], ['Basavaraj', '(passing, low) Kiran-anna. That’s what they’re calling you. I didn’t stop them.']]).then(() => { AF.s.seen.jl2z = 1; afSave(); AF.busy = false; }); }, chk: () => !!AF.s.seen.jl2z } ] });
+  AF_SKIP[AF_CH.length - 1] = () => { const J = afJ(); J.day = Math.max(J.day, 2); J.ph = 0; Object.assign(J.ev, { basav: 1, yard1: 1, won_xqjyard: 1, out1: 1 }); AF.s.seen.jl2a = AF.s.seen.jl2z = 1; afJNight(false); afSave(); };
+  afKidFrame = (o => function(dt){ o(dt); if (TWR.sc && TWR.floors.pstn && !TWR.floors.jail) try { afBuildJail(); } catch (e) { console.error(e); } if (AF.basav) { const k = afJPh()[0]; AF.basav.g.position.set(k === 'yard' ? 8 : 4.5, 0, k === 'yard' ? 10 : -3); } })(afKidFrame);
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
