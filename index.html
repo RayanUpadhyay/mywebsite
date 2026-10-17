@@ -17478,7 +17478,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { L: () => afLc('twr', [9, -12.4], 'flats'), r: 2.2, label: 'Your flat (4E)', go: afKFlatIn },
     { L: () => afLc('twr', [0, 4.4], 'kflat'), r: 1.8, label: 'Out to the corridor', go: afKFlatOut },
     { L: () => afLc('twr', [0, -3.9], 'kflat'), r: 2.2, on: () => !!AF.s.seen.rb_stall && !afIs('oh_race'), label: () => AF.s.seen.rb_board ? 'Your suspect board' : 'Start a suspect board', go: () => { if (!AF.s.seen.rb_board) { AF.s.seen.rb_board = 1; afSave(); } afBoardOpen(); } },
-    { L: () => afLc('twr', [-12, 12.2], 'flats'), r: 2.4, on: () => !AF.s.seen.rb_rao, label: 'Say hello to Mrs. Rao (4A)', go: () => afRbTalk('rao') },
+    { L: () => afLc('twr', [-12, 12.2], 'flats'), r: 2.4, on: () => !AF.s.seen.rb_rao && afChId() === 'rb1', label: 'Say hello to Mrs. Rao (4A)', go: () => afRbTalk('rao') },
     { L: () => AF.blP && afLc('blr', AF.blP.dad), r: 3, on: () => !!(AF.blDad && AF.blDad.g.visible) && !AF.s.seen.rb_dad, label: 'Say hello to the boy from 4B', go: () => afRbTalk('dad') },
     { L: () => AF.blP && afLc('blr', AF.blP.stall), r: 3, on: () => !AF.s.seen.rb_stall, label: 'Tea at Shanthamma’s stall', go: () => afRbTalk('stall', () => { afRbDay('Tuesday: (nothing written)'); afRbClue('Notebook: page 14 is missing. Torn out, neatly, close to the spine.'); }) },
     { L: () => AF.blP && afLc('blr', AF.blP.guard), r: 3, on: () => !!AF.s.seen.rb_board && !AF.s.seen.rb_guard, label: 'Talk to Prakash at the bank', go: () => afRbTalk('guard') },
@@ -17505,7 +17505,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ---------- every frame ----------
   afKidFrame = (o => function(dt){ o(dt); try { afBlFrame(dt); } catch (e) { if (!AF.blErr) { AF.blErr = 1; console.error(e); } } })(afKidFrame);
   function afBlFrame(dt){ const on = afBlOn();
-    if (on && performance.now() - (AF.blT || 0) > 3000 && !(inWorld && ['blr', 'twr', 'event'].includes(zone))) { AF.on = false; afSave(); afHud.hidden = true; afActBtn.hidden = true; afBoardBtnUp(); return; }
+    if (on && performance.now() - (AF.blT || 0) > 3000 && !(inWorld && ['blr', 'twr', 'event'].includes(zone)) && !(AF.s.home4b && zone === 'hub')) { AF.on = false; afSave(); afHud.hidden = true; afActBtn.hidden = true; afBoardBtnUp(); return; }
     if (BL.mapG) afBlCity(); if (TWR.sc) afBlTwr();
     const day = AF.s.rbHr >= 7 && AF.s.rbHr < 19;
     if (AF.blG) AF.blG.visible = on; if (AF.blDad) AF.blDad.g.visible = on && day && ['rb1', 'rb2', 'rb3', 'rb5'].includes(afChId()); if (AF.rao) AF.rao.g.visible = on; if (AF.kBoard) AF.kBoard.visible = !AF.s.seen.oh_board;
@@ -18150,6 +18150,66 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // a chapter that happens in a room keeps Kiran in that room (however the story got there)
   afKidFrame = (o => function(dt){ o(dt); if (!afBlOn() || AF.busy || EV || A || !inWorld || performance.now() - (AF.blT || 0) < 3000) return; const C = AF_CH[AF.s.ch];
     if (C && C.room && (zone === 'blr' || zone === 'twr') && !(zone === 'twr' && TWR.floor === C.room[0])) afRoom(C.room[0], C.room[1], C.room[2]); })(afKidFrame);
+  // ---------- Ch50: 4B ----------
+  const afPosterTex = () => tex(256, 340, (c, w, h) => { c.fillStyle = '#F2E8C8'; c.fillRect(0, 0, w, h); c.fillStyle = '#C8102E'; c.font = 'bold 46px sans-serif'; c.textAlign = 'center'; c.fillText('WANTED', w / 2, 52); c.fillStyle = '#3A3D44'; c.fillRect(48, 72, 160, 170);
+    c.fillStyle = '#B88A64'; c.beginPath(); c.arc(128, 140, 46, 0, 7); c.fill(); c.fillStyle = '#16181D'; c.fillRect(82, 180, 92, 62); c.font = 'bold 30px sans-serif'; c.fillText('KIRAN', w / 2, 280); c.font = '16px sans-serif'; c.fillText('ESCAPED · DO NOT APPROACH', w / 2, 306); c.fillText('CALL 100', w / 2, 328); });
+  function afPostersBuild(){ if (AF.postG || !AF.blC || !BL.mapG || Math.abs(BL.off.y) > .01 || BL.lvl) return; const G = AF.postG = new THREE.Group(); G.visible = false; BL.mapG.add(G); const T = afPosterTex(), taken = Object.values(AF.blP || {});
+    [[-30, -2], [20, 20], [60, -60], [-60, 40], [5, -45], [100, 30], [-100, -30], [40, 100]].forEach(s => { const p = afBlFree(s, taken); taken.push(p); const [fx, fz] = afBlFace(p), q = new THREE.Group(); q.position.set(p[0], 0, p[1]); q.rotation.y = Math.atan2(fx, fz); G.add(q);
+      box(.1, 2.6, .1, mat(0x3A3D44), 0, 1.3, -.1, q); const m = new THREE.Mesh(new THREE.PlaneGeometry(.9, 1.2), new THREE.MeshStandardMaterial({ map: T })); m.position.set(0, 1.9, -.04); q.add(m); });
+    if (AF.esc) { const E = AF.esc; [[E.L * .3, 3], [E.L * .62, -3]].forEach(([d, sd]) => { const [x, z] = afAlong(E, d, sd), b = new THREE.Group(); b.position.set(x, 0, z); b.rotation.y = Math.atan2(E.a[0], E.a[1]) + Math.PI / 2; G.add(b); for (let i = 0; i < 4; i++) box(.4, .25, .2, mat(i % 2 ? 0xF2EEE6 : 0xC8102E), -.6 + i * .4, .9, 0, b); [-.8, .8].forEach(x2 => box(.08, .9, .08, mat(0x3A3D44), x2, .45, 0, b)); }); } }
+  // 4B, empty and freshly painted, then his: dust sheets, the TO LET sign, and later the two boards on the wall
+  function afB4Build(){ if (AF.b4 || !TWR.sc || !TWR.floors.flats || !BLC.twrPl) return; const F = TWR.floors.flats; AF.b4 = {};
+    const sh = AF.b4.sheets = new THREE.Group(); F.add(sh); const cl = mat(0xF4F4EE, { roughness: 1 }); [[-.8, .5, 19, 3.4, 1, 1.3], [7.5, .45, 24.2, 2.4, .9, 1.6], [4.5, .5, 17.2, 1, 1.1, 1.6], [5.8, .45, 22.5, 2, .9, 1.4], [-.8, .7, 23.9, 2.6, 1.4, .7]].forEach(([x, y, z, w, h, d]) => box(w, h, d, cl, x, y, z, sh));
+    const let_ = AF.b4.let = new THREE.Mesh(new THREE.PlaneGeometry(1, .5), xcSign('TO LET', '#C8102E', '#FFFFFF', 1, .5)); let_.position.set(3, 2.55, 13.92); let_.rotation.y = Math.PI; F.add(let_);
+    const bd = AF.b4.boards = new THREE.Group(); F.add(bd);
+    const fh = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.7), new THREE.MeshStandardMaterial({ map: tex(512, 336, (c, w, h) => { c.fillStyle = '#B88A5A'; c.fillRect(0, 0, w, h); c.fillStyle = '#16181D'; c.font = 'bold 30px sans-serif'; c.fillText('FIND HIM', 16, 38);
+      c.fillStyle = '#E8DCC8'; c.beginPath(); [[230, 50], [300, 70], [330, 110], [400, 120], [380, 160], [330, 170], [300, 240], [270, 310], [245, 300], [225, 230], [190, 180], [160, 150], [180, 100], [215, 90]].forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.fill();
+      [[262, 262, '✕ BLR'], [250, 278, 'Mysore?'], [218, 150, 'Pune?'], [300, 120, ''], [300, 180, '']].forEach(([x, y, t]) => { c.fillStyle = '#C8102E'; c.beginPath(); c.arc(x, y, 6, 0, 7); c.fill(); c.fillStyle = '#16181D'; c.font = '16px sans-serif'; if (t) c.fillText(t, x + 9, y + 5); });
+      c.fillStyle = '#F2EEE6'; c.fillRect(16, 60, 140, 70); c.fillRect(16, 150, 140, 70); c.fillRect(16, 240, 140, 70); c.fillStyle = '#16181D'; c.font = '13px sans-serif';
+      ['Sold his bat to Imran’s', 'cousin. Asked: Pune buses?'].forEach((t, i) => c.fillText(t, 22, 82 + i * 18)); ['Bookshop by the Circle:', 'she left too. Same week.'].forEach((t, i) => c.fillText(t, 22, 172 + i * 18)); ['Mrs. Rao: “didn’t want', 'anyone to know”'].forEach((t, i) => c.fillText(t, 22, 262 + i * 18)); }) }));
+    fh.position.set(-.6, 1.85, 14.36); bd.add(fh);
+    const sb = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.3), AF.kBoard ? AF.kBoard.material : mat(0xB88A5A)); sb.position.set(6, 1.85, 14.36); bd.add(sb); }
+  function afB4Up(){ if (AF.postG) AF.postG.visible = afBlOn() && !!AF.s.seen.j_out; if (!AF.b4) return; const on = afBlOn(), i50 = AF_CH.findIndex(C => C.id === 'jl5'), here = on && i50 >= 0 && AF.s.ch >= i50;
+    AF.b4.sheets.visible = here && !AF.s.home4b; AF.b4.let.visible = here && !AF.s.home4b; AF.b4.boards.visible = on && !!AF.s.home4b; }
+  afKidFrame = (o => function(dt){ o(dt); afPostersBuild(); afB4Build(); afB4Up(); if (afBlOn() && AF.s.home4b && zone === 'hub' && !AF.inHub) { AF.inHub = 1; say('His old room. The fan, the window, the bookshelf. Yours now.', 3600); } if (zone !== 'hub') AF.inHub = 0; })(afKidFrame);
+  function afHomePat(){ if (AF_PAT.home || !AF.esc) return AF_PAT.home || null; const E = AF.esc, cop = (d0, d1, side) => [afAlong(E, d0, side), afAlong(E, d1, side)];
+    AF_PAT.home = { w: 'blr', cops: [[.18, .42, -1.5], [.48, .7, 1], [.76, .92, -1]].map(([a, b, sd]) => cop(E.L * a, E.L * b, sd)), hide: AF.escHide, view: 11, cone: .85, speed: 1.5, start: afAlong(E, E.L - 2),
+      msg: ['A checkpoint torch sweeps your way. You duck back the way you came. (Start again.)', '“Papers?” You’re gone before he finishes the word. (Start again.)', 'Your own face looks at you from a poster on the pillar. So does a constable. (Start again.)'] }; return AF_PAT.home; }
+  async function afB4Door(){ AF.busy = true;
+    await cbTalk([['Narrator', '4B. The nameplate has been unscrewed; two clean holes in the paint. A TO LET sign on string. The door isn’t even locked.'], ['Narrator', 'Inside: the smell of fresh paint. White walls. The furniture is the landlord’s, under dust sheets, like ghosts at a party nobody came to.'], ['Narrator', 'No cricket shirt on the line. No mug in the sink. No rubber band, no diary, no bat behind the door.']]);
+    AF.s.seen.j5door = 1; afSave(); AF.busy = false; }
+  async function afB4Rao(){ AF.busy = true;
+    await cbTalk([['Mrs. Rao', '(in her doorway, not surprised to see you. She’s never surprised by anything) You. Too thin. Thinner.'], ['Kiran', 'Where is he?'], ['Mrs. Rao', 'He moved away. Months ago. Didn’t say where.'], ['Mrs. Rao', '(after a long time) Didn’t want anyone to know. Especially, I think, you.'], ['Narrator', 'She closes her door. You hear her on the other side of it, standing there, not walking away.']]);
+    AF.s.seen.j5rao = 1; afSave(); AF.busy = false; }
+  async function afB4Shelf(){ AF.busy = true;
+    await cbTalk([['Narrator', 'The bookshelf is still here: it was the landlord’s too. Empty now. You crouch and reach behind where the engineering textbook used to be.'], ['Narrator', 'Nothing. Just a clean rectangle in the dust on the back panel, the exact size of a notebook. The outline of the place where it used to be.'], ['Kiran', '(touching it, very lightly) …']]);
+    AF.s.seen.j5shelf = 1; afSave(); AF.busy = false; }
+  async function afB4Sit(){ AF.busy = true;
+    await cbTalk([['Narrator', 'You sit on the floor in the middle of 4B with your back against a sheeted sofa. Somebody has left the ceiling fan on. It goes round, and round.'], ['Narrator', 'Outside, a siren goes past on Tower Road and doesn’t stop. Two balconies along, Mrs. Rao is watering her plants and very carefully not looking this way.'],
+      ['Narrator', 'From your shirt: a new notebook, bought with the last coins in your pocket. You open it. Page one. The date first, very small, very careful.'], ['Narrator', 'Then: “Never him.”'], ['Narrator', 'And underneath, after a long time: “Find him.”']]);
+    await cbCard('', 'Find him', 'Flat 4B. The tower. Bangalore.');
+    await cbTalk([['Narrator', 'You pull the dust sheets off. You pin the old board back on the wall, and next to it a new one: a map of India, a red cross on Bangalore, three questions.'], ['Narrator', '4B is yours now. His door. His fan. His room behind the YOUR ROOM door on the floor above, with your name on nothing.'], ['Narrator', 'Every pillar in the city has your face on it. Let them look.']]);
+    AF.s.seen.j5sit = 1; AF.s.home4b = 1; afHeat(100); afLog('Kiran went home to the tower. 4B was empty, freshly painted, TO LET. His father had moved away and told nobody where. In a new notebook: “Never him.” And underneath: “Find him.”'); afSave(); AF.busy = false; }
+  function afFindHim(){ if (document.pointerLockElement) document.exitPointerLock(); afBoard.innerHTML = `<h3>FIND HIM</h3><div class="pin y"><b>Gone</b>Moved out of 4B months ago. Told nobody where. Nameplate unscrewed.</div><div class="pin"><b>Clues</b>Sold his cricket bat to Imran’s cousin. Asked about Pune buses.<br>The girl from the bookshop by the Circle left too, the same week.<br>Mrs. Rao: “Didn’t want anyone to know. Especially you.”</div><div class="pin"><b>Rules</b>Never anyone who didn’t earn it.<br>Never him.<br>Find him.</div><button type="button" data-afb="x">Close</button>`; afBoard.hidden = false; tone(300, .08, 'triangle', .03); }
+  function afRest(){ if (AF.busy) return; AF.busy = true; fade(() => { AF.s.rbHr = 8; try { if (typeof hpNow !== 'undefined') hpNow = hpMax; } catch (e) {} afSave(); AF.busy = false; say('You sleep on his bed with the fan going round. Morning. (Rested. Saved.)', 3200); }, '#000000'); }
+  AF_BACTS.push(
+    { L: () => afLc('twr', [3, 13.2], 'flats'), r: 2, on: () => afIs('j5_door'), label: '4B', go: afB4Door },
+    { L: () => afLc('twr', [-12, 12.2], 'flats'), r: 2.4, on: () => afIs('j5_rao'), label: 'Knock on 4A', go: afB4Rao },
+    { L: () => afLc('twr', [-1.6, 22.3], 'flats'), r: 1.6, on: () => afIs('j5_shelf'), label: 'Reach behind the bookshelf', go: afB4Shelf },
+    { L: () => afLc('twr', [3, 21], 'flats'), r: 1.8, on: () => afIs('j5_sit'), label: 'Sit down on the floor, under the fan', go: afB4Sit },
+    { L: () => afLc('twr', [-.6, 15.6], 'flats'), r: 1.6, on: () => !!AF.s.home4b, label: 'The FIND HIM board', go: afFindHim },
+    { L: () => afLc('twr', [6, 15.6], 'flats'), r: 1.6, on: () => !!AF.s.home4b, label: 'Your old suspect board', go: () => afBoardOpen() },
+    { L: () => afLc('twr', [5.9, 24.2], 'flats'), r: 1.6, on: () => !!AF.s.home4b, label: 'Home: rest (heal and save)', go: afRest });
+  AF_CH.push({ n: 'Chapter 50', t: '4B', sub: 'He’ll go home. They always go home.', id: 'jl5', steps: [
+    { g: '', go: () => { AF.busy = true; AF.s.rbHr = 5.5; afJNight(false); cbTalk([['Narrator', 'Three days walking, sleeping in bus shelters, eating what falls off market carts. Then, at dawn, the edge of Bangalore.'], ['Narrator', 'Your face is on every pillar. Constables at every junction near Tower Road with your photo on their phones.'], ['Kiran', 'He said I’d go home. He was right. I just want to see it. Once.']])
+        .then(() => { const E = AF.esc, e = E ? afAlong(E, E.L - 2) : [HOUSE.door[0], HOUSE.door[1] + 20]; AF.blT = performance.now(); enterBlr([e[0], e[1], Math.atan2(-(E ? E.a[0] : 0), -(E ? E.a[1] : 1))]); setTimeout(() => { AF.s.seen.j50 = 1; afSave(); AF.busy = false; }, 1200); }); }, chk: () => !!AF.s.seen.j50 },
+    { pat: () => zone === 'blr' ? afHomePat() : null, g: afGh('Get home to the tower past the checkpoints. Hide behind the bins'), at: () => afLc('blr', HOUSE.door), chk: () => zone === 'twr' },
+    { k: 'j5_door', g: afGh('The Flats floor. 4B'), at: () => afLc('twr', [3, 13.2], 'flats'), chk: () => !!AF.s.seen.j5door },
+    { k: 'j5_rao', g: afGh('Mrs. Rao, 4A'), at: () => afLc('twr', [-12, 12.2], 'flats'), chk: () => !!AF.s.seen.j5rao },
+    { k: 'j5_shelf', fl: 1, g: afGh('4B. The bookshelf'), at: () => afLc('twr', [-1.6, 22.3], 'flats'), chk: () => !!AF.s.seen.j5shelf },
+    { k: 'j5_sit', fl: 1, g: afGh('Sit down, under the fan'), at: () => afLc('twr', [3, 21], 'flats'), chk: () => !!AF.s.seen.j5sit },
+    { fl: 1, g: 'To be continued: Find him.', chk: () => false } ] });
+  AF_SKIP[AF_CH.length - 1] = () => { ['j50', 'j5door', 'j5rao', 'j5shelf', 'j5sit'].forEach(k => { AF.s.seen[k] = 1; }); AF.s.home4b = 1; afHeat(100); AF.s.st = AF_CH[AF.s.ch].steps.length - 1; AF.key = ''; afSave(); return 1; };
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
