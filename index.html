@@ -17890,13 +17890,15 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       : [['Kiran', 'It’s a story. I’m writing a crime novel. All of it’s made up.'], [afDadNm(), 'Varadan is real. Manju is real. It was on the news. You wrote down the dates they disappeared before the news did.'], ['Kiran', '…'], [afDadNm(), '(standing up, backing away from the table) Get out of my flat.']]);
     await cbTalk([[afDadNm(), 'At nine tomorrow morning that constable comes back. I’m giving him this. I’m giving him all of it.'], ['Narrator', 'You could stop him. You both know it. He’s nineteen and he weighs nothing and the notebook is right there.'], ['Kiran', '(standing, leaving it on the table) Never him.'], ['Narrator', 'You close his door very gently on your way out.']]);
     AF.s.seen.ex_conf = 1; afLog(v === 'truth' ? 'The boy in 4B found the notebook. Kiran told him the truth: “I’m your son.” He believed enough of it to be afraid.' : 'The boy in 4B found the notebook. Kiran lied, and he didn’t believe a word.'); afSave(); AF.busy = false; }
-  async function afExposedEnd(){ AF.busy = true; const T = afExS().truth;
-    await cbTalk([['Narrator', 'The night bus to anywhere. Back seat, hood up, the window cold against your head. Bangalore goes past in orange streetlight, and then it stops going past.'], ['Narrator', 'Your phone buzzes once. A voice note. From 4B.'],
-      T ? [afDadNm(), '(very quiet, a fan going round behind him) I don’t know if any of what you said is true. Part of me hopes it is. Part of me hopes I never… (a breath) Don’t come back here. Please. Whoever you are. Don’t come back.'] : [afDadNm(), '(very quiet) I gave him the notebook. I told him everything. I don’t know who you are. I hope I never do. Don’t come back.'],
-      ['Narrator', 'On the news at the bus stop in the morning: your face. TIDY STREETS KILLER: STUDENT NAMED. Constable Pawar on the steps, tired, not smiling. “He’ll be found. They always think they won’t be.”'], ['Narrator', 'Mrs. Rao, on the evening news, in her best sari: “He was too thin. I said so on the first day.”']]);
-    await cbCard('', 'Wanted', 'Somewhere south of Bangalore. A new notebook.');
-    await cbTalk([['Narrator', 'A rented room in a town you’ve never heard of. A new notebook. Page one. The rules, copied out again in very small careful writing.'], ['Narrator', 'Never anyone who didn’t earn it. Never him.'], ['Narrator', 'Then you cross out the third one, and write it again underneath.'], ['Kiran', '(to the window) Don’t get caught again.']]);
-    AF.s.seen.ex_end = 1; afHeat(100); afLog('Kiran was named on every channel: the Tidy Streets Killer. He ran south on a night bus with a new notebook. His father asked him never to come back.'); afSave(); AF.busy = false; }
+  async function afExposedEnd(){ AF.busy = true;
+    await cbTalk([['Narrator', 'The bus stand. The night bus to anywhere is already in, engine running, door open. Three steps away.'], ['Narrator', 'On the bench under the timetable, in a khaki shirt, with two teas in steel glasses, sits Constable Pawar.'], ['Constable Pawar', '(holding one out) Less sugar. I asked Shanthamma how you take it.']]);
+    let v = ''; const tries = { run: ['Your legs don’t move. He’s between you and the door, and he has never hurt anyone in his life. Never anyone who didn’t earn it.', 'You could make it. He’s slower than you. You don’t.'], fight: ['Your hands close. Then open. He has a daughter in Mumbai; you read it in his notebook. Never anyone who didn’t earn it.', 'He doesn’t even put the tea down. He knows you won’t.'] }, n = { run: 0, fight: 0 };
+    while (v !== 'wrists') { v = await new Promise(r => askChoice('karrest', r, { h: 'The bus stand', q: 'Pawar waits. The bus engine idles. Nobody else is moving.', a: [['run', 'Run for the bus'], ['fight', 'Go for him'], ['wrists', 'Hold out your wrists']] }));
+      if (v !== 'wrists') { await cbTalk([['Narrator', tries[v][Math.min(1, n[v]++)]]]); } }
+    await cbTalk([['Narrator', 'You hold out your wrists. He puts the tea in your hands first, and waits while you drink it. Then the cuffs, gently, like a man closing a door on a sleeping room.'], ['Constable Pawar', 'Kiran. I’m arresting you for the murders of Vinod Shetty, Hari Varadan, Bhaskar Naidu, Celestino Fernandes, Rajiv Khanna and the man called Manju.'], ['Kiran', '(very quietly) They earned it.'], ['Constable Pawar', 'Maybe. That’s not a word the court has.']]);
+    await cbCard('', 'Tower Road', 'The back of a police jeep.');
+    await cbTalk([['Narrator', 'The jeep takes Tower Road. It always would. Through the mesh window, the tower goes past slowly: the lobby, the watchman standing up to look, Mrs. Rao on her balcony with her hand over her mouth.'], ['Narrator', 'Two balconies along: 4B. The light is off. The washing line is empty. Nobody is there.'], ['Narrator', 'You watch it until the road bends and takes it away.']]);
+    AF.s.seen.ex_end = 1; afHeat(100); afLog('Kiran was arrested at the bus stand by Constable Pawar. He didn’t run, and he didn’t fight: Pawar had never hurt anyone. Nobody was on the 4B balcony when the jeep went past.'); afSave(); AF.busy = false; }
   // ---------- the chapters (after the Collector's balcony) ----------
   { const C = AF_CH.find(c => c.id === 'cl3'); if (C) C.steps.pop(); }
   const afExPt = f => () => f() ? afLc('blr', f()) : null;
@@ -17929,6 +17931,73 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { g: '', go: () => afExposedEnd(), chk: () => !!AF.s.seen.ex_end },
     { g: 'To be continued', chk: () => false } ] });
   AF_SKIP[AF_CH.length - 1] = () => { ['ex50', 'ex_bus'].forEach(k => { AF.s.seen[k] = 1; }); afSave(); };
+  // ======================= Kiran: arrest, jail, the long way out, and 4B (Chapters 46-50 and after) =======================
+  // The dad is gone from here on: no visits, no calls. Kiran's rooms (the station, the jail) are extra floors in the tower
+  // scene that the lift never lists, so the story's markers, actions and patrols work in them unchanged.
+  const afJ = () => AF.s.jail || (AF.s.jail = { ans: {}, proven: [], day: 0, ph: 0, ev: {}, tools: [] });
+  const AF_JFLOORS = ['pstn', 'jail'];
+  // a walled room on its own floor: everything outside [x0..x1, z0..z1] is solid
+  function afRoomFloor(id, x0, x1, z0, z1, floorCol, wallCol, h){ const g = new THREE.Group(); g.visible = false; TWR.sc.add(g); TWR.floors[id] = g;
+    const R = TWR.rects[id] = [[-20, x0 - .3, -14, 14], [x1 + .3, 20, -14, 14], [x0 - .3, x1 + .3, -14, z0 - .3], [x0 - .3, x1 + .3, z1 + .3, 14]], W = x1 - x0, D = z1 - z0, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+    const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, D), mat(floorCol, { roughness: .95 })); fl.rotation.x = -Math.PI / 2; fl.position.set(cx, 0, cz); fl.userData.walk = true; g.add(fl);
+    const wm = mat(wallCol, { roughness: 1 }); box(W, h, .2, wm, cx, h / 2, z0 - .1, g); box(W, h, .2, wm, cx, h / 2, z1 + .1, g); box(.2, h, D, wm, x0 - .1, h / 2, cz, g); box(.2, h, D, wm, x1 + .1, h / 2, cz, g);
+    const wall = (a0, a1, b0, b1, hh, m) => { box(a1 - a0, hh || h, b1 - b0, m || wm, (a0 + a1) / 2, (hh || h) / 2, (b0 + b1) / 2, g); R.push([a0, a1, b0, b1]); };
+    return { g, R, wall }; }
+  // go to one of those rooms (without the lift's floor announcement)
+  function afRoom(f, at, yw){ if (A || EV) return; if (!TWR.sc) buildTwr(); afJBuild(); AF.blT = performance.now();
+    fade(() => { web.p = null; drawWeb(); walkTarget = null; exitTelescope(); inWorld = true; zone = 'twr'; vy = 0; falling = false; grounded = true; showFloor(f); pos.set(at[0], 1.6, at[1]); yaw = yw || 0; pitch = -.05; TWR.liftArm = false;
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Back to your room'; jumpBtn.hidden = fine; uiZone(); }, '#06070B'); }
+  // carrying on (or reloading) while Kiran is locked up takes you back to where he's locked up
+  afBlGo = (o => function(){ const C = AF_CH[AF.s.ch]; if (C && C.room && !(inWorld && zone === 'twr' && TWR.floor === C.room[0])) { if (A || EV) return; if (typeof DRV !== 'undefined' && DRV.on) getOut(true); if (XC.drv) xcExitCar(); XC.ride = null;
+      AF.s.act = 'krb'; AF.on = true; AF.key = ''; afSave(); meKey = ''; afRoom(C.room[0], C.room[1], C.room[2]); setTimeout(() => { if (zone !== 'xc' && zone !== 'xin') { xcFree(); XC.city = ''; } }, 1200); return; } return o(); })(afBlGo);
+  afHint = (o => function(){ const S = afSt(), L = S.at && S.at(); if (L && L.w === 'twr' && AF_JFLOORS.includes(L.f)) return ''; return o(); })(afHint);
+  function afJBuild(){ if (!TWR.sc) return; if (!TWR.floors.pstn) afBuildStation(); if (!TWR.floors.jail && typeof afBuildJail === 'function') afBuildJail(); }
+  // ---------- the police station: an interrogation room ----------
+  function afBuildStation(){ const { g, R } = afRoomFloor('pstn', -6, 6, -5, 5, 0x8A8F99, 0xC8CCC0, 3.2);
+    box(2.4, .08, 1.2, mat(0x5A5E68, { metalness: .4 }), 0, .78, 0, g); [[-1.1, -.5], [1.1, -.5], [-1.1, .5], [1.1, .5]].forEach(([x, z]) => box(.06, .78, .06, mat(0x3A3D44), x, .39, z, g)); R.push([-1.2, 1.2, -.6, .6]);
+    [[0, -1.2], [0, 1.2]].forEach(([x, z]) => { box(.5, .06, .5, mat(0x3A3D44), x, .46, z, g); box(.5, .5, .06, mat(0x3A3D44), x, .72, z + (z < 0 ? -.22 : .22), g); });
+    box(.04, 1.2, 2.6, new THREE.MeshStandardMaterial({ color: 0x0A0C10, roughness: .05, metalness: .8 }), 5.88, 1.6, 0, g);
+    const lamp = new THREE.PointLight(0xFFE8C0, 1.1, 10, 2); lamp.position.set(0, 2.6, 0); g.add(lamp); box(.5, .12, .5, mat(0x2A2D33), 0, 2.9, 0, g);
+    box(1.4, 2.3, .08, mat(0x5A5E68), 0, 1.15, 4.92, g);
+    box(.8, .02, .6, mat(0xF2EEE6), -.5, .83, 0, g); box(.6, .02, .8, mat(0xE8DCC8), .6, .83, .1, g);
+    AF.pawarS = afMk(() => bodyAv('af_pawar', 1)); if (AF.pawarS) { AF.pawarS.g.position.set(0, 0, -1.25); g.add(AF.pawarS.g); } }
+  // ---------- Ch46: the interrogation, a battle of answers ----------
+  const AF_JQ = [
+    { k: 'shetty', who: 'Vinod Shetty', str: 'weak', q: 'Vinod Shetty. The lake. Page one of your notebook: “Lake. Done. Tidy.” And Mrs. Rao says you were burning things in the basement at midnight.' },
+    { k: 'varadan', who: 'Hari Varadan', str: 'medium', q: 'Hari Varadan. His car is in his garage and his passport is in his drawer. Mrs. Rao’s statement says you came home at dawn that day with garden soil on your shoes, carrying a pair of gloves that weren’t yours.' },
+    { k: 'naidu', who: 'Bhaskar Naidu', str: 'strong', q: 'Bhaskar Naidu. Mumbai Central. I don’t need your notebook for that one, Kiran. I was there. I watched you on that footbridge for two days.' },
+    { k: 'cel', who: 'Celestino Fernandes', str: 'none', q: 'Celestino Fernandes. Goa. A night trip for one, booked in a name that isn’t yours. His boat came back. He didn’t.' },
+    { k: 'khanna', who: 'Rajiv Khanna', str: 'none', q: 'Rajiv Khanna. Delhi. Someone posted his ledger to three newspapers and a judge. Every page but one.' },
+    { k: 'manju', who: 'Manju', str: 'medium', q: 'Manju. His boys say a student walked into their godown alone. Mrs. Rao says the basement smelled of burning plastic the week after.' } ];
+  const afJProven = (ans, str) => ans === 'admit' || ans === 'deny' && (str === 'strong' || str === 'medium') || ans === 'silent' && str === 'strong';
+  const AF_JREPLY = { admit: ['(writing) Thank you.', '“Earned.” You keep using that word.', '(not writing for a moment) You know what you just did, saying that out loud?'],
+    denyP: ['Mrs. Rao’s statement says otherwise, and she has never lied in her life. Neither has the notebook.', 'You’re lying to a man holding your own handwriting.'], denyU: ['Maybe. I can’t prove that one. Yet.', 'I’ll write “denies”. The court will decide what it believes.'],
+    silentP: ['Silence. Fine. I don’t need your words for this one; I have my own eyes.'], silentU: ['That’s your right. I’ll write: declined to answer.', '(writing slowly) Declined. To. Answer.'] };
+  async function afInterro(){ AF.busy = true; const J = afJ();
+    await cbTalk([['Narrator', 'Constable Pawar sits down across the table. He puts two things between you: a photocopy of your notebook, every page, and three typed sheets with a signature at the bottom.'], ['Constable Pawar', 'Your notebook. And the statement of Mrs. Kamala Rao, 4A. She came in on her own. She brought her reading glasses and a flask of tea.'],
+      ['Constable Pawar', 'A notebook is a story until something outside it agrees. So. Six names. You can deny them, you can say nothing, or you can tell me which ones you think “earned it”. Each answer goes on the record.']]);
+    for (const Q of AF_JQ) { await cbTalk([['Constable Pawar', Q.q]]);
+      const v = await new Promise(r => askChoice('kint_' + Q.k, r, { h: Q.who, q: 'What do you say to him?', a: [['deny', 'Deny it'], ['silent', 'Say nothing'], ['admit', 'Admit it: he earned it']] }));
+      J.ans[Q.k] = v; const p = afJProven(v, Q.str); if (p && !J.proven.includes(Q.k)) J.proven.push(Q.k);
+      const L = v === 'admit' ? AF_JREPLY.admit : v === 'deny' ? (p ? AF_JREPLY.denyP : AF_JREPLY.denyU) : (p ? AF_JREPLY.silentP : AF_JREPLY.silentU), line = L[(AF_JQ.indexOf(Q) + J.proven.length) % L.length];
+      await cbTalk([['Kiran', v === 'admit' ? `${Q.who.split(' ')[0]}? He earned it.` : v === 'deny' ? 'I don’t know what you’re talking about.' : '(nothing)'], ['Constable Pawar', line]]); afSave(); }
+    const n = J.proven.length, adm = Object.values(J.ans).filter(a => a === 'admit').length;
+    await cbTalk([['Constable Pawar', `(closing the folder) ${n} of six I can put in front of a judge tomorrow${n < 6 ? `. The other ${6 - n} will take time` : ''}. ${adm ? 'You told me why. Most of them never tell me why.' : 'You never once told me why.'}`],
+      ['Constable Pawar', '(at the door, not turning round) For what it’s worth: the boatman, the advocate, the tea seller. I’d been chasing those for years. I couldn’t make any of them stick.'], ['Constable Pawar', 'That’s exactly why it isn’t up to you, Kiran.']]);
+    J.n = n; AF.s.seen.j_int = 1; afLog(`Constable Pawar interrogated Kiran. ${n} of the six deaths can be proved in court${adm ? `; Kiran admitted ${adm} himself, because they “earned it”` : ''}.`); afSave(); AF.busy = false; }
+  async function afRemand(){ AF.busy = true; const J = afJ();
+    await cbTalk([['Narrator', 'A magistrate’s court, the next morning, for eleven minutes. Your name read out wrong, then right. The notebook in a plastic evidence bag. Mrs. Rao in the second row in her best sari, not looking at you.'], ['Magistrate', `Remanded to judicial custody. Bangalore Central Prison. ${J.n >= 4 ? 'Bail is refused.' : 'Bail is refused; the investigation continues.'} Next.`],
+      ['Narrator', 'Nobody else from Tower Road came. You looked.'], ['Narrator', 'A van with no windows. A gate. Another gate. A man with a register who writes your name without looking up.']]);
+    AF.s.seen.j_rem = 1; afSave(); AF.busy = false; }
+  // ---------- the chapter ----------
+  { const C = AF_CH.find(c => c.id === 'ex5'); if (C) C.steps.pop(); }
+  AF_BACTS.push({ L: () => afLc('twr', [0, 1.9], 'pstn'), r: 1.8, on: () => afIs('j_int'), label: 'Sit down across from Constable Pawar', go: afInterro });
+  AF_CH.push({ n: 'Chapter 46', t: 'Booked', sub: 'A table, two chairs, a notebook in a plastic bag.', id: 'jl1', room: ['pstn', [0, 3.8], 0], steps: [
+    { g: '', go: () => { AF.busy = true; afRoom('pstn', [0, 3.8], 0); setTimeout(() => cbTalk([['Narrator', 'Fingerprints. A photograph against a height chart. Your belt and your shoelaces in a brown envelope with your name on it.'], ['Narrator', 'A night on a concrete bench in a holding cell that smells of phenyl. In the morning they bring you into a small room with a big lamp.']]).then(() => { AF.s.seen.j0 = 1; afSave(); AF.busy = false; }), 900); }, chk: () => !!AF.s.seen.j0 },
+    { k: 'j_int', g: afGh('Sit down across from Constable Pawar'), at: () => afLc('twr', [0, 1.9], 'pstn'), chk: () => !!AF.s.seen.j_int },
+    { g: '', go: () => afRemand(), chk: () => !!AF.s.seen.j_rem } ] });
+  AF_SKIP[AF_CH.length - 1] = () => { const J = afJ(); AF_JQ.forEach(Q => { if (!J.ans[Q.k]) J.ans[Q.k] = 'silent'; if (afJProven(J.ans[Q.k], Q.str) && !J.proven.includes(Q.k)) J.proven.push(Q.k); }); J.n = J.proven.length; ['j0', 'j_int', 'j_rem'].forEach(k => { AF.s.seen[k] = 1; }); afSave(); };
+  afKidFrame = (o => function(dt){ o(dt); if (TWR.sc && !TWR.floors.pstn) try { afJBuild(); } catch (e) { console.error(e); } })(afKidFrame);
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
