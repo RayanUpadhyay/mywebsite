@@ -17478,7 +17478,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { L: () => afLc('twr', [9, -12.4], 'flats'), r: 2.2, label: 'Your flat (4E)', go: afKFlatIn },
     { L: () => afLc('twr', [0, 4.4], 'kflat'), r: 1.8, label: 'Out to the corridor', go: afKFlatOut },
     { L: () => afLc('twr', [0, -3.9], 'kflat'), r: 2.2, on: () => !!AF.s.seen.rb_stall && !afIs('oh_race'), label: () => AF.s.seen.rb_board ? 'Your suspect board' : 'Start a suspect board', go: () => { if (!AF.s.seen.rb_board) { AF.s.seen.rb_board = 1; afSave(); } afBoardOpen(); } },
-    { L: () => afLc('twr', [-12, 12.2], 'flats'), r: 2.4, on: () => !AF.s.seen.rb_rao, label: 'Say hello to Mrs. Rao (4A)', go: () => afRbTalk('rao') },
+    { L: () => afLc('twr', [-12, 12.2], 'flats'), r: 2.4, on: () => !AF.s.seen.rb_rao && afChId() === 'rb1', label: 'Say hello to Mrs. Rao (4A)', go: () => afRbTalk('rao') },
     { L: () => AF.blP && afLc('blr', AF.blP.dad), r: 3, on: () => !!(AF.blDad && AF.blDad.g.visible) && !AF.s.seen.rb_dad, label: 'Say hello to the boy from 4B', go: () => afRbTalk('dad') },
     { L: () => AF.blP && afLc('blr', AF.blP.stall), r: 3, on: () => !AF.s.seen.rb_stall, label: 'Tea at Shanthamma’s stall', go: () => afRbTalk('stall', () => { afRbDay('Tuesday: (nothing written)'); afRbClue('Notebook: page 14 is missing. Torn out, neatly, close to the spine.'); }) },
     { L: () => AF.blP && afLc('blr', AF.blP.guard), r: 3, on: () => !!AF.s.seen.rb_board && !AF.s.seen.rb_guard, label: 'Talk to Prakash at the bank', go: () => afRbTalk('guard') },
@@ -17505,7 +17505,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ---------- every frame ----------
   afKidFrame = (o => function(dt){ o(dt); try { afBlFrame(dt); } catch (e) { if (!AF.blErr) { AF.blErr = 1; console.error(e); } } })(afKidFrame);
   function afBlFrame(dt){ const on = afBlOn();
-    if (on && performance.now() - (AF.blT || 0) > 3000 && !(inWorld && ['blr', 'twr', 'event'].includes(zone))) { AF.on = false; afSave(); afHud.hidden = true; afActBtn.hidden = true; afBoardBtnUp(); return; }
+    if (on && performance.now() - (AF.blT || 0) > 3000 && !(inWorld && ['blr', 'twr', 'event'].includes(zone)) && !(AF.s.home4b && zone === 'hub')) { AF.on = false; afSave(); afHud.hidden = true; afActBtn.hidden = true; afBoardBtnUp(); return; }
     if (BL.mapG) afBlCity(); if (TWR.sc) afBlTwr();
     const day = AF.s.rbHr >= 7 && AF.s.rbHr < 19;
     if (AF.blG) AF.blG.visible = on; if (AF.blDad) AF.blDad.g.visible = on && day && ['rb1', 'rb2', 'rb3', 'rb5'].includes(afChId()); if (AF.rao) AF.rao.g.visible = on; if (AF.kBoard) AF.kBoard.visible = !AF.s.seen.oh_board;
@@ -17890,13 +17890,15 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       : [['Kiran', 'It’s a story. I’m writing a crime novel. All of it’s made up.'], [afDadNm(), 'Varadan is real. Manju is real. It was on the news. You wrote down the dates they disappeared before the news did.'], ['Kiran', '…'], [afDadNm(), '(standing up, backing away from the table) Get out of my flat.']]);
     await cbTalk([[afDadNm(), 'At nine tomorrow morning that constable comes back. I’m giving him this. I’m giving him all of it.'], ['Narrator', 'You could stop him. You both know it. He’s nineteen and he weighs nothing and the notebook is right there.'], ['Kiran', '(standing, leaving it on the table) Never him.'], ['Narrator', 'You close his door very gently on your way out.']]);
     AF.s.seen.ex_conf = 1; afLog(v === 'truth' ? 'The boy in 4B found the notebook. Kiran told him the truth: “I’m your son.” He believed enough of it to be afraid.' : 'The boy in 4B found the notebook. Kiran lied, and he didn’t believe a word.'); afSave(); AF.busy = false; }
-  async function afExposedEnd(){ AF.busy = true; const T = afExS().truth;
-    await cbTalk([['Narrator', 'The night bus to anywhere. Back seat, hood up, the window cold against your head. Bangalore goes past in orange streetlight, and then it stops going past.'], ['Narrator', 'Your phone buzzes once. A voice note. From 4B.'],
-      T ? [afDadNm(), '(very quiet, a fan going round behind him) I don’t know if any of what you said is true. Part of me hopes it is. Part of me hopes I never… (a breath) Don’t come back here. Please. Whoever you are. Don’t come back.'] : [afDadNm(), '(very quiet) I gave him the notebook. I told him everything. I don’t know who you are. I hope I never do. Don’t come back.'],
-      ['Narrator', 'On the news at the bus stop in the morning: your face. TIDY STREETS KILLER: STUDENT NAMED. Constable Pawar on the steps, tired, not smiling. “He’ll be found. They always think they won’t be.”'], ['Narrator', 'Mrs. Rao, on the evening news, in her best sari: “He was too thin. I said so on the first day.”']]);
-    await cbCard('', 'Wanted', 'Somewhere south of Bangalore. A new notebook.');
-    await cbTalk([['Narrator', 'A rented room in a town you’ve never heard of. A new notebook. Page one. The rules, copied out again in very small careful writing.'], ['Narrator', 'Never anyone who didn’t earn it. Never him.'], ['Narrator', 'Then you cross out the third one, and write it again underneath.'], ['Kiran', '(to the window) Don’t get caught again.']]);
-    AF.s.seen.ex_end = 1; afHeat(100); afLog('Kiran was named on every channel: the Tidy Streets Killer. He ran south on a night bus with a new notebook. His father asked him never to come back.'); afSave(); AF.busy = false; }
+  async function afExposedEnd(){ AF.busy = true;
+    await cbTalk([['Narrator', 'The bus stand. The night bus to anywhere is already in, engine running, door open. Three steps away.'], ['Narrator', 'On the bench under the timetable, in a khaki shirt, with two teas in steel glasses, sits Constable Pawar.'], ['Constable Pawar', '(holding one out) Less sugar. I asked Shanthamma how you take it.']]);
+    let v = ''; const tries = { run: ['Your legs don’t move. He’s between you and the door, and he has never hurt anyone in his life. Never anyone who didn’t earn it.', 'You could make it. He’s slower than you. You don’t.'], fight: ['Your hands close. Then open. He has a daughter in Mumbai; you read it in his notebook. Never anyone who didn’t earn it.', 'He doesn’t even put the tea down. He knows you won’t.'] }, n = { run: 0, fight: 0 };
+    while (v !== 'wrists') { v = await new Promise(r => askChoice('karrest', r, { h: 'The bus stand', q: 'Pawar waits. The bus engine idles. Nobody else is moving.', a: [['run', 'Run for the bus'], ['fight', 'Go for him'], ['wrists', 'Hold out your wrists']] }));
+      if (v !== 'wrists') { await cbTalk([['Narrator', tries[v][Math.min(1, n[v]++)]]]); } }
+    await cbTalk([['Narrator', 'You hold out your wrists. He puts the tea in your hands first, and waits while you drink it. Then the cuffs, gently, like a man closing a door on a sleeping room.'], ['Constable Pawar', 'Kiran. I’m arresting you for the murders of Vinod Shetty, Hari Varadan, Bhaskar Naidu, Celestino Fernandes, Rajiv Khanna and the man called Manju.'], ['Kiran', '(very quietly) They earned it.'], ['Constable Pawar', 'Maybe. That’s not a word the court has.']]);
+    await cbCard('', 'Tower Road', 'The back of a police jeep.');
+    await cbTalk([['Narrator', 'The jeep takes Tower Road. It always would. Through the mesh window, the tower goes past slowly: the lobby, the watchman standing up to look, Mrs. Rao on her balcony with her hand over her mouth.'], ['Narrator', 'Two balconies along: 4B. The light is off. The washing line is empty. Nobody is there.'], ['Narrator', 'You watch it until the road bends and takes it away.']]);
+    AF.s.seen.ex_end = 1; afHeat(100); afLog('Kiran was arrested at the bus stand by Constable Pawar. He didn’t run, and he didn’t fight: Pawar had never hurt anyone. Nobody was on the 4B balcony when the jeep went past.'); afSave(); AF.busy = false; }
   // ---------- the chapters (after the Collector's balcony) ----------
   { const C = AF_CH.find(c => c.id === 'cl3'); if (C) C.steps.pop(); }
   const afExPt = f => () => f() ? afLc('blr', f()) : null;
@@ -17929,6 +17931,285 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { g: '', go: () => afExposedEnd(), chk: () => !!AF.s.seen.ex_end },
     { g: 'To be continued', chk: () => false } ] });
   AF_SKIP[AF_CH.length - 1] = () => { ['ex50', 'ex_bus'].forEach(k => { AF.s.seen[k] = 1; }); afSave(); };
+  // ======================= Kiran: arrest, jail, the long way out, and 4B (Chapters 46-50 and after) =======================
+  // The dad is gone from here on: no visits, no calls. Kiran's rooms (the station, the jail) are extra floors in the tower
+  // scene that the lift never lists, so the story's markers, actions and patrols work in them unchanged.
+  const afJ = () => AF.s.jail || (AF.s.jail = { ans: {}, proven: [], day: 0, ph: 0, ev: {}, tools: [] });
+  const AF_JFLOORS = ['pstn', 'jail'];
+  // a walled room on its own floor: everything outside [x0..x1, z0..z1] is solid
+  function afRoomFloor(id, x0, x1, z0, z1, floorCol, wallCol, h){ const g = new THREE.Group(); g.visible = false; TWR.sc.add(g); TWR.floors[id] = g;
+    const R = TWR.rects[id] = [[-20, x0 - .3, -14, 14], [x1 + .3, 20, -14, 14], [x0 - .3, x1 + .3, -14, z0 - .3], [x0 - .3, x1 + .3, z1 + .3, 14]], W = x1 - x0, D = z1 - z0, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
+    const fl = new THREE.Mesh(new THREE.PlaneGeometry(W, D), mat(floorCol, { roughness: .95 })); fl.rotation.x = -Math.PI / 2; fl.position.set(cx, 0, cz); fl.userData.walk = true; g.add(fl);
+    const wm = mat(wallCol, { roughness: 1 }); box(W, h, .2, wm, cx, h / 2, z0 - .1, g); box(W, h, .2, wm, cx, h / 2, z1 + .1, g); box(.2, h, D, wm, x0 - .1, h / 2, cz, g); box(.2, h, D, wm, x1 + .1, h / 2, cz, g);
+    const wall = (a0, a1, b0, b1, hh, m) => { box(a1 - a0, hh || h, b1 - b0, m || wm, (a0 + a1) / 2, (hh || h) / 2, (b0 + b1) / 2, g); R.push([a0, a1, b0, b1]); };
+    return { g, R, wall }; }
+  // go to one of those rooms (without the lift's floor announcement)
+  function afRoom(f, at, yw){ if (A || EV) return; if (!TWR.sc) buildTwr(); afJBuild(); AF.blT = performance.now();
+    fade(() => { web.p = null; drawWeb(); walkTarget = null; exitTelescope(); inWorld = true; zone = 'twr'; vy = 0; falling = false; grounded = true; showFloor(f); pos.set(at[0], 1.6, at[1]); yaw = yw || 0; pitch = -.05; TWR.liftArm = false;
+      closePanel(); dock.classList.remove('on'); hotEl.hidden = false; $('#worldBack').hidden = false; $('#worldBack').textContent = 'Back to your room'; jumpBtn.hidden = fine; uiZone(); }, '#06070B'); }
+  // carrying on (or reloading) while Kiran is locked up takes you back to where he's locked up
+  afBlGo = (o => function(){ const C = AF_CH[AF.s.ch]; if (C && C.room && !(inWorld && zone === 'twr' && TWR.floor === C.room[0])) { if (A || EV) return; if (typeof DRV !== 'undefined' && DRV.on) getOut(true); if (XC.drv) xcExitCar(); XC.ride = null;
+      AF.s.act = 'krb'; AF.on = true; AF.key = ''; afSave(); meKey = ''; afRoom(C.room[0], C.room[1], C.room[2]); setTimeout(() => { if (zone !== 'xc' && zone !== 'xin') { xcFree(); XC.city = ''; } }, 1200); return; } return o(); })(afBlGo);
+  afHint = (o => function(){ const S = afSt(), L = S.at && S.at(); if (L && L.w === 'twr' && AF_JFLOORS.includes(L.f)) return ''; return o(); })(afHint);
+  function afJBuild(){ if (!TWR.sc) return; if (!TWR.floors.pstn) afBuildStation(); if (!TWR.floors.jail && typeof afBuildJail === 'function') afBuildJail(); }
+  // ---------- the police station: an interrogation room ----------
+  function afBuildStation(){ const { g, R } = afRoomFloor('pstn', -6, 6, -5, 5, 0x8A8F99, 0xC8CCC0, 3.2);
+    box(2.4, .08, 1.2, mat(0x5A5E68, { metalness: .4 }), 0, .78, 0, g); [[-1.1, -.5], [1.1, -.5], [-1.1, .5], [1.1, .5]].forEach(([x, z]) => box(.06, .78, .06, mat(0x3A3D44), x, .39, z, g)); R.push([-1.2, 1.2, -.6, .6]);
+    [[0, -1.2], [0, 1.2]].forEach(([x, z]) => { box(.5, .06, .5, mat(0x3A3D44), x, .46, z, g); box(.5, .5, .06, mat(0x3A3D44), x, .72, z + (z < 0 ? -.22 : .22), g); });
+    box(.04, 1.2, 2.6, new THREE.MeshStandardMaterial({ color: 0x0A0C10, roughness: .05, metalness: .8 }), 5.88, 1.6, 0, g);
+    const lamp = new THREE.PointLight(0xFFE8C0, 1.1, 10, 2); lamp.position.set(0, 2.6, 0); g.add(lamp); box(.5, .12, .5, mat(0x2A2D33), 0, 2.9, 0, g);
+    box(1.4, 2.3, .08, mat(0x5A5E68), 0, 1.15, 4.92, g);
+    box(.8, .02, .6, mat(0xF2EEE6), -.5, .83, 0, g); box(.6, .02, .8, mat(0xE8DCC8), .6, .83, .1, g);
+    AF.pawarS = afMk(() => bodyAv('af_pawar', 1)); if (AF.pawarS) { AF.pawarS.g.position.set(0, 0, -1.25); g.add(AF.pawarS.g); } }
+  // ---------- Ch46: the interrogation, a battle of answers ----------
+  const AF_JQ = [
+    { k: 'shetty', who: 'Vinod Shetty', str: 'weak', q: 'Vinod Shetty. The lake. Page one of your notebook: “Lake. Done. Tidy.” And Mrs. Rao says you were burning things in the basement at midnight.' },
+    { k: 'varadan', who: 'Hari Varadan', str: 'medium', q: 'Hari Varadan. His car is in his garage and his passport is in his drawer. Mrs. Rao’s statement says you came home at dawn that day with garden soil on your shoes, carrying a pair of gloves that weren’t yours.' },
+    { k: 'naidu', who: 'Bhaskar Naidu', str: 'strong', q: 'Bhaskar Naidu. Mumbai Central. I don’t need your notebook for that one, Kiran. I was there. I watched you on that footbridge for two days.' },
+    { k: 'cel', who: 'Celestino Fernandes', str: 'none', q: 'Celestino Fernandes. Goa. A night trip for one, booked in a name that isn’t yours. His boat came back. He didn’t.' },
+    { k: 'khanna', who: 'Rajiv Khanna', str: 'none', q: 'Rajiv Khanna. Delhi. Someone posted his ledger to three newspapers and a judge. Every page but one.' },
+    { k: 'manju', who: 'Manju', str: 'medium', q: 'Manju. His boys say a student walked into their godown alone. Mrs. Rao says the basement smelled of burning plastic the week after.' } ];
+  const afJProven = (ans, str) => ans === 'admit' || ans === 'deny' && (str === 'strong' || str === 'medium') || ans === 'silent' && str === 'strong';
+  const AF_JREPLY = { admit: ['(writing) Thank you.', '“Earned.” You keep using that word.', '(not writing for a moment) You know what you just did, saying that out loud?'],
+    denyP: ['Mrs. Rao’s statement says otherwise, and she has never lied in her life. Neither has the notebook.', 'You’re lying to a man holding your own handwriting.'], denyU: ['Maybe. I can’t prove that one. Yet.', 'I’ll write “denies”. The court will decide what it believes.'],
+    silentP: ['Silence. Fine. I don’t need your words for this one; I have my own eyes.'], silentU: ['That’s your right. I’ll write: declined to answer.', '(writing slowly) Declined. To. Answer.'] };
+  async function afInterro(){ AF.busy = true; const J = afJ();
+    await cbTalk([['Narrator', 'Constable Pawar sits down across the table. He puts two things between you: a photocopy of your notebook, every page, and three typed sheets with a signature at the bottom.'], ['Constable Pawar', 'Your notebook. And the statement of Mrs. Kamala Rao, 4A. She came in on her own. She brought her reading glasses and a flask of tea.'],
+      ['Constable Pawar', 'A notebook is a story until something outside it agrees. So. Six names. You can deny them, you can say nothing, or you can tell me which ones you think “earned it”. Each answer goes on the record.']]);
+    for (const Q of AF_JQ) { await cbTalk([['Constable Pawar', Q.q]]);
+      const v = await new Promise(r => askChoice('kint_' + Q.k, r, { h: Q.who, q: 'What do you say to him?', a: [['deny', 'Deny it'], ['silent', 'Say nothing'], ['admit', 'Admit it: he earned it']] }));
+      J.ans[Q.k] = v; const p = afJProven(v, Q.str); if (p && !J.proven.includes(Q.k)) J.proven.push(Q.k);
+      const L = v === 'admit' ? AF_JREPLY.admit : v === 'deny' ? (p ? AF_JREPLY.denyP : AF_JREPLY.denyU) : (p ? AF_JREPLY.silentP : AF_JREPLY.silentU), line = L[(AF_JQ.indexOf(Q) + J.proven.length) % L.length];
+      await cbTalk([['Kiran', v === 'admit' ? `${Q.who.split(' ')[0]}? He earned it.` : v === 'deny' ? 'I don’t know what you’re talking about.' : '(nothing)'], ['Constable Pawar', line]]); afSave(); }
+    const n = J.proven.length, adm = Object.values(J.ans).filter(a => a === 'admit').length;
+    await cbTalk([['Constable Pawar', `(closing the folder) ${n} of six I can put in front of a judge tomorrow${n < 6 ? `. The other ${6 - n} will take time` : ''}. ${adm ? 'You told me why. Most of them never tell me why.' : 'You never once told me why.'}`],
+      ['Constable Pawar', '(at the door, not turning round) For what it’s worth: the boatman, the advocate, the tea seller. I’d been chasing those for years. I couldn’t make any of them stick.'], ['Constable Pawar', 'That’s exactly why it isn’t up to you, Kiran.']]);
+    J.n = n; AF.s.seen.j_int = 1; afLog(`Constable Pawar interrogated Kiran. ${n} of the six deaths can be proved in court${adm ? `; Kiran admitted ${adm} himself, because they “earned it”` : ''}.`); afSave(); AF.busy = false; }
+  async function afRemand(){ AF.busy = true; const J = afJ();
+    await cbTalk([['Narrator', 'A magistrate’s court, the next morning, for eleven minutes. Your name read out wrong, then right. The notebook in a plastic evidence bag. Mrs. Rao in the second row in her best sari, not looking at you.'], ['Magistrate', `Remanded to judicial custody. Bangalore Central Prison. ${J.n >= 4 ? 'Bail is refused.' : 'Bail is refused; the investigation continues.'} Next.`],
+      ['Narrator', 'Nobody else from Tower Road came. You looked.'], ['Narrator', 'A van with no windows. A gate. Another gate. A man with a register who writes your name without looking up.']]);
+    AF.s.seen.j_rem = 1; afSave(); AF.busy = false; }
+  // ---------- the chapter ----------
+  { const C = AF_CH.find(c => c.id === 'ex5'); if (C) C.steps.pop(); }
+  AF_BACTS.push({ L: () => afLc('twr', [0, 1.9], 'pstn'), r: 1.8, on: () => afIs('j_int'), label: 'Sit down across from Constable Pawar', go: afInterro });
+  AF_CH.push({ n: 'Chapter 46', t: 'Booked', sub: 'A table, two chairs, a notebook in a plastic bag.', id: 'jl1', room: ['pstn', [0, 3.8], 0], steps: [
+    { g: '', go: () => { AF.busy = true; afRoom('pstn', [0, 3.8], 0); setTimeout(() => cbTalk([['Narrator', 'Fingerprints. A photograph against a height chart. Your belt and your shoelaces in a brown envelope with your name on it.'], ['Narrator', 'A night on a concrete bench in a holding cell that smells of phenyl. In the morning they bring you into a small room with a big lamp.']]).then(() => { AF.s.seen.j0 = 1; afSave(); AF.busy = false; }), 900); }, chk: () => !!AF.s.seen.j0 },
+    { k: 'j_int', g: afGh('Sit down across from Constable Pawar'), at: () => afLc('twr', [0, 1.9], 'pstn'), chk: () => !!AF.s.seen.j_int },
+    { g: '', go: () => afRemand(), chk: () => !!AF.s.seen.j_rem } ] });
+  AF_SKIP[AF_CH.length - 1] = () => { const J = afJ(); AF_JQ.forEach(Q => { if (!J.ans[Q.k]) J.ans[Q.k] = 'silent'; if (afJProven(J.ans[Q.k], Q.str) && !J.proven.includes(Q.k)) J.proven.push(Q.k); }); J.n = J.proven.length; ['j0', 'j_int', 'j_rem'].forEach(k => { AF.s.seen[k] = 1; }); afSave(); };
+  afKidFrame = (o => function(dt){ o(dt); if (TWR.sc && !TWR.floors.pstn) try { afJBuild(); } catch (e) { console.error(e); } })(afKidFrame);
+  // ---------- Bangalore Central Prison: cell block, mess hall, workshop, yard ----------
+  BODY.af_basav = afManBody(0xEEEEE8, 0xEEEEE8, 0x6A4630, 0x2A2A2A, R => { R.add(new THREE.BoxGeometry(.56, .3, .36), 0xEEEEE8, 0, R.hip + .55, 0); R.add(new THREE.TorusGeometry(.07, .012, 6, 16), 0xD8B040, 0, R.sh - .02, -.14); });
+  BODY.af_inm = afManBody(0xEEEEE8, 0xEEEEE8, 0x9A7050, 0x1A1410);
+  HEROES.af_gundu = { name: 'Gundu', outfit: 'casual', hp: 420, kind: 'melee', dmg: 9, range: 2.1, cd: .9, speed: 4.6, r: .5, grounded: 1 }; BODY.af_gundu = afManBody(0xEEEEE8, 0xEEEEE8, 0x5A3A2A, 0x16181D, R => { R.add(new THREE.BoxGeometry(.6, .32, .4), 0xEEEEE8, 0, R.hip + .5, 0); });
+  HEROES.af_inmate = { name: 'Inmate', outfit: 'casual', hp: 160, kind: 'melee', dmg: 6, range: 2, cd: 1, speed: 4.4, r: .5, grounded: 1 }; BODY.af_inmate = BODY.af_inm;
+  const AF_JCELL = { door: [-11.5, 5.2], bunk: [-11.4, 10.4], mate: [-13.2, 11.4] };
+  function afBuildJail(){ const { g, R, wall } = afRoomFloor('jail', -19.2, 19.4, -13.2, 13.2, 0x7A7A72, 0xB8B4A8, 4.4); AF.jailL = [];
+    const bar = mat(0x4A4D52, { metalness: .7, roughness: .4 }), bars = (a0, a1, z) => { R.push([a0, a1, z - .1, z + .1]); const L = []; for (let x = a0 + .12; x < a1; x += .26) L.push([x, 1.6, z, 0, .05, 3.2, .05]); inst(new THREE.BoxGeometry(1, 1, 1), bar, L, g); box(a1 - a0, .1, .12, bar, (a0 + a1) / 2, 3.2, z, g); };
+    // cells: three on each side of the corridor, barred fronts with a door gap
+    [[-4, -1], [4, 1]].forEach(([z, s]) => { [[-19.2, -17.2], [-15.8, -12.2], [-10.8, -7.2], [-5.8, -4]].forEach(([a, b]) => bars(a, b, z)); [-14, -9].forEach(x => wall(x - .1, x + .1, s < 0 ? -13.2 : 4, s < 0 ? -4 : 13.2, 3.4));
+      [-16.5, -11.5, -6.5].forEach(x => { const zb = s < 0 ? -11.8 : 11.8; box(1.1, .5, 2.2, mat(0x6A6E74), x - 1.4, .25, zb, g); box(1, .08, 2.1, mat(0xD8D2C0), x - 1.4, .54, zb, g); R.push([x - 2, x - .85, zb - 1.15, zb + 1.15]); }); });
+    // Kiran's cell: the far bunk is his, the near one his cellmate's
+    box(1.1, .5, 2.2, mat(0x6A6E74), -9.9, .25, 10.4, g); box(1, .08, 2.1, mat(0xD8D2C0), -9.9, .54, 10.4, g); R.push([-10.5, -9.2, 9.2, 11.6]);
+    wall(-4.1, -3.9, -13.2, -1.6); wall(-4.1, -3.9, 1.6, 13.2);
+    const sg = new THREE.Mesh(new THREE.PlaneGeometry(3, .6), xcSign('BLOCK C', '#16181D', '#E8DCC8', 3, .6)); sg.position.set(-3.75, 3, 0); sg.rotation.y = Math.PI / 2; g.add(sg);
+    // the warder's office at the end of the corridor (the north-west cell, with a real door)
+    box(1.4, 2.4, .1, mat(0x5A4632), -16.5, 1.2, -3.95, g); const of = new THREE.Mesh(new THREE.PlaneGeometry(2, .45), xcSign('OFFICE', '#FFFFFF', '#5A4632', 2, .45)); of.position.set(-16.5, 2.8, -3.82); g.add(of);
+    // mess hall
+    wall(-4, -.2, -1.1, -.9); wall(1.8, 11, -1.1, -.9); wall(13, 19.4, -1.1, -.9); wall(6.9, 7.1, -13.2, -6.2); wall(6.9, 7.1, -4.2, -1);
+    [[-1, -6], [3.5, -6], [-1, -9.5], [3.5, -9.5]].forEach(([x, z]) => { box(3, .08, .9, mat(0x8A6B4A), x, .78, z, g); box(3, .4, .3, mat(0x6A4E3A), x, .22, z - .7, g); box(3, .4, .3, mat(0x6A4E3A), x, .22, z + .7, g); R.push([x - 1.5, x + 1.5, z - .5, z + .5]); });
+    box(6, 1, .8, mat(0x8A8F99, { metalness: .5 }), 1.5, .5, -12.6, g); R.push([-1.5, 4.5, -13.2, -12.2]); const ms = new THREE.Mesh(new THREE.PlaneGeometry(2.6, .5), xcSign('MESS', '#FFFFFF', '#3A5A4A', 2.6, .5)); ms.position.set(1.5, 3.4, -13.08); g.add(ms);
+    // workshop
+    [[10, -10], [15.5, -10], [10, -5.5], [15.5, -5.5]].forEach(([x, z]) => { box(3.2, .9, 1.2, mat(0x6A4E3A), x, .45, z, g); box(3.2, .06, 1.2, mat(0x8A8F99, { metalness: .5 }), x, .93, z, g); R.push([x - 1.6, x + 1.6, z - .6, z + .6]); });
+    box(.1, 2.4, 3, mat(0x3A3D44), 19.3, 1.6, -9, g); for (let i = 0; i < 6; i++) box(.06, .5, .1, mat(0x8A8F99, { metalness: .7 }), 19.2, 1.2 + (i % 3) * .5, -10 + Math.floor(i / 3) * 1.6, g);
+    const ws = new THREE.Mesh(new THREE.PlaneGeometry(3, .5), xcSign('WORKSHOP', '#16181D', '#F2C230', 3, .5)); ws.position.set(13, 3.4, -13.08); g.add(ws);
+    // the yard: concrete, a wall with wire on top, floodlights, crates stacked where the lift would be, and the storm drain
+    const yd = new THREE.Mesh(new THREE.PlaneGeometry(23.4, 14.2), mat(0x9A968C, { roughness: 1 })); yd.rotation.x = -Math.PI / 2; yd.position.set(7.7, .01, 6.1); g.add(yd);
+    box(23.4, 6, .3, mat(0x8A8478), 7.7, 3, 13.35, g); for (let x = -3.5; x < 19.4; x += 1.2) box(.04, .8, .04, bar, x, 6.4, 13.35, g); box(23.4, .03, .03, bar, 7.7, 6.6, 13.35, g);
+    box(3, 2.6, 3.4, mat(0x6A4E3A), 18.2, 1.3, .7, g); R.push([16.6, 20, -1.2, 2.4]);
+    const dr = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.4), mat(0x2A2D33, { metalness: .6 })); dr.rotation.x = -Math.PI / 2; dr.position.set(15, .03, 11.9); g.add(dr); for (let i = 0; i < 5; i++) box(1.3, .02, .06, bar, 15, .04, 11.4 + i * .25, g); AF.jDrain = [15, 11.9];
+    [[-2.5, 12.4], [18, 12.4]].forEach(([x, z]) => { box(.2, 7, .2, bar, x, 3.5, z, g); box(.8, .4, .5, glowM(0xFFF4D0, { emissiveIntensity: 1 }), x, 7, z - .4, g); const l = new THREE.PointLight(0xFFF4D0, .9, 22, 2); l.position.set(x, 6.5, z - 1); g.add(l); AF.jailL.push([l, .9]); });
+    [[-11.5, 8.5], [-11.5, -8.5], [-11.5, 0], [-16.5, 8.5], [-6.5, 8.5], [1.5, -7], [13, -7]].forEach(([x, z]) => { const l = new THREE.PointLight(0xFFF0D8, .7, 12, 2); l.position.set(x, 3.6, z); g.add(l); AF.jailL.push([l, .7]); });
+    // laundry carts in the yard: something to crouch behind at night
+    [[3, 8], [11, 6.5]].forEach(([x, z]) => { box(1.6, 1.2, 1, mat(0x5A6E8A), x, .6, z, g); box(1.5, .3, .9, mat(0xEEEEE8), x, 1.3, z, g); R.push([x - .8, x + .8, z - .5, z + .5]); });
+    // people
+    const P = (id, x, z, ry) => { const a = afMk(() => bodyAv(id, 1)); if (a) { a.g.position.set(x, 0, z); a.g.rotation.y = ry || 0; g.add(a.g); } return a; };
+    AF.basav = P('af_basav', 4.5, -3, Math.PI); AF.jmate = P('af_inm', AF_JCELL.mate[0], AF_JCELL.mate[1], Math.PI / 2);
+    AF.jcrowd = [[-1, -7.2, 0], [3.5, -7.2, 0], [-1, -4.8, Math.PI], [10, -6.7, Math.PI], [15.5, -11.2, 0], [4, 5, 2], [9, 9, -1], [12, 3, 1]].map(([x, z, r]) => P('af_inm', x, z, r));
+    AF.jguards = [[-5, 2.4, -Math.PI / 2], [1, -1.8, 0], [12, -1.8, 0]].map(([x, z, r]) => P('af_cop', x, z, r)); }
+  function afJNight(on){ (AF.jailL || []).forEach(([l, i]) => { l.intensity = on ? i * .18 : i; }); }
+  // ---------- the routine ----------
+  const AF_JR = [['count', 'Head count: stand at your cell door', AF_JCELL.door, 6.5], ['meal', 'Breakfast: queue at the mess counter', [1.5, -11.4], 7.5], ['work', 'Work duty: your bench in the workshop', [10, -8], 10],
+    ['yard', 'Yard time', [6, 6], 16], ['dinner', 'Dinner at the mess counter', [1.5, -11.4], 19], ['out', 'Lights out: your bunk', AF_JCELL.bunk, 21.5]];
+  const AF_JFLAV = { count: ['“Two-one-four-seven.” “Present.” The warder doesn’t look up.', 'Head count. Somebody two cells down coughs his number.', 'The count is wrong, then right. Everyone stands for twenty minutes while they find a pencil.'],
+    meal: ['Ragi mudde and a thin dal. You eat all of it.', 'Upma that tastes of the pot. Tea that tastes of the upma.', 'Someone has stolen the pickle again. Nobody looks at anyone.'],
+    work: ['Eight hours of sanding chair legs. Your hands stop shaking by the third.', 'Stitching cloth bags for a government office. Four hundred. Then four hundred more.', 'You plane a table top until it’s perfectly smooth. Nobody tells you to stop, so you don’t.'],
+    yard: ['Forty minutes of sky. You walk the wall and count the bricks.', 'A cricket game with a ball made of rags. You’re not invited. Yet.', 'Pigeons on the wire. You think of Mrs. Rao, and stop yourself.'],
+    dinner: ['Rice, sambar, a boiled egg on Thursdays. It’s Thursday.', 'Chapatis like cardboard. You eat them.', 'Basavaraj’s table laughs at something. Everyone else waits to see if they should.'],
+    out: ['Lights out. Your cellmate turns a page by the corridor light, very quietly.', 'Lights out. Somebody down the block is singing an old film song, badly, and nobody shouts.', 'Lights out. You lie on your back and write tomorrow’s date in your head, very small.'] };
+  const AF_JEV = [];   // { id, day, ph, on(), run() }: things that happen at a point in the routine
+  const afJPh = () => AF_JR[afJ().ph % AF_JR.length];
+  async function afJPhase(){ if (AF.busy) return; const J = afJ(), [k] = afJPh(); AF.busy = true;
+    const ev = AF_JEV.find(e => (e.day == null || e.day === J.day || e.day === 'any') && e.ph === k && !J.ev[e.id] && (!e.on || e.on()));
+    if (ev) { const r = await ev.run(); if (r === 'hold') { AF.busy = false; return; } } else { const F = AF_JFLAV[k]; say(F[(J.day + J.ph) % F.length], 3200); }
+    J.ph++; if (J.ph >= AF_JR.length) { J.ph = 0; J.day++; afJNight(false); await cbCard('', `Day ${J.day}`, 'Bangalore Central Prison'); }
+    AF.s.rbHr = afJPh()[3]; if (afJPh()[0] === 'out') afJNight(true); afSave(); AF.busy = false; }
+  AF_BACTS.push({ L: () => afLc('twr', afJPh()[2], 'jail'), r: 1.8, on: () => !!afSt().rt, label: () => afJPh()[1], go: afJPhase });
+  const afJGoal = extra => afGh(() => `Day ${afJ().day} · ${afJPh()[1]}${extra ? extra() : ''}`);
+  const afJAt = () => afLc('twr', afJPh()[2], 'jail');
+  function afTwFight(part, name){ if (EV || A) return; ST_TITLE[part] = name; ST_FRAIL.x = [1, 1, 1]; AF.fT = performance.now(); startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part, xc: 1, twr: true }); }
+  afSetup = (o => function(part, S){ if (!part.startsWith('xqj')) return o(part, S); S.af = { part, t: 0, n: 0, sp: 0 };
+    const sp = (r, a) => { for (let k = 0; k < 8; k++) { const x = pos.x + Math.cos(a + k) * r, z = pos.z + Math.sin(a + k) * r; if (evValid(x, z)) return [x, z]; } return [pos.x + 2, pos.z + 2]; };
+    if (part === 'xqjyard') { S.add('af_inmate', ...sp(5, 1)); const b = addUnit({ hero: 'af_gundu', team: 'en' }); [b.x, b.z] = sp(6, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name: 'Gundu' }, b, t: 99, marks: [] }; return; }
+    if (part === 'xqjnight') { const b = addUnit({ hero: 'af_gundu', team: 'en' }); [b.x, b.z] = sp(5, Math.PI); b.boss = 1; EV.boss = b; S.sb = { B: { name: 'Head Warder Mahadev' }, b, t: 99, marks: [] }; return; } })(afSetup);
+  afAfterFight = (o => function(part, won, F){ if (!part.startsWith('xqj')) return o(part, won, F); const J = afJ();
+    if (won) { J.ev['won_' + part] = 1; afSave(); } else say(part === 'xqjyard' ? 'Gundu’s bigger, and the yard is watching. Keep your hands up and move. Try again at yard time.' : 'He’s armed and you aren’t. Get inside his reach. Try again.', 3600); })(afAfterFight);
+  // ---------- Ch47 events ----------
+  AF_JEV.push(
+    { id: 'basav', day: 1, ph: 'meal', run: async () => { await cbTalk([['Narrator', 'The mess. Every bench full except one end of one table, where a big man in a gold chain he isn’t supposed to have eats alone, slowly, with his hands.'], ['Basavaraj', '(not looking up) Sit.'], ['Narrator', 'You sit. The hall gets quieter around you, the way a room does when a cricket ball is in the air.'],
+        ['Basavaraj', 'Tidy Streets. You’re in the papers more than the Chief Minister. Six men. A lawyer.'], ['Basavaraj', '(finally looking up) I run C block. Not the warders, not the superintendent. Me. Here, you’re nobody until I say you’re somebody. Eat your mudde.'],
+        ['Narrator', 'Everybody who walks past your table that morning looks at you for exactly as long as they dare.']]); afJ().ev.basav = 1; } },
+    { id: 'yard1', day: 1, ph: 'yard', run: async () => { const J = afJ(); if (J.ev.won_xqjyard) { J.ev.yard1 = 1; await cbTalk([['Narrator', 'Gundu is sitting on the bench with ice on his face. Basavaraj, from across the yard, raises one finger. That’s all.']]); return; }
+        await cbTalk([['Narrator', 'The yard. The rag-ball cricket stops. A man the size of a door walks over, cracking his knuckles: Gundu, Basavaraj’s.'], ['Gundu', 'Tidy Streets. Show us. Six men, and a boy like you? Show us.'], ['Narrator', 'No weapons. No black. Everyone is watching, and the warders have decided to look at the sky.']]); afTwFight('xqjyard', 'Gundu'); return 'hold'; } },
+    { id: 'out1', day: 1, ph: 'out', run: async () => { await cbTalk([['Narrator', 'Lights out. Your cellmate, Devraj, a soft-spoken man of fifty with a schoolteacher’s glasses, turns a page in a library book.'], ['Devraj', 'You did well in the yard. People here will leave you alone now. That’s worth a lot.'], ['Kiran', 'What are you in for?'], ['Devraj', '(a small smile, turning the page) A misunderstanding. Goodnight, Kiran.']]); afJ().ev.out1 = 1; } });
+  AF_CH.push({ n: 'Chapter 47', t: 'Inside', sub: 'Bangalore Central Prison. Block C.', id: 'jl2', room: ['jail', [-6, 0], Math.PI / 2], steps: [
+    { g: '', go: () => { AF.busy = true; const J = afJ(); if (!J.day) { J.day = 1; J.ph = 0; } afRoom('jail', [-6, 0], Math.PI / 2); setTimeout(() => cbTalk([['Narrator', 'A white kurta and pyjama with a number stencilled on the back: 2147. A steel plate, a steel tumbler, a blanket that smells of other people.'], ['Narrator', 'Block C. Six cells either side of a long corridor, three to a cell. Yours is the middle one on the south side. A man is already sitting on the near bunk, reading.'], ['Warder', 'Count at six. Breakfast at seven. Work at ten. Yard at four. Lights out at nine-thirty. You learn it, or you learn it the other way.']]).then(() => { AF.s.seen.jl2a = 1; AF.s.rbHr = AF_JR[afJ().ph][3]; afSave(); AF.busy = false; }), 900); }, chk: () => !!AF.s.seen.jl2a },
+    { rt: 1, g: afJGoal(() => afJ().day === 1 && afJPh()[0] === 'yard' && !afJ().ev.won_xqjyard ? ' (Gundu is waiting)' : ''), at: afJAt, chk: () => { const J = afJ(); return !!J.ev.yard1 && !!J.ev.out1 && J.day >= 2; } },
+    { g: '', go: () => { AF.busy = true; cbTalk([['Narrator', 'Day two. At breakfast someone puts an extra spoon of pickle on your plate without a word. At work, nobody takes your plane. In the yard, they throw you the rag ball.'], ['Basavaraj', '(passing, low) Kiran-anna. That’s what they’re calling you. I didn’t stop them.']]).then(() => { AF.s.seen.jl2z = 1; afSave(); AF.busy = false; }); }, chk: () => !!AF.s.seen.jl2z } ] });
+  AF_SKIP[AF_CH.length - 1] = () => { const J = afJ(); J.day = Math.max(J.day, 2); J.ph = 0; Object.assign(J.ev, { basav: 1, yard1: 1, won_xqjyard: 1, out1: 1 }); AF.s.seen.jl2a = AF.s.seen.jl2z = 1; afJNight(false); afSave(); };
+  afKidFrame = (o => function(dt){ o(dt); if (TWR.sc && TWR.floors.pstn && !TWR.floors.jail) try { afBuildJail(); } catch (e) { console.error(e); } if (AF.basav) { const k = afJPh()[0]; AF.basav.g.position.set(k === 'yard' ? 8 : 4.5, 0, k === 'yard' ? 10 : -3); } })(afKidFrame);
+  // ---------- night patrols inside ----------
+  Object.assign(AF_PAT, {
+    cells: { w: 'twr', f: 'jail', cops: [[[-18.4, 0], [-5, 0]], [[-5, .6], [-18.4, .6]]], hide: [[-11.5, -4.7], [-6.5, -4.7], [-16.5, 4.7], [-6.5, 4.7]], view: 7, cone: .9, speed: 1.3, start: AF_JCELL.door,
+      msg: ['A torch beam finds you. “Back in your cell. Now.” The night warder walks you there and bangs the bars with his lathi.', '“Two-one-four-seven. Again?” He writes it down this time.', 'A torch in your face. You put your hands up and walk back before he can decide what to do with you.'] },
+    yard: { w: 'twr', f: 'jail', cops: [[[-2.5, 2], [16, 2]], [[16, 10.8], [-2.5, 10.8]]], hide: [[3, 9.2], [11, 7.7]], view: 9, cone: .85, speed: 1.4, start: [-4.6, 0],
+      msg: ['The yard torch swings your way. You’re back through the block door before it lands.', 'A whistle. You flatten against the wall and slide back inside. (Start again.)', 'Boots on wet concrete, coming your way. Back inside. (Start again.)'] } });
+  // ---------- Ch48: Old Habits ----------
+  AF_JEV.push({ id: 'n48', day: 'any', ph: 'out', on: () => afSt().k === 'j_n48', run: async () => { const J = afJ();
+      await cbTalk([['Narrator', 'Lights out. Devraj says goodnight and turns his face to the wall.'], ['Narrator', 'Then, from the office at the end of the corridor: a lathi on something soft. Again. A boy’s voice. Arun. Seventeen. In for stealing a phone.'], ['Narrator', 'Head Warder Mahadev’s voice, bored: “Again. Say thank you. Again.”'], ['Narrator', 'Down the block, nobody makes a sound. On the near bunk, Devraj is breathing slowly. He’s awake. He’s listening. He’s smiling.']]);
+      const v = await new Promise(r => askChoice('kcode', r, { h: 'Lights out', q: 'Never anyone who didn’t earn it. The office is forty steps away. The night warders are on the corridor.', a: [['code', 'Keep the code. Go down the corridor'], ['down', 'Keep your head down. Stay on your bunk']] }));
+      J.code = v; J.ev.n48 = 1; afSave(); } });
+  async function afJOffice(){ AF.busy = true; afPatEnd(AF.patC); AF.patC = null;
+    await cbTalk([['Narrator', 'The office door is open a hand’s width. Arun on the floor, curled round himself. Mahadev, sleeves rolled, lathi in his hand, turns round.'], ['Head Warder Mahadev', '(almost pleased) Tidy Streets. Come to clean up?']]);
+    AF.busy = false; afTwFight('xqjnight', 'Head Warder Mahadev'); }
+  async function afJCodeEnd(){ AF.busy = true; const low = goreLow() || scaresLow(), J = afJ();
+    await cbTalk([['Narrator', 'Mahadev is on the office floor holding his arm at an angle arms don’t go. Arun is already gone, running, barefoot, back to his cell.'], ['Kiran', 'He earned the arm. Not the rest. Not yet.'],
+      ['Narrator', 'You walk back down the corridor. Nobody stops you now. In your cell, Devraj is sitting up on his bunk.'], ['Devraj', '(softly, still smiling) You read my papers, didn’t you. While I was in the shower.'], ['Kiran', 'Yes.'],
+      ['Narrator', low ? 'You don’t say anything else. Neither does he, after a while. In the morning the block says he fell from the top bunk. The block decides not to know any more than that.' : 'You don’t say anything else. It isn’t loud. In the morning the block says he fell from the top bunk, and everyone who walks past the cell looks at the floor.']]);
+    await cbCard('', 'Solitary', 'Twenty-one days.');
+    afJNight(true); await cbTalk([['Narrator', 'A cell two metres by two. No window. A slot in the door for food. The light goes on for eight minutes a day.'], ['Kiran', '(to the dark) Never anyone who didn’t earn it.'], ['Narrator', 'You count the days by the meals. You write the date in your head, very small, every morning. On the fourteenth day you lose count. On the twenty-first the door opens, and the light is so bright you cry, and you hate that you cry.'], ['Basavaraj', '(in the corridor, as they walk you back) Kiran-anna. The whole block was very quiet while you were gone. Very polite.']]);
+    afJNight(false); J.sol = 1; J.ev.code_end = 1; afLog('In Bangalore Central Prison, Kiran kept the code: he broke the head warder’s arm and dealt with his cellmate. He did twenty-one days in solitary.'); afSave(); AF.busy = false; }
+  async function afJDownEnd(){ AF.busy = true; const J = afJ();
+    await cbTalk([['Narrator', 'You stay on your bunk. You stare at the ceiling. It goes on for a long time, and then it stops, and that’s worse.'], ['Narrator', 'Devraj turns over. In the dark you can hear that he’s still smiling.'],
+      ['Narrator', 'In the morning Arun is at breakfast with one eye shut, eating with the wrong hand. He doesn’t look at anyone. He especially doesn’t look at you.'], ['Kiran', '(very quietly) Never anyone who didn’t earn it. And I did nothing. I lay there. I kept my head down like a good prisoner.'],
+      ['Narrator', 'That night, and the next, and the next, you lie awake and listen to Devraj sleep. It is the worst thing you have ever done, and you have done a lot of things.']]);
+    J.ev.code_end = 1; afLog('In Bangalore Central Prison, Kiran kept his head down while a boy was beaten and a child-killer slept in the next bunk. It was the worst thing he had ever done.'); afSave(); AF.busy = false; }
+  afPatEnd = (o => function(C){ if (C) C.placed = 0; o(C); })(afPatEnd);
+  const afNightPat = k => () => { afJNight(true); return AF_PAT[k]; };
+  AF_CH.push({ n: 'Chapter 48', t: 'Old Habits', sub: 'Never anyone who didn’t earn it.', id: 'jl3', room: ['jail', AF_JCELL.door, Math.PI], steps: [
+    { g: '', go: () => { AF.busy = true; cbTalk([['Narrator', 'Day three. Devraj is in the showers. His library book is on his bunk, and folded inside it, his court papers.'], ['Narrator', 'You read them. Of course you do. A child. Nine years old. A neighbour’s child he tutored after school. Trial in four months; his brother has hired the best lawyer in the city.'], ['Basavaraj', '(at breakfast, low, not looking at you) Everyone knows. Nobody touches him. His brother pays the warders more than the government does.'], ['Narrator', 'Devraj comes back from the shower and smiles at you, and asks if you slept well.']]).then(() => { AF.s.seen.j48a = 1; afSave(); AF.busy = false; }); }, chk: () => !!AF.s.seen.j48a },
+    { rt: 1, k: 'j_n48', g: afJGoal(() => afJPh()[0] === 'out' ? '' : ' (until lights out)'), at: afJAt, chk: () => !!afJ().ev.n48 },
+    { pat: () => afJ().code === 'code' && !afJ().ev.office ? afNightPat('cells')() : null, g: afGh(() => afJ().code === 'code' ? 'Down the corridor to the office. Night warders: wait in the cell doorways when their torches swing your way' : ''), at: () => afJ().code === 'code' ? afLc('twr', [-16.5, -3.2], 'jail') : null,
+      auto: () => { if (afJ().code === 'code' && !afJ().ev.office && zone === 'twr' && TWR.floor === 'jail' && Math.hypot(pos.x + 16.5, pos.z + 3.2) < 1.6) { afJ().ev.office = 1; afSave(); afJOffice(); } }, chk: () => afJ().code === 'down' || !!afJ().ev.won_xqjnight },
+    { g: '', go: () => { if (afJ().code === 'down') afJDownEnd(); else if (!afJ().ev.code_end && !AF.busy) afJCodeEnd(); }, chk: () => !!afJ().ev.code_end } ] });
+  AF_SKIP[AF_CH.length - 1] = () => { const J = afJ(); J.code = J.code || 'code'; Object.assign(J.ev, { n48: 1, office: 1, won_xqjnight: 1, code_end: 1 }); if (J.code === 'code') J.sol = 1; AF.s.seen.j48a = 1; afJNight(false); afSave(); };
+  // ---------- Ch49: The Long Way Out ----------
+  const AF_JTOOLS = [['blade', 'a hacksaw blade, snapped short, inside your waistband'], ['cutters', 'a pair of wire cutters, taped to your shin'], ['bar', 'a flat pry bar, down the leg of your pyjama']];
+  AF_JEV.push({ id: 'tool', day: 'any', ph: 'work', on: () => afSt().k === 'j_tools' && afJ().tools.length < 3, run: async () => { const J = afJ(), T = AF_JTOOLS[J.tools.length]; J.tools.push(T[0]); afSave(); await cbTalk([['Narrator', `Work duty. The instructor turns to shout at someone. You pocket ${T[1]}.`], ['Narrator', J.tools.length < 3 ? 'One more day. Then another. Then another. A week goes past; you don’t count it.' : 'Three. Hidden in the mattress seam, the one thing every warder is too bored to check.']]); } });
+  async function afBasav(){ AF.busy = true; afJNight(false);
+    await cbTalk([['Basavaraj', '(in the yard, cracking peanuts) You’ve been watching the drain for a month. Everyone sees you do it. Only I care.'], ['Basavaraj', 'Monsoon’s coming. When the big rain comes, the yard lights sometimes go. Sometimes. If somebody in the workshop forgets the fuse box.']]);
+    const v = await new Promise(r => askChoice('kbasav', r, { h: 'Basavaraj', q: 'He wants something.', a: [['bribe', 'Bribe him: your canteen account, all of it, and a name in Mumbai he can use'], ['blackmail', 'Blackmail him: you know who pays him, and which warder he pays']] }));
+    afJ().basav = v;
+    await cbTalk(v === 'bribe' ? [['Kiran', 'Every rupee in my canteen account. And a name in Mumbai: a man who owes a policeman called Pawar a very big favour.'], ['Basavaraj', '(laughing, pocketing the slip) Tidy Streets, doing business. The lights will go.']]
+      : [['Kiran', 'Devraj’s brother paid you, and you paid Mahadev. I can tell a constable named Pawar exactly how much, and when.'], ['Basavaraj', '(very still, then smiling with only his mouth) You’re a dangerous boy to share a block with. The lights will go. And then you’ll never come back here.']]);
+    AF.s.seen.j_basav = 1; afSave(); AF.busy = false; }
+  async function afMonsoon(){ AF.busy = true; afJNight(true);
+    await cbCard('', 'Monsoon', 'Day forty-three.'); (AF.jailL || []).forEach(([l]) => { l.intensity = 0; });
+    await cbTalk([['Narrator', 'The rain comes all at once, like a bucket kicked over the city. Thunder. Then a bang from the workshop, and every light in the yard goes out.'], ['Narrator', 'Shouting from the gate. Torches, going the wrong way. Basavaraj’s cell, as you pass it, is dark; but you can hear him laughing.'], ['Kiran', 'The drain. Now.']]);
+    AF.s.seen.j_storm = 1; afSave(); AF.busy = false; }
+  async function afJOut(){ AF.busy = true; const low = scaresLow();
+    await cbTalk([['Narrator', 'The bar under the grate. It lifts. The blade through the old bolts underneath, one by one, while the rain fills the drain up to your knees, your waist.'], ['Narrator', low ? 'You go in. It’s dark, and it’s narrow, and then it isn’t.' : 'You go in head first. Black water, the roof of the pipe against your back, forty metres of not breathing. Then the storm channel, and air, and rain on your face.'],
+      ['Narrator', 'The outer wall. The cutters through the wire. A long drop into the mud on the other side. Then you run, through the rain, through a city that can’t see its own hands, and you don’t stop until the jail is a smudge of torches behind you.']]);
+    await cbCard('', '3 a.m.', 'A flat in Malleshwaram. A phone ringing.');
+    await cbTalk([['Narrator', 'Constable Pawar, sitting up in bed in the dark, the phone pressed to his ear. His wife turns over and sighs.'], ['Voice on the phone', 'Sir. Central Prison. The monsoon took the yard lights. Two-one-four-seven. The drain.'], ['Constable Pawar', '(a long silence) …Of course it did.'], ['Constable Pawar', '(swinging his legs out of bed, reaching for his shirt) Put a man on every bus stand. And Tower Road. He’ll go home. They always think they won’t, and they always go home.']]);
+    afJNight(false); AF.s.seen.j_out = 1; afHeat(100); afLog('On monsoon night the yard lights failed. Kiran went through the drain, over the wall, and into the rain. Pawar got the call at 3 a.m.'); afSave(); AF.busy = false; }
+  AF_BACTS.push({ L: () => afLc('twr', [8, 9], 'jail'), r: 2.4, on: () => afIs('j_basav'), label: 'Basavaraj, cracking peanuts by the wall', go: afBasav },
+    { L: () => afLc('twr', [15, 10.6], 'jail'), r: 2, on: () => afIs('j_drain'), label: 'The drain grate: the bar, the blade, go', go: afJOut });
+  AF_CH.push({ n: 'Chapter 49', t: 'The Long Way Out', sub: 'Weeks. Then one night.', id: 'jl4', room: ['jail', AF_JCELL.door, Math.PI], steps: [
+    { g: '', go: () => { AF.busy = true; afJNight(false); cbTalk([['Narrator', afJ().sol ? 'Out of solitary, back in Block C. A new cellmate who never speaks. Your eyes still hurt in the light.' : 'Weeks. The routine closes over you like water.'], ['Narrator', 'In the yard there is a storm drain, half a metre wide, with a rusted grate. Every monsoon it floods, and the water goes somewhere outside the wall.'], ['Kiran', '(very quietly) Three tools. The guards’ timings. Somebody to turn the lights off. And rain.']]).then(() => { AF.s.seen.j49a = 1; afSave(); AF.busy = false; }); }, chk: () => !!AF.s.seen.j49a },
+    { rt: 1, k: 'j_tools', g: afJGoal(() => ` · tools: ${afJ().tools.length} of 3 (one a day, at work duty)`), at: afJAt, chk: () => afJ().tools.length >= 3 },
+    { pat: afNightPat('yard'), g: afGh(() => `Night. Learn the yard guards’ rotations: watch from the west wall ${afJ().ev.rot1 ? '✓' : '○'} and by the drain ${afJ().ev.rot2 ? '✓' : '○'}. Crouch by the laundry carts`),
+      at: () => afLc('twr', afJ().ev.rot1 ? [15, 10.2] : [-2.6, 9], 'jail'), auto: () => { const J = afJ(); if (zone !== 'twr' || TWR.floor !== 'jail') return; if (!J.ev.rot1 && Math.hypot(pos.x + 2.6, pos.z - 9) < 1.6) { J.ev.rot1 = 1; afSave(); say('West wall: the yard guards cross every four minutes, and stop to smoke at the far end.', 3200); } if (!J.ev.rot2 && Math.hypot(pos.x - 15, pos.z - 10.2) < 1.6) { J.ev.rot2 = 1; afSave(); say('By the drain: at the change of shift there are ninety seconds when nobody is looking at it.', 3200); } },
+      chk: () => !!(afJ().ev.rot1 && afJ().ev.rot2) },
+    { k: 'j_basav', g: afGh('Basavaraj, by the yard wall'), at: () => afLc('twr', [8, 9], 'jail'), chk: () => !!AF.s.seen.j_basav },
+    { g: '', go: () => afMonsoon(), chk: () => !!AF.s.seen.j_storm },
+    { k: 'j_drain', g: afGh('The lights are out. The drain'), at: () => afLc('twr', [15, 10.6], 'jail'), chk: () => !!AF.s.seen.j_out } ] });
+  AF_SKIP[AF_CH.length - 1] = () => { const J = afJ(); J.tools = ['blade', 'cutters', 'bar']; Object.assign(J.ev, { rot1: 1, rot2: 1 }); J.basav = J.basav || 'bribe'; ['j49a', 'j_basav', 'j_storm', 'j_out'].forEach(k => { AF.s.seen[k] = 1; }); afJNight(false); afSave(); };
+  // the yard patrol and Basavaraj's yard spot only make sense in the yard steps: keep the step on the night-stealth start
+  afKidFrame = (o => function(dt){ o(dt); const S = afSt(); if (afBlOn() && S.pat && AF.patC && !AF.patC.placed && zone === 'twr' && TWR.floor === 'jail') { AF.patC.placed = 1; pos.set(AF.patC.start[0], 1.6, AF.patC.start[1]); } if (AF.basav && afIs('j_basav')) AF.basav.g.position.set(8, 0, 10.2); })(afKidFrame);
+  // a chapter that happens in a room keeps Kiran in that room (however the story got there)
+  afKidFrame = (o => function(dt){ o(dt); if (!afBlOn() || AF.busy || EV || A || !inWorld || performance.now() - (AF.blT || 0) < 3000) return; const C = AF_CH[AF.s.ch];
+    if (C && C.room && (zone === 'blr' || zone === 'twr') && !(zone === 'twr' && TWR.floor === C.room[0])) afRoom(C.room[0], C.room[1], C.room[2]); })(afKidFrame);
+  // ---------- Ch50: 4B ----------
+  const afPosterTex = () => tex(256, 340, (c, w, h) => { c.fillStyle = '#F2E8C8'; c.fillRect(0, 0, w, h); c.fillStyle = '#C8102E'; c.font = 'bold 46px sans-serif'; c.textAlign = 'center'; c.fillText('WANTED', w / 2, 52); c.fillStyle = '#3A3D44'; c.fillRect(48, 72, 160, 170);
+    c.fillStyle = '#B88A64'; c.beginPath(); c.arc(128, 140, 46, 0, 7); c.fill(); c.fillStyle = '#16181D'; c.fillRect(82, 180, 92, 62); c.font = 'bold 30px sans-serif'; c.fillText('KIRAN', w / 2, 280); c.font = '16px sans-serif'; c.fillText('ESCAPED · DO NOT APPROACH', w / 2, 306); c.fillText('CALL 100', w / 2, 328); });
+  function afPostersBuild(){ if (AF.postG || !AF.blC || !BL.mapG || Math.abs(BL.off.y) > .01 || BL.lvl) return; const G = AF.postG = new THREE.Group(); G.visible = false; BL.mapG.add(G); const T = afPosterTex(), taken = Object.values(AF.blP || {});
+    [[-30, -2], [20, 20], [60, -60], [-60, 40], [5, -45], [100, 30], [-100, -30], [40, 100]].forEach(s => { const p = afBlFree(s, taken); taken.push(p); const [fx, fz] = afBlFace(p), q = new THREE.Group(); q.position.set(p[0], 0, p[1]); q.rotation.y = Math.atan2(fx, fz); G.add(q);
+      box(.1, 2.6, .1, mat(0x3A3D44), 0, 1.3, -.1, q); const m = new THREE.Mesh(new THREE.PlaneGeometry(.9, 1.2), new THREE.MeshStandardMaterial({ map: T })); m.position.set(0, 1.9, -.04); q.add(m); });
+    if (AF.esc) { const E = AF.esc; [[E.L * .3, 3], [E.L * .62, -3]].forEach(([d, sd]) => { const [x, z] = afAlong(E, d, sd), b = new THREE.Group(); b.position.set(x, 0, z); b.rotation.y = Math.atan2(E.a[0], E.a[1]) + Math.PI / 2; G.add(b); for (let i = 0; i < 4; i++) box(.4, .25, .2, mat(i % 2 ? 0xF2EEE6 : 0xC8102E), -.6 + i * .4, .9, 0, b); [-.8, .8].forEach(x2 => box(.08, .9, .08, mat(0x3A3D44), x2, .45, 0, b)); }); } }
+  // 4B, empty and freshly painted, then his: dust sheets, the TO LET sign, and later the two boards on the wall
+  function afB4Build(){ if (AF.b4 || !TWR.sc || !TWR.floors.flats || !BLC.twrPl) return; const F = TWR.floors.flats; AF.b4 = {};
+    const sh = AF.b4.sheets = new THREE.Group(); F.add(sh); const cl = mat(0xF4F4EE, { roughness: 1 }); [[-.8, .5, 19, 3.4, 1, 1.3], [7.5, .45, 24.2, 2.4, .9, 1.6], [4.5, .5, 17.2, 1, 1.1, 1.6], [5.8, .45, 22.5, 2, .9, 1.4], [-.8, .7, 23.9, 2.6, 1.4, .7]].forEach(([x, y, z, w, h, d]) => box(w, h, d, cl, x, y, z, sh));
+    const let_ = AF.b4.let = new THREE.Mesh(new THREE.PlaneGeometry(1, .5), xcSign('TO LET', '#C8102E', '#FFFFFF', 1, .5)); let_.position.set(3, 2.55, 13.92); let_.rotation.y = Math.PI; F.add(let_);
+    const bd = AF.b4.boards = new THREE.Group(); F.add(bd);
+    const fh = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.7), new THREE.MeshStandardMaterial({ map: tex(512, 336, (c, w, h) => { c.fillStyle = '#B88A5A'; c.fillRect(0, 0, w, h); c.fillStyle = '#16181D'; c.font = 'bold 30px sans-serif'; c.fillText('FIND HIM', 16, 38);
+      c.fillStyle = '#E8DCC8'; c.beginPath(); [[230, 50], [300, 70], [330, 110], [400, 120], [380, 160], [330, 170], [300, 240], [270, 310], [245, 300], [225, 230], [190, 180], [160, 150], [180, 100], [215, 90]].forEach(([x, y], i) => i ? c.lineTo(x, y) : c.moveTo(x, y)); c.closePath(); c.fill();
+      [[262, 262, '✕ BLR'], [250, 278, 'Mysore?'], [218, 150, 'Pune?'], [300, 120, ''], [300, 180, '']].forEach(([x, y, t]) => { c.fillStyle = '#C8102E'; c.beginPath(); c.arc(x, y, 6, 0, 7); c.fill(); c.fillStyle = '#16181D'; c.font = '16px sans-serif'; if (t) c.fillText(t, x + 9, y + 5); });
+      c.fillStyle = '#F2EEE6'; c.fillRect(16, 60, 140, 70); c.fillRect(16, 150, 140, 70); c.fillRect(16, 240, 140, 70); c.fillStyle = '#16181D'; c.font = '13px sans-serif';
+      ['Sold his bat to Imran’s', 'cousin. Asked: Pune buses?'].forEach((t, i) => c.fillText(t, 22, 82 + i * 18)); ['Bookshop by the Circle:', 'she left too. Same week.'].forEach((t, i) => c.fillText(t, 22, 172 + i * 18)); ['Mrs. Rao: “didn’t want', 'anyone to know”'].forEach((t, i) => c.fillText(t, 22, 262 + i * 18)); }) }));
+    fh.position.set(-.6, 1.85, 14.36); bd.add(fh);
+    const sb = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.3), AF.kBoard ? AF.kBoard.material : mat(0xB88A5A)); sb.position.set(6, 1.85, 14.36); bd.add(sb); }
+  function afB4Up(){ if (AF.postG) AF.postG.visible = afBlOn() && !!AF.s.seen.j_out; if (!AF.b4) return; const on = afBlOn(), i50 = AF_CH.findIndex(C => C.id === 'jl5'), here = on && i50 >= 0 && AF.s.ch >= i50;
+    AF.b4.sheets.visible = here && !AF.s.home4b; AF.b4.let.visible = here && !AF.s.home4b; AF.b4.boards.visible = on && !!AF.s.home4b; }
+  afKidFrame = (o => function(dt){ o(dt); afPostersBuild(); afB4Build(); afB4Up(); if (afBlOn() && AF.s.home4b && zone === 'hub' && !AF.inHub) { AF.inHub = 1; say('His old room. The fan, the window, the bookshelf. Yours now.', 3600); } if (zone !== 'hub') AF.inHub = 0; })(afKidFrame);
+  function afHomePat(){ if (AF_PAT.home || !AF.esc) return AF_PAT.home || null; const E = AF.esc, cop = (d0, d1, side) => [afAlong(E, d0, side), afAlong(E, d1, side)];
+    AF_PAT.home = { w: 'blr', cops: [[.18, .42, -1.5], [.48, .7, 1], [.76, .92, -1]].map(([a, b, sd]) => cop(E.L * a, E.L * b, sd)), hide: AF.escHide, view: 11, cone: .85, speed: 1.5, start: afAlong(E, E.L - 2),
+      msg: ['A checkpoint torch sweeps your way. You duck back the way you came. (Start again.)', '“Papers?” You’re gone before he finishes the word. (Start again.)', 'Your own face looks at you from a poster on the pillar. So does a constable. (Start again.)'] }; return AF_PAT.home; }
+  async function afB4Door(){ AF.busy = true;
+    await cbTalk([['Narrator', '4B. The nameplate has been unscrewed; two clean holes in the paint. A TO LET sign on string. The door isn’t even locked.'], ['Narrator', 'Inside: the smell of fresh paint. White walls. The furniture is the landlord’s, under dust sheets, like ghosts at a party nobody came to.'], ['Narrator', 'No cricket shirt on the line. No mug in the sink. No rubber band, no diary, no bat behind the door.']]);
+    AF.s.seen.j5door = 1; afSave(); AF.busy = false; }
+  async function afB4Rao(){ AF.busy = true;
+    await cbTalk([['Mrs. Rao', '(in her doorway, not surprised to see you. She’s never surprised by anything) You. Too thin. Thinner.'], ['Kiran', 'Where is he?'], ['Mrs. Rao', 'He moved away. Months ago. Didn’t say where.'], ['Mrs. Rao', '(after a long time) Didn’t want anyone to know. Especially, I think, you.'], ['Narrator', 'She closes her door. You hear her on the other side of it, standing there, not walking away.']]);
+    AF.s.seen.j5rao = 1; afSave(); AF.busy = false; }
+  async function afB4Shelf(){ AF.busy = true;
+    await cbTalk([['Narrator', 'The bookshelf is still here: it was the landlord’s too. Empty now. You crouch and reach behind where the engineering textbook used to be.'], ['Narrator', 'Nothing. Just a clean rectangle in the dust on the back panel, the exact size of a notebook. The outline of the place where it used to be.'], ['Kiran', '(touching it, very lightly) …']]);
+    AF.s.seen.j5shelf = 1; afSave(); AF.busy = false; }
+  async function afB4Sit(){ AF.busy = true;
+    await cbTalk([['Narrator', 'You sit on the floor in the middle of 4B with your back against a sheeted sofa. Somebody has left the ceiling fan on. It goes round, and round.'], ['Narrator', 'Outside, a siren goes past on Tower Road and doesn’t stop. Two balconies along, Mrs. Rao is watering her plants and very carefully not looking this way.'],
+      ['Narrator', 'From your shirt: a new notebook, bought with the last coins in your pocket. You open it. Page one. The date first, very small, very careful.'], ['Narrator', 'Then: “Never him.”'], ['Narrator', 'And underneath, after a long time: “Find him.”']]);
+    await cbCard('', 'Find him', 'Flat 4B. The tower. Bangalore.');
+    await cbTalk([['Narrator', 'You pull the dust sheets off. You pin the old board back on the wall, and next to it a new one: a map of India, a red cross on Bangalore, three questions.'], ['Narrator', '4B is yours now. His door. His fan. His room behind the YOUR ROOM door on the floor above, with your name on nothing.'], ['Narrator', 'Every pillar in the city has your face on it. Let them look.']]);
+    AF.s.seen.j5sit = 1; AF.s.home4b = 1; afHeat(100); afLog('Kiran went home to the tower. 4B was empty, freshly painted, TO LET. His father had moved away and told nobody where. In a new notebook: “Never him.” And underneath: “Find him.”'); afSave(); AF.busy = false; }
+  function afFindHim(){ if (document.pointerLockElement) document.exitPointerLock(); afBoard.innerHTML = `<h3>FIND HIM</h3><div class="pin y"><b>Gone</b>Moved out of 4B months ago. Told nobody where. Nameplate unscrewed.</div><div class="pin"><b>Clues</b>Sold his cricket bat to Imran’s cousin. Asked about Pune buses.<br>The girl from the bookshop by the Circle left too, the same week.<br>Mrs. Rao: “Didn’t want anyone to know. Especially you.”</div><div class="pin"><b>Rules</b>Never anyone who didn’t earn it.<br>Never him.<br>Find him.</div><button type="button" data-afb="x">Close</button>`; afBoard.hidden = false; tone(300, .08, 'triangle', .03); }
+  function afRest(){ if (AF.busy) return; AF.busy = true; fade(() => { AF.s.rbHr = 8; try { if (typeof hpNow !== 'undefined') hpNow = hpMax; } catch (e) {} afSave(); AF.busy = false; say('You sleep on his bed with the fan going round. Morning. (Rested. Saved.)', 3200); }, '#000000'); }
+  AF_BACTS.push(
+    { L: () => afLc('twr', [3, 13.2], 'flats'), r: 2, on: () => afIs('j5_door'), label: '4B', go: afB4Door },
+    { L: () => afLc('twr', [-12, 12.2], 'flats'), r: 2.4, on: () => afIs('j5_rao'), label: 'Knock on 4A', go: afB4Rao },
+    { L: () => afLc('twr', [-1.6, 22.3], 'flats'), r: 1.6, on: () => afIs('j5_shelf'), label: 'Reach behind the bookshelf', go: afB4Shelf },
+    { L: () => afLc('twr', [3, 21], 'flats'), r: 1.8, on: () => afIs('j5_sit'), label: 'Sit down on the floor, under the fan', go: afB4Sit },
+    { L: () => afLc('twr', [-.6, 15.6], 'flats'), r: 1.6, on: () => !!AF.s.home4b, label: 'The FIND HIM board', go: afFindHim },
+    { L: () => afLc('twr', [6, 15.6], 'flats'), r: 1.6, on: () => !!AF.s.home4b, label: 'Your old suspect board', go: () => afBoardOpen() },
+    { L: () => afLc('twr', [5.9, 24.2], 'flats'), r: 1.6, on: () => !!AF.s.home4b, label: 'Home: rest (heal and save)', go: afRest });
+  AF_CH.push({ n: 'Chapter 50', t: '4B', sub: 'He’ll go home. They always go home.', id: 'jl5', steps: [
+    { g: '', go: () => { AF.busy = true; AF.s.rbHr = 5.5; afJNight(false); cbTalk([['Narrator', 'Three days walking, sleeping in bus shelters, eating what falls off market carts. Then, at dawn, the edge of Bangalore.'], ['Narrator', 'Your face is on every pillar. Constables at every junction near Tower Road with your photo on their phones.'], ['Kiran', 'He said I’d go home. He was right. I just want to see it. Once.']])
+        .then(() => { const E = AF.esc, e = E ? afAlong(E, E.L - 2) : [HOUSE.door[0], HOUSE.door[1] + 20]; AF.blT = performance.now(); enterBlr([e[0], e[1], Math.atan2(-(E ? E.a[0] : 0), -(E ? E.a[1] : 1))]); setTimeout(() => { AF.s.seen.j50 = 1; afSave(); AF.busy = false; }, 1200); }); }, chk: () => !!AF.s.seen.j50 },
+    { pat: () => zone === 'blr' ? afHomePat() : null, g: afGh('Get home to the tower past the checkpoints. Hide behind the bins'), at: () => afLc('blr', HOUSE.door), chk: () => zone === 'twr' },
+    { k: 'j5_door', g: afGh('The Flats floor. 4B'), at: () => afLc('twr', [3, 13.2], 'flats'), chk: () => !!AF.s.seen.j5door },
+    { k: 'j5_rao', g: afGh('Mrs. Rao, 4A'), at: () => afLc('twr', [-12, 12.2], 'flats'), chk: () => !!AF.s.seen.j5rao },
+    { k: 'j5_shelf', fl: 1, g: afGh('4B. The bookshelf'), at: () => afLc('twr', [-1.6, 22.3], 'flats'), chk: () => !!AF.s.seen.j5shelf },
+    { k: 'j5_sit', fl: 1, g: afGh('Sit down, under the fan'), at: () => afLc('twr', [3, 21], 'flats'), chk: () => !!AF.s.seen.j5sit },
+    { fl: 1, g: 'To be continued: Find him.', chk: () => false } ] });
+  AF_SKIP[AF_CH.length - 1] = () => { ['j50', 'j5door', 'j5rao', 'j5shelf', 'j5sit'].forEach(k => { AF.s.seen[k] = 1; }); AF.s.home4b = 1; afHeat(100); AF.s.st = AF_CH[AF.s.ch].steps.length - 1; AF.key = ''; afSave(); return 1; };
   function enterMed(){
     if (inWorld) return;
     closePanel(); putBackRecord(); tone(660, .25, 'sine', .05, 990); setTimeout(() => tone(660, .25, 'sine', .05, 990), 260);
