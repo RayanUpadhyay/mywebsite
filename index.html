@@ -276,11 +276,9 @@ body.mkwon .toast{top:calc(160px + env(safe-area-inset-top,0px))}
 .bars .n{color:var(--muted);font-size:14px}
 .bars .t{grid-column:2;height:6px;border-radius:3px;background:var(--line)}
 .bars .t i{display:block;height:6px;border-radius:3px;background:var(--accent)}
-.lfmnow{display:flex;align-items:center;gap:10px;margin:0 0 14px;font-size:14px;color:var(--muted);min-height:20px}
-.lfmnow b{color:inherit;font-weight:600}.lfmnow .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}.lfmnow.live .dot{background:var(--accent);animation:lfmPulse 1.6s ease-in-out infinite}
-@keyframes lfmPulse{50%{opacity:.35}}@media (prefers-reduced-motion:reduce){.lfmnow.live .dot{animation:none}}
 .lfmstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 16px}@media (max-width:560px){.lfmstats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .lfmstats div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}.lfmstats b{display:block;font-size:22px;line-height:1.1;font-variant-numeric:tabular-nums}.lfmstats span{font-size:12px;color:var(--muted)}
+.lfmgen{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px;padding:0;list-style:none}.lfmgen li{border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:13px}.lfmgen li span{color:var(--muted);margin-left:4px;font-variant-numeric:tabular-nums}
 .covers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
 .cv{aspect-ratio:1;border-radius:8px;position:relative;overflow:hidden;background:var(--line);display:block}
 .cv img{width:100%;height:100%;object-fit:cover;display:block}
@@ -863,8 +861,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     <section class="sec" data-s="music">
       <h2 class="display">Music</h2>
       <p class="sub">What I've had on repeat this year, live from Last.fm.</p>
-      <p class="lfmnow" id="lfmNow" aria-live="polite" hidden><span class="dot" aria-hidden="true"></span><span></span></p>
-      <div class="lfmstats" id="lfmStats" hidden><div><b>–</b><span>Scrobbles, all time</span></div><div><b>–</b><span>This week</span></div><div><b>–</b><span>Artists</span></div><div><b>–</b><span>Listening since</span></div></div>
+      <div class="lfmstats" id="lfmStats" hidden><div><b>–</b><span>Scrobbles, all time</span></div><div><b>–</b><span>This week</span></div><div><b>–</b><span>A day, on average</span></div><div><b>–</b><span>Listening since</span></div><div><b>–</b><span>Artists</span></div><div><b>–</b><span>Albums</span></div><div><b>–</b><span>Tracks</span></div><div><b>–</b><span>Loved tracks</span></div></div>
+      <ul class="lfmgen" id="lfmGenres" aria-label="Top genres" hidden></ul>
       <ol class="bars" id="lfmArtists">
         <li><span class="n">1</span><span>Artist name</span><span class="t"><i style="width:100%"></i></span></li>
         <li><span class="n">2</span><span>Artist name</span><span class="t"><i style="width:82%"></i></span></li>
@@ -1281,19 +1279,21 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         box.removeAttribute('aria-hidden');
       }
     } catch (e) { /* keep placeholders */ }
-    // more stats: totals, this week, top tracks, and what's playing right now (refreshed every minute)
+    // more stats: totals, this week, loved tracks, top tracks and top genres (nothing live: no now-playing, on purpose)
     const n = v => (+v || 0).toLocaleString();
     try {
       const wk = Math.floor(Date.now() / 1000) - 7 * 86400;
-      const [inf, week, tt] = await Promise.all([
+      const [inf, week, tt, lv] = await Promise.all([
         fetch(`${base}${user}&method=user.getinfo`).then(r => r.json()),
         fetch(`${base}${user}&method=user.getrecenttracks&limit=1&from=${wk}`).then(r => r.json()),
-        fetch(`${base}${user}&method=user.gettoptracks&period=1month&limit=5`).then(r => r.json())
+        fetch(`${base}${user}&method=user.gettoptracks&period=1month&limit=5`).then(r => r.json()),
+        fetch(`${base}${user}&method=user.getlovedtracks&limit=1`).then(r => r.json()).catch(() => ({}))
       ]);
       const u = inf.user;
       if (u) {
         const since = u.registered && (u.registered.unixtime || u.registered['#text']), wkN = week.recenttracks && week.recenttracks['@attr'] && week.recenttracks['@attr'].total;
-        const vals = [n(u.playcount), wkN != null ? n(wkN) : '–', u.artist_count ? n(u.artist_count) : '–', since ? new Date(+since * 1000).getFullYear() : '–'];
+        const days = since ? Math.max(1, (Date.now() / 1000 - +since) / 86400) : 0, lvN = lv.lovedtracks && lv.lovedtracks['@attr'] && lv.lovedtracks['@attr'].total;
+        const vals = [n(u.playcount), wkN != null ? n(wkN) : '–', days ? n(Math.round(u.playcount / days)) : '–', since ? new Date(+since * 1000).getFullYear() : '–', u.artist_count ? n(u.artist_count) : '–', u.album_count ? n(u.album_count) : '–', u.track_count ? n(u.track_count) : '–', lvN != null ? n(lvN) : '–'];
         const box = $('#lfmStats'); box.querySelectorAll('b').forEach((b, i) => { b.textContent = vals[i]; }); box.hidden = false;
       }
       const tracks = (tt.toptracks && tt.toptracks.track) || [];
@@ -1303,15 +1303,15 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         $('#lfmTracksCard').hidden = false;
       }
     } catch (e) {}
-    const ago = s => { const d = Math.floor(Date.now() / 1000) - s; return d < 3600 ? `${Math.max(1, Math.round(d / 60))} min ago` : d < 86400 ? `${Math.round(d / 3600)} h ago` : `${Math.round(d / 86400)} d ago`; };
-    async function lfmNow(){
-      try {
-        const j = await fetch(`${base}${user}&method=user.getrecenttracks&limit=1`).then(r => r.json()), t = j.recenttracks && [].concat(j.recenttracks.track || [])[0];
-        if (!t) return; const live = t['@attr'] && t['@attr'].nowplaying === 'true', el = $('#lfmNow');
-        el.classList.toggle('live', !!live); el.lastChild.innerHTML = `${live ? 'Listening now' : 'Last played'}: <b>${esc(t.name)}</b> by ${esc(t.artist['#text'] || t.artist.name || '')}${!live && t.date ? ` · ${ago(+t.date.uts)}` : ''}`; el.hidden = false;
-      } catch (e) {}
-    }
-    lfmNow(); setInterval(() => { if (!document.hidden) lfmNow(); }, 60000);
+    // top genres: the tags on your top artists this year, weighted by how much you played each artist
+    try {
+      const ar = await fetch(`${base}${user}&method=user.gettopartists&period=12month&limit=10`).then(r => r.json()), list = (ar.topartists && ar.topartists.artist) || [];
+      const junk = /^(seen live|favorites?|favourites?|my favorites?|all|male vocalists|female vocalists|\d{2,4}s?)$/i, w = {};
+      await Promise.all(list.map(async a => { const t = await fetch(`${base}&method=artist.gettoptags&artist=${encodeURIComponent(a.name)}`).then(r => r.json()).catch(() => ({})), tags = ((t.toptags && t.toptags.tag) || []).slice(0, 5);
+        tags.forEach(g => { const k = String(g.name).toLowerCase().trim(); if (!k || junk.test(k) || k === a.name.toLowerCase()) return; w[k] = (w[k] || 0) + (+a.playcount || 0) * (+g.count || 1) / 100; }); }));
+      const top = Object.entries(w).sort((a, b) => b[1] - a[1]).slice(0, 6), tot = top.reduce((s2, [, v]) => s2 + v, 0);
+      if (top.length) { $('#lfmGenres').innerHTML = top.map(([g, v]) => `<li>${esc(g)}<span>${Math.round(v / tot * 100)}%</span></li>`).join(''); $('#lfmGenres').hidden = false; }
+    } catch (e) {}
     try {
       await Promise.all(VINYLS.map(async ([t, a], i) => {
         const r = await fetch(`${base}&method=album.getinfo&autocorrect=1&artist=${encodeURIComponent(a)}&album=${encodeURIComponent(t)}`).then(r => r.json());
