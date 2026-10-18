@@ -276,9 +276,13 @@ body.mkwon .toast{top:calc(160px + env(safe-area-inset-top,0px))}
 .bars .n{color:var(--muted);font-size:14px}
 .bars .t{grid-column:2;height:6px;border-radius:3px;background:var(--line)}
 .bars .t i{display:block;height:6px;border-radius:3px;background:var(--accent)}
-.lfmstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 16px}@media (max-width:560px){.lfmstats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.lfmstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 16px}@media (max-width:560px){.lfmstats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .lfmstats div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}.lfmstats b{display:block;font-size:22px;line-height:1.1;font-variant-numeric:tabular-nums}.lfmstats span{font-size:12px;color:var(--muted)}
-.lfmgen{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px;padding:0;list-style:none}.lfmgen li{border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:13px}.lfmgen li span{color:var(--muted);margin-left:4px;font-variant-numeric:tabular-nums}
+.lfmchart{position:relative;margin-top:8px}.lfmchart svg{display:block;width:100%;height:auto;overflow:visible}.lfmchart .col{fill:var(--accent);pointer-events:none}.lfmchart text{pointer-events:none}.lfmchart .hit{fill:transparent;cursor:default;outline:none}.lfmchart .hit:hover+.col,.lfmchart .hit:focus+.col{opacity:.75}
+.lfmchart .grid{stroke:var(--line);stroke-width:1}.lfmchart text{fill:var(--muted);font-size:11px;font-variant-numeric:tabular-nums}.lfmchart text.v{fill:currentColor;font-weight:600}
+.lfmtip{position:absolute;pointer-events:none;background:var(--card,#fff);color:inherit;border:1px solid var(--line);border-radius:8px;padding:6px 9px;font-size:13px;line-height:1.3;white-space:nowrap;box-shadow:0 4px 14px rgba(0,0,0,.12);transform:translate(-50%,-100%);margin-top:-8px}.lfmtip b{display:block;font-size:15px}.lfmtip span{color:var(--muted)}
+.lfmsr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.lfmmeter{height:10px;border-radius:5px;background:var(--line);margin:10px 0 6px}.lfmmeter i{display:block;height:10px;border-radius:5px;background:var(--accent)}.lfmnote{font-size:13px;color:var(--muted);margin:0}
 .covers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
 .cv{aspect-ratio:1;border-radius:8px;position:relative;overflow:hidden;background:var(--line);display:block}
 .cv img{width:100%;height:100%;object-fit:cover;display:block}
@@ -861,8 +865,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     <section class="sec" data-s="music">
       <h2 class="display">Music</h2>
       <p class="sub">What I've had on repeat this year, live from Last.fm.</p>
-      <div class="lfmstats" id="lfmStats" hidden><div><b>–</b><span>Scrobbles, all time</span></div><div><b>–</b><span>This week</span></div><div><b>–</b><span>A day, on average</span></div><div><b>–</b><span>Listening since</span></div><div><b>–</b><span>Artists</span></div><div><b>–</b><span>Albums</span></div><div><b>–</b><span>Tracks</span></div><div><b>–</b><span>Loved tracks</span></div></div>
-      <ul class="lfmgen" id="lfmGenres" aria-label="Top genres" hidden></ul>
+      <div class="lfmstats" id="lfmStats" hidden><div><b>–</b><span>Scrobbles, all time</span></div><div><b>–</b><span>Listening since</span></div><div><b>–</b><span>Artists</span></div><div><b>–</b><span>Albums</span></div><div><b>–</b><span>Tracks</span></div><div><b>–</b><span>Loved tracks</span></div></div>
+      <div class="card" id="lfmMonthsCard" hidden><h3 class="display">Scrobbles by month</h3><p class="lfmnote">The last 12 months. Hover or tab to a month for its count.</p><div class="lfmchart" id="lfmMonths"></div></div>
       <ol class="bars" id="lfmArtists">
         <li><span class="n">1</span><span>Artist name</span><span class="t"><i style="width:100%"></i></span></li>
         <li><span class="n">2</span><span>Artist name</span><span class="t"><i style="width:82%"></i></span></li>
@@ -873,6 +877,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       <div class="card"><h3 class="display">Most played this month</h3>
         <div class="covers" id="lfmAlbums" aria-hidden="true"><div class="cv c1"></div><div class="cv c2"></div><div class="cv c3"></div><div class="cv c4"></div></div>
       </div>
+      <div class="card" id="lfmGenresCard" hidden><h3 class="display">Top genres this year</h3><ol class="bars" id="lfmGenres"></ol></div>
+      <div class="card" id="lfmAlbumsCard" hidden><h3 class="display">Top albums this year</h3><ol class="bars" id="lfmAlbumBars"></ol></div>
+      <div class="card" id="lfmSpreadCard" hidden><h3 class="display">How spread out</h3><div class="lfmmeter"><i id="lfmSpreadBar"></i></div><p class="lfmnote" id="lfmSpreadTxt"></p></div>
       <div class="card" id="lfmTracksCard" hidden><h3 class="display">Top tracks this month</h3><ol class="bars" id="lfmTracks"></ol></div>
       <button class="open" type="button" data-open="vinyl">See my vinyl collection</button>
     </section>
@@ -1249,6 +1256,28 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       const hit = rs.find(x => squash(x.collectionName).startsWith(squash(title).slice(0, 5)) && squash(x.artistName).includes(squash(artist).slice(0, 4))) || rs.find(x => squash(x.collectionName).includes(squash(title).slice(0, 5)));
       return hit && hit.artworkUrl100 ? hit.artworkUrl100.replace(/\d+x\d+bb/, '600x600bb') : ''; } catch (e) { return ''; }
   }
+  // a single-series column chart: thin columns grow from one baseline, the peak is labelled, every column has a hover/focus tooltip and a table for screen readers
+  function lfmColumns(box, data){
+    const NS = 'http://www.w3.org/2000/svg', W = Math.max(280, Math.round(box.clientWidth || 600)), H = 200, L = 36, B = 22, T = 18, max = Math.max(...data.map(d => d.value), 1);
+    const step = Math.pow(10, Math.floor(Math.log10(max))), top = Math.ceil(max / step) * step, ticks = [0, top / 2, top], band = (W - L) / data.length, bw = Math.min(24, band * .6);
+    const fmt = v => v >= 1000 ? (v / 1000).toFixed(v % 1000 ? 1 : 0).replace(/\.0$/, '') + 'K' : String(v), y = v => H - B - (v / top) * (H - B - T);
+    const el = (k, a) => { const e = document.createElementNS(NS, k); Object.entries(a).forEach(([q, v]) => e.setAttribute(q, v)); return e; };
+    box.textContent = ''; const svg = el('svg', { viewBox: `0 0 ${W} ${H}`, role: 'img', 'aria-label': 'Scrobbles by month, last 12 months' }); box.appendChild(svg);
+    ticks.forEach(t => { svg.appendChild(el('line', { class: 'grid', x1: L, x2: W, y1: y(t), y2: y(t) })); const tx = el('text', { x: L - 6, y: y(t) + 4, 'text-anchor': 'end' }); tx.textContent = fmt(t); svg.appendChild(tx); });
+    const tip = document.createElement('div'); tip.className = 'lfmtip'; tip.hidden = true; box.appendChild(tip); const tb = document.createElement('b'), ts = document.createElement('span'); tip.append(tb, ts);
+    const peak = data.reduce((a, d, i) => d.value > data[a].value ? i : a, 0);
+    data.forEach((d, i) => { const cx = L + band * i + band / 2, h = Math.max(0, H - B - y(d.value)), x0 = cx - bw / 2, y0 = y(d.value), r = Math.min(4, h, bw / 2);
+      const hit = el('rect', { class: 'hit', x: L + band * i, y: T, width: band, height: H - B - T, tabindex: 0, 'aria-label': `${d.full}: ${d.value.toLocaleString()} scrobbles` });
+      const col = el('path', { class: 'col', d: h > 0 ? `M${x0},${H - B}V${y0 + r}Q${x0},${y0} ${x0 + r},${y0}H${x0 + bw - r}Q${x0 + bw},${y0} ${x0 + bw},${y0 + r}V${H - B}Z` : '' });
+      svg.append(hit, col); if (band >= 30 || (data.length - 1 - i) % 2 === 0) { const lb = el('text', { x: cx, y: H - 6, 'text-anchor': 'middle' }); lb.textContent = d.label; svg.appendChild(lb); }
+      if (i === peak && d.value) { const v = el('text', { x: cx, y: y0 - 6, 'text-anchor': 'middle', class: 'v' }); v.textContent = d.value.toLocaleString(); svg.appendChild(v); }
+      const show = () => { tb.textContent = d.value.toLocaleString(); ts.textContent = `scrobbles in ${d.full}`; tip.hidden = false; const bx = box.getBoundingClientRect(), sx = bx.width / W; tip.style.left = Math.min(bx.width - 70, Math.max(70, cx * sx)) + 'px'; tip.style.top = (y0 * sx) + 'px'; };
+      hit.addEventListener('pointerenter', show); hit.addEventListener('focus', show); hit.addEventListener('pointerleave', () => { tip.hidden = true; }); hit.addEventListener('blur', () => { tip.hidden = true; }); });
+    const tbl = document.createElement('table'); tbl.className = 'lfmsr'; const cap = document.createElement('caption'); cap.textContent = 'Scrobbles by month'; tbl.appendChild(cap);
+    data.forEach(d => { const tr = document.createElement('tr'), th = document.createElement('th'), td = document.createElement('td'); th.textContent = d.full; td.textContent = d.value.toLocaleString(); tr.append(th, td); tbl.appendChild(tr); }); box.appendChild(tbl);
+    box.lfmW = box.clientWidth; box.lfmData = data;
+    if (!box.lfmRz && window.ResizeObserver) { box.lfmRz = new ResizeObserver(() => { const w = box.clientWidth; if (w && Math.abs(w - (box.lfmW || 0)) > 20) lfmColumns(box, box.lfmData); }); box.lfmRz.observe(box); }
+  }
   const LASTFM_KEY = 'f82a8af0f4287872b67e94cc734d67bb';
   (async function loadLastfm(){
     if (!LASTFM_KEY || LASTFM_KEY.startsWith('PASTE')) return;
@@ -1279,21 +1308,19 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         box.removeAttribute('aria-hidden');
       }
     } catch (e) { /* keep placeholders */ }
-    // more stats: totals, this week, loved tracks, top tracks and top genres (nothing live: no now-playing, on purpose)
+    // more stats: totals, loved tracks, charts by month / genre / album, top tracks (nothing live or daily, on purpose)
     const n = v => (+v || 0).toLocaleString();
     try {
-      const wk = Math.floor(Date.now() / 1000) - 7 * 86400;
-      const [inf, week, tt, lv] = await Promise.all([
+      const [inf, tt, lv] = await Promise.all([
         fetch(`${base}${user}&method=user.getinfo`).then(r => r.json()),
-        fetch(`${base}${user}&method=user.getrecenttracks&limit=1&from=${wk}`).then(r => r.json()),
         fetch(`${base}${user}&method=user.gettoptracks&period=1month&limit=5`).then(r => r.json()),
         fetch(`${base}${user}&method=user.getlovedtracks&limit=1`).then(r => r.json()).catch(() => ({}))
       ]);
       const u = inf.user;
       if (u) {
-        const since = u.registered && (u.registered.unixtime || u.registered['#text']), wkN = week.recenttracks && week.recenttracks['@attr'] && week.recenttracks['@attr'].total;
-        const days = since ? Math.max(1, (Date.now() / 1000 - +since) / 86400) : 0, lvN = lv.lovedtracks && lv.lovedtracks['@attr'] && lv.lovedtracks['@attr'].total;
-        const vals = [n(u.playcount), wkN != null ? n(wkN) : '–', days ? n(Math.round(u.playcount / days)) : '–', since ? new Date(+since * 1000).getFullYear() : '–', u.artist_count ? n(u.artist_count) : '–', u.album_count ? n(u.album_count) : '–', u.track_count ? n(u.track_count) : '–', lvN != null ? n(lvN) : '–'];
+        const since = u.registered && (u.registered.unixtime || u.registered['#text']);
+        const lvN = lv.lovedtracks && lv.lovedtracks['@attr'] && lv.lovedtracks['@attr'].total;
+        const vals = [n(u.playcount), since ? new Date(+since * 1000).getFullYear() : '–', u.artist_count ? n(u.artist_count) : '–', u.album_count ? n(u.album_count) : '–', u.track_count ? n(u.track_count) : '–', lvN != null ? n(lvN) : '–'];
         const box = $('#lfmStats'); box.querySelectorAll('b').forEach((b, i) => { b.textContent = vals[i]; }); box.hidden = false;
       }
       const tracks = (tt.toptracks && tt.toptracks.track) || [];
@@ -1309,8 +1336,26 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       const junk = /^(seen live|favorites?|favourites?|my favorites?|all|male vocalists|female vocalists|\d{2,4}s?)$/i, w = {};
       await Promise.all(list.map(async a => { const t = await fetch(`${base}&method=artist.gettoptags&artist=${encodeURIComponent(a.name)}`).then(r => r.json()).catch(() => ({})), tags = ((t.toptags && t.toptags.tag) || []).slice(0, 5);
         tags.forEach(g => { const k = String(g.name).toLowerCase().trim(); if (!k || junk.test(k) || k === a.name.toLowerCase()) return; w[k] = (w[k] || 0) + (+a.playcount || 0) * (+g.count || 1) / 100; }); }));
-      const top = Object.entries(w).sort((a, b) => b[1] - a[1]).slice(0, 6), tot = top.reduce((s2, [, v]) => s2 + v, 0);
-      if (top.length) { $('#lfmGenres').innerHTML = top.map(([g, v]) => `<li>${esc(g)}<span>${Math.round(v / tot * 100)}%</span></li>`).join(''); $('#lfmGenres').hidden = false; }
+      const top = Object.entries(w).sort((a, b) => b[1] - a[1]).slice(0, 6), tot = top.reduce((s2, [, v]) => s2 + v, 0), mx = top.length ? top[0][1] : 1;
+      if (top.length) { $('#lfmGenres').innerHTML = top.map(([g, v], i) => `<li><span class="n">${i + 1}</span><span>${esc(g)} <span style="color:var(--muted);font-size:14px">${Math.round(v / tot * 100)}%</span></span><span class="t"><i style="width:${Math.max(8, Math.round(v / mx * 100))}%"></i></span></li>`).join(''); $('#lfmGenresCard').hidden = false; }
+    } catch (e) {}
+    // scrobbles by month: one total per calendar month, for the last 12 months
+    try {
+      const now = new Date(), months = [];
+      for (let i = 11; i >= 0; i--) { const a = new Date(now.getFullYear(), now.getMonth() - i, 1), b = new Date(now.getFullYear(), now.getMonth() - i + 1, 1); months.push([a, Math.floor(a / 1000), Math.min(Math.floor(b / 1000), Math.floor(Date.now() / 1000))]); }
+      const tots = await Promise.all(months.map(([, f, t]) => fetch(`${base}${user}&method=user.getrecenttracks&limit=1&from=${f}&to=${t}`).then(r => r.json()).then(j => +(j.recenttracks && j.recenttracks['@attr'] && j.recenttracks['@attr'].total) || 0).catch(() => null)));
+      if (tots.some(v => v)) {
+        const data = months.map(([a], i) => ({ label: a.toLocaleString('en', { month: 'short' }), full: a.toLocaleString('en', { month: 'long', year: 'numeric' }), value: tots[i] || 0 }));
+        lfmColumns($('#lfmMonths'), data); $('#lfmMonthsCard').hidden = false;
+        // how spread out: what share of this year's plays went to the top 10 artists
+        const yearPlays = data.reduce((s2, d) => s2 + d.value, 0), ar10 = await fetch(`${base}${user}&method=user.gettopartists&period=12month&limit=10`).then(r => r.json()).catch(() => ({})), l10 = (ar10.topartists && ar10.topartists.artist) || [], p10 = l10.reduce((s2, a) => s2 + (+a.playcount || 0), 0);
+        if (yearPlays && p10) { const pc = Math.min(100, Math.round(p10 / yearPlays * 100)); $('#lfmSpreadBar').style.width = pc + '%'; $('#lfmSpreadTxt').textContent = `${pc}% of this year's ${n(yearPlays)} plays went to my top 10 artists; the other ${100 - pc}% is spread across everyone else.`; $('#lfmSpreadCard').hidden = false; }
+      }
+    } catch (e) {}
+    // top albums this year, as a bar chart
+    try {
+      const j = await fetch(`${base}${user}&method=user.gettopalbums&period=12month&limit=5`).then(r => r.json()), al = (j.topalbums && j.topalbums.album) || [];
+      if (al.length) { const mx = +al[0].playcount || 1; $('#lfmAlbumBars').innerHTML = al.map((a, i) => `<li title="${esc(a.name)} by ${esc(a.artist.name)}: ${n(a.playcount)} plays"><span class="n">${i + 1}</span><span>${esc(a.name)} <span style="color:var(--muted);font-size:14px">${esc(a.artist.name)} · ${n(a.playcount)} plays</span></span><span class="t"><i style="width:${Math.max(8, Math.round(a.playcount / mx * 100))}%"></i></span></li>`).join(''); $('#lfmAlbumsCard').hidden = false; }
     } catch (e) {}
     try {
       await Promise.all(VINYLS.map(async ([t, a], i) => {
