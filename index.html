@@ -276,9 +276,10 @@ body.mkwon .toast{top:calc(160px + env(safe-area-inset-top,0px))}
 .bars .n{color:var(--muted);font-size:14px}
 .bars .t{grid-column:2;height:6px;border-radius:3px;background:var(--line)}
 .bars .t i{display:block;height:6px;border-radius:3px;background:var(--accent)}
-.lfmstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:0 0 16px}@media (max-width:560px){.lfmstats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.lfmstats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0 0 16px}@media (max-width:560px){.lfmstats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .lfmstats div{border:1px solid var(--line);border-radius:10px;padding:10px 12px}.lfmstats b{display:block;font-size:22px;line-height:1.1;font-variant-numeric:tabular-nums}.lfmstats span{font-size:12px;color:var(--muted)}
-.lfmgen{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 16px;padding:0;list-style:none}.lfmgen li{border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:13px}.lfmgen li span{color:var(--muted);margin-left:4px;font-variant-numeric:tabular-nums}
+.lfmtabs{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0}.lfmtabs button{font:inherit;font-size:13px;border:1px solid var(--line);background:transparent;color:inherit;border-radius:999px;padding:5px 11px;cursor:pointer}.lfmtabs button[aria-selected="true"]{background:var(--accent);border-color:var(--accent);color:#fff}.lfmtabs+.lfmtabs{margin-top:6px}
+#lfmChart{margin-top:14px;transition:opacity .15s}#lfmChart.busy{opacity:.5}.lfmempty{color:var(--muted);font-size:14px}
 .covers{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:10px}
 .cv{aspect-ratio:1;border-radius:8px;position:relative;overflow:hidden;background:var(--line);display:block}
 .cv img{width:100%;height:100%;object-fit:cover;display:block}
@@ -861,19 +862,15 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     <section class="sec" data-s="music">
       <h2 class="display">Music</h2>
       <p class="sub">What I've had on repeat this year, live from Last.fm.</p>
-      <div class="lfmstats" id="lfmStats" hidden><div><b>–</b><span>Scrobbles, all time</span></div><div><b>–</b><span>This week</span></div><div><b>–</b><span>A day, on average</span></div><div><b>–</b><span>Listening since</span></div><div><b>–</b><span>Artists</span></div><div><b>–</b><span>Albums</span></div><div><b>–</b><span>Tracks</span></div><div><b>–</b><span>Loved tracks</span></div></div>
-      <ul class="lfmgen" id="lfmGenres" aria-label="Top genres" hidden></ul>
-      <ol class="bars" id="lfmArtists">
-        <li><span class="n">1</span><span>Artist name</span><span class="t"><i style="width:100%"></i></span></li>
-        <li><span class="n">2</span><span>Artist name</span><span class="t"><i style="width:82%"></i></span></li>
-        <li><span class="n">3</span><span>Artist name</span><span class="t"><i style="width:67%"></i></span></li>
-        <li><span class="n">4</span><span>Artist name</span><span class="t"><i style="width:53%"></i></span></li>
-        <li><span class="n">5</span><span>Artist name</span><span class="t"><i style="width:41%"></i></span></li>
-      </ol>
+      <div class="lfmstats" id="lfmStats" hidden><div><b>–</b><span>Scrobbles, all time</span></div><div><b>–</b><span>Listening since</span></div><div><b>–</b><span>Artists</span></div><div><b>–</b><span>Albums</span></div><div><b>–</b><span>Tracks</span></div><div><b>–</b><span>Loved tracks</span></div></div>
+      <div class="card"><h3 class="display">Charts</h3>
+        <div class="lfmtabs" role="tablist" aria-label="Chart type" id="lfmType"><button type="button" role="tab" data-t="artists" aria-selected="true">Artists</button><button type="button" role="tab" data-t="albums" aria-selected="false">Albums</button><button type="button" role="tab" data-t="tracks" aria-selected="false">Tracks</button></div>
+        <div class="lfmtabs" role="tablist" aria-label="Time range" id="lfmPeriod"><button type="button" role="tab" data-p="7day" aria-selected="false">This week</button><button type="button" role="tab" data-p="1month" aria-selected="false">This month</button><button type="button" role="tab" data-p="3month" aria-selected="false">3 months</button><button type="button" role="tab" data-p="6month" aria-selected="false">6 months</button><button type="button" role="tab" data-p="12month" aria-selected="true">This year</button><button type="button" role="tab" data-p="overall" aria-selected="false">All time</button></div>
+        <ol class="bars" id="lfmChart" aria-live="polite"></ol>
+      </div>
       <div class="card"><h3 class="display">Most played this month</h3>
         <div class="covers" id="lfmAlbums" aria-hidden="true"><div class="cv c1"></div><div class="cv c2"></div><div class="cv c3"></div><div class="cv c4"></div></div>
       </div>
-      <div class="card" id="lfmTracksCard" hidden><h3 class="display">Top tracks this month</h3><ol class="bars" id="lfmTracks"></ol></div>
       <button class="open" type="button" data-open="vinyl">See my vinyl collection</button>
     </section>
 
@@ -1260,7 +1257,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         fetch(`${base}${user}&method=user.gettopalbums&period=1month&limit=6`).then(r => r.json())
       ]);
       const artists = (ar.topartists && ar.topartists.artist) || [];
-      if (artists.length) {
+      if (artists.length && $('#lfmArtists')) {
         const max = +artists[0].playcount || 1;
         $('#lfmArtists').innerHTML = artists.map((a, i) =>
           `<li><span class="n">${i + 1}</span><span>${esc(a.name)} <span style="color:var(--muted);font-size:14px">${(+a.playcount).toLocaleString()} plays</span></span><span class="t"><i style="width:${Math.max(8, Math.round(a.playcount / max * 100))}%"></i></span></li>`).join('');
@@ -1279,39 +1276,30 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         box.removeAttribute('aria-hidden');
       }
     } catch (e) { /* keep placeholders */ }
-    // more stats: totals, this week, loved tracks, top tracks and top genres (nothing live: no now-playing, on purpose)
+    // totals and loved tracks (nothing live or daily, on purpose)
     const n = v => (+v || 0).toLocaleString();
     try {
-      const wk = Math.floor(Date.now() / 1000) - 7 * 86400;
-      const [inf, week, tt, lv] = await Promise.all([
+      const [inf, lv] = await Promise.all([
         fetch(`${base}${user}&method=user.getinfo`).then(r => r.json()),
-        fetch(`${base}${user}&method=user.getrecenttracks&limit=1&from=${wk}`).then(r => r.json()),
-        fetch(`${base}${user}&method=user.gettoptracks&period=1month&limit=5`).then(r => r.json()),
         fetch(`${base}${user}&method=user.getlovedtracks&limit=1`).then(r => r.json()).catch(() => ({}))
       ]);
       const u = inf.user;
       if (u) {
-        const since = u.registered && (u.registered.unixtime || u.registered['#text']), wkN = week.recenttracks && week.recenttracks['@attr'] && week.recenttracks['@attr'].total;
-        const days = since ? Math.max(1, (Date.now() / 1000 - +since) / 86400) : 0, lvN = lv.lovedtracks && lv.lovedtracks['@attr'] && lv.lovedtracks['@attr'].total;
-        const vals = [n(u.playcount), wkN != null ? n(wkN) : '–', days ? n(Math.round(u.playcount / days)) : '–', since ? new Date(+since * 1000).getFullYear() : '–', u.artist_count ? n(u.artist_count) : '–', u.album_count ? n(u.album_count) : '–', u.track_count ? n(u.track_count) : '–', lvN != null ? n(lvN) : '–'];
+        const since = u.registered && (u.registered.unixtime || u.registered['#text']);
+        const lvN = lv.lovedtracks && lv.lovedtracks['@attr'] && lv.lovedtracks['@attr'].total;
+        const vals = [n(u.playcount), since ? new Date(+since * 1000).getFullYear() : '–', u.artist_count ? n(u.artist_count) : '–', u.album_count ? n(u.album_count) : '–', u.track_count ? n(u.track_count) : '–', lvN != null ? n(lvN) : '–'];
         const box = $('#lfmStats'); box.querySelectorAll('b').forEach((b, i) => { b.textContent = vals[i]; }); box.hidden = false;
       }
-      const tracks = (tt.toptracks && tt.toptracks.track) || [];
-      if (tracks.length) {
-        const max = +tracks[0].playcount || 1;
-        $('#lfmTracks').innerHTML = tracks.map((t, i) => `<li title="${esc(t.name)} by ${esc(t.artist.name)}: ${n(t.playcount)} plays"><span class="n">${i + 1}</span><span>${esc(t.name)} <span style="color:var(--muted);font-size:14px">${esc(t.artist.name)} · ${n(t.playcount)} plays</span></span><span class="t"><i style="width:${Math.max(8, Math.round(t.playcount / max * 100))}%"></i></span></li>`).join('');
-        $('#lfmTracksCard').hidden = false;
-      }
     } catch (e) {}
-    // top genres: the tags on your top artists this year, weighted by how much you played each artist
-    try {
-      const ar = await fetch(`${base}${user}&method=user.gettopartists&period=12month&limit=10`).then(r => r.json()), list = (ar.topartists && ar.topartists.artist) || [];
-      const junk = /^(seen live|favorites?|favourites?|my favorites?|all|male vocalists|female vocalists|\d{2,4}s?)$/i, w = {};
-      await Promise.all(list.map(async a => { const t = await fetch(`${base}&method=artist.gettoptags&artist=${encodeURIComponent(a.name)}`).then(r => r.json()).catch(() => ({})), tags = ((t.toptags && t.toptags.tag) || []).slice(0, 5);
-        tags.forEach(g => { const k = String(g.name).toLowerCase().trim(); if (!k || junk.test(k) || k === a.name.toLowerCase()) return; w[k] = (w[k] || 0) + (+a.playcount || 0) * (+g.count || 1) / 100; }); }));
-      const top = Object.entries(w).sort((a, b) => b[1] - a[1]).slice(0, 6), tot = top.reduce((s2, [, v]) => s2 + v, 0);
-      if (top.length) { $('#lfmGenres').innerHTML = top.map(([g, v]) => `<li>${esc(g)}<span>${Math.round(v / tot * 100)}%</span></li>`).join(''); $('#lfmGenres').hidden = false; }
-    } catch (e) {}
+    // Charts: top artists, albums or tracks for a time range, the way Last.fm shows them
+    { const cache = {}, el = $('#lfmChart'); let T = 'artists', P = '12month';
+      const draw = async () => { const t = T, p = P, k = t + p; el.classList.add('busy');
+        try { if (!cache[k]) { const j = await fetch(`${base}${user}&method=user.gettop${t}&period=${p}&limit=10`).then(r => r.json()); cache[k] = (j['top' + t] && j['top' + t][t.slice(0, -1)]) || []; }
+          if (T + P !== k) return; const L = cache[k], max = L.length ? +L[0].playcount || 1 : 1;
+          el.innerHTML = L.length ? L.map((x, i) => { const by = t === 'artists' ? '' : `${esc(x.artist.name)} · `; return `<li title="${esc(x.name)}${t === 'artists' ? '' : ' by ' + esc(x.artist.name)}: ${n(x.playcount)} plays"><span class="n">${i + 1}</span><span>${esc(x.name)} <span style="color:var(--muted);font-size:14px">${by}${n(x.playcount)} plays</span></span><span class="t"><i style="width:${Math.max(6, Math.round(x.playcount / max * 100))}%"></i></span></li>`; }).join('') : '<li class="lfmempty">Nothing scrobbled in this range.</li>';
+        } catch (e) { if (!el.children.length) el.innerHTML = '<li class="lfmempty">Couldn’t reach Last.fm.</li>'; } finally { el.classList.remove('busy'); } };
+      const tabs = (id, attr, set) => $(id).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; $(id).querySelectorAll('button').forEach(x => x.setAttribute('aria-selected', x === b ? 'true' : 'false')); set(b.dataset[attr]); draw(); });
+      tabs('#lfmType', 't', v => { T = v; }); tabs('#lfmPeriod', 'p', v => { P = v; }); draw(); }
     try {
       await Promise.all(VINYLS.map(async ([t, a], i) => {
         const r = await fetch(`${base}&method=album.getinfo&autocorrect=1&artist=${encodeURIComponent(a)}&album=${encodeURIComponent(t)}`).then(r => r.json());
