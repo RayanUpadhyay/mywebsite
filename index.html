@@ -1576,6 +1576,33 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   addMarker(V(4.1, .75, -3.3), 0x7C8CFF, { egg: 'crate' });
   views.crate = { pos: V(3.2, 1.45, -2.2), look: V(4.1, .45, -3.2) };
 
+  // ---------- the wardrobe: it never opens onto the inside of a wardrobe ----------
+  // a wardrobe, facing +z; doors hinge at the outer edges. Used in the room and as the way back from each place.
+  function wardrobeMesh(parent, x, z, ry){
+    const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = ry; parent.add(g);
+    const wd = mat(0x5B3A26, { roughness: .55 }), dk = mat(0x3E2718, { roughness: .6 }), brass = mat(0xC9A24A, { metalness: .8, roughness: .3 });
+    box(1.36, 2.2, .06, dk, 0, 1.18, -.29, g);
+    [-.67, .67].forEach(sx => box(.06, 2.2, .62, wd, sx, 1.18, 0, g));
+    box(1.48, .12, .7, wd, 0, 2.33, 0, g); box(1.4, .05, .66, dk, 0, 2.41, 0, g);
+    box(1.44, .1, .68, dk, 0, .05, 0, g); box(1.3, .04, .58, dk, 0, .12, 0, g);
+    // inside: a rail and a few coats, and whatever light is coming from behind them
+    const glow = new THREE.Mesh(new THREE.PlaneGeometry(1.26, 2.02), new THREE.MeshBasicMaterial({ color: 0xCFE3FF, transparent: true, opacity: 0, toneMapped: false }));
+    glow.position.set(0, 1.18, -.25); g.add(glow);
+    cyl(.012, .012, 1.26, brass, 0, 1.95, -.02, g, 8).rotation.z = Math.PI / 2;
+    [[-.35, 0x2E3A55], [-.05, 0x6B2F2A], [.3, 0x3F4A33]].forEach(([cx, c]) => { const coat = box(.26, .95, .14, mat(c, { roughness: 1 }), cx, 1.42, -.04, g); coat.rotation.y = .12; });
+    const door = sx => {
+      const pv = new THREE.Group(); pv.position.set(sx * .64, 0, .31); g.add(pv);
+      box(.64, 2.08, .04, wd, -sx * .32, 1.18, 0, pv);
+      [[1.62, .62], [.66, .9]].forEach(([y, h]) => box(.46, h, .02, dk, -sx * .32, y, .025, pv));
+      const kn = new THREE.Mesh(new THREE.SphereGeometry(.03, 12, 10), brass); kn.position.set(-sx * .58, 1.15, .05); pv.add(kn);
+      return pv;
+    };
+    return { g, dl: door(-1), dr: door(1), glow };
+  }
+  const WROBE = wardrobeMesh(scene, 4.62, -1.55, -Math.PI / 2); WROBE.g.userData.egg = 'wardrobe';
+  addMarker(V(4.3, 2.6, -1.55), 0x7C8CFF, { egg: 'wardrobe' });
+  views.wardrobe = { pos: V(3.0, 1.55, -1.55), look: V(4.6, 1.25, -1.55) };
+
   // Real cover art from Last.fm (falls back to the designed sleeves if an image can't load)
   const loaded = {};
   function loadCover(url, apply){
@@ -2129,7 +2156,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const inDoor = (x, z) => vaultOpen && x > 4.2 && x <= 5.7 && z >= -.25 && z <= .85;
   const inVault = (x, z) => vaultOpen && Object.values(VR).some(r => inRect(r, x, z));
   const inHall = (x, z) => entered && ((Math.abs(x) < .45 && z > 4.2 && z <= 5.5) || (Math.abs(x) < 1.2 && z > 5.5 && z < 10.3));
-  const valid = (x, z) => inWorld ? zone === 'med' ? medValid(x, z) : zone === 'tidy' ? tdValid(x, z) : zone === 'apt' ? aptValid(x, z) : zone === 'fly' ? false : zone === 'xc' ? xcValid(x, z) : zone === 'xin' ? xinValid(x, z) : zone === 'farm' ? farmValid(x, z) : zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) || inDeep(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? (SW.roof ? swRoofOK(x, z) : blrValid(x, z)) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
+  const valid = (x, z) => inWorld ? WD_PL[zone] ? wdValid(x, z) : zone === 'med' ? medValid(x, z) : zone === 'tidy' ? tdValid(x, z) : zone === 'apt' ? aptValid(x, z) : zone === 'fly' ? false : zone === 'xc' ? xcValid(x, z) : zone === 'xin' ? xinValid(x, z) : zone === 'farm' ? farmValid(x, z) : zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) || inDeep(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? (SW.roof ? swRoofOK(x, z) : blrValid(x, z)) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
   const region = x => x > 4.9 ? 'vault' : 'room';
   function flyTo(target, dir, done){
     if (inWorld) { const a = dir ? lookAngles(target, dir) : null; return moveCam(target, a ? a.yaw : null, a ? a.pitch : null, 1, done); }
@@ -2185,6 +2212,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     jobs: ['Local hero', 'Inspired by the idea that the best heroes are the ones who still help with the small stuff: the parcels, the stuck kites, the stolen phones.'],
     streets: ['Street sweeper', 'Inspired by the comics where the hero’s own city throws up a new villain every week, and he has to know every street to keep up.'],
     greenhouse: ['The greenhouse', 'Inspired by AgriBridge and the farmers it’s for, and by how good it feels to watch something you planted actually grow.'],
+    wardrobe: ['Through the wardrobe', 'Inspired by every story where an ordinary door in an ordinary room opens onto somewhere it shouldn\u2019t.'],
     binary: ['The full stack', 'Inspired by loving every layer of building things, from the AI model all the way down to the 0s and 1s.']
   };
   const TOTAL = Object.keys(SECRETS).length, found = new Set();
@@ -2214,7 +2242,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     toast.classList.remove('on'); sc.classList.add('on'); clearTimeout(sc._t); sc._t = setTimeout(() => sc.classList.remove('on'), 6000);
     [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, .22, 'square', .05), i * 90));
   }
-  const LABELS = { logbook: 'Rayan\u2019s logbook', batfig: 'Tilt the Batman figure', seed: 'A strange golden seed', lairexit: 'Back upstairs', lairboard: 'The lair scoreboard', rackinfo: 'The weapon rack', telescope: 'Look through the telescope', hatch: 'Back downstairs', ladder: 'Climb to the rooftop', lift: 'Take the lift', window: 'The sky outside', counter: 'Visitors so far', speakers: 'Play lo-fi', portal: 'Through the moon gate: Mandalink world', meddoor: 'Meridian General',  medkiosk: 'Lobby kiosk', cbstart: 'The pager: Code Black', medlift: 'Take the lift', halePlaque: 'A plaque in the lobby', sfClock: 'The Clockmaker’s clock', medexit: 'Back to the room', optable: 'Lift the sheet', whiteboard: 'The whiteboard', swim: 'Swim corner', photos: 'Photo folder', reviews: 'My album reviews', shelfvinyl: 'On the shelf', alexa: 'Alexa', scratch: 'Scratch it', map: 'AgriBridge across India', apk: 'Download AgriBridge (Android)', chat: 'A walkie-talkie', builder: 'Play: block builder', switch: 'Light switch', radicals: 'Play: find the radical', screen: 'Use the laptop: Mandalink', crate: 'Dig through the crate', vaultbook: 'Pull the red book' };
+  const LABELS = { logbook: 'Rayan\u2019s logbook', batfig: 'Tilt the Batman figure', seed: 'A strange golden seed', lairexit: 'Back upstairs', lairboard: 'The lair scoreboard', rackinfo: 'The weapon rack', telescope: 'Look through the telescope', hatch: 'Back downstairs', ladder: 'Climb to the rooftop', lift: 'Take the lift', window: 'The sky outside', counter: 'Visitors so far', speakers: 'Play lo-fi', portal: 'Through the moon gate: Mandalink world', meddoor: 'Meridian General',  medkiosk: 'Lobby kiosk', cbstart: 'The pager: Code Black', medlift: 'Take the lift', halePlaque: 'A plaque in the lobby', sfClock: 'The Clockmaker’s clock', medexit: 'Back to the room', optable: 'Lift the sheet', whiteboard: 'The whiteboard', swim: 'Swim corner', photos: 'Photo folder', reviews: 'My album reviews', shelfvinyl: 'On the shelf', alexa: 'Alexa', scratch: 'Scratch it', map: 'AgriBridge across India', apk: 'Download AgriBridge (Android)', chat: 'A walkie-talkie', builder: 'Play: block builder', switch: 'Light switch', radicals: 'Play: find the radical', screen: 'Use the laptop: Mandalink', crate: 'Dig through the crate', vaultbook: 'Pull the red book', wardrobe: 'Open the wardrobe' };
   const bookLabel = () => vaultOpen ? 'Close the bookshelf' : 'Pull the red book';
 
   let night = false;
@@ -13338,6 +13366,239 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (e === 'bifrost') { const others = Object.keys(AREAS).filter(q => q !== 'asgard'); tone(200, 1, 'sawtooth', .05, 1600); say('Bifrost!', 1400); return setTimeout(() => enterArea(others[Math.floor(Math.random() * others.length)]), 500); }
   }
 
+  // ======================= through the wardrobe: a snowy forest, a tiny cinema, an empty night train =======================
+  const WD_PL = {
+    wd_snow: { name: 'A snowy forest', col: 0xCFE3FF, fade: '#DDE8F6', hello: 'Snow. Pine trees. A lamppost that has no business being out here. The wardrobe is right behind you.' },
+    wd_cine: { name: 'A tiny cinema', col: 0xFF6A50, fade: '#14080A', hello: 'A cinema with three rows of seats, and the film has already started. Take a seat; the projectionist changes reels if you ask.' },
+    wd_train: { name: 'An empty night train', col: 0xFFB45A, fade: '#0A0C14', hello: 'An empty carriage, late at night, going somewhere fast. Nobody else is on board.' }
+  };
+  const WD = { order: Object.keys(WD_PL), i: 0, busy: false, sit: null, film: 0, filmT: 0, stop: 0, stopT: 0, clack: 0, cabin: null, seen: [] };
+  try { WD.i = (+localStorage.getItem('ru-wardrobe') || 0) % WD.order.length; WD.seen = JSON.parse(localStorage.getItem('ru-wardrobe-seen') || '[]'); } catch (e) {}
+  function wdDoors(to, ms, done){
+    const t0 = performance.now(), a0 = WROBE.dr.rotation.y, o0 = WROBE.glow.material.opacity;
+    const st = now => { const k = Math.min(1, (now - t0) / ms), e = k * k * (3 - 2 * k), a = a0 + (to - a0) * e; WROBE.dr.rotation.y = a; WROBE.dl.rotation.y = -a; WROBE.glow.material.opacity = o0 + ((to ? .95 : 0) - o0) * e; if (k < 1) requestAnimationFrame(st); else done && done(); };
+    requestAnimationFrame(st);
+  }
+  function wdOpen(){
+    if (A || EV) return say(A ? 'Finish your fight first.' : 'Leave the event first.', 2200);
+    if (WD.busy) return; WD.busy = true; closePanel(); endTour(true);
+    const k = WD.order[WD.i]; WROBE.glow.material.color.setHex(WD_PL[k].col);
+    flyTo(views.wardrobe.pos.clone(), views.wardrobe.look, () => {
+      tone(180, .5, 'sawtooth', .025, 120); setTimeout(() => tone(240, .35, 'sawtooth', .02, 160), 260);
+      wdDoors(1.9, 900, () => setTimeout(() => wdEnter(k), 250));
+    });
+    setTimeout(() => { WD.busy = false; }, 4000);
+  }
+  function wdEnter(k){
+    const P = WD_PL[k];
+    putBackRecord(); exitTelescope();
+    fade(() => {
+      if (!areaScenes[k]) WD_BUILD[k](k);
+      const an = areaAnim[k];
+      saved = { pos: V(0, 1.6, 2.6), yaw: 0, pitch: -.05 };
+      inWorld = true; zone = k; falling = false; vy = 0; walkTarget = null; web.p = null; drawWeb(); WD.sit = null;
+      pos.set(an.spawn[0], 1.6, an.spawn[1]); yaw = an.yaw || 0; pitch = -.05;
+      dock.classList.remove('on'); $('#worldBack').hidden = false; $('#worldBack').textContent = 'Back through the wardrobe'; jumpBtn.hidden = fine; uiZone();
+      WD.i = (WD.order.indexOf(k) + 1) % WD.order.length; if (!WD.seen.includes(k)) WD.seen.push(k);
+      try { localStorage.setItem('ru-wardrobe', String(WD.i)); localStorage.setItem('ru-wardrobe-seen', JSON.stringify(WD.seen)); } catch (e) {}
+      WROBE.dr.rotation.y = WROBE.dl.rotation.y = 0; WROBE.glow.material.opacity = 0; WD.busy = false;
+      secret('wardrobe'); say(P.hello, 5200);
+    }, P.fade);
+  }
+  function wdLeave(){
+    fade(() => {
+      WD.sit = null; travel('room'); pos.set(3.4, 1.6, -1.55); yaw = -Math.PI / 2; pitch = -.08;
+      WROBE.dr.rotation.y = 1.9; WROBE.dl.rotation.y = -1.9; WROBE.glow.material.color.setHex(WD_PL[WD.order[WD.i]].col); WROBE.glow.material.opacity = .95;
+      setTimeout(() => { tone(150, .3, 'sawtooth', .02, 110); wdDoors(0, 800, () => tone(90, .12, 'square', .05)); }, 500);
+      say(WD.seen.length >= WD.order.length ? 'Back in your room. Open it again; it never goes to the same place twice in a row.' : 'Back in your room. The wardrobe won’t open onto the same place next time.', 4200);
+    }, '#100C08');
+  }
+  const wdIn = (r, x, z) => x > r[0] && x < r[1] && z > r[2] && z < r[3];
+  function wdValid(x, z){
+    const an = areaAnim[zone]; if (!an) return true; if (WD.sit) return false;
+    if (an.bound && !an.bound(x, z)) return false;
+    return !(an.blocks || []).some(b => b.r ? Math.hypot(x - b.x, z - b.z) < b.r : wdIn(b, x, z));
+  }
+  // a wardrobe standing in each place: the way home
+  function wdBackDoor(sc, x, z, ry, col){ const w = wardrobeMesh(sc, x, z, ry); w.dr.rotation.y = 1.25; w.dl.rotation.y = -1.25; w.glow.material.color.setHex(col); w.glow.material.opacity = .9; egg(w.g, 'wdhome', 'Back through the wardrobe'); return w; }
+  const wdLine = (n, a) => a[(WD[n] = (WD[n] || 0) + 1) % a.length];
+  const FILMS = ['Countdown', 'The Paper Boat', 'Night Bus', 'The Kite'];
+  function drawFilm(g, w, h, f, t){
+    g.fillStyle = '#111'; g.fillRect(0, 0, w, h);
+    if (f === 0) {
+      const n = 5 - Math.floor(t % 5), a = (t % 1) * Math.PI * 2;
+      g.fillStyle = '#C9C2B0'; g.fillRect(0, 0, w, h); g.fillStyle = '#8D8676'; g.beginPath(); g.moveTo(w / 2, h / 2); g.arc(w / 2, h / 2, w, -Math.PI / 2, -Math.PI / 2 + a); g.fill();
+      g.strokeStyle = '#222'; g.lineWidth = 4; [90, 120].forEach(r => { g.beginPath(); g.arc(w / 2, h / 2, r, 0, 7); g.stroke(); }); g.beginPath(); g.moveTo(0, h / 2); g.lineTo(w, h / 2); g.moveTo(w / 2, 0); g.lineTo(w / 2, h); g.stroke();
+      g.fillStyle = '#111'; g.font = `800 150px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(n, w / 2, h / 2 + 8);
+    } else if (f === 1) {
+      const sky = g.createLinearGradient(0, 0, 0, h); sky.addColorStop(0, '#1B2A44'); sky.addColorStop(1, '#46617E'); g.fillStyle = sky; g.fillRect(0, 0, w, h);
+      g.fillStyle = '#F4EBD0'; g.beginPath(); g.arc(w * .8, h * .22, 26, 0, 7); g.fill();
+      for (let L = 0; L < 3; L++) { g.fillStyle = ['#2B4460', '#22384F', '#1A2C3F'][L]; g.beginPath(); g.moveTo(0, h); for (let x = 0; x <= w; x += 8) g.lineTo(x, h * (.62 + L * .1) + Math.sin(x / 40 + t * (1.2 + L * .5) + L) * 7); g.lineTo(w, h); g.fill(); }
+      const bx = (t * 40) % (w + 160) - 80, by = h * .62 + Math.sin(bx / 40 + t * 1.2) * 7 - 4, r = Math.sin(t * 1.5) * .12;
+      g.save(); g.translate(bx, by); g.rotate(r); g.fillStyle = '#F2F2EA'; g.beginPath(); g.moveTo(-34, -6); g.lineTo(34, -6); g.lineTo(22, 10); g.lineTo(-22, 10); g.fill(); g.beginPath(); g.moveTo(-14, -6); g.lineTo(0, -40); g.lineTo(14, -6); g.fill(); g.restore();
+      g.strokeStyle = 'rgba(200,220,255,.25)'; g.lineWidth = 1; for (let i = 0; i < 40; i++) { const x = (i * 97 + t * 260) % w, y = (i * 53 + t * 520) % h; g.beginPath(); g.moveTo(x, y); g.lineTo(x - 3, y + 12); g.stroke(); }
+    } else if (f === 2) {
+      g.fillStyle = '#0B0E1A'; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 18; i++) { const bw = 40 + (i * 37) % 50, bh = 60 + (i * 71) % 120, x = ((i * 61 - t * 30) % (w + 100) + w + 100) % (w + 100) - 60; g.fillStyle = '#161B2C'; g.fillRect(x, h * .72 - bh, bw, bh); g.fillStyle = 'rgba(255,200,110,.6)'; for (let yy = h * .72 - bh + 8; yy < h * .7 - 8; yy += 14) for (let xx = x + 6; xx < x + bw - 6; xx += 12) if ((xx * 7 + yy * 3 + i) % 5 < 2) g.fillRect(xx, yy, 5, 6); }
+      g.fillStyle = '#20232B'; g.fillRect(0, h * .72, w, h); const bx = w - ((t * 90) % (w + 400));
+      g.fillStyle = '#C23B2E'; g.fillRect(bx, h * .55, 280, 70); g.fillStyle = '#FFD98A'; for (let i = 0; i < 7; i++) g.fillRect(bx + 14 + i * 38, h * .58, 28, 26); g.fillStyle = '#111'; [50, 230].forEach(o => { g.beginPath(); g.arc(bx + o, h * .55 + 72, 14, 0, 7); g.fill(); });
+    } else {
+      const sky = g.createLinearGradient(0, 0, 0, h); sky.addColorStop(0, '#5FA8E8'); sky.addColorStop(1, '#CDE7FA'); g.fillStyle = sky; g.fillRect(0, 0, w, h);
+      g.fillStyle = 'rgba(255,255,255,.9)'; for (let i = 0; i < 5; i++) { const x = ((i * 140 + t * 18) % (w + 160)) - 80, y = 40 + (i * 37) % 90; [0, 22, 44].forEach((o, j) => { g.beginPath(); g.arc(x + o, y - (j === 1 ? 10 : 0), 22, 0, 7); g.fill(); }); }
+      g.fillStyle = '#6BAA4E'; g.fillRect(0, h * .84, w, h);
+      const kx = w * .62 + Math.sin(t * .7) * 50, ky = h * .3 + Math.cos(t * .9) * 22;
+      g.strokeStyle = '#333'; g.lineWidth = 1.5; g.beginPath(); g.moveTo(w * .2, h * .84); g.quadraticCurveTo(w * .45, h * .7, kx, ky + 30); g.stroke();
+      g.save(); g.translate(kx, ky); g.rotate(Math.sin(t * 1.3) * .2); g.fillStyle = '#E4572E'; g.beginPath(); g.moveTo(0, -32); g.lineTo(24, 0); g.lineTo(0, 32); g.lineTo(-24, 0); g.fill(); g.fillStyle = '#FFC93C'; g.beginPath(); g.moveTo(0, -32); g.lineTo(24, 0); g.lineTo(0, 0); g.fill(); g.restore();
+      g.strokeStyle = '#E4572E'; g.lineWidth = 2; g.beginPath(); g.moveTo(kx, ky + 32); for (let i = 1; i < 6; i++) g.lineTo(kx + Math.sin(t * 3 + i) * 8, ky + 32 + i * 10); g.stroke();
+    }
+    g.fillStyle = 'rgba(255,255,255,.05)'; for (let i = 0; i < 30; i++) g.fillRect(Math.random() * w, Math.random() * h, 2, 2);
+    if (Math.random() < .3) { g.fillStyle = 'rgba(0,0,0,.25)'; g.fillRect(Math.random() * w, 0, 1.5, h); }
+  }
+  const TRAIN_STOPS = ['Next stop: somewhere you forgot', 'Next stop: 3:47 a.m.', 'Next stop: the bottom of the sea', 'Next stop: the Moon (change here for Mars)', 'Next stop: the day before yesterday', 'Next stop: the end of the line', 'Next stop: your room. Mind the wardrobe.'];
+  const WD_BUILD = {
+    wd_snow(k){
+      const sc = areaBase(k, { fog: 0xC9D6E6, near: 8, far: 60, top: '#8FA3BF', bot: '#DCE5F0', hemi: 0xE6EEFF, ground: 0x9AA6B8, hi: .85, sun: 0xDDE6FF, si: .45 });
+      disc(sc, k, 0, 0, 40, mat(0xF4F7FB, { roughness: 1 }), 1);
+      const pine = mat(0x1F3B2E, { roughness: 1 }), snowM = mat(0xF4F7FB, { roughness: 1 }), bark = mat(0x4A3424), blocks = [];
+      for (let i = 0; i < (lowFx ? 70 : 130); i++) {
+        const a = Math.random() * Math.PI * 2, r = 6 + Math.pow(Math.random(), .7) * 32, x = Math.cos(a) * r, z = Math.sin(a) * r;
+        if (Math.hypot(x, z - 1.5) < 4 || Math.hypot(x - 3, z + 6) < 2.5 || Math.hypot(x + 6, z + 10) < 5.5 || Math.hypot(x - 14, z + 24) < 5 || Math.abs(x) < 1.5 && z < 0 && z > -18) continue;
+        const s = .8 + Math.random() * .9, t = new THREE.Group(); t.position.set(x, 0, z); sc.add(t);
+        cyl(.14 * s, .18 * s, 1.2 * s, bark, 0, .6 * s, 0, t, 8);
+        [[1.5, 2.4, 1.6], [1.15, 2, 2.9], [.8, 1.7, 4]].forEach(([cr, ch, cy]) => { cone(cr * s, ch * s, pine, 0, cy * s, 0, t); cone(cr * s * .7, ch * s * .45, snowM, 0, (cy + ch * .32) * s, 0, t); });
+        t.traverse(o => { o.userData.noPick = true; }); blocks.push({ x, z, r: .55 * s });
+      }
+      // the lamppost, still lit
+      const lp = new THREE.Group(); lp.position.set(3, 0, -6); sc.add(lp); const iron = mat(0x1C1E22, { metalness: .6, roughness: .4 });
+      cyl(.07, .1, 3.4, iron, 0, 1.7, 0, lp, 12); cyl(.2, .2, .12, iron, 0, .06, 0, lp, 12); box(.34, .06, .34, iron, 0, 3.42, 0, lp);
+      const lampG = new THREE.Mesh(new THREE.BoxGeometry(.28, .36, .28), new THREE.MeshBasicMaterial({ color: 0xFFD98A, toneMapped: false })); lampG.position.y = 3.62; lp.add(lampG); cone(.26, .22, iron, 0, 3.92, 0, lp);
+      const ll = new THREE.PointLight(0xFFC87A, 1.4, 12, 2); ll.position.set(0, 3.5, 0); lp.add(ll); egg(lp, 'wdlamp', 'A lamppost in the middle of a forest'); blocks.push({ x: 3, z: -6, r: .35 });
+      // a frozen pond
+      const ice = new THREE.Mesh(new THREE.CircleGeometry(4.5, 40), mat(0xA9C8E0, { roughness: .08, metalness: .3 })); ice.rotation.x = -Math.PI / 2; ice.position.set(-6, .02, -10); sc.add(ice); egg(ice, 'wdpond', 'The frozen pond');
+      // a snowman
+      const sm = new THREE.Group(); sm.position.set(-2.4, 0, -3.4); sc.add(sm);
+      [[.45, .42], [.32, 1.08], [.22, 1.55]].forEach(([r, y]) => { const b = new THREE.Mesh(new THREE.SphereGeometry(r, 20, 14), snowM); b.position.y = y; sm.add(b); });
+      [-.07, .07].forEach(x => { const e = new THREE.Mesh(new THREE.SphereGeometry(.025, 8, 6), mat(0x111111)); e.position.set(x, 1.6, .2); sm.add(e); });
+      const nose = new THREE.Mesh(new THREE.ConeGeometry(.035, .22, 8), mat(0xE8742A)); nose.rotation.x = Math.PI / 2; nose.position.set(0, 1.54, .3); sm.add(nose);
+      box(.62, .07, .1, mat(0xB0302A), 0, 1.33, .05, sm); egg(sm, 'wdsnowman', 'A snowman'); blocks.push({ x: -2.4, z: -3.4, r: .6 });
+      // footprints that just stop
+      const fpM = new THREE.MeshBasicMaterial({ color: 0xB7C4D6 }), prints = new THREE.Group(); sc.add(prints);
+      for (let i = 0; i < 26; i++) { const f = new THREE.Mesh(new THREE.CircleGeometry(.09, 10), fpM); f.scale.set(1, 1.7, 1); f.rotation.x = -Math.PI / 2; f.position.set((i % 2 ? .14 : -.14), .021, -1.5 - i * .62); prints.add(f); }
+      egg(prints, 'wdprints', 'Footprints');
+      // a cabin with one lit window
+      const cab = new THREE.Group(); cab.position.set(14, 0, -24); cab.rotation.y = -.6; sc.add(cab); const logM = mat(0x5A3B26, { roughness: 1 });
+      box(4, 2.4, 3.2, logM, 0, 1.2, 0, cab); const rf = box(4.6, .2, 2.1, snowM, 0, 2.95, -.85, cab); rf.rotation.x = .62; const rf2 = box(4.6, .2, 2.1, snowM, 0, 2.95, .85, cab); rf2.rotation.x = -.62;
+      const win = new THREE.Mesh(new THREE.PlaneGeometry(.8, .7), new THREE.MeshBasicMaterial({ color: 0xFFC46A, toneMapped: false })); win.position.set(.6, 1.4, 1.61); cab.add(win);
+      const cl = new THREE.PointLight(0xFFB050, .9, 9, 2); cl.position.set(.6, 1.4, 2.2); cab.add(cl); egg(cab, 'wdcabin', 'A cabin'); blocks.push({ x: 14, z: -24, r: 2.8 });
+      WD.cabin = { win, cl, x: 14, z: -24 };
+      // snow, falling forever
+      const n = lowFx ? 500 : 1600, P = new Float32Array(n * 3); for (let i = 0; i < n; i++) P.set([(Math.random() - .5) * 40, Math.random() * 14, (Math.random() - .5) * 40], i * 3);
+      const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(P, 3));
+      const flakes = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xFFFFFF, size: .09, transparent: true, opacity: .9, depthWrite: false })); flakes.userData.noPick = true; flakes.frustumCulled = false; sc.add(flakes);
+      wdBackDoor(sc, 0, 2.6, Math.PI, WD_PL.wd_snow.col); blocks.push({ x: 0, z: 2.6, r: .85 });
+      areaAnim[k] = { spawn: [0, .9], yaw: 0, blocks, bound: (x, z) => Math.hypot(x, z) < 34, hello: WD_PL[k].hello, step(dt, t){
+        for (let i = 0; i < n; i++) { let y = P[i * 3 + 1] - dt * (.9 + (i % 7) * .08); P[i * 3] += Math.sin(t + i) * dt * .15; if (y < 0) { y = 14; P[i * 3] = pos.x + (Math.random() - .5) * 40; P[i * 3 + 2] = pos.z + (Math.random() - .5) * 40; } P[i * 3 + 1] = y; }
+        sg.attributes.position.needsUpdate = true; ll.intensity = 1.3 + Math.sin(t * 7) * .05 + (Math.random() < .01 ? -.6 : 0);
+        const C = WD.cabin, near = Math.hypot(pos.x - C.x, pos.z - C.z) < 9; C.cl.intensity += ((near ? 0 : .9) - C.cl.intensity) * Math.min(1, dt * 3); C.win.material.color.setHex(C.cl.intensity > .45 ? 0xFFC46A : 0x1A1610);
+      } };
+    },
+    wd_cine(k){
+      const sc = areaBase(k, { fog: 0x0A0506, near: 30, far: 60, top: '#000', bot: '#000', hemi: 0xFFD6C8, ground: 0x220808, hi: .22, sun: 0xFFE0D0, si: .1 });
+      slab(sc, k, -4, 4, -6, 6, mat(0x3A1414, { roughness: 1 }), .4);
+      const wall = mat(0x2A0E10, { roughness: .9 }), velvet = mat(0x8E1C22, { roughness: .9 }), gold2 = mat(0xC9A24A, { metalness: .7, roughness: .35 });
+      box(8, 4.6, .2, wall, 0, 2.3, -6.1, sc); box(8, 4.6, .2, wall, 0, 2.3, 6.1, sc); box(.2, 4.6, 12.2, wall, -4.1, 2.3, 0, sc); box(.2, 4.6, 12.2, wall, 4.1, 2.3, 0, sc); box(8.4, .2, 12.4, mat(0x1A0809), 0, 4.6, 0, sc);
+      // curtains, a little stage and the screen
+      for (let i = 0; i < 9; i++) [-1, 1].forEach(sd => { const c = cyl(.16, .16, 4.2, velvet, sd * (3.0 + i * .12), 2.25, -5.85, sc, 10); c.userData.noPick = true; });
+      box(8, .5, 1.2, mat(0x2E1010), 0, .25, -5.5, sc); box(8, .06, .06, gold2, 0, .5, -4.9, sc);
+      const FW = 512, FH = 288, fc = document.createElement('canvas'); fc.width = FW; fc.height = FH; const fg = fc.getContext('2d'), ft = new THREE.CanvasTexture(fc); ft.encoding = THREE.sRGBEncoding;
+      const screen = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 3.15), new THREE.MeshBasicMaterial({ map: ft, toneMapped: false })); screen.position.set(0, 2.45, -5.98); sc.add(screen); egg(screen, 'wdscreen', 'The film');
+      const sl = new THREE.PointLight(0xBFD4FF, .8, 12, 2); sl.position.set(0, 2.4, -4.6); sc.add(sl);
+      // the seats: three rows
+      const blocks = [], seatM = mat(0xA4212A, { roughness: .85 }), armM = mat(0x1E1012);
+      [-.4, 1.4, 3.2].forEach((rz, ri) => {
+        const row = new THREE.Group(); row.position.set(0, 0, rz); sc.add(row);
+        for (let j = 0; j < 6; j++) { const x = -2.1 + j * .84, s = new THREE.Group(); s.position.x = x; row.add(s); box(.66, .14, .55, seatM, 0, .48, 0, s); box(.66, .58, .12, seatM, 0, .8, .27, s); box(.06, .58, .5, armM, .36, .4, 0, s); s.userData.egg = 'wdseat'; s.userData.seat = { x, z: rz, ri }; }
+        blocks.push([-2.6, 2.6, rz - .45, rz + .45]);
+      });
+      LABELS.wdseat = 'Take a seat';
+      // the projector at the back, and its beam
+      const pj = new THREE.Group(); pj.position.set(2.6, 2.7, 5.6); sc.add(pj); box(.6, .4, .7, mat(0x2B2B2E, { metalness: .5 }), 0, 0, 0, pj);
+      [-.2, .2].forEach(o => { const r = cyl(.22, .22, .06, mat(0x18181A), 0, .38, o, pj, 20); r.rotation.x = Math.PI / 2; });
+      box(.8, 1.3, .8, mat(0x1E1012), 0, -.85, 0, pj); egg(pj, 'wdproj', 'The projector: change the reel');
+      const beam = new THREE.Mesh(new THREE.ConeGeometry(1.9, 11.6, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0xDDE6FF, transparent: true, opacity: .05, depthWrite: false, side: THREE.DoubleSide, toneMapped: false }));
+      beam.userData.noPick = true; sc.add(beam); beam.position.set(1.3, 2.58, -.2); beam.lookAt(0, 2.45, -6); beam.rotateX(-Math.PI / 2);
+      // popcorn on the front of the stage
+      const pc = new THREE.Group(); pc.position.set(-3.3, .5, 4.7); sc.add(pc); cyl(.16, .11, .34, mat(0xE8E2D4), 0, .17, 0, pc, 16);
+      for (let i = 0; i < 16; i++) { const q = new THREE.Mesh(new THREE.SphereGeometry(.045, 8, 6), mat(0xFFF2C0)); q.position.set((Math.random() - .5) * .22, .36 + Math.random() * .08, (Math.random() - .5) * .22); pc.add(q); }
+      box(.5, .5, .5, mat(0x2E1010), 0, -.25, 0, pc); egg(pc, 'wdcorn', 'Popcorn'); blocks.push([-3.6, -3.0, 4.4, 5.0]);
+      // exit sign and the wardrobe at the back
+      const ex = new THREE.Mesh(new THREE.PlaneGeometry(.7, .26), new THREE.MeshBasicMaterial({ toneMapped: false, map: tex(140, 52, (g, w, h) => { g.fillStyle = '#0E7A3A'; g.fillRect(0, 0, w, h); g.fillStyle = '#E8FFE8'; g.font = `800 34px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('EXIT?', w / 2, h / 2 + 2); }) }));
+      ex.position.set(-2.8, 2.75, 5.99); ex.rotation.y = Math.PI; sc.add(ex);
+      wdBackDoor(sc, -2.8, 5.65, Math.PI, WD_PL.wd_cine.col); blocks.push([-3.6, -2.0, 5.2, 6]);
+      const hx = 3.75, hz = 5.75;
+      areaAnim[k] = { spawn: [-2.8, 4.6], yaw: 0, blocks, bound: (x, z) => Math.abs(x) < hx && z > -4.7 && z < hz, hello: WD_PL[k].hello, step(dt, t){
+        WD.filmT += dt; if (WD.filmT > 1 / 20) { WD.filmT = 0; drawFilm(fg, FW, FH, WD.film, t); ft.needsUpdate = true; }
+        sl.intensity = .7 + Math.random() * .15; beam.material.opacity = .045 + Math.random() * .015;
+        if (WD.sit) { pos.y = 1.34; vy = 1e-4; if (keys.w || keys.s || keys.a || keys.d || keys.arrowup || keys.arrowdown || walkTarget || Math.hypot(joy.x, joy.y) > .15) { const S = WD.sit; WD.sit = null; walkTarget = null; pos.set(S.x < 0 ? -3.1 : 3.1, 1.6, S.z); } }
+      } };
+    },
+    wd_train(k){
+      const sc = areaBase(k, { fog: 0x05070D, near: 8, far: 70, top: '#03040A', bot: '#0E1424', hemi: 0xFFE2B8, ground: 0x111111, hi: .55, sun: 0x8899CC, si: .1 });
+      const car = new THREE.Group(); sc.add(car);
+      slab(sc, k, -1.4, 1.4, -11, 11, mat(0x3A3F48, { roughness: .9 }), .3);
+      const panel = mat(0xC9CCD1, { roughness: .6 }), seat = mat(0x2F4B7A, { roughness: .95 }), steel = mat(0xB8BEC6, { metalness: .8, roughness: .25 });
+      [-1, 1].forEach(sd => {
+        box(.08, .9, 22, panel, sd * 1.42, .45, 0, car); box(.08, .5, 22, panel, sd * 1.42, 2.25, 0, car);
+        for (let z = -10; z <= 10; z += 2.5) box(.1, 1.1, .3, panel, sd * 1.42, 1.45, z, car);
+        const glass = new THREE.Mesh(new THREE.PlaneGeometry(22, 1.1), new THREE.MeshBasicMaterial({ color: 0x8AA0C0, transparent: true, opacity: .08, depthWrite: false })); glass.rotation.y = sd * Math.PI / 2; glass.position.set(sd * 1.44, 1.45, 0); glass.userData.noPick = true; car.add(glass);
+        for (let z = -9.5; z <= 9.5; z += 2.5) { if (sd < 0 && z > 8) continue; box(.5, .12, 1.9, seat, sd * 1.1, .48, z, car); box(.1, .55, 1.9, seat, sd * 1.33, .78, z, car); }
+      });
+      box(2.9, .1, 22, mat(0xE6E8EB), 0, 2.55, 0, car); box(2.9, 2.6, .1, panel, 0, 1.3, -11, car); box(2.9, 2.6, .1, panel, 0, 1.3, 11, car);
+      const lights = []; for (let z = -9; z <= 9; z += 3) { const s = new THREE.Mesh(new THREE.BoxGeometry(.5, .03, 1.6), new THREE.MeshBasicMaterial({ color: 0xFFF3DC, toneMapped: false })); s.position.set(0, 2.49, z); car.add(s); lights.push(s); }
+      const cl1 = new THREE.PointLight(0xFFEBD0, .9, 14, 2); cl1.position.set(0, 2.2, -5); car.add(cl1); const cl2 = new THREE.PointLight(0xFFEBD0, .9, 14, 2); cl2.position.set(0, 2.2, 5); car.add(cl2);
+      [-.7, .7].forEach(x => cyl(.025, .025, 2.5, steel, x, 1.27, 0, car, 8).rotation.x = Math.PI / 2);
+      [-6, 0, 6].forEach(z => cyl(.025, .025, 2.4, steel, .45, 1.25, z, car, 8));
+      // the stop display, the cord, a newspaper and a yellow umbrella
+      const DW = 512, DH = 64, dc = document.createElement('canvas'); dc.width = DW; dc.height = DH; const dg = dc.getContext('2d'), dt2 = new THREE.CanvasTexture(dc);
+      const disp = new THREE.Mesh(new THREE.PlaneGeometry(2.2, .28), new THREE.MeshBasicMaterial({ map: dt2, toneMapped: false })); disp.position.set(0, 2.3, -10.93); car.add(disp); egg(disp, 'wdsign', 'The next stop');
+      const cord = new THREE.Group(); cord.position.set(-1.25, 2.3, -3); car.add(cord); cyl(.008, .008, 22, mat(0xD03A2A), 0, 0, 3, cord, 6).rotation.x = Math.PI / 2; const hd = box(.08, .16, .08, mat(0xD03A2A), 0, -.12, 0, cord); egg(cord, 'wdcord', 'The emergency cord');
+      const np = box(.36, .02, .5, mat(0xE8E4D8), 1.05, .56, -2.5, car); np.rotation.y = .3; egg(np, 'wdpaper', 'A newspaper someone left');
+      const um = new THREE.Group(); um.position.set(1.12, .6, 5); um.rotation.x = Math.PI / 2; car.add(um); cone(.12, .8, mat(0xF2C230), 0, .4, 0, um); cyl(.012, .012, .3, mat(0x333333), 0, -.15, 0, um, 6); egg(um, 'wdumb', 'A yellow umbrella');
+      // outside: poles, far lights and a moon, rushing past
+      const out = []; const poleM = mat(0x22262E), farM = new THREE.MeshBasicMaterial({ color: 0xFFC46A, toneMapped: false }), farM2 = new THREE.MeshBasicMaterial({ color: 0x9FC4FF, toneMapped: false });
+      for (let i = 0; i < 16; i++) [-1, 1].forEach(sd => { const p = box(.12, 4, .12, poleM, sd * 3.2, 1.2, -60 + i * 8, sc); p.userData.noPick = true; out.push({ o: p, sp: 1 }); });
+      for (let i = 0; i < (lowFx ? 30 : 70); i++) { const sd = Math.random() < .5 ? -1 : 1, l = new THREE.Mesh(new THREE.BoxGeometry(.25, .25, .25), Math.random() < .7 ? farM : farM2); l.position.set(sd * (14 + Math.random() * 40), Math.random() * 3 - .5, -60 + Math.random() * 120); l.userData.noPick = true; sc.add(l); out.push({ o: l, sp: .12 + 6 / Math.abs(l.position.x) }); }
+      const moon = new THREE.Mesh(new THREE.CircleGeometry(4, 32), new THREE.MeshBasicMaterial({ color: 0xF4EED8, fog: false, toneMapped: false })); moon.position.set(-80, 22, -60); moon.lookAt(0, 1.6, 0); sc.add(moon);
+      wdBackDoor(sc, -.0, 10.65, Math.PI, WD_PL.wd_train.col);
+      const drawSign = t => { dg.fillStyle = '#120A04'; dg.fillRect(0, 0, DW, DH); dg.fillStyle = '#FFA43A'; dg.font = `700 34px ui-monospace, monospace`; dg.textBaseline = 'middle'; const s = TRAIN_STOPS[WD.stop % TRAIN_STOPS.length], tw = dg.measureText(s).width; dg.fillText(s, tw < DW - 20 ? (DW - tw) / 2 : DW - ((t * 90) % (tw + DW)), DH / 2 + 2); dt2.needsUpdate = true; };
+      drawSign(0);
+      areaAnim[k] = { spawn: [0, 9.2], yaw: 0, blocks: [[-1.4, -.82, -11, 11], [.82, 1.4, -11, 11]], bound: (x, z) => Math.abs(x) < 1.3 && z > -10.6 && z < 9.9, hello: WD_PL[k].hello, step(dt, t){
+        out.forEach(q => { q.o.position.z += dt * 38 * q.sp; if (q.o.position.z > 60) q.o.position.z -= 120; });
+        car.position.x = Math.sin(t * 1.7) * .012; car.rotation.z = Math.sin(t * 1.1) * .004;
+        WD.clack += dt; if (WD.clack > .55) { WD.clack = 0; tone(62, .07, 'square', .018); setTimeout(() => tone(58, .06, 'square', .014), 110); }
+        WD.stopT += dt; if (WD.stopT > 14) { WD.stopT = 0; WD.stop++; tone(660, .2, 'sine', .03); setTimeout(() => tone(520, .3, 'sine', .03), 220); }
+        drawSign(t); if (Math.random() < .004) { const L = lights[Math.floor(Math.random() * lights.length)]; L.visible = false; setTimeout(() => { L.visible = true; }, 90 + Math.random() * 200); }
+      } };
+    }
+  };
+  function wdEgg(p){
+    const e = p.egg;
+    if (e === 'wdhome') return wdLeave();
+    if (e === 'wdlamp') return say(wdLine('lampN', ['A lamppost, still lit, in the middle of a forest. Nobody remembers who put it here.', 'The glass is warm. The snow around the base hasn’t settled.', 'Someone has scratched a small arrow into the iron. It points back at the wardrobe.']), 4200);
+    if (e === 'wdpond') { tone(1400, .2, 'sine', .03, 1800); return say(wdLine('pondN', ['The ice is thick. Under it, something orange drifts past very slowly.', 'You tap the ice. Something taps back.', 'Your reflection in the ice is a second late.']), 4000); }
+    if (e === 'wdsnowman') { tone(300, .15, 'triangle', .04, 420); return say(wdLine('smN', ['The snowman doesn’t say anything. It’s a snowman.', 'Was it facing the other way a minute ago?', 'Someone has given it a very good scarf.']), 3600); }
+    if (e === 'wdprints') return say('Footprints leading into the trees. They stop in the middle of the path, as if whoever made them simply left.', 4400);
+    if (e === 'wdcabin') return say('A cabin with one lit window. Every time you walk up to it, the light goes out.', 4000);
+    if (e === 'wdscreen') return say(`Now showing: ${FILMS[WD.film]}. ${WD.film === 0 ? 'Still counting down. It always is.' : 'No credits, no title card, no idea who made it.'}`, 3800);
+    if (e === 'wdproj') { WD.film = (WD.film + 1) % FILMS.length; [220, 330].forEach((f, i) => setTimeout(() => tone(f, .12, 'square', .03), i * 120)); return say(`The projector clatters. New reel: ${FILMS[WD.film]}.`, 3000); }
+    if (e === 'wdseat') { const S = p.o.userData.seat || p.o.parent.userData.seat; if (!S) return; WD.sit = S; walkTarget = null; moveCam(V(S.x, 1.34, S.z), 0, .05, .7); return say(S.ri === 0 ? 'Front row. Your neck will hate you. Move to stand up.' : 'Good seat. Move to stand up.', 2600); }
+    if (e === 'wdcorn') { [900, 1100, 800].forEach((f, i) => setTimeout(() => tone(f, .04, 'square', .02), i * 70)); return say(wdLine('cornN', ['Still warm. Nobody is selling it.', 'It’s exactly the right amount of salt.', 'The bucket is never any emptier.']), 3000); }
+    if (e === 'wdsign') return say(`${TRAIN_STOPS[WD.stop % TRAIN_STOPS.length]}. It changes before you can tell where you are.`, 3800);
+    if (e === 'wdcord') { tone(880, .4, 'sawtooth', .03, 440); return say('You pull the cord. The train doesn’t slow down. Somewhere far ahead, a whistle answers.', 4200); }
+    if (e === 'wdpaper') return say(wdLine('papN', ['Tomorrow’s paper. The weather says: snow, in a forest that isn’t on any map.', 'Tomorrow’s paper. The crossword is already done, in your handwriting.', 'Tomorrow’s paper. Page 3: “Local wardrobe goes missing. Again.”']), 4400);
+    if (e === 'wdumb') return say('A yellow umbrella. Still wet. It hasn’t rained in here.', 3400);
+  }
+
   // ======================= four more worlds: the Quantum Realm, Knowhere, Arkham Asylum and the TVA =======================
   Object.assign(AREAS, {
     quantum: { name: 'The Quantum Realm', uni: 'Marvel', blurb: 'Shrink down through the portal on the desk. Your room, but everything is enormous.', col: '#FF6AD5' },
@@ -20215,7 +20476,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // if the bookshelf is closed, the vault (and the operating table) is sealed off, so come back into the room instead
     fade(() => { inWorld = false; zone = 'hub'; uiZone(); walkTarget = null; vy = 0; pos.copy(saved.pos); yaw = saved.yaw; pitch = saved.pitch; if (region(pos.x) === 'vault' && !vaultOpen) { pos.set(3.2, 1.6, .3); yaw = Math.PI / 2; pitch = 0; } dock.classList.add('on'); $('#worldBack').hidden = true; jumpBtn.hidden = true; $('#worldBack').textContent = 'Back to the room'; });
   }
-  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : inWorld && zone === 'tidy' ? tdExit() : inWorld && zone === 'apt' ? aptLeave() : inWorld && zone === 'fly' ? aptArrive() : inWorld && zone === 'xc' ? xcLeave() : inWorld && zone === 'xin' ? xcOutside() : inWorld && zone === 'med' ? leaveMed() : inWorld && zone === 'farm' ? leaveFarm() : inWorld && zone === 'mc' ? bzLeave() : inWorld && zone === 'sp' ? spAbort() : inWorld && zone === 'blr' ? leaveBlr() : inWorld && (zone === 'twr' || zone === 'dsp') ? fade(() => travel('room'), '#06070B') : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
+  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : inWorld && WD_PL[zone] ? wdLeave() : inWorld && zone === 'tidy' ? tdExit() : inWorld && zone === 'apt' ? aptLeave() : inWorld && zone === 'fly' ? aptArrive() : inWorld && zone === 'xc' ? xcLeave() : inWorld && zone === 'xin' ? xcOutside() : inWorld && zone === 'med' ? leaveMed() : inWorld && zone === 'farm' ? leaveFarm() : inWorld && zone === 'mc' ? bzLeave() : inWorld && zone === 'sp' ? spAbort() : inWorld && zone === 'blr' ? leaveBlr() : inWorld && (zone === 'twr' || zone === 'dsp') ? fade(() => travel('room'), '#06070B') : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
   function enterAI(){
     fade(() => {
       if (!aiScene) buildAI();
@@ -21769,6 +22030,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       if (p.egg === 'repair') return repairJunk();
       if (p.egg === 'lairmap') { storyFlag('lairmap'); return openWallMap(); }
       if (p.egg === 'bdrone') return shootDrone(p.o);
+      if (WD_PL[zone] && p.egg) return wdEgg(p);
       if (AREAS[zone] && p.egg) return areaEgg(p);
       if (p.egg === 'evpanel') return openLobby(p.o.userData.ev);
       if (p.egg === 'medkiosk') return medKiosk();
@@ -21831,6 +22093,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.egg === 'galhelm') { tone(60, .8, 'sawtooth', .05, 40); return say('A piece of Galactus\u2019s helmet. It still hums. The rest of it is out on the skyline.', 4000); }
     if (p.egg === 'radicals') return flyTo(views.scroll.pos.clone(), views.scroll.look, openGame);
     if (p.egg === 'crate') return digCrate();
+    if (p.egg === 'wardrobe') return wdOpen();
     if (p.egg === 'screen') return flyTo(views.screen.pos.clone(), views.screen.look, openPC);
     if (p.egg === 'vaultbook') return openVault();
     if (p.egg === 'optable') return revealTable();
