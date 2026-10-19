@@ -1430,7 +1430,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // hallway
   const hallFloor = new THREE.Mesh(new THREE.PlaneGeometry(3, 6), mat(0x3A3530));
   hallFloor.rotation.x = -Math.PI / 2; hallFloor.position.set(0, 0, 8); hallFloor.receiveShadow = true; scene.add(hallFloor);
-  box(.1, H, 6, mat(0x2A2D35), -1.5, H / 2, 8); box(.1, H, 6, mat(0x2A2D35), 1.5, H / 2, 8);
+  box(.1, H, 2.05, mat(0x2A2D35), -1.5, H / 2, 6.03); box(.1, H, 2.9, mat(0x2A2D35), -1.5, H / 2, 9.55); box(.1, H - 2.2, 1.1, mat(0x2A2D35), -1.5, 2.2 + (H - 2.2) / 2, 7.6); box(.1, H, 6, mat(0x2A2D35), 1.5, H / 2, 8);
   box(1.4, .08, .14, mat(0xFFFFFF), 0, dh + .04, D / 2 + .05);
   box(.1, dh, .14, mat(0xFFFFFF), -dw / 2 - .05, dh / 2, D / 2 + .05);
   box(.1, dh, .14, mat(0xFFFFFF), dw / 2 + .05, dh / 2, D / 2 + .05);
@@ -1599,9 +1599,49 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     };
     return { g, dl: door(-1), dr: door(1), glow };
   }
-  const WROBE = wardrobeMesh(scene, 4.62, -1.55, -Math.PI / 2); WROBE.g.userData.egg = 'wardrobe';
-  addMarker(V(4.3, 2.6, -1.55), 0x7C8CFF, { egg: 'wardrobe' });
-  views.wardrobe = { pos: V(3.0, 1.55, -1.55), look: V(4.6, 1.25, -1.55) };
+  // ---------- the spare room: through a doorway on the left of the hallway ----------
+  const SPR = { lamp: true };
+  { const sw = mat(0xE9E0D2, { roughness: .95 }), trim = mat(0xFFFFFF);
+    const sf = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 5.95), mat(0x9C6B45, { roughness: .75 })); sf.rotation.x = -Math.PI / 2; sf.position.set(-3.75, 0, 8.03); sf.receiveShadow = true; sf.userData.walk = true; scene.add(sf);
+    const sc2 = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 5.95), mat(0xF2EEE6)); sc2.rotation.x = Math.PI / 2; sc2.position.set(-3.75, H, 8.03); scene.add(sc2);
+    box(.1, H, 6, sw, -6, H / 2, 8); box(4.6, H, .1, sw, -3.75, H / 2, 11); box(4.5, H, .04, sw, -3.75, H / 2, 5.07);
+    // the hallway wall, faced on this side, with the doorway cut through it
+    box(.04, H, 2.05, sw, -1.57, H / 2, 6.08); box(.04, H, 2.85, sw, -1.57, H / 2, 9.57); box(.04, H - 2.2, 1.0, sw, -1.57, 2.2 + (H - 2.2) / 2, 7.6);
+    box(.14, .08, 1.12, trim, -1.5, 2.24, 7.6); [7.06, 8.14].forEach(z => box(.14, 2.2, .08, trim, -1.5, 1.1, z));
+    const dp = new THREE.Group(); dp.position.set(-1.62, 0, 8.12); scene.add(dp); const sd = box(1.0, 2.18, .05, mat(0x6FA5C9, { roughness: .6 }), -.5, 1.09, 0, dp); dp.rotation.y = 1.47; sd.userData.egg = 'sparedoor';
+    box(.12, .02, 5.9, trim, -5.94, .06, 8.03);
+    // the bed, a rug, a bedside table with a lamp
+    const bed = new THREE.Group(); bed.position.set(-3.6, 0, 9.85); scene.add(bed); bed.userData.egg = 'sparebed';
+    box(1.6, .3, 2.1, mat(0x6B4A33), 0, .25, 0, bed); box(1.5, .22, 2.0, mat(0xF4F1EA), 0, .51, 0, bed); box(1.52, .08, 1.3, mat(0x3F6E8C, { roughness: 1 }), 0, .64, -.32, bed);
+    box(1.0, .14, .4, mat(0xFFFFFF), 0, .68, .7, bed); box(1.6, 1.1, .08, mat(0x6B4A33), 0, .75, 1.08, bed);
+    const rug = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.7), mat(0xC98A4E, { roughness: 1 })); rug.rotation.x = -Math.PI / 2; rug.position.set(-3.6, .012, 7.6); scene.add(rug);
+    const rug2 = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 1.4), mat(0xE4572E, { roughness: 1 })); rug2.rotation.x = -Math.PI / 2; rug2.position.set(-3.6, .014, 7.6); scene.add(rug2);
+    const nt = new THREE.Group(); nt.position.set(-2.35, 0, 10.55); scene.add(nt); nt.userData.egg = 'sparelamp';
+    box(.5, .55, .45, mat(0x6B4A33), 0, .275, 0, nt); cyl(.06, .08, .3, mat(0x2B2D33), 0, .7, 0, nt, 12);
+    SPR.shade = new THREE.Mesh(new THREE.CylinderGeometry(.13, .19, .2, 20, 1, true), new THREE.MeshStandardMaterial({ color: 0xFFE2A8, emissive: 0xFFC26A, emissiveIntensity: .9, side: THREE.DoubleSide })); SPR.shade.position.y = .92; nt.add(SPR.shade);
+    SPR.light = new THREE.PointLight(0xFFC98A, .9, 7, 2); SPR.light.position.set(-2.35, 1.2, 10.4); scene.add(SPR.light);
+    const fill = new THREE.PointLight(0xFFE6C8, .5, 8, 2); fill.position.set(-3.75, 2.9, 7.6); scene.add(fill);
+    // a window that only ever shows the night
+    const win = new THREE.Group(); win.position.set(-3.6, 1.7, 10.93); scene.add(win); win.userData.egg = 'sparewin';
+    box(1.3, 1.0, .06, trim, 0, 0, 0, win);
+    const night = new THREE.Mesh(new THREE.PlaneGeometry(1.18, .88), new THREE.MeshBasicMaterial({ toneMapped: false, map: tex(256, 192, (g, w, h) => { const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#060A1C'); gr.addColorStop(1, '#22305A'); g.fillStyle = gr; g.fillRect(0, 0, w, h); g.fillStyle = '#fff'; for (let i = 0; i < 70; i++) g.fillRect(Math.random() * w, Math.random() * h * .8, Math.random() < .2 ? 2 : 1, Math.random() < .2 ? 2 : 1); g.fillStyle = '#F4EED8'; g.beginPath(); g.arc(w * .72, h * .3, 18, 0, 7); g.fill(); g.fillStyle = '#060A1C'; g.beginPath(); g.arc(w * .72 + 8, h * .27, 16, 0, 7); g.fill(); g.fillStyle = '#0A0E1A'; for (let x = 0; x < w; x += 22) { const bh = 20 + (x * 37) % 50; g.fillRect(x, h - bh, 20, bh); } }) }));
+    night.position.z = -.04; night.rotation.y = Math.PI; win.add(night); box(1.3, .05, .05, trim, 0, 0, -.07, win); box(.05, 1.0, .05, trim, 0, 0, -.07, win);
+    box(1.5, .05, .16, trim, 0, -.53, -.08, win);
+    // string lights along the top of the walls
+    const bulbs = new THREE.Group(); scene.add(bulbs); SPR.bulbs = bulbs;
+    for (let i = 0; i < 22; i++) { const a = i / 21, x = -5.9, z = 5.4 + a * 5.4, b = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), new THREE.MeshBasicMaterial({ color: [0xFFC93C, 0xFF7A5A, 0x9FD3FF, 0xA6F0A0][i % 4], toneMapped: false })); b.position.set(x, 2.85 - Math.sin(a * Math.PI * 4) ** 2 * .12, z); bulbs.add(b); }
+    for (let i = 0; i < 18; i++) { const a = i / 17, b = new THREE.Mesh(new THREE.SphereGeometry(.035, 8, 6), new THREE.MeshBasicMaterial({ color: [0x9FD3FF, 0xFFC93C, 0xA6F0A0, 0xFF7A5A][i % 4], toneMapped: false })); b.position.set(-5.8 + a * 4.1, 2.85 - Math.sin(a * Math.PI * 3) ** 2 * .12, 10.9); bulbs.add(b); }
+    // a few boxes nobody has unpacked, and a poster
+    [[-5.55, 5.5, .6, .5], [-5.0, 5.45, .45, .4], [-5.5, 5.55, .45, .35, .6]].forEach(([x, z, w, h, y]) => box(w, h, w * .8, mat(0xC79A63, { roughness: 1 }), x, (y || 0) + h / 2, z));
+    const post = new THREE.Mesh(new THREE.PlaneGeometry(.8, 1.1), new THREE.MeshStandardMaterial({ roughness: .9, map: tex(240, 330, (g, w, h) => { g.fillStyle = '#16181D'; g.fillRect(0, 0, w, h); g.fillStyle = '#FFC93C'; g.beginPath(); g.arc(w / 2, h * .42, 70, 0, 7); g.fill(); g.fillStyle = '#16181D'; g.font = `800 34px ${DISPLAY}`; g.textAlign = 'center'; g.fillText('SOMEWHERE', w / 2, h * .82); g.fillText('ELSE', w / 2, h * .93); }) }));
+    post.position.set(-3.0, 1.75, 5.1); scene.add(post);
+  }
+  addMarker(V(-1.4, 2.5, 7.6), 0x7C8CFF, { egg: 'sparedoor' });
+  views.spare = { pos: V(-2.4, 1.6, 7.6), look: V(-4.6, 1.3, 8.6) };
+  const inSpare = (x, z) => entered && ((x > -5.55 && x < -1.6 && z > 5.45 && z < 10.6 && !(x < -2.65 && z > 8.65) && !(x < -4.75 && z < 8.3) && !(x > -2.7 && z > 10.15)) || (x >= -1.6 && x < -1.1 && z > 7.2 && z < 8.0));
+  const WROBE = wardrobeMesh(scene, -5.62, 7.45, Math.PI / 2); WROBE.g.userData.egg = 'wardrobe';
+  addMarker(V(-5.3, 2.6, 7.45), 0x7C8CFF, { egg: 'wardrobe' });
+  views.wardrobe = { pos: V(-3.7, 1.55, 7.45), look: V(-5.6, 1.25, 7.45) };
 
   // Real cover art from Last.fm (falls back to the designed sleeves if an image can't load)
   const loaded = {};
@@ -2156,19 +2196,21 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const inDoor = (x, z) => vaultOpen && x > 4.2 && x <= 5.7 && z >= -.25 && z <= .85;
   const inVault = (x, z) => vaultOpen && Object.values(VR).some(r => inRect(r, x, z));
   const inHall = (x, z) => entered && ((Math.abs(x) < .45 && z > 4.2 && z <= 5.5) || (Math.abs(x) < 1.2 && z > 5.5 && z < 10.3));
-  const valid = (x, z) => inWorld ? WD_PL[zone] ? wdValid(x, z) : zone === 'med' ? medValid(x, z) : zone === 'tidy' ? tdValid(x, z) : zone === 'apt' ? aptValid(x, z) : zone === 'fly' ? false : zone === 'xc' ? xcValid(x, z) : zone === 'xin' ? xinValid(x, z) : zone === 'farm' ? farmValid(x, z) : zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) || inDeep(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? (SW.roof ? swRoofOK(x, z) : blrValid(x, z)) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
+  const valid = (x, z) => inWorld ? WD_PL[zone] ? wdValid(x, z) : zone === 'med' ? medValid(x, z) : zone === 'tidy' ? tdValid(x, z) : zone === 'apt' ? aptValid(x, z) : zone === 'fly' ? false : zone === 'xc' ? xcValid(x, z) : zone === 'xin' ? xinValid(x, z) : zone === 'farm' ? farmValid(x, z) : zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) || inDeep(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? (SW.roof ? swRoofOK(x, z) : blrValid(x, z)) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z) || inSpare(x, z));
   const region = x => x > 4.9 ? 'vault' : 'room';
   function flyTo(target, dir, done){
     if (inWorld) { const a = dir ? lookAngles(target, dir) : null; return moveCam(target, a ? a.yaw : null, a ? a.pitch : null, 1, done); }
     const a = dir ? lookAngles(target, dir) : null;
-    const R = (x, z) => x > 4.9 ? (x > 7 && z > 2.25 ? 'gh' : 'vault') : z > 4.7 ? 'hall' : 'room', inV = r => r === 'vault' || r === 'gh';
+    const R = (x, z) => x > 4.9 ? (x > 7 && z > 2.25 ? 'gh' : 'vault') : z > 4.7 ? (x < -1.35 ? 'spare' : 'hall') : 'room', inV = r => r === 'vault' || r === 'gh', inH = r => r === 'hall' || r === 'spare';
     const from = R(pos.x, pos.z), to = R(target.x, target.z), path = [];
     if (from === 'gh' && to !== 'gh') path.push([V(10.2, 1.6, 2.0), 0], [V(10.2, 1.6, .2), 0]);
     if (inV(from) && !inV(to)) path.push([V(4.9, 1.6, .3), Math.PI / 2]);
-    if (from === 'hall' && to !== 'hall') path.push([V(0, 1.6, 5.6), 0], [V(0, 1.6, 4.1), 0]);
-    if (to === 'hall' && from !== 'hall') path.push([V(0, 1.6, 4.1), Math.PI], [V(0, 1.6, 5.6), Math.PI]);
+    if (from === 'spare' && to !== 'spare') path.push([V(-1.3, 1.6, 7.6), -Math.PI / 2], [V(0, 1.6, 7.6), -Math.PI / 2]);
+    if (inH(from) && !inH(to)) path.push([V(0, 1.6, 5.6), 0], [V(0, 1.6, 4.1), 0]);
+    if (inH(to) && !inH(from)) path.push([V(0, 1.6, 4.1), Math.PI], [V(0, 1.6, 5.6), Math.PI]);
     if (inV(to) && !inV(from)) path.push([V(4.9, 1.6, .3), -Math.PI / 2]);
     if (to === 'gh' && from !== 'gh') path.push([V(10.2, 1.6, .2), Math.PI], [V(10.2, 1.6, 2.0), Math.PI]);
+    if (to === 'spare' && from !== 'spare') path.push([V(0, 1.6, 7.6), Math.PI / 2], [V(-1.3, 1.6, 7.6), Math.PI / 2]);
     const step = i => {
       if (i < path.length) { const [p, y] = path[i]; return moveCam(p, y, 0, Math.min(1.6, .5 + pos.distanceTo(p) * .2), () => step(i + 1)); }
       moveCam(target, a ? a.yaw : null, a ? a.pitch : null, Math.min(2, .7 + pos.distanceTo(target) * .2), done);
@@ -2242,7 +2284,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     toast.classList.remove('on'); sc.classList.add('on'); clearTimeout(sc._t); sc._t = setTimeout(() => sc.classList.remove('on'), 6000);
     [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, .22, 'square', .05), i * 90));
   }
-  const LABELS = { logbook: 'Rayan\u2019s logbook', batfig: 'Tilt the Batman figure', seed: 'A strange golden seed', lairexit: 'Back upstairs', lairboard: 'The lair scoreboard', rackinfo: 'The weapon rack', telescope: 'Look through the telescope', hatch: 'Back downstairs', ladder: 'Climb to the rooftop', lift: 'Take the lift', window: 'The sky outside', counter: 'Visitors so far', speakers: 'Play lo-fi', portal: 'Through the moon gate: Mandalink world', meddoor: 'Meridian General',  medkiosk: 'Lobby kiosk', cbstart: 'The pager: Code Black', medlift: 'Take the lift', halePlaque: 'A plaque in the lobby', sfClock: 'The Clockmaker’s clock', medexit: 'Back to the room', optable: 'Lift the sheet', whiteboard: 'The whiteboard', swim: 'Swim corner', photos: 'Photo folder', reviews: 'My album reviews', shelfvinyl: 'On the shelf', alexa: 'Alexa', scratch: 'Scratch it', map: 'AgriBridge across India', apk: 'Download AgriBridge (Android)', chat: 'A walkie-talkie', builder: 'Play: block builder', switch: 'Light switch', radicals: 'Play: find the radical', screen: 'Use the laptop: Mandalink', crate: 'Dig through the crate', vaultbook: 'Pull the red book', wardrobe: 'Open the wardrobe' };
+  const LABELS = { logbook: 'Rayan\u2019s logbook', batfig: 'Tilt the Batman figure', seed: 'A strange golden seed', lairexit: 'Back upstairs', lairboard: 'The lair scoreboard', rackinfo: 'The weapon rack', telescope: 'Look through the telescope', hatch: 'Back downstairs', ladder: 'Climb to the rooftop', lift: 'Take the lift', window: 'The sky outside', counter: 'Visitors so far', speakers: 'Play lo-fi', portal: 'Through the moon gate: Mandalink world', meddoor: 'Meridian General',  medkiosk: 'Lobby kiosk', cbstart: 'The pager: Code Black', medlift: 'Take the lift', halePlaque: 'A plaque in the lobby', sfClock: 'The Clockmaker’s clock', medexit: 'Back to the room', optable: 'Lift the sheet', whiteboard: 'The whiteboard', swim: 'Swim corner', photos: 'Photo folder', reviews: 'My album reviews', shelfvinyl: 'On the shelf', alexa: 'Alexa', scratch: 'Scratch it', map: 'AgriBridge across India', apk: 'Download AgriBridge (Android)', chat: 'A walkie-talkie', builder: 'Play: block builder', switch: 'Light switch', radicals: 'Play: find the radical', screen: 'Use the laptop: Mandalink', crate: 'Dig through the crate', vaultbook: 'Pull the red book', wardrobe: 'Open the wardrobe', sparedoor: 'The spare room', sparelamp: 'The bedside lamp', sparewin: 'The window', sparebed: 'The bed' };
   const bookLabel = () => vaultOpen ? 'Close the bookshelf' : 'Pull the red book';
 
   let night = false;
@@ -13407,7 +13449,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function wdLeave(){
     fade(() => {
-      WD.sit = null; travel('room'); pos.set(3.4, 1.6, -1.55); yaw = -Math.PI / 2; pitch = -.08;
+      WD.sit = null; travel('room'); pos.set(-4.1, 1.6, 7.45); yaw = Math.PI / 2; pitch = -.08;
       WROBE.dr.rotation.y = 1.9; WROBE.dl.rotation.y = -1.9; WROBE.glow.material.color.setHex(WD_PL[WD.order[WD.i]].col); WROBE.glow.material.opacity = .95;
       setTimeout(() => { tone(150, .3, 'sawtooth', .02, 110); wdDoors(0, 800, () => tone(90, .12, 'square', .05)); }, 500);
       say(WD.seen.length >= WD.order.length ? 'Back in your room. Open it again; it never goes to the same place twice in a row.' : 'Back in your room. The wardrobe won’t open onto the same place next time.', 4200);
@@ -22094,6 +22136,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.egg === 'radicals') return flyTo(views.scroll.pos.clone(), views.scroll.look, openGame);
     if (p.egg === 'crate') return digCrate();
     if (p.egg === 'wardrobe') return wdOpen();
+    if (p.egg === 'sparedoor') return flyTo(views.spare.pos.clone(), views.spare.look);
+    if (p.egg === 'sparelamp') { SPR.lamp = !SPR.lamp; SPR.light.intensity = SPR.lamp ? .9 : 0; SPR.shade.material.emissiveIntensity = SPR.lamp ? .9 : 0; return tone(SPR.lamp ? 700 : 500, .05, 'square', .04); }
+    if (p.egg === 'sparewin') return say('It\u2019s always night in this window, whatever time it is outside. Nobody has ever worked out why.', 3800);
+    if (p.egg === 'sparebed') return say(wdLine('bedN', ['You sit on the edge of the bed for a second. The springs creak like they know you.', 'Someone made this bed very neatly, and then never slept in it.', 'There\u2019s something under the bed. It\u2019s a sock. Just a sock.']), 3800);
     if (p.egg === 'screen') return flyTo(views.screen.pos.clone(), views.screen.look, openPC);
     if (p.egg === 'vaultbook') return openVault();
     if (p.egg === 'optable') return revealTable();
@@ -22111,6 +22157,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.walk) {
       let x = p.walk.x, z = p.walk.z;
       if (region(x) === 'vault') { if (!vaultOpen || !inVault(x, z)) return; }
+      else if (z > 4.7 && x < -1.5) { x = clamp(x, -5.4, -1.7); z = clamp(z, 5.6, 10.5); if (!inSpare(x, z)) return; }
       else if (z > 4.7) { x = clamp(x, -1.1, 1.1); z = clamp(z, 5.6, 10.2); }
       else { x = clamp(x, -4.2, 4.2); z = clamp(z, -3.6, 4.3); }
       closePanel();
