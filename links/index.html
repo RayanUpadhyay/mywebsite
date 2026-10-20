@@ -95,11 +95,14 @@ h1{margin:10px 0 0;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;
 
 /* ---------- socials ---------- */
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.soc{display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;text-align:left;width:100%;
+.soc{display:flex;align-items:center;gap:12px;min-width:0;padding:12px 14px;cursor:pointer;text-align:left;width:100%;
   transition:transform .2s, border-color .2s, background .2s}
 .soc:hover,.soc:focus-visible{transform:translateY(-2px);border-color:var(--edge-hi);background:rgba(28,32,46,.65);outline:none}
 .soc .ic{width:38px;height:38px;flex:none;border-radius:11px;display:grid;place-items:center;color:#fff;background:var(--c)}
+.soc .ic{position:relative}
 .soc .ic svg{width:20px;height:20px;fill:currentColor}
+.sdot{position:absolute;right:-4px;bottom:-4px;width:14px;height:14px;border-radius:50%;border:3px solid #12151E;background:var(--offline)}
+.sdot.online{background:var(--online)} .sdot.idle{background:var(--idle)} .sdot.dnd{background:var(--dnd)}
 .soc .t{min-width:0}
 .soc b{display:block;font-weight:600;font-size:14px}
 .soc small{display:block;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -163,16 +166,16 @@ footer button:hover{color:var(--ink)}
    EDIT ME. Leave anything empty ('') and it just won't show up.
    ============================================================ */
 const ME = {
-  name: 'realmelon',                // display name at the top
+  name: '',                         // display name at the top; empty uses your Discord display name
   bio: ['just here for the vibes', 'probably online rn', 'dm me on discord'],
 
   // Live Discord status, avatar, game and Spotify come from Lanyard.
   // 1. Join discord.gg/lanyard with your account (you can mute it).
   // 2. Discord settings → Advanced → Developer Mode on, then right-click yourself → Copy User ID.
-  discordId: '881075541954924554',
-  discord:   '',                    // your Discord username, copied when someone clicks the card
+  // The first account fills the big card; every account also gets a live card in the grid.
+  discordIds: ['881075541954924554', '787529668953767966'],
 
-  reddit:    '',                    // without the u/
+  reddit:    'Specialist-Tackle296', // without the u/                    // without the u/
   steam:     '',                    // steamcommunity.com/id/<this>
   roblox:    '',                    // roblox user ID number
   spotify:   '',                    // open.spotify.com/user/<this>
@@ -194,7 +197,7 @@ const ME = {
 
   // ---------- socials ----------
   const SITES = [
-    ['discord', 'Discord', '#5865F2', u => null, 'M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.3 18.3 0 0 0-5.5 0L8.6 3a19.7 19.7 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18a19.9 19.9 0 0 0 6 3l1.3-2.1a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1L18 21a19.8 19.8 0 0 0 6-3c.5-5.1-.8-9.6-3.7-13.6zM8 15.3c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.5 8 10.5s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z'],
+    ['discord', 'Discord', '#5865F2', id => `https://discord.com/users/${id}`, 'M20.3 4.4A19.8 19.8 0 0 0 15.4 3l-.6 1.3a18.3 18.3 0 0 0-5.5 0L8.6 3a19.7 19.7 0 0 0-4.9 1.5C.6 9.1-.3 13.6.1 18a19.9 19.9 0 0 0 6 3l1.3-2.1a12.9 12.9 0 0 1-2-1l.5-.4a14.2 14.2 0 0 0 12.2 0l.5.4c-.6.4-1.3.7-2 1L18 21a19.8 19.8 0 0 0 6-3c.5-5.1-.8-9.6-3.7-13.6zM8 15.3c-1.2 0-2.2-1.1-2.2-2.4S6.8 10.5 8 10.5s2.2 1.1 2.2 2.4-1 2.4-2.2 2.4zm8 0c-1.2 0-2.2-1.1-2.2-2.4s1-2.4 2.2-2.4 2.2 1.1 2.2 2.4-1 2.4-2.2 2.4z'],
     ['reddit', 'Reddit', '#FF4500', u => `https://www.reddit.com/user/${u}`, 'M22 12.1a2.2 2.2 0 0 0-3.7-1.6 10.8 10.8 0 0 0-5.8-1.8l1-4.6 3.2.7a1.6 1.6 0 1 0 .2-1l-3.6-.8a.5.5 0 0 0-.6.4L11.6 8.7a10.8 10.8 0 0 0-5.9 1.8 2.2 2.2 0 1 0-2.4 3.6v.7c0 3.5 4 6.3 8.7 6.3s8.7-2.8 8.7-6.3v-.7a2.2 2.2 0 0 0 1.3-2zM7 13.7a1.6 1.6 0 1 1 1.6 1.6A1.6 1.6 0 0 1 7 13.7zm8.9 4.2a5.8 5.8 0 0 1-3.9 1.2 5.8 5.8 0 0 1-3.9-1.2.4.4 0 0 1 .6-.6 4.9 4.9 0 0 0 3.3 1 4.9 4.9 0 0 0 3.3-1 .4.4 0 1 1 .6.6zm-.3-2.6a1.6 1.6 0 1 1 1.6-1.6 1.6 1.6 0 0 1-1.6 1.6z'],
     ['steam', 'Steam', '#1B2838', u => `https://steamcommunity.com/id/${u}`, 'M12 1a11 11 0 0 0-11 10.1l5.9 2.4a3.1 3.1 0 0 1 1.8-.5l2.6-3.8v-.1a4.1 4.1 0 1 1 4.1 4.1h-.1l-3.8 2.7v.2a3.1 3.1 0 0 1-6.1.8L1.2 15A11 11 0 1 0 12 1zM7.9 17.7l-1.4-.6a2.3 2.3 0 1 0 1.2-3.1l1.4.6a1.7 1.7 0 1 1-1.2 3.1zm10.5-8.4a2.7 2.7 0 1 0-2.7 2.7 2.7 2.7 0 0 0 2.7-2.7zm-4.8 0a2.1 2.1 0 1 1 2.1 2.1 2.1 2.1 0 0 1-2.1-2.1z'],
     ['roblox', 'Roblox', '#E2231A', u => `https://www.roblox.com/users/${u}/profile`, 'M5.2 1 1 18.8 18.8 23 23 5.2zm8.2 14-4.4-1.1 1.1-4.4 4.4 1.1z'],
@@ -207,24 +210,23 @@ const ME = {
     ['x', 'X', '#000', u => `https://x.com/${u}`, 'M18.2 2.3h3.4l-7.4 8.4L23 21.7h-6.8l-5.3-7-6.1 7H1.4l7.9-9L.9 2.3h7l4.8 6.4zm-1.2 17.4h1.9L7 4.2H5z'],
     ['github', 'GitHub', '#24292F', u => `https://github.com/${u}`, 'M12 .5a11.5 11.5 0 0 0-3.6 22.4c.6.1.8-.3.8-.6v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.2-1.3-5.2-5.7 0-1.3.4-2.3 1.2-3.1-.1-.3-.5-1.5.1-3 0 0 1-.3 3.2 1.2a11 11 0 0 1 5.8 0c2.2-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3 .7.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.1v3.2c0 .3.2.7.8.6A11.5 11.5 0 0 0 12 .5z'],
   ];
-  $('grid').innerHTML = SITES.filter(([k]) => ME[k]).map(([k, label, c, url, path], i) => {
-    const href = url(ME[k]);
-    const handle = k === 'reddit' ? 'u/' + ME[k] : k === 'roblox' ? 'profile' : (['youtube', 'tiktok'].includes(k) ? '@' : '') + ME[k];
-    const tag = href ? `a href="${esc(href)}" target="_blank" rel="noopener"` : `button type="button" data-copy="${esc(ME[k])}"`;
-    return `<${tag} class="card soc rise" style="--c:${c};animation-delay:${.18 + i * .04}s">
-      <span class="ic"><svg viewBox="0 0 24 24"><path d="${path}"/></svg></span>
-      <span class="t"><b>${label}</b><small>${esc(handle)}</small></span></${href ? 'a' : 'button'}>`;
+  // one entry per Discord account, then everything else that's filled in
+  const entries = [
+    ...ME.discordIds.map(id => ['discord', id]),
+    ...SITES.filter(([k]) => k !== 'discord' && ME[k]).map(([k]) => [k, ME[k]]),
+  ];
+  $('grid').innerHTML = entries.map(([k, v], i) => {
+    const [, label, c, url, path] = SITES.find(x => x[0] === k);
+    const handle = k === 'discord' ? 'loading…' : k === 'reddit' ? 'u/' + v : k === 'roblox' ? 'profile' : (['youtube', 'tiktok'].includes(k) ? '@' : '') + v;
+    return `<a href="${esc(url(v))}" target="_blank" rel="noopener" class="card soc rise"${k === 'discord' ? ` data-dc="${esc(v)}"` : ''} style="--c:${c};animation-delay:${.18 + i * .04}s">
+      <span class="ic"><svg viewBox="0 0 24 24"><path d="${path}"/></svg>${k === 'discord' ? '<i class="sdot"></i>' : ''}</span>
+      <span class="t"><b>${label}</b><small>${esc(handle)}</small></span></a>`;
   }).join('');
-  $('grid').addEventListener('click', e => {
-    const b = e.target.closest('[data-copy]'); if (!b) return;
-    navigator.clipboard?.writeText(b.dataset.copy).then(() => toast('Discord username copied'), () => toast(b.dataset.copy));
-  });
 
   // ---------- profile basics ----------
   $('name').textContent = ME.name;
-  $('user').textContent = ME.discord || ME.name;
   $('face').textContent = (ME.name[0] || '?').toUpperCase();
-  document.title = ME.name;
+  if (ME.name) document.title = ME.name;
 
   // ---------- Discord presence via Lanyard ----------
   const STATUS_TXT = { online: 'online', idle: 'idle', dnd: 'do not disturb', offline: 'offline' };
@@ -241,12 +243,24 @@ const ME = {
     $('actSmall').hidden = !o.small; if (o.small) $('actSmall').style.backgroundImage = `url("${o.small}")`;
     $('prog').hidden = !o.prog;
   }
+  // the small grid card for any Discord account
+  function renderCard(id, d) {
+    const el = document.querySelector(`[data-dc="${id}"]`), u = d.discord_user;
+    if (!el || !u) return;
+    const st = d.discord_status || 'offline';
+    const game = (d.activities || []).find(a => a.type !== 4);
+    el.querySelector('.sdot').className = 'sdot ' + st;
+    el.querySelector('small').textContent = u.username + (d.listening_to_spotify ? ' · listening to Spotify' : game ? ' · ' + game.name : '');
+    if (u.avatar) el.querySelector('.ic').style.background = `#5865F2 url("https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.webp?size=80") center/cover`;
+    el.querySelector('svg').style.display = u.avatar ? 'none' : '';
+  }
   function render(d) {
     const u = d.discord_user, st = d.discord_status || 'offline';
     $('status').className = 'status ' + st; $('status').title = STATUS_TXT[st];
     $('statusTxt').textContent = STATUS_TXT[st];
     if (u) {
       $('user').textContent = u.username;
+      if (!ME.name) { $('name').textContent = u.global_name || u.username; document.title = $('name').textContent; }
       if (u.avatar) {
         const ext = u.avatar.startsWith('a_') ? 'gif' : 'webp';
         $('face').outerHTML = `<img id="face" alt="" src="https://cdn.discordapp.com/avatars/${u.id}/${u.avatar}.${ext}?size=256">`;
@@ -276,12 +290,14 @@ const ME = {
     let beat;
     ws.onmessage = e => {
       const m = JSON.parse(e.data);
-      if (m.op === 1) { beat = setInterval(() => ws.send('{"op":3}'), m.d.heartbeat_interval); ws.send(JSON.stringify({ op: 2, d: { subscribe_to_id: ME.discordId } })); }
-      if (m.op === 0) render(m.d);
+      if (m.op === 1) { beat = setInterval(() => ws.send('{"op":3}'), m.d.heartbeat_interval); ws.send(JSON.stringify({ op: 2, d: { subscribe_to_ids: ME.discordIds } })); }
+      if (m.op !== 0) return;
+      const list = m.t === 'INIT_STATE' ? Object.entries(m.d) : [[m.d.user_id, m.d]];
+      for (const [id, d] of list) { renderCard(id, d); if (id === ME.discordIds[0]) render(d); }
     };
     ws.onclose = () => { clearInterval(beat); setTimeout(lanyard, 5000); };
   }
-  if (ME.discordId) lanyard();
+  if (ME.discordIds.length) lanyard();
   else if (ME.lastfm) lastfmFallback();
 
   // no Discord hooked up yet: show the last song from Last.fm instead
