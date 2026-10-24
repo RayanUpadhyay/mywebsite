@@ -2412,6 +2412,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     rattle: ['The Night of the Rattle', 'Inspired by Halloween, slasher films, and the oldest rule of trick-or-treating: never answer the door to a clown.'],
     w_pixel: ['The last pixel', 'Inspired by every console generation I grew up hearing about, and how a world can feel just as real at four pixels if you\u2019ve played it enough.'],
     w_mirror: ['The other side of the glass', 'Inspired by mirror mazes at fairs, and the creepy idea that your reflection only copies you because it has to.'],
+    w_bigroom: ['Lost and found', 'Inspired by every film where someone gets shrunk, and everything that has ever rolled under my bed.'],
     w_library: ['Overdue since forever', 'Inspired by libraries, Li Bai, and the feeling that every good book is a place you can walk into.'],
     w_flatland: ['A slice of Flatland', 'Inspired by Edwin Abbott\u2019s Flatland, and the idea that the hardest thing to imagine is the direction you can\u2019t see.'],
     rayanos: ['sudo make me a sandwich', 'Inspired by every developer who has ever poked around someone else\u2019s terminal just to see what was there.'],
@@ -3540,6 +3541,196 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     function hand(){ M.hm = !M.hm; M.hmEl.hidden = !M.hm; M.hmEl.dataset.t = ''; tone(M.hm ? 1320 : 990, .08, 'sine', .03); }
     return { name: 'Mirror Dimension', dir: 'mirror-dimension', icon: '🪞', col: '#C9D6E4', three: true, blurb: 'Everything is backwards. Your reflection runs a step behind you, touching a mirror swaps you over, and the water flows up.', help: 'WASD move, drag to look, E or Use to pick up / drop / use, M hand mirror, walk into a framed mirror to swap, Esc exit', trophy: ['a-mirror-shard.txt', 'A sliver of mirror, about the size of a thumbnail.\nIt doesn’t show your face. It shows your room, at night, with the window on the wrong wall.\n\nSouvenir from the Mirror Dimension.'], buttons: [['jump', 'Jump'], ['use', 'Use'], ['mirror', 'Mirror']], start, step, draw, end, dbg: () => M,
       press(k){ if (k === 'use') use(); if (k === 'mirror') hand(); }, key(k){ if (k === 'e' || k === 'enter') use(); if (k === 'm') hand(); } };
+  })();
+
+  // ---------- world 5: the Big Room. My own room, with me about a hundred times smaller (1 unit = 1 cm) ----------
+  WORLDS.bigroom = (() => {
+    const B = {}, BEAT = 60 / 74;
+    // things you can't walk through (or can stand on, if they're low): [x0, x1, z0, z1, top, bottom]
+    const BOX = [
+      [93, 99, -200, -194, 22], [241, 247, -200, -194, 22], [93, 99, -26, -20, 22], [241, 247, -26, -20, 22], [90, 250, -200, -20, 55, 22],
+      [-250, -245, -200, -195, 72], [-115, -110, -200, -195, 72], [-250, -245, -140, -135, 72], [-115, -110, -140, -135, 72], [-250, -110, -200, -135, 76, 72],
+      [-60, -26, -70, -46, 1.5], [-60, -26, -73, -69, 23],
+      [-170, -163, 110, 125, .8],
+      [-235, -210, 160, 185, 40], [-130, -105, 160, 185, 40],
+      [110, 200, 88, 90, 32], [110, 200, 170, 172, 32], [198, 200, 88, 172, 32], [112, 198, 91, 123, 31], [112, 198, 137, 169, 31],
+      [-15, 15, 130, 160, 1.4], [-6, 6, 139, 151, 33]
+    ];
+    const RUG = [-20, 30, 70];
+    const LOST = [
+      ['coin', 'a ₹1 coin', 170, -110], ['pick', 'a guitar pick', -222, 192], ['clip', 'a paperclip', -43, -60], ['bud', 'an earbud', -180, -168],
+      ['brick', 'a toy brick', 0, 134], ['cap', 'a bottle cap', 192, 130], ['button', 'a shirt button', -72, 62], ['note', 'a sticky note', 236, 186]
+    ];
+    function top(x, z){ let t = Math.hypot(x - RUG[0], z - RUG[1]) < RUG[2] ? .3 : 0; return t; }
+    function ground(x, z, feet){
+      let best = top(x, z);
+      BOX.forEach(b => { if (x >= b[0] && x <= b[1] && z >= b[2] && z <= b[3] && b[4] <= feet + .95 && b[4] > best && !b[5]) best = b[4]; });
+      return best;
+    }
+    function solid(x, z, feet){
+      if (x < -248 || x > 248 || z < -198 || z > 198) return true;
+      return BOX.some(b => x >= b[0] - .3 && x <= b[1] + .3 && z >= b[2] - .3 && z <= b[3] + .3 && b[4] > feet + .95 && (b[5] || 0) < feet + 1.8);
+    }
+    const tex = (w, h, f, rx, ry) => { const t = rwTex(w, h, f); if (rx) { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rx, ry); } return t; };
+    const std = (o) => new THREE.MeshStandardMaterial(Object.assign({ roughness: .7 }, o));
+    function box(w, h, d, m, x, y, z, par){ const b = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); b.position.set(x, y, z); (par || B.sc).add(b); return b; }
+    function blob(x, z, r, o){ const m = new THREE.Mesh(new THREE.CircleGeometry(r, 28), new THREE.MeshBasicMaterial({ color: 0, transparent: true, opacity: o || .3, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.position.set(x, .06, z); B.sc.add(m); }
+    const ALBUMS = [['Night Bus', '#2B3A6A', '#FFC93C'], ['Chai Hours', '#C8742E', '#FFF1DC'], ['Monsoon Tape', '#2E6A5A', '#BFE8DA'], ['Low Light', '#16181D', '#E4572E'], ['Rooftop FM', '#7A3FB0', '#FFD0F0'], ['Slow Orbit', '#0E4A8A', '#9FD8FF'], ['Paper Moon', '#E8E0CC', '#2A2D35'], ['Static Bloom', '#8A2E4A', '#FFB0A0']];
+    function albumTex(i){
+      const [n, bg, fg] = ALBUMS[i];
+      return rwTex(256, 256, (c, w, h) => { c.fillStyle = bg; c.fillRect(0, 0, w, h); c.fillStyle = fg; c.globalAlpha = .85;
+        if (i % 4 === 0) { c.beginPath(); c.arc(w * .6, h * .4, 60, 0, 7); c.fill(); } else if (i % 4 === 1) { for (let k = 0; k < 6; k++) c.fillRect(20, 30 + k * 26, w - 40 - k * 24, 12); } else if (i % 4 === 2) { c.beginPath(); c.moveTo(0, h * .7); for (let x = 0; x <= w; x += 16) c.lineTo(x, h * .55 + Math.sin(x / 20) * 18); c.lineTo(w, h); c.lineTo(0, h); c.fill(); } else { c.translate(w / 2, h / 2); c.rotate(.5); c.fillRect(-50, -50, 100, 100); c.setTransform(1, 0, 0, 1, 0, 0); }
+        c.globalAlpha = 1; c.font = `800 28px ${DISPLAY}`; c.fillText(n, 18, h - 22); });
+    }
+    function bunnyTex(){
+      return rwTex(128, 128, (c, w, h) => { const g = c.createRadialGradient(64, 64, 8, 64, 64, 56); g.addColorStop(0, 'rgba(150,150,156,1)'); g.addColorStop(.7, 'rgba(120,120,128,.9)'); g.addColorStop(1, 'rgba(120,120,128,0)'); c.fillStyle = g; c.fillRect(0, 0, w, h);
+        c.strokeStyle = 'rgba(90,90,98,.7)'; c.lineWidth = 1.2; for (let i = 0; i < 160; i++) { const a = Math.random() * 7, r = 20 + Math.random() * 34; c.beginPath(); c.moveTo(64 + Math.cos(a) * r * .6, 64 + Math.sin(a) * r * .6); c.lineTo(64 + Math.cos(a + .2) * r, 64 + Math.sin(a + .2) * r); c.stroke(); }
+        c.fillStyle = '#fff'; [[50, 58], [78, 58]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 8, 0, 7); c.fill(); }); c.fillStyle = '#0A0A0E'; [[52, 60], [76, 60]].forEach(([x, y]) => { c.beginPath(); c.arc(x, y, 4, 0, 7); c.fill(); });
+        c.strokeStyle = '#2A2A30'; c.lineWidth = 3; c.beginPath(); c.moveTo(40, 44); c.lineTo(58, 50); c.moveTo(88, 44); c.lineTo(70, 50); c.stroke(); });
+    }
+    function build(){
+      const sc = B.sc = new THREE.Scene(); sc.background = new THREE.Color(0xD9C8B0); sc.fog = new THREE.Fog(0xD9C8B0, 160, 620);
+      B.cam = new THREE.PerspectiveCamera(70, 1, .05, 1400);
+      sc.add(new THREE.HemisphereLight(0xFFF4E6, 0x8A6A4E, .75));
+      const sun = new THREE.DirectionalLight(0xFFE2B8, .8); sun.position.set(400, 300, 60); sc.add(sun);
+      const lamp = new THREE.PointLight(0xFFC88A, .9, 400, 1.5); lamp.position.set(-180, 120, -170); sc.add(lamp);
+      // floorboards: at this size every gap between planks is a little trench
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(500, 400), std({ map: tex(512, 512, (c, w, h) => { for (let i = 0; i < 8; i++) { c.fillStyle = ['#A87A52', '#9A6E48', '#B0845A', '#A2744C'][i % 4]; c.fillRect(0, i * 64, w, 64); c.strokeStyle = 'rgba(70,45,25,.25)'; for (let k = 0; k < 9; k++) { c.beginPath(); c.moveTo(0, i * 64 + 8 + k * 6); c.bezierCurveTo(w * .3, i * 64 + 4 + k * 6, w * .6, i * 64 + 14 + k * 6, w, i * 64 + 8 + k * 6); c.stroke(); } c.fillStyle = '#3A2414'; c.fillRect(0, i * 64, w, 3); c.fillRect((i * 173) % w, i * 64, 3, 64); } }, 4, 3), roughness: .55 }));
+      floor.rotation.x = -Math.PI / 2; sc.add(floor);
+      const wallM = std({ color: 0xE8DCC8, roughness: .95 });
+      box(500, 280, 2, wallM, 0, 140, -201); box(500, 280, 2, wallM, 0, 140, 201); box(2, 280, 400, wallM, -251, 140, 0); box(2, 280, 400, wallM, 251, 140, 0);
+      const skirt = std({ color: 0xF4EEE4 }); box(500, 10, 1.5, skirt, 0, 5, -199.5); box(500, 10, 1.5, skirt, 0, 5, 199.5); box(1.5, 10, 400, skirt, -249.5, 5, 0); box(1.5, 10, 400, skirt, 249.5, 5, 0);
+      const ceil = new THREE.Mesh(new THREE.PlaneGeometry(500, 400), std({ color: 0xF2EEE8 })); ceil.rotation.x = Math.PI / 2; ceil.position.y = 280; sc.add(ceil);
+      // the window, and the beam of light it throws across the floor
+      const win = new THREE.Mesh(new THREE.PlaneGeometry(110, 120), new THREE.MeshBasicMaterial({ color: 0xFFF6E0 })); win.position.set(250, 160, 20); win.rotation.y = -Math.PI / 2; sc.add(win);
+      const beam = new THREE.Mesh(new THREE.PlaneGeometry(260, 110), new THREE.MeshBasicMaterial({ map: tex(64, 64, (c, w, h) => { const g = c.createLinearGradient(0, 0, w, 0); g.addColorStop(0, 'rgba(255,240,200,0)'); g.addColorStop(.5, 'rgba(255,240,200,.5)'); g.addColorStop(1, 'rgba(255,240,200,.15)'); c.fillStyle = g; c.fillRect(0, 0, w, h); }), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: .5 }));
+      beam.rotation.x = -Math.PI / 2; beam.position.set(120, .1, 20); sc.add(beam);
+      const N = 260, mp = new Float32Array(N * 3); for (let i = 0; i < N; i++) { mp[i * 3] = 20 + Math.random() * 230; mp[i * 3 + 1] = Math.random() * 160; mp[i * 3 + 2] = -40 + Math.random() * 120; }
+      const mg = new THREE.BufferGeometry(); mg.setAttribute('position', new THREE.BufferAttribute(mp, 3)); B.motes = new THREE.Points(mg, new THREE.PointsMaterial({ color: 0xFFF4D8, size: .6, transparent: true, opacity: .7, depthWrite: false })); sc.add(B.motes);
+      // the bed: a ceiling of mattress on four tree-trunk legs, and dark underneath
+      const wood = std({ color: 0x6A4A32 }); [[96, -197], [244, -197], [96, -23], [244, -23]].forEach(([x, z]) => box(6, 22, 6, wood, x, 11, z));
+      box(160, 8, 180, wood, 170, 26, -110); box(158, 22, 178, std({ color: 0xF0EEF4 }), 170, 41, -110); box(150, 10, 60, std({ color: 0x5E7AB8 }), 170, 56, -160);
+      box(170, 40, 4, std({ color: 0x5E7AB8, roughness: .95 }), 170, 30, -19).position.y = 38;
+      blob(170, -110, 90, .45);
+      // the desk, with a lamp
+      [[-247, -197], [-112, -197], [-247, -138], [-112, -138]].forEach(([x, z]) => box(5, 72, 5, wood, x, 36, z));
+      box(140, 4, 65, std({ color: 0x8A6A4A }), -180, 74, -167); blob(-180, -167, 55, .25);
+      box(8, 40, 8, std({ color: 0x2A2D35, metalness: .6 }), -150, 96, -180); box(24, 10, 24, std({ color: 0xFFE2A8, emissive: 0x8A6A20 }), -150, 118, -180);
+      // the laptop: a keyboard plateau and a cliff of light
+      const lap = B.lap = new THREE.Group(); lap.position.set(-43, 0, -58); sc.add(lap);
+      box(34, 1.5, 24, std({ color: 0x9AA0A8, metalness: .6, roughness: .35 }), 0, .75, 0, lap);
+      const kb = new THREE.Mesh(new THREE.PlaneGeometry(30, 12), new THREE.MeshStandardMaterial({ map: rwTex(300, 120, (c, w, h) => { c.fillStyle = '#2A2D35'; c.fillRect(0, 0, w, h); c.fillStyle = '#16181D'; for (let r = 0; r < 5; r++) for (let k = 0; k < 14; k++) c.fillRect(6 + k * 20.6, 6 + r * 22.5, 18, 19); c.fillRect(70, 96, 160, 19); }), roughness: .6 })); kb.rotation.x = -Math.PI / 2; kb.position.set(0, 1.52, -4); lap.add(kb);
+      const hinge = new THREE.Group(); hinge.position.set(0, 1.5, -12); hinge.rotation.x = -.26; lap.add(hinge);
+      box(34, 22, .8, std({ color: 0x9AA0A8, metalness: .6, roughness: .35 }), 0, 11, -.4, hinge);
+      const scr = new THREE.Mesh(new THREE.PlaneGeometry(32, 20), new THREE.MeshBasicMaterial({ map: rwTex(512, 320, (c, w, h) => { const g = c.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#2B45E0'); g.addColorStop(1, '#7A3FB0'); c.fillStyle = g; c.fillRect(0, 0, w, h); c.fillStyle = '#FFF1DC'; c.fillRect(0, 0, w, 22); c.fillStyle = '#16181D'; c.font = `700 14px ${DISPLAY}`; c.fillText('RayanOS   File   View', 10, 16); [[30, 60], [30, 130], [30, 200], [110, 60]].forEach(([x, y]) => { c.fillStyle = '#FFC93C'; c.fillRect(x, y, 44, 36); }); c.fillStyle = 'rgba(255,255,255,.9)'; c.font = `800 46px ${DISPLAY}`; c.fillText('you are here →', 180, 210); }) }));
+      scr.position.set(0, 11, .02); hinge.add(scr);
+      const glow = new THREE.PointLight(0x9FB8FF, 1.4, 120, 1.6); glow.position.set(0, 14, 12); lap.add(glow); blob(-43, -58, 26, .2);
+      // the phone that plays lo-fi
+      box(7, .8, 15, std({ color: 0x16181D, metalness: .4, roughness: .3 }), -166.5, .4, 117.5);
+      B.phoneScr = new THREE.Mesh(new THREE.PlaneGeometry(6.2, 13.4), new THREE.MeshBasicMaterial({ map: rwTex(124, 268, (c, w, h) => { c.fillStyle = '#16181D'; c.fillRect(0, 0, w, h); c.fillStyle = '#FFC93C'; c.beginPath(); c.moveTo(48, 110); c.lineTo(84, 134); c.lineTo(48, 158); c.fill(); c.fillStyle = '#fff'; c.font = `700 18px ${DISPLAY}`; c.textAlign = 'center'; c.fillText('lo-fi', w / 2, 200); }) }));
+      B.phoneScr.rotation.x = -Math.PI / 2; B.phoneScr.position.set(-166.5, .82, 117.5); sc.add(B.phoneScr);
+      // speakers along the wall, cones facing into the room
+      B.cones = [];
+      [[-222.5, 172.5], [-117.5, 172.5]].forEach(([x, z]) => { box(25, 40, 25, std({ color: 0x3A2A1E, roughness: .6 }), x, 20, z); blob(x, z, 20, .35);
+        [[11, 6], [30, 3.6]].forEach(([y, r]) => { const c = new THREE.Mesh(new THREE.CylinderGeometry(r, r * .8, 1.6, 28), std({ color: 0x16181D, roughness: .9 })); c.rotation.x = Math.PI / 2; c.position.set(x, y, z - 12.7); sc.add(c); B.cones.push(c); }); });
+      // the vinyl crate: two rows of records like skyscrapers, with a canyon between
+      const crate = std({ color: 0xC8A070, roughness: .85 });
+      box(90, 32, 2, crate, 155, 16, 89); box(90, 32, 2, crate, 155, 16, 171); box(2, 32, 84, crate, 199, 16, 130); blob(155, 130, 60, .25);
+      const amats = ALBUMS.map((a, i) => std({ map: albumTex(i), roughness: .6 })), edge = std({ color: 0x16181D });
+      [[107, 31, 91], [153, 31, 137]].forEach(([z0, d]) => { for (let i = 0; i < 40; i++) { const x = 113 + i * 2.15, hgt = 30 + (i * 7 % 5) * .5;
+        const r = new THREE.Mesh(new THREE.BoxGeometry(.5, hgt, 31), [amats[(i + z0) % 8], amats[(i * 3 + 1) % 8], edge, edge, edge, edge]); r.rotation.y = Math.PI / 2; r.position.set(x, hgt / 2, z0 === 107 ? 107 : 153); r.rotation.z = (i % 3 - 1) * .05; r.rotation.set(0, 0, (i % 3 - 1) * .05); r.scale.set(1, 1, 1); B.sc.add(r); } });
+      // the statue: a caped figure from the shelf, here as tall as a building
+      const st = std({ color: 0x24262C, metalness: .35, roughness: .5 }), stG = new THREE.Group(); stG.position.set(0, 1.4, 145); sc.add(stG);
+      box(30, 1.4, 30, std({ color: 0x0E0F12, metalness: .5, roughness: .3 }), 0, .7, 145);
+      box(4, 14, 4.5, st, -2.6, 7, 0, stG); box(4, 14, 4.5, st, 2.6, 7, 0, stG); box(11, 12, 6.5, st, 0, 20, 0, stG); box(11.4, 1.6, 6.8, std({ color: 0x8A7A3A, metalness: .7 }), 0, 15, 0, stG);
+      box(3.2, 12, 3.4, st, -7.2, 19.5, 0, stG); box(3.2, 12, 3.4, st, 7.2, 19.5, 0, stG); box(14, 3, 7, st, 0, 25.5, 0, stG);
+      const head = box(5, 5.4, 5.2, st, 0, 29.6, 0, stG);
+      [-1.6, 1.6].forEach(x => { const e = new THREE.Mesh(new THREE.ConeGeometry(.8, 3.2, 4), st); e.position.set(x, 33.6, 0); stG.add(e); });
+      [-1, 1].forEach(x => box(1.2, .4, .2, new THREE.MeshBasicMaterial({ color: 0xE8EEF8 }), x * 1.1, 30, -2.62, stG));
+      const cape = new THREE.Mesh(new THREE.CylinderGeometry(9, 12, 26, 20, 1, true, Math.PI * .15, Math.PI * .7), std({ color: 0x1A1B20, roughness: .8, side: THREE.DoubleSide })); cape.position.set(0, 13.5, 2); cape.rotation.y = Math.PI * .5 + Math.PI; stG.add(cape);
+      // the rug
+      const rug = new THREE.Mesh(new THREE.CylinderGeometry(RUG[2], RUG[2], .3, 48), std({ map: rwTex(256, 256, (c, w, h) => { c.fillStyle = '#B85A3A'; c.fillRect(0, 0, w, h); c.strokeStyle = '#F0D8A8'; c.lineWidth = 8; [100, 76, 52].forEach(r => { c.beginPath(); c.arc(128, 128, r, 0, 7); c.stroke(); }); c.fillStyle = 'rgba(0,0,0,.08)'; for (let i = 0; i < 3000; i++) c.fillRect(Math.random() * w, Math.random() * h, 1, 2); }), roughness: 1 })); rug.position.set(RUG[0], .15, RUG[1]); sc.add(rug);
+      // lost things
+      B.lost = LOST.map(([id, name, x, z]) => { const g = new THREE.Group(); g.position.set(x, ground(x, z, 40), z); sc.add(g);
+        const gold = std({ color: 0xD8B45A, metalness: .8, roughness: .3, emissive: 0x2A2008 });
+        if (id === 'coin') { const m = new THREE.Mesh(new THREE.CylinderGeometry(1.0, 1.0, .15, 24), std({ color: 0xC8CCD4, metalness: .9, roughness: .25 })); m.rotation.x = Math.PI / 2; m.position.y = 1.1; g.add(m); }
+        else if (id === 'pick') { const s = new THREE.Shape(); s.moveTo(0, 1.4); s.quadraticCurveTo(1.3, 1.3, 0, -1.2); s.quadraticCurveTo(-1.3, 1.3, 0, 1.4); const m = new THREE.Mesh(new THREE.ShapeGeometry(s), std({ color: 0xE4572E, side: THREE.DoubleSide })); m.position.y = 1.4; g.add(m); }
+        else if (id === 'clip') { const m = new THREE.Mesh(new THREE.TorusGeometry(.9, .08, 6, 24), std({ color: 0xC8CCD4, metalness: .9 })); m.scale.set(1, 2, 1); m.position.y = 1.6; g.add(m); }
+        else if (id === 'bud') { const m = new THREE.Mesh(new THREE.SphereGeometry(.8, 16, 12), std({ color: 0xF4F4F4, roughness: .3 })); m.position.y = .9; g.add(m); const s = box(.4, 1.8, .4, std({ color: 0xF4F4F4 }), .4, 1.6, 0, g); s.rotation.z = .3; }
+        else if (id === 'brick') { box(1.6, 1, 0.8, std({ color: 0x2B45E0, roughness: .3 }), 0, .9, 0, g); [-.4, .4].forEach(x => { const c = new THREE.Mesh(new THREE.CylinderGeometry(.24, .24, .2, 12), std({ color: 0x2B45E0 })); c.position.set(x, 1.5, 0); g.add(c); }); }
+        else if (id === 'cap') { const m = new THREE.Mesh(new THREE.CylinderGeometry(1.05, 1.1, .5, 20), std({ color: 0xC83A2A, metalness: .6 })); m.position.y = .6; g.add(m); }
+        else if (id === 'button') { const m = new THREE.Mesh(new THREE.CylinderGeometry(.9, .9, .2, 20), std({ color: 0x5E3A8A })); m.rotation.x = Math.PI / 2; m.position.y = 1.1; g.add(m); }
+        else { const m = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), std({ color: 0xFFE45A, side: THREE.DoubleSide })); m.position.y = 1.5; m.rotation.y = .4; g.add(m); }
+        const ring = new THREE.Mesh(new THREE.RingGeometry(1.4, 1.7, 24), new THREE.MeshBasicMaterial({ color: 0xFFF1A8, transparent: true, opacity: .6, side: THREE.DoubleSide, depthWrite: false })); ring.rotation.x = -Math.PI / 2; ring.position.y = .08; g.add(ring); void gold;
+        return { id, name, g, x, z }; });
+      // dust bunnies
+      B.bt = bunnyTex(); B.bunnies = [[150, -150], [200, -60], [120, -80], [-200, -170], [-140, -160]].map(([x, z]) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: B.bt, transparent: true, depthWrite: false })); s.scale.set(4.4, 4.4, 1); sc.add(s);
+        return { s, x, z, hx: x, hz: z, vx: 0, vz: 0, stun: 0, dead: 0, ph: Math.random() * 6 }; });
+      B.puffs = new THREE.Group(); sc.add(B.puffs);
+    }
+    function start(s){
+      B.s = s; s.found = s.found || []; build(); B.hp = 3; B.hitCd = 0; B.mine = false; B.done = false;
+      B.lost.forEach(l => { l.g.visible = !s.found.includes(l.id); });
+      B.o = { cam: B.cam, pos: new THREE.Vector3(10, 1.6, 20), yaw: .6, pitch: .08, vy: 0, eye: 1.6, speed: 9, jumpV: 7, grav: 16, ground, solid, onG: true, eUse: true };
+      rwMsg('You’re about a centimetre and a half tall, in the middle of my room. Eight small lost things are hidden around the furniture. Dust bunnies live under the bed. Stomp them, or turn the music up.', 6500);
+    }
+    function music(){
+      if (lofi) { lofi.stop(); lofi = null; B.mine = false; rwMsg('The music stops. The floor goes still.', 1800); }
+      else { startLofi(); B.mine = true; B.lofiT = RW.t; rwMsg(muted ? 'The phone plays, but the site is muted (speaker button on the main page). The floor still shakes.' : 'Lo-fi, at a hundred times the size. Every kick shakes the floor, and the dust bunnies hate it.', 3200); }
+    }
+    function use(){
+      const o = B.o; if (Math.hypot(o.pos.x + 166.5, o.pos.z - 117.5) < 14) return music();
+      const near = B.lost.find(l => l.g.visible && Math.hypot(l.x - o.pos.x, l.z - o.pos.z) < 4);
+      if (near) return pick(near);
+      rwMsg(Math.hypot(o.pos.x + 43, o.pos.z + 58) < 40 ? 'The laptop. From down here the screen is a cliff of light.' : 'Nothing to use here. The phone near the speakers plays music.', 2000);
+    }
+    function pick(l){
+      l.g.visible = false; B.s.found.push(l.id); rwSave(); tone(784, .12, 'triangle', .05); setTimeout(() => tone(1175, .18, 'triangle', .05), 90);
+      const n = B.s.found.length; rwMsg(`Found ${l.name}. ${n} of 8.`, 2000);
+      if (n >= 8 && !B.done) { B.done = true; setTimeout(() => rwFinish('bigroom', 'Everything that rolled under the furniture this year, found. You shrink back out of the floorboards with your pockets full.'), 900); }
+    }
+    function puff(x, y, z){ for (let i = 0; i < 8; i++) { const p = new THREE.Sprite(new THREE.SpriteMaterial({ map: B.bt, transparent: true, depthWrite: false, opacity: .8 })); p.position.set(x, y, z); p.scale.set(1.5, 1.5, 1); p.userData = { v: new THREE.Vector3((Math.random() - .5) * 8, Math.random() * 5, (Math.random() - .5) * 8), life: 1.2 }; B.puffs.add(p); } }
+    function hurt(b){
+      const o = B.o; B.hp--; B.hitCd = 1.4; const dx = o.pos.x - b.x, dz = o.pos.z - b.z, d = Math.hypot(dx, dz) || 1; o.vy = 5; o.onG = false;
+      for (let i = 0; i < 6; i++) { const nx = o.pos.x + dx / d * 1.2, nz = o.pos.z + dz / d * 1.2; if (!solid(nx, nz, o.pos.y - o.eye)) { o.pos.x = nx; o.pos.z = nz; } }
+      const a = audio(); if (a) { const s = a.createBufferSource(); s.buffer = noise(a); const f = a.createBiquadFilter(); f.type = 'bandpass'; f.frequency.value = 2400; const g = a.createGain(); g.gain.setValueAtTime(.12, a.currentTime); g.gain.exponentialRampToValueAtTime(.001, a.currentTime + .35); s.connect(f); f.connect(g); g.connect(out()); s.start(); s.stop(a.currentTime + .4); }
+      if (B.hp <= 0) { B.hp = 3; o.pos.set(10, 1.6, 20); o.vy = 0; rwMsg('Achoo! Buried in dust. You wake up back on the rug. (Your finds are safe.)', 3000); }
+      else rwMsg(B.hp === 1 ? 'Achoo! One more and you’re buried in dust.' : 'Achoo! A dust bunny got you.', 1600);
+    }
+    function step(dt, t){
+      const o = B.o; if (B.done) return;
+      rwFP(o, dt); B.hitCd = Math.max(0, B.hitCd - dt);
+      // the speakers: on every kick the floor jumps, harder the closer you are
+      let kick = 0;
+      if (lofi) { const lt = ((t - (B.lofiT || 0)) % (BEAT * 4) + BEAT * 4) % (BEAT * 4); [0, BEAT * 2.5].forEach(k => { const d = lt - k; if (d >= 0 && d < .25) kick = Math.max(kick, 1 - d / .25); }); }
+      const spd = Math.min(...[[-222.5, 168], [-117.5, 168]].map(([x, z]) => Math.hypot(o.pos.x - x, o.pos.z - z))), amp = kick * (.05 + Math.max(0, 1 - spd / 160) * .45);
+      if (amp > 0) { B.cam.position.x += (Math.random() - .5) * amp; B.cam.position.y += Math.random() * amp; B.cam.rotation.z = (Math.random() - .5) * amp * .05; }
+      B.cones.forEach((c, i) => { c.scale.y = 1 + kick * (i % 2 ? .4 : .8); });
+      B.lost.forEach((l, i) => { if (!l.g.visible) return; l.g.rotation.y += dt * 1.2; l.g.children[0].position.y += Math.sin(t * 3 + i) * .004;
+        if (Math.hypot(l.x - o.pos.x, l.z - o.pos.z) < 2.4 && Math.abs(l.g.position.y - (o.pos.y - o.eye)) < 2.5) pick(l); });
+      // dust bunnies wander their dark corners, and chase you if you come close
+      B.bunnies.forEach(b => {
+        if (b.dead > 0) { b.dead -= dt; b.s.visible = false; if (b.dead <= 0) { b.x = b.hx; b.z = b.hz; b.s.visible = true; } return; }
+        const dx = o.pos.x - b.x, dz = o.pos.z - b.z, d = Math.hypot(dx, dz), fromHome = Math.hypot(b.x - b.hx, b.z - b.hz), feet = o.pos.y - o.eye;
+        if (kick > .9 && Math.min(...[[-222.5, 168], [-117.5, 168]].map(([x, z]) => Math.hypot(b.x - x, b.z - z))) < 130 && b.stun <= 0) { b.stun = 3; const ax = b.x + 170, az = b.z - 168, ad = Math.hypot(ax, az) || 1; b.vx = ax / ad * 30; b.vz = az / ad * 30; }
+        let tx = 0, tz = 0, sp = 2;
+        if (b.stun > 0) { b.stun -= dt; b.vx *= Math.pow(.2, dt); b.vz *= Math.pow(.2, dt); }
+        else { if (d < 34 && fromHome < 110 && feet < 1) { tx = dx / d; tz = dz / d; sp = 6.5; } else if (fromHome > 30) { tx = (b.hx - b.x) / fromHome; tz = (b.hz - b.z) / fromHome; } else { tx = Math.cos(t * .5 + b.ph); tz = Math.sin(t * .7 + b.ph); }
+          b.vx += (tx * sp - b.vx) * Math.min(1, dt * 3); b.vz += (tz * sp - b.vz) * Math.min(1, dt * 3); }
+        const nx = b.x + b.vx * dt, nz = b.z + b.vz * dt; if (!solid(nx, b.z, 0)) b.x = nx; else b.vx *= -.5; if (!solid(b.x, nz, 0)) b.z = nz; else b.vz *= -.5;
+        const hop = Math.abs(Math.sin(t * 6 + b.ph)) * (b.stun > 0 ? .2 : .7); b.s.position.set(b.x, 2.1 + hop, b.z); b.s.material.rotation = b.stun > 0 ? t * 8 : Math.sin(t * 6 + b.ph) * .15;
+        if (d < 2.8) { if (o.vy < 0 && feet > hop + 1.6) { b.dead = 25; o.vy = 7; puff(b.x, 2, b.z); tone(300, .15, 'square', .04, 120); rwMsg('Poof. One dust bunny, back to dust.', 1300); } else if (feet < hop + 3 && B.hitCd <= 0 && b.stun <= 0) hurt(b); }
+      });
+      B.puffs.children.slice().forEach(p => { const u = p.userData; u.life -= dt; p.position.addScaledVector(u.v, dt); p.scale.multiplyScalar(1 + dt); p.material.opacity = Math.max(0, u.life / 1.2) * .8; if (u.life <= 0) { p.material.dispose(); B.puffs.remove(p); } });
+      const mp = B.motes.geometry.attributes.position; for (let i = 0; i < mp.count; i++) { mp.array[i * 3 + 1] += Math.sin(t + i) * .02 + .01; if (mp.array[i * 3 + 1] > 160) mp.array[i * 3 + 1] = 0; } mp.needsUpdate = true;
+      rwObj(`Lost things found: ${B.s.found.length}/8`);
+      const nearPhone = Math.hypot(o.pos.x + 166.5, o.pos.z - 117.5) < 14;
+      rwMeter(`${'●'.repeat(B.hp)}${'○'.repeat(3 - B.hp)} sneezes left${nearPhone ? (lofi ? ' · Use: stop the music' : ' · Use: play lo-fi') : ''}`);
+    }
+    function draw(w, h){ rwCam(B.cam, w, h); RW.r3.render(B.sc, B.cam); B.cam.rotation.z = 0; }
+    function end(){ if (B.mine && lofi) { lofi.stop(); lofi = null; } if (B.sc) B.sc.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) [].concat(o.material).forEach(m => { if (m.map) m.map.dispose(); m.dispose(); }); }); B.sc = null; }
+    return { name: 'The Big Room', dir: 'big-room', icon: '🔍', col: '#E8C88A', three: true, blurb: 'My own room, with you a hundred times smaller. The vinyl crate is a canyon of skyscraper records, the laptop a cliff of light, and dust bunnies own the space under the bed.', help: 'WASD move, drag to look, Space jump (land on dust bunnies), E or Use for the phone that plays lo-fi, Esc exit', trophy: ['lost-and-found.txt', 'LOST & FOUND, found by someone 1.6 cm tall:\n- a ₹1 coin (under the bed)\n- a guitar pick (behind the left speaker)\n- a paperclip (on the laptop keyboard)\n- an earbud (under the desk)\n- a toy brick (at the statue’s feet)\n- a bottle cap (deep in the record canyon)\n- a shirt button (on the rug)\n- a sticky note: "clean your room"\n\nSouvenir from the Big Room.'], buttons: [['jump', 'Jump'], ['use', 'Use']], start, step, draw, end, dbg: () => B,
+      press(k){ if (k === 'use') use(); }, key(k){ if (k === 'e' || k === 'enter') use(); } };
   })();
 
   // ---------- the Trash: every file in it really opens ----------
