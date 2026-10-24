@@ -390,7 +390,11 @@ body.mkwon .toast{top:calc(160px + env(safe-area-inset-top,0px))}
 .ros .rwhud b{background:rgba(0,0,0,.45);border-radius:999px;padding:4px 11px;font-weight:800}
 .ros .rwhud span{background:rgba(0,0,0,.35);border-radius:999px;padding:4px 11px}
 .ros .rwhud .rwm{margin-left:auto}
-.ros .rwmsg{position:absolute;left:50%;top:18%;transform:translateX(-50%);max-width:min(560px,86%);background:rgba(10,12,18,.82);color:#F2F2F2;border-radius:14px;padding:10px 16px;font:500 14.5px/1.45 "Instrument Sans",system-ui,sans-serif;text-align:center;white-space:pre-line;opacity:0;transition:opacity .3s;pointer-events:none;z-index:4}
+.ros .rwhm{position:absolute;right:16px;bottom:96px;width:190px;height:190px;border-radius:50%;border:8px solid #C9A85A;background:radial-gradient(circle at 35% 30%,#F4F8FC,#AEB8C6);box-shadow:0 8px 24px rgba(0,0,0,.45),inset 0 0 20px rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;text-align:center;padding:22px;box-sizing:border-box;color:#16181D;font:800 13px/1.35 "Bricolage Grotesque","Instrument Sans",sans-serif;white-space:pre-line;z-index:5;pointer-events:none}
+.rwhm[hidden]{display:none}
+.rw.touch .rwhm{right:auto;left:50%;transform:translateX(-50%);bottom:auto;top:56px;width:150px;height:150px;font-size:11px}
+.rwflash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;z-index:3}
+.rwmsg{position:absolute;left:50%;top:18%;transform:translateX(-50%);max-width:min(560px,86%);background:rgba(10,12,18,.82);color:#F2F2F2;border-radius:14px;padding:10px 16px;font:500 14.5px/1.45 "Instrument Sans",system-ui,sans-serif;text-align:center;white-space:pre-line;opacity:0;transition:opacity .3s;pointer-events:none;z-index:4}
 .ros .rwmsg.on{opacity:1}
 .ros .rwcard{position:absolute;inset:0;display:grid;place-items:center;background:rgba(5,6,10,.7);z-index:6}
 .ros .rwcard div{background:#fff;color:#16181D;border-radius:18px;padding:22px 24px;max-width:min(420px,88%);text-align:center;font:500 14.5px/1.5 "Instrument Sans",system-ui,sans-serif}
@@ -2407,6 +2411,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     greenhouse: ['The greenhouse', 'Inspired by AgriBridge and the farmers it’s for, and by how good it feels to watch something you planted actually grow.'],
     rattle: ['The Night of the Rattle', 'Inspired by Halloween, slasher films, and the oldest rule of trick-or-treating: never answer the door to a clown.'],
     w_pixel: ['The last pixel', 'Inspired by every console generation I grew up hearing about, and how a world can feel just as real at four pixels if you\u2019ve played it enough.'],
+    w_mirror: ['The other side of the glass', 'Inspired by mirror mazes at fairs, and the creepy idea that your reflection only copies you because it has to.'],
     w_library: ['Overdue since forever', 'Inspired by libraries, Li Bai, and the feeling that every good book is a place you can walk into.'],
     w_flatland: ['A slice of Flatland', 'Inspired by Edwin Abbott\u2019s Flatland, and the idea that the hardest thing to imagine is the direction you can\u2019t see.'],
     rayanos: ['sudo make me a sandwich', 'Inspired by every developer who has ever poked around someone else\u2019s terminal just to see what was there.'],
@@ -3304,6 +3309,237 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     function end(){ if (L.sc) L.sc.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) [].concat(o.material).forEach(m => { if (m.map) m.map.dispose(); m.dispose(); }); }); L.sc = null; }
     return { name: 'Sky Library', dir: 'sky-library', icon: '📚', col: '#BFDDF7', three: true, blurb: 'Floating stacks of giant books in an open sky. Open one and its pages unfold into a bridge. A poem becomes a mountain path; my research paper becomes a lab.', help: 'WASD move, drag to look, Space jump, E or click to open a book, Esc exit', trophy: ['a-bookmark.txt', 'A red ribbon bookmark, stamped in gold:\n"SKY LIBRARY · overdue since forever"\n\nSouvenir from the Sky Library.'], buttons: [['jump', 'Jump'], ['open', 'Open']], start, step, draw, end, dbg: () => L,
       press(k){ if (k === 'open') use(); }, key(k){ if (k === 'e' || k === 'enter') use(); }, click(){ if (nearBook() >= 0) use(); } };
+  })();
+
+  // ---------- world 3: the Mirror Dimension. Two rooms either side of a sheet of glass, and a reflection that's always a little late ----------
+  WORLDS.mirror = (() => {
+    const M = {}, LAG = .55, PORTALS = [-4, -20], PLATE = [6, -24], RING = [-6, -24], TABLES = [[-6, -9], [6, -9]], FOUNT = [[-8, 2], [8, 2]];
+    // walkable floor: [x0, x1, z0, z1]
+    const ROOMS = [[-11.6, -.35, -13.6, 5.6], [.35, 11.6, -13.6, 5.6], [-11.6, -.35, -27.6, -14.4], [.35, 11.6, -27.6, -14.4], [2.75, 9.25, -71.6, -28.4]];
+    const D1 = [4.4, 7.6, -14.5, -13.5], D2 = [4.4, 7.6, -28.5, -27.5];
+    const inR = (r, x, z) => x >= r[0] && x <= r[1] && z >= r[2] && z <= r[3];
+    const g2Pass = () => M.s.stage >= 2 || M.g2 > 0;
+    function walk(x, z){
+      if (!ROOMS.some(r => inR(r, x, z)) && !(M.s.stage >= 1 && inR(D1, x, z)) && !(g2Pass() && inR(D2, x, z))) return false;
+      if (FOUNT.some(([fx, fz]) => Math.hypot(x - fx, z - fz) < 1.5)) return false;
+      if (TABLES.some(([tx, tz]) => Math.abs(x - tx) < 1.25 && Math.abs(z - tz) < .95)) return false;
+      return true;
+    }
+    const side = x => x < 0 ? 'A' : 'B';
+    function signTex(text, fwd){
+      const L = text.split('\n'), h = 34 + L.length * 52;
+      return rwTex(640, h, (c, w) => { c.fillStyle = '#14161C'; c.fillRect(0, 0, w, h); c.strokeStyle = '#C9D6E4'; c.lineWidth = 4; c.strokeRect(6, 6, w - 12, h - 12);
+        if (!fwd) { c.translate(w, 0); c.scale(-1, 1); }
+        c.fillStyle = '#E8F0F8'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `800 30px ${DISPLAY}`; L.forEach((l, i) => c.fillText(l, w / 2, 40 + i * 52)); });
+    }
+    function sign(text, x, y, z, ry){
+      const back = signTex(text, false), fwd = signTex(text, true), n = text.split('\n').length, mat = new THREE.MeshBasicMaterial({ map: back });
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(3.2, 3.2 * (34 + n * 52) / 640), mat); m.position.set(x, y, z); m.rotation.y = ry; M.sc.add(m);
+      M.signs.push({ text, m, mat, back, fwd });
+    }
+    // little pictures of the same room gone different, for the shards
+    const VERS = [
+      ['#1B2340', (c, w, h) => { c.fillStyle = '#F4EFD0'; c.beginPath(); c.arc(w * .72, h * .28, 12, 0, 7); c.fill(); }],
+      ['#9FB8C8', (c, w, h) => { c.fillStyle = 'rgba(40,110,190,.85)'; c.fillRect(0, h * .55, w, h); c.strokeStyle = '#CFE8FF'; c.beginPath(); for (let x = 0; x < w; x += 8) c.lineTo(x, h * .55 + Math.sin(x / 6) * 3); c.stroke(); }],
+      ['#DCE6F0', (c, w, h) => { c.fillStyle = '#fff'; for (let i = 0; i < 40; i++) c.fillRect((i * 37) % w, (i * 53) % h, 3, 3); }],
+      ['#E8C88A', (c, w, h) => { c.translate(0, h); c.scale(1, -1); }],
+      ['#5E7A4A', (c, w, h) => { c.strokeStyle = '#2E5A22'; c.lineWidth = 5; for (let i = 0; i < 6; i++) { c.beginPath(); c.moveTo(i * 24, 0); c.quadraticCurveTo(i * 24 + 14, h * .5, i * 24 - 4, h); c.stroke(); } }],
+      ['#5C94FC', null]
+    ];
+    function versTex(i){
+      const [bg, fx] = VERS[i];
+      return rwTex(128, 128, (c, w, h) => { c.imageSmoothingEnabled = false; c.fillStyle = bg; c.fillRect(0, 0, w, h); c.save(); if (fx && i === 3) fx(c, w, h);
+        c.fillStyle = 'rgba(0,0,0,.25)'; c.fillRect(0, h * .7, w, h * .3); c.fillStyle = i === 5 ? '#C84C0C' : '#6B4A32'; c.fillRect(14, h * .56, 46, 18); c.fillStyle = i === 5 ? '#FCD8A8' : '#EDE3D0'; c.fillRect(14, h * .52, 46, 6);
+        c.fillStyle = i === 0 ? '#2B3A6A' : '#87B8E8'; c.fillRect(w * .58, h * .14, 34, 30); c.fillStyle = '#16181D'; c.fillRect(w * .82, h * .4, 10, 40); c.restore(); if (fx && i !== 3) fx(c, w, h);
+        if (i === 5) { const d = c.getImageData(0, 0, w, h); c.clearRect(0, 0, w, h); for (let y = 0; y < h; y += 16) for (let x = 0; x < w; x += 16) { const k = (y * w + x) * 4; c.fillStyle = `rgb(${d.data[k]},${d.data[k + 1]},${d.data[k + 2]})`; c.fillRect(x, y, 16, 16); } } });
+    }
+    function figure(){
+      const g = new THREE.Group(), skin = new THREE.MeshStandardMaterial({ color: 0xC9D6E4, metalness: .55, roughness: .25, emissive: 0x223344 }), dark = new THREE.MeshBasicMaterial({ color: 0x0A0C12 });
+      const torso = new THREE.Mesh(new THREE.BoxGeometry(.5, .68, .28), skin); torso.position.y = 1.12; g.add(torso);
+      const head = new THREE.Mesh(new THREE.SphereGeometry(.2, 16, 12), skin); head.position.y = 1.64; g.add(head);
+      [-.07, .07].forEach(x => { const e = new THREE.Mesh(new THREE.BoxGeometry(.05, .035, .02), dark); e.position.set(x, 1.67, -.19); g.add(e); });
+      g.userData.legs = [-.13, .13].map(x => { const p = new THREE.Group(); p.position.set(x, .78, 0); const l = new THREE.Mesh(new THREE.BoxGeometry(.17, .78, .18), skin); l.position.y = -.39; p.add(l); g.add(p); return p; });
+      g.userData.arms = [-.33, .33].map(x => { const p = new THREE.Group(); p.position.set(x, 1.42, 0); const a = new THREE.Mesh(new THREE.BoxGeometry(.13, .62, .14), skin); a.position.y = -.31; p.add(a); g.add(p); return p; });
+      const sh = new THREE.Mesh(new THREE.CircleGeometry(.45, 20), new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: .5, depthWrite: false })); sh.rotation.x = -Math.PI / 2; sh.position.y = .015; g.add(sh); g.userData.sh = sh;
+      return g;
+    }
+    function shadow(x, z, r){
+      const b = x > 0, m = new THREE.Mesh(new THREE.CircleGeometry(r, 24), new THREE.MeshBasicMaterial({ color: b ? 0xFFFFF0 : 0x000000, transparent: true, opacity: b ? .75 : .35, depthWrite: false, blending: b ? THREE.AdditiveBlending : THREE.NormalBlending }));
+      m.rotation.x = -Math.PI / 2; m.position.set(x, .012, z); M.sc.add(m);
+    }
+    function box(w, h, d, mat, x, y, z){ const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); M.sc.add(m); return m; }
+    function build(){
+      const sc = M.sc = new THREE.Scene(); sc.background = new THREE.Color(0x0B0D14); sc.fog = new THREE.Fog(0x0B0D14, 18, 46); M.signs = [];
+      M.cam = new THREE.PerspectiveCamera(72, 1, .08, 120);
+      sc.add(new THREE.HemisphereLight(0xE8EEF8, 0x2A2E3A, .7));
+      [[-6, 0xFFD9A8], [6, 0xA8E8FF]].forEach(([x, c]) => [2, -10, -22].forEach(z => { const p = new THREE.PointLight(c, .55, 16, 2); p.position.set(x, 3.6, z); sc.add(p); }));
+      const tile = (a, b) => { const t = rwTex(128, 128, (c, w, h) => { c.fillStyle = a; c.fillRect(0, 0, w, h); c.fillStyle = b; c.fillRect(0, 0, w / 2, h / 2); c.fillRect(w / 2, h / 2, w / 2, h / 2); }); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(12, 17); return new THREE.MeshStandardMaterial({ map: t, roughness: .35, metalness: .1 }); };
+      const fA = new THREE.Mesh(new THREE.PlaneGeometry(12, 34), tile('#E9E2D4', '#2A2620')); fA.rotation.x = -Math.PI / 2; fA.position.set(-6, 0, -11); sc.add(fA);
+      const fB = new THREE.Mesh(new THREE.PlaneGeometry(12, 34), tile('#D4E2E9', '#20262A')); fB.rotation.x = -Math.PI / 2; fB.position.set(6, 0, -11); sc.add(fB);
+      const fC = new THREE.Mesh(new THREE.PlaneGeometry(8, 44), tile('#C8D2DC', '#1A1E26')); fC.material.map.repeat.set(4, 22); fC.rotation.x = -Math.PI / 2; fC.position.set(6, 0, -50); sc.add(fC);
+      const ceil = new THREE.Mesh(new THREE.PlaneGeometry(26, 82), new THREE.MeshStandardMaterial({ color: 0x1A1C24 })); ceil.rotation.x = Math.PI / 2; ceil.position.set(0, 4, -33); sc.add(ceil);
+      const wallA = new THREE.MeshStandardMaterial({ color: 0x8A6E5A, roughness: .8 }), wallB = new THREE.MeshStandardMaterial({ color: 0x5A7A8A, roughness: .8 }), iron = new THREE.MeshStandardMaterial({ color: 0x3A3E48, metalness: .7, roughness: .4 }), wood = new THREE.MeshStandardMaterial({ color: 0x5A3A24, roughness: .7 });
+      box(.3, 4, 34, wallA, -12, 2, -11); box(.3, 4, 34, wallB, 12, 2, -11); box(12, 4, .3, wallA, -6, 2, 6); box(12, 4, .3, wallB, 6, 2, 6);
+      box(12, 4, .3, wallA, -6, 2, -14); box(12, 4, .3, wallA, -6, 2, -28); box(25, 4, .3, wallA, 0, 2, -72.1);
+      [-14, -28].forEach(z => { box(4.2, 4, .3, wallB, 2.1, 2, z); box(4.2, 4, .3, wallB, 9.9, 2, z); });
+      M.g1 = box(3.2, 3.6, .2, iron, 6, 1.8, -14); const kh = new THREE.Mesh(new THREE.BoxGeometry(.3, .5, .05), new THREE.MeshBasicMaterial({ color: 0xFFC93C })); kh.position.set(0, -.5, .12); M.g1.add(kh);
+      M.g2M = box(3.2, 3.6, .2, iron, 6, 1.8, -28);
+      // the sheet of glass down the middle, with two framed mirrors you can walk into
+      const glass = new THREE.Mesh(new THREE.PlaneGeometry(34, 4), new THREE.MeshBasicMaterial({ color: 0xBFD8EA, transparent: true, opacity: .16, side: THREE.DoubleSide, depthWrite: false })); glass.rotation.y = Math.PI / 2; glass.position.set(0, 2, -11); sc.add(glass);
+      const gold = new THREE.MeshStandardMaterial({ color: 0xD8B45A, metalness: .8, roughness: .3, emissive: 0x3A2A08 });
+      for (let z = 6; z >= -28; z -= 4) box(.12, 4, .12, iron, 0, 2, z);
+      M.portals = PORTALS.map(z => { box(.16, .16, 2.3, gold, 0, 3.15, z); box(.16, 3.1, .16, gold, 0, 1.55, z - 1.1); box(.16, 3.1, .16, gold, 0, 1.55, z + 1.1);
+        const sheen = new THREE.Mesh(new THREE.PlaneGeometry(2.1, 3.05), new THREE.MeshBasicMaterial({ color: 0xE8F4FF, transparent: true, opacity: .22, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending })); sheen.rotation.y = Math.PI / 2; sheen.position.set(0, 1.55, z); sc.add(sheen); return { z, sheen }; });
+      // tables (the key starts on the left one) and fountains, whose water disagrees about which way is down
+      TABLES.forEach(([x, z]) => { box(2.2, .1, 1.6, wood, x, .95, z); [[-1, -.7], [1, -.7], [-1, .7], [1, .7]].forEach(([a, b]) => box(.1, .9, .1, wood, x + a * .95, .45, z + b * .65)); shadow(x, z, 1.25); });
+      M.water = FOUNT.map(([x, z]) => { const b = new THREE.Mesh(new THREE.CylinderGeometry(1.3, 1.4, .5, 24), new THREE.MeshStandardMaterial({ color: 0xBFC6D0, roughness: .6 })); b.position.set(x, .25, z); sc.add(b);
+        const sp = new THREE.Mesh(new THREE.CylinderGeometry(.12, .16, 2.2, 10), b.material); sp.position.set(x, 1.3, z); sc.add(sp); shadow(x, z, 1.7);
+        const N = 140, pos = new Float32Array(N * 3), seed = []; for (let i = 0; i < N; i++) seed.push([Math.random() * Math.PI * 2, Math.random(), Math.random()]);
+        const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); const p = new THREE.Points(g, new THREE.PointsMaterial({ color: 0x9FD8FF, size: .07, transparent: true, opacity: .85, depthWrite: false })); sc.add(p);
+        return { x, z, up: x > 0, g, pos, seed }; });
+      // the key, the ring you stand in and the plate only reflections can press
+      M.keyM = new THREE.Group(); const km = new THREE.MeshStandardMaterial({ color: 0xFFC93C, metalness: .9, roughness: .25, emissive: 0x4A3000 });
+      const bow = new THREE.Mesh(new THREE.TorusGeometry(.11, .035, 8, 18), km); bow.position.x = -.2; M.keyM.add(bow); const sh = new THREE.Mesh(new THREE.BoxGeometry(.32, .05, .05), km); M.keyM.add(sh); const bit = new THREE.Mesh(new THREE.BoxGeometry(.05, .1, .05), km); bit.position.set(.13, -.06, 0); M.keyM.add(bit); sc.add(M.keyM);
+      const ring = new THREE.Mesh(new THREE.RingGeometry(.7, .85, 32), new THREE.MeshBasicMaterial({ color: 0x7FE0FF, side: THREE.DoubleSide })); ring.rotation.x = -Math.PI / 2; ring.position.set(RING[0], .02, RING[1]); sc.add(ring); M.ring = ring;
+      M.plate = new THREE.Mesh(new THREE.CylinderGeometry(.9, .95, .08, 28), new THREE.MeshStandardMaterial({ color: 0x8899AA, metalness: .6, roughness: .3, emissive: 0x000000 })); M.plate.position.set(PLATE[0], .04, PLATE[1]); sc.add(M.plate);
+      // everything written here is backwards
+      sign('EVERYTHING HERE IS BACKWARDS\nPRESS M FOR YOUR HAND MIRROR', -6, 2.6, -13.82, 0);
+      sign('TOUCH A FRAMED MIRROR\nTO TRADE PLACES WITH YOUR REFLECTION', -.09, 3.55, -4, -Math.PI / 2);
+      sign('TOUCH A FRAMED MIRROR\nTO TRADE PLACES WITH YOUR REFLECTION', .09, 3.55, -4, Math.PI / 2);
+      sign('NOTHING YOU CARRY PASSES THROUGH GLASS\nWHAT YOU DROP, THE OTHER SIDE KEEPS', -11.82, 2.4, -9, Math.PI / 2);
+      sign('LOCKED\nTHE KEY LIVES ON THE OTHER SIDE', 9.9, 2.4, -13.82, 0);
+      sign('STAND IN THE RING\nTHE PLATE OVER THERE ONLY FEELS REFLECTIONS', -6, 2.6, -27.82, 0);
+      sign('REFLECTIONS ONLY', 9.9, 2.4, -27.82, 0);
+      sign('THE HALL OF SHARDS\nLEAVE THROUGH ANY MIRROR STILL WHOLE', 2.1, 2.4, -27.82, 0);
+      // the hall of shards: mirror panels down both walls, darkness behind them
+      const silver = rwTex(128, 256, (c, w, h) => { const g = c.createLinearGradient(0, 0, w, h); g.addColorStop(0, '#E8EEF4'); g.addColorStop(.45, '#9AA6B4'); g.addColorStop(.55, '#F4F8FC'); g.addColorStop(1, '#7A8696'); c.fillStyle = g; c.fillRect(0, 0, w, h); c.fillStyle = 'rgba(255,255,255,.35)'; c.fillRect(w * .2, 0, 6, h); c.fillRect(w * .62, 0, 3, h); });
+      box(.2, 4, 44, new THREE.MeshBasicMaterial({ color: 0x05060A }), 2.15, 2, -50); box(.2, 4, 44, new THREE.MeshBasicMaterial({ color: 0x05060A }), 9.85, 2, -50);
+      M.vers = VERS.map((v, i) => new THREE.MeshBasicMaterial({ map: versTex(i), side: THREE.DoubleSide }));
+      const tri = new THREE.ShapeGeometry(new THREE.Shape([new THREE.Vector2(0, .34), new THREE.Vector2(-.26, -.2), new THREE.Vector2(.3, -.14)])); M.tri = tri;
+      M.panels = [];
+      for (let i = 0; i < 17; i++) [0, 1].forEach(sd => { const z = -29.6 - i * 2.5, x = sd ? 9.72 : 2.28;
+        const mat = new THREE.MeshStandardMaterial({ map: silver, metalness: .5, roughness: .15, emissive: 0x000000 }), m = new THREE.Mesh(new THREE.PlaneGeometry(2.3, 3.5), mat);
+        m.position.set(x, 1.85, z); m.rotation.y = sd ? -Math.PI / 2 : Math.PI / 2; sc.add(m); box(.1, 3.7, .12, iron, sd ? 9.76 : 2.24, 1.85, z + 1.25);
+        M.panels.push({ m, mat, x, z, sd, keep: i >= 6 && (i + sd) % 3 === 0 }); });
+      const endM = new THREE.MeshStandardMaterial({ map: silver, metalness: .5, roughness: .15, emissive: 0x000000 }), em = new THREE.Mesh(new THREE.PlaneGeometry(6, 3.6), endM); em.position.set(6, 1.9, -71.9); sc.add(em);
+      M.panels.push({ m: em, mat: endM, x: 6, z: -71.9, sd: 2, keep: true });
+      M.fold = new THREE.Mesh(new THREE.PlaneGeometry(8, 4), new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide })); M.fold.position.set(6, 2, -28); M.fold.visible = false; sc.add(M.fold);
+      M.shards = new THREE.Group(); sc.add(M.shards);
+      M.me = figure(); sc.add(M.me);
+    }
+    function placeKey(){ const k = M.key; if (k.held) { M.keyM.visible = false; return; } M.keyM.visible = true; M.keyM.position.set(k.x, k.y, k.z); }
+    function start(s){
+      M.s = s; s.stage = s.stage || 0; build(); M.hist = []; M.g2 = 0; M.fin = null; M.swapCd = 0; M.flash = 0; M.hm = false;
+      M.key = s.stage >= 1 ? { held: false, x: 0, y: -9, z: 0 } : { held: false, x: -6, y: 1.1, z: -9 }; placeKey(); if (s.stage >= 1) M.keyM.visible = false;
+      if (s.stage >= 1) M.g1.position.y = 5.4;
+      const st = s.stage >= 2 ? [6, -26.5, Math.PI] : s.stage >= 1 ? [6, -12, 0] : [-6, 3.5, 0];
+      M.o = { cam: M.cam, pos: new THREE.Vector3(st[0], 1.6, st[1]), yaw: st[2] === Math.PI ? 0 : 0, pitch: -.05, vy: 0, eye: 1.6, speed: 4.2, jumpV: 5, grav: 14, ground: () => 0, solid: (x, z) => !walk(x, z), onG: true, eUse: true };
+      const hm = M.hmEl = document.createElement('div'); hm.className = 'rwhm'; hm.hidden = true; RW.el.appendChild(hm);
+      const fl = M.flEl = document.createElement('div'); fl.className = 'rwflash'; RW.el.appendChild(fl);
+      if (s.stage >= 2) { M.g2 = 99; M.g2m = 1; }
+      rwMsg(s.stage >= 2 ? 'Back at the Hall of Shards. Your reflection is waiting at the far end.' : 'The Mirror Dimension. Everything is written backwards, and on the other side of the glass, someone copies you. A little late.', 5200);
+    }
+    function swap(){
+      const o = M.o; o.pos.x = -Math.sign(o.pos.x) * 1.3; o.yaw = -o.yaw; M.hist = []; M.swapCd = 1; M.flash = 1;
+      tone(880, .25, 'sine', .05, 440); setTimeout(() => tone(440, .3, 'sine', .04, 880), 90);
+      rwMsg(side(o.pos.x) === 'B' ? 'You and your reflection trade places. Now you are the one behind the glass.' : 'Back on your own side. Your reflection takes its place again, a step behind.', 2600);
+    }
+    function nearPortal(){ const o = M.o; return M.s.stage < 2 && !M.fin && PORTALS.find(z => Math.abs(o.pos.z - z) < 1.1 && Math.abs(o.pos.x) < 1.6); }
+    function use(){
+      const o = M.o, k = M.key, x = o.pos.x, z = o.pos.z;
+      if (M.fin) return tryExit(true);
+      if (nearPortal() != null) { if (k.held) return rwMsg('The glass won’t let the key through. Nothing you carry passes. Drop it somewhere and see where it lands.', 3200); return swap(); }
+      if (k.held) {
+        if (M.s.stage < 1 && side(x) === 'B' && Math.hypot(x - 6, z + 14) < 2.4) { k.held = false; M.s.stage = 1; rwSave(); M.keyM.visible = false; tone(330, .2, 'square', .04); setTimeout(() => tone(220, .5, 'sawtooth', .03, 120), 150); return rwMsg('The key turns backwards, which here means forwards. The gate grinds up.', 3000); }
+        // dropping: the floor keeps it, but the other side is where it ends up
+        k.held = false; k.x = -x; k.z = z; k.y = .08; placeKey(); tone(1200, .08, 'triangle', .04); setTimeout(() => tone(900, .1, 'triangle', .03), 80);
+        return rwMsg(`It clinks on the floor and isn’t there. Through the glass, it lies on the ${side(-x) === 'B' ? 'other' : 'near'} side, right where your reflection stands.`, 3400);
+      }
+      if (!k.held && M.keyM.visible && Math.hypot(k.x - x, k.z - z) < 1.9 && side(k.x) === side(x)) { k.held = true; placeKey(); tone(660, .15, 'triangle', .05, 990); return rwMsg(side(x) === 'A' ? 'A key. Its teeth point the wrong way. The gate it fits is on the far side of the glass.' : 'Got it. Now the gate.', 2600); }
+      if (!k.held && M.keyM.visible && side(k.x) !== side(x) && Math.hypot(-k.x - x, k.z - z) < 1.9) return rwMsg('That key is on the other side of the glass. Only its reflection is here.', 2400);
+      rwMsg(M.hm ? 'The hand mirror shows the nearest writing the right way round.' : 'Nothing to use here. Try M for the hand mirror.', 2000);
+    }
+    function startFinale(){
+      M.fin = { t: 0, wave: -25.5, rz: -33, ry: 0 }; M.me.visible = true; M.me.position.set(6, 0, -33); M.me.rotation.y = 0;
+      M.panels.forEach(p => { p.broken = false; p.m.visible = true; p.mat.emissive.setHex(0); }); M.shards.children.slice().forEach(c => M.shards.remove(c));
+      M.fold.visible = false; M.fold.position.z = -28;
+      rwMsg('Your reflection stops copying you. It turns and runs, and the mirrors start to break. Leave through any mirror that’s still whole.', 4200); tone(196, .8, 'sawtooth', .04, 98);
+    }
+    function breakPanel(p, loud){
+      if (p.broken) return; p.broken = true; p.m.visible = false; if (loud) tone(1400 + Math.random() * 800, .18, 'square', .025, 300);
+      const n = p.sd === 2 ? 0 : 9, nx = p.sd ? -1 : 1;
+      for (let i = 0; i < n; i++) { const s = new THREE.Mesh(M.tri, M.vers[(i + Math.round(-p.z)) % M.vers.length]); s.position.set(p.x + nx * .1, .6 + Math.random() * 2.6, p.z - 1 + Math.random() * 2); s.scale.setScalar(1.3 + Math.random() * 1.2);
+        s.userData = { v: new THREE.Vector3(nx * (1.5 + Math.random() * 2.5), 1 + Math.random() * 2, (Math.random() - .5) * 2), r: new THREE.Vector3(Math.random() * 6, Math.random() * 6, Math.random() * 6), life: 2.2 }; s.rotation.y = nx > 0 ? Math.PI / 2 : -Math.PI / 2; M.shards.add(s); }
+    }
+    function tryExit(pressed){
+      const o = M.o; if (!M.fin) return false;
+      const p = M.panels.find(q => q.keep && !q.broken && (M.fin.rz < q.z + .2 || !M.me.visible) && (q.sd === 2 ? Math.abs(o.pos.z - q.z) < 1.4 : Math.abs(o.pos.z - q.z) < 1.25 && Math.abs(o.pos.x - q.x) < .75));
+      if (!p) { if (pressed) rwMsg('Find a mirror that’s still whole and glowing, and walk into it.', 1800); return false; }
+      M.done = true; M.flash = 1; tone(1046, .6, 'sine', .05, 523);
+      setTimeout(() => rwFinish('mirror', 'You step into a whole mirror and out of the Mirror Dimension. One shard comes with you, still showing a room that isn’t quite yours.'), 500);
+      return true;
+    }
+    function water(dt, t){
+      M.water.forEach(w => { for (let i = 0; i < w.seed.length; i++) { const [a, r, ph] = w.seed[i], f = (t * .6 + ph) % 1, rr = .15 + r * 1.05;
+        let y; if (w.up) { y = .5 + f * 3.5; } else { y = 2.4 - f * 1.9; }
+        const spread = w.up ? .1 + rr * (1 - f) : .1 + rr * f; w.pos[i * 3] = w.x + Math.cos(a) * spread; w.pos[i * 3 + 1] = y; w.pos[i * 3 + 2] = w.z + Math.sin(a) * spread; }
+        w.g.attributes.position.needsUpdate = true; });
+    }
+    function animFig(g, sp, t){ const s = Math.sin(t * 9) * Math.min(1, sp) * .6; g.userData.legs[0].rotation.x = s; g.userData.legs[1].rotation.x = -s; g.userData.arms[0].rotation.x = -s; g.userData.arms[1].rotation.x = s; }
+    function step(dt, t){
+      const o = M.o; if (M.done) return;
+      rwFP(o, dt);
+      M.swapCd = Math.max(0, M.swapCd - dt); M.flash = Math.max(0, M.flash - dt * 2.5); M.flEl.style.opacity = M.flash;
+      // walking into a framed mirror swaps you over
+      const pz = nearPortal(); if (pz != null && Math.abs(o.pos.x) < .5 && M.swapCd <= 0) { if (M.key.held) { if (!M.warned) { M.warned = 1; rwMsg('The glass won’t let the key through. Nothing you carry passes. Drop it somewhere and see where it lands.', 3200); } } else swap(); }
+      if (Math.abs(o.pos.x) > .9) M.warned = 0;
+      water(dt, t);
+      M.portals.forEach(p => { p.sheen.material.opacity = .16 + Math.sin(t * 2 + p.z) * .06; });
+      if (M.keyM.visible) { M.keyM.rotation.y += dt * 1.6; M.keyM.position.y = M.key.y + (M.key.y > .5 ? Math.sin(t * 2) * .04 : 0); }
+      // the reflection: your position from a moment ago, flipped across the glass
+      if (!M.fin) {
+        M.hist.push({ t, x: o.pos.x, z: o.pos.z, yaw: o.yaw }); while (M.hist.length > 2 && M.hist[1].t <= t - LAG) M.hist.shift();
+        const h = M.hist[0], fig = M.me, nx = -h.x, sp = fig.userData.last ? Math.hypot(nx - fig.userData.last[0], h.z - fig.userData.last[1]) / Math.max(dt, .001) : 0; fig.userData.last = [nx, h.z];
+        fig.position.set(nx, 0, h.z); fig.rotation.y = -h.yaw; animFig(fig, sp / 4, t);
+        const bright = nx > 0; fig.userData.sh.material.color.setHex(bright ? 0xFFFFF0 : 0x000000); fig.userData.sh.material.blending = bright ? THREE.AdditiveBlending : THREE.NormalBlending; fig.userData.sh.material.opacity = bright ? .7 : .35;
+        fig.visible = !(nx > 2.4 && h.z < -28.2);
+        // the plate only feels reflections
+        const onPlate = Math.hypot(nx - PLATE[0], h.z - PLATE[1]) < .95;
+        if (onPlate && M.s.stage === 1) { if (M.g2 <= 0) { tone(523, .3, 'triangle', .05, 784); rwMsg('Your reflection steps on the plate. The far gate rises, but it won’t stay up for long.', 3000); } M.g2 = 9; }
+        else if (M.s.stage === 1 && !inR(D2, o.pos.x, o.pos.z)) M.g2 = Math.max(0, M.g2 - dt);
+        M.plate.material.emissive.setHex(onPlate ? 0x2A6A8A : 0);
+        if (o.pos.x > 2.4 && o.pos.z < -28.6) { if (M.s.stage < 2) { M.s.stage = 2; rwSave(); } }
+        if (M.s.stage >= 2 && o.pos.z < -29.6) startFinale();
+      }
+      const gOpen = M.s.stage >= 2 || M.g2 > 0; M.g2m = Math.max(0, Math.min(1, (M.g2m || 0) + (gOpen ? dt : -dt) * 1.4)); M.g2M.position.y = 1.8 + M.g2m * 3.6;
+      if (M.s.stage >= 1) M.g1.position.y = Math.min(5.4, M.g1.position.y + dt * 3);
+      M.ring.material.color.setHex(Math.hypot(o.pos.x - RING[0], o.pos.z - RING[1]) < .85 ? 0xFFFFFF : 0x7FE0FF);
+      // the finale: chase it down the hall while the mirrors break behind you both
+      if (M.fin) {
+        const F = M.fin; F.t += dt; const gap = o.pos.z - F.rz;
+        if (F.rz > -70.5) { const sp = gap < 9 ? 5.4 : 1.6; F.rz -= sp * dt; M.me.position.set(6 + Math.sin(F.t * 1.3) * 1.2, 0, F.rz); M.me.rotation.y = 0; animFig(M.me, sp / 4, t); }
+        else if (M.me.visible) { M.me.visible = false; tone(988, .4, 'sine', .04, 1480); rwMsg('It dives into the last mirror at the end and is gone. Go after it: any whole mirror will do.', 3000); }
+        M.panels.forEach(p => { if (!p.broken && !p.keep && F.rz < p.z - .3) breakPanel(p, true); if (p.keep && !p.broken && (F.rz < p.z + .2 || !M.me.visible)) p.mat.emissive.setRGB(.15 + Math.sin(t * 4) * .1, .35 + Math.sin(t * 4) * .15, .5); });
+        if (F.t > 2.5) { F.wave -= dt * (2.6 + Math.min(1, F.t / 18)); M.fold.visible = true; M.fold.position.z = F.wave; M.panels.forEach(p => { if (!p.broken && p.z > F.wave) breakPanel(p, false); }); }
+        if (o.pos.z > F.wave - .45 && F.t > 2.5) { M.flash = 1; tone(110, .6, 'sawtooth', .05, 55); o.pos.set(6, 1.6, -29.5); o.yaw = 0; startFinale(); rwMsg('The hall folds shut behind you and you’re back at its start. The mirrors are whole again. Run.', 3000); }
+        tryExit(false);
+        rwMeter(`the fold is ${Math.max(0, o.pos.z - F.wave).toFixed(0)} m behind you`);
+      }
+      M.shards.children.slice().forEach(s => { const u = s.userData; u.life -= dt; u.v.y -= 6 * dt; s.position.addScaledVector(u.v, dt); s.rotation.x += u.r.x * dt; s.rotation.z += u.r.z * dt; if (s.position.y < .05) { s.position.y = .05; u.v.multiplyScalar(.4); } if (u.life <= 0) M.shards.remove(s); });
+      // the hand mirror: hold it up and the nearest writing reads the right way
+      M.signs.forEach(sg => { const want = M.hm ? sg.fwd : sg.back; if (sg.mat.map !== want) { sg.mat.map = want; sg.mat.needsUpdate = true; } });
+      if (M.hm) { let best = null, bd = 9; const fx = -Math.sin(o.yaw), fz = -Math.cos(o.yaw); M.signs.forEach(sg => { const dx = sg.m.position.x - o.pos.x, dz = sg.m.position.z - o.pos.z, d = Math.hypot(dx, dz); if (d < bd && (dx * fx + dz * fz) / (d || 1) > .2) { bd = d; best = sg; } }); const tx = best ? best.text : '(nothing written nearby)'; if (M.hmEl.dataset.t !== tx) { M.hmEl.dataset.t = tx; M.hmEl.textContent = tx; } }
+      if (!M.fin) {
+        const k = M.key, x = o.pos.x;
+        rwObj(M.s.stage < 1 ? (k.held && side(x) === 'B' || !k.held && side(k.x) === 'B' && M.keyM.visible ? 'Open the gate on the far side with the key' : 'Get the key to the far side of the glass') : M.s.stage < 2 ? 'Get your reflection onto the plate, then get through the gate' : 'Go into the Hall of Shards');
+        rwMeter(nearPortal() != null ? (k.held ? 'the key can’t pass through glass' : 'walk into the mirror to trade places') : k.held ? 'holding the key · Use (E) to drop it here' : M.s.stage === 1 && M.g2 > 0 ? `gate open · ${Math.ceil(M.g2)}s` : '');
+      } else rwObj('Chase your reflection. Leave through any mirror still whole');
+    }
+    function draw(w, h){ rwCam(M.cam, w, h); RW.r3.render(M.sc, M.cam); }
+    function end(){ if (M.hmEl) M.hmEl.remove(); if (M.flEl) M.flEl.remove(); if (M.sc) M.sc.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) [].concat(o.material).forEach(m => { if (m.map) m.map.dispose(); m.dispose(); }); }); (M.signs || []).forEach(s => { s.back.dispose(); s.fwd.dispose(); }); M.sc = null; M.done = false; }
+    function hand(){ M.hm = !M.hm; M.hmEl.hidden = !M.hm; M.hmEl.dataset.t = ''; tone(M.hm ? 1320 : 990, .08, 'sine', .03); }
+    return { name: 'Mirror Dimension', dir: 'mirror-dimension', icon: '🪞', col: '#C9D6E4', three: true, blurb: 'Everything is backwards. Your reflection runs a step behind you, touching a mirror swaps you over, and the water flows up.', help: 'WASD move, drag to look, E or Use to pick up / drop / use, M hand mirror, walk into a framed mirror to swap, Esc exit', trophy: ['a-mirror-shard.txt', 'A sliver of mirror, about the size of a thumbnail.\nIt doesn’t show your face. It shows your room, at night, with the window on the wrong wall.\n\nSouvenir from the Mirror Dimension.'], buttons: [['jump', 'Jump'], ['use', 'Use'], ['mirror', 'Mirror']], start, step, draw, end, dbg: () => M,
+      press(k){ if (k === 'use') use(); if (k === 'mirror') hand(); }, key(k){ if (k === 'e' || k === 'enter') use(); if (k === 'm') hand(); } };
   })();
 
   // ---------- the Trash: every file in it really opens ----------
