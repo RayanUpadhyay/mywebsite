@@ -4812,6 +4812,105 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const a = audio(); if (!a) return; [0, .22, .44, .66].forEach((d, i) => { const o2 = a.createOscillator(), g = a.createGain(); o2.type = 'sawtooth'; o2.frequency.setValueAtTime(180 - i * 12, a.currentTime + d); o2.frequency.exponentialRampToValueAtTime(90 - i * 8, a.currentTime + d + .18); g.gain.setValueAtTime(.0001, a.currentTime + d); g.gain.exponentialRampToValueAtTime(.09, a.currentTime + d + .03); g.gain.exponentialRampToValueAtTime(.0001, a.currentTime + d + .2); o2.connect(g); g.connect(out()); o2.start(a.currentTime + d); o2.stop(a.currentTime + d + .25); });
   }
 
+  // ---------- the Battery Core: the virus, bloated on stolen charge. Its health is the battery percentage ----------
+  const VRINGS = [3, 6, 9, 12], VR0 = 19.5, VR1 = 27.5;
+  const vRingGap = (h, a) => { const k = VRINGS.indexOf(h); return [[.35 + k * 1.1, .75 + k * 1.1], [3.5 + k * 1.1, 3.9 + k * 1.1]].some(([g0, g1]) => { const aa = ((a % 6.2832) + 6.2832) % 6.2832, b0 = g0 % 6.2832, b1 = g1 % 6.2832; return b0 < b1 ? aa > b0 && aa < b1 : aa > b0 || aa < b1; }); };
+  ARENA.core = function(){
+    const sc = VX.sc; sc.background = new THREE.Color(0x020814); sc.fog = new THREE.Fog(0x020814, 30, 90); VX.bounds = [-29, 29, -29, 29];
+    sc.children.filter(c => c.isLight).forEach(l => { if (l.isHemisphereLight) { l.color.setHex(0x9FE8FF); l.groundColor.setHex(0x061830); l.intensity = .75; } else l.intensity = .25; });
+    const hex = vtex(128, 128, (c, w, h) => { c.fillStyle = '#04122A'; c.fillRect(0, 0, w, h); c.strokeStyle = '#2A8AD8'; c.lineWidth = 3; for (let y = 0; y < 3; y++) for (let x = 0; x < 3; x++) { const cx = x * 44 + (y % 2) * 22, cy = y * 40 + 20; c.beginPath(); for (let k = 0; k < 6; k++) c.lineTo(cx + Math.cos(k * 1.047) * 20, cy + Math.sin(k * 1.047) * 20); c.closePath(); c.stroke(); } }, 16, 6);
+    const wall = new THREE.Mesh(new THREE.CylinderGeometry(29, 29, 34, 48, 1, true), new THREE.MeshStandardMaterial({ map: hex, emissive: 0xFFFFFF, emissiveMap: hex, emissiveIntensity: .5, side: THREE.BackSide })); wall.position.y = 15; sc.add(wall);
+    const fl = new THREE.Mesh(new THREE.CircleGeometry(29, 48), vstd({ color: 0x0A1A30, metalness: .7, roughness: .3, emissive: 0x04122A })); fl.rotation.x = -Math.PI / 2; sc.add(fl);
+    VX.wall = (x, z, feet) => { const r = Math.hypot(x, z), a = Math.atan2(z, x); if (r > 28.5) return true; return VRINGS.some(h => r > VR0 && r < VR1 && !vRingGap(h, a) && feet > h - 2.3 && feet < h - .95); };
+    VX.floorY = (x, z, feet) => { const r = Math.hypot(x, z), a = Math.atan2(z, x); let t = 0; VRINGS.forEach(h => { if (r > VR0 && r < VR1 && !vRingGap(h, a) && h <= feet + .95 && h > t) t = h; }); return t; };
+    // the charge rings, labelled like a battery gauge
+    const ringM = vstd({ color: 0x0E2A4A, metalness: .6, roughness: .3, emissive: 0x0A3A6A, emissiveIntensity: .6 });
+    VRINGS.forEach((h, k) => { for (let s = 0; s < 64; s++) { const a0 = s / 64 * 6.2832, a1 = (s + 1) / 64 * 6.2832, am = (a0 + a1) / 2; if (vRingGap(h, am)) continue; const seg = new THREE.Mesh(new THREE.RingGeometry(VR0, VR1, 2, 1, a0, a1 - a0), ringM); seg.rotation.x = -Math.PI / 2; seg.position.y = h; sc.add(seg); const und = seg.clone(); und.rotation.x = Math.PI / 2; und.position.y = h - .3; sc.add(und); }
+      const edge = new THREE.Mesh(new THREE.TorusGeometry(VR0, .08, 6, 96), new THREE.MeshBasicMaterial({ color: 0x9FE8FF })); edge.rotation.x = Math.PI / 2; edge.position.y = h + .02; sc.add(edge);
+      [0, 2.1, 4.2].forEach(a => { const l = vlabel(`${(k + 1) * 20}%`, '#9FE8FF', null, 3); l.position.set(Math.cos(a + k) * 28.6, h + 1.4, Math.sin(a + k) * 28.6); l.lookAt(0, h + 1.4, 0); sc.add(l); }); });
+    // stairs that spiral from each level to the next
+    const stepM = vstd({ color: 0x14365A, metalness: .5, emissive: 0x0A2A4A });
+    [0, 3, 6, 9].forEach((h0, k) => { const a0 = 1.2 + k * 1.6; for (let q = 1; q <= 4; q++) { const a = a0 + q * .13, r = 23.5, x = Math.cos(a) * r, z = Math.sin(a) * r, top = h0 + q * .75; if (q === 4) continue; vbox(2.4, .4, 2.4, stepM, x, top - .2, z, null, false); VX.solid.push([x - 1.2, x + 1.2, z - 1.2, z + 1.2, top, top - .45]); } });
+    // the liquid (rises in phase 2)
+    VX.liq = new THREE.Mesh(new THREE.CircleGeometry(28.9, 64), new THREE.MeshStandardMaterial({ color: 0x3AA8E0, emissive: 0x2A88D0, emissiveIntensity: .7, transparent: true, opacity: .62, roughness: .1, metalness: .3, side: THREE.DoubleSide })); VX.liq.rotation.x = -Math.PI / 2; VX.liq.position.y = -.4; sc.add(VX.liq); VX.liqY = -.4;
+    // the wall coils that keep feeding it
+    VX.coils = [0, 1, 2, 3, 4, 5].map(i => { const a = i / 6 * 6.2832 + .5, h = [3, 6, 9, 12, 6, 9][i] + 1.6, x = Math.cos(a) * 27.6, z = Math.sin(a) * 27.6, g = new THREE.Group(); g.position.set(x, h, z); g.lookAt(0, h, 0); sc.add(g);
+      const core = new THREE.Mesh(new THREE.CylinderGeometry(.7, .7, 2.6, 14), vstd({ color: 0x2A3A4A, metalness: .8 })); core.rotation.x = Math.PI / 2; g.add(core);
+      for (let k = 0; k < 4; k++) { const w = new THREE.Mesh(new THREE.TorusGeometry(.85, .14, 6, 18), vstd({ color: 0xC88A3A, metalness: .9, emissive: 0x3A1A00 })); w.position.z = -.9 + k * .6; g.add(w); }
+      const tip = new THREE.Mesh(new THREE.SphereGeometry(.55, 12, 10), new THREE.MeshBasicMaterial({ color: 0x9FE8FF })); tip.position.z = 1.6; g.add(tip);
+      const c = { g, tip, pos: tip.getWorldPosition(new THREE.Vector3()), r: 1.6, hp: 50, i, hit(d, p){ c.hp -= d; vSpark(p.x, p.y, p.z, 0x9FE8FF); if (c.hp <= 0) { c.g.visible = false; vPuff(c.pos.x, c.pos.y, c.pos.z, 0x9FE8FF, 16); VX.shake = .5; tone(180, .4, 'sawtooth', .06, 60); const B = VX.boss; B.hp = Math.max(1, B.hp - 4); const left = VX.coils.filter(q => q.hp > 0).length; rwMsg(left ? `Coil down. ${left} still charging it.` : 'Every coil is down. It can’t charge from the walls any more.', 2200); } } }; return c; });
+    VX.shootables = VX.coils.slice();
+    // lightning lines, rebuilt every frame
+    VX.arcs = [0, 1, 2, 3, 4, 5, 6, 7].map(() => { const l = new THREE.Line(new THREE.BufferGeometry().setFromPoints(new Array(9).fill(0).map(() => new THREE.Vector3())), new THREE.LineBasicMaterial({ color: 0xBFF4FF, transparent: true, opacity: .9 })); sc.add(l); return l; });
+    VX.coreLight = new THREE.PointLight(0x6AC8FF, 2, 60, 1.4); VX.coreLight.position.set(0, 10, 0); sc.add(VX.coreLight);
+    VX.spawn = [0, 16]; VX.spawnYaw = 0; VX.spawnY = 7; VX.shotFloor = -1;
+  };
+  function vArc(line, a, b, jag){ const pa = line.geometry.attributes.position; for (let i = 0; i < 9; i++) { const t = i / 8; pa.setXYZ(i, a.x + (b.x - a.x) * t + (i % 8 ? (Math.random() - .5) * jag : 0), a.y + (b.y - a.y) * t + (i % 8 ? (Math.random() - .5) * jag : 0), a.z + (b.z - a.z) * t + (i % 8 ? (Math.random() - .5) * jag : 0)); } pa.needsUpdate = true; line.geometry.computeBoundingSphere(); line.visible = true; }
+  // the boss, bloated: built from whichever virus you've been chasing
+  function vCoreBoss(){
+    const B = { kind: 'core', hp: 100, max: 100, t: 0, hit: 0, ph: 1, r: 4.8, g: new THREE.Group(), cd: 2, strikes: [], cable: null, cableCd: 9 }; VX.boss = B; B.g.position.set(0, 10, 0); VX.sc.add(B.g);
+    const glow = vstd({ color: 0x6AC8FF, emissive: 0x2A88D0, emissiveIntensity: .9, roughness: .2, metalness: .3 });
+    B.shellM = glow;
+    if (VX.id === 'vworm') { for (let i = 0; i < 22; i++) { const a = i * .55, r = 3.2 + Math.sin(i * .4) * .6, s = new THREE.Mesh(new THREE.SphereGeometry(2.1 - i * .05, 14, 10), glow); s.position.set(Math.cos(a) * r, i * .32 - 3.4, Math.sin(a) * r); B.g.add(s); }
+      const head = new THREE.Mesh(new THREE.SphereGeometry(2.6, 16, 12), glow); head.position.set(0, 4.4, 0); B.g.add(head); B.face = head; [-1, 1].forEach(s => { const e = new THREE.Mesh(new THREE.SphereGeometry(.55, 10, 8), new THREE.MeshBasicMaterial({ color: 0xFFE45A })); e.position.set(s * 1, 5, -2.2); B.g.add(e); }); }
+    else if (VX.id === 'vclick') { const m = new THREE.Mesh(new THREE.ExtrudeGeometry(vCursorShape(), { depth: 2.4, bevelEnabled: true, bevelSize: .4, bevelThickness: .4 }), glow); m.scale.setScalar(1.3); m.position.set(0, 0, -1.5); B.g.add(m); B.face = m; }
+    else { const m = new THREE.Mesh(new THREE.BoxGeometry(7, 9, 4), [glow, glow, glow, glow, vstd({ map: vLockTex(), emissive: 0x2A88D0, emissiveIntensity: .5 }), glow]); B.g.add(m); B.face = m; const sh = new THREE.Mesh(new THREE.TorusGeometry(2.6, .7, 10, 24, Math.PI), vstd({ color: 0xC8CCD4, metalness: .9 })); sh.position.y = 5.2; B.g.add(sh); }
+    B.coreM = new THREE.Mesh(new THREE.IcosahedronGeometry(2.2, 1), new THREE.MeshBasicMaterial({ color: 0xFFFFFF })); B.coreM.visible = false; B.g.add(B.coreM);
+    B.pos = () => B.g.position.clone().add(new THREE.Vector3(0, B.ph === 3 ? 0 : 1, 0));
+    B.hitBoss = (d, at) => { if (B.hp <= 0 || VX.cine) return;
+      if (B.ph === 1 && VX.coils.some(c => c.hp > 0) && B.hp <= 67) { if (!B.told || VX.t - B.told > 3) { B.told = VX.t; rwMsg('It just recharges from the wall coils. Shoot the coils!', 1800); } vSpark(at.x, at.y, at.z, 0x9FE8FF); return; }
+      const k = B.ph === 3 ? 1.6 : 1; B.hp = Math.max(0, B.hp - d * .04 * k); B.hit = .1; vSpark(at.x, at.y, at.z, 0xFFFFFF); tone(560, .05, 'square', .02, 320); VX.shake = Math.max(VX.shake, .12);
+      if (B.hp <= 0) vCoreWin(); };
+    return B;
+  }
+  function vCoreStrike(x, z, y){ const ring = new THREE.Mesh(new THREE.RingGeometry(1.8, 2.3, 32), new THREE.MeshBasicMaterial({ color: 0xBFF4FF, transparent: true, opacity: .85, side: THREE.DoubleSide })); ring.rotation.x = -Math.PI / 2; ring.position.set(x, y + .06, z); VX.sc.add(ring); VX.boss.strikes.push({ ring, x, z, y, t: 0 }); }
+  VMODE.core = {
+    enter(){ VX.boss = null; vCoreBoss(); VX.batt = 100; VX.phTold = 1; VX.o.vy = -1;
+      rwMsg(`The Battery Core. ${VX.def.name} is in here, swollen with every percent it stole. Its health is the battery. Take it back: shoot the coils feeding it.`, 6000); },
+    step(dt, t){
+      const o = VX.o, B = VX.boss, s = VX.s; rwFP(o, dt);
+      VX.fireCd -= dt; VX.scanCd = Math.max(0, VX.scanCd - dt); VX.hurtT += dt; if (VX.hurtT > 4) VX.hp = Math.min(VX.maxHp, VX.hp + dt * 3);
+      if (RW.k.f || RW.btn.fire) vFire();
+      vShots(dt, vst()); vBolts(dt); vFoes(dt, t);
+      if (!B || B.hp <= 0) return;
+      B.t += dt; B.hit = Math.max(0, B.hit - dt);
+      // phase changes
+      const coilsUp = VX.coils.filter(c => c.hp > 0);
+      if (B.ph === 1 && !coilsUp.length && B.hp <= 67) { B.ph = 2; rwMsg('It starts flooding the core with electrolyte to drink from. Climb the charge rings!', 3600); VX.shake = .8; tone(90, 1.2, 'sawtooth', .06, 45); }
+      if (B.ph === 2 && B.hp <= 33) { B.ph = 3; B.coreM.visible = true; B.shellM.transparent = true; B.shellM.opacity = .35; rwMsg('OVERLOAD. Its core is exposed, and the lightning is looking for you.', 3600); VX.shake = 1.2; tone(60, 1.5, 'sawtooth', .08, 30); }
+      // it keeps trying to recharge itself
+      if (B.ph === 1) B.hp = Math.min(100, B.hp + coilsUp.length * .55 * dt);
+      const target = B.ph === 2 ? Math.min(11.2, VX.liqY + dt * .38) : Math.max(-.4, VX.liqY - dt * 1.2); VX.liqY = B.ph === 2 ? target : B.ph === 3 ? Math.max(-.4, VX.liqY - dt * 1.2) : VX.liqY;
+      VX.liq.position.y = VX.liqY + Math.sin(t * 2) * .05; VX.liq.material.emissiveIntensity = .55 + Math.sin(t * 3) * .15;
+      if (B.ph === 2 && VX.liqY > 1) B.hp = Math.min(66, B.hp + dt * .22);
+      if (o.pos.y - o.eye < VX.liqY - .1) { VX.liqHurt = (VX.liqHurt || 0) - dt; if (VX.liqHurt <= 0) { VX.liqHurt = .5; vHurt(7); if (!VX.liqTold) { VX.liqTold = 1; rwMsg('The electrolyte burns. Get above it!', 1500); } } }
+      // body language
+      B.g.rotation.y += dt * (B.ph === 3 ? 1.2 : .35); B.g.position.y = 10 + Math.sin(t * 1.3) * .8; const pulse = 1 + Math.sin(t * 5) * .04 + (B.hit > 0 ? .06 : 0); B.g.scale.setScalar(pulse * (.75 + B.hp / 100 * .45));
+      B.shellM.emissiveIntensity = .7 + Math.sin(t * 6) * .25 + (B.ph === 3 ? .5 : 0); if (B.coreM.visible) { B.coreM.rotation.x += dt * 3; B.coreM.rotation.y += dt * 2; B.coreM.scale.setScalar(1 + Math.sin(t * 14) * .15); }
+      VX.coreLight.intensity = 1.6 + Math.sin(t * 9) * .6 + (B.ph === 3 ? 1.5 : 0);
+      // arcs: coils to the boss, and stray arcs across the chamber
+      VX.arcs.forEach((l, i) => { const c = coilsUp[i]; if (c) vArc(l, c.pos, B.g.position, 1.6); else if (Math.random() < (B.ph === 3 ? .5 : .15)) { const a = Math.random() * 6.28, h = VRINGS[Math.floor(Math.random() * 4)]; vArc(l, B.g.position, new THREE.Vector3(Math.cos(a) * 26, h + 1, Math.sin(a) * 26), 2.4); } else l.visible = false; });
+      // attacks: homing charge bolts, and in phase 3 lightning that hunts you
+      B.cd -= dt; if (B.cd <= 0) { B.cd = B.ph === 1 ? 2.2 : B.ph === 2 ? 1.7 : 1.4; const p = B.g.position.clone(), b = new THREE.Mesh(VX.boltGeo, new THREE.MeshBasicMaterial({ color: 0x9FE8FF })); b.position.copy(p); b.scale.setScalar(1.5); VX.sc.add(b); VX.bolts.push({ m: b, v: new THREE.Vector3(o.pos.x - p.x, o.pos.y - p.y, o.pos.z - p.z).normalize().multiplyScalar(12), life: 5, dmg: 11, home: true }); }
+      if (B.ph === 3) { B.sk = (B.sk || 1.2) - dt; if (B.sk <= 0) { B.sk = 1.25; vCoreStrike(o.pos.x, o.pos.z, o.pos.y - o.eye); } }
+      B.strikes = B.strikes.filter(S => { S.t += dt; S.ring.scale.setScalar(1 - Math.min(.6, S.t * .6)); if (S.t > .9 && !S.hit) { S.hit = true; const bolt = new THREE.Mesh(new THREE.CylinderGeometry(.35, .35, 30, 6), new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: .95 })); bolt.position.set(S.x, S.y + 15, S.z); VX.sc.add(bolt); S.bolt = bolt; tone(1800, .12, 'square', .05, 200); VX.shake = Math.max(VX.shake, .4); if (Math.hypot(o.pos.x - S.x, o.pos.z - S.z) < 2.3 && Math.abs(o.pos.y - o.eye - S.y) < 2) vHurt(16); }
+        if (S.bolt) S.bolt.material.opacity = Math.max(0, .95 - (S.t - .9) * 5); if (S.t > 1.2) { VX.sc.remove(S.ring); if (S.bolt) VX.sc.remove(S.bolt); return false; } return true; });
+      // and a charging cable lowered from the ceiling: shoot it before it plugs in
+      if (B.ph >= 2) { B.cableCd -= dt; if (!B.cable && B.cableCd <= 0) { const g = new THREE.Group(); const plug = vbox(1.4, 1, 2, vstd({ color: 0xF4F4F4, emissive: 0x3A3A3A }), 0, 0, 0, g); void plug; const wire = new THREE.Mesh(new THREE.CylinderGeometry(.18, .18, 20, 6), vstd({ color: 0xE8E8EC })); wire.position.y = 10; g.add(wire); g.position.set((Math.random() - .5) * 8, 30, (Math.random() - .5) * 8); VX.sc.add(g);
+          const C = B.cable = { g, pos: g.position.clone(), r: 1.6, hp: 30, hit(d, p){ C.hp -= d; vSpark(p.x, p.y, p.z); if (C.hp <= 0) { VX.sc.remove(C.g); B.cable = null; B.cableCd = 9; VX.shootables = VX.shootables.filter(q => q !== C); tone(880, .2, 'triangle', .05); rwMsg('Cable cut. No top-up for you.', 1400); } } }; VX.shootables.push(C); rwMsg('It’s lowering a charger cable. Shoot it before it plugs in!', 2200); }
+        if (B.cable) { const C = B.cable; C.g.position.y = Math.max(B.g.position.y + 4, C.g.position.y - dt * 3.2); C.pos.copy(C.g.position); if (C.g.position.y <= B.g.position.y + 4.05) { VX.sc.remove(C.g); VX.shootables = VX.shootables.filter(q => q !== C); B.cable = null; B.cableCd = 9; B.hp = Math.min(B.ph === 2 ? 66 : 33, B.hp + 10); tone(220, .5, 'sine', .05, 660); rwMsg('It plugged in. +10% for the virus.', 1800); } } }
+      VX.coils.forEach(c => { if (c.hp > 0) c.tip.material.color.setHSL(.55, 1, .7 + Math.sin(t * 8 + c.i) * .2); });
+      vHudSet({ obj: `${s.stage + 1}/${VX.stages.length} · ${B.ph === 1 ? `Shoot the wall coils: ${coilsUp.length} left` : B.ph === 2 ? 'Climb above the electrolyte and keep shooting' : 'Shoot the exposed core. Keep moving!'}`, batt: B.hp, battNote: 'STOLEN', bossBatt: true, hp: VX.hp, maxHp: VX.maxHp, scan: VX.scanCd, boss: [`${VX.def.name.toUpperCase()} · PHASE ${B.ph}`, B.hp / 100] });
+    }
+  };
+  function vCoreWin(){
+    const B = VX.boss; B.hp = 0; vPuff(B.g.position.x, B.g.position.y, B.g.position.z, 0x9FE8FF, 50); VX.shake = 1.4; tone(110, 1.4, 'sawtooth', .07, 30);
+    B.strikes.forEach(S => { VX.sc.remove(S.ring); if (S.bolt) VX.sc.remove(S.bolt); }); B.strikes = []; VX.bolts.forEach(b => VX.sc.remove(b.m)); VX.bolts = [];
+    rwMsg('The charge pours out of it. It shrinks, sparks… and with the last of its strength, it types something.', 4200);
+    VX.cine = { t: 0, len: 3.6, step(dt){ B.g.scale.multiplyScalar(1 - dt * .6); B.g.rotation.y += dt * 6; VX.liqY = Math.max(-.4, VX.liqY - dt * 2); VX.liq.position.y = VX.liqY; vHudSet({ obj: 'It’s dying…', batt: Math.max(0, 0), battNote: '', bossBatt: true, hp: VX.hp, maxHp: VX.maxHp, scan: null }); },
+      done(){ if (VX.toCalc) VX.toCalc(); else vNext(); } };
+  }
+
   // ---------- the Trash: every file in it really opens ----------
   const TRASH = [['essay', '📄', 'essay_draft_v37_final_FINAL(2).docx'], ['web90', '🌐', 'my_first_website.html'], ['mc', '📦', 'minecraft_world_backup_2019.zip'], ['ring', '🎵', 'ringtone_remix.mp3']];
   function rosTrash(){
