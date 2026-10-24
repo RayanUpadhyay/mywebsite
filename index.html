@@ -13896,10 +13896,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
 
   // ======================= seasonal events: Halloween, and the Night of the Rattle =======================
-  // In season the room gets decorated. Then someone knocks. Answer, and the menu, the dock and the way back are gone until it's over:
+  // In season the room gets decorated, and the big jack-o'-lantern offers a way out into the night. Go, and the menu, the dock and the way back are gone until it's over:
   // you're out on Hollow Lane with Rattle the clown, and four trick-or-treaters who need to get home.
   const hwSeason = () => { const p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', month: 'numeric', day: 'numeric' }).formatToParts(new Date()), m = +p.find(q => q.type === 'month').value, d = +p.find(q => q.type === 'day').value; return m === 10 && d >= 15 || m === 11 && d <= 2; };
-  var HWE = { on: false, decor: null, roomT: 0, knocked: false, declined: false, done: false, lives: 3, saved: 0, key: 0, fin: false, hide: null, R: null, N: null, card: null, bellT: 0, ending: false };
+  var HWE = { on: false, decor: null, done: false, lives: 3, saved: 0, key: 0, fin: false, hide: null, R: null, N: null, card: null, bellT: 0, ending: false };
   try { HWE.done = localStorage.getItem('ru-hw26') === 'won'; } catch (e) {}
   const hwFaceTex = (w, h, draw) => { const t = tex(w, h, draw); return t; };
   function pumpkinMesh(r, glow){
@@ -13933,13 +13933,14 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const ban = new THREE.Mesh(new THREE.PlaneGeometry(3.2, .5), new THREE.MeshBasicMaterial({ transparent: true, side: THREE.DoubleSide, map: tex(640, 100, (c, w, h) => { const L = 'HAPPY HALLOWEEN'; c.strokeStyle = '#333'; c.lineWidth = 2; c.beginPath(); c.moveTo(0, 8); c.quadraticCurveTo(w / 2, 30, w, 8); c.stroke(); for (let i = 0; i < L.length; i++) { const x = 12 + i * 41, y = 8 + Math.sin(i / (L.length - 1) * Math.PI) * 18; if (L[i] === ' ') continue; c.fillStyle = ['#E8742A', '#2A2230', '#7A3FB0'][i % 3]; c.beginPath(); c.moveTo(x, y); c.lineTo(x + 36, y); c.lineTo(x + 18, y + 60); c.fill(); c.fillStyle = '#FFF4E0'; c.font = `800 22px ${DISPLAY}`; c.textAlign = 'center'; c.fillText(L[i], x + 18, y + 26); } }) }));
     ban.position.set(0, 2.62, 4.9); ban.rotation.y = Math.PI; g.add(ban);
     const purple = new THREE.PointLight(0x9A5AFF, .35, 9, 2); purple.position.set(0, 2.6, 0); g.add(purple);
-    // the balloon, once he's knocked
+    // his balloon, tied up by the door once you've survived him
     const bal = HWE.balloon = new THREE.Group(); bal.position.set(.45, 0, 4.7); bal.visible = false; g.add(bal); bal.userData.egg = 'hwpumpkin';
     const bb = new THREE.Mesh(new THREE.SphereGeometry(.17, 20, 14), mat(0xD01E22, { roughness: .35 })); bb.scale.y = 1.2; bb.position.y = 2.0; bal.add(bb); cyl(.003, .003, 1.0, mat(0xEEEEEE), 0, 1.35, 0, bal, 4);
     if (HWE.done) bal.visible = true;
     g.traverse(o => { if (!o.userData.egg && !(o.parent && o.parent.userData.egg)) o.userData.noPick = true; });
     big.traverse(o => { o.userData.noPick = false; }); bal.traverse(o => { o.userData.noPick = false; });
-    say(HWE.done ? 'Happy Halloween! The balloon is still tied to the door. You won’t forget whose it was.' : 'Happy Halloween! The room’s been decorated. Keep an ear on the door.', 4200);
+    addMarker(V(1.5, .95, -3.9), 0x7C8CFF, { egg: 'hwpumpkin' });
+    say(HWE.done ? 'Happy Halloween! The balloon is still tied to the door. You won’t forget whose it was.' : 'Happy Halloween! The room’s been decorated. The big jack-o’-lantern by the portrait looks like it knows something.', 4200);
   }
   function hwFlash(times){ const ov = document.createElement('div'); ov.style.cssText = 'position:fixed;inset:0;background:#000;z-index:45;pointer-events:none;opacity:0'; document.body.appendChild(ov); let i = 0; const f = () => { ov.style.opacity = i % 2 ? '0' : '.92'; if (++i < times * 2) setTimeout(f, 90 + Math.random() * 160); else ov.remove(); }; f(); }
   function hwCard(title, text, a, b){
@@ -13950,15 +13951,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (b) c.querySelector('[data-hw="b"]').onclick = () => { c.remove(); HWE.card = null; b[1](); };
     document.body.appendChild(c);
   }
-  function hwKnock(){
-    HWE.knocked = true; hwFlash(3);
-    setTimeout(() => { [0, 380, 760].forEach(t => setTimeout(() => tone(85, .09, 'square', .12, 60), t)); }, 700);
-    setTimeout(() => { HWE.balloon.visible = true; hwAsk(true); }, 1900);
-  }
-  function hwAsk(first){
+  function hwAsk(){
     if (HWE.on || A || EV) return;
-    if (HWE.done && !first) return hwCard('The Night of the Rattle', 'You survived it once. The bells are still out there, if you want to go again.', ['Go back out', hwStart], ['Stay in', () => {}]);
-    hwCard(first ? 'Someone is knocking.' : 'The jack-o’-lantern grins.', first ? 'Three slow knocks. Through the gap under the door: big shoes, and the jingle of tiny bells. A red balloon bumps against the frame.<br><br><small style="opacity:.75">Answering starts a Halloween event. The menu and the dock are locked until it’s over. Scares and gore follow your settings in the menu.</small>' : 'Somewhere outside, very faintly, bells. The knocking will come again when you answer.', ['Answer the door', hwStart], ['Not tonight', () => { HWE.declined = true; say('The knocking stops. The big jack-o’-lantern by the portrait is still grinning. Click it when you’re ready.', 4200); }]);
+    if (HWE.done) return hwCard('The Night of the Rattle', 'You survived it once. The bells are still out there, if you want to go again.', ['Go back out', hwStart], ['Stay in', () => {}]);
+    hwCard('The jack-o’-lantern grins.', 'Its candle gutters. Somewhere outside, very faintly: the jingle of tiny bells, and a child calling for help.<br><br><small style="opacity:.75">Going out starts a Halloween event. The menu and the dock are locked until it’s over. Scares and gore follow your settings in the menu.</small>', ['Go outside', hwStart], ['Not tonight', () => say('The candle steadies. The bells fade. The jack-o’-lantern will still be here.', 3200)]);
   }
   // ---------- Hollow Lane ----------
   WD_PL.hw = { name: 'Hollow Lane', col: 0xFF8A2E, fade: '#0A0610', hello: '' };
@@ -14205,7 +14201,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!HWE.decor) { if (entered && hwSeason()) buildHalloween(); return; }
     if (!reduce && HWE.bats) HWE.bats.forEach((b, i) => { b.rotation.y = Math.sin(now / 900 + i) * .6; b.scale.y = .8 + Math.abs(Math.sin(now / 160 + i)) * .3; });
     if (HWE.bigL) HWE.bigL.intensity = .6 + Math.sin(now / 130) * .08 + (Math.random() < .03 ? -.3 : 0);
-    if (!HWE.on && !HWE.done && !HWE.declined && !HWE.knocked && entered && !inWorld && !A && !EV && !HWE.card && !panel.classList.contains('on') && !simple.classList.contains('on')) { if (!HWE.kAt) HWE.kAt = now + 22000; if (now > HWE.kAt) hwKnock(); }
   }
 
   // ======================= four more worlds: the Quantum Realm, Knowhere, Arkham Asylum and the TVA =======================
@@ -16481,8 +16476,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function afPlace(){ if (!entered || entering || A || EV) return null; if (!inWorld) return zone === 'hub' ? 'room' : null;
     if ((zone === 'blr' || zone === 'twr') && afBlOn()) return 'arc:blr'; if (zone === 'xc' && XC.city) return (AF.on ? 'arc:' : 'xc:') + XC.city; if (zone === 'blr' || zone === 'city') return 'blr'; return null; }
   // opening the door: straight to black, then wherever you were last, with no room in between
-  function afResumeCity(){ let L = ''; try { L = localStorage.getItem('ru-last') || ''; } catch (e) {} if (!L || L === 'room') return false;
-    if (L.startsWith('arc:') && !(AF.s.started || storiesDone())) return false;
+  function afResumeCity(){ let L = ''; try { L = localStorage.getItem('ru-last') || ''; } catch (e) {} // only a story chapter picks up where you left off; free play always opens into the room
+    if (!L.startsWith('arc:') || !(AF.s.started || storiesDone())) return false;
     fadeEl.style.background = '#000000'; fadeEl.classList.add('on'); entered = true; entering = false; enterUI.style.display = 'none'; badge.hidden = false; if (!fine) joyEl.classList.add('on'); AF.lastP = L;
     const back = () => { fadeEl.classList.remove('on'); dock.classList.add('on'); };
     try { if (L.startsWith('arc:')) { afEnter(1); if (!AF.on) back(); } else if (L.startsWith('xc:')) { xcEnter(L.slice(3)); setTimeout(() => fadeEl.classList.remove('on'), 900); } else if (L === 'blr') { travel('city'); setTimeout(() => fadeEl.classList.remove('on'), 700); } else back(); } catch (e) { console.error(e); back(); }
@@ -22703,7 +22698,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.egg === 'radicals') return flyTo(views.scroll.pos.clone(), views.scroll.look, openGame);
     if (p.egg === 'crate') return digCrate();
     if (p.egg === 'wardrobe') return wdOpen();
-    if (p.egg === 'hwpumpkin') return hwAsk(false);
+    if (p.egg === 'hwpumpkin') return hwAsk();
     if (p.egg === 'atticdoor') return flyTo(views.atticdoor.pos.clone(), views.atticdoor.look, () => atEnter(false));
     if (p.egg === 'screen') return flyTo(views.screen.pos.clone(), views.screen.look, openPC);
     if (p.egg === 'vaultbook') return openVault();
