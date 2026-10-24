@@ -390,7 +390,7 @@ body.mkwon .toast{top:calc(160px + env(safe-area-inset-top,0px))}
 .ros .rwhud b{background:rgba(0,0,0,.45);border-radius:999px;padding:4px 11px;font-weight:800}
 .ros .rwhud span{background:rgba(0,0,0,.35);border-radius:999px;padding:4px 11px}
 .ros .rwhud .rwm{margin-left:auto}
-.ros .rwmsg{position:absolute;left:50%;top:18%;transform:translateX(-50%);max-width:min(560px,86%);background:rgba(10,12,18,.82);color:#F2F2F2;border-radius:14px;padding:10px 16px;font:500 14.5px/1.45 "Instrument Sans",system-ui,sans-serif;text-align:center;opacity:0;transition:opacity .3s;pointer-events:none;z-index:4}
+.ros .rwmsg{position:absolute;left:50%;top:18%;transform:translateX(-50%);max-width:min(560px,86%);background:rgba(10,12,18,.82);color:#F2F2F2;border-radius:14px;padding:10px 16px;font:500 14.5px/1.45 "Instrument Sans",system-ui,sans-serif;text-align:center;white-space:pre-line;opacity:0;transition:opacity .3s;pointer-events:none;z-index:4}
 .ros .rwmsg.on{opacity:1}
 .ros .rwcard{position:absolute;inset:0;display:grid;place-items:center;background:rgba(5,6,10,.7);z-index:6}
 .ros .rwcard div{background:#fff;color:#16181D;border-radius:18px;padding:22px 24px;max-width:min(420px,88%);text-align:center;font:500 14.5px/1.5 "Instrument Sans",system-ui,sans-serif}
@@ -2406,6 +2406,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     streets: ['Street sweeper', 'Inspired by the comics where the hero’s own city throws up a new villain every week, and he has to know every street to keep up.'],
     greenhouse: ['The greenhouse', 'Inspired by AgriBridge and the farmers it’s for, and by how good it feels to watch something you planted actually grow.'],
     rattle: ['The Night of the Rattle', 'Inspired by Halloween, slasher films, and the oldest rule of trick-or-treating: never answer the door to a clown.'],
+    w_pixel: ['The last pixel', 'Inspired by every console generation I grew up hearing about, and how a world can feel just as real at four pixels if you\u2019ve played it enough.'],
+    w_library: ['Overdue since forever', 'Inspired by libraries, Li Bai, and the feeling that every good book is a place you can walk into.'],
     w_flatland: ['A slice of Flatland', 'Inspired by Edwin Abbott\u2019s Flatland, and the idea that the hardest thing to imagine is the direction you can\u2019t see.'],
     rayanos: ['sudo make me a sandwich', 'Inspired by every developer who has ever poked around someone else\u2019s terminal just to see what was there.'],
     hollow: ['The Hollow', 'Inspired by every horror game where the scariest thing in the woods is whatever stands perfectly still while you\u2019re looking at it.'],
@@ -2711,6 +2713,15 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     d.addEventListener('click', e => { if (e.target === d) return rosClose(); const a = e.target.closest('[data-app]'); if (a) return rosApp(a.dataset.app); const b = e.target.closest('[data-ros]'); if (b && b.dataset.ros === 'exitw') return rwExit(); if (b && b.dataset.ros === 'close') { rwExit(true); rosClose(); } });
     return d;
   }
+  // while the laptop is open, stray key presses go to it (the terminal, or the running world), never to the room behind it
+  addEventListener('keydown', e => {
+    if (!ROS.el || !ROS.el.classList.contains('on') || ROS.el.contains(e.target)) return;
+    if (RW.on && RW.el) { RW.el.focus({ preventScroll: true }); const k = e.key.toLowerCase(); if (k === 'escape') { e.preventDefault(); e.stopImmediatePropagation(); return rwExit(); } if (!RW.k[k] && RW.W && RW.W.key) RW.W.key(k); RW.k[k] = true; e.stopImmediatePropagation(); return; }
+    const inp = ROS.wins.term && !ROS.wins.term.classList.contains('min') && ROS.wins.term.querySelector('input');
+    if (e.key === 'Escape') { e.stopImmediatePropagation(); if (!ROS.vim) rosClose(); return; }
+    if (inp) inp.focus({ preventScroll: true }); e.stopImmediatePropagation();
+  }, true);
+  addEventListener('keyup', e => { if (RW.on && ROS.el && !ROS.el.contains(e.target)) { RW.k[e.key.toLowerCase()] = false; e.stopImmediatePropagation(); } }, true);
   function rosToast(t){ const x = ROS.el.querySelector('.rtoast'); x.textContent = t; x.classList.add('on'); clearTimeout(x._t); x._t = setTimeout(() => x.classList.remove('on'), 2400); }
   function rosClock(){ if (ROS.el) ROS.el.querySelector('.clk').textContent = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', weekday: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date()) + ' IST'; }
   function openROS(){
@@ -2761,7 +2772,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       else if (e.key.toLowerCase() === 'l' && e.ctrlKey) { e.preventDefault(); rosRun('clear'); }
     });
     W0.addEventListener('click', () => { if (!window.getSelection().toString()) inp.focus(); });
-    setTimeout(() => inp.focus(), 50);
+    [50, 300, 900].forEach(ms => setTimeout(() => { if (ROS.el.classList.contains('on') && !RW.on && !ROS.el.contains(document.activeElement)) inp.focus({ preventScroll: true }); }, ms));
   }
   function rosPrompt(){ const p = ROS.wins.term && ROS.wins.term.querySelector('.pr'); if (p) p.innerHTML = ROS.vim ? '<span class="dim">~ vim ~</span>' : `rayan@bangalore:<b>${esc(ROS.cwd)}</b>$`; if (ROS.wins.term) ROS.wins.term.querySelector('.t').textContent = 'rayan@bangalore: ' + ROS.cwd; }
   function rosPrint(html){ const W0 = ROS.wins.term; if (!W0) return; const o = W0.querySelector('.out'), p = document.createElement('pre'); p.innerHTML = html; o.appendChild(p); const wb = W0.querySelector('.wb'); wb.scrollTop = wb.scrollHeight; }
@@ -2917,8 +2928,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const d = RW.el, w = d.clientWidth, h = d.clientHeight, W = RW.W; if (!W || !w || !h) return;
     if (!W.three) { const pr = W.pixel ? 1 : Math.min(devicePixelRatio || 1, 1.5), cw = Math.round(w * pr), ch = Math.round(h * pr); if (RW.cv.width !== cw || RW.cv.height !== ch) { RW.cv.width = cw; RW.cv.height = ch; } }
     else { const r = RW.r3, sz = r.getSize(new THREE.Vector2()); if (sz.x !== w || sz.y !== h) r.setSize(w, h, false); }
-    if (!d.querySelector('.rwcard')) W.step(dt, RW.t, w, h);
-    W.draw(w, h); RW.look.dx = RW.look.dy = 0;
+    // a broken world must never trap anyone: any error just drops you back to the desktop
+    try { if (!d.querySelector('.rwcard')) W.step(dt, RW.t, w, h); W.draw(w, h); }
+    catch (err) { console.error(err); rwExit(); rosToast('that world crashed — you are back on the desktop'); return; }
+    RW.look.dx = RW.look.dy = 0;
   }
   // ---------- the worlds/ window on the desktop ----------
   function rwWindow(){
@@ -3057,6 +3070,240 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       g.fillStyle = '#16181D'; g.font = '700 13px "Instrument Sans",sans-serif'; g.textAlign = 'center'; g.fillText('SPACELAND: you can see over the low walls. Tall walls and gates are still too tall.', w / 2, h - 10);
     }
     return { name: 'Flatland', dir: 'flatland', icon: '△', col: '#E8F0FF', blurb: 'Fall into a paper-thin world where all anyone can see is a line. Pop into 3D to hop walls the flat people can’t see past.', help: 'W/S or ↑↓ walk, A/D or ←→ turn, hold Space or F to Pop into 3D, T to talk, Esc to exit', trophy: ['a-folded-square.txt', 'A perfect square, folded once along its diagonal.\nOn the back, in pencil: "Upward, not Northward."\n\nSouvenir from Flatland.'], buttons: [['pop', 'Pop<br>3D'], ['talk', 'Talk']], start, step, draw, dbg: () => F, press(k){ if (k === 'talk') talk(); }, key(k){ if (k === 't') talk(); } };
+  })();
+
+  // ---------- shared first-person walking for the 3D worlds ----------
+  // o: { cam, pos, yaw, pitch, vy, eye, speed, jumpV, grav, ground(x, z, feetY) -> top or null, solid(x, z) -> bool }
+  function rwFP(o, dt){
+    const k = rwKey;
+    o.yaw -= RW.look.dx * .0055; o.pitch = Math.max(-1.25, Math.min(1.25, o.pitch - RW.look.dy * .0045));
+    if (k('arrowleft')) o.yaw += 1.9 * dt; if (k('arrowright')) o.yaw -= 1.9 * dt;
+    const f = (k('w', 'arrowup') ? 1 : 0) - (k('s', 'arrowdown') ? 1 : 0) - RW.joy.y, s = (k('d') ? 1 : 0) - (k('a') ? 1 : 0) + RW.joy.x;
+    const sp = o.speed * dt * (k('shift') ? 1.55 : 1) * (o.slow || 1);
+    const dx = (-Math.sin(o.yaw) * f + Math.cos(o.yaw) * s) * sp, dz = (-Math.cos(o.yaw) * f - Math.sin(o.yaw) * s) * sp;
+    if (!o.solid || !o.solid(o.pos.x + dx, o.pos.z, o.pos.y - o.eye)) o.pos.x += dx;
+    if (!o.solid || !o.solid(o.pos.x, o.pos.z + dz, o.pos.y - o.eye)) o.pos.z += dz;
+    o.moved = Math.hypot(dx, dz);
+    if (o.onG && (k(' ') || RW.btn.jump) && o.jumpV) { o.vy = o.jumpV; o.onG = false; }
+    o.vy -= o.grav * dt; o.pos.y += o.vy * dt;
+    const feet = o.pos.y - o.eye, gh = o.ground(o.pos.x, o.pos.z, feet);
+    if (gh != null && o.vy <= 0 && feet <= gh + .02 && feet > gh - .9) { o.pos.y = gh + o.eye; o.vy = 0; o.onG = true; } else o.onG = false;
+    o.cam.position.copy(o.pos); o.cam.rotation.set(o.pitch, o.yaw, 0, 'YXZ');
+  }
+  function rwCam(cam, w, h){ if (Math.abs(cam.aspect - w / h) > .001) { cam.aspect = w / h; cam.updateProjectionMatrix(); } }
+  const rwTex = (w, h, draw) => { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.encoding = THREE.sRGBEncoding; return t; };
+
+  // ---------- world 2: Pixel Collapse. The longer you stay, the fewer pixels there are ----------
+  WORLDS.pixel = (() => {
+    const P = {}, ERAS = [
+      { n: 'HD', t: 0, f: 1, smooth: false, run: 270, jump: 600, grav: 1550, jumps: 1, fr: 10, pal: { sky: ['#6FB8FF', '#D9F0FF'], hill: '#7FC48A', ground: '#6B4A32', grass: '#5DBB3F', plat: '#C98A4E', me: '#FFC93C', coin: '#FFD54A', spike: '#9AA1AD', flag: '#E4572E' } },
+      { n: 'PS2', t: 12, f: 3, smooth: false, run: 235, jump: 520, grav: 1080, jumps: 1, fr: 8, pal: { sky: ['#4E7FB8', '#A9C6E0'], hill: '#5E8A66', ground: '#5A4030', grass: '#4E9A3A', plat: '#A87444', me: '#F0B830', coin: '#E8C440', spike: '#8A8F98', flag: '#C84A2A' } },
+      { n: 'N64', t: 24, f: 6, smooth: true, run: 320, jump: 590, grav: 1500, jumps: 1, long: true, fr: 9, pal: { sky: ['#3A6FD8', '#9FC2F0'], hill: '#3FA05A', ground: '#7A5034', grass: '#38B048', plat: '#D07A3A', me: '#FFC020', coin: '#FFE030', spike: '#A0A0A8', flag: '#F04020' } },
+      { n: '8-bit', t: 38, f: 12, smooth: false, run: 260, jump: 540, grav: 1750, jumps: 2, fr: 12, pal: { sky: ['#5C94FC', '#5C94FC'], hill: '#00A800', ground: '#C84C0C', grass: '#80D010', plat: '#FC9838', me: '#FCD8A8', coin: '#FCBC3C', spike: '#BCBCBC', flag: '#D82800' } },
+      { n: '4 pixels', t: 56, f: 0, smooth: false, run: 240, jump: 520, grav: 1600, jumps: 1, fr: 1.2, ice: true, pal: { sky: ['#5C94FC', '#5C94FC'], hill: '#00A800', ground: '#C84C0C', grass: '#80D010', plat: '#FC9838', me: '#FCD8A8', coin: '#FCBC3C', spike: '#BCBCBC', flag: '#D82800' } },
+      { n: 'one colour', t: 66, f: -1, run: 0, jump: 0, grav: 0, jumps: 0, pal: {} }
+    ], END = 72, GOAL = 5200;
+    // the route: ground pieces with pits, floating platforms, spikes, checkpoints
+    const GROUND = [[0, 900], [1020, 1500], [1640, 2300], [2420, 3200], [3450, 4300], [4420, 5400]];
+    const PLATS = [[700, 360, 140], [1180, 330, 120], [1360, 260, 120], [1900, 340, 160], [2100, 250, 120], [2600, 330, 120], [2800, 240, 130], [3000, 330, 100], [3800, 330, 140], [4000, 240, 120], [4600, 320, 160]];
+    const SPIKES = [[560, 60], [1280, 50], [1780, 70], [2700, 60], [3700, 50], [3950, 60], [4800, 70]];
+    const CPS = [0, 1060, 2440, 3600];
+    const GY = 440;
+    function era(){ let e = ERAS[0]; ERAS.forEach(x => { if (P.T >= x.t) e = x; }); return e; }
+    function reset(hard){ if (hard) { P.T = 0; P.cp = 0; P.lastEra = ''; } const c = CPS[P.cp]; P.x = c + 60; P.y = GY - 40; P.vx = 0; P.vy = 0; P.jl = 0; P.ground = true; P.face = 1; }
+    function start(s){ P.s = s; P.off = document.createElement('canvas'); P.og = P.off.getContext('2d'); reset(true); rwMsg('The world is losing resolution. Get to the flag before it melts down to a single colour. Every era plays differently; double jump only works in 8-bit.', 6500); musicStart(); }
+    function end(){ musicStop(); }
+    // ---------- era music, generated ----------
+    function musicStart(){ musicStop(); const a = audio(); if (!a) return; P.bus = a.createGain(); P.bus.gain.value = .5; P.bus.connect(out()); P.next = a.currentTime + .1; P.stepN = 0; P.mus = setInterval(musicTick, 90); }
+    function musicStop(){ clearInterval(P.mus); P.mus = null; if (P.bus) { try { P.bus.gain.setTargetAtTime(0, audio().currentTime, .1); } catch (e) {} P.bus = null; } }
+    function nt(type, m, t, d, v, cut){ const a = audio(), o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.value = 440 * Math.pow(2, (m - 69) / 12); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(v, t + .012); g.gain.exponentialRampToValueAtTime(.0001, t + d); let n = o; if (cut) { const f = a.createBiquadFilter(); f.type = 'lowpass'; f.frequency.value = cut; o.connect(f); n = f; } n.connect(g); g.connect(P.bus); o.start(t); o.stop(t + d + .05); }
+    function musicTick(){
+      const a = audio(); if (!a || !P.bus) return; const e = era(), name = e.n;
+      while (P.next < a.currentTime + .25) {
+        const t = P.next, i = P.stepN++, bar = Math.floor(i / 8) % 4, p = i % 8, prog = [[60, 64, 67, 71], [57, 60, 64, 67], [53, 57, 60, 64], [55, 59, 62, 65]][bar];
+        if (name === 'HD') { if (p === 0) prog.forEach(m => nt('sine', m, t, 1.6, .03)); if (p % 2 === 0) nt('triangle', prog[(p / 2) % 4] + 12, t, .5, .035); P.next += .2; }
+        else if (name === 'PS2') { nt('sawtooth', prog[p % 4] + 12, t, .14, .03, 1800); if (p % 4 === 0) nt('sine', prog[0] - 12, t, .3, .2); P.next += .14; }
+        else if (name === 'N64') { nt('triangle', prog[[0, 2, 1, 3, 2, 1, 3, 0][p]] + 12, t, .18, .06); if (p % 2 === 0) nt('square', prog[0] - 12, t, .1, .02, 900); P.next += .16; }
+        else if (name === '8-bit') { nt('square', prog[[0, 1, 2, 3, 2, 1, 2, 3][p]] + 12, t, .1, .035); nt('triangle', prog[0] - 12, t, .1, .06); P.next += .12; }
+        else if (name === '4 pixels') { nt('square', prog[0] + (i % 3) * .3, t, .5, .02); P.next += .6; }
+        else { nt('sine', 36, t, 2.4, .04); P.next += 2.2; }
+      }
+    }
+    const onGround = (x, y) => GROUND.some(([a, b]) => x > a && x < b) && y >= GY - 1 && y <= GY + 18;
+    function step(dt, t){
+      P.T += dt; const e = era();
+      if (e.n !== P.lastEra) { if (P.lastEra) { rwMsg(e.n === 'one colour' ? 'Everything is one colour now. The world has melted.' : `Resolution dropped: ${e.n}. ${e.n === 'PS2' ? 'Floatier jumps.' : e.n === 'N64' ? 'Run, then jump: long jump.' : e.n === '8-bit' ? 'Double jump unlocked!' : 'Four pixels left. It’s like ice.'}`, 3000); tone(220, .4, 'square', .04, 110); } P.lastEra = e.n; }
+      if (e.n === 'one colour') { rwObj('Era: one colour'); rwMeter(`□□□□□□□□□□  melted · ${Math.max(0, Math.ceil(END - P.T))}s to auto-restart`); if (P.T > END) { P.s.melts = (P.s.melts || 0) + 1; rwSave(); rwMsg('It melted. Restarting brings every pixel back.', 2400); reset(true); } return; }
+      const k = rwKey, mv = (k('d', 'arrowright') ? 1 : 0) - (k('a', 'arrowleft') ? 1 : 0) + RW.joy.x;
+      const target = mv * e.run, acc = e.ice ? 2.2 : 14; P.vx += (target - P.vx) * Math.min(1, acc * dt); if (Math.abs(mv) > .1) P.face = Math.sign(mv);
+      P.vy += e.grav * dt; P.x += P.vx * dt; const py = P.y; P.y += P.vy * dt;
+      // land on ground or platforms (from above only)
+      P.ground = false;
+      if (P.vy >= 0 && GROUND.some(([a, b]) => P.x > a - 8 && P.x < b + 8) && py <= GY && P.y >= GY) { P.y = GY; P.vy = 0; P.ground = true; }
+      PLATS.forEach(([px, ph, pw]) => { if (P.vy >= 0 && P.x > px - 8 && P.x < px + pw + 8 && py <= ph && P.y >= ph) { P.y = ph; P.vy = 0; P.ground = true; } });
+      if (P.ground) { P.jl = 0; P.landT = t; }
+      P.x = Math.max(10, P.x);
+      if (P.y > 700) { tone(150, .3, 'sawtooth', .04, 60); reset(false); }
+      if (SPIKES.some(([sx, sw]) => P.x > sx && P.x < sx + sw && P.y > GY - 22 && P.y <= GY + 2)) { tone(120, .3, 'sawtooth', .04, 60); reset(false); }
+      CPS.forEach((c, i) => { if (i > P.cp && P.x > c) { P.cp = i; tone(660, .15, 'triangle', .04); } });
+      if (P.x > GOAL) { const tm = P.T.toFixed(1), best = P.s.best; if (!best || P.T < best) P.s.best = +tm; rwSave(); musicStop(); return rwFinish('pixel', `You touched the flag at ${tm}s, in ${e.n}. ${best ? `Your best: ${Math.min(best, P.T).toFixed(1)}s.` : ''}`); }
+      rwObj(`Era: ${e.n}`); const left = Math.min(ERAS[5].t, Math.max(0, ERAS[5].t - P.T)); rwMeter(`${'■'.repeat(Math.ceil(left / ERAS[5].t * 10))}${'□'.repeat(10 - Math.ceil(left / ERAS[5].t * 10))}  ${Math.ceil(left)}s of pixels left`);
+    }
+    function jump(){ const e = era(); if (!e.jumps) return; if (P.ground) { let j = e.jump; if (e.long && Math.abs(P.vx) > 280) { j *= 1.08; P.vx = Math.sign(P.vx) * 470; } P.vy = -j; P.jl = 1; P.ground = false; tone(e.n === '8-bit' ? 660 : 440, .08, e.n === '8-bit' ? 'square' : 'sine', .03, 880); } else if (P.jl < e.jumps) { P.vy = -e.jump; P.jl++; tone(880, .08, 'square', .03, 1200); } }
+    function draw(w, h){
+      const e = era(), g = RW.g;
+      if (e.n === 'one colour') { g.fillStyle = '#5C94FC'; g.fillRect(0, 0, w, h); g.fillStyle = 'rgba(255,255,255,.85)'; g.font = '700 16px "Instrument Sans",sans-serif'; g.textAlign = 'center'; g.fillText('one colour. press R (or Restart) to bring the pixels back', w / 2, h / 2); return; }
+      const f = e.f === 0 ? null : e.f, ow = f ? Math.max(2, Math.round(w / f)) : 2, oh = f ? Math.max(2, Math.round(h / f)) : 2;
+      if (P.off.width !== ow || P.off.height !== oh) { P.off.width = ow; P.off.height = oh; }
+      const o = P.og, sc = ow / w * (h / 600 > 1 ? 1 : 1), Z = oh / 600, camX = Math.max(0, P.x - (ow / Z) * .35), pal = e.pal;
+      o.setTransform(1, 0, 0, 1, 0, 0);
+      const gr = o.createLinearGradient(0, 0, 0, oh); gr.addColorStop(0, pal.sky[0]); gr.addColorStop(1, pal.sky[1]); o.fillStyle = gr; o.fillRect(0, 0, ow, oh);
+      o.setTransform(Z, 0, 0, Z, -camX * Z, 0);
+      o.fillStyle = pal.hill; for (let i = 0; i < 14; i++) { const hx = i * 520 + camX * .5, r = 200 + (i % 3) * 70; o.beginPath(); o.arc(hx, 520, r, Math.PI, 0); o.fill(); }
+      if (e.n === 'HD') { o.fillStyle = 'rgba(255,255,255,.85)'; for (let i = 0; i < 12; i++) { const cx = i * 640 + camX * .7 + 120, cy = 90 + (i % 3) * 30; [0, 40, 80].forEach((d, j) => { o.beginPath(); o.arc(cx + d, cy - (j === 1 ? 14 : 0), 36, 0, 7); o.fill(); }); } }
+      GROUND.forEach(([a, b]) => { o.fillStyle = pal.ground; o.fillRect(a, GY, b - a, 200); o.fillStyle = pal.grass; o.fillRect(a, GY, b - a, 14); if (e.n === 'HD' || e.n === 'PS2') { o.fillStyle = 'rgba(0,0,0,.12)'; for (let x = a; x < b; x += 40) o.fillRect(x, GY + 30 + (x % 80 ? 20 : 0), 18, 8); } });
+      PLATS.forEach(([px, ph, pw]) => { o.fillStyle = pal.plat; o.fillRect(px, ph, pw, 18); o.fillStyle = 'rgba(0,0,0,.2)'; o.fillRect(px, ph + 14, pw, 4); });
+      SPIKES.forEach(([sx, sw]) => { o.fillStyle = pal.spike; for (let x = sx; x < sx + sw; x += 14) { o.beginPath(); o.moveTo(x, GY); o.lineTo(x + 7, GY - 20); o.lineTo(x + 14, GY); o.fill(); } });
+      CPS.slice(1).forEach((c, i) => { o.fillStyle = i + 1 <= P.cp ? '#50E68C' : '#FFFFFF'; o.fillRect(c, GY - 70, 5, 70); o.fillRect(c + 5, GY - 70, 26, 16); });
+      o.fillStyle = '#333'; o.fillRect(GOAL, GY - 160, 8, 160); o.fillStyle = pal.flag; o.beginPath(); o.moveTo(GOAL + 8, GY - 160); o.lineTo(GOAL + 70, GY - 140); o.lineTo(GOAL + 8, GY - 120); o.fill();
+      o.fillStyle = '#16181D'; o.font = '700 22px sans-serif'; o.fillText('TOO FAR FOR ONE JUMP →', 3020, GY - 96); o.fillText('N64 long jump or 8-bit double jump', 3020, GY - 68);
+      // you
+      const bob = P.ground ? Math.abs(Math.sin(P.x / 18)) * 3 : 0; o.fillStyle = pal.me; o.fillRect(P.x - 14, P.y - 40 - bob, 28, 40); o.fillStyle = '#16181D'; o.fillRect(P.x + (P.face > 0 ? 4 : -10), P.y - 32 - bob, 6, 6); o.fillStyle = '#2B45E0'; o.fillRect(P.x - 14, P.y - 14 - bob, 28, 6);
+      g.imageSmoothingEnabled = !!e.smooth; g.drawImage(P.off, 0, 0, w, h); g.imageSmoothingEnabled = true;
+      if (e.f === 0) { g.fillStyle = 'rgba(255,255,255,.75)'; g.font = '700 14px "Instrument Sans",sans-serif'; g.textAlign = 'center'; g.fillText('4 pixels left. Keep going right!', w / 2, h - 30); g.textAlign = 'left'; }
+    }
+    return { name: 'Pixel Collapse', dir: 'pixel-collapse', icon: '▦', col: '#5C94FC', pixel: true, blurb: 'A platformer that loses resolution while you play: HD, PS2, N64, 8-bit, four pixels, one colour. Each era has its own music and physics.', help: 'A/D or ←→ run, Space/W/↑ jump (double jump in 8-bit), R restart, Esc exit', trophy: ['the-last-pixel.txt', 'One single pixel, colour #FFC93C.\nIt used to be a whole world.\n\nSouvenir from Pixel Collapse.'], buttons: [['jump', 'Jump'], ['restart', 'Restart']], start, step, draw, end, dbg: () => P,
+      press(k){ if (k === 'jump') jump(); if (k === 'restart') { reset(true); rwMsg('Restarted. Every pixel is back.', 1600); } },
+      key(k){ if (k === ' ' || k === 'w' || k === 'arrowup') jump(); if (k === 'r') { reset(true); rwMsg('Restarted. Every pixel is back.', 1600); } } };
+  })();
+
+  // ---------- world 4: the Sky Library. Open a book and its pages fold out into a bridge ----------
+  WORLDS.library = (() => {
+    const L = {}, POEM = [['床', 'chuáng', 'bed'], ['前', 'qián', 'before'], ['明', 'míng', 'bright'], ['月', 'yuè', 'moon'], ['光', 'guāng', 'light'], ['疑', 'yí', 'I wonder'], ['是', 'shì', 'if it is'], ['地', 'dì', 'ground'], ['上', 'shàng', 'on'], ['霜', 'shuāng', 'frost'], ['举', 'jǔ', 'raise'], ['头', 'tóu', 'head'], ['望', 'wàng', 'gaze at'], ['明', 'míng', 'bright'], ['月', 'yuè', 'moon'], ['低', 'dī', 'lower'], ['头', 'tóu', 'head'], ['思', 'sī', 'think of'], ['故', 'gù', 'old'], ['乡', 'xiāng', 'home']];
+    const LINES = ['Before my bed, the bright moonlight,', 'I wonder if it is frost upon the ground.', 'I raise my head and gaze at the bright moon,', 'I lower my head and think of home.'];
+    // islands: [x, y, z, half-width, half-depth]
+    const ISL = [[0, 0, 0, 4, 4], [0, 0, -22, 3, 3], [22, 8.4, -30, 6, 5], [24, 15, 6, 4, 4]];
+    const MC = [0, -30];
+    function walkRects(){
+      const W = [];
+      L.isl.forEach(([x, y, z, hw, hd]) => W.push({ t: 'r', x, z, hw, hd, y }));
+      if (L.s.open[0]) { W.push({ t: 'b', a: [0, 0, -3.6], b: [0, 0, -19.4], w: 2.4 }); L.stones.forEach(s => W.push({ t: 'c', x: s.x, z: s.z, r: 1.15, y: s.y })); W.push(L.peak); }
+      if (L.s.open[1]) W.push({ t: 'b', a: [MC[0] + 2, 8.4, MC[1]], b: [16.5, 8.4, -30], w: 2.4 });
+      if (L.s.open[2]) W.push({ t: 'b', a: [22, 8.4, -25.5], b: [24, 15, 2.5], w: 2.4 });
+      return W;
+    }
+    function ground(x, z, feet){
+      let best = null;
+      L.walk.forEach(s => { let y = null;
+        if (s.t === 'r') { if (Math.abs(x - s.x) <= s.hw && Math.abs(z - s.z) <= s.hd) y = s.y; }
+        else if (s.t === 'c') { if (Math.hypot(x - s.x, z - s.z) <= s.r) y = s.y; }
+        else { const ax = s.a[0], az = s.a[2], bx = s.b[0], bz = s.b[2], lx = bx - ax, lz = bz - az, ll = lx * lx + lz * lz, t = ((x - ax) * lx + (z - az) * lz) / ll; if (t >= -.05 && t <= 1.05) { const px = ax + lx * t, pz = az + lz * t; if (Math.hypot(x - px, z - pz) <= s.w / 2) y = s.a[1] + (s.b[1] - s.a[1]) * Math.max(0, Math.min(1, t)); } }
+        if (y != null && y <= feet + .6 && (best == null || y > best)) best = y; });
+      return best;
+    }
+    function book(col, title, sub){
+      const g = new THREE.Group(), cover = new THREE.MeshStandardMaterial({ color: col, roughness: .7 }), paper = new THREE.MeshStandardMaterial({ color: 0xF4ECDA, roughness: .95 });
+      const pages = new THREE.Mesh(new THREE.BoxGeometry(2.8, .5, 3.8), paper); pages.position.y = .3; g.add(pages);
+      const back = new THREE.Mesh(new THREE.BoxGeometry(3, .08, 4), cover); back.position.y = .04; g.add(back);
+      const lidP = new THREE.Group(); lidP.position.set(-1.5, .58, 0); g.add(lidP);
+      const lid = new THREE.Mesh(new THREE.BoxGeometry(3, .08, 4), [cover, cover, new THREE.MeshStandardMaterial({ map: rwTex(300, 400, (c, w, h) => { c.fillStyle = '#' + new THREE.Color(col).getHexString(); c.fillRect(0, 0, w, h); c.strokeStyle = 'rgba(255,220,140,.8)'; c.lineWidth = 6; c.strokeRect(18, 18, w - 36, h - 36); c.fillStyle = '#FFE6A8'; c.textAlign = 'center'; c.font = `800 46px ${DISPLAY}`; c.fillText(title, w / 2, h * .45); c.font = `600 22px "Instrument Sans", sans-serif`; c.fillText(sub, w / 2, h * .58); }), roughness: .7 }), cover, cover, cover]);
+      lid.position.x = 1.5; lidP.add(lid); g.userData.lid = lidP; return g;
+    }
+    function build(){
+      const sc = L.sc = new THREE.Scene(); sc.fog = new THREE.Fog(0xCFE4FA, 40, 140);
+      sc.background = rwTex(16, 256, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#5B9BE8'); gr.addColorStop(.6, '#BFDDF7'); gr.addColorStop(1, '#F7E9D2'); c.fillStyle = gr; c.fillRect(0, 0, w, h); });
+      sc.add(new THREE.HemisphereLight(0xFFFFFF, 0x9AB0D0, .85)); const sun = new THREE.DirectionalLight(0xFFF1DC, .75); sun.position.set(20, 40, 10); sc.add(sun);
+      L.cam = new THREE.PerspectiveCamera(70, 1, .1, 300);
+      const spineCols = [0x8E2E2A, 0x2E5E6A, 0x6A4A1A, 0x3A3A6A, 0x2E6A3A, 0x7A3FB0, 0xB98A2E];
+      const stack = (x, y, z, hw, hd, n) => { for (let i = 0; i < n; i++) { const m = new THREE.Mesh(new THREE.BoxGeometry(hw * 2 * (1 - i * .03), 1.1, hd * 2 * (1 - i * .02)), new THREE.MeshStandardMaterial({ color: spineCols[(i + Math.round(x)) % spineCols.length], roughness: .8 })); m.position.set(x + (i % 2 ? .15 : -.1), y - .55 - i * 1.12, z); m.rotation.y = (i % 3 - 1) * .04; sc.add(m); const pg = new THREE.Mesh(new THREE.BoxGeometry(hw * 2 * (1 - i * .03) - .1, .9, hd * 2 * (1 - i * .02) + .02), new THREE.MeshStandardMaterial({ color: 0xF1E8D4 })); pg.position.copy(m.position); pg.position.x += .1; pg.rotation.y = m.rotation.y; sc.add(pg); } };
+      L.isl.forEach(([x, y, z, hw, hd], i) => { const g = new THREE.Group(); g.userData.i = i; sc.add(g); stack(x, y, z, hw, hd, 6 + (i % 2) * 3); if (i === 1) L.base = g; });
+      for (let i = 0; i < 26; i++) { const a = i / 26 * Math.PI * 2, r = 50 + (i % 4) * 18; stack(Math.cos(a) * r, -6 + (i % 5) * 7, Math.sin(a) * r - 10, 3 + (i % 3), 2.5 + (i % 2), 4 + (i % 4)); }
+      // clouds
+      const cloudT = rwTex(128, 64, (c, w, h) => { [[40, 36, 26], [64, 28, 30], [88, 38, 24]].forEach(([x, y, r]) => { const gr = c.createRadialGradient(x, y, 2, x, y, r); gr.addColorStop(0, 'rgba(255,255,255,.95)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gr; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); }); });
+      L.clouds = []; for (let i = 0; i < 24; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: cloudT, transparent: true, depthWrite: false, opacity: .85 })); s.scale.set(26, 13, 1); s.position.set((Math.random() - .5) * 200, -14 + Math.random() * 40, (Math.random() - .5) * 200); sc.add(s); L.clouds.push(s); }
+      // the four books
+      L.books = [book(0x8E2E2A, '静夜思', 'Li Bai · a poem'), book(0x2E5E6A, 'The Paper', 'Fairness & Synthetic Data'), book(0x6A4A1A, 'Notebook', 'Rayan · ideas'), book(0x3A3A6A, 'The Index', 'of everything')];
+      [[0, 0, -2], [MC[0], 8.4, MC[1]], [22, 8.4, -28], [24, 15, 5]].forEach((p, i) => { const b = L.books[i]; b.position.set(p[0], p[1], p[2]); b.rotation.y = [0, Math.PI / 2, 0, 0][i]; sc.add(b); });
+      // the poem mountain: stepping stones, one character each, spiralling up
+      L.stones = POEM.map((ch, i) => { const a = -Math.PI / 2 + i * .62, r = 5.2 - i * .12; return { x: MC[0] + Math.cos(a) * r, z: MC[1] + 14 + Math.sin(a) * r - 14 * (i / POEM.length) * .0, y: .4 + i * .42, ch }; });
+      // put them on a spiral around the mountain centre
+      L.stones.forEach((s, i) => { const a = Math.PI / 2 + i * .55, r = 5.4 - i * .1; s.x = MC[0] + Math.cos(a) * r; s.z = MC[1] + Math.sin(a) * r; });
+      L.stoneG = new THREE.Group(); sc.add(L.stoneG);
+      L.stones.forEach(s => { const m = new THREE.Mesh(new THREE.CylinderGeometry(1.15, 1.3, .5, 18), [new THREE.MeshStandardMaterial({ color: 0x8A8F98, roughness: .9 }), new THREE.MeshStandardMaterial({ map: rwTex(128, 128, (c, w, h) => { c.fillStyle = '#C9CDD4'; c.fillRect(0, 0, w, h); c.fillStyle = '#2A2D35'; c.font = `700 80px ${ZH}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(s.ch[0], w / 2, h / 2 + 4); }), roughness: .9 }), new THREE.MeshStandardMaterial({ color: 0x6A6F78 })]); m.position.set(s.x, s.y - .25, s.z); L.stoneG.add(m); });
+      const mtn = new THREE.Mesh(new THREE.ConeGeometry(4.2, 9, 7), new THREE.MeshStandardMaterial({ color: 0x6E8A6A, roughness: 1, flatShading: true })); mtn.position.set(MC[0], 3.2, MC[1]); L.stoneG.add(mtn);
+      const peak = new THREE.Mesh(new THREE.CylinderGeometry(3, 3.4, .6, 20), new THREE.MeshStandardMaterial({ color: 0x8A8F98 })); peak.position.set(MC[0], 8.1, MC[1]); L.stoneG.add(peak); L.peak = { t: 'c', x: MC[0], z: MC[1], r: 3, y: 8.4 };
+      const moon = new THREE.Mesh(new THREE.CircleGeometry(4, 32), new THREE.MeshBasicMaterial({ color: 0xFFF6D8, fog: false })); moon.position.set(-30, 30, -60); moon.lookAt(0, 0, 0); L.stoneG.add(moon);
+      // the lab: machines, a bar chart of the scores, floating data
+      const lab = L.lab = new THREE.Group(); lab.position.set(22, 8.4, -30); sc.add(lab);
+      const floor = new THREE.Mesh(new THREE.BoxGeometry(12, .2, 10), new THREE.MeshStandardMaterial({ color: 0xE8ECF2, roughness: .5 })); floor.position.y = -.1; lab.add(floor);
+      L.machines = [['SMOTE', 0xE8742A, 'Oversamples by drawing lines between neighbours. Score kept: 0.536.'], ['CTGAN', 0xE4572E, 'A GAN for tables. Score kept: 0.399, the lowest I measured.'], ['TVAE', 0x7A3FB0, 'A variational autoencoder for tables. It distorted the relationships too.'], ['Gaussian Copula', 0x2B45E0, 'Models each column, then glues them with a copula. Also distorted them.']].map(([n, c, line], i) => {
+        const m = new THREE.Group(); m.position.set(-4.5 + i * 3, 0, -3.2); lab.add(m);
+        const body = new THREE.Mesh(new THREE.BoxGeometry(2, 1.8, 1.2), new THREE.MeshStandardMaterial({ color: c, roughness: .45, metalness: .2 })); body.position.y = .9; m.add(body);
+        const lab2 = new THREE.Mesh(new THREE.PlaneGeometry(1.8, .45), new THREE.MeshBasicMaterial({ map: rwTex(256, 64, (g, w, h) => { g.fillStyle = '#16181D'; g.fillRect(0, 0, w, h); g.fillStyle = '#fff'; g.font = `800 ${n.length > 8 ? 26 : 34}px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(n, w / 2, h / 2 + 2); }) })); lab2.position.set(0, 1.45, .61); m.add(lab2);
+        return { n, line, x: 22 - 4.5 + i * 3, z: -33.2 };
+      });
+      [[1, 0x2EB872, 'Real data 1.000'], [.536, 0xE8742A, 'SMOTE 0.536'], [.399, 0xE4572E, 'CTGAN 0.399']].forEach(([v, c, l], i) => { const b = new THREE.Mesh(new THREE.BoxGeometry(1.1, v * 4, 1.1), new THREE.MeshStandardMaterial({ color: c })); b.position.set(-4 + i * 1.6, v * 2, 2.4); lab.add(b); const t = new THREE.Mesh(new THREE.PlaneGeometry(1.5, .38), new THREE.MeshBasicMaterial({ transparent: true, map: rwTex(256, 64, (g, w, h) => { g.fillStyle = '#16181D'; g.font = `700 26px ${DISPLAY}`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(l, w / 2, h / 2); }) })); t.position.set(-4 + i * 1.6, v * 4 + .35, 2.4); lab.add(t); });
+      const sign = new THREE.Mesh(new THREE.PlaneGeometry(5, 1.4), new THREE.MeshBasicMaterial({ map: rwTex(512, 140, (g, w, h) => { g.fillStyle = '#16181D'; g.fillRect(0, 0, w, h); g.fillStyle = '#FFC93C'; g.font = `800 40px ${DISPLAY}`; g.fillText('Dependency Preservation', 24, 58); g.fillStyle = '#fff'; g.font = `500 24px "Instrument Sans", sans-serif`; g.fillText('higher = kept more of the real relationships', 24, 104); }) })); sign.position.set(-1.6, 3.4, 3.6); sign.rotation.y = Math.PI; lab.add(sign);
+      L.cubes = []; for (let i = 0; i < 18; i++) { const cb = new THREE.Mesh(new THREE.BoxGeometry(.35, .35, .35), new THREE.MeshStandardMaterial({ color: [0x2B45E0, 0xFFC93C, 0x2EB872][i % 3] })); cb.position.set(2 + (i % 6) * .55, 1.5 + Math.floor(i / 6) * .55, 1.5); lab.add(cb); L.cubes.push(cb); }
+      L.labG = lab; L.mtnG = L.stoneG;
+      // the Index's island: a reading desk with a lamp
+      const desk = new THREE.Mesh(new THREE.BoxGeometry(2.4, .9, 1.2), new THREE.MeshStandardMaterial({ color: 0x5A3A24 })); desk.position.set(26, 15.45, 3); sc.add(desk);
+      const lp = new THREE.PointLight(0xFFD08A, 1.2, 12, 2); lp.position.set(26, 17.6, 3); sc.add(lp);
+      L.pages = new THREE.Group(); sc.add(L.pages);
+    }
+    // a bridge of open pages, laid between two points
+    function bridge(a, b, w, animate){
+      const n = Math.max(4, Math.round(Math.hypot(b[0] - a[0], b[2] - a[2]) / 1.15)), pageM = new THREE.MeshStandardMaterial({ color: 0xF6EEDC, roughness: .95, side: THREE.DoubleSide }), lineM = new THREE.MeshBasicMaterial({ color: 0x9AA1AD });
+      const out = [];
+      for (let i = 0; i < n; i++) { const t = (i + .5) / n, p = new THREE.Group(); const x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t, z = a[2] + (b[2] - a[2]) * t;
+        const pg = new THREE.Mesh(new THREE.PlaneGeometry(w, 1.25), pageM); pg.rotation.x = -Math.PI / 2; p.add(pg); for (let k = 0; k < 4; k++) { const ln = new THREE.Mesh(new THREE.PlaneGeometry(w * .8, .03), lineM); ln.rotation.x = -Math.PI / 2; ln.position.set(0, .005, -.4 + k * .25); p.add(ln); }
+        p.position.set(x, y - .02, z); p.rotation.y = Math.atan2(b[0] - a[0], b[2] - a[2]); const slope = Math.atan2(b[1] - a[1], Math.hypot(b[0] - a[0], b[2] - a[2])); p.rotation.x = -slope; p.rotation.order = 'YXZ'; p.rotation.z = (i % 2 ? .03 : -.03);
+        L.pages.add(p); out.push({ p, from: new THREE.Vector3(a[0], a[1] + 1, a[2]), to: p.position.clone(), d: i * .06 }); }
+      if (animate) out.forEach(q => { q.p.position.copy(q.from); q.p.scale.setScalar(.2); }); L.fly = (L.fly || []).concat(animate ? out.map(q => Object.assign(q, { t: 0 })) : []);
+    }
+    function openBook(i, animate){
+      L.s.open[i] = 1; rwSave(); const b = L.books[i]; b.userData.open = animate ? 0 : 1; b.userData.opening = animate;
+      if (i === 0) { bridge([0, 0, -3.6], [0, 0, -19.4], 2.4, animate); L.mtnG.visible = true; }
+      if (i === 1) bridge([MC[0] + 2, 8.4, MC[1]], [16.5, 8.4, -30], 2.4, animate);
+      if (i === 2) bridge([22, 8.4, -25.5], [24, 15, 2.5], 2.4, animate);
+      L.walk = walkRects();
+    }
+    function start(s){
+      L.s = s; s.open = s.open || [0, 0, 0, 0]; L.isl = ISL; L.fly = []; build(); L.walk = [];
+      L.mtnG.visible = !!s.open[0];
+      [0, 1, 2].forEach(i => { if (s.open[i]) openBook(i, false); }); L.walk = walkRects();
+      const cp = s.open[2] ? [22, 8.4, -27] : s.open[1] ? [MC[0], 8.4, MC[1] + 2] : [0, 0, 2.6];
+      L.cp = cp; L.o = { cam: L.cam, pos: new THREE.Vector3(cp[0], cp[1] + 1.6, cp[2]), yaw: 0, pitch: -.1, vy: 0, eye: 1.6, speed: 4.2, jumpV: 5.6, grav: 14, ground, onG: true };
+      rwMsg('The Sky Library. Every book here is a place. Walk up to the red book and open it (E, or the Open button).', 5200);
+    }
+    function nearBook(){ let best = -1, bd = 3.6; L.books.forEach((b, i) => { const d = Math.hypot(b.position.x - L.o.pos.x, b.position.z - L.o.pos.z); if (d < bd && Math.abs(b.position.y - (L.o.pos.y - 1.6)) < 2) { bd = d; best = i; } }); return best; }
+    function use(){
+      const i = nearBook();
+      if (i >= 0) { if (L.s.open[i] && i < 3) return rwMsg('Already open: its pages are the bridge.', 1600); if (i === 3) { tone(660, .4, 'sine', .05, 990); return setTimeout(() => rwFinish('library', 'The Index opens on a single entry: "you, page 1". A ribbon bookmark slides out and into your pocket.'), 600); }
+        if (i > 0 && !L.s.open[i - 1]) return; tone(330, .5, 'triangle', .05, 660); rwMsg(['The cover swings open. The pages lift out one by one and lay themselves across the sky: a path to a mountain made of a poem.', 'The paper opens. Its pages fold out into a walkway, and at the end of it, a lab.', 'The notebook flips open. Its pages climb up into the sky, towards the Index.'][i], 4600); return openBook(i, true); }
+      const m = L.machines.find(q => Math.hypot(q.x - L.o.pos.x, q.z - L.o.pos.z) < 2.6 && L.o.pos.y > 9);
+      if (m) return rwMsg(`${m.n}: ${m.line}`, 4200);
+      rwMsg('Nothing to open here. Books are the ones lying flat on top of the stacks.', 2000);
+    }
+    function step(dt, t){
+      rwFP(L.o, dt);
+      if (L.o.pos.y < -25) { tone(150, .3, 'sine', .04, 80); L.o.pos.set(L.cp[0], L.cp[1] + 1.7, L.cp[2]); L.o.vy = 0; rwMsg('You drift back up to the last shelf you stood on.', 2000); }
+      if (L.o.onG) { const f = L.o.pos.y - 1.6; if (f > 14) L.cp = [24, 15, 5.5]; else if (f > 8 && L.o.pos.x > 15) L.cp = [22, 8.4, -27]; else if (f > 8) L.cp = [MC[0], 8.4, MC[1] + 2]; }
+      // which character are you standing on?
+      const st = L.s.open[0] && L.stones.findIndex(s => Math.hypot(s.x - L.o.pos.x, s.z - L.o.pos.z) < 1.2 && Math.abs(s.y - (L.o.pos.y - 1.6)) < .3);
+      if (st != null && st >= 0 && st !== L.lastSt) { L.lastSt = st; const [c, py, m] = POEM[st]; tone(523 + st * 18, .2, 'sine', .04); rwMsg(`${c}  ${py}  ·  ${m}\n${LINES[Math.floor(st / 5)]}`, 2600); }
+      // pages flying into place, covers swinging open
+      (L.fly || []).forEach(q => { if (q.t >= 1) return; q.t = Math.min(1, q.t + dt * .9 - (q.d > 0 ? 0 : 0)); const e = Math.max(0, Math.min(1, (q.t * 1.6 - q.d))); q.p.position.lerpVectors(q.from, q.to, e * e * (3 - 2 * e)); q.p.position.y += Math.sin(e * Math.PI) * 2; q.p.scale.setScalar(.2 + .8 * e); });
+      L.books.forEach((b, i) => { if (L.s.open[i] && b.userData.lid) b.userData.lid.rotation.z = Math.min(Math.PI * .92, (b.userData.lid.rotation.z || 0) + dt * 2.2); });
+      L.clouds.forEach((c, i) => { c.position.x += dt * (.6 + (i % 3) * .3); if (c.position.x > 110) c.position.x = -110; });
+      L.cubes.forEach((c, i) => { c.rotation.x += dt; c.rotation.y += dt * .7; c.position.y = 1.5 + Math.floor(i / 6) * .55 + Math.sin(t * 2 + i) * .08; });
+      const nb = nearBook(); rwObj(!L.s.open[0] ? 'Open the red book' : !L.s.open[1] ? 'Climb the poem to the book at the top' : !L.s.open[2] ? 'Cross to the lab and open the notebook' : 'Climb to the Index and open it');
+      rwMeter(nb >= 0 && (!L.s.open[nb] || nb === 3) ? 'E / Open: open the book' : '');
+    }
+    function draw(w, h){ rwCam(L.cam, w, h); RW.r3.render(L.sc, L.cam); }
+    function end(){ if (L.sc) L.sc.traverse(o => { if (o.geometry) o.geometry.dispose(); if (o.material) [].concat(o.material).forEach(m => { if (m.map) m.map.dispose(); m.dispose(); }); }); L.sc = null; }
+    return { name: 'Sky Library', dir: 'sky-library', icon: '📚', col: '#BFDDF7', three: true, blurb: 'Floating stacks of giant books in an open sky. Open one and its pages unfold into a bridge. A poem becomes a mountain path; my research paper becomes a lab.', help: 'WASD move, drag to look, Space jump, E or click to open a book, Esc exit', trophy: ['a-bookmark.txt', 'A red ribbon bookmark, stamped in gold:\n"SKY LIBRARY · overdue since forever"\n\nSouvenir from the Sky Library.'], buttons: [['jump', 'Jump'], ['open', 'Open']], start, step, draw, end, dbg: () => L,
+      press(k){ if (k === 'open') use(); }, key(k){ if (k === 'e' || k === 'enter') use(); }, click(){ if (nearBook() >= 0) use(); } };
   })();
 
   // ---------- the Trash: every file in it really opens ----------
