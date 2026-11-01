@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Rayan Upadhyay's personal site (rayanupadhyay.com), hosted on GitHub Pages (`CNAME`). The **entire site is one self-contained `index.html`** (~28k lines, ~4 MB): inline CSS, inline vanilla JS and Three.js **r128** from cdnjs (post-processing extras load lazily from `cdn.jsdelivr.net/npm/three@0.128.0/examples/js/`). There is no build step, no framework, no package.json and no test suite. Keep it that way: everything goes inside `index.html`, and Three.js stays on r128.
 
-The `*.rayanupadhyay.com` "little sites" (tools, study, wish, links, agribridge, swimming, research, elevator) live in **separate repos/Vercel projects**. This repo only links to them (Sites section, RayanOS, terminal `open` list, README).
+The `*.rayanupadhyay.com` "little sites" (tools, study, wish, links, agribridge, research) live in **separate repos/Vercel projects**. This repo only links to them (Sites section, RayanOS, terminal `open` list, README).
 
 ## Running and checking
 
