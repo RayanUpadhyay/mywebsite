@@ -35,6 +35,29 @@ Thirty years after the world of rayanupadhyay.com came apart, it's all ruins: th
 
 The world stays in ruins.
 
+## Part Two: Kiran
+
+### Setup
+
+The Courier dies destroying the reptilian mothership. Kiran survived Chapter 3, and he wakes up in Mumbai as a cyborg. He rebuilt himself from reptilian tech he scavenged from the mothership's wreckage. One of his eyes sees in static, and he can see seams of light across the sky.
+
+### The threat: the Wardens
+
+The Wardens are an older alien species who were here first. They sent the reptilians and they built the static. The reptilians were a cleanup crew working under a pact with them. By destroying the mothership, the Courier took away the Wardens' last reason to wait.
+
+### Chapters
+
+6. **Spare Parts:** Kiran learns his new body. A whole district disappears cleanly. It's the first sign of the Wardens.
+7. **The Pact:** at a reptilian crash site, Kiran finds out about the pact. His implants let him move among the last reptilians, who are in hiding.
+8. **Who Was Here First:** the twist. The bright Bangalore on rayanupadhyay.com was the Wardens' model of the world, built to study us. The ruins are that model being shut down. The cracks on the main site (the comic writing itself, the Clockmaker, "somebody is writing your ending") were the Wardens adjusting the experiment.
+9. **Last Frame:** the Wardens come down, for the first and only time. Kiran can't stop them. He watches the planet fall apart, and he dies with it. There's no ledger, no last message and no title card: it cuts to black.
+
+The world is destroyed for good. Nothing survives.
+
+### Before writing these chapters
+
+Check the Wardens idea against the aliens the main site already has ("the people who were here first", "The Hidden Species") in `STORY_PLAN.md` and `index.html`.
+
 ## Mechanics
 
 - **Scavenging** for ammo, food and medicine.
