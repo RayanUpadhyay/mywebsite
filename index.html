@@ -600,6 +600,9 @@ body.mkwon .toast{top:calc(160px + env(safe-area-inset-top,0px))}
 .rvhead img{width:72px;height:72px;border-radius:8px;object-fit:cover;flex:0 0 auto}
 .rvhead > div{flex:1;min-width:0}
 .score{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:40px;color:var(--accent);line-height:1}
+.rvhead .score{flex:0 0 auto;white-space:nowrap}
+@media (max-width:480px){.rvhead{gap:10px}.rvhead img{width:56px;height:56px}.rvhead .score{font-size:26px}}
+.rvhead h2,.rvhead h3{overflow-wrap:anywhere}
 .rvtext{margin-top:12px;color:var(--ink)!important;line-height:1.65}
 .photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
 .photos figure{margin:0}
@@ -1388,7 +1391,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ===== YOUR ALBUM REVIEWS =====
   // Add a review by copying the example below, removing the // at the start of each line, and filling it in.
   // Until there's at least one review, the Writing section says they're coming soon.
+  // Newest first. The cover is found automatically (from your vinyl, then Last.fm, then iTunes); to pick one yourself, add cover: 'https://…'.
   const REVIEWS = [
+    { album: 'AftërLyfe', artist: 'Yeat', score: '10/10', date: 'November 2026', text: "Afterlyfe is genuinely one of those albums I don't think I'll ever get tired of. There's something about the production that just clicks with me. The atmospheric beats, the synths, the vocal effects, everything comes together in a way that makes the album feel like an entirely different world. It's the kind of music I can just get lost in.\n\nTracks like No morë, Bettr off, Shmunk, and Nun id change are genuinely some of my favorite Yeat songs. I love how he experiments with his sound while still making everything feel cohesive. The album has this futuristic, almost alien vibe that I haven't really found anywhere else.\n\nEvery time I come back to Afterlyfe, I remember why I love Yeat's music so much. No skips, no complaints. Just an incredible listening experience from start to finish.\n\nEasy 10/10." },
     // { album: 'Flower Boy', artist: 'Tyler, The Creator', score: '9.0', date: 'September 2026', text: 'Your review goes here. You can write as much as you like.' },
   ];
   // ===== YOUR PHOTOS =====
@@ -1418,14 +1423,18 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     }).join('');
   }
   renderVinyls();
-  const norm = t => String(t).toLowerCase().replace(/[^a-z0-9$]/g, '');
+  // fold accents first, so AftërLyfe matches Afterlyfe
+  const norm = t => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9$]/g, '');
   function reviewFor(vi){ return REVIEWS.findIndex(r => norm(r.album) === norm(VINYLS[vi][0])); }
   function coverFor(album){ const i = VINYLS.findIndex(v => norm(v[0]) === norm(album)); return i >= 0 ? covers[i] : null; }
+  // a review's cover: its own cover field, else the matching vinyl, else whatever Last.fm/iTunes found for it
+  const rvCovers = {};
+  const reviewCover = (r, i) => r.cover || coverFor(r.album) || rvCovers[i] || null;
   function renderReviews(){
     // with no reviews yet the section stays up and says they're coming soon
     $('#reviewList').innerHTML = !REVIEWS.length ? '<div class="card"><span class="pill">Coming soon</span><h3 class="display">Reviews on the way</h3><p>My album reviews will show up here soon.</p></div>' : REVIEWS.map((r, i) => {
-      const img = coverFor(r.album);
-      return `<div class="card rv"><div class="rvhead">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : ''}<div><p class="meta">${esc(r.date || '')}</p><h3 class="display">${esc(r.album)}</h3><p>${esc(r.artist)}</p></div><span class="score">${esc(r.score || '')}</span></div><p class="rvtext">${esc(r.text).replace(/\n/g, '<br>')}</p></div>`;
+      const img = reviewCover(r, i);
+      return `<div class="card rv"><div class="rvhead">${img ? `<img src="${esc(img)}" alt="${esc(r.album)} by ${esc(r.artist)}" loading="lazy">` : ''}<div><p class="meta">${esc(r.date || '')}</p><h3 class="display">${esc(r.album)}</h3><p>${esc(r.artist)}</p></div><span class="score">${esc(r.score || '')}</span></div><p class="rvtext">${esc(r.text).replace(/\n/g, '<br>')}</p></div>`;
     }).join('');
   }
   function renderPhotos(){
@@ -1603,8 +1612,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   $('#close').onclick = closePanel;
   panelBody.addEventListener('click', e => { const b = e.target.closest('[data-open]'); if (b) openPanel(b.dataset.open); });
   function openReview(i){
-    const r = REVIEWS[i], img = coverFor(r.album);
-    panelBody.innerHTML = `<div class="sec"><p class="meta">Album review${r.date ? ' \u00B7 ' + esc(r.date) : ''}</p><div class="rvhead">${img ? `<img src="${esc(img)}" alt="" loading="lazy">` : ''}<div><h2 class="display">${esc(r.album)}</h2><p>${esc(r.artist)}</p></div><span class="score">${esc(r.score || '')}</span></div><p class="rvtext">${esc(r.text).replace(/\n/g, '<br>')}</p><button class="open" type="button" data-open="writing">All my reviews</button></div>`;
+    const r = REVIEWS[i], img = reviewCover(r, i);
+    panelBody.innerHTML = `<div class="sec"><p class="meta">Album review${r.date ? ' \u00B7 ' + esc(r.date) : ''}</p><div class="rvhead">${img ? `<img src="${esc(img)}" alt="${esc(r.album)} by ${esc(r.artist)}" loading="lazy">` : ''}<div><h2 class="display">${esc(r.album)}</h2><p>${esc(r.artist)}</p></div><span class="score">${esc(r.score || '')}</span></div><p class="rvtext">${esc(r.text).replace(/\n/g, '<br>')}</p><button class="open" type="button" data-open="writing">All my reviews</button></div>`;
     panel.scrollTop = 0; panel.classList.add('on');
   }
 
@@ -1615,7 +1624,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const LFM_BLANK = '2a96cbd8b46e442fc41c2b86b821562f';
   const lfmImg = arr => { const im = (arr || []).map(x => x && x['#text']).filter(u => u && !u.includes(LFM_BLANK)); return im.length ? im[im.length - 1] : ''; };
   // when Last.fm has nothing, ask the iTunes store for the album art instead
-  const squash = t => String(t).toLowerCase().replace(/[^a-z0-9]/g, '');
+  const squash = t => String(t).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
   async function itunesArt(title, artist){
     try { const j = await fetch(`https://itunes.apple.com/search?entity=album&limit=8&term=${encodeURIComponent(artist + ' ' + title)}`).then(r => r.json()), rs = j.results || [];
       const hit = rs.find(x => squash(x.collectionName).startsWith(squash(title).slice(0, 5)) && squash(x.artistName).includes(squash(artist).slice(0, 4))) || rs.find(x => squash(x.collectionName).includes(squash(title).slice(0, 5)));
@@ -1693,6 +1702,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     } catch (e) {}
     // anything Last.fm couldn't find (or if it's down), try iTunes
     await Promise.all(VINYLS.map(async ([t, a], i) => { if (!covers[i]) { const u = await itunesArt(t, a); if (u) covers[i] = u; } }));
+    // reviews of albums that aren't on the vinyl shelf: Last.fm, then iTunes
+    await Promise.all(REVIEWS.map(async (r, i) => { if (r.cover || coverFor(r.album)) return;
+      try { const j = await fetch(`${base}&method=album.getinfo&autocorrect=1&artist=${encodeURIComponent(r.artist)}&album=${encodeURIComponent(r.album)}`).then(x => x.json()); const img = j.album && lfmImg(j.album.image); if (img) rvCovers[i] = img; } catch (e) {}
+      if (!rvCovers[i]) { const u = await itunesArt(r.album, r.artist); if (u) rvCovers[i] = u; } }));
     renderVinyls(); renderReviews();
     applyCovers && applyCovers();
   })();
