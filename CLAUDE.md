@@ -28,6 +28,23 @@ node --check /tmp/chk.js
 
 For behaviour checks, drive the page headlessly with Playwright/Chromium. Click `#simpleBtn` for the simple view; the 3D room needs WebGL (`--use-gl=swiftshader`). Check phone width (390px) as well as desktop, plus light and dark themes.
 
+- Cloud sandboxes usually can't reach Last.fm, iTunes or the Mandalink API. Stub them with `page.route()` (fake JSON and a tiny PNG) to test covers, charts and the board.
+- Without WebGL the page logs `Cannot access 'ac' before initialization`. That error is pre-existing, so don't chase it unless your change touches it.
+- Start the server in the background and stop it by PID. `pkill -f http.server` also matches, and kills, the shell running it.
+
+Merging to `main` publishes the site (GitHub Pages, live within a minute or two). Work goes on a branch, then a PR into `main`.
+
+## Editing content
+
+Rayan's editable data sits near the top of the main script, under `// ===== YOUR … =====` banner comments (search for `// ---------- content data ----------`):
+
+- `VINYLS`: `[title, artist]` pairs. Covers come from Last.fm, then iTunes, at runtime, and they drive the vinyl section, the shelf and the crate in the room.
+- `REVIEWS`: `{ album, artist, score, date, text, cover? }`, newest first, with `\n` for line breaks. A review's cover comes from `cover`, then the matching vinyl, then a Last.fm/iTunes lookup (`reviewCover`). Title matching folds accents, so `AftërLyfe` matches `Afterlyfe`. When `REVIEWS` is empty, the Writing section shows "Coming soon".
+- `PHOTOS`, plus `PAPER_DOI` and `QUOTES` for the "At a glance" sheet. Leave these empty to keep their sections hidden.
+- `news.json` holds the news pill (see External data below).
+
+Use Rayan's own words for reviews and other writing; fix only what breaks the page (e.g. quoting).
+
 ## Architecture (the big picture)
 
 - **Two views over the same content.** `#simple` (the "Simple version") holds the real content as `<section class="sec" data-s="KEY">` blocks (about, research, projects, sites, music, vinyl, writing, news, highlights, contact, vault, plus `only-panel` ones like swim and photos). Those sections are the **single source of truth**:
@@ -40,7 +57,7 @@ For behaviour checks, drive the page headlessly with Playwright/Chromium. Click 
 - **Persistence.** Everything is in `localStorage` under `ru-*` keys. Every storage access is wrapped in `try/catch`; keep that pattern.
 - **External data.** Several features load data from outside the page:
   - Last.fm charts and album covers (filled into `#lfmAlbums` and friends inside the music section);
-  - the Mandalink announcements board (`anRender`);
+  - the Mandalink announcements board (`anRender`), from the read-only API at `mychineseapp.onrender.com`. It's a free Render server, so the first load can take a while as it wakes up;
   - `news.json`, the news pill, which Mandalink also reads (give each new message a new `id`; it hides after `until`);
   - the private chat (`chatOpen`, `/#chat`): AES-GCM in the browser, ciphertext stored in Supabase; see `CHAT_SETUP.md`.
 
@@ -48,7 +65,7 @@ For behaviour checks, drive the page headlessly with Playwright/Chromium. Click 
 
 - **The Mandalink code is frozen.** Don't modify these three regions unless explicitly asked:
   - `function radTile(` … `function toHub(){`;
-  - the block from the `猴王闹海岛: the Mandalink story` banner comment to `// ---------- input ----------`;
+  - the block from the `猴王闹海岛: the Mandalink story` banner comment to the **first** `// ---------- input ----------` after it (that marker appears twice in the file);
   - `function enterWorld(){` … `function exitWorld(){`.
   To verify, compare those slices against `git show 4d3c6d1:index.html`.
 - Never put the chat password in the repo or site, and never use the Supabase `service_role` key; only the public anon key belongs in the page.
