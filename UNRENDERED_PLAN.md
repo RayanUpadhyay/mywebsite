@@ -9,44 +9,44 @@ Status: **plan only.** Nothing is built yet.
 
 ## Tone
 
-A bleak, grief-heavy Wild West apocalypse. The tone is influenced by *Logan*, but the characters and plot are original.
+A bleak, post-apocalyptic Wild West. The story is a man struggling to survive in the ruins of a world players already know.
 
-At its heart is a broken man learning, too late, how to be a father.
+The world stays in ruins forever. Nothing grows back, nothing gets fixed, and there's no healing ending.
 
 ## Setting
 
-Thirty years after the universe from rayanupadhyay.com started unloading into wireframe and static.
+Thirty years after the world of rayanupadhyay.com came apart, it's all ruins: the site's own map, wrecked. Ruined Bangalore, a gutted Meridian General, the Mandalink islands sunk, the ruins of Mumbai, the old Space Centre, and the bedroom buried somewhere out in the static.
 
 ## Characters
 
-- **The Courier:** an old man. He carries a cracked Lantern that burns his own memories as fuel. He has already lost his wife's face.
-- **Wren:** about ten years old and silent. She renders the world just by walking through it.
-- **Deacon Hale and the Static Choir**
-- **The Hollows**
-- **The Cartographer**
+- **The Courier:** an old drifter with a revolver and not much else. His wife died in the collapse. He dies in the final chapter.
+- **Deacon Hale and the Static Choir:** a cult that worships the static and hunts the Courier.
+- **The Hollows:** people the static has emptied out.
+- **Kiran:** old now, running a settlement in the ruins of Mumbai on rules and a ledger. He's an uneasy ally for the Courier.
+- **The reptilians:** they come down to strip what's left of the world, from a mothership above it.
 
 ## Chapters
 
-1. **Last Frame**
-2. **The Salt Line**
-3. **The Cartographer:** the reveal that Wren was made from memories the Lantern burned, including the Courier's memories of his wife.
-4. **The Dry River:** Wren's first word.
-5. **The Seam:** the final stand. The Courier dies, and Wren plants the Lantern on his grave.
+1. **Last Frame:** survival in ruined Bangalore: scavenging, hiding from the Hollows, getting through each night.
+2. **The Salt Line:** the Courier crosses the dead land between cities while Deacon Hale and the Static Choir hunt him. He takes a wound that never heals.
+3. **Kiran:** the Courier reaches Kiran's settlement in the ruins of Mumbai, and Kiran appears to die there.
+4. **The Sky Opens:** the ruin isn't natural. Reptilians come down to strip what's left of the world.
+5. **The Seam:** the Courier fights his way to the old Space Centre and takes a ship up. In the battle in space he rams the reptilian mothership and destroys it. The reptilians die with it, and so does the Courier.
+
+The world stays in ruins.
 
 ## Mechanics
 
-- **The Lantern costs memories.** Using it loses skills and cutscenes you've already seen.
+- **Scavenging** for ammo, food and medicine.
 - **Standoff duels.** The timing windows shrink as the Courier gets hurt.
-- **Wren grows.** She starts out hiding, then learns to render cover, then bridges, and finally lost memories.
 - **Wounds carry across chapters.**
-- **The final sequence strips the game away.** The HUD and the Courier's abilities are removed one by one.
+- **The final sequence strips the game away.** The HUD and abilities are removed one by one.
+- **Still to decide:** how the space battle plays.
 
 ## Nods to the original site
 
-Keep these small. Unrendered has to stand on its own.
-
-- Wren hums the lo-fi tune from the room's speakers.
-- The Courier's last memory is a bedroom with a record crate.
+- The ruined rayanupadhyay.com map is the setting itself.
+- A bedroom with a record crate, buried in the static.
 - "The Broker's bargain."
 - A stopped clock showing the Clockmaker's time.
 - Dust bunnies are the only animals left.
