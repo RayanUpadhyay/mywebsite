@@ -72,3 +72,4 @@ Use Rayan's own words for reviews and other writing; fix only what breaks the pa
 - Content must be factual: don't invent achievements, dates, numbers or credits for Rayan, and don't credit mentors or teachers.
 - Phones must work: no horizontal scroll at 390px, touch controls intact, safe-area insets respected.
 - `STORY_PLAN.md` and `MANDALINK_STORY_PLAN.md` are the design docs for story mode. `IDEAS.md` is an unpromised backlog; don't build from it unless asked.
+- `UNRENDERED_PLAN.md` is the design doc for unrendered.rayanupadhyay.com (a separate site, not part of `index.html`).
