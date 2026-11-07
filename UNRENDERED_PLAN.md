@@ -1,9 +1,9 @@
 # Unrendered: design doc
 
-Status: **plan only.** Nothing is built yet.
+Status: **built.** All nine chapters are playable. The game is one `index.html` for its own repo (see Where the code goes).
 
 - **Site:** `unrendered.rayanupadhyay.com`.
-- **Where the code goes:** a separate repo and Vercel project, like the other little sites. This repo only holds this design doc for now. Unrendered is not part of `index.html`.
+- **Where the code goes:** a separate repo and Vercel project, like the other little sites. This repo only holds this design doc. Unrendered is not part of `index.html`.
 
 ---
 
@@ -54,9 +54,13 @@ The Wardens are an older alien species who were here first. They sent the reptil
 
 The world is destroyed for good. Nothing survives.
 
-### Before writing these chapters
+### How the Wardens fit the main site
 
-Check the Wardens idea against the aliens the main site already has ("the people who were here first", "The Hidden Species") in `STORY_PLAN.md` and `index.html`.
+Checked against `index.html`:
+
+- **The Wardens are the main site's Hidden Species:** the ones who "wrote the Pact" and are "still writing". Their ink scene says "we wrote them all and we are writing now".
+- **They aren't the friendly aliens:** the Dustwalker, Lumin and Driftkin ("the people who were here first") play no part in Unrendered.
+- **The reptilians are the main site's Council of Scales.** In Unrendered they turn out to be a cleanup crew, not rulers. The elder says so in Chapter 7.
 
 ## Mechanics
 
@@ -64,7 +68,9 @@ Check the Wardens idea against the aliens the main site already has ("the people
 - **Standoff duels.** The timing windows shrink as the Courier gets hurt.
 - **Wounds carry across chapters.**
 - **The final sequence strips the game away.** The HUD and abilities are removed one by one.
-- **Still to decide:** how the space battle plays.
+- **The space battle (Chapter 5):** first person in the ship. You steer with the look controls and shoot fighters down. When a fighter locks on (a red light and a click), you roll to dodge, the same rule as ducking. After eight kills the mothership turns towards you. Your guns go dead, and the ship drifts onto the seam on its own while the HUD is taken away piece by piece.
+- **Kiran (Part Two):** an arm cannon that recharges (Charge) instead of rounds. A static eye (V / Eye) shows the seams and things hidden from the normal eye. He's faster and jumps higher, and he doesn't eat.
+- **The ending (Chapter 9):** everything is stripped one by one: the map, inventory, health, clock, arm, crosshair, sound and words. Then the ground goes and the screen cuts to black, with no card. Only a small ↺ appears after a while, to get back to the start.
 
 ## Nods to the original site
 
@@ -76,5 +82,5 @@ Check the Wardens idea against the aliens the main site already has ("the people
 
 ## Scope
 
-- 2D/2.5D, not full 3D.
-- The first playable slice is Chapter 1, *Last Frame*.
+- First-person 3D (Three.js r128), built on the ruined rayanupadhyay.com map.
+- All nine chapters are playable and can be picked from **Chapters** on the title screen.
