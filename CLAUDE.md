@@ -74,3 +74,4 @@ Use Rayan's own words for reviews and other writing; fix only what breaks the pa
 - `STORY_PLAN.md` and `MANDALINK_STORY_PLAN.md` are the design docs for story mode. `IDEAS.md` is an unpromised backlog; don't build from it unless asked.
 - `UNRENDERED_PLAN.md` is the design doc for unrendered.rayanupadhyay.com (a separate site, not part of `index.html`). It covers both parts: the Courier's five chapters and Kiran's four.
 - `HANGAR_ZERO_PLAN.md` is the design doc for hangarzero.rayanupadhyay.com (a separate site, not part of `index.html`): a fighting game set the morning after Book Nine's ending, where Halcyon drags Mandalink island out of the sky.
+- `SALTWATER_PLAN.md` is the design doc for saltwater.rayanupadhyay.com (a separate site, not part of `index.html`): a flood survival game on the drowned rayanupadhyay.com map, built one chapter a day.
