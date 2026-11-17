@@ -11085,7 +11085,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (close && now > HEAT.siren) { HEAT.siren = now + 900; tone(760, .4, 'sine', .015, 980); setTimeout(() => tone(980, .4, 'sine', .015, 760), 450); }
   }
   // ---------- day and night, and festival nights ----------
-  const festNow = () => { try { if (diwaliNow()) return true; } catch (e) {} const d = new Date(), h = cityHour(); return (d.getDay() === 5 || d.getDay() === 6) && h >= 18 && h < 23.5; };
+  const festNow = () => { const d = new Date(), h = cityHour(); return (d.getDay() === 5 || d.getDay() === 6) && h >= 18 && h < 23.5; };
   const nightNow = () => { const h = cityHour(); return h >= 19 || h < 5; };
   const FW = { list: [], t: .4, told: false };
   function fwStep(dt){
@@ -15836,7 +15836,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   arcBtn.addEventListener('click', e => { e.stopPropagation(); if (ARC.near) ARC.near[1](); });
   addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'e' && ARC.near) ARC.near[1](); });
 
-  // ======================= little things: the Bugle, voicemail, achievements, night, Diwali, pets =======================
+  // ======================= little things: the Bugle, voicemail, achievements, night, pets =======================
   const deedsHeadlines = () => {
     const n = BOSSES.filter(d => beaten.has(d.id)).length, H = [];
     if (n) H.push(`LOCAL TEEN LOCKS UP ${n} SUPERVILLAIN${n > 1 ? 'S' : ''} IN BASEMENT`);
@@ -15908,7 +15908,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     ['pet', 'Good boy', 'Got a pet.', () => petK !== 'none'],
     ['convergence', 'Everything, everywhere, all at once', 'Survived Convergence.', () => cvWon],
     ['galactus', 'Devourer of the Devourer', 'Beat Galactus.', () => galBeaten],
-    ['diwali', 'Festival of lights', 'Visited during Diwali.', () => diwaliOn]
+    ['diwali', 'Festival of lights', 'Visited during Diwali.', () => false, 'retired']
   ];
   let achGot = []; try { achGot = JSON.parse(localStorage.getItem('ru-ach') || '[]'); } catch (e) {}
   let achT = 0, achFirst = true;
@@ -15921,20 +15921,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   const achShown = () => ACH.filter(a => !a[4] || achGot.includes(a[0]));
   const achMenu = () => `<h3>Achievements (${achGot.filter(k => achShown().some(a => a[0] === k)).length}/${achShown().length})</h3><div class="achlist">${achShown().map(a => `<div class="${achGot.includes(a[0]) ? 'got' : ''}"><b>${achGot.includes(a[0]) ? esc(a[1]) : '???'}</b><small>${esc(a[2])}</small></div>`).join('')}</div>`;
-  // Diwali: lamps along the walls and a rangoli on the floor (mid-October to mid-November, Bangalore time)
-  let diwaliOn = false, diwaliG = null;
-  const diwaliNow = () => { const p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', month: 'numeric', day: 'numeric' }).formatToParts(new Date()), m = +p.find(q => q.type === 'month').value, d = +p.find(q => q.type === 'day').value; return m === 10 && d >= 12 || m === 11 && d <= 18; };
-  function buildDiwali(){
-    if (diwaliG) return; diwaliOn = true; const g = diwaliG = new THREE.Group(); scene.add(g); const cols = [0xFFC93C, 0xFF8A2E, 0xFF5AA0, 0x7CF2C0];
-    // a string of fairy lights along the top of the walls
-    for (let i = 0; i < 64; i++) { const s = i / 64 * 4, side = Math.floor(s), f = s - side, x = side === 0 ? -4.9 + f * 9.8 : side === 1 ? 4.9 : side === 2 ? 4.9 - f * 9.8 : -4.9, z = side === 0 ? -4.9 : side === 1 ? -4.9 + f * 9.8 : side === 2 ? 4.9 : 4.9 - f * 9.8; const b = sph(.035, glowM(cols[i % 4], { emissiveIntensity: 1.6 }), x, 2.95 - Math.sin(f * Math.PI * 4) * .08, z, g); b.userData.ph = i; }
-    // diyas by the window and the door
-    [[-4.3, 1.6], [-4.3, 2.2], [3.6, 4.3], [4.2, 4.3], [0, -4.4]].forEach(([x, z]) => { const d = new THREE.Group(); d.position.set(x, 0, z); g.add(d); cyl(.09, .06, .05, mat(0xB5562E), 0, .025, 0, d, 12); const fl = new THREE.Mesh(new THREE.ConeGeometry(.025, .07, 8), glowM(0xFFB02E, { emissiveIntensity: 2 })); fl.position.y = .09; d.add(fl); const l = new THREE.PointLight(0xFFA040, .35, 2.2, 2); l.position.y = .15; d.add(l); });
-    // a rangoli on the floor
-    const rg = new THREE.Mesh(new THREE.CircleGeometry(.8, 48), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, map: tex(512, 512, (c, w, h) => { const cx = w / 2, cy = h / 2; ['#FF5AA0', '#FFC93C', '#3C9CFF', '#FF8A2E', '#7CF2C0'].forEach((col, k) => { c.fillStyle = col; const n = 8 + k * 4, R = 230 - k * 44; for (let i = 0; i < n; i++) { const a = i / n * Math.PI * 2; c.beginPath(); c.ellipse(cx + Math.cos(a) * R * .7, cy + Math.sin(a) * R * .7, R * .26, R * .12, a, 0, 7); c.fill(); } }); c.fillStyle = '#FFFFFF'; c.beginPath(); c.arc(cx, cy, 30, 0, 7); c.fill(); }) }));
-    rg.rotation.x = -Math.PI / 2; rg.position.set(1.4, .012, 1.4); g.add(rg);
-    g.traverse(o => o.userData.noPick = true);
-  }
   // pets: a friend that follows you everywhere and nips at whatever you're fighting
   const PETS = { none: { name: 'No pet' }, krypto: { name: 'Krypto the Superdog' }, goose: { name: 'Goose the Flerken' }, lockjaw: { name: 'Lockjaw' } };
   let petK = 'none'; try { petK = PETS[localStorage.getItem('ru-pet')] ? localStorage.getItem('ru-pet') : 'none'; } catch (e) {}
@@ -15988,10 +15974,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     { const cv = newTL() ? false : SG.mvEnd ? 'blank' : SG.gold; if (comicG && comicG.userData.gold !== cv) { comicG.userData.gold = cv; comicG.userData.cover.material.map = comicTex(cv); comicG.userData.cover.material.needsUpdate = true; } }
     if (lairScene && !wallMap) buildWallMap();
     if (galBeaten && roofScene && !roofHelm) buildGalTrophy();
-    if (diwaliG && !reduce) diwaliG.children.forEach(o => { if (o.userData.ph !== undefined) o.material.emissiveIntensity = 1 + Math.sin(now / 300 + o.userData.ph) * .6; });
     if (now < achT) return; achT = now + 2000;
     ACH.forEach(a => { if (!achGot.includes(a[0]) && a[3]()) ach(a[0]); }); shopAuto(); achFirst = false; refreshWallMap(); podTint(); ultronFaces(SG.active && chId() === 'ultron' && !SG.flags.u3 && !normalView);
-    if (entered && !nightChecked) { nightChecked = true; if (phaseNow() === 'night' && !night && !inWorld) { flipLights(); say('It’s night in Bangalore, so the lights are low. The villains in the lair get bolder after dark.', 4600); } if (diwaliNow()) { buildDiwali(); setTimeout(() => say('Happy Diwali! The room is lit up for the festival.', 4000), 5000); } }
+    if (entered && !nightChecked) { nightChecked = true; if (phaseNow() === 'night' && !night && !inWorld) { flipLights(); say('It’s night in Bangalore, so the lights are low. The villains in the lair get bolder after dark.', 4600); } }
   }
 
   // ---------- bot brains ----------
