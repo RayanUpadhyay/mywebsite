@@ -576,7 +576,7 @@ This time, it isn't yours.
 - **Decided so far:** you arrive with your gear, and the rift jumper and meteor core come with you.
 - **Decided since:** the new world is Kaleido, a neon mega-city. It replaces Bangalore and the bedroom for every visitor, for good, and Bangalore doesn't come back (see Phase 2 below).
 
-# Phase 2 · Kaleido (Seasons 9–15)
+# Phase 2 · Kaleido (Seasons 9–15, Phase 2 · Chapters 1–7)
 
 Phase 1 (Seasons 1–8) happened in Bangalore, and ended with Prime winning and your Bangalore destroyed. Phase 2 happens in **Kaleido**, a neon mega-city in another universe, where the Keeper's last act threw you. You arrive with everything you'd earned (weapons, tools, vehicles and skins), plus the meteor core and the rift jumper. The big thread of Phase 2: Prime has swallowed a hundred worlds, Kaleido is the next on the list, and this time you have to be ready.
 
@@ -594,7 +594,7 @@ Phase 1 (Seasons 1–8) happened in Bangalore, and ended with Prime winning and 
   - Season 15 (Convergence): you kill Prime early, in week two, and the Collector of Worlds takes over as the final villain.
 - **The build:** Kaleido is a new world built from scratch in `index.html`, the biggest build in the series. The new bedroom is a second big piece of work. Both need to be ready by Season 9 (30 June 2027).
 
-## Phase 2 · Season 9 · Neon Nights (30 June – 27 July 2027)
+## Phase 2 · Chapter 1 (Season 9) · Neon Nights (30 June – 27 July 2027)
 
 ### Story
 You wake up in the rain at the bottom of a city that goes up for ever. It's built in layers:
@@ -665,10 +665,10 @@ Every sign is in a language you can't read. Every door scans you, and you have n
 - **Type:** glitching neon signage that flickers between the alien script and English as the trailer goes on.
 - **Score:** synthwave and drum and bass, with a pulsing bassline, sky-train rumble and rain, and a vocoded voice saying the city's name.
 
-## Seasons 10–14 (to be re-planned for Kaleido)
+## Phase 2 · Chapters 2–6 (Seasons 10–14, to be re-planned for Kaleido)
 The original list (The Rift, Skyline, Harvest, The Drought, Festival of Lights) was written for Bangalore, and needs re-planning around Kaleido. Prime recurs through all of them, getting closer each season.
 
-## Phase 2 · Season 15 · Convergence (15 December 2027 – 11 January 2028)
+## Phase 2 · Chapter 7 (Season 15) · Convergence (15 December 2027 – 11 January 2028)
 
 ### The surprise
 Phase 2 has built up to one fight: you against {N} Prime. Season 15 gives it to players early, and then pulls the floor out.
@@ -686,9 +686,9 @@ Phase 2 has built up to one fight: you against {N} Prime. Season 15 gives it to 
 
 **Skins:** Multiverse Traveller (story), Collector's Armour (villain), and The Keeper for owning every skin (unchanged from the original list).
 
-# Phase 3 · Shifting Bangalore (Season 16 onwards)
+# Phase 3 · Shifting Bangalore (from Season 16, Phase 3 · Chapter 1)
 
-## Season 16 · Warped (12 January – 8 February 2028)
+## Phase 3 · Chapter 1 (Season 16) · Warped (12 January – 8 February 2028)
 
 ### How it starts
 - At the end of Season 15, your final choice is to use the meteor core one last time: go back to the night it all began, and push the meteor off course so it never hits.
@@ -726,11 +726,13 @@ Phase 2 has built up to one fight: you against {N} Prime. Season 15 gives it to 
   - some remember you, and some never met you.
 - **A stability meter** for the whole city, shown on the phone: it drops each week as the shifts get faster and wilder, until the finale at the reactor.
 
+### The villain: the reactor, awake (decided)
+- The reactor at the Kaveri facility takes in the meteor core's power and **becomes sentient**.
+- It's the one thing that exists in every reality at once. Shifting the city between realities is how it's learning: it pulls in each new version of Bangalore to study it, and keeps the pieces it likes.
+- The more it learns, the more it wants to keep, and Bangalore's own reality is the next one on its list to be filed away.
+- It speaks through anything electrical in every reality: a radio in the medieval fort, a hologram in the future, a buzzing street lamp in the ruins. Its voice changes to fit each one.
+
 ### Still to plan
-- **The villain:** someone or something born from the break in space-time. Some options:
-  1. **The Director** of the facility, who walked out of the blast able to choose realities, and wants to keep the one where she rules;
-  2. **the reactor itself**, waking up with a mind of its own and collecting realities;
-  3. **your own Season 15 choice**, made into a person: a version of you from one of the realities, who wanted the Collector's ending.
 - Chapters, bosses (one per reality would suit it), skins, the map trace and the trailer.
 - **The build:**
   - the season engine counts 15 seasons and loops (`seasonInfo`, `SEASON_NAMES`, `SEASON_FILES`), so Phase 3 means letting it go past 15;
