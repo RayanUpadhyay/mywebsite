@@ -54,6 +54,7 @@ The whole site is a single self-contained **`index.html`** (apart from one small
 | `CNAME` | Custom domain for GitHub Pages |
 | `CHAT_SETUP.md` | How to set up the private chat |
 | `CLAUDE.md` | Notes on how the code fits together |
+| `SEASON_PLANS.md` | Plans for seasons that aren't built yet |
 
 ## Running locally
 
