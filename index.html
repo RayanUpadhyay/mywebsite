@@ -5471,6 +5471,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const skyTex = new THREE.CanvasTexture(skyCanvas); skyTex.encoding = THREE.sRGBEncoding;
   const istHour = () => { const p = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: 'numeric', hour12: false }).formatToParts(new Date()); const h = +p.find(x => x.type === 'hour').value % 24, m = +p.find(x => x.type === 'minute').value; return h + m / 60; };
   const istClock = () => new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Kolkata', hour: 'numeric', minute: '2-digit' }).format(new Date());
+  // winter: 1 December to 6 January on the visitor's own calendar (add ?winter to the address to preview it), and New Year's Eve
+  const winterNow = () => { try { if (/[?&]winter\b/.test(location.search)) return true; } catch (e) {} const d = new Date(), m = d.getMonth(); return m === 11 || m === 0 && d.getDate() <= 6; };
+  const nyeNow = () => { try { if (/[?&]nye\b/.test(location.search)) return true; } catch (e) {} const d = new Date(), m = d.getMonth(), day = d.getDate(), h = d.getHours(); return m === 11 && day === 31 && h >= 18 || m === 0 && day === 1 && h < 2; };
   function drawSky(){
     const g = skyCanvas.getContext('2d'), w = 480, h = 560, t = istHour();
     const phase = t < 5 || t >= 19.5 ? 'night' : t < 7 ? 'dawn' : t < 17 ? 'day' : 'dusk';
@@ -5484,7 +5487,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       g.fillStyle = phase === 'day' ? '#FFF4C2' : '#FFC06A'; g.beginPath(); g.arc(sx, sy, 34, 0, 7); g.fill();
       if (phase === 'day') { g.fillStyle = 'rgba(255,255,255,.85)'; [[90, 170], [300, 110], [380, 230]].forEach(([x, y]) => { g.beginPath(); g.ellipse(x, y, 60, 18, 0, 0, 7); g.ellipse(x + 30, y - 10, 40, 16, 0, 0, 7); g.fill(); }); }
     }
-    g.fillStyle = phase === 'day' ? '#4F7A55' : phase === 'night' ? '#0A0E1C' : '#2A2440';
+    const snowy = winterNow(); g.fillStyle = snowy ? (phase === 'day' ? '#EEF3F8' : phase === 'night' ? '#2A3350' : '#B9B4D2') : phase === 'day' ? '#4F7A55' : phase === 'night' ? '#0A0E1C' : '#2A2440';
     g.beginPath(); g.moveTo(0, h); g.lineTo(0, 440); for (let x = 0; x <= w; x += 40) g.lineTo(x, 430 + Math.sin(x / 55) * 22 + (x % 80 ? 8 : -6)); g.lineTo(w, h); g.fill();
     if (phase === 'night' || phase === 'dusk') { g.fillStyle = 'rgba(255,214,120,.9)'; for (let i = 0; i < 26; i++) g.fillRect(Math.random() * w, 470 + Math.random() * 80, 3, 3); }
     skyTex.needsUpdate = true;
@@ -11085,12 +11088,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (close && now > HEAT.siren) { HEAT.siren = now + 900; tone(760, .4, 'sine', .015, 980); setTimeout(() => tone(980, .4, 'sine', .015, 760), 450); }
   }
   // ---------- day and night, and festival nights ----------
-  const festNow = () => { const d = new Date(), h = cityHour(); return (d.getDay() === 5 || d.getDay() === 6) && h >= 18 && h < 23.5; };
+  const festNow = () => { if (nyeNow()) return true; const d = new Date(), h = cityHour(); return (d.getDay() === 5 || d.getDay() === 6) && h >= 18 && h < 23.5; };
   const nightNow = () => { const h = cityHour(); return h >= 19 || h < 5; };
   const FW = { list: [], t: .4, told: false };
   function fwStep(dt){
     const on = festNow() && (inWorld && zone === 'blr' || cityLive()) && !EV && GFX.cur && GFX.cur.win > .4 && !lowFx;
-    if (on && !FW.told && inWorld && zone === 'blr') { FW.told = true; setTimeout(() => say('It’s a festival night: the streets are full and there are fireworks over the city.', 4200), 3000); }
+    if (on && !FW.told && inWorld && zone === 'blr') { FW.told = true; setTimeout(() => say(nyeNow() ? 'It’s New Year’s Eve: the streets are full and there are fireworks over the city.' : 'It’s a festival night: the streets are full and there are fireworks over the city.', 4200), 3000); }
     if (on && (FW.t -= dt) <= 0 && FW.list.length < 4) { FW.t = .8 + Math.random() * 1.6; const [mx, mz] = toMap(pos.x, pos.z), a = Math.atan2(-Math.cos(yaw), -Math.sin(yaw)) + (Math.random() - .5) * 1.4, r = 70 + Math.random() * 80, n = 110, P = new Float32Array(n * 3), V2 = [];
       for (let i = 0; i < n; i++) { const u = Math.random() * 2 - 1, th = Math.random() * 6.28, s = Math.sqrt(1 - u * u), sp = 18 + Math.random() * 5; V2.push([Math.cos(th) * s * sp, u * sp, Math.sin(th) * s * sp]); }
       const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); if (!FW.tex) FW.tex = tex(64, 64, (c2, w, h) => { const gr = c2.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.3, 'rgba(255,255,255,.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); c2.fillStyle = gr; c2.fillRect(0, 0, w, h); });
@@ -11200,7 +11203,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       DOORS.filter(d => d.type === 'stash').forEach(d => dot(d.front[0], d.front[1], JOB.sealed.has(d) ? '#8A8F99' : '#7A2A2A', 7, '#fff'));
       SBOSS.forEach(Bq => { dot(Bq.at[0], Bq.at[1], SBK[Bq.id] ? '#3CE870' : '#FF3C3C', 9, '#16181D'); lbl(Bq.at[0], Bq.at[1], Bq.name); });
       dot(HOUSE.door[0], HOUSE.door[1], '#FFC93C', 8, '#16181D'); lbl(HOUSE.door[0], HOUSE.door[1], 'Home');
-      HEAT.cops.forEach(v => dot(v.x, v.z, '#2A6AFF', 6, '#fff')); MET.st.forEach(S => { dot(S.x, S.z, '#1F9A4A', 8, '#fff'); lbl(S.x, S.z, S.name + ' Metro'); }); dot(SPC.x, SPC.z, '#E8501E', 10, '#fff'); lbl(SPC.x, SPC.z, 'Space Centre');
+      HEAT.cops.forEach(v => dot(v.x, v.z, '#2A6AFF', 6, '#fff')); MET.st.forEach(S => { dot(S.x, S.z, '#1F9A4A', 8, '#fff'); lbl(S.x, S.z, S.name + ' Metro'); }); dot(SPC.x, SPC.z, '#E8501E', 10, '#fff'); lbl(SPC.x, SPC.z, 'Space Centre'); try { winterPhMap(g, P, W); } catch (e) {}
       if (APT.stand) { const [px, py] = P(APT.stand[0], APT.stand[1]); g.fillStyle = '#FFC93C'; g.strokeStyle = '#16181D'; g.lineWidth = 3; g.beginPath(); g.arc(px, py - 16, 13, Math.PI * .8, Math.PI * .2); g.lineTo(px, py); g.closePath(); g.fill(); g.stroke(); g.fillStyle = '#16181D'; g.font = '900 14px system-ui'; g.textAlign = 'center'; g.fillText('✈', px, py - 11); g.font = '800 15px system-ui'; g.lineWidth = 4; g.strokeStyle = '#FFFFFF'; g.strokeText('Airport Taxis', px, py - 34); g.fillText('Airport Taxis', px, py - 34); }
       const rt = reTarget(); if (rt) dot(rt[0], rt[1], '#35C8F0', 9, '#fff'); if (PH.wp) dot(PH.wp[0], PH.wp[1], '#35C8F0', 10, '#16181D'); const jt = jobTarget(); if (jt) { dot(jt[0], jt[1], '#FFC93C', 11, '#16181D'); const [px, py] = P(jt[0], jt[1]); g.fillStyle = '#16181D'; g.font = '900 14px system-ui'; g.textAlign = 'center'; g.fillText('!', px, py + 5); }
       if (zone === 'blr' && BL.sc) { const [px, py] = P(...toMap(pos.x, pos.z)), a = Math.atan2(-Math.sin(yaw), -Math.cos(yaw)); g.save(); g.translate(px, py); g.rotate(a + Math.PI / 2); g.fillStyle = '#FFC93C'; g.strokeStyle = '#16181D'; g.lineWidth = 3; g.beginPath(); g.moveTo(14, 0); g.lineTo(-9, -9); g.lineTo(-4, 0); g.lineTo(-9, 9); g.closePath(); g.fill(); g.stroke(); g.restore(); } };
@@ -15908,7 +15911,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     ['pet', 'Good boy', 'Got a pet.', () => petK !== 'none'],
     ['convergence', 'Everything, everywhere, all at once', 'Survived Convergence.', () => cvWon],
     ['galactus', 'Devourer of the Devourer', 'Beat Galactus.', () => galBeaten],
-    ['diwali', 'Festival of lights', 'Visited during Diwali.', () => false, 'retired']
+    ['diwali', 'Festival of lights', 'Visited during Diwali.', () => false, 'retired'],
+    ['winter', 'Snow day', 'Visited in winter.', () => !!(WNT && WNT.room), 'winter'],
+    ['snowmen', 'Snowman spotter', 'Found all eight snowmen hiding in Bangalore.', () => !!WNT && WNT.found.length >= 8, 'winter'],
+    ['flakes', 'Flake catcher', 'Caught 40 snowflakes in one round.', () => !!WNT && WNT.best >= 40, 'winter']
   ];
   let achGot = []; try { achGot = JSON.parse(localStorage.getItem('ru-ach') || '[]'); } catch (e) {}
   let achT = 0, achFirst = true;
@@ -15919,7 +15925,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     achEl.innerHTML = `<small>Achievement unlocked · ${achGot.length}/${ACH.length}</small><b>${esc(a[1])}</b><span>${esc(a[2])}</span>`; achEl.classList.remove('on'); void achEl.offsetWidth; achEl.classList.add('on');
     [659, 880, 1175].forEach((f, i) => setTimeout(() => tone(f, .18, 'triangle', .045), i * 90)); clearTimeout(ach.t); ach.t = setTimeout(() => achEl.classList.remove('on'), 4200);
   }
-  const achShown = () => ACH.filter(a => !a[4] || achGot.includes(a[0]));
+  const achShown = () => ACH.filter(a => !a[4] || achGot.includes(a[0]) || a[4] === 'winter' && winterNow());
   const achMenu = () => `<h3>Achievements (${achGot.filter(k => achShown().some(a => a[0] === k)).length}/${achShown().length})</h3><div class="achlist">${achShown().map(a => `<div class="${achGot.includes(a[0]) ? 'got' : ''}"><b>${achGot.includes(a[0]) ? esc(a[1]) : '???'}</b><small>${esc(a[2])}</small></div>`).join('')}</div>`;
   // pets: a friend that follows you everywhere and nips at whatever you're fighting
   const PETS = { none: { name: 'No pet' }, krypto: { name: 'Krypto the Superdog' }, goose: { name: 'Goose the Flerken' }, lockjaw: { name: 'Lockjaw' } };
@@ -15953,10 +15959,298 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       else if (EV && !EV.over && EV.dead <= 0) { const foe = EV.units.filter(u => u.team !== EV.team && u.dead <= 0 && u.hero !== 'anchor' && Math.hypot(u.x - pos.x, u.z - pos.z) < 7)[0]; if (foe) { hitUnit(foe, petK === 'lockjaw' ? 30 : 18, EV.me); if (petK === 'lockjaw' && Math.random() < .3) { pet.x = foe.x + .8; pet.z = foe.z; } } } }
   }
   const petMenu = () => `<h3>Pet</h3><div class="lkrow">${Object.entries(PETS).map(([k, p]) => `<button type="button" class="tbtn" data-pet="${k}" aria-pressed="${petK === k}">${p.name}</button>`).join('')}</div>`;
+  // ======================= winter: snow, lights, a tree, and a fair in Cubbon Park (1 December to 6 January) =======================
+  // Everything here builds itself on the first frame of the season and never outside it, so nothing needs deleting in January.
+  // The room gets snow past the window, fairy lights, a tree (its card has the activities and the New Year countdown), a snow
+  // globe to shake and a mug of cocoa. Bangalore gets falling snow, snowy pavements, rooftops and park, piles along the kerbs,
+  // a Winter Fair in Cubbon Park (a big tree, an ice rink, two stalls, a snowman to build) and eight snowmen hiding on the
+  // pavements. The phone map shows the fair and the snowmen you've found. Preview it any time with ?winter in the address.
+  var WNT = { room: null, city: null, found: [], best: 0, built: 0, t: 0, act: null, skate: null, globe: 0, told: false, cg: null };
+  try { const o = JSON.parse(localStorage.getItem('ru-winter') || '{}'); WNT.found = Array.isArray(o.found) ? o.found.filter(n => n >= 0 && n < 8) : []; WNT.best = +o.best || 0; WNT.built = Math.min(4, +o.built || 0); } catch (e) {}
+  const wSave = () => { try { localStorage.setItem('ru-winter', JSON.stringify({ found: WNT.found, best: WNT.best, built: WNT.built })); } catch (e) {} };
+  const flakeTex = () => WNT.ftex || (WNT.ftex = tex(32, 32, (c, w, h) => { const gr = c.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(.5, 'rgba(255,255,255,.75)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gr; c.fillRect(0, 0, w, h); }));
+  // a cloud of flakes in a box [x0, x1, y0, y1, z0, z1]; snowFall lets them drift down and puts them back at the top
+  function snowCloud(n, b, size, parent){
+    const P = new Float32Array(n * 3), S = []; for (let i = 0; i < n; i++) { P[i * 3] = b[0] + Math.random() * (b[1] - b[0]); P[i * 3 + 1] = b[2] + Math.random() * (b[3] - b[2]); P[i * 3 + 2] = b[4] + Math.random() * (b[5] - b[4]); S.push(.6 + Math.random() * .8, Math.random() * 6.28); }
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3));
+    const pts = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xFFFFFF, map: flakeTex(), size, transparent: true, depthWrite: false, opacity: .95 }));
+    pts.frustumCulled = false; pts.userData.noPick = true; parent.add(pts); return { pts, P, S, b, n };
+  }
+  function snowFall(c, dt, speed, t){
+    const { P, S, b } = c; for (let i = 0; i < c.n; i++) { const k = i * 3; P[k + 1] -= dt * speed * S[i * 2]; P[k + 2] += Math.sin(t * .9 + S[i * 2 + 1]) * dt * speed * .25;
+      if (P[k + 1] < b[2] || P[k + 2] < b[4] - .05 || P[k + 2] > b[5] + .05) { P[k + 1] = b[3]; P[k] = b[0] + Math.random() * (b[1] - b[0]); P[k + 2] = b[4] + Math.random() * (b[5] - b[4]); } }
+    c.pts.geometry.attributes.position.needsUpdate = true;
+  }
+  // ---------- the room ----------
+  function buildWinterRoom(){
+    if (WNT.room) return; const g = WNT.room = new THREE.Group(); scene.add(g);
+    // fairy lights along the top of the walls
+    const cols = [0xFFE2A0, 0x9FD8FF, 0xFF5A5A, 0x6CE89A]; WNT.bulbs = [];
+    for (let i = 0; i < 72; i++) { const s = i / 72 * 4, side = Math.floor(s), f = s - side, x = side === 0 ? -4.9 + f * 9.8 : side === 1 ? 4.9 : side === 2 ? 4.9 - f * 9.8 : -4.9, z = side === 0 ? -4.9 : side === 1 ? -4.9 + f * 9.8 : side === 2 ? 4.9 : 4.9 - f * 9.8; const b = sph(.032, glowM(cols[i % 4], { emissiveIntensity: 1.4 }), x, 2.98 - Math.sin(f * Math.PI * 4.5) * .08, z, g, 1, 1, 1, 8); b.castShadow = false; b.userData.ph = i; WNT.bulbs.push(b); }
+    // snow falling past the window, and snow on the ledge outside
+    WNT.win = snowCloud(lowFx ? 70 : 140, [5.04, 5.26, .95, 2.75, 2.05, 3.75], .055, g);
+    box(.16, .06, 1.46, mat(0xF6F9FC, { roughness: 1 }), 5.1, 1.12, 2.9, g);
+    // a little tree between the bookshelf and the window, with presents
+    const tr = new THREE.Group(); tr.position.set(4.25, 0, 1.7); tr.userData.egg = 'wtree'; g.add(tr);
+    cyl(.2, .16, .26, mat(0xB0302A, { roughness: .6 }), 0, .13, 0, tr, 16); cyl(.05, .05, .2, mat(0x5A3A22), 0, .34, 0, tr, 8);
+    const green = mat(0x2D6B40, { roughness: .9 }), layers = [[.48, .55, .66], [.39, .5, .98], [.29, .44, 1.27], [.17, .36, 1.52]], orn = [0xE8423A, 0xFFC93C, 0x3C7CFF, 0xF4F1E8, 0xC04AE0];
+    layers.forEach(([r, h, y], L) => { const c = new THREE.Mesh(new THREE.ConeGeometry(r, h, 14), green); c.position.y = y; c.castShadow = true; tr.add(c);
+      const n = 7 - L; for (let i = 0; i < n; i++) { const a = i / n * 6.28 + L, rr = r * (1 - .12 / h); sph(.03, mat(orn[(i + L) % 5], { roughness: .25, metalness: .4 }), Math.cos(a) * rr, y - h / 2 + .12, Math.sin(a) * rr, tr, 1, 1, 1, 10); } });
+    for (let i = 0; i < 26; i++) { const u = i / 26, L = layers[Math.min(3, Math.floor(u * 4))], k = u * 4 - Math.floor(u * 4), y = L[2] - L[1] / 2 + L[1] * (.15 + k * .6), rr = L[0] * (1 - (.15 + k * .6)) + .01, a = i * 2.4; const b = sph(.018, glowM(cols[i % 4], { emissiveIntensity: 1.6 }), Math.cos(a) * rr, y, Math.sin(a) * rr, tr, 1, 1, 1, 6); b.castShadow = false; b.userData.ph = i * 3; WNT.bulbs.push(b); }
+    const sh = new THREE.Shape(); for (let i = 0; i <= 10; i++) { const a = i / 10 * Math.PI * 2 + Math.PI / 2, r = i % 2 ? .04 : .095; i ? sh.lineTo(Math.cos(a) * r, Math.sin(a) * r) : sh.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+    const sg = new THREE.ExtrudeGeometry(sh, { depth: .02, bevelEnabled: false }); sg.translate(0, 0, -.01);
+    const star = WNT.star = new THREE.Mesh(sg, glowM(0xFFD54A, { emissiveIntensity: 1.5 })); star.position.y = 1.78; tr.add(star);
+    [[-.3, .2, .2, 0xE8423A, 0xFFC93C], [-.3, -.22, .16, 0x3C7CFF, 0xF4F1E8], [-.05, -.38, .13, 0x3CB371, 0xE8423A]].forEach(([x, z, s, c1, c2]) => { box(s, s * .8, s, mat(c1, { roughness: .5 }), x, s * .4, z, tr); box(s + .005, s * .8 + .005, .025, mat(c2), x, s * .4, z, tr); box(.025, s * .8 + .005, s + .005, mat(c2), x, s * .4, z, tr); });
+    LABELS.wtree = 'The winter tree'; addMarker(V(4.25, 2.05, 1.7), 0x7C8CFF, { egg: 'wtree' }); views.wtree = { pos: V(2.5, 1.45, 1.7), look: V(4.25, 1.0, 1.7) };
+    // a snow globe on the desk
+    const gl = WNT.globeG = new THREE.Group(); gl.position.set(-2.14, .795, -3.99); gl.userData.egg = 'wglobe'; g.add(gl);
+    cyl(.055, .065, .045, mat(0x5A3A22, { roughness: .5 }), 0, .022, 0, gl, 16); cyl(.045, .045, .008, mat(0xFFFFFF, { roughness: 1 }), 0, .05, 0, gl, 16);
+    const mini = new THREE.Mesh(new THREE.ConeGeometry(.016, .045, 8), mat(0x2D6B40)); mini.position.set(-.014, .075, 0); gl.add(mini); box(.022, .02, .02, mat(0xE8423A), .018, .064, .006, gl);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(.06, 20, 14), new THREE.MeshStandardMaterial({ color: 0xDDEEFF, transparent: true, opacity: .25, roughness: .05, metalness: .1, depthWrite: false })); dome.position.y = .1; gl.add(dome);
+    WNT.gflakes = snowCloud(26, [-.03, .03, .056, .14, -.03, .03], .007, gl);
+    LABELS.wglobe = 'Shake the snow globe';
+    WNT.inSnow = snowCloud(lowFx ? 220 : 450, [-4.8, 4.8, .05, 3.1, -4.8, 4.8], .07, g); WNT.inSnow.pts.visible = false;
+    // hot cocoa on the windowsill
+    const mug = new THREE.Group(); mug.position.set(4.88, 1.11, 2.42); mug.userData.egg = 'wcocoa'; g.add(mug);
+    const red = mat(0xE8423A, { roughness: .5 }); cyl(.034, .03, .08, red, 0, .04, 0, mug, 16); cyl(.03, .03, .004, mat(0x5A3220), 0, .078, 0, mug, 16);
+    [[.01, .006], [-.012, -.004], [.002, -.014]].forEach(([x, z]) => box(.012, .01, .012, mat(0xFFFFFF), x, .082, z, mug));
+    const hd = new THREE.Mesh(new THREE.TorusGeometry(.02, .006, 6, 12, Math.PI), red); hd.rotation.z = Math.PI / 2; hd.position.set(-.034, .042, 0); mug.add(hd);
+    WNT.steam = [0, 1, 2].map(i => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: flakeTex(), transparent: true, opacity: 0, depthWrite: false })); s.scale.setScalar(.04); s.userData = { p: i / 3, noPick: true }; mug.add(s); return s; });
+    LABELS.wcocoa = 'A mug of hot cocoa';
+    g.traverse(o => { if (!o.userData.egg && !(o.parent && (o.parent.userData.egg || o.parent === tr || o.parent === gl || o.parent === mug))) o.userData.noPick = true; });
+  }
+  function shakeGlobe(){
+    WNT.globe = 10; WNT.inSnow.pts.visible = true; tone(1568, .4, 'sine', .03); setTimeout(() => tone(2093, .5, 'sine', .02), 120);
+    say('You shake the snow globe… and it starts snowing in the room.', 3400);
+  }
+  function sipCocoa(){
+    tone(330, .25, 'sine', .03); WNT.sips = (WNT.sips || 0) + 1;
+    say(['Hot cocoa with marshmallows. Still warm.', 'You take a sip. Perfect.', 'Cocoa, snow out the window and nowhere to be.'][(WNT.sips - 1) % 3], 3000);
+  }
+  function wCountdown(){
+    const d = new Date(); if (d.getMonth() === 0) { const n = d.getDate(); return `Happy New Year! ${d.getFullYear()} is ${n} day${n > 1 ? 's' : ''} old.`; }
+    const y = d.getFullYear() + 1, ms = new Date(y, 0, 1) - d, D = Math.floor(ms / 864e5), H = Math.floor(ms / 36e5) % 24, M = Math.floor(ms / 6e4) % 60;
+    return `${D} day${D === 1 ? '' : 's'}, ${H} hour${H === 1 ? '' : 's'} and ${M} minute${M === 1 ? '' : 's'} until ${y}.`;
+  }
+  function treeCard(){
+    const n = WNT.found.length;
+    panelBody.innerHTML = `<div class="sec"><h2 class="display">Winter in the room</h2><p class="sub">${esc(wCountdown())}</p>
+      <div class="card"><h3 class="display">Catch the snow</h3><p>Thirty seconds to catch as many snowflakes as you can. Gold ones are worth five.${WNT.best ? ` Your best is ${WNT.best}.` : ''}</p><button class="open" type="button" data-w="catch">Play</button></div>
+      <div class="card"><h3 class="display">The snow globe</h3><p>It’s on the desk, next to the papers. Give it a shake.</p></div>
+      <div class="card"><h3 class="display">Winter Fair in Cubbon Park</h3><p>It’s snowing in Bangalore, somehow. Skate a lap of the ice rink, build a snowman and visit the stalls. Eight more snowmen are hiding on pavements around the city${n ? `, and you’ve found ${n}` : ''}.</p><button class="open" type="button" data-w="fair">Go to the fair</button></div>
+      <div class="card"><h3 class="display">New Year’s Eve</h3><p>On the night of 31 December there are fireworks over the city.</p></div></div>`;
+    panel.scrollTop = 0; panel.classList.add('on');
+    panelBody.querySelector('[data-w="catch"]').onclick = () => { closePanel(); catchGame(); };
+    panelBody.querySelector('[data-w="fair"]').onclick = () => { closePanel(); goFair(); };
+  }
+  function goFair(){
+    if (EV || A) return; const cx = (PARK_B[0] + PARK_B[1]) / 2, cz = (PARK_B[2] + PARK_B[3]) / 2;
+    travel('roof'); setTimeout(() => enterBlr([cx, cz + 20, 0]), 60);
+  }
+  function winterEgg(k){
+    if (k === 'wtree') return flyTo(views.wtree.pos.clone(), views.wtree.look, treeCard);
+    if (k === 'wglobe') return shakeGlobe();
+    if (k === 'wcocoa') return sipCocoa();
+  }
+  // ---------- Catch the snow: a 30-second mini-game on top of the page ----------
+  const wCss = document.createElement('style'); wCss.textContent = '.wcatch{position:fixed;inset:0;z-index:58;background:linear-gradient(#0E1A33,#2B4372);touch-action:none;user-select:none;-webkit-user-select:none}.wcatch canvas{position:absolute;inset:0;width:100%;height:100%;cursor:none}.wcatch .wch{position:absolute;left:0;right:0;top:0;display:flex;gap:14px;align-items:center;justify-content:space-between;padding:calc(14px + env(safe-area-inset-top,0px)) 16px 0;color:#fff;font:700 15px/1.2 system-ui,sans-serif}.wcatch .wch b{font-size:18px}.wcatch .wch span{background:rgba(255,255,255,.14);border-radius:999px;padding:6px 12px;white-space:nowrap}.wcatch .wtip{position:absolute;left:16px;right:16px;bottom:calc(18px + env(safe-area-inset-bottom,0px));margin:0;text-align:center;color:#2B4372;font:600 13px/1.4 system-ui,sans-serif}.wcatch .wend{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:min(320px,calc(100% - 32px));background:#fff;color:#16181D;border-radius:18px;padding:22px;text-align:center;font:500 15px/1.4 system-ui,sans-serif}.wcatch .wend b{display:block;font:800 40px/1.1 system-ui,sans-serif;margin:6px 0}.wcatch .wend .btn{margin:12px 4px 0}@media (max-width:440px){.wcatch .wch b{display:none}}';
+  document.head.appendChild(wCss);
+  function catchGame(){
+    if (WNT.cg) return; const ov = document.createElement('div'); ov.className = 'wcatch'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-label', 'Catch the snow');
+    ov.innerHTML = `<canvas></canvas><div class="wch"><b>Catch the snow</b><span class="wsc">0 caught</span><span class="wtm">30s</span><button type="button" class="btn alt wx">Close</button></div><p class="wtip">${fine ? 'Move the mouse, or use ← and →, to move the mitten.' : 'Drag anywhere to move the mitten.'} Gold flakes are worth five.</p>`;
+    document.body.appendChild(ov); const cv = ov.querySelector('canvas'), g = cv.getContext('2d'), dpr = Math.min(2, devicePixelRatio || 1);
+    const G = WNT.cg = { ov, flakes: [], pops: [], score: 0, left: 30, x: innerWidth / 2, keys: 0, spawn: 0, last: performance.now(), over: false, raf: 0 };
+    const size = () => { cv.width = innerWidth * dpr; cv.height = innerHeight * dpr; }; size(); addEventListener('resize', size);
+    const move = e => { G.x = e.clientX; }; cv.addEventListener('pointermove', move); cv.addEventListener('pointerdown', move);
+    const key = e => { const k = e.key; if (k === 'Escape') close(); else if (k === 'ArrowLeft' || k === 'a' || k === 'A') G.keys = -1; else if (k === 'ArrowRight' || k === 'd' || k === 'D') G.keys = 1; e.stopImmediatePropagation(); if (k.startsWith('Arrow') || k === ' ') e.preventDefault(); };
+    const keyUp = e => { if ((e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') && G.keys < 0 || (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') && G.keys > 0) G.keys = 0; e.stopImmediatePropagation(); };
+    addEventListener('keydown', key, true); addEventListener('keyup', keyUp, true);
+    function close(){ cancelAnimationFrame(G.raf); removeEventListener('resize', size); removeEventListener('keydown', key, true); removeEventListener('keyup', keyUp, true); ov.remove(); WNT.cg = null; }
+    ov.querySelector('.wx').onclick = close;
+    const flake = (x, y, r, gold, rot) => { g.save(); g.translate(x, y); g.rotate(rot); g.strokeStyle = gold ? '#FFD54A' : '#FFFFFF'; g.lineWidth = Math.max(1.5, r / 4); g.lineCap = 'round'; g.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2, cx = Math.cos(a), sx = Math.sin(a); g.moveTo(0, 0); g.lineTo(cx * r, sx * r); g.moveTo(cx * r * .55, sx * r * .55); g.lineTo(Math.cos(a + .5) * r * .8, Math.sin(a + .5) * r * .8); g.moveTo(cx * r * .55, sx * r * .55); g.lineTo(Math.cos(a - .5) * r * .8, Math.sin(a - .5) * r * .8); } g.stroke(); if (gold) { g.fillStyle = 'rgba(255,213,74,.35)'; g.beginPath(); g.arc(0, 0, r * 1.2, 0, 7); g.fill(); } g.restore(); };
+    function end(){
+      G.over = true; const best = G.score > WNT.best; if (best) { WNT.best = G.score; wSave(); }
+      const box = document.createElement('div'); box.className = 'wend'; box.innerHTML = `You caught<b>${G.score}</b>${best && G.score ? 'A new best!' : `Your best is ${WNT.best}.`}<br><button type="button" class="btn wagain">Play again</button><button type="button" class="btn alt wclose">Close</button>`; ov.appendChild(box);
+      box.querySelector('.wagain').onclick = () => { box.remove(); Object.assign(G, { flakes: [], pops: [], score: 0, left: 30, over: false, last: performance.now() }); ov.querySelector('.wsc').textContent = '0 caught'; loop(); };
+      box.querySelector('.wclose').onclick = close; [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, .16, 'triangle', .04), i * 90));
+    }
+    function loop(){
+      const now = performance.now(), dt = Math.min(.05, (now - G.last) / 1000); G.last = now; const W2 = innerWidth, H2 = innerHeight, my = H2 - 120;
+      if (!G.over) {
+        G.left -= dt; G.x = Math.max(30, Math.min(W2 - 30, G.x + G.keys * dt * 620));
+        if ((G.spawn -= dt) <= 0) { G.spawn = .42 - Math.min(.24, (30 - G.left) * .008); G.flakes.push({ x: 20 + Math.random() * (W2 - 40), y: -20, vy: 110 + Math.random() * 90 + (30 - G.left) * 4, ph: Math.random() * 6.28, r: 9 + Math.random() * 7, gold: Math.random() < .08, rot: Math.random() * 6 }); }
+        G.flakes.forEach(f => { f.y += f.vy * dt; f.x += Math.sin(now / 600 + f.ph) * 30 * dt; f.rot += dt;
+          if (!f.got && f.y > my - 26 && f.y < my + 16 && Math.abs(f.x - G.x) < 44) { f.got = true; const v = f.gold ? 5 : 1; G.score += v; G.pops.push({ x: f.x, y: my - 40, t: 0, v }); tone(f.gold ? 1320 : 880 + Math.random() * 200, .08, 'triangle', .03); ov.querySelector('.wsc').textContent = `${G.score} caught`; } });
+        G.flakes = G.flakes.filter(f => !f.got && f.y < H2 + 30);
+        ov.querySelector('.wtm').textContent = `${Math.max(0, Math.ceil(G.left))}s`; if (G.left <= 0) end();
+      }
+      g.setTransform(dpr, 0, 0, dpr, 0, 0); g.clearRect(0, 0, W2, H2);
+      g.fillStyle = 'rgba(255,255,255,.9)'; g.beginPath(); g.moveTo(0, H2); g.lineTo(0, H2 - 72); for (let x = 0; x <= W2; x += 40) g.lineTo(x, H2 - 72 - Math.sin(x / 90) * 8); g.lineTo(W2, H2); g.fill();
+      G.flakes.forEach(f => flake(f.x, f.y, f.r, f.gold, f.rot));
+      // the mitten
+      g.save(); g.translate(G.x, my); g.fillStyle = '#E8423A'; g.beginPath(); g.ellipse(0, -6, 34, 24, 0, 0, 7); g.fill(); g.beginPath(); g.ellipse(-30, -18, 10, 16, -.6, 0, 7); g.fill(); g.fillStyle = '#FFFFFF'; g.fillRect(-36, 12, 72, 14); g.fillStyle = 'rgba(255,255,255,.35)'; for (let i = -2; i <= 2; i++) { g.beginPath(); g.arc(i * 12, -8, 3, 0, 7); g.fill(); } g.restore();
+      G.pops = G.pops.filter(p => (p.t += dt) < .7); G.pops.forEach(p => { g.globalAlpha = 1 - p.t / .7; g.fillStyle = p.v > 1 ? '#FFD54A' : '#FFFFFF'; g.font = '800 20px system-ui'; g.textAlign = 'center'; g.fillText(`+${p.v}`, p.x, p.y - p.t * 40); g.globalAlpha = 1; });
+      if (!G.over) G.raf = requestAnimationFrame(loop);
+    }
+    loop();
+  }
+  // ---------- the city ----------
+  const RINK = [8, 6.5], SMAN = [-8, 6], XTREE = [-10.5, -4];
+  // [road runs along x?, road line, side of the road, distance along it]: one snowman on the pavement near each
+  const HUNT = [[0, -55, 1, 27.5], [1, 0, -1, 82.5], [1, 110, 1, -82.5], [1, -165, 1, -27.5], [0, -220, 1, 192.5], [1, 220, -1, 137.5], [0, 165, 1, 247.5], [0, 275, -1, 82.5]];
+  function huntSpot([dir, l, side, c]){
+    for (let k = 0; k < 14; k++) { const cc = c + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 6, o = l + side * 6.7, x = dir ? cc : o, z = dir ? o : cc;
+      if (!ROADS.some(r => Math.abs(cc - r) < 9) && !offMap(x, z) && !inTowerZone(x, z, 4) && !BL.boxes.some(b => x > b.x0 - .6 && x < b.x1 + .6 && z > b.z0 - .6 && z < b.z1 + .6)) return [x, z, dir ? (side > 0 ? Math.PI : 0) : (side > 0 ? -Math.PI / 2 : Math.PI / 2)]; }
+    return null;
+  }
+  // a snowman facing +z, as four meshes (base, middle, head, the rest) so the fair's one can be built a step at a time
+  function snowman(s, scarf, hat){
+    const g = new THREE.Group(), SN = 0xF4F7FA, coal = 0x1A1C20, wood = 0x5A3A22;
+    const parts = [
+      [S3(.55 * s, SN, 0, .45 * s, 0, 12)],
+      [S3(.4 * s, SN, 0, 1.1 * s, 0, 12), S3(.04 * s, coal, 0, 1.22 * s, .38 * s), S3(.04 * s, coal, 0, 1.02 * s, .39 * s)],
+      [S3(.28 * s, SN, 0, 1.62 * s, 0, 12)],
+      [S3(.035 * s, coal, -.1 * s, 1.69 * s, .25 * s), S3(.035 * s, coal, .1 * s, 1.69 * s, .25 * s), [new THREE.ConeGeometry(.045 * s, .26 * s, 8), 0xF07A1E, 0, 1.6 * s, .38 * s, Math.PI / 2, 0, 0],
+        C3(.3 * s, .1 * s, scarf, 0, 1.36 * s, 0, 12), B3(.1 * s, .4 * s, .05 * s, scarf, .18 * s, 1.2 * s, .3 * s, 0, .15, 0),
+        B3(.6 * s, .04 * s, .04 * s, wood, .62 * s, 1.18 * s, 0, 0, 0, .5), B3(.6 * s, .04 * s, .04 * s, wood, -.62 * s, 1.18 * s, 0, 0, 0, -.5),
+        ...(hat ? [C3(.21 * s, .04 * s, coal, 0, 1.86 * s, 0, 12), C3(.14 * s, .26 * s, coal, 0, 2.0 * s, 0, 12)] : [])]];
+    return { g, parts: parts.map(p => decor(p, g)) };
+  }
+  function buildWinterCity(){
+    const C = WNT.city = {}, [px0, px1, pz0, pz1] = PARK_B, cx = C.cx = (px0 + px1) / 2, cz = C.cz = (pz0 + pz1) / 2, SN = 0xF4F7FA;
+    const snowTex = (rep, base, dots) => { const t = tex(256, 256, (c, w, h) => { c.fillStyle = base; c.fillRect(0, 0, w, h); for (let i = 0; i < 2400; i++) { c.fillStyle = Math.random() < .5 ? 'rgba(255,255,255,.75)' : 'rgba(140,160,190,.16)'; c.fillRect(Math.random() * w, Math.random() * h, 3, 2); } if (dots) { c.strokeStyle = 'rgba(90,100,120,.10)'; c.lineWidth = 2; for (let i = 0; i <= 8; i++) { c.beginPath(); c.moveTo(i * 32, 0); c.lineTo(i * 32, h); c.stroke(); c.beginPath(); c.moveTo(0, i * 32); c.lineTo(w, i * 32); c.stroke(); } } }); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); return t; };
+    // snow on the paving (the roads stay clear), on the park's grass and on every roof
+    const ground = BL.mapG.children.find(o => o.isMesh && o.geometry.parameters && o.geometry.parameters.width === 900); if (ground) { ground.material.map = snowTex(225, '#E2E8EE', true); ground.material.needsUpdate = true; }
+    const grass = BLC.parkG.children.find(o => o.isMesh && o.geometry.parameters && o.geometry.parameters.width === 45); if (grass) { grass.material.map = snowTex(8, '#EDF1F5'); grass.material.needsUpdate = true; }
+    C.roofB = BL.bld.filter(b => b.im); if (C.roofB.length) { C.roofIM = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), mat(SN, { roughness: .95 }), C.roofB.length); C.roofIM.userData.noPick = true; C.roofIM.receiveShadow = true; C.roofB[0].im.parent.add(C.roofIM); roofSnow(); }
+    // piles of snow along the pavements
+    const P = [], gA = new THREE.SphereGeometry(1, 6, 4), n = lowFx ? 90 : 200; let tries = 0;
+    while (P.length < n * 2 && tries++ < n * 8) { const l = ROADS[Math.random() * ROADS.length | 0], dir = Math.random() < .5 ? 1 : 0, side = Math.random() < .5 ? -1 : 1, c = -365 + Math.random() * 730, o = l + side * 7.0, x = dir ? c : o, z = dir ? o : c;
+      if (ROADS.some(r => Math.abs(c - r) < 9) || offMap(x, z) || inTowerZone(x, z, 4) || inBoxR(x, z, PARK_B)) continue; const r = .35 + Math.random() * .4;
+      P.push([gA.clone().scale(r * 1.6, r * .5, r), SN, x, .02, z, 0, dir ? 0 : Math.PI / 2, 0], [gA.clone().scale(r, r * .4, r * .8), 0xFFFFFF, x + (dir ? r * .7 : 0), .05, z + (dir ? 0 : r * .7), 0, 0, 0]); }
+    C.piles = decor(P, BL.mapG); if (C.piles) C.piles.castShadow = false;
+    // the Winter Fair, in the park's own coordinates
+    const F = C.fair = new THREE.Group(); BLC.parkG.add(F); const Q = [];
+    // snow on the park's trees
+    [[-17, -17], [17, -17], [-17, 17], [17, 17], [-8, -19], [9, 19], [-20, 6], [20, -7], [6, -9], [-7, 9]].forEach(([x, z], i) => { const s = .9 + (i % 3) * .2; Q.push([new THREE.SphereGeometry(2.68 * s, 10, 4, 0, Math.PI * 2, 0, .95), SN, x, 4.6 * s, z]); });
+    // the big tree
+    const T = XTREE, layers = [[2.6, 3.0, 2.4], [2.1, 2.7, 4.0], [1.6, 2.4, 5.5], [1.05, 2.0, 6.8], [.55, 1.5, 7.9]], ORN = [0xE8423A, 0xFFC93C, 0x3C7CFF, 0xF4F1E8, 0xC04AE0], LC = [0xFFE2A0, 0x9FD8FF, 0xFF6A6A, 0x7CF2A0], LA = [], LB = [];
+    Q.push(C3(.45, 2.2, 0x4A3222, T[0], 1.1, T[1], 8));
+    layers.forEach(([r, h, y], L) => { Q.push([new THREE.ConeGeometry(r, h, 12), 0x24603A, T[0], y, T[1]]); const b0 = y - h / 2;
+      const m = 10 - L * 2; for (let i = 0; i < m; i++) { const a = i / m * 6.28 + L * .7, rr = r * (1 - .25 / h); Q.push(S3(.17, ORN[(i + L) % 5], T[0] + Math.cos(a) * rr, b0 + .25, T[1] + Math.sin(a) * rr, 8)); }
+      [.2, .48, .74].forEach((u, j) => { const hy = b0 + h * u, rr = r * (1 - u) + .06, k = Math.max(4, Math.round(rr * 6)); for (let i = 0; i < k; i++) { const a = i / k * 6.28 + j * .5 + L; ((i + j) % 2 ? LA : LB).push(S3(.075, LC[(i + j + L) % 4], T[0] + Math.cos(a) * rr, hy, T[1] + Math.sin(a) * rr, 5)); } }); });
+    [[1.9, .3, 0xE8423A], [1.7, 2.2, 0x3C7CFF], [2.0, 4.0, 0x3CB371], [1.8, 5.4, 0xC04AE0]].forEach(([d, a, c], i) => { const x = T[0] + Math.cos(a) * d, z = T[1] + Math.sin(a) * d, s = .45 + (i % 2) * .15; Q.push(B3(s, s * .8, s, c, x, s * .4, z, a), B3(s + .02, s * .8 + .02, .08, 0xFFC93C, x, s * .4, z, a), B3(.08, s * .8 + .02, s + .02, 0xFFC93C, x, s * .4, z, a)); });
+    blrBox(cx + T[0] - 1.6, cx + T[0] + 1.6, cz + T[1] - 1.6, cz + T[1] + 1.6);
+    // strings of lights from the bandstand roof to the four lamps
+    const wire = []; [[-10, -10], [10, -10], [10, 10], [-10, 10]].forEach(([x, z], s) => { let prev = null; for (let i = 0; i <= 20; i++) { const f = i / 20, p = [x * f, 5.3 + (3.6 - 5.3) * f - Math.sin(f * Math.PI) * .7, z * f]; if (prev) wire.push(...prev, ...p); prev = p; if (i > 1 && i < 20) ((i + s) % 2 ? LA : LB).push(S3(.07, LC[(i + s) % 4], p[0], p[1] - .06, p[2], 5)); } });
+    const wg = new THREE.BufferGeometry(); wg.setAttribute('position', new THREE.Float32BufferAttribute(wire, 3)); const wl = new THREE.LineSegments(wg, new THREE.LineBasicMaterial({ color: 0x2A2D33 })); wl.userData.noPick = true; F.add(wl);
+    const bm = new THREE.MeshBasicMaterial({ vertexColors: true, toneMapped: false }); C.lA = new THREE.Mesh(bake(LA), bm); C.lB = new THREE.Mesh(bake(LB), bm); [C.lA, C.lB].forEach(m => { m.userData.noPick = true; F.add(m); });
+    const sh = new THREE.Shape(); for (let i = 0; i <= 10; i++) { const a = i / 10 * Math.PI * 2 + Math.PI / 2, r = i % 2 ? .24 : .58; i ? sh.lineTo(Math.cos(a) * r, Math.sin(a) * r) : sh.moveTo(Math.cos(a) * r, Math.sin(a) * r); }
+    const sg = new THREE.ExtrudeGeometry(sh, { depth: .12, bevelEnabled: false }); sg.translate(0, 0, -.06); C.star = new THREE.Mesh(sg, new THREE.MeshBasicMaterial({ color: 0xFFD54A, toneMapped: false })); C.star.position.set(T[0], 9.15, T[1]); C.star.userData.noPick = true; F.add(C.star);
+    // the ice rink, with three skaters going round
+    const R = RINK; Q.push([new THREE.CylinderGeometry(3.9, 3.9, .12, 36), 0xDDE4EA, R[0], .06, R[1]]);
+    for (let i = 0; i < 30; i++) { const a = i / 30 * Math.PI * 2; if (Math.abs(a - Math.PI) < .2) continue; Q.push(B3(.78, .42, .08, i % 2 ? 0xE8423A : 0xF4F1E8, R[0] + Math.cos(a) * 3.78, .33, R[1] + Math.sin(a) * 3.78, Math.PI / 2 - a)); }
+    const ice = new THREE.Mesh(new THREE.CircleGeometry(3.7, 40), new THREE.MeshStandardMaterial({ color: 0xC4E2F2, roughness: .06, metalness: .35 })); ice.rotation.x = -Math.PI / 2; ice.position.set(R[0], .125, R[1]); ice.receiveShadow = true; ice.userData.noPick = true; F.add(ice);
+    Q.push(B3(.08, 2.0, .08, 0x2A2D33, R[0] - 4.25, 1.0, R[1] + .7), B3(.08, 2.0, .08, 0x2A2D33, R[0] - 4.25, 1.0, R[1] + 2.9)); signPlane('ICE RINK', 'ONE LAP AT A TIME', '#2A5A8A', '#FFFFFF', 2.4, .6, F, R[0] - 4.3, 1.75, R[1] + 1.8, -Math.PI / 2);
+    C.skaters = [...Array(lowFx ? 1 : 3)].map((_, i) => { const a = avatar(crowdLook(40 + i)); a.g.userData.noPick = true; a.g.traverse(o => o.userData.noPick = true); F.add(a.g); return { a, o: i * 2.1, sp: .5 + i * .08 }; });
+    // two stalls
+    [[7.5, -5, 'HOT CHOCOLATE', 'AND KAAPI', '#7A3A1E', 0x7A3A1E, 'The woman at the hot chocolate stall', 'Hot chocolate, or kaapi if you’re a purist. Snow in Bangalore! My grandmother would never believe it.'], [11.8, -6, 'PLUM CAKE', 'FRESH FROM THE OVEN', '#8A1E2A', 0x8A1E2A, 'The baker', 'Plum cake, the Bangalore Christmas kind. I’ve been baking since October.']].forEach(([x, z, t, sub, bg, col, who, line], i) => {
+      Q.push(B3(2.4, 1.0, 1.1, 0x8A6B4A, x, .5, z), B3(2.5, .06, 1.2, 0xD8C8A8, x, 1.03, z), ...[[-1.15, -.5], [1.15, -.5], [-1.15, .5], [1.15, .5]].map(([dx, dz]) => B3(.08, 1.5, .08, 0x5A3A22, x + dx, 1.8, z + dz)));
+      for (let k = 0; k < 6; k++) Q.push(B3(.42, .06, 1.5, k % 2 ? 0xF4F1E8 : col, x - 1.05 + k * .42, 2.56, z + .05, 0, .16, 0)); Q.push(B3(2.52, .07, 1.5, SN, x, 2.62, z + .05, 0, .16, 0));
+      for (let k = 0; k < 4; k++) Q.push(C3(.06, .12, i ? 0x8A4A2A : 0xF4F1E8, x - .6 + k * .4, 1.12, z + .3, 8));
+      signPlane(t, sub, bg, '#FFFFFF', 2.2, .55, F, x, 2.15, z + .82);
+      const v = avatar(crowdLook(50 + i)); v.g.position.set(x, 0, z - .95); v.g.traverse(o => o.userData.noPick = true); F.add(v.g);
+      blrBox(cx + x - 1.25, cx + x + 1.25, cz + z - .6, cz + z + .6); addTalk(cx + x, cz + z + 1.3, null, who, line);
+    });
+    // the sign at the south gate, and the snowman you build yourself
+    Q.push(B3(.14, 4.4, .14, 0x2A2D33, -2.7, 2.2, 21.6), B3(.14, 4.4, .14, 0x2A2D33, 2.7, 2.2, 21.6));
+    signPlane('WINTER FAIR', '1 DECEMBER – 6 JANUARY', '#1E3A6A', '#FFFFFF', 5, 1.25, F, 0, 3.7, 21.68); signPlane('WINTER FAIR', 'ICE RINK · STALLS · BUILD A SNOWMAN', '#1E3A6A', '#FFFFFF', 5, 1.25, F, 0, 3.7, 21.52, Math.PI);
+    Q.push([new THREE.SphereGeometry(1.7, 14, 4, 0, Math.PI * 2, 0, .6), SN, SMAN[0], -1.12, SMAN[1]]);
+    Q.push(B3(.06, 1.1, .06, 0x5A3A22, SMAN[0] + 1.9, .55, SMAN[1] + .4)); signPlane('SNOWMAN', 'BUILD ONE HERE', '#F4F1E8', '#1E3A6A', 1.2, .3, F, SMAN[0] + 1.9, 1.15, SMAN[1] + .44);
+    const bs = C.bsm = snowman(1, 0xE8423A, true); bs.g.position.set(SMAN[0], .18, SMAN[1]); bs.g.rotation.y = Math.PI * .15; F.add(bs.g); wSmShow();
+    decor(Q, F);
+    // eight snowmen hiding on the pavements
+    const SC = [0xE8423A, 0x3C7CFF, 0xFFC93C, 0x3CB371, 0xC04AE0, 0xFF8A2E, 0x1F9CA8, 0xF4F1E8]; C.hunt = [];
+    HUNT.forEach((h, i) => { const s = huntSpot(h); if (!s) return; const sm = snowman(.85 + (i % 3) * .1, SC[i], i % 2 === 0); sm.g.position.set(s[0], 0, s[1]); sm.g.rotation.y = s[2]; BL.mapG.add(sm.g); C.hunt.push({ i, x: s[0], z: s[1], g: sm.g }); blrBox(s[0] - .5, s[0] + .5, s[1] - .5, s[1] + .5); });
+    // snow falling around you
+    C.fall = snowCloud(lowFx ? 600 : 1400, [-35, 35, 0, 26, -35, 35], .2, BL.sc); C.fall.pts.visible = false;
+  }
+  function roofSnow(){
+    const C = WNT.city, m = new THREE.Matrix4(), p = new THREE.Vector3(), q = new THREE.Quaternion(), s = new THREE.Vector3();
+    C.roofB.forEach((b, i) => { b.im.getMatrixAt(b.i, m); m.decompose(p, q, s); if (b.hide || s.y < .05) m.makeScale(0, 0, 0); else m.compose(p.set(p.x, p.y + s.y / 2 + .05, p.z), q, s.set(s.x * .99, .1, s.z * .99)); C.roofIM.setMatrixAt(i, m); });
+    C.roofIM.instanceMatrix.needsUpdate = true;
+  }
+  function wSmShow(){ const C = WNT.city; if (C && C.bsm) C.bsm.parts.forEach((m, i) => { if (m) m.visible = WNT.built > i; }); }
+  function cityFall(dt, t){
+    const c = WNT.city.fall, P = c.P, S = c.S, cp = camera.position, lo = Math.max(0, cp.y - 10), hi = cp.y + 18;
+    for (let i = 0; i < c.n; i++) { const k = i * 3; P[k + 1] -= dt * 2.2 * S[i * 2]; P[k] += Math.sin(t * .7 + S[i * 2 + 1]) * dt * .6;
+      const dx = P[k] - cp.x, dz = P[k + 2] - cp.z; if (dx > 35) P[k] -= 70; else if (dx < -35) P[k] += 70; if (dz > 35) P[k + 2] -= 70; else if (dz < -35) P[k + 2] += 70;
+      if (P[k + 1] < lo) P[k + 1] = hi - Math.random() * 2; else if (P[k + 1] > hi + 2) P[k + 1] = lo + Math.random() * (hi - lo); }
+    c.pts.geometry.attributes.position.needsUpdate = true;
+  }
+  function foundSnowman(h){
+    WNT.found.push(h.i); wSave(); const n = WNT.found.length, all = WNT.city.hunt.length;
+    plCard.innerHTML = `<small>SNOWMAN FOUND</small><b>${n} of ${all}</b><small>${n >= all ? 'That’s every one of them!' : 'The rest are on pavements around the city.'}</small>`; plCard.classList.add('on'); clearTimeout(placeHere.t); placeHere.t = setTimeout(() => plCard.classList.remove('on'), 3200);
+    [784, 988, 1175].forEach((f, i) => setTimeout(() => tone(f, .14, 'triangle', .035), i * 80));
+  }
+  function skateStart(){
+    if (WNT.skate || DRV.on || DRV.lock || EV || A) return; const C = WNT.city, [mx, mz] = toMap(pos.x, pos.z);
+    WNT.skate = { t: 0, a0: Math.atan2(mz - C.cz - RINK[1], mx - C.cx - RINK[0]) }; DRV.lock = true; say('Skates on. One lap of the rink…', 2600); tone(660, .15, 'triangle', .04); setTimeout(() => tone(880, .2, 'triangle', .04), 140);
+  }
+  function skateStep(dt){
+    const S = WNT.skate, C = WNT.city; S.t += dt; const f = Math.min(1, S.t / 9), e = f * f * (3 - 2 * f), a = S.a0 + e * Math.PI * 2, r = 2.5 + Math.sin(f * Math.PI * 2) * .5;
+    const [lx, lz] = toLocal(C.cx + RINK[0] + Math.cos(a) * r, C.cz + RINK[1] + Math.sin(a) * r); pos.x = lx; pos.z = lz; yaw = Math.PI - a;
+    if (f >= 1) { WNT.skate = null; DRV.lock = false; say('One lap, no falls. The skaters clap, a bit.', 2800); }
+  }
+  function buildStep(){
+    if (WNT.built >= 4) return; WNT.built++; wSave(); wSmShow(); tone(380 + WNT.built * 120, .2, 'triangle', .04);
+    say(['You roll a big ball of snow for the base.', 'A middle ball, packed tight.', 'The head goes on top.', 'Coal eyes, a carrot, a scarf and a hat. Done! Your snowman will be here all winter.'][WNT.built - 1], 3200);
+  }
+  const wBtn = document.createElement('button'); wBtn.type = 'button'; wBtn.className = 'btn alt drvbtn'; wBtn.hidden = true; document.body.appendChild(wBtn);
+  wBtn.addEventListener('click', e => { e.stopPropagation(); if (WNT.act) WNT.act(); });
+  addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'e' && WNT.act && !wBtn.hidden) WNT.act(); });
+  // the phone's map: a snowy wash, the fair, and the snowmen you've found
+  function winterPhMap(g, P, Wd){
+    if (!winterNow()) return; g.fillStyle = 'rgba(235,242,250,.22)'; g.fillRect(0, 0, Wd, Wd);
+    const mark = (x, z, ch, col, label) => { const [px, py] = P(x, z); if (px < -20 || py < -20 || px > Wd + 20 || py > Wd + 20) return; g.fillStyle = col; g.strokeStyle = '#16181D'; g.lineWidth = 3; g.beginPath(); g.arc(px, py, 12, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#16181D'; g.font = '900 15px system-ui'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(ch, px, py + 1); g.textBaseline = 'alphabetic';
+      if (label) { g.font = '800 15px system-ui'; g.lineWidth = 4; g.strokeStyle = '#FFFFFF'; g.strokeText(label, px, py - 18); g.fillText(label, px, py - 18); } };
+    mark((PARK_B[0] + PARK_B[1]) / 2, (PARK_B[2] + PARK_B[3]) / 2, '❄', '#BFE6FF', 'Winter Fair');
+    if (WNT.city && WNT.city.hunt) WNT.city.hunt.forEach(h => { if (WNT.found.includes(h.i)) mark(h.x, h.z, '☃', '#FFFFFF'); });
+  }
+  // every frame
+  function winterStep(dt, now){
+    if (!winterNow()) return; const t = now / 1000;
+    if (entered && !WNT.room) { buildWinterRoom(); if (!WNT.told) { WNT.told = true; setTimeout(() => { if (!inWorld) say('It’s winter! Snow outside the window, lights up, and a tree by the bookshelf.', 4200); }, 7000); } }
+    if (WNT.room && !inWorld) {
+      if (!reduce) WNT.bulbs.forEach(b => b.material.emissiveIntensity = 1 + Math.sin(now / 320 + b.userData.ph * 1.7) * .6);
+      snowFall(WNT.win, dt, .35, t); WNT.star.rotation.y = t * .8;
+      WNT.steam.forEach(s => { const p = s.userData.p = (s.userData.p + dt * .35) % 1; s.position.set(Math.sin(p * 6 + s.id) * .012, .09 + p * .16, 0); s.material.opacity = .35 * Math.sin(p * Math.PI); s.scale.setScalar(.03 + p * .04); });
+      if (WNT.globe > 0) { WNT.globe -= dt; const o = Math.min(1, (10 - WNT.globe) * 1.5, WNT.globe / 2); WNT.inSnow.pts.material.opacity = .95 * Math.max(0, o); snowFall(WNT.inSnow, dt, .45, t); snowFall(WNT.gflakes, dt, .02, t); WNT.globeG.rotation.z = Math.sin(t * 30) * .25 * Math.max(0, WNT.globe - 9.2); if (WNT.globe <= 0) WNT.inSnow.pts.visible = false; }
+    }
+    if (!WNT.city && BLC.built && BLC.parkG && BL.mapG) { try { buildWinterCity(); } catch (e) { console.error(e); } }
+    const C = WNT.city; if (!C || !C.fall) return;
+    const inB = inWorld && zone === 'blr', show = !(EV && EV.inMap) && BL.mood !== 'burn';
+    C.fair.visible = show; C.hunt.forEach(h => h.g.visible = show); if (C.piles) C.piles.visible = show;
+    const outside = inB && show && !BL.lvl && !(PL.cur && /^shop-/.test(PL.cur)); C.fall.pts.visible = outside; if (outside) cityFall(dt, t);
+    if (!inB) { if (WNT.skate) { WNT.skate = null; DRV.lock = false; } wBtn.hidden = true; WNT.act = null; return; }
+    if (show) { const blink = Math.floor(t * 1.6) % 2; C.lA.visible = reduce || !!blink; C.lB.visible = reduce || !blink; C.star.rotation.y = t * .5;
+      C.skaters.forEach((s, i) => { const a = t * s.sp + s.o, r = 2.4 + Math.sin(t * .4 + i) * .6; s.a.g.position.set(RINK[0] + Math.cos(a) * r, .12, RINK[1] + Math.sin(a) * r); s.a.g.rotation.y = -a + Math.PI; if (s.a.anim) s.a.anim(t * 1.5 + i, .5, 0); }); }
+    if (WNT.skate) skateStep(dt);
+    // the rink and the snowman patch: checked every frame so the button never offers something you've walked away from
+    const [mx, mz] = toMap(pos.x, pos.z), ok = show && onGround() && !EV && !BL.cine && !DRV.on && !DRV.lock && !WNT.skate;
+    let act = null, label = '';
+    if (ok) { if (Math.hypot(mx - C.cx - RINK[0], mz - C.cz - RINK[1]) < 5.2) { act = skateStart; label = 'Skate a lap'; } else if (WNT.built < 4 && Math.hypot(mx - C.cx - SMAN[0], mz - C.cz - SMAN[1]) < 3.2) { act = buildStep; label = ['Roll the base', 'Add the middle', 'Add the head', 'Dress it up'][WNT.built]; } }
+    WNT.act = act; wBtn.hidden = !act || !drvBtn.hidden || !plBtn.hidden; if (!wBtn.hidden && wBtn.textContent !== label + (fine ? ' (E)' : '')) wBtn.textContent = label + (fine ? ' (E)' : '');
+    if ((WNT.t -= dt) > 0) return; WNT.t = .25;
+    if (C.roofIM && (C.rt = (C.rt || 0) - .25) <= 0) { C.rt = 3; roofSnow(); }
+    if (ok) C.hunt.forEach(h => { if (!WNT.found.includes(h.i) && Math.hypot(mx - h.x, mz - h.z) < 3.5) foundSnowman(h); });
+    if (ok && !C.told && Math.hypot(mx - C.cx, mz - C.cz) < 21) { C.told = true; say('Cubbon Park’s Winter Fair: an ice rink, two stalls, a big tree, and a snowman waiting to be built.', 4600); }
+  }
+
   // every couple of seconds: achievements, the real night, and the phone light
   let nightChecked = false;
   function littleStep(dt, now){
-    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now);
+    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { winterStep(dt, now); } catch (e) { console.error(e); }
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.dz) deathStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.fin) finalStep(dt, now);
@@ -25279,6 +25573,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (p.egg === 'window') return say(`It\u2019s ${istClock()} where Rayan is. The sky outside matches.`, 3200);
     if (p.egg === 'counter') return say(visitors ? `You\u2019re one of ${visitors.toLocaleString()} visitors so far. Welcome!` : 'The visitor counter is warming up.', 3000);
     if (p.egg === 'map') return playMap();
+    if (p.egg === 'wtree' || p.egg === 'wglobe' || p.egg === 'wcocoa') return winterEgg(p.egg);
     if (p.egg === 'chat') return chatOpen();
     if (p.egg === 'apk') return flyTo(views.map.pos.clone(), views.map.look, apkPanel);
     if (p.egg === 'builder') return flyTo(views.builder.pos.clone(), views.builder.look, openBuilder);
