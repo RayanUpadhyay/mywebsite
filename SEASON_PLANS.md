@@ -31,8 +31,8 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | 3 | **The Syndicate** (replaces The Carnival) | 13 Jan – 9 Feb 2027 | After the flood, a crime syndicate takes over the city. | Madame Marigold, until Inspector Devi betrays you | The Comet (getaway car) | Marigold's tower, now Devi's | Undercover / Clean Hands / Marigold's Suit |
 | 4 | **Blackout** | 10 Feb – 9 Mar 2027 | The city stays dark; Devi rules it, frames you for Marigold's death, and drills into a hot vent under the sea. Ends with the volcano rising and Devi falling into the lava. | Commissioner Devi, with Static (a saboteur in the power lines) working for her | Lantern and toolkit | A new power plant, and the volcano offshore | Lineworker / Lantern Bearer / Commissioner Devi |
 | 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | The new volcano becomes Ember Island and ash falls on the city; a cult uses the stolen meteor core to wake it. Ends with the core firing a beam at the Moon, and something there answering. | Cinder, leader of the Kindled | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |
-| 6 | **Dark Side** (space; replaces Deep Freeze) | 7 Apr – 4 May 2027 | The core's beam woke something inside the Moon. Build a rocket and go there first. Ends with a scaled alien craft escaping the Moon's vault towards Earth. | The Archivist | Rocket and moon rover | The launch pad on Crash Isle, and a cracked Moon in the sky | Moonwalker / Zero-G / Archivist's Lanterns |
-| 7 | **Scales** | 5 May – 1 Jun 2027 | Reptilian aliens, the Vashk, land in disguise, and shapeshifters replace townspeople. | Queen Ssera | Truth lens (reveals disguised Vashk) and an alien hover-sled | The wrecked mothership in the mountains | Alien Hunter / Truth Lens Agent / Vashk Disguise |
+| 6 | **Dark Side** (space; replaces Deep Freeze) | 7 Apr – 4 May 2027 | The meteor was a key, and Cinder turned it. The Vashk Dominion's fleet on the Moon invades. Take the fight to their Moon fortress. Ends with their queen's ship slipping down to Earth. | High Commander Vorrak of the Vashk Dominion | Boost pack, and the Kite (fighter) | The launch pad on Crash Isle, a crashed landing pod, and a cracked Moon | Moonwalker / Ace / Vorrak's Armour |
+| 7 | **Scales** | 5 May – 1 Jun 2027 | After Vorrak's defeat, the Vashk queen's ship lands in disguise, and shapeshifters replace townspeople. | Queen Ssera | Truth lens (reveals disguised Vashk) and an alien hover-sled | The wrecked mothership in the mountains | Alien Hunter / Truth Lens Agent / Vashk Disguise |
 | 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore presses down from the sky; stop the collision before the timer runs out. | {N} Prime, the evil version of you | Rift jumper | A permanent tear in the sky | Rift Jumper / Other-Earth You / {N} Prime |
 | 9 | **The Rift** | 30 Jun – 27 Jul 2027 | The mountains split open. | The Excavator | Grappling hook | The Rift Valley and its caves | Cave Explorer / Ancient Machine / The Excavator |
 | 10 | **Skyline** | 28 Jul – 24 Aug 2027 | Floating islands appear. | Baron Altitude | Glider | An anchored sky island | Glider Pilot / Sky Racer / Baron Altitude |
@@ -349,61 +349,83 @@ The volcano that swallowed Devi doesn't stop growing. Within a week it's an isla
 ## Season 6 · Dark Side (7 April – 4 May 2027)
 
 ### Story
-The meteor that started everything came from the Moon. Something living inside the Moon sends keys like it out into space, and wherever one lands it opens a door and takes something back. The beam from the core woke it. Now Bangalore is on its list, and the only way to stop it is to go there. (This game's Moon is its own place: it has air pockets, ruins and someone living inside it.)
+The beam the core fired at the end of Season 5 wasn't an accident. It was a signal, and someone had been waiting for it for a very long time. The meteor was a key, and the Keeper was left on Earth to make sure nobody ever turned it. Cinder turned it. Now **the Vashk Dominion**, a reptilian empire that conquers worlds and keeps them, has heard Earth's door open. Their fleet has been sitting on the dark side of the Moon. This season they come.
 
 **The cast**
-- **The Archivist (villain, original):** an ancient collector, tall and thin, in a coat of hanging lanterns. Each lantern holds a piece of a world it has taken. *“Nothing is lost if it is kept.”*
-- **The Keeper:** this season they finally say what they are: the keeper of the key, left on Earth a long time ago to watch for the Archivist's return.
-- **Dr. Neel:** the volcanologist from Season 5, who helps build the rocket and runs mission control from his rooftop lab.
-- **Velvet:** flies with you as the pilot.
+- **High Commander Vorrak (villain, original):** the Dominion's general, twice the height of a person, in black-green battle armour with a crest of horns. He has taken eleven worlds and never lost a war. *“Kneel, and you keep your city. Stand, and you keep nothing.”*
+- **The Vashk Dominion:**
+  - soldiers with energy shields and rifles;
+  - war-beasts;
+  - hovering gunships;
+  - a fortress built into the Moon itself, with a planet-cracker cannon aimed at Earth.
+- **Queen Ssera:** their ruler, seen only once, at the very end (she's Season 7's villain).
+- **The Keeper:** finally says what they are, the guard left on Earth to keep the key from ever being used. They failed, and they know it.
+- **Dr. Neel** builds the rocket and runs mission control. **Velvet** flies it.
 
 **Cold open (7 Apr).**
-- Night. Across Bangalore, people look up: a line of tiny lights is moving across the Moon's dark side.
-- The Keeper is waiting at the end of the pier: *“It’s coming for the key, {N}. We go to it first.”*
-- On Crash Isle, scaffolding and a half-built rocket stand where the core used to be.
+- Night. All over Bangalore, people look up. The dark side of the Moon is lighting up, point after point, as hundreds of ships power on.
+- A voice cuts into every phone, radio and screen in the city: *“Earth. I am Vorrak of the Dominion. You have one day to kneel.”*
+- The next morning, the first landing pods hit the city.
 
 **Chapters**
 
 | Week | Chapter | What you do | Boss |
 |---|---|---|---|
-| 1 · 7 Apr | Liftoff | Help build the rocket on Crash Isle from scrap collected across the city: the Salvager's wreckage, Brine's ship, Devi's rig. Launch cinematic, then a rough landing near the Moon's north pole, with Earth hanging in the sky and Bangalore on it. | **The Welcome Party:** the Archivist's moon drones swarm the landing site while you get the rover out. |
-| 2 · 14 Apr | Tranquility Base | An old, abandoned moonbase, with low gravity, an oxygen meter (refills at airlocks and tanks) and crew logs from whoever lived here. | **The Custodian**, the base's robot, which switches the base's gravity on and off mid-fight. |
-| 3 · 21 Apr | The Dark Side | Drive the rover across the far side, where Earth can't be seen: glowing craters, chasms to jump, and the Archivist's diggers boring into the Moon's core. | **The Burrower**, a drilling machine that tunnels under you and bursts out. |
-| 4 · 28 Apr | Heart of the Moon (finale) | Go down into the vault inside the Moon, full of things taken from other worlds. Some hint at later seasons: a lost city of glowing glass, a floating island, a neon street from somewhere else. | Three phases:<br>1. A rover chase down the spiral tunnel.<br>2. Zero gravity in the hollow core.<br>3. The Archivist, close up, as the vault collapses. |
+| 1 · 7 Apr | First Contact | The invasion begins. Landing pods hit the streets, and you hold your district with the people of Bangalore. You take a Vashk boost pack from a downed soldier (the season's first tool) and learn to fly with it: short bursts, hovering and dive attacks. | **A Vashk war-beast**, dropped into Cubbon Park: an armoured monster you have to get above with the boost pack to hit its back. |
+| 2 · 14 Apr | Counterstrike | Build the rocket on Crash Isle from the wreckage of every past villain (the Salvager's mech, Brine's ship, Devi's rig) while gunships attack it. Launch under fire, then fly **the Kite**, a small fighter, in a dogfight in orbit. | **Skarr**, the Dominion's best pilot, in an orbital dogfight around the fleet. |
+| 3 · 21 Apr | The Moon Fortress | Land on the Moon. Low gravity, oxygen, and the boost pack for big leaps across craters. Sneak or fight into the fortress and sabotage the planet-cracker cannon before it fires at Earth: hack its three power relays, and turn captured Vashk turrets against their own guards. | **The Fortress Titan**, a giant walking war machine guarding the cannon. Disable its legs, then climb it. |
+| 4 · 28 Apr | Vorrak (finale) | Storm Vorrak's command deck as the cannon charges. | Three phases:<br>1. A zero-gravity fight through the fortress core.<br>2. A boost-pack duel around the cannon's barrel.<br>3. Vorrak himself in full battle armour, while the cannon overloads. |
 
 **The finale (sets up Season 7).**
-1. You break the Archivist's lanterns one by one, and the things inside them fade back to wherever they were taken from.
-2. Its last words, as its last lantern goes dark: *“You think I was the only collector? I was the one who kept them locked away.”*
-3. The vault collapses, and you escape on the rocket.
-4. The Moon is left cracked, and the crack stays in Bangalore's sky for good (the season's trace).
-5. Last shot: something else escapes the vault in the confusion. It's a craft covered in overlapping metal scales, one of the Archivist's prisoners, now free. It shoots past your rocket towards Earth and comes down somewhere in the mountains. **Season 7 · Scales.**
+1. You beat Vorrak, and the sabotaged cannon backfires into the Moon instead of firing at Earth.
+2. The fortress breaks apart, and the fleet scatters. The Moon is left **cracked**, and the crack stays in Bangalore's sky for good (the season's trace).
+3. Vorrak's last words, as his armour gives way: *“You won a battle. The Queen does not lose wars.”*
+4. You escape in the Kite.
+5. Last shot: one ship didn't run. A sleek royal craft, its hull covered in shimmering scales, slips away under the debris towards Earth and comes down in the mountains. In the cockpit, a figure's face ripples and changes into a human one. **Season 7 · Scales.**
 
-### How it plays
-- **A Moon world:** a separate zone with its own ground and sky, built in `index.html` so later seasons can reuse it. The old world system is frozen Mandalink code.
+### New mechanics
+- **The boost pack:** the season's main tool, and you keep it.
+  - short bursts of flight, hovering, dashes and dive attacks;
+  - fuel recharges on the ground;
+  - it changes how you move around the whole city afterwards, e.g. a rooftop boost with Season 3's rope swing.
+- **Flying the Kite (kept):**
+  - a small fighter for dogfights in orbit;
+  - after the season you can also fly it over Bangalore;
+  - phones get a flight stick and a fire button.
 - **Low and zero gravity:**
-  - big, floaty jumps on the surface;
-  - in the hollow core you push off walls between floating rocks.
-- **Oxygen:** a meter like Season 2's breath, refilled at airlocks, tanks and the rover.
-- **The rover (kept):** a bouncy moon buggy with big low-gravity jumps. You can bring it back and drive it in Bangalore.
-- **The rocket (kept):** its launch pad stays on Crash Isle, and you can fly to the Moon and back any time after the season.
+  - big, floaty jumps on the Moon;
+  - pushing off walls in the zero-gravity core.
+- **Oxygen:** a meter on the Moon, like Season 2's breath, refilled at airlocks and tanks.
+- **Alien tech:**
+  - captured turrets you can take over;
+  - Vashk shields you have to break with the right weapon;
+  - relays you hack in a quick timing puzzle.
+- **Invasion battles:** big fights in the real streets alongside friendly civilians and police. Pods keep landing, and you hold each area.
 - **Everything from Seasons 1–5 carries over.**
 
 ### What you keep
-- **Vehicles:** the rocket and the rover.
-- **Weapons** (three new ones):
-  - plasma lance (long reach);
-  - gravity gun (pulls or pushes enemies and rocks);
-  - star shot (hold to charge).
+- **Tool:** the boost pack.
+- **Vehicle:** the Kite (fighter).
+- **Weapons:**
+  - the Vashk rifle;
+  - the plasma lance (long-reach melee);
+  - the gravity gun (pull or push enemies and rocks).
 - **Skins:**
   - Moonwalker: finish the story;
-  - Zero-G: beat the Custodian without touching the floor while gravity is off;
-  - Archivist's Lanterns: beat the finale.
-- **Left on the map:** the launch pad on Crash Isle, and a cracked Moon in Bangalore's sky.
+  - Ace: the challenge, beat Skarr without taking a hit;
+  - Vorrak's Armour: beat the finale.
+- **Left on the map:**
+  - the launch pad on Crash Isle;
+  - a crashed Vashk landing pod in Cubbon Park;
+  - a cracked Moon in Bangalore's sky.
 
 ### The trailer
-- **Look:** deep black space, stark white sunlight, the blue Earth, and the Archivist's lanterns as the only warm colour.
-- **Type:** clean, wide, spaced-out capitals like a mission patch, with a countdown.
-- **Score:** radio chatter and a countdown, the roar of the launch, then near-silence in space, with breathing, a soft synth pad and the hum of the lanterns, building to a big final chord.
+- **Look:** deep black space, stark white sunlight and the blue Earth, with the Vashk's sickly green running lights and engine glow as the threat colour.
+- **Type:** wide, heavy military stencil for the human side, and an alien script that resolves into English for Vorrak's lines.
+- **Score:**
+  - a war-horn blast and thundering drums for the Dominion, with radio chatter and a launch countdown;
+  - then near-silence in space, broken by Vorrak's voice;
+  - it ends on a huge orchestral hit as the cannon fires.
 
 ## Deep Freeze (saved for a future season)
 
