@@ -74,7 +74,9 @@ body.s2cs button:not(.s2skip),body.s2cs .placecard,body.s2cs .s2hearts,body.s2cs
   let P = null;
   function places(){
     if (P || !R.BL.bld || !R.BL.bld.length) return P; const B = R.BL.bld.filter(b => !b.hide), near = (p, f) => B.filter(f).sort((a, b) => Math.hypot((a.x0 + a.x1) / 2 - p[0], (a.z0 + a.z1) / 2 - p[1]) - Math.hypot((b.x0 + b.x1) / 2 - p[0], (b.z0 + b.z1) / 2 - p[1]))[0];
-    const west = B.filter(b => b.x0 < -300 && b.h > 18).sort((a, b) => b.h - a.h)[0], tower = west || near([-330, 20], b => b.h > 14) || B[0];
+    // the friend's highrise: a tall building near the west coast with nothing tall between its window and the sea
+    const clear = b => { const cz = (b.z0 + b.z1) / 2, wy = Math.min(b.h - 2, 30); return !B.some(o => o !== b && o.x1 <= b.x0 + .5 && o.x1 > -405 && o.z1 > cz - 8 && o.z0 < cz + 8 && o.h > wy - 6); };
+    const west = B.filter(b => b.x0 < -280 && b.h > 16).sort((a, b) => b.h - a.h), tower = west.find(clear) || west[0] || near([-330, 20], b => b.h > 14) || B[0];
     const camp = near([-200, 70], b => b.h > LEVEL + 3 && b.h < 20 && b !== tower) || tower;
     const ctr = b => [(b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2];
     // a spot of open water just off a building's side
@@ -336,7 +338,7 @@ body.s2tr .s2bn{background:linear-gradient(90deg,rgba(14,30,38,.7),rgba(14,30,38
     const storm = on => { if (on) { fog.color.setHex(0x5E7378); fog.near = 20; fog.far = 140; if (R.BL.sc.background && R.BL.sc.background.setHex) R.BL.sc.background.setHex(0x6E8388); } else { fog.color.setHex(fog0.c); fog.near = fog0.n; fog.far = fog0.f; if (bg0 != null) R.BL.sc.background.setHex(bg0); } };
     const ping = () => { R.tone(1250, .5, 'sine', .03, 1240); setTimeout(() => R.tone(1250, .9, 'sine', .012, 1240), 420); };
     const thud = () => { R.tone(48, .7, 'sine', .08, 36); }, drum = () => { R.tone(70, .25, 'square', .05, 50); setTimeout(() => R.tone(180, .08, 'square', .03, 140), 230); };
-    let wall = null, ring = null, fins = [], wave = { x: -640 }, shards = [];
+    let wall = null, ring = null, fins = [], wave = { x: -640 }, shards = []; const WB = Pl.waterBy(Pl.camp, [0, 1]), this_w = i => WB[i];
     const sea = (x, z, y) => [x, y == null ? LEVEL + 1 : y, z];
     return [
       { d: 3.6, start(C){ document.body.classList.add('s2tr'); storm(true); R.flood.off(); C.onEnd = () => { document.body.classList.remove('s2tr'); cine.querySelector('.s2tint').style.background = ''; storm(false); if (wasOn || (st.open && !st.drained)) R.flood.set(wasLevel); else R.flood.off(); };
@@ -351,7 +353,7 @@ body.s2tr .s2bn{background:linear-gradient(90deg,rgba(14,30,38,.7),rgba(14,30,38
       { d: 3, start(){ for (let i = 0; i < 3; i++) { try { const a = R.avatar(R.crowdLook(30 + i)); a.g.position.set(kx + (i - 1) * 1.3, Pl.camp.h, kz); scAdd(a.g); } catch (e) {} } }, cam: f => [kx + 16, Pl.camp.h + 4 + f * 2, kz + 14], look: () => [kx, Pl.camp.h + 1, kz], name: ['THE ROOFTOPS', 'THE SURVIVORS', 'Water, a fire, a radio full of static. And a harpoon gun.'] },
       { d: 2.8, start(C){ C.big = scAdd(sharkMesh(true)); thud(); }, on(f, t, dt, C){ C.big.position.set(kx + 30 - f * 22, LEVEL - .5, kz + 34); C.big.rotation.y = -Math.PI / 2; }, cam: () => [kx + 10, LEVEL + 1.4, kz + 40], look: f => [kx + 30 - f * 22, LEVEL, kz + 34], say: 'Something bigger is hunting.' },
       { d: 3, start(C){ cine.querySelector('.s2tint').style.background = 'radial-gradient(ellipse at 50% 30%,rgba(140,110,70,.12),rgba(30,26,20,.5))'; drum(); C.r = [0, 1, 2].map(i => { const g = scAdd(raiderMesh(i === 1)); return g; }); }, on(f, t, dt, C){ if (Math.floor(t * 2.2) !== C.beat) { C.beat = Math.floor(t * 2.2); drum(); } C.r.forEach((g, i) => { g.position.set(kx + 20 + i * 9 - f * 12, LEVEL - .3, kz + 50 - i * 5); g.rotation.y = -Math.PI / 2 - .3; }); }, cam: () => [kx + 4, LEVEL + 2, kz + 46], look: f => [kx + 22 - f * 12, LEVEL + 1, kz + 46], name: ['THEN THE RAIDERS CAME', 'BRINE’S HARBOUR', '“Every roof pays a toll now.”'] },
-      { d: 3, start(C){ ping(); C.iron = scAdd(sharkMesh(true)); }, on(f, t, dt, C){ C.iron.position.set(kx - 40 + f * 8, 2.2, kz - 30); C.iron.rotation.y = Math.PI / 2; if (Math.floor(t * 2.2) !== C.beat) { C.beat = Math.floor(t * 2.2); drum(); } }, cam: () => [kx - 30, 3.2, kz - 26], look: f => [kx - 40 + f * 8, 2.2, kz - 30], name: ['BELOW THE PUMP HOUSE', 'IRONJAW', ''] },
+      { d: 3, start(C){ ping(); C.iron = scAdd(sharkMesh(true)); C.w = Pl.waterBy(Pl.camp, [0, 1]); }, on(f, t, dt, C){ C.iron.position.set(C.w[0] + 2 + f * 8, 3, C.w[1] + 10); C.iron.rotation.y = Math.PI / 2; if (Math.floor(t * 2.2) !== C.beat) { C.beat = Math.floor(t * 2.2); drum(); } }, cam: () => [this_w(0), LEVEL + 3, this_w(1)], look: f => [this_w(0) + 6 + f * 8, 3, this_w(1) + 10], name: ['BELOW THE PUMP HOUSE', 'IRONJAW', 'Something armoured sleeps down there.'] },
       { d: 4, start(C){ C.s = scAdd(shipMesh()); C.s.position.set(kx + 60, LEVEL - 1.5, kz - 10); C.s.rotation.y = -1.2; try { const a = R.avatar(R.crowdLook(90)); a.g.position.set(kx + 60, LEVEL + .8, kz - 4); scAdd(a.g); } catch (e) {} },
         on(f, t, dt, C){ if (Math.floor(t * 2.6) !== C.beat) { C.beat = Math.floor(t * 2.6); drum(); if (C.beat % 2) R.tone(55, .4, 'sawtooth', .06, 30); } }, cam: f => [kx + 40 - f * 6, LEVEL + 5, kz + 12], look: () => [kx + 60, LEVEL + 7, kz - 10], name: ['THE MASTER OF THE DROWNED CITY', 'CAPTAIN BRINE', '“Turn those pumps off, or I sink every roof in my harbour.”'] },
       { d: 4.8, start(){ title('SEASON 2', 'HIGH WATER'); thud(); }, on(f, t){ if (t > 4) cine.querySelector('.s2title').classList.remove('on'); }, cam: f => [kx + 70 - f * 12, 26 + f * 6, kz + 60], look: () => [kx - 20, LEVEL, kz] },
