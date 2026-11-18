@@ -124,35 +124,62 @@ While Bangalore was underwater, the police stations flooded, the phones went dea
 - **Inspector Devi:** an honest police inspector whose station is still full of mud. Officially she has no power left, so she works with you. Or so it seems.
 - **The Keeper:** in the background. The Syndicate is looking for something that came through the tear.
 
+**Cold open (13 Jan).**
+- The morning after the drain, the city is mud and wreckage, and people are trying to reopen.
+- You walk down your street and every shutter has a fresh marigold stamp.
+- A collector in a cream suit tells a chaiwala his "protection" is due, and when he can't pay his cart gets tipped over.
+- Inspector Devi pulls up in a mud-caked police jeep: *“My station is underwater and my phone is dead. You’re the only one in this city I’ve seen do anything. Want a job?”*
+
 **Chapters**
 
 | Week | Chapter | What you do | Boss |
 |---|---|---|---|
 | 1 · 13 Jan | Protection | Your street is paying protection. Help the stall owners stand up to the collectors, chase down a collection van, and free your district. | **Brass**, a big brawler with knuckle-dusters, fought in the market. |
-| 2 · 20 Jan | The Ledger | Steal the Syndicate's ledger (who pays, and who's on the payroll) in a heist on their counting house. Go in quietly with disguises and timing, or go in loud. | **The Ledger**, who fights with traps, alarms, locking doors and flying safes. |
+| 2 · 20 Jan | The Ledger | Steal the Syndicate's ledger (who pays, and who's on the payroll) in a heist on their counting house. Go in quietly with disguises and timing, or go in loud: quiet is optional. | **The Ledger**, who fights with traps, alarms, locking doors and flying safes. |
 | 3 · 27 Jan | The Velvet Run | The ledger points to the smuggling convoys. Get a getaway car of your own and wreck the convoys in car chases across the city and the flyovers. | **Velvet**, in a high-speed chase on the highway. |
 | 4 · 3 Feb | Marigold (finale) | Storm Marigold's tower floor by floor with Inspector Devi. | Three phases:<br>1. A gunfight in the lobby.<br>2. A rooftop chase.<br>3. Marigold in her greenhouse penthouse. |
 
-**The twist (sets up Season 4).**
-- You beat Marigold in her penthouse.
-- As you go to arrest her, Inspector Devi steps past you and kills her.
-- Devi was never just helping. The ledger had her name in it all along, on the Syndicate's payroll. She used you to clear the other bosses out of the way, and now the Syndicate is hers.
-- Her last words to you: *“You cleaned up this city for me. Thank you.”*
-- Then every light in Bangalore goes out, and the story leads straight into **Season 4 · Blackout**, with Devi as its villain.
+**Devi's betrayal is only hinted at, never stated.**
+- She always arrives just after the Syndicate has cleared out.
+- She asks for the ledger "for evidence", and the page with the payroll is missing when it comes back.
+- One collector salutes her by mistake, then pretends he was waving.
+- Her jeep is the only clean car in the city.
+
+**The finale (sets up Season 4).**
+1. You beat Marigold in her greenhouse penthouse. She backs out onto the terrace, against the railing, bleeding marigold petals from a torn lapel.
+2. As you go to arrest her, she looks past you at Devi and laughs. Her last words:
+   *“You’re arresting the wrong woman, {N}. She paid for every stamp on every door. She’ll make you miss me.”*
+3. Devi steps forward: *“Enough.”* She shoves Marigold over the railing.
+4. **Marigold's fall:**
+   - the camera follows her down past the glass floors of her own tower, petals streaming up behind her;
+   - it cuts to the petals settling on the street before she lands.
+5. **Devi runs off.** She grabs the ledger and sprints for the stairwell, and you chase her down two floors. She stops on the landing just long enough to say *“You cleaned up this city for me. Thank you.”* Then she's gone.
+6. Every light in Bangalore goes out, leading straight into **Season 4 · Blackout**, with Devi as its villain.
 
 ### How it plays
 - **Territory map:**
-  - the phone map shows which districts the Syndicate controls;
-  - you free each one by breaking its racket: rescue stall owners, smash collection points, beat its crew;
-  - freed districts change: the stamps come off the doors, music comes back and stalls reopen.
-- **Heat:** the more trouble you cause, the more the Syndicate hunts you with goon cars and roadblocks. Lie low and it cools down. This would reuse the existing police-chase code with Syndicate cars.
-- **Heists:** you can play them quietly or loudly. The challenge skin rewards doing them quietly.
-- **Car combat:** chases, ramming and tyre spikes.
-- **Tone:** fights stay cartoon-style. Enemies are knocked out, there's no gore, and Marigold's death happens off-screen.
+  - five districts start under the Syndicate, and the phone map shows which;
+  - you free a district by doing three of its four rackets: stop a collection, smash a collection point, beat its crew, rescue a shopkeeper;
+  - freed districts change for good: the stamps come off the doors, stalls reopen and music comes back.
+- **Heat:**
+  - causing trouble raises the Syndicate's attention, shown as one to three marigolds on screen;
+  - at high heat, goon cars hunt you and roadblocks go up;
+  - you lose them by lying low or reaching a safehouse;
+  - this reuses the existing police-chase code with Syndicate cars.
+- **Heists:**
+  - each is an interior level, like the garage;
+  - the quiet way is optional: disguises, guard sight-cones (like the Season 1 searchlights), timing and crouch takedowns;
+  - the loud way means alarms, lockdown doors and safe traps;
+  - the challenge skin rewards doing the Ledger heist unseen.
+- **Car combat:** chases, ramming, tyre spikes and the Comet's nitro.
+- **Weapons:** the Season 1 guns and blades stay, plus the season's gadgets.
+- **Tone:**
+  - fights stay cartoon-style: enemies are knocked out, there's no gore, and the street crews break into a daze, not blood;
+  - Marigold's fall is shown, but the scene cuts away before she lands.
 
 ### What you keep
 - **Vehicle:** the Comet, a souped-up getaway car with nitro, parked in your garage afterwards.
-- **Weapons:**
+- **Gadgets:**
   - stun baton (melee);
   - tyre-spike launcher (for chases);
   - flashbangs (for heists).
@@ -160,7 +187,13 @@ While Bangalore was underwater, the police stations flooded, the phones went dea
   - Undercover: finish the story;
   - Clean Hands: do the Ledger heist without being seen;
   - Marigold's Suit: beat the finale.
-- **Left on the map:** Marigold's tower, taken over by Devi, and marigold graffiti across the city.
+- **Left on the map:** Marigold's tower, now Devi's, with its lights off, and marigold graffiti across the city.
+
+### The trailer (a third look, different from Seasons 1 and 2)
+- **Look:** noir. Desaturated black and white, with only marigold orange left in colour: the stamps, Marigold's flower, and the brake lights in the chase.
+- **Type:** 1970s crime film, with a condensed typewriter or slab-serif and title cards like case-file stamps (“CASE NO. 3 · THE SYNDICATE”).
+- **Score:** walking upright bass, brushed snare, a muted trumpet and a tense string stab on each cut, building into a car-chase beat.
+- **Ending:** the betrayal stays secret. The only hint is one line from Devi: *“Trust me.”*
 
 ## The Moon (saved for a future season)
 
