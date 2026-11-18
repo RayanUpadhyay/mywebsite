@@ -1,10 +1,54 @@
 # Season plans
 
-Plans for seasons that aren't built yet. Each season is four weeks with a chapter a week, its own original villain, a tool or vehicle you keep, three skins (story, challenge, villain) and a permanent change to the map. See the Seasons section of `CLAUDE.md` for how a season file plugs into the page.
+The plan for all 15 seasons, plus ideas saved for later. Each season is four weeks with a chapter a week, starting 18 November 2026 and cycling. Every season has its own original villain, an intro cinematic, weekly chapters and a finale. It gives you a tool or vehicle you keep, three skins and a permanent change to the map. See the Seasons section of `CLAUDE.md` for how a season file plugs into the page.
+
+## The rules that hold for every season
+
+- The seasons are loosely linked: each has its own story and you can jump in at any one. Light threads run through them all: the Keeper (a mysterious figure), the traces each season leaves on the map, and the tear in the sky.
+- Every season changes the map, gives you one new tool or vehicle to keep, and leaves a permanent trace.
+- Progress is saved in `ru-season` and your name in `ru-heroname` (default "Traveller").
+- Real winter (December to early January) is a bonus layer on top of whichever season is running.
+- All villains, aliens and skins are original: no Marvel or DC characters. Season 7's aliens are clearly fictional, with no real-world conspiracy theories.
+- **Skins:**
+  - There are three per season (45 in all):
+    - a story skin (finish the story);
+    - a challenge skin (complete the season's challenge);
+    - a villain skin (beat the villain).
+  - They are earned by playing, never bought, and kept for good (`ru-arsenal`).
+  - You equip them from the Wardrobe on the phone.
+  - A season currency, like Season 3's tickets, can buy small extras such as colour variants.
+  - Owning every skin unlocks a final one: The Keeper.
+- **Still to decide:**
+  - whether missed skins come back when the cycle loops;
+  - whether a past season's fights stay replayable.
+
+## All 15 seasons
+
+| # | Season | Dates | What happens | Villain | Tool or vehicle | Left on the map | Skins (story / challenge / villain) |
+|---|---|---|---|---|---|---|---|
+| 1 | **Landfall** ✓ built | 18 Nov – 15 Dec 2026 | A meteor crashes off the west coast. | The Salvager | Scanner | Crash Isle | Crater Scout / Meteor Glow / Salvager's Rig |
+| 2 | **High Water** | 16 Dec 2026 – 12 Jan 2027 | Floods turn the streets into canals. | Captain Brine, a pirate (draft story below uses the Undertow; story being rewritten) | Boat and diving | A sunken district | Diver / Canal Captain / Brine's Coat |
+| 3 | **The Carnival** | 13 Jan – 9 Feb 2027 | A travelling fair takes over the park. | The Showman, who hypnotises the crowds | Tickets (a season currency) | The Ferris wheel | Ringmaster's Assistant / Prize Plush / The Showman |
+| 4 | **Blackout** | 10 Feb – 9 Mar 2027 | The power grid fails. | Static, a saboteur in the power lines | Lantern and toolkit | A new power plant | Lineworker / Lantern Bearer / Static |
+| 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | A volcano rises offshore. | Cinder, a cult leader | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |
+| 6 | **Deep Freeze** | 7 Apr – 4 May 2027 | The sea freezes. | The Frost Warden | Skates | Ice palace ruins | Ice Skater / Snow Ranger / Frost Warden |
+| 7 | **Scales** | 5 May – 1 Jun 2027 | Reptilian aliens, the Vashk, land in disguise, and shapeshifters replace townspeople. | Queen Ssera | Truth lens (reveals disguised Vashk) and an alien hover-sled | The wrecked mothership in the mountains | Alien Hunter / Truth Lens Agent / Vashk Disguise |
+| 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore presses down from the sky; stop the collision before the timer runs out. | {N} Prime, the evil version of you | Rift jumper | A permanent tear in the sky | Rift Jumper / Other-Earth You / {N} Prime |
+| 9 | **The Rift** | 30 Jun – 27 Jul 2027 | The mountains split open. | The Excavator | Grappling hook | The Rift Valley and its caves | Cave Explorer / Ancient Machine / The Excavator |
+| 10 | **Skyline** | 28 Jul – 24 Aug 2027 | Floating islands appear. | Baron Altitude | Glider | An anchored sky island | Glider Pilot / Sky Racer / Baron Altitude |
+| 11 | **Harvest** | 25 Aug – 21 Sep 2027 | A food shortage; farms spread across the island. | The Blight (rot) | Farming | New farmland | Farmer / Scarecrow / The Blight |
+| 12 | **Neon Nights** | 22 Sep – 19 Oct 2027 | The city goes cyberpunk. | Vector, a tech CEO | Hover-auto | A neon strip | Street Racer / Hologram / Vector |
+| 13 | **The Drought** | 20 Oct – 16 Nov 2027 | The sea pulls back. | The Tide-Taker | Metal detector | A land bridge and a lighthouse | Treasure Hunter / Lighthouse Keeper / Tide-Taker |
+| 14 | **Festival of Lights** | 17 Nov – 14 Dec 2027 | An island-wide lantern festival. | The Snuffer | Fireworks you can launch | Lantern trees | Lantern Robe / Firework Suit / The Snuffer |
+| 15 | **Convergence** (multiversal finale) | 15 Dec 2027 – 11 Jan 2028 | Several incursions hit at once. You use every tool, and your final choice decides how the cycle restarts. | The Collector of Worlds, with variants of past villains (including {N} Prime and the Vashk) | Every tool you've earned | How the cycle restarts | Multiverse Traveller / Collector's Armour (plus The Keeper for owning every skin) |
+
+After Season 15 the cycle starts again with Season 1.
 
 ## Season 2 · High Water (16 December 2026 – 12 January 2027)
 
-### Story synopsis
+> **Draft, being rewritten.** This first story uses an original water villain, the Undertow, instead of Captain Brine from the season list, with new skin names. A new story will replace it; the chapters, mechanics and engine notes below are still useful.
+
+### Story synopsis (draft)
 
 **The cast**
 - **You ({N}):** the hero of Landfall.
