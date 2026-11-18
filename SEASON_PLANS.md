@@ -16,7 +16,7 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
     - a villain skin (beat the villain).
   - They are earned by playing, never bought, and kept for good (`ru-arsenal`).
   - You equip them from the Wardrobe on the phone.
-  - A season currency, like Season 3's tickets, can buy small extras such as colour variants.
+  - A season currency can buy small extras such as colour variants.
   - Owning every skin unlocks a final one: The Keeper.
 - **Still to decide:**
   - whether missed skins come back when the cycle loops;
@@ -27,8 +27,8 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | # | Season | Dates | What happens | Villain | Tool or vehicle | Left on the map | Skins (story / challenge / villain) |
 |---|---|---|---|---|---|---|---|
 | 1 | **Landfall** ✓ built | 18 Nov – 15 Dec 2026 | A meteor crashes off the west coast. | The Salvager | Scanner | Crash Isle | Crater Scout / Meteor Glow / Salvager's Rig |
-| 2 | **High Water** | 16 Dec 2026 – 12 Jan 2027 | Floods turn the streets into canals. | Captain Brine, a pirate (draft story below uses the Undertow; story being rewritten) | Boat and diving | A sunken district | Diver / Canal Captain / Brine's Coat |
-| 3 | **The Carnival** | 13 Jan – 9 Feb 2027 | A travelling fair takes over the park. | The Showman, who hypnotises the crowds | Tickets (a season currency) | The Ferris wheel | Ringmaster's Assistant / Prize Plush / The Showman |
+| 2 | **High Water** | 16 Dec 2026 – 12 Jan 2027 | A wave through the tear drowns the city; the whole map is swimmable, with sharks. The city drains at the finale. | Captain Brine, a pirate | Boat and diving gear | The sunken district | Diver / Canal Captain / Brine's Coat |
+| 3 | **To be planned** (replaces The Carnival) | 13 Jan – 9 Feb 2027 | Starts in the city just after it drains. | – | – | – | – |
 | 4 | **Blackout** | 10 Feb – 9 Mar 2027 | The power grid fails. | Static, a saboteur in the power lines | Lantern and toolkit | A new power plant | Lineworker / Lantern Bearer / Static |
 | 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | A volcano rises offshore. | Cinder, a cult leader | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |
 | 6 | **Deep Freeze** | 7 Apr – 4 May 2027 | The sea freezes. | The Frost Warden | Skates | Ice palace ruins | Ice Skater / Snow Ranger / Frost Warden |
@@ -46,82 +46,72 @@ After Season 15 the cycle starts again with Season 1.
 
 ## Season 2 · High Water (16 December 2026 – 12 January 2027)
 
-> **Draft, being rewritten.** This first story uses an original water villain, the Undertow, instead of Captain Brine from the season list, with new skin names. A new story will replace it; the chapters, mechanics and engine notes below are still useful.
+### Story
 
-### Story synopsis (draft)
+**Cold open (16 Dec).**
+- A few days after Landfall, you're visiting a friend's highrise, high up and looking out at the sea, trying to move on from everything that happened.
+- The glass starts to hum. The tear over Crash Isle splits wider, and the wall of water seen at the end of Season 1 pours through it and races across the sea.
+- The wave hits the tower, the window bursts, and you're thrown out into the air. Black screen.
+- **You wake up on a wooden plank in the middle of a drowned Bangalore.** Only the tops of the tall buildings stick out of the water, there's wreckage everywhere, and a fin is circling.
 
-**The cast**
-- **You ({N}):** the hero of Landfall.
-- **The Keeper:** still watching over the island, quieter now. They know more about the tear than they've said.
-- **Nila (new):** the pilot of the pier ferry. Quick, funny and stubborn, she knows every channel in the city once the streets turn to water. She's been rebuilding an old jet skiff in her shed for years.
-- **The Undertow (villain, original):** a tall figure made of moving seawater, with a crown of driftwood and a lantern of deep-sea light. It speaks slowly, like the tide, and keeps coming back to one line: *“Everything finds its level.”*
-- **The Salvager:** beaten in Landfall. He turns up again, stuck and grumpy.
+**Villain (original): Captain Brine.** A pirate who rode the wave in through the tear on a ship built from wreckage. To him a drowned city is the perfect harbour, and he means to keep it that way. His crew raid the rooftop survivors for supplies, and the sharks follow his ship like hounds.
 
-**Prologue (16 Dec, opening scene).** The night after the Salvager falls, the tear over Crash Isle stays open. Just after midnight it starts to rain out of a clear sky. Rain comes down through the tear, warm and salty and faintly blue. Far out west, the wall of water seen at the end of Landfall still stands on the horizon, not moving, as if it's waiting. By morning the low streets of Bangalore are underwater.
+**Chapter 1 · Adrift (16 Dec).**
+- You paddle your plank between floating wreckage while sharks circle.
+- Early on you find a battered boat caught in the top of a billboard: the tool you keep for the season and after.
+- You reach a camp of survivors on the rooftops, linked by rope bridges, and find your way back towards your own tower.
+- Boss: **the first great shark.** It hunts you across open water until you make it to the rooftops.
 
-**Chapter 1 · Rising (16 Dec).**
-- You wake to rain on the bedroom window. Outside, your street is ankle-deep, and the garage under your tower is flooded.
-- At the pier, Nila is stuck: the ferry can't run when the roads are rivers. She hands you the skiff she's been rebuilding: “Don’t scratch it.” It's yours to keep.
-- You race through the flooded districts rescuing people stranded on rooftops, bus shelters and an auto-rickshaw roof. The water isn't coming from the sea. It's welling up out of the storm drains, glowing blue.
-- Things crawl out with it: **Driftlings**, scuttling shapes of wreckage held together by water.
-- You and Nila shut the first floodgate at the canal mouth. **Bilge**, a hulking crab-like Driftling built from boat hulls, rams you to stop you; you fight it from the skiff.
-- The gate closes and the water drops a little. Then, from every drain in the street at once, a voice: *“Everything finds its level.”*
+**Chapter 2 · Brine's Harbour (23 Dec).**
+- Brine's crew raid the rooftop camp and take its supplies.
+- You chase their raider boats through the drowned streets and fight on rooftops and decks to get the supplies back.
+- Boss: **Brine's first mate**, fought on a raider boat.
 
-**Chapter 2 · Undercurrent (23 Dec).**
-- The Keeper explains that the water isn't Bangalore's. Under the city, where there should only be rock, there's a drowned district that was never built here. Something is pulling it up from below.
-- Nila lends you her diving mask, and you go under. Swimming through drowned streets that look almost like Bangalore's, but older, you find air pockets in sunken rooms, and murals on the walls.
-- The murals tell a story: a city on another world, a meteor key, a door opening, and the sea pouring in until nothing was left above the water. Standing at the city's edge in every mural is a robed figure with a lantern: a keeper, like ours.
-- At the bottom waits **the Pearl Warden**, an eel-like guardian circling a nest of glowing pearls. Each pearl is an anchor pulling the drowned world through.
-- Breaking the last pearl shows you the truth. The Undertow was that world's Keeper. It couldn't save its city, so it means to bring a new one home to it: Bangalore.
-
-**Chapter 3 · The Floodgate (30 Dec).**
-- The wall of water in the west starts to move. The city races to build a sea wall along the west coast, and it stays there for good after the season.
-- The gates aren't finished, and the only crane big enough is on the Salvager's sunken barge. Over the radio, the Salvager is stranded on top of its crane as the tide climbs. “Fine. Get me off this thing, and you can have the crane.”
-- You rescue him in the skiff. Grumbling, he swings the crane round to lift the last gate into place.
-- Then you hold the wall against wave after wave of Driftlings while the gates close.
-- At the end, **the Tide Engine** bursts out of the wall's pump house: a pump-monster that drags the tide up and lets it fall, so the ground you can stand on keeps changing.
-- When it breaks, the gates slam shut and the great wave smashes against the new wall, and holds.
+**Chapter 3 · The Deep (30 Dec).**
+- The survivors give you diving gear, and you go down into the drowned streets: cars, bus stops and the metro line under the water.
+- You find the old floodgates and pumps that could drain the city.
+- Boss: **a huge armoured shark** guarding the pump house, fought underwater.
 
 **Chapter 4 · High Water (6 Jan, finale).**
-- The Undertow comes itself. It walks out of the sea onto Crash Isle, under the tear, carrying its lantern.
-- The Keeper goes to meet it, and they recognise each other: two keepers from two worlds. “You opened the door,” says the Undertow. “Doors open both ways.” It doesn't hate Bangalore. It wants a city to keep again, and it means to take this one.
-- The finale has three phases:
-  1. On the skiff, through whirlpools, shooting at its lantern.
-  2. On a platform that sinks as the tide rises.
-  3. Up close under the tear, as the light in the lantern fails.
-- When the lantern breaks, the drowned world's light goes out with it, and the Undertow stops. It isn't beaten so much as calmed. It sinks back through the tear. *“Then I will wait. Everything finds its level.”*
-- The water drains out of the city.
+- You start the pumps and board Brine's ship as the water begins to fall.
+- The fight has three phases:
+  1. A boat chase.
+  2. Fighting on the deck.
+  3. A duel up the mast as the water drops away beneath the ship.
+- **The city drains.** One neighbourhood stays underwater for good: the sunken district.
+- The ending leads straight into Season 3.
 
-**Epilogue (sets up Season 3 · The Carnival).**
-- One low neighbourhood never quite dries out and becomes a canal district. Nila starts a water-taxi there.
-- The Keeper watches the tear and says quietly, “Something else has noticed us.”
-- On the drained lake bed, half-buried in silt, sits something that came through with the water: a striped ticket booth. A music box inside is still playing. On the counter is one ticket: **ADMIT ONE · {N}**.
+### The flooded city
+- While Season 2 runs, the whole city sits under about 6–8 m of water: low buildings are gone, and towers become islands.
+- **The whole map is swimmable**, both on the surface and under it. Through the clear water you can see the old streets below.
+- Rooftops are safe spots, linked by rope bridges and planks.
+- **Sharks** patrol, and a fin shows where each one is. When one locks on it circles, then lunges, with a warning you can dodge. Getting out of the water onto a rooftop or the boat keeps you safe. Bigger ones turn up in deeper water.
+- **Other dangers:** jellyfish swarms, whirlpools round collapsed buildings, and debris carried by the current.
+- **Christmas crossover:** at night the shallow water between rooftops freezes into skating lanes, and the boat gets a light on the bow.
 
-### What you keep and what changes
-- **Vehicle:** Nila's skiff, a small jet boat. It drives like the cars, but on water: through flooded streets, around the island and out to the other lands.
-- **Weapons:**
-  - Tide cannon: pushes enemies back.
-  - Anchor flail: a heavy melee weapon with a wide spin.
-  - Maybe a net launcher that slows enemies.
+### What you keep
+- **Vehicle:** the boat. **Tool:** the diving gear.
 - **Skins:**
-  - Story skin, Floodrunner: finish chapters 1–3.
-  - Challenge skin, Abyssal: beat the Pearl Warden without surfacing for air.
-  - Villain skin, Undertow's Crown: beat the finale.
-- **Left on the map:** the canal district (water streets you can boat through, with Nila's water-taxi) and the sea wall on the west coast.
-- **Winter crossover (it all runs in December):** floodwater freezes at night, the canals become skating lanes, and the skiff gets a light on the bow.
-- **Scenes:**
-  - an opening cutscene (the rain from the tear);
-  - an intro and a payoff for every boss;
-  - the finale under the tear;
-  - a Season 2 trailer;
-  - all replayable from the Season tab, like Season 1.
+  - Diver: finish the story.
+  - Canal Captain: the challenge, e.g. finish Chapter 1 without being bitten.
+  - Brine's Coat: beat the finale.
+- **Left on the map:** the sunken district.
 
-### Engine work it needs (in `index.html`, so later seasons can use it too)
-- Crash Isle and the other Season 1 map changes must move out of `seasons/s01.js`, which stops loading on 16 Dec, or the island vanishes.
-- Boat physics for the skiff.
-- An underwater mode: swimming down, a breath meter, blue fog and air pockets.
-- A water level that can rise and fall (flooded streets, tide arenas).
-- Season 1's fights stay replayable after it ends, so latecomers can still earn its skins (to be decided).
+### Engine work (in `index.html`, so later seasons can use it too)
+- Crash Isle and the other Season 1 map changes move out of `seasons/s01.js` before 16 Dec, or they vanish when Season 1 stops loading.
+- **A flooded-city mode:** one big water surface over the whole map, underwater fog and light, and the traffic and pedestrians switched off. The water level can fall for the finale.
+- **Swimming and diving everywhere:** reuse the sea swimming, and add diving with a breath meter.
+- **A walking height on building tops**, like the mountains have.
+- **Boat physics.**
+- **Sharks:** new enemies that swim, circle and lunge, built on the season fight engine.
+
+### Still to decide
+- Whether sharks can knock you out (you'd wake up on the nearest rooftop) or only hurt you.
+- How much fighting sharks takes: mostly getting away from them, or proper weapons. The default is to bop one on the nose to drive it off, plus the harpoon spear.
+
+## Season 3 (to be planned)
+
+The Carnival is scrapped. Season 3 starts where High Water ends, in the city just after it drains. Its story, villain, tool, map trace and skins are still to be worked out.
 
 ## The Moon (saved for a future season)
 
