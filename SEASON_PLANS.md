@@ -584,6 +584,20 @@ This time, it isn't yours.
 
 Phase 1 (Seasons 1–8) happened in Bangalore, and ended with Prime winning and your Bangalore destroyed. Phase 2 happens in **Kaleido**, a neon mega-city in another universe, where the Keeper's last act threw you. You arrive with everything you'd earned (weapons, tools, vehicles and skins), plus the meteor core and the rift jumper. The big thread of Phase 2: Prime has swallowed a hundred worlds, Kaleido is the next on the list, and this time you have to be ready.
 
+### What Phase 2 changes for everyone (decided)
+- **Kaleido replaces Bangalore for good.** From Season 9 the city every visitor walks out into is Kaleido, not Bangalore, and it stays Kaleido after the seasons, too.
+  - Bangalore is gone, along with everything Phase 1 left on its map: Crash Isle, the sunken district, Ember Island, the garage under the tower.
+  - Season 15 doesn't bring it back.
+- **The bedroom changes too.** The site's front door becomes your new place in Kaleido: a small apartment in the Mids, with rain and neon outside the window and a sky-train going past.
+  - Everything the room is there for comes with you: the desk, the laptop (RayanOS), research, projects, music and vinyl, the walkie-talkie and the simple view.
+  - So the site's content stays the same, in a new room.
+- **Your gear comes with you:** weapons, tools, vehicles, skins and saved progress.
+- **{N} Prime is the recurring villain of Phase 2:**
+  - Season 9: Vector has been taking Prime's calls, and Prime got to Kaleido first.
+  - Seasons 10–14: Prime is behind or alongside each season's villain. Prime sends agents, turns up in person at least once, and keeps getting closer.
+  - Season 15 (Convergence): the final showdown with Prime.
+- **The build:** Kaleido is a new world built from scratch in `index.html`, the biggest build in the series. The new bedroom is a second big piece of work. Both need to be ready by Season 9 (30 June 2027).
+
 ## Phase 2 · Season 9 · Neon Nights (30 June – 27 July 2027)
 
 ### Story
@@ -625,7 +639,7 @@ Every sign is in a language you can't read. Every door scans you, and you have n
 - **A whole new map:** Kaleido.
   - It's a vertical neon mega-city with three layers (the Stacks, the Mids, the Spires), sky-trains, rain, giant holograms and markets.
   - It's built from scratch as its own world in `index.html` (the biggest build in the series).
-  - It takes over from Bangalore as the city for the Phase 2 seasons.
+  - It replaces Bangalore for good, for every visitor.
 - **The language:**
   - signs and voices start as an unreadable script;
   - every word Pip teaches you translates more of the city, until you can read it all.
@@ -656,7 +670,7 @@ Every sign is in a language you can't read. Every door scans you, and you have n
 - **Score:** synthwave and drum and bass, with a pulsing bassline, sky-train rumble and rain, and a vocoded voice saying the city's name.
 
 ## Seasons 10–15 (to be re-planned for Kaleido)
-The original list (The Rift, Skyline, Harvest, Neon Nights, The Drought, Festival of Lights, Convergence) was written for Bangalore. Neon Nights is now Season 9's title. Seasons 10–15 need re-planning around Kaleido and the build-up to facing Prime again, with Season 15, Convergence, as the final showdown.
+The original list (The Rift, Skyline, Harvest, Neon Nights, The Drought, Festival of Lights, Convergence) was written for Bangalore. Neon Nights is now Season 9's title. Seasons 10–15 need re-planning around Kaleido and the build-up to facing Prime again, with Season 15, Convergence, as the final showdown with Prime, who recurs through all of them.
 
 ## Deep Freeze (saved for a future season)
 
