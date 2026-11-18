@@ -9,6 +9,7 @@ window.RU_SEASON_1 = function(R){
   // ---------- saved progress ----------
   const all = R.get(); const st = all.s1 = Object.assign({ intro: 0, met: 0, scanner: 0, frags: [], ch1: 0, c2: { start: 0, got: [], lost: [], done: 0 } }, all.s1 || {});
   st.c2 = Object.assign({ start: 0, got: [], lost: [], done: 0 }, st.c2 || {});
+  st.c3 = Object.assign({ start: 0, got: [], done: 0 }, st.c3 || {});
   // the week of the season (add ?week=N to the address to preview a later chapter)
   const week = () => { try { const q = location.search.match(/[?&]week=(\d)/); if (q) return +q[1]; } catch (e) {} return R.info().week; };
   const save = () => { const a = R.get(); a.s1 = st; R.put(a); };
@@ -39,64 +40,95 @@ window.RU_SEASON_1 = function(R){
     steam = { g, parts, glow };
   }
   function steamStep(dt, t){ if (!steam) return; steam.parts.forEach(q => { q.p = (q.p + dt * .045) % 1; const h = q.p * 70, w = 4 + q.p * 18; q.s.position.set(Math.cos(q.a + t * .1) * q.r * w, h, Math.sin(q.a + t * .1) * q.r * w); q.s.scale.setScalar(8 + q.p * 30); q.s.material.opacity = .42 * Math.sin(q.p * Math.PI); }); steam.glow.material.opacity = .35 + Math.sin(t * 2.2) * .12; }
-  // ---------- the cutscene ----------
+  // ---------- the cutscene: four shots with their own camera (no hands, no buttons but Skip) ----------
+  // 1. over the rooftops as the meteor crosses the sky; 2. on the beach as it hits the sea; 3. a slow push in on the steam,
+  // with the title; 4. back on the street, over the shoulders of people pointing out to sea. Times are in seconds.
+  const SHOTS = [5.4, 6.2, 4.2, 4.4], cine = document.createElement('div'); cine.className = 's1cine'; cine.innerHTML = '<div class="s1tint"></div><div class="s1black"></div><div class="s1title"><small>SEASON 1</small><b>LANDFALL</b></div>'; document.body.appendChild(cine);
+  css.textContent += `
+.s1cine{position:fixed;inset:0;pointer-events:none;z-index:54;display:none}body.s1cs .s1cine{display:block}
+.s1tint{position:absolute;inset:0;background:radial-gradient(ellipse at 30% 25%,rgba(255,150,70,.35),rgba(255,90,40,.12) 45%,rgba(20,10,30,.25));opacity:0;transition:opacity 1.2s}
+.s1black{position:absolute;inset:0;background:#000;opacity:0}
+.s1title{position:absolute;left:0;right:0;top:40%;text-align:center;color:#fff;opacity:0;transition:opacity 1s,letter-spacing 3.5s;letter-spacing:.2em;text-shadow:0 2px 24px rgba(0,0,0,.6)}
+.s1title small{display:block;font:800 14px system-ui,sans-serif;letter-spacing:.5em;color:#FFB27A}.s1title b{display:block;font:900 clamp(40px,9vw,92px)/1.05 system-ui,sans-serif}
+.s1title.on{opacity:1;letter-spacing:.32em}
+body.s1cs button:not(.s1skip),body.s1cs .placecard,body.s1cs .s1card{visibility:hidden!important}`;
   let CS = null;
-  function csStart(){
+  const aimAt = (cx, cy, cz, tx, ty, tz) => { const [lx, lz] = R.toLocal(cx, cz); R.pos.x = lx; R.pos.z = lz; R.pos.y = cy; const dx = tx - cx, dy = ty - cy, dz = tz - cz; R.yaw = Math.atan2(-dx, -dz); R.pitch = Math.atan2(dy, Math.hypot(dx, dz)); };
+  const lerp3 = (a, b, f) => [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f, a[2] + (b[2] - a[2]) * f];
+  const black = () => cine.querySelector('.s1black');
+  function cut(){ const el = black(); el.style.transition = 'none'; el.style.opacity = '1'; requestAnimationFrame(() => requestAnimationFrame(() => { el.style.transition = 'opacity .45s'; el.style.opacity = '0'; })); }
+  function add(o){ R.BL.mapG.add(o); CS.objs.push(o); return o; }
+  function puff(at, col, size, life, smoke){ const sp = smoke ? new THREE.Sprite(new THREE.SpriteMaterial({ map: R.flakeTex(), color: col, transparent: true, opacity: .5, depthWrite: false, fog: false })) : glowSprite(col, size, .9); sp.scale.setScalar(size); sp.position.set(at[0], at[1], at[2]); sp.userData.noPick = true; R.BL.mapG.add(sp); CS.fx.push({ s: sp, t: 0, life, size, v: null, smoke }); return CS.fx[CS.fx.length - 1]; }
+  function meteor(){ const g = new THREE.Group(); g.add(new THREE.Mesh(new THREE.SphereGeometry(1.8, 16, 12), new THREE.MeshBasicMaterial({ color: 0xFFF4DC, fog: false, toneMapped: false }))); g.add(glowSprite(0xFFE2A0, 14, 1)); g.add(glowSprite(0xFF7A2A, 30, .55)); g.traverse(o => o.userData.noPick = true); return add(g); }
+  function trail(at, f){ puff(at, 0xFFF0C8, 9, .35); puff([at[0] + (Math.random() - .5) * 2, at[1] + (Math.random() - .5) * 2, at[2] + (Math.random() - .5) * 2], f > .5 ? 0xFF6A2A : 0xFF9A4A, 7 + Math.random() * 5, 1.1); if (Math.random() < .5) puff(at, 0x6A6460, 10 + Math.random() * 6, 2.6, true);
+    if (Math.random() < .12) { const d = puff(at, 0xFFB060, 2.2, 1.6); d.v = V((Math.random() - .5) * 30, -10 - Math.random() * 20, (Math.random() - .5) * 30); } }
+  function csStart(replay){
     const [mx, mz] = R.toMap(R.pos.x, R.pos.z);
-    CS = { t: 0, from: { x: R.pos.x, y: R.pos.y, z: R.pos.z, yaw: R.yaw, pitch: R.pitch, map: [mx, mz] }, shot: 1, objs: [], trail: [], people: [] };
-    R.DRV.lock = true; document.body.classList.add('cine'); skipBtn.hidden = false; R.closePanel();
-    // the meteor, first seen from where you're standing: high over the city, heading west
-    const cp = R.camera.position, m = new THREE.Group(); m.add(new THREE.Mesh(new THREE.SphereGeometry(1.6, 16, 12), new THREE.MeshBasicMaterial({ color: 0xFFE2A8, fog: false, toneMapped: false }))); m.add(glowSprite(0xFF8A2A, 16)); m.children.forEach(o => o.userData.noPick = true);
-    R.BL.sc.add(m); CS.objs.push(m); CS.met = m; CS.a = V(cp.x + 150, cp.y + 150, cp.z - 60); CS.b = V(cp.x - 210, cp.y + 22, cp.z + 25); m.position.copy(CS.a);
-    R.tone(900, 3.2, 'sawtooth', .02, 140);
+    CS = { t: 0, shot: 0, st: 0, replay: !!replay, from: { x: R.pos.x, y: R.pos.y, z: R.pos.z, yaw: R.yaw, pitch: R.pitch, map: [mx, mz], tpv: R.tpv }, objs: [], fx: [], people: [] };
+    R.tpv = false; R.DRV.lock = true; R.closePanel(); document.body.classList.add('cine', 's1cs'); skipBtn.hidden = false; cine.querySelector('.s1tint').style.opacity = '1';
+    CS.met = meteor(); CS.a = [mx + 260, 230, mz - 120]; CS.b = [mx - 330, 55, mz + 40]; CS.met.position.set(...CS.a);
+    R.tone(1200, 4.4, 'sawtooth', .012, 90); setTimeout(() => R.tone(300, 3.5, 'triangle', .02, 60), 900);
   }
-  function trailPuff(at){ const s = glowSprite(0xFF9A4A, 9, .7); s.position.copy(at); R.BL.sc.add(s); CS.trail.push({ s, t: 0 }); }
-  function csGo(x, z, yaw, pitch){ const [lx, lz] = R.toLocal(x, z); R.pos.x = lx; R.pos.z = lz; R.yaw = yaw; R.pitch = pitch; }
-  function csImpact(){
-    const I = mapPos(IMPACT[0], .2, IMPACT[1]);
-    flash.style.transition = 'none'; flash.style.opacity = '1'; requestAnimationFrame(() => { flash.style.transition = 'opacity 1.6s'; flash.style.opacity = '0'; });
-    const big = glowSprite(0xFFE8C0, 90); big.position.copy(I); big.position.y = 6; R.BL.mapG.add(big); CS.objs.push(big); CS.big = big;
-    const ring = new THREE.Mesh(new THREE.RingGeometry(.9, 1, 64), new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: .9, side: THREE.DoubleSide, depthWrite: false, fog: false })); ring.rotation.x = -Math.PI / 2; ring.position.copy(I); ring.userData.noPick = true; R.BL.mapG.add(ring); CS.objs.push(ring); CS.ring = ring;
-    CS.spray = []; for (let i = 0; i < 26; i++) { const s = glowSprite(0xDDEEFF, 6, .8); s.position.copy(I); R.BL.mapG.add(s); CS.objs.push(s); const a = Math.random() * 6.28, sp = 8 + Math.random() * 18; CS.spray.push({ s, v: V(Math.cos(a) * sp * .5, 14 + Math.random() * 22, Math.sin(a) * sp * .5) }); }
-    R.tone(55, 2.4, 'sawtooth', .09, 25); R.tone(38, 3.2, 'sine', .12, 22); setTimeout(() => R.tone(90, 1.6, 'triangle', .05, 40), 300);
-    buildSteam();
-  }
-  function csCrowd(C){
-    // a few people on the street stop and point out to sea
+  function crowd(C){
     if (C.crowded) return; C.crowded = true; const [mx, mz] = C.from.map;
-    [[-3, -2.5], [-3.5, 1.8], [-5.5, -.6], [-2.2, 3.6], [-4.6, 3.2]].forEach(([dx, dz], i) => { let a; try { a = R.avatar(R.crowdLook(60 + i)); } catch (e) { return; } a.g.position.set(mx + dx, 0, mz + dz); a.g.rotation.y = Math.PI / 2 + (Math.random() - .5) * .4; a.g.traverse(o => o.userData.noPick = true); R.BL.mapG.add(a.g); if (i % 2 === 0 && a.arms && a.arms[1]) a.arms[1].a.rotation.x = -1.9; C.people.push(a); });
-    const L = ['“Did you see that?!”', '“It went into the sea!”', '“Was that a plane?”']; L.forEach((l, i) => setTimeout(() => R.say(l, 1800), 300 + i * 1500));
+    [[-3, -2.2], [-3.4, 1.6], [-5.4, -.4], [-2.4, 3.4], [-4.6, 3], [-6.2, 1.2]].forEach(([dx, dz], i) => { let a; try { a = R.avatar(R.crowdLook(60 + i)); } catch (e) { return; } a.g.position.set(mx + dx, 0, mz + dz); a.g.rotation.y = Math.PI / 2 + (Math.random() - .5) * .4; a.g.traverse(o => o.userData.noPick = true); R.BL.mapG.add(a.g); if (i % 2 === 0 && a.arms && a.arms[1]) a.arms[1].a.rotation.x = -1.9; if (i === 3 && a.arms && a.arms[0]) a.arms[0].a.rotation.x = -2.6; C.people.push(a); });
+    ['“Did you see that?!”', '“It went into the sea!”', '“Was that a plane?”'].forEach((l, i) => setTimeout(() => R.say(l, 1700), 400 + i * 1400));
+  }
+  function impact(C){
+    const I = [IMPACT[0], 0, IMPACT[1]];
+    const fl = black(); fl.style.transition = 'none'; fl.style.background = '#FFF6E8'; fl.style.opacity = '1'; requestAnimationFrame(() => requestAnimationFrame(() => { fl.style.transition = 'opacity 1.4s'; fl.style.opacity = '0'; setTimeout(() => fl.style.background = '#000', 1500); }));
+    C.ball = add(new THREE.Mesh(new THREE.SphereGeometry(1, 24, 16), new THREE.MeshBasicMaterial({ color: 0xFFB060, transparent: true, opacity: .95, fog: false, toneMapped: false, blending: THREE.AdditiveBlending, depthWrite: false }))); C.ball.position.set(I[0], 2, I[2]);
+    C.col = add(new THREE.Mesh(new THREE.CylinderGeometry(5, 9, 1, 24, 1, true), new THREE.MeshBasicMaterial({ color: 0xF4FAFF, transparent: true, opacity: .8, fog: false, side: THREE.DoubleSide, depthWrite: false }))); C.col.position.set(I[0], 0, I[2]);
+    C.ring = add(new THREE.Mesh(new THREE.RingGeometry(.92, 1, 96), new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: .9, side: THREE.DoubleSide, depthWrite: false, fog: false }))); C.ring.rotation.x = -Math.PI / 2; C.ring.position.set(I[0], .15, I[2]);
+    C.ring2 = add(C.ring.clone()); C.ring2.material = C.ring.material.clone();
+    for (let i = 0; i < 40; i++) { const a = Math.random() * 6.28, sp = 6 + Math.random() * 16, d = puff([I[0], 2, I[2]], i % 3 ? 0xEAF4FF : 0xFFC080, 4 + Math.random() * 4, 2.4 + Math.random()); d.v = V(Math.cos(a) * sp, 18 + Math.random() * 28, Math.sin(a) * sp); d.g = 26; }
+    R.tone(48, 2.8, 'sawtooth', .1, 22); R.tone(32, 3.6, 'sine', .14, 20); setTimeout(() => R.tone(120, 1.4, 'square', .03, 40), 120); setTimeout(() => R.tone(70, 2.4, 'triangle', .06, 30), 600);
+    buildSteam(); C.shake = 1;
   }
   function csEnd(skipped){
     if (!CS) return; const C = CS; CS = null;
-    C.objs.forEach(o => { if (o.parent) o.parent.remove(o); }); C.trail.forEach(q => { if (q.s.parent) q.s.parent.remove(q.s); });
-    csGo(C.from.map[0], C.from.map[1], Math.PI / 2, .04); csCrowd(C);
-    document.body.classList.remove('cine'); skipBtn.hidden = true; R.DRV.lock = false; flash.style.opacity = '0'; buildSteam();
-    const people = C.people; setTimeout(() => people.forEach(a => { if (a.g.parent) a.g.parent.remove(a.g); }), skipped ? 8000 : 20000);
+    C.objs.forEach(o => { if (o.parent) o.parent.remove(o); }); C.fx.forEach(q => { if (q.s.parent) q.s.parent.remove(q.s); });
+    document.body.classList.remove('cine', 's1cs'); cine.querySelector('.s1tint').style.opacity = '0'; cine.querySelector('.s1title').classList.remove('on'); black().style.opacity = '0'; skipBtn.hidden = true;
+    const [lx, lz] = R.toLocal(C.from.map[0], C.from.map[1]); R.pos.x = lx; R.pos.z = lz; R.pos.y = C.from.y; R.yaw = C.replay ? C.from.yaw : Math.PI / 2; R.pitch = .02; R.tpv = C.from.tpv; R.DRV.lock = false; buildSteam();
+    if (!C.crowded && !skipped) crowd(C); const people = C.people; setTimeout(() => people.forEach(a => { if (a.g.parent) a.g.parent.remove(a.g); }), skipped ? 1000 : 16000);
+    if (C.replay) return;
     st.intro = 1; save(); R.PH.wp = PIER.slice();
-    showCard('SEASON 1', 'Landfall', 'Something fell into the sea off the west coast. Follow the beacon to the ferry pier.', 5200);
+    showCard('SEASON 1 · CHAPTER 1', 'Impact', 'Something fell into the sea off the west coast. Follow the beacon to the ferry pier.', 5600);
   }
   skipBtn.addEventListener('click', e => { e.stopPropagation(); csEnd(true); });
   addEventListener('keydown', e => { if (CS && e.key === 'Escape') csEnd(true); });
   function csStep(dt){
-    const C = CS; C.t += dt; const t = C.t;
-    if (C.shot === 1) {
-      // turn west and look up while it crosses the sky
-      const k = ease(Math.min(1, t / 2)); R.yaw = C.from.yaw + angTo(C.from.yaw, Math.PI / 2) * k; R.pitch = C.from.pitch + (.32 - C.from.pitch) * k;
-      if (t > 1.2) { const f = Math.min(1, (t - 1.2) / 3.4); C.met.position.lerpVectors(C.a, C.b, f); if ((C.tp = (C.tp || 0) - dt) <= 0) { C.tp = .05; trailPuff(C.met.position); } }
-      if (t > 4.8 && !C.cut) { C.cut = true; R.fade(() => { csGo(COAST[0], COAST[1], Math.PI / 2, .06); const [lx, lz] = R.toLocal(COAST[0], COAST[1]); C.a = V(lx - 30, 170, lz - 80); C.met.position.copy(C.a); C.t2 = 0; C.shot = 2; }, '#000'); }
+    const C = CS; C.t += dt; C.st += dt; const t = C.st, [px, pz] = C.from.map;
+    if (C.st > SHOTS[C.shot]) { C.shot++; C.st = 0; if (C.shot >= SHOTS.length) return csEnd(false); cut(); if (C.shot === 2) [C.ball, C.col, C.ring, C.ring2, C.met].forEach(o => { if (o) o.visible = false; }); }
+    const shake = (C.shake || 0) > 0 ? (C.shake -= dt * .55, Math.max(0, C.shake)) : 0, j = () => (Math.random() - .5) * shake * .9;
+    if (C.shot === 0) {
+      // 1. crane up over the rooftops, looking west as it crosses the sky
+      const f = ease(Math.min(1, t / 5)), cam = [px + 6 * f, 1.7 + 30 * f, pz + 4 * f], mf = Math.min(1, Math.max(0, (t - .9) / 4.5)), m = lerp3(CS.a, CS.b, mf);
+      C.met.position.set(...m); if (mf > 0 && mf < 1) trail(m, mf); const look = lerp3([px - 200, 30, pz], m, .55);
+      aimAt(cam[0], cam[1], cam[2], look[0], look[1], look[2]);
+    } else if (C.shot === 1) {
+      // 2. low on the beach: it screams in and hits the sea
+      if (!C.b2) { C.b2 = true; C.ma = [IMPACT[0] + 70, 260, IMPACT[1] - 60]; C.met.position.set(...C.ma); C.met.visible = true; }
+      const cam = [-399 - t * .5, 1.15, 57], hitT = 2.5, mf = Math.min(1, t / hitT), m = lerp3(C.ma, [IMPACT[0], 0, IMPACT[1]], mf * mf);
+      if (t < hitT) { C.met.position.set(...m); trail(m, mf); } else if (!C.hit) { C.hit = true; C.met.visible = false; impact(C); }
+      aimAt(cam[0] + j(), cam[1] + j() * .5, cam[2] + j(), IMPACT[0], 14 + (C.hit ? Math.min(14, (t - hitT) * 9) : 0), IMPACT[1]);
+      if (C.hit) { const h = t - hitT;
+        C.ball.scale.setScalar(2 + Math.min(1, h / .7) * 26); C.ball.material.opacity = Math.max(0, .95 - h / 2.2); C.ball.material.color.setHSL(.08 - h * .02, 1, Math.max(.2, .65 - h * .15));
+        const ch = Math.min(1, h / 1.1) * 62 * Math.max(0, 1 - Math.max(0, h - 1.6) / 2.4); C.col.scale.set(1 + h * .4, Math.max(.01, ch), 1 + h * .4); C.col.position.y = ch / 2; C.col.material.opacity = Math.max(0, .8 - h / 3.6);
+        const r = 1 + h * 48; C.ring.scale.set(r, r, r); C.ring.material.opacity = Math.max(0, .9 - h / 3.6); const r2 = 1 + Math.max(0, h - .35) * 36; C.ring2.scale.set(r2, r2, r2); C.ring2.material.opacity = Math.max(0, .6 - h / 3.2); }
     } else if (C.shot === 2) {
-      C.t2 += dt; const t2 = C.t2; R.yaw = Math.PI / 2;
-      if (t2 > .6 && t2 < 3.1) { const I = R.toLocal(IMPACT[0], IMPACT[1]), to = V(I[0], 0, I[1]), f = Math.min(1, (t2 - .6) / 2.5); C.met.position.lerpVectors(C.a, to, f * f); if ((C.tp = (C.tp || 0) - dt) <= 0) { C.tp = .04; trailPuff(C.met.position); } }
-      if (t2 >= 3.1 && !C.hit) { C.hit = true; C.met.visible = false; csImpact(); }
-      if (C.hit) { const h = t2 - 3.1; R.pitch = .06 + (h < 1.2 ? Math.sin(h * 50) * .02 * (1.2 - h) : 0);
-        if (C.big) { C.big.material.opacity = Math.max(0, 1 - h / 1.4); C.big.scale.setScalar(90 + h * 60); }
-        if (C.ring) { const r = 1 + h * 55; C.ring.scale.set(r, r, r); C.ring.material.opacity = Math.max(0, .9 - h / 3.4); }
-        (C.spray || []).forEach(q => { q.v.y -= 22 * dt; q.s.position.addScaledVector(q.v, dt); q.s.material.opacity = Math.max(0, .8 - h / 2.4); });
-        if (h > 4.2 && !C.back) { C.back = true; R.fade(() => { if (CS !== C) return; csGo(C.from.map[0], C.from.map[1], Math.PI / 2, .04); csCrowd(C); C.shot = 3; C.t3 = 0; }, '#000'); } }
-    } else if (C.shot === 3) { C.t3 += dt; R.yaw = Math.PI / 2; if (C.t3 > 4.6) csEnd(false); }
-    C.trail.forEach(q => { q.t += dt; q.s.material.opacity = Math.max(0, .7 - q.t / 1.4); q.s.scale.setScalar(9 + q.t * 10); });
-    C.trail = C.trail.filter(q => { if (q.t < 1.4) return true; if (q.s.parent) q.s.parent.remove(q.s); return false; });
+      // 3. a slow push in on the steam where the island will rise; the title comes up
+      const f = ease(Math.min(1, t / SHOTS[2])), cam = lerp3([-428, 24, 114], [-466, 15, 97], f); aimAt(cam[0], cam[1], cam[2], IMPACT[0], 22, IMPACT[1]);
+      if ((C.em = (C.em || 0) - dt) <= 0) { C.em = .06; const d = puff([IMPACT[0] + (Math.random() - .5) * 20, 20 + Math.random() * 30, IMPACT[1] + (Math.random() - .5) * 20], 0xFF8A3A, 1.4, 2.2); d.v = V((Math.random() - .5) * 4, -3 - Math.random() * 4, (Math.random() - .5) * 4); }
+      if (t > .6 && !C.titled) { C.titled = true; cine.querySelector('.s1title').classList.add('on'); R.tone(220, 2.6, 'sine', .03, 330); }
+      if (t > SHOTS[2] - 1 && C.titled) cine.querySelector('.s1title').classList.remove('on');
+    } else {
+      // 4. back on the street, over their shoulders, looking at the glow on the horizon
+      if (!C.crowded) crowd(C); const f = ease(Math.min(1, t / SHOTS[3])); aimAt(px + 2.6 - f * .8, 1.75, pz + 1.3, px - 80, 7 + f * 3, pz);
+      cine.querySelector('.s1tint').style.opacity = '0';
+    }
+    C.fx.forEach(q => { q.t += dt; const k = q.t / q.life; if (q.v) { q.v.y -= (q.g || 12) * dt; q.s.position.addScaledVector(q.v, dt); } q.s.material.opacity = Math.max(0, (q.smoke ? .5 : .9) * (1 - k)); q.s.scale.setScalar(q.size * (q.smoke ? 1 + k * 2.4 : 1 + k * .8)); });
+    C.fx = C.fx.filter(q => { if (q.t < q.life) return true; if (q.s.parent) q.s.parent.remove(q.s); return false; });
   }
   // ---------- the hint in the room, for visitors who never go outside ----------
   let roomT = 0, hinted = false, streak = null;
@@ -117,7 +149,7 @@ window.RU_SEASON_1 = function(R){
     a.g.userData.noPick = true; return a;
   }
   function keeperMeet(){
-    st.met = 1; save(); R.PH.wp = null; R.DRV.lock = true; talking = true;
+    st.met = 1; save(); R.PH.wp = null; R.DRV.lock = true; talking = true; document.body.classList.add('cine');
     const k = keeper = keeperMesh(); if (k) { k.g.position.set(R.ISLE.px1 + 1.5, 0, R.ISLE.pz); k.g.rotation.y = -Math.PI / 2; R.BL.mapG.add(k.g); }
     const [lx, lz] = R.toLocal(R.ISLE.px1 + 4.5, R.ISLE.pz); R.pos.x = lx; R.pos.z = lz; R.yaw = Math.PI / 2; R.pitch = 0;
     talk = { lines: [['The Keeper', 'You saw it fall. Good. Most of them have already forgotten.'], ['The Keeper', 'I keep watch over this island. Things fall into it. Things climb out of it.'], ['The Keeper', 'What do they call you?']], then: askName };
@@ -138,7 +170,7 @@ window.RU_SEASON_1 = function(R){
     } });
   }
   function keeperGo(){
-    R.DRV.lock = false; talking = false; if (!keeper) return; const k = keeper; let f = 1;
+    R.DRV.lock = false; talking = false; document.body.classList.remove('cine'); if (!keeper) return; const k = keeper; let f = 1;
     k.g.traverse(o => { if (o.material) { o.material = o.material.clone(); o.material.transparent = true; } });
     const iv = setInterval(() => { f -= .05; k.g.traverse(o => { if (o.material) o.material.opacity = Math.max(0, f); }); if (f <= 0) { clearInterval(iv); if (k.g.parent) k.g.parent.remove(k.g); keeper = null; R.say('When you look back, the end of the pier is empty.', 3400); } }, 60);
   }
@@ -150,8 +182,8 @@ window.RU_SEASON_1 = function(R){
       const gl = glowSprite(0xFF7A2A, 2.6, .55); gl.position.y = .4; g.add(gl); g.traverse(o => o.userData.noPick = true); return { i, g, gl, x: p[0], z: p[1] }; });
   }
   function scan(){
-    if (!st.scanner || R.busy) return; const [mx, mz] = R.toMap(R.pos.x, R.pos.z); if (c2Jam(mx, mz)) return;
-    const left = (frags || []).filter(Boolean).concat((c2 || []).filter(f => f.g)); if (!left.length) return R.say('The scanner is quiet. Nothing left to find, for now.', 2400);
+    if (!st.scanner || R.busy) return; const [mx, mz] = R.toMap(R.pos.x, R.pos.z); if (c2Jam(mx, mz) || c3Jam(mx, mz)) return;
+    const left = (frags || []).filter(Boolean).concat((c2 || []).filter(f => f.g), c3 ? c3.shards.filter(Boolean) : []); if (!left.length) return R.say('The scanner is quiet. Nothing left to find, for now.', 2400);
     let best = null, bd = 1e9; left.forEach(f => { const d = Math.hypot(f.x - mx, f.z - mz); if (d < bd) { bd = d; best = f; } });
     const a = Math.atan2(best.x - mx, -(best.z - mz)), dirs = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'], dir = dirs[((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8];
     const ring = new THREE.Mesh(new THREE.RingGeometry(.9, 1, 48), new THREE.MeshBasicMaterial({ color: 0xFF9A4A, transparent: true, opacity: .8, side: THREE.DoubleSide, depthWrite: false, fog: false })); ring.rotation.x = -Math.PI / 2; ring.position.set(mx, .15, mz); ring.userData.noPick = true; R.BL.mapG.add(ring);
@@ -224,6 +256,85 @@ window.RU_SEASON_1 = function(R){
   }
   // scanning near a drone jams it
   function c2Jam(mx, mz){ let n = 0; (c2 || []).forEach(f => { const D = f.d; if (D && (D.st === 'go' || D.st === 'down') && Math.hypot(D.x - mx, D.z - mz) < 18) { D.st = 'jam'; D.jam = 4; D.y = Math.max(D.y, 8); n++; } }); if (n) { R.tone(160, .5, 'sawtooth', .04, 60); R.say(n > 1 ? 'Your scanner screams on the drones’ frequency. They spark, spin and limp back where they came from.' : 'Your scanner screams on the drone’s frequency. It sparks, spins and limps back where it came from.', 3200); } return n; }
+
+  // ---------- Chapter 3: Crash Isle. The steam has become land; the core is on it, and so is the Salvager's camp ----------
+  const ISLE_C = IMPACT, ISLE_R = 44, DOCK = [IMPACT[0] + ISLE_R + 3, IMPACT[1]], SHARDS = [[-528, 100], [-566, 62], [-550, 41]];
+  const SENTRY = [{ c: [-530, 98], r: 9, sp: .32 }, { c: [-563, 66], r: 8, sp: -.36 }, { c: [-546, 46], r: 10, sp: .28 }];
+  let isle = null, c3 = null;
+  const onIsle = (mx, mz) => Math.hypot(mx - ISLE_C[0], mz - ISLE_C[1]) < ISLE_R - 1 || mx > DOCK[0] - 5 && mx < DOCK[0] + 2.5 && Math.abs(mz - DOCK[1]) < 1.4;
+  function buildIsle(){
+    if (isle || !R.BL.mapG) return; const g = new THREE.Group(); g.position.set(ISLE_C[0], 0, ISLE_C[1]); R.BL.mapG.add(g); isle = { g };
+    const M = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, o || {}));
+    // dark volcanic sand, a rim of boulders round the crater, and the core on a mound in the middle
+    const ground = new THREE.Mesh(new THREE.CircleGeometry(ISLE_R + 3, 48), M(0x4A403C, { polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 })); ground.rotation.x = -Math.PI / 2; ground.position.y = .03; g.add(ground);
+    const shore = new THREE.Mesh(new THREE.RingGeometry(ISLE_R, ISLE_R + 6, 48), new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: .35, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 })); shore.rotation.x = -Math.PI / 2; shore.position.y = -.05; g.add(shore);
+    const rock = M(0x2E2826); for (let i = 0; i < 22; i++) { const a = i / 22 * 6.28, r = 13 + (i % 3) * 1.4, s = 1.4 + (i * 7 % 5) * .45, b = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0), rock); b.position.set(Math.cos(a) * r, s * .55, Math.sin(a) * r); b.rotation.set(i, i * 2, 0); g.add(b); if (Math.abs(Math.sin(a)) > .25 || Math.cos(a) < 0) R.blrBox(ISLE_C[0] + b.position.x - s * .7, ISLE_C[0] + b.position.x + s * .7, ISLE_C[1] + b.position.z - s * .7, ISLE_C[1] + b.position.z + s * .7); }
+    for (let i = 0; i < 30; i++) { const a = Math.random() * 6.28, r = 18 + Math.random() * 22, s = .4 + Math.random() * .9, b = new THREE.Mesh(new THREE.DodecahedronGeometry(s, 0), rock); b.position.set(Math.cos(a) * r, s * .4, Math.sin(a) * r); g.add(b); }
+    const mound = new THREE.Mesh(new THREE.SphereGeometry(7, 20, 8, 0, 6.28, 0, .9), M(0x3A3230)); mound.position.y = -4.2; g.add(mound);
+    const core = isle.core = new THREE.Group(); core.position.y = 2.2; g.add(core); const cm = new THREE.MeshBasicMaterial({ color: 0xFF8A3A, toneMapped: false });
+    [[0, 0, 0, 1.6], [1.1, -.4, .5, .8], [-.9, -.5, -.6, .9], [.3, -.6, -1.1, .6], [-.6, .7, .6, .5]].forEach(([x, y, z, s]) => { const c = new THREE.Mesh(new THREE.IcosahedronGeometry(s, 0), cm); c.position.set(x, y, z); c.rotation.set(x, y, z); core.add(c); });
+    const halo = glowSprite(0xFF7A2A, 14, .6); core.add(halo); isle.halo = halo;
+    // the Salvager's camp: crates, a generator, a tent and two floodlights
+    const camp = new THREE.Group(); camp.position.set(8, 0, 24); g.add(camp); const box = (w, h, d, c, x, y, z, ry = 0) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(c)); m.position.set(x, y, z); m.rotation.y = ry; camp.add(m); return m; };
+    [[0, 0], [2.2, .4], [1, 2.2], [-2.4, 1.2]].forEach(([x, z], i) => box(1.8, 1.4, 1.8, i % 2 ? 0x6A5236 : 0x7A6242, x, .7, z, i * .4)); box(2.6, 1.6, 1.4, 0xE8B82E, -5, .8, -1.5); box(.5, .5, .5, 0x16181D, -5, 1.9, -1.5);
+    const tent = new THREE.Mesh(new THREE.ConeGeometry(3, 2.8, 4), M(0x5A6A3A)); tent.position.set(5, 1.4, -3); tent.rotation.y = .7; camp.add(tent);
+    [[-3, 4], [6, 3]].forEach(([x, z]) => { box(.2, 7, .2, 0x2A2D33, x, 3.5, z); const l = glowSprite(0xFFF2C8, 4, .9); l.position.set(x, 7.2, z); camp.add(l); });
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(4.4, .9), new THREE.MeshBasicMaterial({ map: R.tex(512, 104, (c, w, h) => { c.fillStyle = '#16181D'; c.fillRect(0, 0, w, h); c.fillStyle = '#E8B82E'; c.font = '900 46px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('KEEP OUT · SALVAGE SITE', w / 2, h / 2 + 2); }) })); sign.position.set(0, 2.4, -3.2); sign.rotation.y = Math.PI; camp.add(sign);
+    R.blrBox(ISLE_C[0] + 8 - 4, ISLE_C[0] + 8 + 4, ISLE_C[1] + 24 - 2, ISLE_C[1] + 24 + 4);
+    // a little dock on the east side, facing the pier
+    const dock = new THREE.Mesh(new THREE.BoxGeometry(8, .25, 2.6), M(0x8A6A4A)); dock.position.set(DOCK[0] - ISLE_C[0] - 1, .08, 0); g.add(dock);
+    // steam still drifting out of the vents
+    isle.vents = []; for (let i = 0; i < (R.lowFx ? 10 : 22); i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: R.flakeTex(), color: 0xE8ECF0, transparent: true, opacity: 0, depthWrite: false })); s.userData.noPick = true; g.add(s); isle.vents.push({ s, p: i / 22, a: Math.random() * 6.28, r: 3 + Math.random() * 9 }); }
+    g.traverse(o => o.userData.noPick = true);
+    R.ISLE.extra.push(onIsle);
+    if (st.c3.done) coreBeam();
+  }
+  function isleStep(dt, t){ if (!isle) return; isle.core.rotation.y = t * .4; const k = 1 + Math.sin(t * 2.4) * .08; isle.core.scale.setScalar(k * (isle.flare || 1)); isle.halo.material.opacity = .45 + Math.sin(t * 2.4) * .15;
+    isle.vents.forEach(q => { q.p = (q.p + dt * .07) % 1; q.s.position.set(Math.cos(q.a) * q.r, 1 + q.p * 18, Math.sin(q.a) * q.r); q.s.scale.setScalar(2 + q.p * 8); q.s.material.opacity = .32 * Math.sin(q.p * Math.PI); });
+    if (isle.beam) isle.beam.material.opacity = .35 + Math.sin(t * 3) * .1; }
+  function coreBeam(){ if (!isle || isle.beam) return; const b = isle.beam = new THREE.Mesh(new THREE.CylinderGeometry(.9, 1.6, 300, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFB070, transparent: true, opacity: .4, depthWrite: false, fog: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, toneMapped: false })); b.position.y = 150; b.userData.noPick = true; isle.g.add(b); }
+  // the island ferry and a swim both go there once it has risen
+  function goIsle(){ R.fade(() => { buildIsle(); const [lx, lz] = R.toLocal(DOCK[0] - 1, DOCK[1]); R.pos.x = lx; R.pos.z = lz; R.pos.y = 1.6; R.yaw = Math.PI / 2; R.pitch = 0; R.say(st.c3.done ? 'Crash Isle. The core is still burning a hole in the sky.' : 'Crash Isle. Two weeks ago this was open sea. Now it’s warm underfoot, and someone has already put up a fence.', 5200); }, '#0B0D14'); }
+  function addStop(){ if (R.ISLE.stops.some(q => q.k === 'crash')) return; R.ISLE.stops.push({ k: 'crash', n: 'Crash Isle', where: 'the new island where the meteor came down', go: goIsle }); }
+  const dockBtn = document.createElement('button'); dockBtn.type = 'button'; dockBtn.className = 'btn alt'; dockBtn.style.cssText = 'position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:40'; dockBtn.textContent = 'Ferry back to the pier' + (R.fine ? ' (E)' : ''); dockBtn.hidden = true; document.body.appendChild(dockBtn);
+  const ferryBack = () => R.fade(() => { const [lx, lz] = R.toLocal(R.ISLE.px1 + 6, R.ISLE.pz); R.pos.x = lx; R.pos.z = lz; R.yaw = -Math.PI / 2; R.pitch = 0; }, '#0B0D14');
+  dockBtn.addEventListener('click', e => { e.stopPropagation(); ferryBack(); });
+  addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; if (e.key.toLowerCase() === 'e' && !dockBtn.hidden) ferryBack(); });
+  function c3Build(){
+    if (c3 || !R.BL.mapG) return; buildIsle();
+    c3 = { shards: SHARDS.map((p, i) => { if (st.c3.got.includes(i)) return null; const g = new THREE.Group(); g.position.set(p[0], 0, p[1]); R.BL.mapG.add(g);
+        const m = new THREE.MeshBasicMaterial({ color: 0x7CF2FF, toneMapped: false }); [[0, .5, 0, .35], [.2, .3, .15, .2], [-.18, .28, -.1, .18]].forEach(([x, y, z, s]) => { const c = new THREE.Mesh(new THREE.OctahedronGeometry(s, 0), m); c.position.set(x, y, z); c.scale.y = 1.8; g.add(c); });
+        const gl = glowSprite(0x7CF2FF, 2.4, .6); gl.position.y = .5; g.add(gl); g.traverse(o => o.userData.noPick = true); return { i, g, x: p[0], z: p[1] }; }),
+      sentries: SENTRY.map((S, k) => { const g = droneMesh(); R.BL.mapG.add(g); const cone = new THREE.Mesh(new THREE.ConeGeometry(5, 11, 20, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFF2B0, transparent: true, opacity: .16, depthWrite: false, side: THREE.DoubleSide, fog: false })); cone.position.y = -5.8; cone.userData.noPick = true; g.add(cone); return Object.assign({ g, cone, a: k * 2, jam: 0, x: 0, z: 0 }, S); }) };
+  }
+  function c3Intro(){
+    st.c3.start = 1; save(); addStop(); buildIsle();
+    ['📻 …reports that the steam off the west coast has stopped. Fishermen say there’s land out there now.', '📻 The island has no name yet. People are calling it Crash Isle.'].forEach((l, i) => setTimeout(() => R.say(l, 4000), i * 4200));
+    setTimeout(() => showCard('CHAPTER 3', 'Crash Isle', 'The meteor’s core is on the new island, and so is the Salvager’s camp. Take the ferry from the pier, find three crystal shards, and keep out of the searchlights.', 6800), 8600);
+    R.PH.wp = PIER.slice();
+  }
+  function caught(){ R.tone(880, .15, 'square', .04); setTimeout(() => R.tone(660, .25, 'square', .04), 160); R.say('Spotted! A siren whoops and the sentries herd you back to the dock.', 3200); R.fade(() => { const [lx, lz] = R.toLocal(DOCK[0] - 1, DOCK[1]); R.pos.x = lx; R.pos.z = lz; R.yaw = Math.PI / 2; }, '#2A0A0A'); c3.cool = 4; }
+  function c3Step(dt, t, mx, mz, free){
+    if (!c3) return; c3.cool = Math.max(0, (c3.cool || 0) - dt);
+    c3.sentries.forEach(S => { if (S.jam > 0) { S.jam -= dt; S.g.rotation.z = Math.sin(t * 20) * .3; S.cone.visible = false; } else { S.a += S.sp * dt; S.g.rotation.z = 0; S.cone.visible = true; }
+      S.x = S.c[0] + Math.cos(S.a) * S.r; S.z = S.c[1] + Math.sin(S.a) * S.r; S.g.position.set(S.x, 11 + Math.sin(t * 2 + S.a) * .3, S.z); S.g.rotors.forEach((r, k) => r.rotation.y = t * 30 + k);
+      if (!st.c3.done && free && S.jam <= 0 && !c3.cool && onIsle(mx, mz) && Math.hypot(mx - S.x, mz - S.z) < 4.6) caught(); });
+    c3.shards.forEach((f, k) => { if (!f) return; f.g.rotation.y = t; if (free && Math.hypot(f.x - mx, f.z - mz) < 2.2) { R.BL.mapG.remove(f.g); c3.shards[k] = null; st.c3.got.push(f.i); save(); R.tone(1046, .15, 'triangle', .05); setTimeout(() => R.tone(1568, .25, 'triangle', .05), 140);
+        showCard('SHARD FOUND', `${st.c3.got.length} of ${SHARDS.length}`, st.c3.got.length < SHARDS.length ? 'It hums in the same key as the core.' : 'All three. Take them to the core in the crater.', 3200); } });
+    if (st.c3.got.length >= SHARDS.length && !st.c3.done && free && Math.hypot(mx - ISLE_C[0], mz - ISLE_C[1]) < 8) coreScene();
+  }
+  function c3Jam(mx, mz){ let n = 0; (c3 ? c3.sentries : []).forEach(S => { if (S.jam <= 0 && Math.hypot(S.x - mx, S.z - mz) < 18) { S.jam = 6; n++; } }); if (n) { R.tone(160, .5, 'sawtooth', .04, 60); R.say(n > 1 ? 'The sentries’ lights stutter out. You have a few seconds.' : 'The sentry’s light stutters out. You have a few seconds.', 2600); } return n; }
+  function coreScene(){
+    st.c3.done = 1; save(); R.DRV.lock = true; document.body.classList.add('cine'); talking = true;
+    // step back so the whole core is in view, and look up at it
+    { const [lx, lz] = R.toLocal(ISLE_C[0] + 10, ISLE_C[1] + 1); R.pos.x = lx; R.pos.z = lz; R.yaw = Math.PI / 2 - .1; R.pitch = .18; }
+    let f = 1; const iv = setInterval(() => { f = Math.min(1.7, f + .04); isle.flare = f; if (f >= 1.7) clearInterval(iv); }, 50);
+    R.tone(220, 2.4, 'sine', .04, 440); setTimeout(() => { coreBeam(); R.tone(110, 2.6, 'sawtooth', .05, 55); }, 1300);
+    setTimeout(() => R.dlgPlay([['The Keeper', 'It isn’t a rock, {N}. It never was.'], ['The Keeper', 'It’s a key. And keys are made to open things.'], ['ME', 'Open what?'], ['The Keeper', 'Look up.']], { block: true, done: () => {
+      R.dlgPlay([['📻 The Salvager', 'Thank you, Traveller. You found my prize, and you lit it up so nicely.'], ['📻 The Salvager', 'I’ll be along to collect it. Don’t get up.']], { block: true, done: () => {
+        talking = false; document.body.classList.remove('cine'); R.DRV.lock = false; isle.flare = 1; R.tone(98, 1.8, 'square', .04, 90); const d4 = 22 - R.info().day;
+        showCard('CHAPTER 3 COMPLETE', 'Crash Isle', d4 > 0 ? `The core is lit, and the Salvager is coming. Chapter 4 unlocks in ${d4} day${d4 > 1 ? 's' : ''}.` : 'The core is lit, and the Salvager is coming.', 6000); } }); } }), 2600);
+  }
   // ---------- every frame ----------
   let streetT = 0;
   function step(dt, now){
@@ -234,7 +345,7 @@ window.RU_SEASON_1 = function(R){
     if (inB && R.BLC.built && st.intro) { buildSteam(); if (st.met) buildFrags(); }
     if (steam) steamStep(dt, t);
     if (CS) { if (!inB || R.busy) { csEnd(true); return; } csStep(dt); return; }
-    if (!inB) { streetT = 0; scanBtn.hidden = true; return; }
+    if (!inB) { streetT = 0; scanBtn.hidden = true; dockBtn.hidden = true; return; }
     const [mx, mz] = R.toMap(R.pos.x, R.pos.z), free = !R.busy && !R.DRV.on && !R.DRV.lock && !(R.BL.cine) && !R.BL.lvl && R.onGround();
     // the first time you're out on the street (however you got there), it falls
     if (!st.intro) { streetT = free ? streetT + dt : 0; if (streetT > 1.5 && R.BLC.built) csStart(); return; }
@@ -242,20 +353,26 @@ window.RU_SEASON_1 = function(R){
     if (st.intro && !st.met && !R.PH.wp && free) R.PH.wp = PIER.slice();
     if (st.ch1 && week() >= 2 && free) { if (!st.c2.start) c2Intro(); else if (!st.c2.done) c2Build(); }
     if (st.c2.start && !st.c2.done) buildBarge();
-    scanBtn.hidden = !(st.scanner && free && (frags && frags.some(Boolean) || c2 && c2.some(f => f.g || f.d)));
+    if (st.c2.done && week() >= 3 && free) { if (!st.c3.start) c3Intro(); else if (!st.c3.done) c3Build(); }
+    if (st.c3.start) { buildIsle(); addStop(); if (st.c3.done) buildBarge(); }
+    if (isle) isleStep(dt, now / 1000); if (!R.busy) c3Step(dt, now / 1000, mx, mz, free);
+    dockBtn.hidden = !(isle && free && Math.hypot(mx - DOCK[0], mz - DOCK[1]) < 6);
+    scanBtn.hidden = !(st.scanner && free && (frags && frags.some(Boolean) || c2 && c2.some(f => f.g || f.d) || c3 && !st.c3.done));
     if (free) fragStep(); if (!R.busy) c2Step(dt);
   }
   // ---------- the Season tab on the phone ----------
   function tab(){
     const S = R.info(), fd = new Date(S.start.getTime()), unlock = i => { const d = new Date(fd.getTime() + i * 7 * 864e5); return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); };
-    const wk = week(), rows = CH.map(([n, sub], i) => { const open = wk > i, done = i === 0 && st.ch1 || i === 1 && st.c2.done, cur = open && !done && (i === 0 || i === 1 && st.ch1);
-      return `<div class="phcard"><b>${done ? '✓ ' : ''}Chapter ${i + 1}: ${n}</b><small>${!open ? `Unlocks ${unlock(i)}.` : i === 0 ? (done ? 'Done.' : !st.intro ? 'Step out onto the street.' : !st.met ? 'Go to the ferry pier on the west coast.' : `Find the fragments: ${st.frags.length} of ${FRAGS.length}.`) : i === 1 ? (!st.ch1 ? 'Finish Chapter 1 first.' : done ? `Done: you kept ${st.c2.got.length} of 4.` : !st.c2.start ? 'Go out onto the street.' : `Beat the drones to the fragments: ${st.c2.got.length} kept, ${st.c2.lost.length} lost.`) : 'Coming soon.'}</small>${cur ? `<small>${esc(sub)}</small>` : ''}</div>`; }).join('');
+    const wk = week(), rows = CH.map(([n, sub], i) => { const open = wk > i, done = i === 0 && st.ch1 || i === 1 && st.c2.done || i === 2 && st.c3.done, cur = open && !done && (i === 0 || i === 1 && st.ch1 || i === 2 && st.c2.done);
+      return `<div class="phcard"><b>${done ? '✓ ' : ''}Chapter ${i + 1}: ${n}</b><small>${!open ? `Unlocks ${unlock(i)}.` : i === 0 ? (done ? 'Done.' : !st.intro ? 'Step out onto the street.' : !st.met ? 'Go to the ferry pier on the west coast.' : `Find the fragments: ${st.frags.length} of ${FRAGS.length}.`) : i === 1 ? (!st.ch1 ? 'Finish Chapter 1 first.' : done ? `Done: you kept ${st.c2.got.length} of 4.` : !st.c2.start ? 'Go out onto the street.' : `Beat the drones to the fragments: ${st.c2.got.length} kept, ${st.c2.lost.length} lost.`) : i === 2 ? (!st.c2.done ? 'Finish Chapter 2 first.' : done ? 'Done: the core is lit.' : !st.c3.start ? 'Go out onto the street.' : st.c3.got.length < 3 ? `Take the ferry to Crash Isle and find the shards: ${st.c3.got.length} of 3.` : 'Take the shards to the core in the crater.') : 'Coming soon.'}</small>${cur ? `<small>${esc(sub)}</small>` : ''}</div>`; }).join('');
     return `<div class="phcard"><b>Season 1 · Landfall</b><small>Day ${S.day} of 28 · ${S.left} day${S.left === 1 ? '' : 's'} left. A meteor came down off the west coast.</small></div>${rows}
+      ${st.intro ? '<div class="phcard"><b>The Landfall cutscene</b><small>Watch the meteor come down again.</small><div class="phrow"><button type="button" data-s1="replay">▶ Watch it again</button></div></div>' : ''}
       <div class="phcard"><b>Tools</b><small>${st.scanner ? '✓ Scanner (yours to keep)' : 'Scanner: not yet'}</small></div>
       <div class="phcard"><b>Skins</b><small>Crater Scout · Meteor Glow · Salvager’s Rig. Earn them by playing the season.</small></div>
       <div class="phcard"><b>Your name: ${esc(R.heroName())}</b><div class="phrow"><button type="button" data-s1="name">Change it</button></div></div>`;
   }
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  function wire(B){ const b = B.querySelector('[data-s1="name"]'); if (b) b.onclick = () => { const v = prompt('Your name (up to 16 characters):', R.heroName() === 'Traveller' ? '' : R.heroName()); if (v == null) return; if (v.trim() && !R.cleanName(v)) return R.say('Pick a different name.', 2000); R.setName(v); B.querySelector('.phcard:last-child b').textContent = 'Your name: ' + R.heroName(); }; }
-  return { step, tab, wire, debug: { get cs(){ return CS; }, st, scan, get c2(){ return c2; } } };
+  function wire(B){ const rp = B.querySelector('[data-s1="replay"]'); if (rp) rp.onclick = () => { if (!(R.inWorld && R.zone === 'blr') || R.busy || R.DRV.on || R.DRV.lock || R.BL.lvl || !R.onGround()) return R.say('Go out onto the street to watch it again.', 2400); R.phoneClose(); setTimeout(() => csStart(true), 300); };
+    const b = B.querySelector('[data-s1="name"]'); if (b) b.onclick = () => { const v = prompt('Your name (up to 16 characters):', R.heroName() === 'Traveller' ? '' : R.heroName()); if (v == null) return; if (v.trim() && !R.cleanName(v)) return R.say('Pick a different name.', 2000); R.setName(v); B.querySelector('.phcard:last-child b').textContent = 'Your name: ' + R.heroName(); }; }
+  return { step, tab, wire, debug: { get cs(){ return CS; }, st, scan, get c2(){ return c2; }, get c3(){ return c3; }, goIsle } };
 };

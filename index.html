@@ -635,7 +635,10 @@ body.mkwon .toast{top:calc(160px + env(safe-area-inset-top,0px))}
 @media (max-width:620px){#brief header{flex-wrap:wrap}#brief .bhead{display:flex;flex-wrap:wrap;gap:8px;width:100%}#brief .bhead .btn{flex:1 1 auto;text-align:center}}
 .mclinks{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}.simple .mcsec .btn{background:#fff;color:#16181D}.simple .mcsec .mcgo{background:#FFC93C}
 .mcchip{position:fixed;left:50%;top:calc(14px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:5;border:0;border-radius:999px;padding:9px 16px;font:800 14px "Instrument Sans",system-ui,sans-serif;color:#16181D;background:linear-gradient(90deg,#FFC93C,#FF9F43);box-shadow:0 6px 20px rgba(0,0,0,.25);cursor:pointer;animation:mcpulse 2.4s ease-in-out infinite}
-.mcchip[hidden]{display:none}body.evlock .mcchip{display:none}
+.mcchip[hidden]{display:none}
+body.swimming::after{content:'';position:fixed;left:0;right:0;bottom:0;height:34vh;z-index:3;pointer-events:none;background:linear-gradient(to bottom,rgba(30,110,160,0) 0,rgba(30,110,160,.55) 18%,rgba(18,70,110,.8) 100%);border-top:2px solid rgba(255,255,255,.35);animation:swimbob 1.6s ease-in-out infinite}
+@keyframes swimbob{50%{transform:translateY(8px)}}
+@media (prefers-reduced-motion:reduce){body.swimming::after{animation:none}}body.evlock .mcchip{display:none}
 @media (max-width:700px){.mcchip{top:auto;bottom:calc(86px + env(safe-area-inset-bottom,0px));padding:8px 14px;font-size:13px}}
 @keyframes mcpulse{50%{transform:translateX(-50%) scale(1.06)}}
 .mcconf{position:fixed;inset:0;pointer-events:none;z-index:9999}
@@ -967,7 +970,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   <div class="mkwords" id="mkWords"><small id="mkWordsT"></small><h3 class="zh">学会了！</h3><p>Xué huì le! Tap a word to hear it.</p><div class="mkwl" id="mkWordList"></div><button type="button" class="gold" id="mkWordsOk">好的！ ▸</button></div>
 </div>
 <button class="btn menubtn" id="menuBtn" type="button" hidden>&#9776; Menu</button>
-<button class="mcchip" id="mcChip" type="button" hidden aria-label="Celebrating MedCon: open the celebration">🎉 MedCon</button>
 <button class="btn povbtn" id="povBtn" type="button" hidden>3rd person</button>
 <div class="lookpanel" id="lookEl" role="dialog" aria-label="Your character"></div>
 <button class="btn snapbtn" id="snapBtn" type="button" hidden>Undo the snap</button>
@@ -1578,9 +1580,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   const mcOnce = k => { try { if (sessionStorage.getItem(k)) return false; sessionStorage.setItem(k, '1'); } catch (e) {} return true; };
   function mcShow(){ showSimple(true); simple.scrollTop = 0; mcConfetti(); }
-  $('#mcChip').onclick = mcShow;
   simple.querySelector('.mcagain').onclick = mcConfetti;
-  function showSimple(on){ simple.classList.toggle('on', on); if (on) { $('#backBtn').focus(); if (mcOnce('ru-mc-simple')) setTimeout(mcConfetti, 250); } }
+  function showSimple(on){ simple.classList.toggle('on', on); if (on) { $('#backBtn').focus(); } }
   $('#simpleBtn').onclick = () => showSimple(true);
   $('#backBtn').onclick = () => showSimple(false);
   $('#home').onclick = e => { e.preventDefault(); showSimple(false); };
@@ -8495,8 +8496,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   let mirror = false, me = null, meKey = '', meHeld, meLast = V(0, 0, 0), meMv = 0;
   const povBtn = $('#povBtn');
   function setPov(third){ tpv = third; try { localStorage.setItem('ru-pov', tpv ? '3' : '1'); } catch (e) {} povBtn.textContent = tpv ? '1st person' : '3rd person'; if (A) fightView(); else idleShown = undefined; say(tpv ? 'Third person. Press V to switch back.' : 'First person.', 1600); }
-  povBtn.onclick = () => setPov(!tpv);
-  addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || !entered || e.repeat) return; if (e.key.toLowerCase() === 'v' && !photoOn) setPov(!tpv); });
+  povBtn.onclick = () => DRV.on ? driveView() : setPov(!tpv);
+  addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || !entered || e.repeat) return; if (e.key.toLowerCase() === 'v' && !photoOn) { if (DRV.on) driveView(); else setPov(!tpv); } });
   // your body, kept in sync with your look, your weapon and whether your arm is burned
   function meStep(dt, now){
     const want = entered && (tpv || mirror) && !(EV && EV.cx && EV.cx.gal && (EV.cx.gal.phase === 'eat' || EV.cx.gal.phase === 'fall')) && !(EV && EV.st && EV.st.lp);
@@ -8516,7 +8517,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // the camera pulls back behind your shoulder (and stops short of walls)
   function camStep(){
     const third = entered && tpv && !mirror;
-    viewG.visible = !(third || mirror) && !(EV && (EV.intro || EV.cx && EV.cx.gal && (EV.cx.gal.phase === 'eat' || EV.cx.gal.phase === 'fall') || EV.st && (EV.st.lp || EV.st.dz || EV.st.fin || EV.st.cin)));
+    viewG.visible = !(third || mirror) && !document.body.classList.contains('cine') && !(EV && (EV.intro || EV.cx && EV.cx.gal && (EV.cx.gal.phase === 'eat' || EV.cx.gal.phase === 'fall') || EV.st && (EV.st.lp || EV.st.dz || EV.st.fin || EV.st.cin)));
     if (!third && !mirror) return;
     const eye = tv1.copy(camera.position), sc = sceneOf(); let target;
     if (mirror) { const f = tv2.set(-Math.sin(yaw), 0, -Math.cos(yaw)); target = tv3.copy(eye).addScaledVector(f, 2.1); target.y -= .2; }
@@ -10749,7 +10750,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     RE.near = false; RE.btn.hidden = true;
     if (!inB) return;
     const c = RE.cur, [mx, mz] = toMap(pos.x, pos.z);
-    if (!c) { if (now > RE.next && !SG.active && !(JOB.q && JOB.q.k === 'thief')) { RE.next = now + 30000; reSpawn(); } return; }
+    if (!c) return;  // random street events (snatched bags, crashes) are switched off; nothing spawns them any more
     if (c.done) return;
     if (now - c.t0 > 100000 || Math.hypot(c.at[0] - mx, c.at[1] - mz) > 260) { say('Someone else sorted it out before you got there.', 2400); reClear(); RE.next = now + 40000; return; }
     if (c.k === 'crash') { c.smoke.forEach(q => { const k = ((now / 2400) + q.ph) % 1; q.s.position.set(Math.sin(q.ph * 9) * .4, k * 3.5, Math.cos(q.ph * 7) * .4); q.s.scale.setScalar(.6 + k * 1.6); q.s.material.opacity = .45 * (1 - k); });
@@ -10807,10 +10808,22 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (zone === 'apt') return say('You’re already at the airport.', 2000);
     if (zone === 'xc' || zone === 'xin') { if (zone === 'xin') { if (XC.isc) { disposeDeep(XC.isc); XC.isc = null; } XC.inside = null; zone = 'xc'; } return xcLeave(); }
     if (DRV.on) getOut(true); aptEnter('blr', 'kerb'); }
+  // the nearest free car pulls up beside you
+  function bringCar(){
+    if (!(inWorld && zone === 'blr') || EV || A || DRV.on || DRV.lock || BL.lvl || !BLC.built || Math.abs(BL.off.y) > .01) return say('You can call a car when you’re out on the street.', 2400);
+    const [mx, mz] = toMap(pos.x, pos.z); let best = null, bd = 1e9; BLC.parked.forEach(p => { if (!p.g.visible || p === DRV.p || Math.abs((p.y || 0) - BL.off.y) > .5 || p.type === 'bus' || p.type === 'truck') return; const d = Math.hypot(p.x - mx, p.z - mz) + (p.type === 'car' || p.type === 'cab' ? 0 : 400); if (d < bd) { bd = d; best = p; } });
+    if (!best) return say('No cars free right now.', 2000);
+    const fx = -Math.sin(yaw), fz = -Math.cos(yaw); let spot = null;
+    for (const [a, r] of [[1.57, 2.6], [-1.57, 2.6], [0, 3.6], [.6, 3.4], [-.6, 3.4], [1.57, 3.4], [-1.57, 3.4], [3.14, 3.6]]) { const c = Math.cos(a), s2 = Math.sin(a), x = mx + (fx * c - fz * s2) * r, z = mz + (fz * c + fx * s2) * r, [lx, lz] = toLocal(x, z); if (blrValid(lx, lz) && blrValid(...toLocal(x + fx * 2.2, z + fz * 2.2)) && blrValid(...toLocal(x - fx * 2.2, z - fz * 2.2))) { spot = [x, z]; break; } }
+    if (!spot) return say('There’s no room for a car to pull up here. Try the road.', 2400);
+    const h = Math.atan2(fx, fz); best.g.visible = true; Object.assign(best, { x: spot[0], z: spot[1], h, fx: Math.sin(h), fz: Math.cos(h), moved: true, spd: 0, v: 0 }); best.g.position.set(spot[0], best.y || 0, spot[1]); best.g.rotation.y = h;
+    phoneClose(); tone(420, .25, 'square', .03); setTimeout(() => tone(400, .2, 'square', .03), 160); say(`${best.name.charAt(0).toUpperCase() + best.name.slice(1)} pulls up beside you.${fine ? ' Press E to get in.' : ' Tap Drive to get in.'}`, 3000);
+  }
+  phEl.addEventListener('click', e => { if (e.target.closest('[data-car]')) { e.stopPropagation(); bringCar(); return; } });
   phEl.addEventListener('click', e => { if (e.target.closest('[data-apt]')) { e.stopPropagation(); aptPhoneGo(); } });
   phEl.addEventListener('click', e => { const b = e.target.closest('[data-dk]'); if (!b) return; e.stopPropagation(); if (EV || A) return; phoneClose(); skipTo(+b.dataset.dk); });
   function phMap(){
-    const B = phEl.querySelector('#phBody'); B.innerHTML = `<canvas id="phCv" width="640" height="640"></canvas><div class="phrow"><button type="button" data-z="1">＋ Zoom in</button><button type="button" data-z="-1">－ Zoom out</button><button type="button" data-z="0">Centre on me</button><button type="button" data-z="x">Clear pin</button></div><div class="phleg"><span><i style="background:#FFC93C"></i>You / job</span><span><i style="background:#35C8F0"></i>Pin / help needed</span><span><i style="background:#FF3C3C"></i>Street boss</span><span><i style="background:#7A2A2A"></i>Stash house</span><span><i style="background:#fff"></i>Place found</span><span><i style="background:#2A6AFF"></i>Police</span><span><i style="background:#FFC93C"></i>✈ Airport taxis</span></div><p style="color:#9AA3AD;font-size:12px">Tap the map to drop a pin. A beacon will show you the way.</p><div class="phrow">${aptPhoneOk() ? '<button type="button" class="y" data-apt="1">✈ Go to the airport</button>' : ''}<button type="button" class="y" data-st="1">🚀 Fly up to the space station</button></div>`;
+    const B = phEl.querySelector('#phBody'); B.innerHTML = `<canvas id="phCv" width="640" height="640"></canvas><div class="phrow"><button type="button" data-z="1">＋ Zoom in</button><button type="button" data-z="-1">－ Zoom out</button><button type="button" data-z="0">Centre on me</button><button type="button" data-z="x">Clear pin</button><button type="button" data-car="1">🚗 Bring me a car</button></div><div class="phleg"><span><i style="background:#FFC93C"></i>You / job</span><span><i style="background:#35C8F0"></i>Pin / help needed</span><span><i style="background:#FF3C3C"></i>Street boss</span><span><i style="background:#7A2A2A"></i>Stash house</span><span><i style="background:#fff"></i>Place found</span><span><i style="background:#2A6AFF"></i>Police</span><span><i style="background:#FFC93C"></i>✈ Airport taxis</span></div><p style="color:#9AA3AD;font-size:12px">Tap the map to drop a pin. A beacon will show you the way.</p><div class="phrow">${aptPhoneOk() ? '<button type="button" class="y" data-apt="1">✈ Go to the airport</button>' : ''}<button type="button" class="y" data-st="1">🚀 Fly up to the space station</button></div>`;
     if (!PH.base && BL.bld && BLC.built) phMapBase();
     const cv = B.querySelector('#phCv'), [mx, mz] = BL.sc ? toMap(pos.x, pos.z) : [0, 0]; if (PH.cx == null || zone !== 'blr') { PH.cx = zone === 'blr' ? mx : -20; PH.cz = zone === 'blr' ? mz : -20; }
     const draw = () => { const g = cv.getContext('2d'), W = cv.width, span = 780 / PH.zoom, sc = W / span, P = (x, z) => [(x - PH.cx) * sc + W / 2, (z - PH.cz) * sc + W / 2];
@@ -12796,11 +12809,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ---------- vehicles you can borrow ----------
   const PARK = [['scooter', 0xC8102E, -4.4, -18, Math.PI, 'your scooter'], ['car', 0x2E5A9A, -4.4, 24, Math.PI, 'a blue hatchback'], ['auto', 0, 4.4, 94, 0, 'an auto-rickshaw'], ['auto', 0, 4.4, 99, 0, 'another auto-rickshaw'], ['cab', 0, -105.6, 40, 0, 'a white taxi'], ['jeep', 0, -50.6, -96, 0, 'a jeep'], ['car', 0xB8322A, 105.6, 40, Math.PI, 'a red sedan'], ['scooter', 0x3CB0A8, 59.4, 96, 0, 'a teal scooter'], ['bus', 0, 50.6, 30, 0, 'an empty BMTC bus']];
   function buildParked(){ PARK.forEach(([type, col, x, z, h, name]) => { if (!blrValid(...toLocal(x, z)) && gridHit(x, z, .2)) return; const v = makeVehicle(type, col, BLC.carG); Object.assign(v, { x, z, h, name, parked: true, fx: Math.sin(h), fz: Math.cos(h) }); v.g.position.set(x, 0, z); v.g.rotation.y = h; BLC.parked.push(v); }); }
-  const DRV = { on: false, p: null, spd: 0 };
+  const DRV = { on: false, p: null, spd: 0, fp: true }; try { DRV.fp = localStorage.getItem('ru-drivecam') !== 'chase'; } catch (e) {}
+  function driveView(){ DRV.fp = !DRV.fp; BLC.cam = null; try { localStorage.setItem('ru-drivecam', DRV.fp ? 'seat' : 'chase'); } catch (e) {} say(DRV.fp ? 'Driver’s seat view. Press V for the chase camera.' : 'Chase camera. Press V for the driver’s seat.', 2000); }
   const drvBtn = document.createElement('button'); drvBtn.type = 'button'; drvBtn.className = 'btn alt drvbtn'; drvBtn.hidden = true; document.body.appendChild(drvBtn);
   const drvHud = document.createElement('div'); drvHud.className = 'drvhud'; drvHud.hidden = true; document.body.appendChild(drvHud);
   const drvCss = document.createElement('style'); drvCss.textContent = '.drvbtn{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:40}.drvhud{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:40;background:rgba(11,13,20,.8);color:#fff;padding:6px 14px;border-radius:999px;font:700 15px/1.2 system-ui,sans-serif;letter-spacing:.02em}'; document.head.appendChild(drvCss);
-  function driveNear(){ if (!inWorld || zone !== 'blr' || EV || A || BL.cine || (BL.lvl ? !BL.lvl.drive : Math.abs(BL.off.y) > .01) || !BLC.built || DRV.lock) return null; const [mx, mz] = toMap(pos.x, pos.z); let best = null, bd = 1e9; BLC.parked.forEach(p => { if (Math.abs((p.y || 0) - BL.off.y) > .5 || !p.g.visible) return; const d = Math.hypot(p.x - mx, p.z - mz) - p.L / 2; if (d < 1.8 && d < bd) { bd = d; best = p; } }); return best; }
+  function driveNear(){ if (!inWorld || zone !== 'blr' || EV || A || BL.cine || (BL.lvl ? !BL.lvl.drive : Math.abs(BL.off.y) > .01) || !BLC.built || DRV.lock) return null; const [mx, mz] = toMap(pos.x, pos.z); let best = null, bd = 1e9; BLC.parked.forEach(p => { if (Math.abs((p.y || 0) - BL.off.y) > .5 || !p.g.visible) return; const d = Math.hypot(p.x - mx, p.z - mz) - p.L / 2; if (d < 3.6 && d < bd) { bd = d; best = p; } }); return best; }
   function getIn(p){ DRV.on = true; DRV.p = p; DRV.spd = 0; DRV.tpv = tpv; tpv = false; walkTarget = null; BLC.cam = null; tone(180, .35, 'sawtooth', .03, 260); say(`You get into ${p.name}. ${fine ? 'W and S to drive, A and D to steer, H for the carHorn, E to get out.' : 'Use the stick to drive. Tap Get out when you’re done.'} Keep left.`, 4600); }
   function getOut(quiet){ const p = DRV.p; DRV.on = false; DRV.p = null; DRV.spd = 0; tpv = DRV.tpv || false; drvHud.hidden = true; if (!p) return;
     if (!quiet) { const lx = Math.cos(p.h), lz = -Math.sin(p.h); for (const s of [1, -1, 0]) { const x = p.x + lx * s * (p.W / 2 + 1), z = p.z + lz * s * (p.W / 2 + 1), [ax, az] = toLocal(x, z); if (s === 0 || blrValid(ax, az)) { pos.x = ax; pos.z = az; break; } } say('You get out.', 1400); } pos.y = 1.6; }
@@ -12825,7 +12839,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     drvHud.hidden = false; drvHud.textContent = `${Math.round(Math.abs(DRV.spd) * 3.6)} km/h${DRV.spd < -.3 ? ' · R' : ''}`;
   }
   function driveCam(dt){
-    const p = DRV.p; if (!p) return; const [lx, lz] = toLocal(p.x, p.z), fx = Math.sin(p.h), fz = Math.cos(p.h), back = p.L / 2 + (p.type === 'bus' ? 8 : p.type === 'truck' ? 7 : 5), up = p.type === 'bus' || p.type === 'truck' ? 4.4 : p.type === 'scooter' ? 2.2 : 2.8;
+    const p = DRV.p; if (!p) return; const [lx, lz] = toLocal(p.x, p.z), fx = Math.sin(p.h), fz = Math.cos(p.h);
+    // from the driver's seat: right-hand drive (this is India), eyes just under the roof, looking down the road
+    if (DRV.fp) { const eye = p.type === 'bus' ? 2.7 : p.type === 'truck' ? 2.5 : p.type === 'scooter' ? 1.7 : p.type === 'auto' ? 1.5 : 1.32, side = p.type === 'scooter' ? 0 : p.type === 'auto' ? 0 : -.36, sx = Math.cos(p.h), sz = -Math.sin(p.h), y0 = (p.y || 0) - BL.off.y;
+      camera.position.set(lx + fx * (p.type === 'bus' ? p.L / 2 - 1.4 : .05) + sx * side, y0 + eye, lz + fz * (p.type === 'bus' ? p.L / 2 - 1.4 : .05) + sz * side); camera.lookAt(camera.position.x + fx * 10, y0 + eye - .35, camera.position.z + fz * 10); viewG.visible = false; return; }
+    const back = p.L / 2 + (p.type === 'bus' ? 8 : p.type === 'truck' ? 7 : 5), up = p.type === 'bus' || p.type === 'truck' ? 4.4 : p.type === 'scooter' ? 2.2 : 2.8;
     const want = V(lx - fx * back, up, lz - fz * back); if (!BLC.cam) BLC.cam = want.clone(); BLC.cam.lerp(want, Math.min(1, dt * 5)); camera.position.copy(BLC.cam); camera.lookAt(lx + fx * 5, 1.1, lz + fz * 5); viewG.visible = false;
   }
   // walking into traffic: you get nudged out of the way
@@ -14420,10 +14438,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // It's Rayan's Bangalore, not the real one, so it doesn't follow real geography: past the outer ring road there's a beach and
   // then open sea, with mountain ranges and the other cities on the horizon. To leave you fly (the airport, as before), take the
   // ferry from the pier on the west coast, or wade in anywhere and swim. Either way you arrive in Mumbai, Goa or Delhi.
-  var ISLE = { edge: 409, sand0: 393, pz: 82.5, px0: -404, px1: -447, built: false, told: false, ride: null, act: null, t: 0 };
+  var ISLE = { extra: [], stops: [], edge: 409, sand0: 393, pz: 82.5, px0: -404, px1: -447, built: false, told: false, ride: null, act: null, t: 0 };
   const onPier = (mx, mz) => mx < ISLE.px0 + 1 && mx > ISLE.px1 && Math.abs(mz - ISLE.pz) < 1.45;
   // where you're allowed to stand past the old edge of the map: the beach, and the pier
-  function isleOk(mx, mz){ return Math.max(Math.abs(mx), Math.abs(mz)) <= ISLE.edge || onPier(mx, mz); }
+  // seasons can add ground of their own out at sea (ISLE.extra: tests) and ferry stops (ISLE.stops: { k, n, where, go(kind) })
+  function isleOk(mx, mz){ return Math.max(Math.abs(mx), Math.abs(mz)) <= ISLE.edge || onPier(mx, mz) || ISLE.extra.some(f => { try { return f(mx, mz); } catch (e) { return false; } }); }
+  const isleTo = () => ISLE_TO.concat(ISLE.stops.map(q => [q.k, q.n, q.where]));
   const ISLE_TO = [['mtn', 'The Far Range', 'the mountains to the north'], ['bom', 'Mumbai', 'the tall skyline to the west'], ['goi', 'Goa', 'the palm coast to the south-west'], ['del', 'Delhi', 'the low city under the mountains to the north-west']];
   function buildIsland(){
     ISLE.built = true; const g = ISLE.g = new THREE.Group(), E = ISLE.edge; BL.mapG.add(g);
@@ -14431,7 +14451,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const ground = BL.mapG.children.find(o => o.isMesh && o.geometry.parameters && o.geometry.parameters.width === 900); if (ground) { const k = (E + 3) * 2 / 900; ground.scale.x *= k; ground.scale.y *= k; }
     const wt = tex(256, 256, (c, w, h) => { c.fillStyle = '#2A6E9A'; c.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { c.fillStyle = Math.random() < .5 ? 'rgba(255,255,255,.10)' : 'rgba(0,30,60,.12)'; c.fillRect(Math.random() * w, Math.random() * h, 6 + Math.random() * 14, 2); } }); wt.wrapS = wt.wrapT = THREE.RepeatWrapping; wt.repeat.set(120, 120);
     // the sea is a frame round the island, not a sheet under it: two surfaces 14 cm apart flicker through each other at a distance
-    const seaM = new THREE.MeshStandardMaterial({ color: 0x8FC4E8, map: wt, roughness: .25, metalness: .15, polygonOffset: true, polygonOffsetFactor: 6, polygonOffsetUnits: 6 }), R0 = E - 2, R1 = 1500, seaG = [];
+    const seaM = new THREE.MeshStandardMaterial({ color: 0xFFFFFF, map: wt, roughness: .5, metalness: 0, envMapIntensity: .15, polygonOffset: true, polygonOffsetFactor: 6, polygonOffsetUnits: 6 }), R0 = E - 2, R1 = 1500, seaG = [];
     [[0, (R0 + R1) / 2, R1 * 2, R1 - R0], [0, -(R0 + R1) / 2, R1 * 2, R1 - R0], [(R0 + R1) / 2, 0, R1 - R0, R0 * 2], [-(R0 + R1) / 2, 0, R1 - R0, R0 * 2]].forEach(([x, z, w, d]) => { const geo = new THREE.PlaneGeometry(w, d), uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * w / 3000, uv.getY(i) * d / 3000); seaG.push([geo, x, z]); });
     const sea = ISLE.sea = new THREE.Group(); sea.material = seaM; seaG.forEach(([geo, x, z]) => { const m = new THREE.Mesh(geo, seaM); m.rotation.x = -Math.PI / 2; m.position.set(x, -.14, z); m.userData.noPick = true; sea.add(m); }); g.add(sea);
     // a sandy beach all the way round, with a line of surf
@@ -14481,15 +14501,15 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!aptPhoneOk()) return say('Not right now.', 2000);
     const ferry = kind === 'ferry';
     panelBody.innerHTML = `<div class="sec"><h2 class="display">${ferry ? 'The island ferry' : 'Swim for it?'}</h2><p class="sub">${ferry ? 'This Bangalore is an island, so the ferry crosses the sea to the other cities. It’s free, and it doesn’t follow any real map.' : 'It’s a long way. But this isn’t the real world: the sea is warm, the water is calm and nothing in it bites.'}</p>
-      ${ISLE_TO.map(([k, n, where]) => `<div class="card"><h3 class="display">${n}</h3><p>${ferry ? 'Over' : 'Swim to'} ${where}.</p><button class="open" type="button" data-isle="${k}">${ferry ? 'Board for ' : 'Swim to '}${n}</button></div>`).join('')}
+      ${isleTo().map(([k, n, where]) => `<div class="card"><h3 class="display">${n}</h3><p>${ferry ? 'Over' : 'Swim to'} ${where}.</p><button class="open" type="button" data-isle="${k}">${ferry ? 'Board for ' : 'Swim to '}${n}</button></div>`).join('')}
       <p class="sub">To come back, fly home from the airport there.</p></div>`;
     panel.scrollTop = 0; panel.classList.add('on');
     panelBody.querySelectorAll('[data-isle]').forEach(b => b.onclick = () => { closePanel(); isleGo(kind, b.dataset.isle); });
   }
   function isleGo(kind, city){
-    if (!aptPhoneOk() || ISLE.ride) return; if (DRV.on) getOut(true); const [mx, mz] = toMap(pos.x, pos.z), name = ISLE_TO.find(q => q[0] === city)[1];
+    if (!aptPhoneOk() || ISLE.ride) return; if (DRV.on) getOut(true); const [mx, mz] = toMap(pos.x, pos.z), name = isleTo().find(q => q[0] === city)[1];
     const dir = kind === 'ferry' ? [-1, 0] : Math.abs(mx) > Math.abs(mz) ? [Math.sign(mx), 0] : [0, Math.sign(mz)];
-    ISLE.ride = { kind, city, t: 0, dir, x: kind === 'ferry' ? ISLE.ferry.position.x : mx, z: kind === 'ferry' ? ISLE.pz : mz }; DRV.lock = true;
+    ISLE.ride = { kind, city, t: 0, dir, x: kind === 'ferry' ? ISLE.ferry.position.x : mx, z: kind === 'ferry' ? ISLE.pz : mz }; DRV.lock = true; if (kind === 'swim') { yaw = Math.atan2(-dir[0], -dir[1]); pitch = 0; document.body.classList.add('swimming'); }
     if (kind === 'ferry') { tone(220, .8, 'sine', .04); setTimeout(() => tone(165, 1.2, 'sine', .04), 500); say(`The ferry pulls away from the pier. Next stop: ${name}.`, 4000); }
     else { tone(330, .3, 'sine', .03); say(`You wade in and start swimming towards ${name}. The water’s warm. It always is, here.`, 4400); }
   }
@@ -14498,7 +14518,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const x = R.x + R.dir[0] * d, z = R.z + R.dir[1] * d;
     if (R.kind === 'ferry') { ISLE.ferry.position.set(x, Math.sin(R.t * 1.4) * .08, z); ISLE.ferry.rotation.z = Math.sin(R.t * 1.1) * .02; const [lx, lz] = toLocal(x - 3.4, z); pos.x = lx; pos.z = lz; if (R.t < .1) yaw = Math.PI / 2; }
     else { const [lx, lz] = toLocal(x, z); pos.x = lx; pos.z = lz; if (d > 7) pos.y = .45 + Math.sin(R.t * 3) * .05; }  // once you're in deep enough, your head is just above the water
-    if (R.t >= T) { const city = R.city; ISLE.ride = null; DRV.lock = false; if (city === 'mtn') mtnEnter(); else xcEnter(city); setTimeout(() => { if (ISLE.ferry) { ISLE.ferry.position.set(ISLE.px1 - 4.5, 0, ISLE.pz); ISLE.ferry.rotation.z = 0; } }, 1500); }
+    if (R.t >= T) { const city = R.city; ISLE.ride = null; DRV.lock = false; document.body.classList.remove('swimming'); const stop = ISLE.stops.find(q => q.k === city); if (stop) { if (R.kind === 'swim') pos.y = 1.6; stop.go(R.kind); } else if (city === 'mtn') mtnEnter(); else xcEnter(city); setTimeout(() => { if (ISLE.ferry) { ISLE.ferry.position.set(ISLE.px1 - 4.5, 0, ISLE.pz); ISLE.ferry.rotation.z = 0; } }, 1500); }
   }
   function isleStep(dt, now){
     if (!ISLE.built) { if (BLC.built && BL.mapG && BLC.sky) try { buildIsland(); } catch (e) { console.error(e); ISLE.built = true; } return; }
@@ -14506,7 +14526,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // the horizon takes the colour of the light: bright by day, dim at night
     if (GFX.cur) { const f = GFX.cur.fog, lum = .3 * f.r + .59 * f.g + .11 * f.b, b = Math.min(1, .22 + lum * 1.25); ISLE.band.material.color.setRGB(b * (.7 + f.r * .3), b * (.7 + f.g * .3), b * (.7 + f.b * .3)); }
     const inB = inWorld && zone === 'blr';
-    if (ISLE.ride && !(inB && !EV)) { ISLE.ride = null; DRV.lock = false; if (inB) pos.y = 1.6; }
+    if (ISLE.ride && !(inB && !EV)) { ISLE.ride = null; DRV.lock = false; document.body.classList.remove('swimming'); if (inB) pos.y = 1.6; }
     if (!inB) { ISLE.act = null; ISLE.btn.hidden = true; return; }
     if (ISLE.sea.material.map) ISLE.sea.material.map.offset.set(t * .004, t * .0025); ISLE.foam.forEach((m, i) => m.material.opacity = .35 + Math.sin(t * 1.3 + i) * .2);
     if (ISLE.ride) { isleRideStep(dt); ISLE.btn.hidden = true; ISLE.act = null; return; }
@@ -14514,7 +14534,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (ok && edge > ISLE.sand0 - 2 && !ISLE.told) { ISLE.told = true; say('This is Rayan’s Bangalore, not the real one. Here it’s an island: the sea is warm all year, the mountains across the water aren’t on any atlas, and you can swim to Goa if you feel like it.', 7000); }
     let act = null, label = '';
     if (ok && onPier(mx, mz) && mx < ISLE.px1 + 4) { act = () => isleAsk('ferry'); label = 'Take the ferry'; }
-    else if (ok && !onPier(mx, mz) && edge > ISLE.edge - 2.5) { act = () => isleAsk('swim'); label = 'Swim out'; }
+    else if (ok && !onPier(mx, mz) && edge > ISLE.edge - 2.5 && edge < ISLE.edge + 3) { act = () => isleAsk('swim'); label = 'Swim out'; }
     ISLE.act = act; ISLE.btn.hidden = !act || [...document.querySelectorAll('.drvbtn')].some(b => b !== ISLE.btn && !b.hidden); if (!ISLE.btn.hidden && ISLE.btn.textContent !== label + (fine ? ' (E)' : '')) ISLE.btn.textContent = label + (fine ? ' (E)' : '');
   }
   // the phone's map: sea round the edge, and the pier
@@ -14892,7 +14912,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // Each season's story lives in its own file (seasons/s01.js and so on), loaded only while that season is running, and gets
   // this small API instead of reaching into the page. Progress is saved under ru-season. Add ?season=N to preview a season.
   const SEASON0 = new Date(2026, 10, 18), SEASON_LEN = 28;
-  const SEASON_V = '2026-11-18c';  // bump whenever a seasons/*.js file changes
+  const SEASON_V = '2026-11-18f';  // bump whenever a seasons/*.js file changes
   const SEASON_NAMES = ['Landfall', 'High Water', 'The Carnival', 'Blackout', 'The Eruption', 'Deep Freeze', 'Scales', 'Incursion', 'The Rift', 'Skyline', 'Harvest', 'Neon Nights', 'The Drought', 'Festival of Lights', 'Convergence'];
   const SEASON = { S: undefined, mod: null, loading: false, failed: false };
   function seasonInfo(){
@@ -14911,10 +14931,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function seasonApi(){ return {
     info: seasonInfo, get: seasonGet, put: seasonPut, names: SEASON_NAMES, THREE, camera, ISLE, fine, reduce,
     get pos(){ return pos; }, get yaw(){ return yaw; }, set yaw(v){ yaw = v; }, get pitch(){ return pitch; }, set pitch(v){ pitch = v; },
-    get zone(){ return zone; }, get inWorld(){ return inWorld; }, get entered(){ return entered; }, get busy(){ return !!(EV || A); }, get lowFx(){ return lowFx; },
+    get tpv(){ return tpv; }, set tpv(v){ tpv = !!v; }, get zone(){ return zone; }, get inWorld(){ return inWorld; }, get entered(){ return entered; }, get busy(){ return !!(EV || A); }, get lowFx(){ return lowFx; },
     get BL(){ return BL; }, get BLC(){ return BLC; }, get DRV(){ return DRV; }, get PH(){ return PH; }, get DLG(){ return DLG; }, get room(){ return scene; }, get panelOpen(){ return panel.classList.contains('on'); },
-    say, tone, toMap, toLocal, onGround, avatar, crowdLook, tex, mat, glowM, decor, B3, C3, S3, fade, flakeTex, heroName, cleanName, setName,
-    dlgPlay, dlgNext, dlgSkip, closePanel, panel(html){ panelBody.innerHTML = html; panel.scrollTop = 0; panel.classList.add('on'); return panelBody; }
+    say, tone, toMap, toLocal, onGround, blrBox, avatar, crowdLook, tex, mat, glowM, decor, B3, C3, S3, fade, flakeTex, heroName, cleanName, setName,
+    dlgPlay, dlgNext, dlgSkip, closePanel, phoneClose, panel(html){ panelBody.innerHTML = html; panel.scrollTop = 0; panel.classList.add('on'); return panelBody; }
   }; }
   function seasonStep(dt, now){
     if (!entered) return; if (SEASON.S === undefined) SEASON.S = seasonInfo(); const S = SEASON.S; if (!S) return;
@@ -15860,7 +15880,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     tween(1.1, e => doorPivot.rotation.y = 1.75 * e, () => {
       moveCam(V(0, 1.6, 2.6), 0, -.05, 2.2, () => {
         entered = true; entering = false; enterUI.style.display = 'none';
-        dock.classList.add('on'); badge.hidden = false; $('#mcChip').hidden = false; if (mcOnce('ru-mc-room')) setTimeout(mcConfetti, 400);
+        dock.classList.add('on'); badge.hidden = false;
         if (!fine) joyEl.classList.add('on');
         hint.textContent = (fine ? 'Drag to look around. Walk with WASD or click the floor.' : 'Drag to look around. Walk with the joystick or tap the floor.') + ' Yellow dots are about me, blue dots are things to play with. Psst: pull the red book on the shelf.';
         hint.classList.add('on'); setTimeout(() => hint.classList.remove('on'), 9000);
