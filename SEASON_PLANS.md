@@ -29,8 +29,8 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | 1 | **Landfall** ✓ built | 18 Nov – 15 Dec 2026 | A meteor crashes off the west coast. | The Salvager | Scanner | Crash Isle | Crater Scout / Meteor Glow / Salvager's Rig |
 | 2 | **High Water** ✓ built | 16 Dec 2026 – 12 Jan 2027 | A wave through the tear drowns the city; the whole map is swimmable, with sharks. The city drains at the finale. | Captain Brine, a pirate | Boat and diving gear | The sunken district | Diver / Canal Captain / Brine's Coat |
 | 3 | **The Syndicate** (replaces The Carnival) | 13 Jan – 9 Feb 2027 | After the flood, a crime syndicate takes over the city. | Madame Marigold, until Inspector Devi betrays you | The Comet (getaway car) | Marigold's tower, now Devi's | Undercover / Clean Hands / Marigold's Suit |
-| 4 | **Blackout** | 10 Feb – 9 Mar 2027 | The city stays dark; Devi rules it, frames you for Marigold's death, and drills into a hot vent under the sea. Ends with the volcano rising and Devi falling into the lava. | Commissioner Devi, with Static (a saboteur in the power lines) working for her | Lantern and toolkit | A new power plant, and the volcano offshore | Lineworker / Lantern Bearer / Static |
-| 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | A volcano rises offshore. | Cinder, a cult leader | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |
+| 4 | **Blackout** | 10 Feb – 9 Mar 2027 | The city stays dark; Devi rules it, frames you for Marigold's death, and drills into a hot vent under the sea. Ends with the volcano rising and Devi falling into the lava. | Commissioner Devi, with Static (a saboteur in the power lines) working for her | Lantern and toolkit | A new power plant, and the volcano offshore | Lineworker / Lantern Bearer / Commissioner Devi |
+| 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | The new volcano becomes Ember Island and ash falls on the city; a cult uses the stolen meteor core to wake it. Ends with the ash dimming the sun and the sea starting to freeze. | Cinder, leader of the Kindled | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |
 | 6 | **Deep Freeze** | 7 Apr – 4 May 2027 | The sea freezes. | The Frost Warden | Skates | Ice palace ruins | Ice Skater / Snow Ranger / Frost Warden |
 | 7 | **Scales** | 5 May – 1 Jun 2027 | Reptilian aliens, the Vashk, land in disguise, and shapeshifters replace townspeople. | Queen Ssera | Truth lens (reveals disguised Vashk) and an alien hover-sled | The wrecked mothership in the mountains | Alien Hunter / Truth Lens Agent / Vashk Disguise |
 | 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore presses down from the sky; stop the collision before the timer runs out. | {N} Prime, the evil version of you | Rift jumper | A permanent tear in the sky | Rift Jumper / Other-Earth You / {N} Prime |
@@ -277,13 +277,74 @@ Bangalore has been dark since the night Marigold fell. Devi has made herself **A
 - **Skins:**
   - Lineworker: finish the story;
   - Lantern Bearer: the challenge, e.g. fix every district's substation;
-  - Static: beat him in Chapter 3.
+  - Commissioner Devi: beat her in the finale.
 - **Left on the map:** the new power plant, and the city lit again. Offshore, the new volcano that becomes Season 5's Ember Island.
 
 ### The trailer
 - **Look:** near-total darkness lit only by torches, searchlights, sparks and lightning, with electric blue as the only strong colour.
 - **Type:** a flickering neon or LED dot-matrix display, like a failing signboard.
 - **Score:** buzzing mains hum, relay clicks, sparks and a heartbeat, with a synth pulse that drops out in each blackout. At the end it gives way to a deep volcanic rumble.
+
+## Season 5 · The Eruption (10 March – 6 April 2027)
+
+### Story
+The volcano that swallowed Devi doesn't stop growing. Within a week it's an island, **Ember Island**, smoking off the west coast. Ash falls on Bangalore like grey snow, the sky turns orange at noon, and glowing rocks crash into the streets. People are frightened, and someone is offering them an answer.
+
+**The cast**
+- **Cinder (villain, original):** leader of a cult called **the Kindled**. She speaks softly and smiles a lot, and she always has a smouldering coal in a brass locket. *“The water drowned you. The dark starved you. Fire will make you clean.”*
+  - She was the hooded woman on the beach at the end of Season 4.
+  - Twist: she was an engineer on Devi's drilling rig. She survived the night it fell, and she believes the volcano spoke to her.
+- **Dr. Neel (ally, new):** a volcanologist who has been measuring Ember Island from a rooftop lab. He's nervous and brilliant, and he builds you the heat suit.
+- **Velvet:** still the ally, now ferrying people away from the worst of the ashfall.
+- **The Keeper:** worried, for once. The core of the meteor from Season 1 is missing from Crash Isle.
+
+**Cold open (10 Mar).**
+- Ash drifts through your bedroom window.
+- Outside, the street is grey, and people in ash-grey robes go door to door handing out little brass lockets.
+- A glowing rock smashes through a parked car.
+- Over the sea, Ember Island lights up the clouds from below.
+
+**Chapters**
+
+| Week | Chapter | What you do | Boss |
+|---|---|---|---|
+| 1 · 10 Mar | Ashfall | Lava bombs fall on the city: watch the red rings and get people to shelter. Dr. Neel gives you the heat suit (the season's tool). The Kindled are recruiting on every corner. | **The Torchbearer**, the cult's enforcer, in a burning market street. He throws fire and lights the ground around him. |
+| 2 · 17 Mar | The Kindled | Go undercover in the cult in an acolyte's robe, with optional stealth. Find out where Cinder takes her followers. Twist: the meteor core from Crash Isle is in her temple. She stole it, and she's using it to feed the volcano. | **The Choir:** three cult leaders who chant to make the floor crack open with lava. Break their rhythm to stop it. |
+| 3 · 24 Mar | Ember Island | Take the boat to the new island and climb it: lava rivers, steam vents and cooling crusts you can only cross in the heat suit. | **The Magma Hound**, a creature made of cooling rock with lava running through the cracks. Douse it at steam vents to harden its shell, then break the shell. |
+| 4 · 31 Mar | The Eruption (finale) | Cinder is at the crater with the meteor core, trying to wake the volcano fully and bury Bangalore in ash. | Three phases:<br>1. A climb up the crater rim under lava bombs.<br>2. Her acolytes and their fire walls.<br>3. Cinder herself, glowing with the core's power, on a crust of rock over the lava. |
+
+**The finale (sets up Season 6).**
+1. You tear the meteor core away from Cinder, and the volcano starts to settle.
+2. Cinder doesn't fall in. She's taken away by her own former followers, who finally see what she is.
+3. Her last words, as they lead her off: *“You’ve only slowed it down. The sky will remember.”*
+4. The core goes back to the Keeper, and the volcano cools into Ember Island for good.
+5. But the eruption has thrown so much ash into the sky that the sun goes pale. The last shot: the sea off the west coast, a thin skin of ice spreading across it in the middle of April. **Season 6 · Deep Freeze.**
+
+### How it plays
+- **Ashfall:**
+  - grey ash settles across the whole city, thicker as the season goes on;
+  - lava bombs land in red rings that warn you a second or two before they hit;
+  - cracks in the ground glow and spit.
+- **Heat:**
+  - lava, fire and hot ground raise your heat meter;
+  - the heat suit lets you cross hot ground for a while, then it needs to cool off in water or shade;
+  - you keep the suit after the season.
+- **Ember Island:** a new climbable island like the Far Range, with lava rivers, steam vents and crusts that crack if you stand still.
+- **Undercover:** cult robes as a disguise, with the same optional stealth as Season 3's heists.
+- **Everything from Seasons 1–4 carries over:** the guns and blades, the rope swing, slide and vault, the boat, the Comet and the lantern.
+
+### What you keep
+- **Tool:** the heat suit.
+- **Skins:**
+  - Heat Suit: finish the story;
+  - Ash Walker: the challenge, e.g. climb Ember Island without your heat meter maxing out;
+  - Cinder: beat her in the finale.
+- **Left on the map:** Ember Island, cooled, with a path to its crater and Dr. Neel's lab hut on its shore.
+
+### The trailer
+- **Look:** a smoky orange-red palette, with falling ash, embers drifting up past the camera, and heat shimmer.
+- **Type:** chiselled stone or carved letters that glow from inside like hot coals.
+- **Score:** a deep rumbling drone, distant temple drums and chanting from the Kindled, with crackling fire and lava hiss. It cuts to silence just before the eruption, then hits.
 
 ## The Moon (saved for a future season)
 
