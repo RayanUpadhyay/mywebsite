@@ -38,7 +38,7 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | 10 | **Skyline** | 28 Jul – 24 Aug 2027 | Floating islands appear. | Baron Altitude | Glider | An anchored sky island | Glider Pilot / Sky Racer / Baron Altitude |
 | 11 | **Harvest** | 25 Aug – 21 Sep 2027 | A food shortage; farms spread across the island. | The Blight (rot) | Farming | New farmland | Farmer / Scarecrow / The Blight |
 | 12 | **Neon Nights** | 22 Sep – 19 Oct 2027 | The city goes cyberpunk. | Vector, a tech CEO | Hover-auto | A neon strip | Street Racer / Hologram / Vector |
-| 13 | **The Drought** | 20 Oct – 16 Nov 2027 | The sea pulls back. | The Tide-Taker | Metal detector | A land bridge and a lighthouse | Treasure Hunter / Lighthouse Keeper / Tide-Taker |
+| 13 | **The Drought** (to be changed) | 20 Oct – 16 Nov 2027 | The sea pulls back. | The Tide-Taker | Metal detector | A land bridge and a lighthouse | Treasure Hunter / Lighthouse Keeper / Tide-Taker |
 | 14 | **Festival of Lights** | 17 Nov – 14 Dec 2027 | An island-wide lantern festival. | The Snuffer | Fireworks you can launch | Lantern trees | Lantern Robe / Firework Suit / The Snuffer |
 | 15 | **Convergence** (multiversal finale) | 15 Dec 2027 – 11 Jan 2028 | Several incursions hit at once. You use every tool, and your final choice decides how the cycle restarts. | The Collector of Worlds, with variants of past villains (including {N} Prime and the Vashk) | Every tool you've earned | How the cycle restarts | Multiverse Traveller / Collector's Armour (plus The Keeper for owning every skin) |
 
@@ -85,12 +85,17 @@ After Season 15 the cycle starts again with Season 1.
 - While Season 2 runs, the whole city sits under about 6–8 m of water: low buildings are gone, and towers become islands.
 - **The whole map is swimmable**, both on the surface and under it. Through the clear water you can see the old streets below.
 - Rooftops are safe spots, linked by rope bridges and planks.
-- **Sharks** patrol, and a fin shows where each one is. When one locks on it circles, then lunges, with a warning you can dodge. Getting out of the water onto a rooftop or the boat keeps you safe. Bigger ones turn up in deeper water.
+- **Sharks** patrol, and a fin shows where each one is.
+  - When one locks on it circles, then lunges, with a warning you can dodge.
+  - Bites hurt, and a shark can knock you out: you wake up on the nearest rooftop.
+  - You stop them with harpoons: a harpoon gun you get in Chapter 1 drives them off or brings them down.
+  - Getting out of the water onto a rooftop or the boat keeps you safe.
+  - Bigger ones turn up in deeper water.
 - **Other dangers:** jellyfish swarms, whirlpools round collapsed buildings, and debris carried by the current.
 - **Christmas crossover:** at night the shallow water between rooftops freezes into skating lanes, and the boat gets a light on the bow.
 
 ### What you keep
-- **Vehicle:** the boat. **Tool:** the diving gear.
+- **Vehicle:** the boat. **Tools:** the harpoon gun and the diving gear.
 - **Skins:**
   - Diver: finish the story.
   - Canal Captain: the challenge, e.g. finish Chapter 1 without being bitten.
@@ -104,10 +109,6 @@ After Season 15 the cycle starts again with Season 1.
 - **A walking height on building tops**, like the mountains have.
 - **Boat physics.**
 - **Sharks:** new enemies that swim, circle and lunge, built on the season fight engine.
-
-### Still to decide
-- Whether sharks can knock you out (you'd wake up on the nearest rooftop) or only hurt you.
-- How much fighting sharks takes: mostly getting away from them, or proper weapons. The default is to bop one on the nose to drive it off, plus the harpoon spear.
 
 ## Season 3 (to be planned)
 
