@@ -34,10 +34,10 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | 6 | **Dark Side** (space; replaces Deep Freeze) | 7 Apr – 4 May 2027 | The meteor was a key, and Cinder turned it. The Vashk Dominion's fleet on the Moon invades. Take the fight to their Moon fortress. Ends with their queen's ship slipping down to Earth. | High Commander Vorrak of the Vashk Dominion | Boost pack, and the Kite (fighter) | The launch pad on Crash Isle, a crashed landing pod, and a cracked Moon | Moonwalker / Ace / Vorrak's Armour |
 | 7 | **Scales** | 5 May – 1 Jun 2027 | Queen Ssera's shapeshifters replace people in Bangalore one by one, Velvet among them. Her crashed ship is a rift ship. Ends with the sky tearing open onto another Bangalore. | Queen Ssera | Truth lens and hover-sled | The wrecked mothership in the Far Range, and the tear in the sky | Alien Hunter / Truth Lens Agent / Vashk Disguise |
 | 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore presses down from the sky. Jump between the two cities and fight your evil double. **Prime wins:** your Bangalore is destroyed, and the Keeper throws you into a new universe with a completely different map. | {N} Prime, the evil version of you | Rift jumper | Your Bangalore is gone. Seasons 9–15 are on a new map | Rift Jumper / Other-Earth You / {N} Prime |
-| 9 | **The Rift** | 30 Jun – 27 Jul 2027 | The mountains split open. | The Excavator | Grappling hook | The Rift Valley and its caves | Cave Explorer / Ancient Machine / The Excavator |
+| 9 | **Neon Nights** (Phase 2 begins) | 30 Jun – 27 Jul 2027 | You wake up in Kaleido, a neon mega-city in another universe, with no ID and a device everyone wants. Vector, who runs the city's network, hunts you. Ends with the twist that Prime got here first. | Vector, CEO of Vector Systems | Hacking rig and hover-car | A Lowlights hideout and a neon strip in Kaleido | Stacks Runner / Hologram / Vector |
 | 10 | **Skyline** | 28 Jul – 24 Aug 2027 | Floating islands appear. | Baron Altitude | Glider | An anchored sky island | Glider Pilot / Sky Racer / Baron Altitude |
 | 11 | **Harvest** | 25 Aug – 21 Sep 2027 | A food shortage; farms spread across the island. | The Blight (rot) | Farming | New farmland | Farmer / Scarecrow / The Blight |
-| 12 | **Neon Nights** | 22 Sep – 19 Oct 2027 | The city goes cyberpunk. | Vector, a tech CEO | Hover-auto | A neon strip | Street Racer / Hologram / Vector |
+| 12 | **To be re-planned** (Neon Nights moved to Season 9) | 22 Sep – 19 Oct 2027 | – | – | – | – | – |
 | 13 | **The Drought** (to be changed) | 20 Oct – 16 Nov 2027 | The sea pulls back. | The Tide-Taker | Metal detector | A land bridge and a lighthouse | Treasure Hunter / Lighthouse Keeper / Tide-Taker |
 | 14 | **Festival of Lights** | 17 Nov – 14 Dec 2027 | An island-wide lantern festival. | The Snuffer | Fireworks you can launch | Lantern trees | Lantern Robe / Firework Suit / The Snuffer |
 | 15 | **Convergence** (multiversal finale) | 15 Dec 2027 – 11 Jan 2028 | Several incursions hit at once. You use every tool, and your final choice decides how the cycle restarts. | The Collector of Worlds, with variants of past villains (including {N} Prime and the Vashk) | Every tool you've earned | How the cycle restarts | Multiverse Traveller / Collector's Armour (plus The Keeper for owning every skin) |
@@ -579,6 +579,84 @@ This time, it isn't yours.
   - Whether the bedroom, the site's front door, stays as it is.
   - Whether the old Bangalore is gone for every visitor from then on, or still there outside the season story.
   - Whether Season 15 (Convergence) brings your Bangalore back.
+
+# Phase 2 · Kaleido (Seasons 9–15)
+
+Phase 1 (Seasons 1–8) happened in Bangalore, and ended with Prime winning and your Bangalore destroyed. Phase 2 happens in **Kaleido**, a neon mega-city in another universe, where the Keeper's last act threw you. You arrive with everything you'd earned (weapons, tools, vehicles and skins), plus the meteor core and the rift jumper. The big thread of Phase 2: Prime has swallowed a hundred worlds, Kaleido is the next on the list, and this time you have to be ready.
+
+## Phase 2 · Season 9 · Neon Nights (30 June – 27 July 2027)
+
+### Story
+You wake up in the rain at the bottom of a city that goes up for ever. It's built in layers:
+- **the Stacks:** the crowded, flickering bottom;
+- **the Mids:** markets, sky-trains and noodle bars;
+- **the Spires:** clean glass towers above the clouds, for people who never look down.
+
+Every sign is in a language you can't read. Every door scans you, and you have no ID. And the device in your pocket is the most valuable thing in the city.
+
+**The cast**
+- **Vector (villain, original):** CEO of Vector Systems, which runs Kaleido's network: every camera, door, drone and ID. He's smiling, polite, and always watching. He picks up the rift jumper's signal the night you arrive. *“Everything in my city has a price, and a serial number. You have neither. Let’s fix that.”*
+- **Pip (ally, new):** a street kid from the Stacks who finds you on the first night. Quick, funny and fearless, Pip teaches you the language a word at a time.
+- **The Lowlights:** a crew of hackers and couriers living off-grid in the Stacks.
+- **The meteor core:** quieter here. It's the only thing left of the Keeper, and every so often it shows you a glimpse of Prime's red city, getting closer.
+
+**Cold open (30 Jun).**
+- The last thing you remember is white light.
+- Now: neon rain, the hum of a sky-train overhead, a wall of signs in letters you don't know.
+- A street kid stares at you, says something you don't understand, then points at the glowing device in your hand and says the one word you do get: *“Run.”*
+- A drone's red eye turns towards you.
+
+**Chapters**
+
+| Week | Chapter | What you do | Boss |
+|---|---|---|---|
+| 1 · 30 Jun | Stranger | Survive your first night in the Stacks with no ID. Pip teaches you words, and signs slowly translate as you learn. Get a forged ID chip so doors and trains stop stopping you. | **Glitch**, Vector's bounty hunter, who flickers in and out of sight with a holographic cloak. |
+| 2 · 7 Jul | Uplink | The Lowlights show you that the core can see Kaleido's network. **Hacking:** take over cameras, open doors, turn drones against their owners and shut off a block's lights. | **Warden-9**, a security mech hunting you through a market while you hack its weak points in mid-fight. |
+| 3 · 14 Jul | Skyline | Climb from the Stacks to the Spires: wall-running up glass towers, a grappling line between buildings, and a **hover-car** chase through the sky lanes. | **Halo**, Vector's enforcer, in a fight on the outside of a moving sky-train. |
+| 4 · 21 Jul | Vector (finale) | Break into Vector Tower above the clouds. | Three phases:<br>1. Every system in the tower turns on you: turrets, doors and drones you have to hack in mid-fight.<br>2. A rooftop chase across the Spires.<br>3. Vector in a hard-light suit, made of the city's own network. |
+
+**The finale (sets up Season 10).**
+1. You beat Vector and cut him off from the network, and the whole city's ID system goes down for one night. The Stacks celebrate in the streets.
+2. **Twist:** in Vector's private vault, you find a red screen. Vector has been taking calls from someone wearing your face. Prime got to Kaleido first, and Vector was preparing the city to be handed over.
+3. Vector's last words, as the Lowlights lead him away: *“You think I was building this for me? I was building it for them.”*
+4. Last shot: in the sky over Kaleido, very faint, a thin red line opens, like the start of a tear. **Season 10.**
+
+### How it plays
+- **A whole new map:** Kaleido.
+  - It's a vertical neon mega-city with three layers (the Stacks, the Mids, the Spires), sky-trains, rain, giant holograms and markets.
+  - It's built from scratch as its own world in `index.html` (the biggest build in the series).
+  - It takes over from Bangalore as the city for the Phase 2 seasons.
+- **The language:**
+  - signs and voices start as an unreadable script;
+  - every word Pip teaches you translates more of the city, until you can read it all.
+- **Hacking (the season's tool, a hacking rig built on the meteor core):**
+  - look at a camera, door, drone or turret and hack it with a quick timing puzzle;
+  - then use it: open, switch off, turn around, or take over.
+- **Movement:**
+  - **wall-running** along glass towers;
+  - a **grappling line** between buildings, which works with the rope swing from Season 3;
+  - **sky-trains** you can ride and fight on top of.
+- **The hover-car (kept):** flies in the sky lanes between towers. Kaleido's version of the Comet.
+- **No ID:** until Chapter 1's forged chip, doors, trains and drones flag you. Afterwards, a wanted level works like Season 4's.
+- **Everything from Phase 1 carries over:** weapons, tools, vehicles and skins.
+
+### What you keep
+- **Tools:** the hacking rig, and the hover-car.
+- **Skins:**
+  - Stacks Runner: finish the story;
+  - Hologram: the challenge, finish the Uplink chapter without being spotted by a single camera;
+  - Vector: beat him in the finale.
+- **Left on the map:** a Lowlights hideout in the Stacks, and a neon strip in the Mids that turns your colours.
+
+### The trailer
+- **Look:**
+  - rain-soaked night, pink and cyan neon, giant holograms, steam from street vents;
+  - a city so tall you never see the ground or the sky.
+- **Type:** glitching neon signage that flickers between the alien script and English as the trailer goes on.
+- **Score:** synthwave and drum and bass, with a pulsing bassline, sky-train rumble and rain, and a vocoded voice saying the city's name.
+
+## Seasons 10–15 (to be re-planned for Kaleido)
+The original list (The Rift, Skyline, Harvest, Neon Nights, The Drought, Festival of Lights, Convergence) was written for Bangalore. Neon Nights is now Season 9's title. Seasons 10–15 need re-planning around Kaleido and the build-up to facing Prime again, with Season 15, Convergence, as the final showdown.
 
 ## Deep Freeze (saved for a future season)
 
