@@ -30,8 +30,8 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | 2 | **High Water** ✓ built | 16 Dec 2026 – 12 Jan 2027 | A wave through the tear drowns the city; the whole map is swimmable, with sharks. The city drains at the finale. | Captain Brine, a pirate | Boat and diving gear | The sunken district | Diver / Canal Captain / Brine's Coat |
 | 3 | **The Syndicate** (replaces The Carnival) | 13 Jan – 9 Feb 2027 | After the flood, a crime syndicate takes over the city. | Madame Marigold, until Inspector Devi betrays you | The Comet (getaway car) | Marigold's tower, now Devi's | Undercover / Clean Hands / Marigold's Suit |
 | 4 | **Blackout** | 10 Feb – 9 Mar 2027 | The city stays dark; Devi rules it, frames you for Marigold's death, and drills into a hot vent under the sea. Ends with the volcano rising and Devi falling into the lava. | Commissioner Devi, with Static (a saboteur in the power lines) working for her | Lantern and toolkit | A new power plant, and the volcano offshore | Lineworker / Lantern Bearer / Commissioner Devi |
-| 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | The new volcano becomes Ember Island and ash falls on the city; a cult uses the stolen meteor core to wake it. Ends with the ash dimming the sun and the sea starting to freeze. | Cinder, leader of the Kindled | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |
-| 6 | **Deep Freeze** | 7 Apr – 4 May 2027 | The ash dims the sun and the sea freezes; an ice palace grows on it. Ends with a scaled alien craft rising from under the ice. | The Frost Warden (Dr. Neel, frozen by a sliver of the meteor core) | Skates | Ice palace ruins | Ice Skater / Snow Ranger / Frost Warden |
+| 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | The new volcano becomes Ember Island and ash falls on the city; a cult uses the stolen meteor core to wake it. Ends with the core firing a beam at the Moon, and something there answering. | Cinder, leader of the Kindled | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |
+| 6 | **Dark Side** (space; replaces Deep Freeze) | 7 Apr – 4 May 2027 | The core's beam woke something inside the Moon. Build a rocket and go there first. Ends with a scaled alien craft escaping the Moon's vault towards Earth. | The Archivist | Rocket and moon rover | The launch pad on Crash Isle, and a cracked Moon in the sky | Moonwalker / Zero-G / Archivist's Lanterns |
 | 7 | **Scales** | 5 May – 1 Jun 2027 | Reptilian aliens, the Vashk, land in disguise, and shapeshifters replace townspeople. | Queen Ssera | Truth lens (reveals disguised Vashk) and an alien hover-sled | The wrecked mothership in the mountains | Alien Hunter / Truth Lens Agent / Vashk Disguise |
 | 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore presses down from the sky; stop the collision before the timer runs out. | {N} Prime, the evil version of you | Rift jumper | A permanent tear in the sky | Rift Jumper / Other-Earth You / {N} Prime |
 | 9 | **The Rift** | 30 Jun – 27 Jul 2027 | The mountains split open. | The Excavator | Grappling hook | The Rift Valley and its caves | Cave Explorer / Ancient Machine / The Excavator |
@@ -318,7 +318,7 @@ The volcano that swallowed Devi doesn't stop growing. Within a week it's an isla
 2. Cinder doesn't fall in. She's taken away by her own former followers, who finally see what she is.
 3. Her last words, as they lead her off: *“You’ve only slowed it down. The sky will remember.”*
 4. The core goes back to the Keeper, and the volcano cools into Ember Island for good.
-5. But the eruption has thrown so much ash into the sky that the sun goes pale. The last shot: the sea off the west coast, a thin skin of ice spreading across it in the middle of April. **Season 6 · Deep Freeze.**
+5. But the core doesn't go quiet. In the Keeper's hands it flares, and a thin beam of light shoots straight up out of the crater and hits **the Moon**. The last shot: a single point of light blinks on, on the Moon's dark side, and blinks back. Something up there has answered. **Season 6 · Dark Side.**
 
 ### How it plays
 - **Ashfall:**
@@ -346,89 +346,74 @@ The volcano that swallowed Devi doesn't stop growing. Within a week it's an isla
 - **Type:** chiselled stone or carved letters that glow from inside like hot coals.
 - **Score:** a deep rumbling drone, distant temple drums and chanting from the Kindled, with crackling fire and lava hiss. It cuts to silence just before the eruption, then hits.
 
-## Season 6 · Deep Freeze (7 April – 4 May 2027)
+## Season 6 · Dark Side (7 April – 4 May 2027)
 
 ### Story
-The ash from Ember Island dimmed the sun, and in the middle of April the sea freezes. It starts as a thin skin off the west coast; within days you can walk from the pier to Crash Isle. Snow buries the streets, and out on the ice something is building a palace.
+The meteor that started everything came from the Moon. Something living inside the Moon sends keys like it out into space, and wherever one lands it opens a door and takes something back. The beam from the core woke it. Now Bangalore is on its list, and the only way to stop it is to go there. (This game's Moon is its own place: it has air pockets, ruins and someone living inside it.)
 
 **The cast**
-- **The Frost Warden (villain, original):** a tall figure in armour of blue ice, with a crown of icicles and a voice like cracking glass. It wants the world to stay still, frozen and safe for ever. *“Nothing breaks if nothing moves.”*
-- **Dr. Neel:** the volcanologist from Season 5. He went back to Ember Island to make sure it never erupts again, and nobody has heard from him since.
-- **Velvet:** still the ally, now running supplies by sledge.
-- **The Keeper:** uneasy. The cold is reaching places it shouldn't.
+- **The Archivist (villain, original):** an ancient collector, tall and thin, in a coat of hanging lanterns. Each lantern holds a piece of a world it has taken. *“Nothing is lost if it is kept.”*
+- **The Keeper:** this season they finally say what they are: the keeper of the key, left on Earth a long time ago to watch for the Archivist's return.
+- **Dr. Neel:** the volcanologist from Season 5, who helps build the rocket and runs mission control from his rooftop lab.
+- **Velvet:** flies with you as the pilot.
 
 **Cold open (7 Apr).**
-- You wake up to silence. The bedroom window is frosted over.
-- Outside, the city is under snow in April, and the sea to the west is white and still all the way to the horizon.
-- On the ice far out, a spire of blue ice catches the pale sun. It's taller than it was an hour ago.
+- Night. Across Bangalore, people look up: a line of tiny lights is moving across the Moon's dark side.
+- The Keeper is waiting at the end of the pier: *“It’s coming for the key, {N}. We go to it first.”*
+- On Crash Isle, scaffolding and a half-built rocket stand where the core used to be.
 
 **Chapters**
 
 | Week | Chapter | What you do | Boss |
 |---|---|---|---|
-| 1 · 7 Apr | Whiteout | The city is snowed in. Get your skates and learn to skate on the frozen roads. Rescue fishermen stranded out on the ice before whiteouts roll in, and stay warm at fires and in the heat suit. | **The Rime Alpha**, leader of a pack of ice wolves that hunt across the frozen sea. |
-| 2 · 14 Apr | The Frozen Sea | Skate out across the sea to Ember Island, now cold and silent, and find Dr. Neel's abandoned lab. His notes describe a cooling machine he built to keep the volcano asleep, powered by a sliver of the Season 1 meteor core. | **The Glacier Golem**, a giant of packed ice guarding the lab. |
-| 3 · 21 Apr | The Ice Palace | Get inside the palace on the ice: sliding-block puzzles, frozen mirrors and floors that crack if you stand still. **Twist:** the Frost Warden is Dr. Neel. The core sliver fused into his cooling suit, froze the sea, and froze his mind with it. | **The Hoarfrost Knights**, the Warden's frozen guards, made from snow and the palace's own walls. |
-| 4 · 28 Apr | Thaw (finale) | The throne room at the top of the palace. Use everything: the heat suit, the lantern and the harpoon. | Three phases:<br>1. Blizzard waves across the throne room.<br>2. Ice spikes erupting from the floor.<br>3. The Warden's armour cracks open, with Neel still inside. |
+| 1 · 7 Apr | Liftoff | Help build the rocket on Crash Isle from scrap collected across the city: the Salvager's wreckage, Brine's ship, Devi's rig. Launch cinematic, then a rough landing near the Moon's north pole, with Earth hanging in the sky and Bangalore on it. | **The Welcome Party:** the Archivist's moon drones swarm the landing site while you get the rover out. |
+| 2 · 14 Apr | Tranquility Base | An old, abandoned moonbase, with low gravity, an oxygen meter (refills at airlocks and tanks) and crew logs from whoever lived here. | **The Custodian**, the base's robot, which switches the base's gravity on and off mid-fight. |
+| 3 · 21 Apr | The Dark Side | Drive the rover across the far side, where Earth can't be seen: glowing craters, chasms to jump, and the Archivist's diggers boring into the Moon's core. | **The Burrower**, a drilling machine that tunnels under you and bursts out. |
+| 4 · 28 Apr | Heart of the Moon (finale) | Go down into the vault inside the Moon, full of things taken from other worlds. Some hint at later seasons: a lost city of glowing glass, a floating island, a neon street from somewhere else. | Three phases:<br>1. A rover chase down the spiral tunnel.<br>2. Zero gravity in the hollow core.<br>3. The Archivist, close up, as the vault collapses. |
 
 **The finale (sets up Season 7).**
-1. You break the core sliver out of the Warden's armour, and Neel is freed: shaking, frostbitten and himself again. Unlike Devi, he survives.
-2. His first words: *“I just wanted it to stop moving. Everything kept breaking.”*
-3. The palace cracks, collapses and leaves its ruins on the ice (the season's trace). The sun comes back, and the sea thaws.
-4. Last shot: as the ice breaks up, something huge and dark is revealed under where the palace stood. It's a craft covered in overlapping metal scales, frozen into the seabed for who knows how long. Its lights blink on. It rises out of the water and flies off towards the mountains. **Season 7 · Scales.**
+1. You break the Archivist's lanterns one by one, and the things inside them fade back to wherever they were taken from.
+2. Its last words, as its last lantern goes dark: *“You think I was the only collector? I was the one who kept them locked away.”*
+3. The vault collapses, and you escape on the rocket.
+4. The Moon is left cracked, and the crack stays in Bangalore's sky for good (the season's trace).
+5. Last shot: something else escapes the vault in the confusion. It's a craft covered in overlapping metal scales, one of the Archivist's prisoners, now free. It shoots past your rocket towards Earth and comes down somewhere in the mountains. **Season 7 · Scales.**
 
 ### How it plays
-- **Skates (the season's tool):** fast skating with momentum on frozen roads and the sea: carve turns, jump cracks, and grind along frozen railings. Kept after the season.
-- **Cold:**
-  - a cold meter that rises in wind and snow;
-  - warm up at fires, indoors or in the heat suit from Season 5.
-- **Thin ice:**
-  - darker patches crack under you, and you fall into freezing water and have to swim out (the flood engine's swimming);
-  - you can't skate on thin ice, but you can crawl across it.
-- **Whiteouts:** blizzards cut visibility to a few metres. The lantern from Season 4 and the scanner from Season 1 help you find the way.
-- **The ice palace:** an interior level like the heist rooms in Season 3, with sliding-block puzzles, mirrors and cracking floors.
-- **Winter crossover:** the existing winter decorations, the ice rink and the snowmen fit right in, but it's April, so the real-winter layer stays off.
+- **A Moon world:** a separate zone with its own ground and sky, built in `index.html` so later seasons can reuse it. The old world system is frozen Mandalink code.
+- **Low and zero gravity:**
+  - big, floaty jumps on the surface;
+  - in the hollow core you push off walls between floating rocks.
+- **Oxygen:** a meter like Season 2's breath, refilled at airlocks, tanks and the rover.
+- **The rover (kept):** a bouncy moon buggy with big low-gravity jumps. You can bring it back and drive it in Bangalore.
+- **The rocket (kept):** its launch pad stays on Crash Isle, and you can fly to the Moon and back any time after the season.
 - **Everything from Seasons 1–5 carries over.**
 
 ### What you keep
-- **Tool:** the skates.
+- **Vehicles:** the rocket and the rover.
+- **Weapons** (three new ones):
+  - plasma lance (long reach);
+  - gravity gun (pulls or pushes enemies and rocks);
+  - star shot (hold to charge).
 - **Skins:**
-  - Ice Skater: finish the story;
-  - Snow Ranger: the challenge, e.g. rescue every fisherman before the whiteout;
-  - Frost Warden: beat the finale.
-- **Left on the map:** the ice palace ruins out on the water (they stay frozen all year).
+  - Moonwalker: finish the story;
+  - Zero-G: beat the Custodian without touching the floor while gravity is off;
+  - Archivist's Lanterns: beat the finale.
+- **Left on the map:** the launch pad on Crash Isle, and a cracked Moon in Bangalore's sky.
 
 ### The trailer
-- **Look:** white and ice blue, crisp and bright, with frost creeping in from the edges of the screen and breath fogging in the air.
-- **Type:** thin, elegant letters that look carved from clear ice.
-- **Score:** a slow music box, wind howling, ice creaking and cracking, and a choir rising at the end. It goes silent, then a deep mechanical hum as the scaled craft wakes.
+- **Look:** deep black space, stark white sunlight, the blue Earth, and the Archivist's lanterns as the only warm colour.
+- **Type:** clean, wide, spaced-out capitals like a mission patch, with a countdown.
+- **Score:** radio chatter and a countdown, the roar of the launch, then near-silence in space, with breathing, a soft synth pad and the hum of the lanterns, building to a big final chord.
 
-## The Moon (saved for a future season)
+## Deep Freeze (saved for a future season)
 
-**Premise.** The meteor came from the Moon. Something living inside it sends out keys like the meteor, and wherever one lands it opens a door and takes something back. This game's Moon is its own place, with air pockets, ruins and someone living inside it.
+The sea freezes, and an ice palace grows on it. The skates are the tool, with a cold meter, thin ice, whiteouts and the palace as an interior level. The skins are Ice Skater, Snow Ranger and Frost Warden.
 
-**Villain (original): the Archivist.** An ancient collector, tall and thin, with a coat of hanging lanterns. It sleeps in a vault deep inside the Moon, and each lantern holds a piece of a world it has taken.
+The direction to use when it's built (idea A):
+- The Frost Warden is an ancient guardian sleeping in the ice. It froze the sea deliberately, to keep something under it asleep.
+- You fight it all season, thinking it's the villain.
+- When you win, the ice breaks and what it was guarding wakes up.
+- Its last words: *“I held them for a thousand years. You let them go in a day.”*
 
-**Kept for good.**
-- A rocket, built on Crash Isle. Its launch pad stays on the map.
-- A moon rover, a buggy with big, bouncy low-gravity jumps. You can bring it back and drive it in Bangalore.
+The first draft (the Warden as Dr. Neel, frozen by a sliver of the meteor core) was dropped. Two allies turning bad in a row was one too many.
 
-**Chapters.**
-
-| Chapter | What you do | Boss |
-|---|---|---|
-| 1 · Liftoff | Build the rocket on Crash Isle from scrap collected around the city. Launch cinematic, then a rough landing near the Moon's north pole, with Earth in the sky. | **The Welcome Party**: moon drones swarm the landing site. |
-| 2 · Tranquility Base | An abandoned moonbase, with low gravity, an oxygen meter (refills at airlocks and tanks) and crew logs. | **The Custodian**, a robot that switches the base's gravity on and off. |
-| 3 · The Dark Side | Drive the rover across the far side: glowing craters, chasms to jump, and diggers boring into the core. | **The Burrower**, a drilling machine that tunnels under you and bursts out. |
-| 4 · Heart of the Moon | The vault inside the Moon, full of things taken from other worlds. | Three phases:<br>1. A rover chase down the spiral tunnel.<br>2. Zero gravity in the hollow core.<br>3. Close up as the vault collapses.<br>You escape on the rocket. |
-
-**After the finale.** The Moon is left cracked, and stays that way in Bangalore's sky.
-
-**Weapons.**
-- Plasma lance: long reach.
-- Gravity gun: pulls or pushes enemies and rocks.
-- Star shot: hold to charge.
-
-**Skins.** Moonwalker (story), Zero-G (beat the Custodian without touching the floor while gravity is off), Archivist's Lanterns (villain).
-
-**Engine work.** A separate Moon world in `index.html` (the old world system is frozen Mandalink code), low and zero gravity, an oxygen meter, rocket launch and landing scenes, and the rover.
