@@ -1723,7 +1723,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   let renderer;
   try { renderer = new THREE.WebGLRenderer({ canvas, antialias: true }); }
   catch (e) { $('#load').classList.add('off'); showSimple(true); $('#backBtn').style.display = 'none'; return; }
-  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 1.5));
   renderer.outputEncoding = THREE.sRGBEncoding;
   renderer.shadowMap.enabled = fine;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -6294,12 +6294,24 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // reduce effects: your choice is remembered; until you choose, slower devices start with it on
   let lowFx = false, fxChosen = false; try { const v = localStorage.getItem('ru-lowfx'); fxChosen = v !== null; lowFx = v === '1'; } catch (e) {}
   if (!fxChosen && ((navigator.deviceMemory && navigator.deviceMemory <= 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4))) lowFx = true;
-  // and if the frame rate is poor for a few seconds after you walk in, it switches on by itself
-  const fpsWatch = { t: 0, n: 0, done: false };
+  // a frame-rate governor: it watches every scene, all the time, and when frames are slow it steps the graphics down one
+  // notch at a time (resolution, then ambient occlusion, then shadows, then bloom, then Reduce effects). Resolution comes
+  // back up when there's plenty of headroom, unless that already made things slow once.
+  const GOV = { t: 0, n: 0, lvl: 0, good: 0, noUp: false, told: false };
+  const govPR = () => lowFx ? (GOV.lvl >= 7 ? .8 : 1) : [Math.min(devicePixelRatio || 1, 1.5), Math.min(devicePixelRatio || 1, 1.25), 1][Math.min(GOV.lvl, 2)];
+  function govApply(){
+    renderer.setPixelRatio(govPR()); resize(); if (typeof GFX !== 'undefined' && GFX.comp) GFX.comp.setPixelRatio(renderer.getPixelRatio());
+    if (GOV.lvl >= 3 && typeof GFX !== 'undefined') GFX.aoOn = false;
+    if (GOV.lvl >= 4 && renderer.shadowMap.enabled) { renderer.shadowMap.enabled = false; [scene, lairScene, world, roofScene, spaceScene, typeof BL !== 'undefined' && BL.sc].forEach(sc => sc && sc.traverse(o => { if (o.material) [].concat(o.material).forEach(m => m.needsUpdate = true); })); }
+    if (GOV.lvl >= 5 && typeof GFX !== 'undefined') GFX.noPost = true;
+  }
   function fpsCheck(dt){
-    if (fpsWatch.done || fxChosen || lowFx || !entered || document.hidden) return;
-    fpsWatch.t += dt; fpsWatch.n++;
-    if (fpsWatch.t > 6) { fpsWatch.done = true; if (fpsWatch.n / fpsWatch.t < 24) { lowFx = true; applyFx(); say('Things looked slow, so I switched on Reduce effects. You can change it in the menu.', 4200); } }
+    if (!entered || document.hidden || dt <= 0 || dt > .5) { GOV.t = GOV.n = 0; return; }
+    GOV.t += dt; GOV.n++; if (GOV.t < 3) return; const fps = GOV.n / GOV.t; GOV.t = GOV.n = 0;
+    if (fps < 40) { GOV.good = 0; if (GOV.lvl >= 7) return; if (GOV.up) GOV.noUp = true; GOV.up = false;
+      if (GOV.lvl === 5 && !lowFx) { if (fxChosen) return; lowFx = true; GOV.lvl = 6; applyFx(); if (!GOV.told) { GOV.told = true; say('Things looked slow, so I switched on Reduce effects. You can change it in the menu.', 4200); } return; }
+      GOV.lvl = lowFx ? Math.max(GOV.lvl + 1, 7) : GOV.lvl + 1; if (GOV.lvl === 3 && !(typeof GFX !== 'undefined' && GFX.aoOn)) GOV.lvl = 4; govApply(); return; }
+    if (fps > 57 && !GOV.noUp && !lowFx && GOV.lvl > 0 && GOV.lvl <= 2 && ++GOV.good >= 4) { GOV.good = 0; GOV.lvl--; GOV.up = true; govApply(); }
   }
   const POST_CREDITS = 'Post-credits scene: the clock resets to 11:58. The Deadline always comes back. See you next term.';
   const beaten = new Set(); try { JSON.parse(localStorage.getItem('ru-bosses') || '[]').forEach(b => beaten.add(b)); } catch (e) {}
@@ -7901,8 +7913,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   });
   menuBtn.onclick = () => openPause();
   function applyFx(){
-    renderer.setPixelRatio(lowFx ? 1 : Math.min(devicePixelRatio, 2)); resize();
-    renderer.shadowMap.enabled = fine && !lowFx;
+    if (!lowFx && GOV.lvl >= 6) GOV.lvl = 2; renderer.setPixelRatio(govPR()); resize(); if (typeof GFX !== 'undefined' && GFX.comp) GFX.comp.setPixelRatio(renderer.getPixelRatio());
+    renderer.shadowMap.enabled = fine && !lowFx && GOV.lvl < 4;
     [scene, lairScene, world, roofScene, spaceScene].forEach(sc => sc && sc.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.needsUpdate = true); }));
   }
   // runs every frame: poisoning, the bar on the right, the menu button and the weapon in your hand
@@ -11203,7 +11215,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       DOORS.filter(d => d.type === 'stash').forEach(d => dot(d.front[0], d.front[1], JOB.sealed.has(d) ? '#8A8F99' : '#7A2A2A', 7, '#fff'));
       SBOSS.forEach(Bq => { dot(Bq.at[0], Bq.at[1], SBK[Bq.id] ? '#3CE870' : '#FF3C3C', 9, '#16181D'); lbl(Bq.at[0], Bq.at[1], Bq.name); });
       dot(HOUSE.door[0], HOUSE.door[1], '#FFC93C', 8, '#16181D'); lbl(HOUSE.door[0], HOUSE.door[1], 'Home');
-      HEAT.cops.forEach(v => dot(v.x, v.z, '#2A6AFF', 6, '#fff')); MET.st.forEach(S => { dot(S.x, S.z, '#1F9A4A', 8, '#fff'); lbl(S.x, S.z, S.name + ' Metro'); }); dot(SPC.x, SPC.z, '#E8501E', 10, '#fff'); lbl(SPC.x, SPC.z, 'Space Centre'); try { winterPhMap(g, P, W); } catch (e) {}
+      HEAT.cops.forEach(v => dot(v.x, v.z, '#2A6AFF', 6, '#fff')); MET.st.forEach(S => { dot(S.x, S.z, '#1F9A4A', 8, '#fff'); lbl(S.x, S.z, S.name + ' Metro'); }); dot(SPC.x, SPC.z, '#E8501E', 10, '#fff'); lbl(SPC.x, SPC.z, 'Space Centre'); try { islePhMap(g, P, W); } catch (e) {} try { winterPhMap(g, P, W); } catch (e) {}
       if (APT.stand) { const [px, py] = P(APT.stand[0], APT.stand[1]); g.fillStyle = '#FFC93C'; g.strokeStyle = '#16181D'; g.lineWidth = 3; g.beginPath(); g.arc(px, py - 16, 13, Math.PI * .8, Math.PI * .2); g.lineTo(px, py); g.closePath(); g.fill(); g.stroke(); g.fillStyle = '#16181D'; g.font = '900 14px system-ui'; g.textAlign = 'center'; g.fillText('✈', px, py - 11); g.font = '800 15px system-ui'; g.lineWidth = 4; g.strokeStyle = '#FFFFFF'; g.strokeText('Airport Taxis', px, py - 34); g.fillText('Airport Taxis', px, py - 34); }
       const rt = reTarget(); if (rt) dot(rt[0], rt[1], '#35C8F0', 9, '#fff'); if (PH.wp) dot(PH.wp[0], PH.wp[1], '#35C8F0', 10, '#16181D'); const jt = jobTarget(); if (jt) { dot(jt[0], jt[1], '#FFC93C', 11, '#16181D'); const [px, py] = P(jt[0], jt[1]); g.fillStyle = '#16181D'; g.font = '900 14px system-ui'; g.textAlign = 'center'; g.fillText('!', px, py + 5); }
       if (zone === 'blr' && BL.sc) { const [px, py] = P(...toMap(pos.x, pos.z)), a = Math.atan2(-Math.sin(yaw), -Math.cos(yaw)); g.save(); g.translate(px, py); g.rotate(a + Math.PI / 2); g.fillStyle = '#FFC93C'; g.strokeStyle = '#16181D'; g.lineWidth = 3; g.beginPath(); g.moveTo(14, 0); g.lineTo(-9, -9); g.lineTo(-4, 0); g.lineTo(-9, 9); g.closePath(); g.fill(); g.stroke(); g.restore(); } };
@@ -11803,7 +11815,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const mx = x + BL.off.x, mz = z + BL.off.z, tx = mx - TW.x, tz = mz - TW.z, td = Math.hypot(tx, tz), inLift = mx > TW.x + 21.6 && mx < TW.x + 26.4 && Math.abs(mz - TW.z) < 2.9;
     if (BL.lvl) return lvlValid(BL.lvl, mx, mz);
     if (BL.off.y > .01) return td < TW.r - .6 && !inLift && !twHit(BL.off.y, tx, tz);
-    if (Math.abs(mx) > 372 || Math.abs(mz) > 372 || inLift && !newTL()) return false;
+    if ((Math.abs(mx) > 372 || Math.abs(mz) > 372) && !(ISLE.built && isleOk(mx, mz)) || inLift && !newTL()) return false;
     // the tower's glass wall, with its door on the west side
     if (td > TW.r - .7 && td < TW.r + .7 && Math.abs(tz) > 2.6 && !newTL()) return false;
     if (td < TW.r - .7 && twHit(0, tx, tz)) return false;
@@ -14162,13 +14174,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function loadPost(){ if (GFX.loading || GFX.comp || !wantPost()) return; GFX.loading = true; const base = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/';
     // all download at once, and still run in order (async = false); the last one finishing starts the effects
     POST.forEach((f, i) => { const s = document.createElement('script'); s.src = base + f; s.async = false; s.onerror = () => { GFX.noPost = true; }; if (i === POST.length - 1) s.onload = () => initPost(); document.head.appendChild(s); }); }
-  function initPost(){ try { renderer.getSize(GFX.sz); const w = GFX.sz.x, h = GFX.sz.y, C = new THREE.EffectComposer(renderer); C.setPixelRatio(Math.min(devicePixelRatio, 1.5));
+  function initPost(){ try { renderer.getSize(GFX.sz); const w = GFX.sz.x, h = GFX.sz.y, C = new THREE.EffectComposer(renderer); C.setPixelRatio(renderer.getPixelRatio());
       const rp = new THREE.RenderPass(BL.sc, camera), ao = new THREE.SSAOPass(BL.sc, camera, w, h); ao.kernelRadius = 1.2; ao.minDistance = .00002; ao.maxDistance = .0024;
       const bl = new THREE.UnrealBloomPass(new THREE.Vector2(w, h), .8, .5, .8); C.addPass(rp); C.addPass(ao); C.addPass(bl); C.addPass(new THREE.ShaderPass(THREE.GammaCorrectionShader));
       const grade = new THREE.ShaderPass({ uniforms: { tDiffuse: { value: null }, uWarm: { value: .5 }, uVig: { value: .32 } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
         fragmentShader: 'uniform sampler2D tDiffuse; uniform float uWarm; uniform float uVig; varying vec2 vUv; void main(){ vec4 c = texture2D(tDiffuse, vUv); vec3 col = c.rgb * mix(vec3(1.0), vec3(1.07, 1.0, 0.88), uWarm); float l = dot(col, vec3(0.299, 0.587, 0.114)); col = mix(vec3(l), col, 1.0 + 0.15 * uWarm); col = mix(col, col * col * (3.0 - 2.0 * col), 0.3); col *= 1.0 - uVig * smoothstep(0.35, 0.9, distance(vUv, vec2(0.5))); gl_FragColor = vec4(col, c.a); }' });
       C.addPass(grade); GFX.grade = grade;
-      Object.assign(GFX, { comp: C, rp, ao, bloom: bl, w, h, aoOn: true }); } catch (e) { console.error(e); GFX.noPost = true; } }
+      Object.assign(GFX, { comp: C, rp, ao, bloom: bl, w, h, aoOn: false }); /* ambient occlusion costs the most and shows the least, so it stays off */ } catch (e) { console.error(e); GFX.noPost = true; } }
   const cityScene3 = sc => !!sc && (sc === BL.sc || sc === TWR.sc || sc === roofScene || sc === BZ.sc || sc === SPF.sc);
   const roofView = () => inWorld && (zone === 'roof' || zone === 'city') && !!roofScene && !!BL.sc && !!BLC.sky;
   // flat 4B: four floors up, its balcony over the street in front of your tower
@@ -14176,6 +14188,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const cityLive = () => roofView() || flatView();
   function flatLink(){ if (BL.off.x !== -23 || BL.off.y !== 12.4 || BL.off.z !== -33) { BL.off.set(-23, 12.4, -33); BL.mapG.position.set(23, -12.4, 33); BL.lvl = null; } if (BL.mapG.parent !== BL.sc) BL.sc.add(BL.mapG); }
   function gfxRender(sc){
+    if (GFX.farCut && sc !== BL.sc) { if (camera.far === GFX.farCut) { camera.far = 500; camera.updateProjectionMatrix(); } GFX.farCut = 0; if (BLC.sky) BLC.sky.scale.setScalar(1); }
     if (sc === roofScene && roofSky) roofSky.visible = !roofView();
     if (sc === roofScene && roofView()) {
       roofLink(); const C = GFX.cur; if (C) { roofHemi.intensity = C.hemiI * 1.6; roofHemi.color.copy(C.hemiC); roofHemi.groundColor.copy(C.hemiG); roofSun.intensity = C.sunI; roofSun.color.copy(C.sunC); roofSun.position.copy(C.sd).multiplyScalar(40); roofScene.fog.color.copy(C.fog); roofScene.fog.near = C.near; roofScene.fog.far = C.far + 200; BL.sc.fog.color.copy(C.fog); }
@@ -14190,6 +14203,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       renderer.render(BL.sc, camera); const bg = TWR.sc.background, ac = renderer.autoClear; TWR.sc.background = null; renderer.autoClear = false; renderer.clearDepth(); renderer.toneMappingExposure = 1.1; renderer.render(TWR.sc, camera); renderer.autoClear = ac; TWR.sc.background = bg;
       renderer.toneMapping = THREE.NoToneMapping; renderer.toneMappingExposure = 1; GFX.last = 0; return;
     }
+    // in the street the fog hides everything past fog.far, so stop drawing there (and shrink the sky dome to fit inside)
+    if (sc === BL.sc && BL.sc.fog && BLC.sky && BL.sc.fog.far < 460) { const far = Math.max(160, BL.sc.fog.far + 40); if (camera.far !== far) { camera.far = far; camera.updateProjectionMatrix(); GFX.farCut = far; } BLC.sky.scale.setScalar(far * .92 / 440); }
     const city = cityScene3(sc); renderer.toneMapping = city ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping; renderer.toneMappingExposure = city ? (sc === BL.sc ? GFX.exposure : 1.1) : 1;
     GFX.haze.value = sc === BL.sc && GFX.cur ? GFX.cur.haze : 0; GFX.fogY.value = BL.off ? BL.off.y : 0;
     const post = city && GFX.comp && wantPost(); if (city && !GFX.comp) loadPost();
@@ -15959,6 +15974,114 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       else if (EV && !EV.over && EV.dead <= 0) { const foe = EV.units.filter(u => u.team !== EV.team && u.dead <= 0 && u.hero !== 'anchor' && Math.hypot(u.x - pos.x, u.z - pos.z) < 7)[0]; if (foe) { hitUnit(foe, petK === 'lockjaw' ? 30 : 18, EV.me); if (petK === 'lockjaw' && Math.random() < .3) { pet.x = foe.x + .8; pet.z = foe.z; } } } }
   }
   const petMenu = () => `<h3>Pet</h3><div class="lkrow">${Object.entries(PETS).map(([k, p]) => `<button type="button" class="tbtn" data-pet="${k}" aria-pressed="${petK === k}">${p.name}</button>`).join('')}</div>`;
+  // ======================= the island: this Bangalore sits alone in a sea, with other lands and mountains across the water =======================
+  // It's Rayan's Bangalore, not the real one, so it doesn't follow real geography: past the outer ring road there's a beach and
+  // then open sea, with mountain ranges and the other cities on the horizon. To leave you fly (the airport, as before), take the
+  // ferry from the pier on the west coast, or wade in anywhere and swim. Either way you arrive in Mumbai, Goa or Delhi.
+  var ISLE = { edge: 409, sand0: 393, pz: 82.5, px0: -404, px1: -447, built: false, told: false, ride: null, act: null, t: 0 };
+  const onPier = (mx, mz) => mx < ISLE.px0 + 1 && mx > ISLE.px1 && Math.abs(mz - ISLE.pz) < 1.45;
+  // where you're allowed to stand past the old edge of the map: the beach, and the pier
+  function isleOk(mx, mz){ return Math.max(Math.abs(mx), Math.abs(mz)) <= ISLE.edge || onPier(mx, mz); }
+  const ISLE_TO = [['bom', 'Mumbai', 'the tall skyline to the west'], ['goi', 'Goa', 'the palm coast to the south-west'], ['del', 'Delhi', 'the low city under the mountains to the north-west']];
+  function buildIsland(){
+    ISLE.built = true; const g = ISLE.g = new THREE.Group(), E = ISLE.edge; BL.mapG.add(g);
+    // the ground stops at the coast, and the sea starts just under it
+    const ground = BL.mapG.children.find(o => o.isMesh && o.geometry.parameters && o.geometry.parameters.width === 900); if (ground) { const k = (E + 3) * 2 / 900; ground.scale.x *= k; ground.scale.y *= k; }
+    const wt = tex(256, 256, (c, w, h) => { c.fillStyle = '#2A6E9A'; c.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { c.fillStyle = Math.random() < .5 ? 'rgba(255,255,255,.10)' : 'rgba(0,30,60,.12)'; c.fillRect(Math.random() * w, Math.random() * h, 6 + Math.random() * 14, 2); } }); wt.wrapS = wt.wrapT = THREE.RepeatWrapping; wt.repeat.set(120, 120);
+    const sea = ISLE.sea = new THREE.Mesh(new THREE.PlaneGeometry(3000, 3000), new THREE.MeshStandardMaterial({ color: 0x8FC4E8, map: wt, roughness: .25, metalness: .15 })); sea.rotation.x = -Math.PI / 2; sea.position.y = -.14; sea.userData.noPick = true; g.add(sea);
+    // a sandy beach all the way round, with a line of surf
+    const sand = new THREE.MeshStandardMaterial({ color: 0xE2CF9E, roughness: 1 }), foam = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: .55, depthWrite: false }), s0 = ISLE.sand0, s1 = E + 4, L = s1 * 2;
+    [[0, (s0 + s1) / 2, L, s1 - s0], [0, -(s0 + s1) / 2, L, s1 - s0], [(s0 + s1) / 2, 0, s1 - s0, s0 * 2], [-(s0 + s1) / 2, 0, s1 - s0, s0 * 2]].forEach(([x, z, w, d]) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), sand); m.rotation.x = -Math.PI / 2; m.position.set(x, .025, z); m.receiveShadow = true; m.userData.noPick = true; g.add(m); });
+    ISLE.foam = [[0, s1 + .9, L + 4, 1.4], [0, -s1 - .9, L + 4, 1.4], [s1 + .9, 0, 1.4, L], [-s1 - .9, 0, 1.4, L]].map(([x, z, w, d]) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), foam); m.rotation.x = -Math.PI / 2; m.position.set(x, -.1, z); m.userData.noPick = true; g.add(m); return m; });
+    // palms and a few beach things, all in one mesh
+    const P = []; for (let i = 0; i < (lowFx ? 40 : 90); i++) { const side = i % 4, f = (Math.random() * 2 - 1) * (E - 6), d = s0 + 4 + Math.random() * (E - s0 - 8), x = side === 0 ? f : side === 1 ? f : side === 2 ? d : -d, z = side === 0 ? d : side === 1 ? -d : f, z2 = side === 2 || side === 3 ? f : z;
+      if (Math.abs(z2 - ISLE.pz) < 8 && x < -380) continue; const hgt = 4 + Math.random() * 2.5, lean = (Math.random() - .5) * .3;
+      P.push(C3(.14, hgt, 0x8A6A44, x, hgt / 2, z2, 6, .1)); for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; P.push(B3(2.2, .06, .5, 0x3E8A4A, x + Math.cos(a) * 1.0, hgt + .05, z2 + Math.sin(a) * 1.0, -a, 0, .35)); } }
+    decor(P, g);
+    // the pier on the west coast, and the ferry tied up at the end of it
+    const pz = ISLE.pz, Q = [B3(ISLE.px0 - ISLE.px1, .22, 3, 0x8A6A4A, (ISLE.px0 + ISLE.px1) / 2, .03, pz)];
+    for (let x = ISLE.px0; x >= ISLE.px1; x -= 3) Q.push(C3(.16, 2, 0x5A4632, x, -.9, pz - 1.6, 6), C3(.16, 2, 0x5A4632, x, -.9, pz + 1.6, 6), B3(.08, .9, .08, 0x5A4632, x, .55, pz - 1.5), B3(.08, .9, .08, 0x5A4632, x, .55, pz + 1.5));
+    Q.push(B3(ISLE.px0 - ISLE.px1, .08, .08, 0x5A4632, (ISLE.px0 + ISLE.px1) / 2, .95, pz - 1.5), B3(ISLE.px0 - ISLE.px1, .08, .08, 0x5A4632, (ISLE.px0 + ISLE.px1) / 2, .95, pz + 1.5));
+    Q.push(B3(.14, 3, .14, 0x2A2D33, -398, 1.5, pz - 2.4), B3(.14, 3, .14, 0x2A2D33, -398, 1.5, pz + 2.4), B3(.14, 2.6, .14, 0x2A2D33, -396, 1.3, pz - 9), B3(.14, 2.6, .14, 0x2A2D33, -396, 1.3, pz - 5.4));
+    decor(Q, g);
+    signPlane('FERRY', 'MUMBAI · GOA · DELHI', '#1E3A6A', '#FFFFFF', 4.6, 1.15, g, -397.9, 2.6, pz, Math.PI / 2);
+    signPlane('RAYAN’S BANGALORE', 'NOT THE REAL ONE. HERE IT’S AN ISLAND.', '#F4F1E8', '#1E3A6A', 3.4, .85, g, -395.9, 2.2, pz - 7.2, Math.PI / 2);
+    const fr = ISLE.ferry = new THREE.Group(); fr.position.set(ISLE.px1 - 4.5, 0, pz); g.add(fr);
+    decor([B3(10, 1.4, 4, 0xF4F1E8, 0, .25, 0), B3(10.2, .3, 4.2, 0xC8462E, 0, -.35, 0), B3(4.5, 1.6, 3.2, 0x1E5AA8, .8, 1.75, 0), B3(4.6, .12, 3.3, 0xF4F1E8, .8, 2.6, 0), C3(.3, 1.4, 0xFFC93C, 2.2, 3.2, 0, 10), B3(2.83, 1.4, 2.83, 0xF4F1E8, -5, .25, 0, Math.PI / 4), B3(2.9, .3, 2.9, 0xC8462E, -5, -.35, 0, Math.PI / 4)], fr);
+    signPlane('ISLAND FERRY', '', '#1E5AA8', '#FFFFFF', 3.2, .5, fr, .8, 1.75, 1.62);
+    // the other lands, painted round the horizon: they ride along with the sky, so they're always there and cost one draw call
+    const pan = tex(4096, 512, (c, w, h) => {
+      const base = h * .92, ridge = (u0, u1, hMax, col, snow, seed, rough) => { c.fillStyle = col; c.beginPath(); c.moveTo(u0 * w, base); for (let x = u0 * w; x <= u1 * w; x += 6) { const f = (x / w - u0) / (u1 - u0), env = Math.sin(f * Math.PI) ** .7, y = base - env * hMax * (.55 + .25 * Math.sin(x * .011 + seed) + .15 * Math.sin(x * .037 + seed * 3) + rough * .08 * Math.sin(x * .13 + seed)); c.lineTo(x, y); } c.lineTo(u1 * w, base); c.fill();
+          if (snow) { c.save(); c.clip(); c.fillStyle = 'rgba(250,252,255,.92)'; c.fillRect(u0 * w, 0, (u1 - u0) * w, base - hMax * snow); c.restore(); } };
+      const towers = (u0, u1, n, hMax, col, seed) => { c.fillStyle = col; for (let i = 0; i < n; i++) { const x = u0 * w + (u1 - u0) * w * (i + .5 * Math.sin(i * 7 + seed) + .5) / n, bw = 6 + (i * 13 % 9), bh = hMax * (.3 + .7 * Math.abs(Math.sin(i * 2.3 + seed))); c.fillRect(x, base - bh, bw, bh); } };
+      // north: the Far Range, big and snowy, with the low city of Delhi in front of it to the north-west
+      ridge(.34, .66, 330, '#93A2BC', .62, 1, 1); ridge(.4, .6, 250, '#7787A2', .55, 4, 1.5); ridge(.3, .5, 120, '#5F6F88', 0, 7, .5);
+      towers(.62, .7, 34, 40, '#6A7488', 2); c.fillStyle = '#6A7488'; c.beginPath(); c.arc(.665 * w, base - 30, 16, Math.PI, 0); c.fill();
+      // west: Mumbai's towers on the water; south-west: Goa's low green hills and palms
+      towers(.72, .81, 60, 120, '#6C778C', 5); ridge(.82, .93, 70, '#5E7A68', 0, 9, .4);
+      c.fillStyle = '#4E6A58'; for (let i = 0; i < 26; i++) { const x = (.83 + i * .0037) * w, y = base - 22 - (i % 3) * 5; c.fillRect(x, y, 2, base - y); c.beginPath(); c.ellipse(x + 1, y, 9, 3, 0, 0, 7); c.fill(); }
+      // south: open sea and a couple of islands; east: the Blue Hills, lower and softer
+      ridge(.96, 1, 40, '#6F8494', 0, 11, .3); ridge(0, .03, 40, '#6F8494', 0, 12, .3); ridge(.06, .1, 70, '#6A7E92', 0, 13, 1);
+      ridge(.12, .34, 170, '#8496B0', .78, 15, .8); ridge(.16, .3, 110, '#6C7E98', 0, 17, .6);
+    });
+    const band = ISLE.band = new THREE.Mesh(new THREE.CylinderGeometry(400, 400, 150, 96, 1, true), new THREE.MeshBasicMaterial({ map: pan, transparent: true, side: THREE.BackSide, fog: false, depthWrite: false, toneMapped: false }));
+    band.position.y = 66; band.renderOrder = -9; band.userData.noPick = true; band.frustumCulled = false; BLC.sky.add(band);
+    // a button for the pier and the shore
+    ISLE.btn = document.createElement('button'); ISLE.btn.type = 'button'; ISLE.btn.className = 'btn alt drvbtn'; ISLE.btn.hidden = true; document.body.appendChild(ISLE.btn);
+    ISLE.btn.addEventListener('click', e => { e.stopPropagation(); if (ISLE.act) ISLE.act(); });
+  }
+  addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'e' && ISLE.act && ISLE.btn && !ISLE.btn.hidden) ISLE.act(); });
+  // pick where to go, then ride (or swim) out
+  function isleAsk(kind){
+    if (!aptPhoneOk()) return say('Not right now.', 2000);
+    const ferry = kind === 'ferry';
+    panelBody.innerHTML = `<div class="sec"><h2 class="display">${ferry ? 'The island ferry' : 'Swim for it?'}</h2><p class="sub">${ferry ? 'This Bangalore is an island, so the ferry crosses the sea to the other cities. It’s free, and it doesn’t follow any real map.' : 'It’s a long way. But this isn’t the real world: the sea is warm, the water is calm and nothing in it bites.'}</p>
+      ${ISLE_TO.map(([k, n, where]) => `<div class="card"><h3 class="display">${n}</h3><p>${ferry ? 'Over' : 'Swim to'} ${where}.</p><button class="open" type="button" data-isle="${k}">${ferry ? 'Board for ' : 'Swim to '}${n}</button></div>`).join('')}
+      <p class="sub">To come back, fly home from the airport there.</p></div>`;
+    panel.scrollTop = 0; panel.classList.add('on');
+    panelBody.querySelectorAll('[data-isle]').forEach(b => b.onclick = () => { closePanel(); isleGo(kind, b.dataset.isle); });
+  }
+  function isleGo(kind, city){
+    if (!aptPhoneOk() || ISLE.ride) return; if (DRV.on) getOut(true); const [mx, mz] = toMap(pos.x, pos.z), name = ISLE_TO.find(q => q[0] === city)[1];
+    const dir = kind === 'ferry' ? [-1, 0] : Math.abs(mx) > Math.abs(mz) ? [Math.sign(mx), 0] : [0, Math.sign(mz)];
+    ISLE.ride = { kind, city, t: 0, dir, x: kind === 'ferry' ? ISLE.ferry.position.x : mx, z: kind === 'ferry' ? ISLE.pz : mz }; DRV.lock = true;
+    if (kind === 'ferry') { tone(220, .8, 'sine', .04); setTimeout(() => tone(165, 1.2, 'sine', .04), 500); say(`The ferry pulls away from the pier. Next stop: ${name}.`, 4000); }
+    else { tone(330, .3, 'sine', .03); say(`You wade in and start swimming towards ${name}. The water’s warm. It always is, here.`, 4400); }
+  }
+  function isleRideStep(dt){
+    const R = ISLE.ride; R.t += dt; const T = R.kind === 'ferry' ? 9 : 8, sp = R.kind === 'ferry' ? 6 * Math.min(1, R.t / 3) : 1.6, d = R.kind === 'ferry' ? (R.t < 3 ? 3 * (R.t / 3) ** 2 : 3 + (R.t - 3) * 6) : R.t * sp;
+    const x = R.x + R.dir[0] * d, z = R.z + R.dir[1] * d;
+    if (R.kind === 'ferry') { ISLE.ferry.position.set(x, Math.sin(R.t * 1.4) * .08, z); ISLE.ferry.rotation.z = Math.sin(R.t * 1.1) * .02; const [lx, lz] = toLocal(x - 3.4, z); pos.x = lx; pos.z = lz; if (R.t < .1) yaw = Math.PI / 2; }
+    else { const [lx, lz] = toLocal(x, z); pos.x = lx; pos.z = lz; if (d > 7) pos.y = .45 + Math.sin(R.t * 3) * .05; }  // once you're in deep enough, your head is just above the water
+    if (R.t >= T) { const city = R.city; ISLE.ride = null; DRV.lock = false; xcEnter(city); setTimeout(() => { if (ISLE.ferry) { ISLE.ferry.position.set(ISLE.px1 - 4.5, 0, ISLE.pz); ISLE.ferry.rotation.z = 0; } }, 1500); }
+  }
+  function isleStep(dt, now){
+    if (!ISLE.built) { if (BLC.built && BL.mapG && BLC.sky) try { buildIsland(); } catch (e) { console.error(e); ISLE.built = true; } return; }
+    if (!ISLE.band) return; const t = now / 1000;
+    // the horizon takes the colour of the light: bright by day, dim at night
+    if (GFX.cur) { const f = GFX.cur.fog, lum = .3 * f.r + .59 * f.g + .11 * f.b, b = Math.min(1, .22 + lum * 1.25); ISLE.band.material.color.setRGB(b * (.7 + f.r * .3), b * (.7 + f.g * .3), b * (.7 + f.b * .3)); }
+    const inB = inWorld && zone === 'blr';
+    if (ISLE.ride && !(inB && !EV)) { ISLE.ride = null; DRV.lock = false; if (inB) pos.y = 1.6; }
+    if (!inB) { ISLE.act = null; ISLE.btn.hidden = true; return; }
+    if (ISLE.sea.material.map) ISLE.sea.material.map.offset.set(t * .004, t * .0025); ISLE.foam.forEach((m, i) => m.material.opacity = .35 + Math.sin(t * 1.3 + i) * .2);
+    if (ISLE.ride) { isleRideStep(dt); ISLE.btn.hidden = true; ISLE.act = null; return; }
+    const [mx, mz] = toMap(pos.x, pos.z), edge = Math.max(Math.abs(mx), Math.abs(mz)), ok = !EV && !BL.cine && !DRV.on && !DRV.lock && !BL.lvl && Math.abs(BL.off.y) < .01;
+    if (ok && edge > ISLE.sand0 - 2 && !ISLE.told) { ISLE.told = true; say('This is Rayan’s Bangalore, not the real one. Here it’s an island: the sea is warm all year, the mountains across the water aren’t on any atlas, and you can swim to Goa if you feel like it.', 7000); }
+    let act = null, label = '';
+    if (ok && onPier(mx, mz) && mx < ISLE.px1 + 4) { act = () => isleAsk('ferry'); label = 'Take the ferry'; }
+    else if (ok && !onPier(mx, mz) && edge > ISLE.edge - 2.5) { act = () => isleAsk('swim'); label = 'Swim out'; }
+    ISLE.act = act; ISLE.btn.hidden = !act || [...document.querySelectorAll('.drvbtn')].some(b => b !== ISLE.btn && !b.hidden); if (!ISLE.btn.hidden && ISLE.btn.textContent !== label + (fine ? ' (E)' : '')) ISLE.btn.textContent = label + (fine ? ' (E)' : '');
+  }
+  // the phone's map: sea round the edge, and the pier
+  function islePhMap(g, P, Wd){
+    const [ax, ay] = P(-ISLE.sand0, -ISLE.sand0), [bx, by] = P(ISLE.sand0, ISLE.sand0); g.fillStyle = '#4F8FC0';
+    g.fillRect(0, 0, Wd, Math.max(0, ay)); g.fillRect(0, by, Wd, Wd - by); g.fillRect(0, ay, Math.max(0, ax), by - ay); g.fillRect(bx, ay, Wd - bx, by - ay);
+    const [c1x, c1y] = P(-ISLE.edge, -ISLE.edge), [c2x, c2y] = P(ISLE.edge, ISLE.edge); g.strokeStyle = '#E2CF9E'; g.lineWidth = Math.max(2, (c2x - bx)); g.strokeRect((ax + c1x) / 2, (ay + c1y) / 2, (bx + c2x) / 2 - (ax + c1x) / 2, (by + c2y) / 2 - (ay + c1y) / 2);
+    const [p0x, py] = P(ISLE.px0, ISLE.pz), [p1x] = P(ISLE.px1, ISLE.pz); g.strokeStyle = '#8A6A4A'; g.lineWidth = 5; g.beginPath(); g.moveTo(p0x, py); g.lineTo(p1x, py); g.stroke();
+    g.fillStyle = '#FFFFFF'; g.strokeStyle = '#16181D'; g.lineWidth = 3; g.beginPath(); g.arc(p1x, py, 11, 0, 7); g.fill(); g.stroke(); g.fillStyle = '#16181D'; g.font = '900 13px system-ui'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('⛴', p1x, py + 1); g.textBaseline = 'alphabetic';
+    g.font = '800 15px system-ui'; g.lineWidth = 4; g.strokeStyle = '#FFFFFF'; g.strokeText('Ferry', p1x, py - 17); g.fillText('Ferry', p1x, py - 17);
+  }
+
   // ======================= winter: snow, lights, a tree, and a fair in Cubbon Park (1 December to 6 January) =======================
   // Everything here builds itself on the first frame of the season and never outside it, so nothing needs deleting in January.
   // The room gets snow past the window, fairy lights, a tree (its card has the activities and the New Year countdown), a snow
@@ -16250,7 +16373,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // every couple of seconds: achievements, the real night, and the phone light
   let nightChecked = false;
   function littleStep(dt, now){
-    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { winterStep(dt, now); } catch (e) { console.error(e); }
+    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { isleStep(dt, now); } catch (e) { console.error(e); } try { winterStep(dt, now); } catch (e) { console.error(e); }
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.dz) deathStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.fin) finalStep(dt, now);
