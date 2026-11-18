@@ -29,7 +29,7 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | 1 | **Landfall** ✓ built | 18 Nov – 15 Dec 2026 | A meteor crashes off the west coast. | The Salvager | Scanner | Crash Isle | Crater Scout / Meteor Glow / Salvager's Rig |
 | 2 | **High Water** ✓ built | 16 Dec 2026 – 12 Jan 2027 | A wave through the tear drowns the city; the whole map is swimmable, with sharks. The city drains at the finale. | Captain Brine, a pirate | Boat and diving gear | The sunken district | Diver / Canal Captain / Brine's Coat |
 | 3 | **The Syndicate** (replaces The Carnival) | 13 Jan – 9 Feb 2027 | After the flood, a crime syndicate takes over the city. | Madame Marigold, until Inspector Devi betrays you | The Comet (getaway car) | Marigold's tower, now Devi's | Undercover / Clean Hands / Marigold's Suit |
-| 4 | **Blackout** | 10 Feb – 9 Mar 2027 | The power grid fails as Devi takes the Syndicate. | Inspector Devi, with Static (a saboteur in the power lines) working for her | Lantern and toolkit | A new power plant | Lineworker / Lantern Bearer / Static |
+| 4 | **Blackout** | 10 Feb – 9 Mar 2027 | The city stays dark; Devi rules it, frames you for Marigold's death, and drills into a hot vent under the sea. Ends with the volcano rising and Devi falling into the lava. | Commissioner Devi, with Static (a saboteur in the power lines) working for her | Lantern and toolkit | A new power plant, and the volcano offshore | Lineworker / Lantern Bearer / Static |
 | 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | A volcano rises offshore. | Cinder, a cult leader | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |
 | 6 | **Deep Freeze** | 7 Apr – 4 May 2027 | The sea freezes. | The Frost Warden | Skates | Ice palace ruins | Ice Skater / Snow Ranger / Frost Warden |
 | 7 | **Scales** | 5 May – 1 Jun 2027 | Reptilian aliens, the Vashk, land in disguise, and shapeshifters replace townspeople. | Queen Ssera | Truth lens (reveals disguised Vashk) and an alien hover-sled | The wrecked mothership in the mountains | Alien Hunter / Truth Lens Agent / Vashk Disguise |
@@ -218,6 +218,72 @@ While Bangalore was underwater, the police stations flooded, the phones went dea
 - **Type:** 1970s crime film, with a condensed typewriter or slab-serif and title cards like case-file stamps (“CASE NO. 3 · THE SYNDICATE”).
 - **Score:** walking upright bass, brushed snare, a muted trumpet and a tense string stab on each cut, building into a car-chase beat.
 - **Ending:** the betrayal stays secret. The only hint is one line from Devi: *“Trust me.”*
+
+## Season 4 · Blackout (10 February – 9 March 2027)
+
+### Story
+Bangalore has been dark since the night Marigold fell. Devi has made herself **Acting Commissioner**, declared a state of emergency and put the city under curfew. She holds the only working generators, and she sells power the way Marigold sold protection. To most people she's the woman holding the city together. To you she's a murderer, and she's made sure the city thinks the murderer is **you**.
+
+**The cast**
+- **Inspector (now Commissioner) Devi:** the villain. She's calm and reasonable on every radio broadcast, and ruthless everywhere else. *“A city in the dark needs one light to follow.”*
+- **Static:** her saboteur. He lives in the power lines, blacks out a district the moment it's fixed, and fights with arcs of electricity.
+- **Velvet:** the ally since Season 3. She runs smuggled power cells to the people Devi cuts off.
+- **Brass:** he survived Season 3, and now he's Devi's muscle.
+- **The Keeper:** in the background. Something under the sea to the west is getting warmer.
+
+**Cold open (10 Feb).**
+- The city is pitch-black at night, with only candles in windows and police searchlights sweeping the streets.
+- A giant screen on Devi's tower flickers on, running on her generators: *“Citizens: the person responsible for Madame Marigold’s death is still at large.”*
+- Then your face fills the screen. WANTED.
+- Velvet's van skids up beside you: *“Get in. Now.”*
+
+**Chapters**
+
+| Week | Chapter | What you do | Boss |
+|---|---|---|---|
+| 1 · 10 Feb | Lights Out | On the run, framed. Get the lantern and the toolkit from Velvet's hideout, and repair your district's substation in a wire-matching mini-game while Devi's patrols sweep the streets. The lights come back on in one district, for a minute, until Static blacks it out again. | **Static**, in an ambush on the substation: dodge his arcs, and fight with the lantern lit so you can see him move along the wires. |
+| 2 · 17 Feb | Curfew | Devi's curfew. Run Velvet's power cells to the hospitals and the rooftop camps, past patrol cars, drone searchlights and checkpoints, swinging across dark streets. People start to help you, and your wanted poster gets torn down in the districts you help. | **Brass, the rematch:** this time you win the fight you lost in Season 3. |
+| 3 · 24 Feb | Live Wire | Break into the old power station, Static's lair, and fight through the turbine hall in the dark. Beaten, Static tells you the truth: Devi isn't saving the city's power, she's draining it into a rig out at sea, drilling into the hot vent under the seabed west of Crash Isle. | **Static** in the turbine hall: live floors, a turbine you shut down to ground him, and a final chase along the high-voltage lines. |
+| 4 · 3 Mar | Overload (finale) | Take the boat out to Devi's drilling rig at night, in a storm. She's overloading the vent to power a city that only she controls. | Three phases:<br>1. The rig deck, dark except for your lantern and the lightning.<br>2. The control room, as she overloads the drill and the rig starts to shake.<br>3. Devi in a stolen powered work suit on the drill platform, as the sea starts to boil. |
+
+**The finale (sets up Season 5).**
+1. You beat Devi on the drill platform. The overload can't be stopped, and the drill punches through into the vent.
+2. The seabed cracks. Below the rig, the sea glows orange.
+3. Devi clings to the platform as it tips towards the glow. Her last words: *“I only wanted the lights to stay on… for me.”*
+4. The platform gives way and she falls into the rising lava. The camera holds on her silhouette as she sinks into the glow and melts away into it. No gore: it fades into the light.
+5. You get to the boat as the rig collapses.
+6. Behind you, **a volcano rises out of the sea**, steam and fire pouring up into the sky.
+7. Across Bangalore every light comes back on at once, because the city's new power plant is finally free of Devi's control.
+8. **Last shot:** on the beach, a row of figures in ash-grey robes kneels facing the volcano. One of them lowers her hood. **Season 5 · The Eruption.**
+
+### How it plays
+- **Darkness:**
+  - nights are much darker, with street lights out across districts you haven't fixed;
+  - your lantern lights the way, but it also makes you easier to spot;
+  - it's the season's tool, and you keep it.
+- **Wanted level:** Devi's police are hunting you. Patrol cars, drone searchlights (like Season 1's sentries) and checkpoints, with disguises and the rope swing to slip past.
+- **Fixing the grid:**
+  - each district has a substation, with a quick wire-and-fuse puzzle from the toolkit;
+  - a district you fix lights up and stays lit, and its people start to help you;
+  - Static comes back to black out fixed districts, so you have to defend them.
+- **Electric fights:**
+  - live puddles and wires you mustn't stand on;
+  - arcs you can see coming;
+  - Static moves along the cables, so you cut or ground them.
+- **Everything from Seasons 1–3 carries over:** the guns and blades, the rope swing, the slide and vault, and the Comet.
+
+### What you keep
+- **Tools:** the lantern and the toolkit.
+- **Skins:**
+  - Lineworker: finish the story;
+  - Lantern Bearer: the challenge, e.g. fix every district's substation;
+  - Static: beat him in Chapter 3.
+- **Left on the map:** the new power plant, and the city lit again. Offshore, the new volcano that becomes Season 5's Ember Island.
+
+### The trailer
+- **Look:** near-total darkness lit only by torches, searchlights, sparks and lightning, with electric blue as the only strong colour.
+- **Type:** a flickering neon or LED dot-matrix display, like a failing signboard.
+- **Score:** buzzing mains hum, relay clicks, sparks and a heartbeat, with a synth pulse that drops out in each blackout. At the end it gives way to a deep volcanic rumble.
 
 ## The Moon (saved for a future season)
 
