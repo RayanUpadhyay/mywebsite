@@ -11467,6 +11467,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function blrValid(x, z){
     const mx = x + BL.off.x, mz = z + BL.off.z, tx = mx - TW.x, tz = mz - TW.z, td = Math.hypot(tx, tz), inLift = mx > TW.x + 21.6 && mx < TW.x + 26.4 && Math.abs(mz - TW.z) < 2.9;
     if (BL.lvl) return lvlValid(BL.lvl, mx, mz);
+    if (FLOOD.on && BL.off.y <= .01) return td > TW.r + .7 && floodValid(mx, mz);
     if (BL.off.y > .01) return td < TW.r - .6 && !inLift && !twHit(BL.off.y, tx, tz);
     if ((Math.abs(mx) > 372 || Math.abs(mz) > 372) && !(ISLE.built && isleOk(mx, mz)) || inLift && !newTL()) return false;
     // the tower's glass wall, with its door on the west side
@@ -11649,7 +11650,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // from chapter 9 until the end of the story, the only weapon left is Wolverine's claws
   
   
-  function kitSpeed(){ if (BL && BL.cine) return 0; let m = 1; if (SG.flags && SG.flags.old && !EV) m *= .6; if (EV && EV.slowMe > 0) m *= .45; if (EV && EV.st && EV.st.part === 's1') m *= .8; if (kitOn()) { if (KIT.crouchK > .5) m *= .5; else if (KIT.sprinting) m *= 1.6; } if (EV && EV.blocking) m *= .5; if (EV && EV.pain) m *= EV.flinch > 0 ? .3 : .82; return m; }
+  function kitSpeed(){ if (BL && BL.cine) return 0; let m = 1; if (FLOOD.on && FLOOD.swim) m *= FLOOD.under ? .55 : .65; if (SG.flags && SG.flags.old && !EV) m *= .6; if (EV && EV.slowMe > 0) m *= .45; if (EV && EV.st && EV.st.part === 's1') m *= .8; if (kitOn()) { if (KIT.crouchK > .5) m *= .5; else if (KIT.sprinting) m *= 1.6; } if (EV && EV.blocking) m *= .5; if (EV && EV.pain) m *= EV.flinch > 0 ? .3 : .82; return m; }
   const kitEl = document.createElement('div'); kitEl.className = 'kitui'; kitEl.hidden = true; kitEl.innerHTML = '<span class="stam"><i></i></span><button type="button" data-kit="sprint">Sprint</button><button type="button" data-kit="crouch">Crouch</button>'; document.body.appendChild(kitEl);
   kitEl.addEventListener('click', e => { const b = e.target.closest('[data-kit]'); if (!b) return; if (b.dataset.kit === 'sprint') KIT.sprint = !KIT.sprint; else KIT.crouch = !KIT.crouch; });
   addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || !entered) return; const k = e.key.toLowerCase();
@@ -11843,7 +11844,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const SSKIN = {
     s1_scout: { n: 'Crater Scout', how: 'Finish the Landfall story (light the core).', o: { hero: 1, c1: '#B8763A', c2: '#3A2E26', gloves: 1, mask: 'visor' } },
     s1_glow: { n: 'Meteor Glow', how: 'Beat the Foreman without being caught by a searchlight.', o: { hero: 1, c1: '#16181D', c2: '#FF7A2A', gloves: 1, mask: 'helmet', glow: 1, stripes: 1 } },
-    s1_rig: { n: 'Salvager’s Rig', how: 'Beat the Salvager in the finale.', o: { hero: 1, c1: '#E8B82E', c2: '#3A3D44', gloves: 1, metal: 1, mask: 'helmet' } }
+    s1_rig: { n: 'Salvager’s Rig', how: 'Beat the Salvager in the finale.', o: { hero: 1, c1: '#E8B82E', c2: '#3A3D44', gloves: 1, metal: 1, mask: 'helmet' } },
+    s2_diver: { n: 'Diver', how: 'Finish the High Water story.', o: { hero: 1, c1: '#1E3A5A', c2: '#3CB0A8', gloves: 1, mask: 'visor' } },
+    s2_captain: { n: 'Canal Captain', how: 'Finish High Water Chapter 1 without being bitten.', o: { hero: 1, c1: '#F4F1E8', c2: '#1E3A8A', gloves: 1, stripes: 1 } },
+    s2_brine: { n: 'Brine’s Coat', how: 'Beat Captain Brine in the finale.', o: { hero: 1, c1: '#5A1E1E', c2: '#E8B82E', gloves: 1, cape: 1, mask: 'hood' } }
   };
   Object.keys(SSKIN).forEach(k => OUTFITS[k] = SSKIN[k].o);
   // the skin you're wearing goes over your own look
@@ -12736,7 +12740,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     const bg = bake(VT.scooter(0xFFFFFF)[0]), bm = inst(bg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .45, metalness: .35 }), bikes, g, true); bikes.forEach((_, i) => bm.setColorAt(i, new THREE.Color(cols[(i * 7) % cols.length]))); if (bm.instanceColor) bm.instanceColor.needsUpdate = true;
   }
   const VNAME = { car: 'a car', cab: 'a taxi', auto: 'an auto-rickshaw', bus: 'a BMTC bus', truck: 'a lorry', scooter: 'a scooter', jeep: 'a jeep' };
-  const VDRIVE = { car: { max: 22, acc: 6, turn: 1.6 }, cab: { max: 22, acc: 6, turn: 1.6 }, auto: { max: 13, acc: 4.5, turn: 2.2 }, scooter: { max: 17, acc: 6.5, turn: 2.6 }, jeep: { max: 19, acc: 5.5, turn: 1.7 }, bus: { max: 12, acc: 2.5, turn: 1.0 }, truck: { max: 13, acc: 3, turn: 1.1 }, moto: { max: 25, acc: 8, turn: 2.4 }, suv: { max: 20, acc: 5.5, turn: 1.5 }, van: { max: 17, acc: 4, turn: 1.3 } };
+  const VDRIVE = { car: { max: 22, acc: 6, turn: 1.6 }, cab: { max: 22, acc: 6, turn: 1.6 }, auto: { max: 13, acc: 4.5, turn: 2.2 }, scooter: { max: 17, acc: 6.5, turn: 2.6 }, jeep: { max: 19, acc: 5.5, turn: 1.7 }, bus: { max: 12, acc: 2.5, turn: 1.0 }, truck: { max: 13, acc: 3, turn: 1.1 }, moto: { max: 25, acc: 8, turn: 2.4 }, boat: { max: 16, acc: 5, turn: 1.4 }, raft: { max: 3.6, acc: 1.6, turn: 1.4 }, suv: { max: 20, acc: 5.5, turn: 1.5 }, van: { max: 17, acc: 4, turn: 1.3 } };
   const vGeo = {}, vBodyM = () => BLC.bodyM || (BLC.bodyM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .45, metalness: .35 })), vLightM = () => BLC.lightM || (BLC.lightM = new THREE.MeshBasicMaterial({ vertexColors: true }));
   function makeVehicle(type, col, parent){
     const k = type + ':' + (col || 0); if (!vGeo[k]) { const [body, lights, L, W, sp] = VT[type](col); vGeo[k] = { body: bake(body), lights: bake(lights), L, W, sp }; }
@@ -13046,7 +13050,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   const drvBtn = document.createElement('button'); drvBtn.type = 'button'; drvBtn.className = 'btn alt drvbtn'; drvBtn.hidden = true; document.body.appendChild(drvBtn);
   const drvHud = document.createElement('div'); drvHud.className = 'drvhud'; drvHud.hidden = true; document.body.appendChild(drvHud);
   const drvCss = document.createElement('style'); drvCss.textContent = '.drvbtn{position:fixed;left:50%;bottom:120px;transform:translateX(-50%);z-index:40}.drvhud{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:40;background:rgba(11,13,20,.8);color:#fff;padding:6px 14px;border-radius:999px;font:700 15px/1.2 system-ui,sans-serif;letter-spacing:.02em}'; document.head.appendChild(drvCss);
-  function driveNear(){ if (!inWorld || zone !== 'blr' || EV || A || BL.cine || (BL.lvl ? !BL.lvl.drive : Math.abs(BL.off.y) > .01) || !BLC.built || DRV.lock) return null; const [mx, mz] = toMap(pos.x, pos.z); let best = null, bd = 1e9; BLC.parked.forEach(p => { if (Math.abs((p.y || 0) - BL.off.y) > .5 || !p.g.visible) return; const d = Math.hypot(p.x - mx, p.z - mz) - p.L / 2; if (d < 3.6 && d < bd) { bd = d; best = p; } }); return best; }
+  function driveNear(){ if (!inWorld || zone !== 'blr' || EV || A || BL.cine || (BL.lvl ? !BL.lvl.drive : Math.abs(BL.off.y) > .01) || !BLC.built || DRV.lock) return null; const [mx, mz] = toMap(pos.x, pos.z); let best = null, bd = 1e9; BLC.parked.forEach(p => { if (FLOOD.on ? !FLOAT[p.type] : Math.abs((p.y || 0) - BL.off.y) > .5 || !p.g.visible) return; const d = Math.hypot(p.x - mx, p.z - mz) - p.L / 2; if (d < 3.6 && d < bd) { bd = d; best = p; } }); return best; }
   function getIn(p){ DRV.on = true; DRV.p = p; DRV.spd = 0; DRV.tpv = tpv; tpv = false; walkTarget = null; BLC.cam = null; tone(180, .35, 'sawtooth', .03, 260); say(`You get into ${p.name}. ${fine ? 'W and S to drive, A and D to steer, H for the carHorn, E to get out.' : 'Use the stick to drive. Tap Get out when you’re done.'} Keep left.`, 4600); }
   function getOut(quiet){ const p = DRV.p; DRV.on = false; DRV.p = null; DRV.spd = 0; tpv = DRV.tpv || false; drvHud.hidden = true; if (!p) return;
     if (!quiet) { const lx = Math.cos(p.h), lz = -Math.sin(p.h); for (const s of [1, -1, 0]) { const x = p.x + lx * s * (p.W / 2 + 1), z = p.z + lz * s * (p.W / 2 + 1), [ax, az] = toLocal(x, z); if (s === 0 || blrValid(ax, az)) { pos.x = ax; pos.z = az; break; } } say('You get out.', 1400); } pos.y = 1.6; }
@@ -13064,7 +13068,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     p.h -= s * M.turn * dt * clamp(DRV.spd / 5, -1, 1);
     const fx = Math.sin(p.h), fz = Math.cos(p.h), nx = p.x + fx * DRV.spd * dt, nz = p.z + fz * DRV.spd * dt, lx = fz, lz = -fx;
     const ok = [[1, 1], [1, -1], [-1, 1], [-1, -1], [0, 1], [0, -1]].every(([a, b]) => { const [ax, az] = toLocal(nx + fx * b * p.L / 2 + lx * a * p.W / 2, nz + fz * b * p.L / 2 + lz * a * p.W / 2); return blrValid(ax, az) && !PILLARS.some(q => Math.hypot(ax - q.x, az - q.z) < q.r); });
-    const hit = [...BLC.cars, ...BLC.parked].find(o => o !== p && Math.hypot(o.x - nx, o.z - nz) < (o.L + p.L) * .32 + .9);
+    const hit = [...BLC.cars, ...BLC.parked].find(o => o !== p && (!FLOOD.on || FLOAT[o.type]) && Math.hypot(o.x - nx, o.z - nz) < (o.L + p.L) * .32 + .9);
     if (ok && !hit) { p.x = nx; p.z = nz; } else if (Math.abs(DRV.spd) > .5) { if (Math.abs(DRV.spd) > 5) { tone(70, .3, 'sawtooth', .05, 40); say(hit ? 'Bump. Sorry!' : 'Crunch.', 900); if (hit && Math.abs(DRV.spd) > 7 && !HEAT.cops.includes(hit)) heatAdd(1, 'You smashed into another car.'); } DRV.spd *= -.25; }
     p.fx = fx; p.fz = fz; if (DRV.spd) p.moved = true; p.g.position.set(p.x, p.y || 0, p.z); p.g.rotation.y = p.h; p.g.rotation.z = -s * clamp(DRV.spd / M.max, 0, 1) * (p.type === 'scooter' ? .25 : .03);
     const [ax, az] = toLocal(p.x, p.z); pos.set(ax, 1.6, az); yaw = p.h + Math.PI; walkTarget = null;
@@ -13149,7 +13153,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     const [mx, mz] = toMap(pos.x, pos.z), pm = Math.abs(BL.off.y) > .01 ? [] : [[mx, mz, DRV.on ? DRV.p.W / 2 : .3]];
     BLC.parked.forEach(p => { if (p.moved && p !== DRV.p) pm.push([p.x, p.z, p.W / 2]); });
     (TLX.walkers || []).forEach(w => { if (w.a.g.visible) pm.push([w.a.g.position.x, w.a.g.position.z, .3]); }); pedPm(pm); rePm(pm); HEAT.cops.forEach(v => pm.push([v.x, v.z, 1.2]));
-    BLC.cars.forEach(v => carStep(v, dt, T, pm));
+    if (!FLOOD.on) BLC.cars.forEach(v => carStep(v, dt, T, pm));
     if (roofV) { drvBtn.hidden = true; return; }
     if (DRV.on) { if (!DRV.lock) driveStep(dt); } else if (!BL.cine && !DRV.lock) { if (!BL.lvl) BLC.cars.forEach(carShove); BLC.parked.forEach(carShove); }
     const near = !DRV.on && driveNear(); drvBtn.hidden = !(DRV.on || near); if (!drvBtn.hidden) drvBtn.textContent = DRV.on ? (fine ? 'Get out (E)' : 'Get out') : `Drive ${near.name.replace(/^(a|an|your) /, 'the ')}${fine ? ' (E)' : ''}`;
@@ -14191,6 +14195,10 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     [[gB(.16, .14, .05), 0xFFF6D8, 0, .95, .72], [gB(.14, .08, .05), 0xFF2A1A, 0, .85, -.72]], 1.8, .7, 12];
   VT.scooterR = col => { const [b, l, L, W] = VT.scooter(col); return [[...b, ...rider(col + 77, .72, -.25, .1)], l, L, W, 11]; };
   // a motorbike with nobody on it (the ones parked in your garage)
+  // a small motorboat and a plank raft for the flooded city (they only go on open water)
+  const FLOAT = { boat: 1, raft: 1 };
+  VT.raft = () => [[[gB(.9, .12, 2.6), 0x8A6A4A, 0, .1, 0], [gB(.92, .02, .08), 0x5A4632, 0, .17, .6], [gB(.92, .02, .08), 0x5A4632, 0, .17, -.6]], [[gB(.02, .02, .02), 0x5A4632, 0, .1, 0]], 2.6, .9, 4];
+  VT.boat = col => [[[gB(1.9, .62, 4.4), col, 0, .28, 0], [gB(1.96, .1, 4.46), 0xF4F1E8, 0, .62, 0], [extr(shapeOf([[0, 0], [.95, 0], [0, 1.1]]), .6), col, -.3, .28, 2.2, Math.PI / 2, 0, 0], [gB(1.2, .5, 1.1), 0xF4F1E8, 0, .92, -.4], [gB(1.1, .3, .05), GLASS, 0, 1.0, .16], [gB(.4, .6, .5), 0x16181D, 0, .6, -2.25]], [[gB(.22, .1, .05), 0xFFF6D8, 0, .78, 2.2]], 4.6, 1.9, 12];
   VT.moto = col => { const n = rider(col, .78, -.3).length, [b, l, L, W, sp] = VT.bike(col); return [b.slice(0, b.length - n), l, L, W, sp]; };
   // ---------- the new districts round the old edge of the map ----------
   // North: Whitefield Tech Park, tall glass round a plaza with a fountain. South: the Old Pete, low old houses round a
@@ -14895,6 +14903,67 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       say(MTN.done ? 'The Far Range. The flag is still up there, where you left it.' : 'The Far Range. The cairns lead all the way to the top. Nobody has drawn this place on a map, because it isn’t on one.', 5200); }, '#0B0D14');
   }
   function mtnLeave(){ if (zone !== 'mtn') return; camera.near = .05; camera.updateProjectionMatrix(); travel('roof'); setTimeout(() => enterBlr([ISLE.px1 + 6, ISLE.pz, -Math.PI / 2]), 60); }
+  // ======================= A flooded city (R.flood): the whole map under water, for Season 2 and after =======================
+  // While FLOOD.on the city sits under water up to FLOOD.level. You swim on the surface anywhere on the island, dive (C, or the
+  // Crouch button) down to the drowned streets with a breath meter, and climb onto a rooftop whose top is near the water, or up
+  // a ladder a season file has placed (Climb button, E). Buildings that stick out of the water are walls while you swim;
+  // submerged ones you swim over. Traffic stops and people stay indoors. Boats (vehicle type 'boat') only go on open water.
+  // The movement code is frozen, so like the mountains this works by validity (blrValid -> floodValid) and by setting your
+  // height after movement (floodStep).
+  var FLOOD = { on: false, level: 0, roof: null, under: false, breath: 1, depth: 0, hgrid: null, ladders: [], mesh: null, fog: null, onBreath: null, swim: false };
+  function floodGrid(){ const G = new Map(); (BL.bld || []).forEach(b => { if (b.hide) return; for (let gx = Math.floor(b.x0 / 16); gx <= Math.floor(b.x1 / 16); gx++) for (let gz = Math.floor(b.z0 / 16); gz <= Math.floor(b.z1 / 16); gz++) { const k = gx + ',' + gz; (G.get(k) || G.set(k, []).get(k)).push(b); } }); FLOOD.hgrid = G; }
+  // the building under a map point (only ones that stick out of the water count)
+  function floodBld(mx, mz, pad = .45){ const L = FLOOD.hgrid && FLOOD.hgrid.get(Math.floor(mx / 16) + ',' + Math.floor(mz / 16)); if (!L) return null; for (const b of L) if (b.h > FLOOD.level - .3 && mx > b.x0 - pad && mx < b.x1 + pad && mz > b.z0 - pad && mz < b.z1 + pad) return b; return null; }
+  function floodValid(mx, mz){
+    if (Math.max(Math.abs(mx), Math.abs(mz)) > ISLE.edge + 30 && !isleOk(mx, mz)) return false;
+    const R = FLOOD.roof, b = floodBld(mx, mz, R ? 0 : .45);
+    if (DRV.on) return !b;                                       // boats: open water only
+    if (R) return !b || b === R || Math.abs(b.h - R.h) < 1.3;    // walk the roof, onto a roof next to it, or off the edge into the water
+    return !b;
+  }
+  const floodClimbBtn = document.createElement('button'); floodClimbBtn.type = 'button'; floodClimbBtn.className = 'btn alt'; floodClimbBtn.hidden = true; floodClimbBtn.style.cssText = 'position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40'; document.body.appendChild(floodClimbBtn);
+  let floodClimb = null;
+  function floodDoClimb(){ const C = floodClimb; if (!C) return; FLOOD.roof = C.b; const cx = clamp(C.x, C.b.x0 + .8, C.b.x1 - .8), cz = clamp(C.z, C.b.z0 + .8, C.b.z1 - .8), [lx, lz] = toLocal(cx, cz); pos.x = lx; pos.z = lz; pos.y = C.b.h + 1.6; vy = 0; tone(440, .15, 'triangle', .04, 660); floodClimbBtn.hidden = true; KIT.crouch = false; }
+  floodClimbBtn.addEventListener('click', e => { e.stopPropagation(); floodDoClimb(); });
+  addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; if (e.key.toLowerCase() === 'e' && !floodClimbBtn.hidden) { e.stopImmediatePropagation(); floodDoClimb(); } }, true);
+  function floodSet(level){
+    FLOOD.on = true; FLOOD.level = level; FLOOD.breath = 1; floodGrid();
+    if (!FLOOD.mesh && BL.mapG) { const m = FLOOD.mesh = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000, 1, 1), new THREE.MeshPhongMaterial({ color: 0x2E7A9A, transparent: true, opacity: .74, shininess: 80, specular: 0x88AACC, side: THREE.DoubleSide })); m.rotation.x = -Math.PI / 2; m.userData.noPick = true; m.renderOrder = 2; BL.mapG.add(m); }
+    if (FLOOD.mesh) { FLOOD.mesh.position.y = level; FLOOD.mesh.visible = true; }
+  }
+  function floodOff(){ FLOOD.on = false; FLOOD.roof = null; FLOOD.under = false; if (FLOOD.mesh) FLOOD.mesh.visible = false; document.body.classList.remove('swimming', 'underwater'); floodClimbBtn.hidden = true; if (BLC.pedG) BLC.pedG.visible = true; if (FLOOD.fog && BL.sc) { BL.sc.fog.color.copy(FLOOD.fog.c); BL.sc.fog.near = FLOOD.fog.n; BL.sc.fog.far = FLOOD.fog.f; FLOOD.fog = null; } }
+  // set the water level without rebuilding anything (the finale drains it)
+  function floodLevel(level){ FLOOD.level = level; if (FLOOD.mesh) FLOOD.mesh.position.y = level; }
+  function floodStep(dt){
+    if (!FLOOD.on) return; if (BLC.pedG) BLC.pedG.visible = false;
+    const inB = inWorld && (zone === 'blr' || zone === 'event' && EV && EV.inMap) && !BL.lvl && Math.abs(BL.off.y) < .01 && !LV.ride;
+    if (!inB || DRV.on || BL.cine) { document.body.classList.remove('swimming', 'underwater'); floodClimbBtn.hidden = true; FLOOD.swim = false; return; }
+    const [mx, mz] = toMap(pos.x, pos.z), L = FLOOD.level;
+    if (FLOOD.roof) { const R = FLOOD.roof; if (mx < R.x0 || mx > R.x1 || mz < R.z0 || mz > R.z1) { const nb = floodBld(mx, mz, 0); if (nb && Math.abs(nb.h - R.h) < 1.3) FLOOD.roof = nb; else { FLOOD.roof = null; tone(160, .3, 'sine', .05, 90); } } }
+    if (FLOOD.roof) { pos.y = FLOOD.roof.h + 1.6; vy = 0; grounded = true; FLOOD.swim = false; FLOOD.under = false; FLOOD.breath = Math.min(1, FLOOD.breath + dt * .5); }
+    else {
+      FLOOD.swim = true; const floor = 1.1, top = L + .75, down = KIT.crouch;
+      FLOOD.depth = down ? Math.min(L - floor + .75, FLOOD.depth + dt * 3.2) : Math.max(0, FLOOD.depth - dt * 4.5);
+      pos.y = top - FLOOD.depth; vy = 0; grounded = true; FLOOD.under = pos.y < L - .1;
+      if (FLOOD.under) { FLOOD.breath = Math.max(0, FLOOD.breath - dt / 18); if (FLOOD.breath <= 0) { FLOOD.breath = .35; KIT.crouch = false; if (FLOOD.onBreath) FLOOD.onBreath(); else say('Out of breath! You kick for the surface.', 2000); } }
+      else FLOOD.breath = Math.min(1, FLOOD.breath + dt * .4);
+    }
+    document.body.classList.toggle('swimming', FLOOD.swim && !FLOOD.under); document.body.classList.toggle('underwater', FLOOD.under);
+    // under the water: everything goes blue and close
+    if (BL.sc) { if (FLOOD.under && !FLOOD.fog) { FLOOD.fog = { c: BL.sc.fog.color.clone(), n: BL.sc.fog.near, f: BL.sc.fog.far }; BL.sc.fog.color.setHex(0x1C5A78); BL.sc.fog.near = 2; BL.sc.fog.far = 38; } else if (!FLOOD.under && FLOOD.fog) { BL.sc.fog.color.copy(FLOOD.fog.c); BL.sc.fog.near = FLOOD.fog.n; BL.sc.fog.far = FLOOD.fog.f; FLOOD.fog = null; } }
+    // a roof you can climb onto: one whose top is just above the water, or one with a ladder
+    floodClimb = null;
+    if (FLOOD.swim && !FLOOD.under && !EV) { const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+      const ld = FLOOD.ladders.find(q => Math.hypot(q.x - mx, q.z - mz) < 1.8); if (ld) floodClimb = { b: ld.b, x: ld.x, z: ld.z };
+      else { const b = floodBld(mx + fx * 1.6, mz + fz * 1.6, .3); if (b && b.h - L < 3.2) floodClimb = { b, x: mx + fx * 2.4, z: mz + fz * 2.4 }; } }
+    floodClimbBtn.hidden = !floodClimb; if (floodClimb) { const t = `Climb up${fine ? ' (E)' : ''}`; if (floodClimbBtn.textContent !== t) floodClimbBtn.textContent = t; }
+  }
+  // a ladder up the side of a building, for a season file (b is the building from floodRoofAt)
+  // put the player on a roof (waking up after a knockout, the end of a scene)
+  function floodPut(b){ FLOOD.roof = b; const [lx, lz] = toLocal((b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2); pos.x = lx; pos.z = lz; pos.y = b.h + 1.6; FLOOD.depth = 0; KIT.crouch = false; }
+  function floodLadder(mx, mz, b){ FLOOD.ladders.push({ x: mx, z: mz, b }); }
+  const floodRoofAt = (mx, mz) => floodBld(mx, mz, 0);
+  { const s = document.createElement('style'); s.textContent = 'body.underwater::after{content:"";position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at 50% 40%,rgba(40,130,170,.18),rgba(10,50,80,.55))}'; document.head.appendChild(s); }
   function mtnStep(dt, now){
     if (!(inWorld && zone === 'mtn') || !MTN.sc) return;
     // stand on the slope (jumps still arc: you only snap down once you reach the ground again)
@@ -15197,8 +15266,8 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // Each season's story lives in its own file (seasons/s01.js and so on), loaded only while that season is running, and gets
   // this small API instead of reaching into the page. Progress is saved under ru-season. Add ?season=N to preview a season.
   const SEASON0 = new Date(2026, 10, 18), SEASON_LEN = 28;
-  const SEASON_V = '2026-11-18i';
-  const SEASON_FILES = [1];  // the seasons that have a file in seasons/ (add each new one here)  // bump whenever a seasons/*.js file changes
+  const SEASON_V = '2026-11-18j';
+  const SEASON_FILES = [1, 2];  // the seasons that have a file in seasons/ (add each new one here)  // bump whenever a seasons/*.js file changes
   const SEASON_NAMES = ['Landfall', 'High Water', 'The Carnival', 'Blackout', 'The Eruption', 'Deep Freeze', 'Scales', 'Incursion', 'The Rift', 'Skyline', 'Harvest', 'Neon Nights', 'The Drought', 'Festival of Lights', 'Convergence'];
   const SEASON = { S: undefined, mod: null, loading: false, failed: false };
   function seasonInfo(){
@@ -15220,7 +15289,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     get tpv(){ return tpv; }, set tpv(v){ tpv = !!v; }, get zone(){ return zone; }, get inWorld(){ return inWorld; }, get entered(){ return entered; }, get busy(){ return !!(EV || A); }, get lowFx(){ return lowFx; },
     get BL(){ return BL; }, get BLC(){ return BLC; }, get DRV(){ return DRV; }, get PH(){ return PH; }, get DLG(){ return DLG; }, get room(){ return scene; }, get panelOpen(){ return panel.classList.contains('on'); },
     say, tone, toMap, toLocal, onGround, blrBox, avatar, crowdLook, tex, mat, glowM, decor, B3, C3, S3, fade, flakeTex, heroName, cleanName, setName,
-    fight: ssFight, fightReg: ssReg, heroAv: ssAvatar, give: arsGive, skin: arsSkin, equip: arsEquip, video: seasonVideo, get ars(){ return ARS; }, weapons: SSW, skins: SSKIN, get fighting(){ return !!(EV && EV.opts && EV.opts.ss); },
+    fight: ssFight, fightReg: ssReg, heroAv: ssAvatar, give: arsGive, skin: arsSkin, equip: arsEquip, getIn, blrValid, flood: { set: floodSet, off: floodOff, level: floodLevel, ladder: floodLadder, roofAt: floodRoofAt, put: floodPut, get state(){ return FLOOD; } }, makeVehicle, getOut, video: seasonVideo, get ars(){ return ARS; }, weapons: SSW, skins: SSKIN, get fighting(){ return !!(EV && EV.opts && EV.opts.ss); },
     dlgPlay, dlgNext, dlgSkip, closePanel, phoneClose, panel(html){ panelBody.innerHTML = html; panel.scrollTop = 0; panel.classList.add('on'); return panelBody; }
   }; }
   function seasonStep(dt, now){
@@ -15243,7 +15312,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // every couple of seconds: achievements, the real night, and the phone light
   let nightChecked = false;
   function littleStep(dt, now){
-    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { isleStep(dt, now); } catch (e) { console.error(e); } try { mtnStep(dt, now); } catch (e) { console.error(e); } try { seasonStep(dt, now); } catch (e) { console.error(e); } try { winterStep(dt, now); } catch (e) { console.error(e); }
+    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { isleStep(dt, now); } catch (e) { console.error(e); } try { mtnStep(dt, now); } catch (e) { console.error(e); } try { floodStep(dt); } catch (e) { console.error(e); } try { seasonStep(dt, now); } catch (e) { console.error(e); } try { winterStep(dt, now); } catch (e) { console.error(e); }
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.dz) deathStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.fin) finalStep(dt, now);
