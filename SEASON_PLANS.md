@@ -33,7 +33,7 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | The new volcano becomes Ember Island and ash falls on the city; a cult uses the stolen meteor core to wake it. Ends with the core firing a beam at the Moon, and something there answering. | Cinder, leader of the Kindled | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |
 | 6 | **Dark Side** (space; replaces Deep Freeze) | 7 Apr – 4 May 2027 | The meteor was a key, and Cinder turned it. The Vashk Dominion's fleet on the Moon invades. Take the fight to their Moon fortress. Ends with their queen's ship slipping down to Earth. | High Commander Vorrak of the Vashk Dominion | Boost pack, and the Kite (fighter) | The launch pad on Crash Isle, a crashed landing pod, and a cracked Moon | Moonwalker / Ace / Vorrak's Armour |
 | 7 | **Scales** | 5 May – 1 Jun 2027 | Queen Ssera's shapeshifters replace people in Bangalore one by one, Velvet among them. Her crashed ship is a rift ship. Ends with the sky tearing open onto another Bangalore. | Queen Ssera | Truth lens and hover-sled | The wrecked mothership in the Far Range, and the tear in the sky | Alien Hunter / Truth Lens Agent / Vashk Disguise |
-| 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore presses down from the sky; stop the collision before the timer runs out. | {N} Prime, the evil version of you | Rift jumper | A permanent tear in the sky | Rift Jumper / Other-Earth You / {N} Prime |
+| 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore, the one Ssera fled, presses down from the sky. Jump between the two, with a good Devi leading the resistance there. Ends with the worlds tearing apart and the mountains splitting. | {N} Prime, the evil version of you | Rift jumper | A permanent scar across the sky, and two rift points | Rift Jumper / Other-Earth You / {N} Prime |
 | 9 | **The Rift** | 30 Jun – 27 Jul 2027 | The mountains split open. | The Excavator | Grappling hook | The Rift Valley and its caves | Cave Explorer / Ancient Machine / The Excavator |
 | 10 | **Skyline** | 28 Jul – 24 Aug 2027 | Floating islands appear. | Baron Altitude | Glider | An anchored sky island | Glider Pilot / Sky Racer / Baron Altitude |
 | 11 | **Harvest** | 25 Aug – 21 Sep 2027 | A food shortage; farms spread across the island. | The Blight (rot) | Farming | New farmland | Farmer / Scarecrow / The Blight |
@@ -490,6 +490,79 @@ The Dominion's fleet is gone, and Bangalore celebrates. But Queen Ssera's ship c
   - the truth lens's green scan lines over the crowd.
 - **Type:** a cold monospace terminal font, like surveillance logs: "SUBJECT 14 · MATCH 98% · NOT HUMAN".
 - **Score:** a slow heartbeat, whispering voices, unsettling high strings and a distorted bass drop on each reveal, ending on a deep tearing sound as the sky splits.
+
+## Season 8 · Incursion (2 June – 29 June 2027)
+
+### Story
+Through the tear Ssera left behind, **another Bangalore** hangs upside down in the sky, and every day it's a little closer. Ssera wasn't conquering anyone. She was running from whoever rules that city. The two worlds are being pulled together, and when they touch, only one will be left.
+
+**The cast**
+- **{N} Prime (villain):** you, from the other Bangalore, as you would be if you'd won every fight and never stopped. Same face and same voice, in black and red, using your own weapons. *“I’m not your enemy. I’m your best ending.”* (Gender-neutral, like the player.)
+- **The other Bangalore:** the same streets and towers, under a red sky, with Prime's statues on every corner and patrols in Prime's colours.
+- **Other-world Devi:** **twist.** In Prime's world, Devi never took a bribe. She leads the resistance against Prime, and she has no idea what her double did to you.
+- **Dr. Neel** turns Ssera's rift ship into a hand-held rift jumper. **Velvet** keeps the ground team together. **The Keeper** knows that only one of the two cities can stay.
+
+**Cold open (2 Jun).**
+- Morning. The upside-down city fills half the sky: you can see its traffic, its lights, its people looking up at you.
+- Bits of it are breaking off and falling: a bus shelter, a tree, a water tank, crashing into your street.
+- On a giant screen in the other city, a face you know looks straight down at you. It's yours. *“Hello, {N}.”*
+
+**Chapters**
+
+| Week | Chapter | What you do | Boss |
+|---|---|---|---|
+| 1 · 2 Jun | Collision Course | Debris rains down and gravity goes wrong in patches, with floating cars and upside-down puddles. Neel turns Ssera's rift drive into the **rift jumper** (the season's tool). Make your first jump into the other city. | **Brass Prime:** the other world's Brass, still loyal to Prime, with a gravity hammer that flips the floor. |
+| 2 · 9 Jun | The Other Side | Find the resistance in Prime's city. **Twist:** it's led by Devi, a good Devi. Run missions jumping between the two cities: a wall in one is a doorway in the other, and a flooded street here is dry there. | **Captain Brine Prime**, who survived in that world and now captains Prime's airship over the red city. |
+| 3 · 16 Jun | Anchors | Prime is pulling the worlds together with three **anchor towers**. Destroy them, using jump puzzles and defending against Prime's patrols while the timer runs. Then **you meet Prime and lose:** Prime knows every move you have. Prime takes your boost pack and leaves you in the street: *“Go home. Watch.”* | **Prime, the first time:** a fight you're meant to lose. |
+| 4 · 23 Jun | Prime (finale) | The two cities are almost touching, roof to roof, upside down. The last fight is in the gap between them. | Three phases:<br>1. A mirror fight: Prime copies your loadout, so you win by switching weapons in ways Prime doesn't expect.<br>2. On falling debris as gravity flips back and forth.<br>3. A rift duel, jumping between both cities mid-fight. |
+
+**The finale (sets up Season 9).**
+1. You beat Prime at the last second and push them back through the rift.
+2. Prime's last words, falling: *“You’ll see. Every win makes you a little more like me.”*
+3. The anchors fail, and the other Bangalore pulls away, back up into the sky and through the tear. Other-world Devi raises a hand from a rooftop as it goes.
+4. The tear shrinks to a thin, permanent scar across the sky (the season's trace).
+5. But the two worlds tearing apart sends a shockwave through the ground. Last shot: in the Far Range, the mountains split open from top to bottom, and something glows deep inside the crack. **Season 9 · The Rift.**
+
+### How it plays
+- **The rift jumper (kept):**
+  - jump between the two Bangalores at certain points;
+  - the same map in two states: walls in one are open in the other, enemies on one side don't see you on the other;
+  - a short cooldown between jumps;
+  - after the season it works at fixed rift points, so you can visit Prime's empty city.
+- **A season-long countdown:**
+  - the other city gets visibly closer every week;
+  - in the finale a real timer runs, and a loss sends you back to the last checkpoint.
+- **Gravity anomalies:**
+  - patches where you float, fall upwards or walk on walls;
+  - falling debris with warning rings.
+- **Fighting yourself:**
+  - Prime uses your equipped weapons and your worn skin;
+  - Prime learns your favourite moves during the fight, so you have to switch it up.
+- **The fight you lose:** Chapter 3, against Prime, and you get the boost pack back in the finale.
+- **Everything from Seasons 1–7 carries over.**
+
+### What you keep
+- **Tool:** the rift jumper.
+- **Skins:**
+  - Rift Jumper: finish the story;
+  - Other-Earth You: the challenge, destroy all three anchors before the halfway mark of the timer;
+  - {N} Prime: beat Prime.
+- **Left on the map:**
+  - a permanent scar of the tear across the sky;
+  - two rift points where you can still jump into Prime's city.
+
+### The trailer
+- **Look:**
+  - mirrored and split-screen, the two cities facing each other;
+  - red sky against blue;
+  - frames that flip upside down;
+  - colour fringing at the edges, as if the image itself is tearing.
+- **Type:** titles that appear mirrored and flip the right way round, like reading in a reflection.
+- **Score:**
+  - one melody played forwards and, over it, backwards;
+  - a ticking clock that speeds up;
+  - deep bass that swells as the cities get closer;
+  - it cuts to silence on Prime's line *“Hello, {N}.”*
 
 ## Deep Freeze (saved for a future season)
 
