@@ -28,8 +28,8 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 |---|---|---|---|---|---|---|---|
 | 1 | **Landfall** ✓ built | 18 Nov – 15 Dec 2026 | A meteor crashes off the west coast. | The Salvager | Scanner | Crash Isle | Crater Scout / Meteor Glow / Salvager's Rig |
 | 2 | **High Water** | 16 Dec 2026 – 12 Jan 2027 | A wave through the tear drowns the city; the whole map is swimmable, with sharks. The city drains at the finale. | Captain Brine, a pirate | Boat and diving gear | The sunken district | Diver / Canal Captain / Brine's Coat |
-| 3 | **To be planned** (replaces The Carnival) | 13 Jan – 9 Feb 2027 | Starts in the city just after it drains. | – | – | – | – |
-| 4 | **Blackout** | 10 Feb – 9 Mar 2027 | The power grid fails. | Static, a saboteur in the power lines | Lantern and toolkit | A new power plant | Lineworker / Lantern Bearer / Static |
+| 3 | **The Syndicate** (replaces The Carnival) | 13 Jan – 9 Feb 2027 | After the flood, a crime syndicate takes over the city. | Madame Marigold, until Inspector Devi betrays you | The Comet (getaway car) | Marigold's tower, now Devi's | Undercover / Clean Hands / Marigold's Suit |
+| 4 | **Blackout** | 10 Feb – 9 Mar 2027 | The power grid fails as Devi takes the Syndicate. | Inspector Devi, with Static (a saboteur in the power lines) working for her | Lantern and toolkit | A new power plant | Lineworker / Lantern Bearer / Static |
 | 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | A volcano rises offshore. | Cinder, a cult leader | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |
 | 6 | **Deep Freeze** | 7 Apr – 4 May 2027 | The sea freezes. | The Frost Warden | Skates | Ice palace ruins | Ice Skater / Snow Ranger / Frost Warden |
 | 7 | **Scales** | 5 May – 1 Jun 2027 | Reptilian aliens, the Vashk, land in disguise, and shapeshifters replace townspeople. | Queen Ssera | Truth lens (reveals disguised Vashk) and an alien hover-sled | The wrecked mothership in the mountains | Alien Hunter / Truth Lens Agent / Vashk Disguise |
@@ -110,9 +110,57 @@ After Season 15 the cycle starts again with Season 1.
 - **Boat physics.**
 - **Sharks:** new enemies that swim, circle and lunge, built on the season fight engine.
 
-## Season 3 (to be planned)
+## Season 3 · The Syndicate (13 January – 9 February 2027)
 
-The Carnival is scrapped. Season 3 starts where High Water ends, in the city just after it drains. Its story, villain, tool, map trace and skins are still to be worked out.
+### Story
+While Bangalore was underwater, the police stations flooded, the phones went dead and nobody was in charge, so someone moved in. During the flood the Marigold Syndicate sold pumps, boats and "protection" to the rooftop camps. When the water drains, they own half the city. Every rebuilt shop pays them, their trucks run the streets, and their marigold stamp is on every door.
+
+**The cast**
+- **Madame Marigold:** head of the Marigold Syndicate. Elegant and polite, always with a fresh marigold in her lapel, and never seen getting her hands dirty. *“A city this beautiful needs someone to look after it.”*
+- **Her three lieutenants:**
+  - Brass, the enforcer;
+  - the Ledger, the accountant;
+  - Velvet, the getaway driver.
+- **Inspector Devi:** an honest police inspector whose station is still full of mud. Officially she has no power left, so she works with you. Or so it seems.
+- **The Keeper:** in the background. The Syndicate is looking for something that came through the tear.
+
+**Chapters**
+
+| Week | Chapter | What you do | Boss |
+|---|---|---|---|
+| 1 · 13 Jan | Protection | Your street is paying protection. Help the stall owners stand up to the collectors, chase down a collection van, and free your district. | **Brass**, a big brawler with knuckle-dusters, fought in the market. |
+| 2 · 20 Jan | The Ledger | Steal the Syndicate's ledger (who pays, and who's on the payroll) in a heist on their counting house. Go in quietly with disguises and timing, or go in loud. | **The Ledger**, who fights with traps, alarms, locking doors and flying safes. |
+| 3 · 27 Jan | The Velvet Run | The ledger points to the smuggling convoys. Get a getaway car of your own and wreck the convoys in car chases across the city and the flyovers. | **Velvet**, in a high-speed chase on the highway. |
+| 4 · 3 Feb | Marigold (finale) | Storm Marigold's tower floor by floor with Inspector Devi. | Three phases:<br>1. A gunfight in the lobby.<br>2. A rooftop chase.<br>3. Marigold in her greenhouse penthouse. |
+
+**The twist (sets up Season 4).**
+- You beat Marigold in her penthouse.
+- As you go to arrest her, Inspector Devi steps past you and kills her.
+- Devi was never just helping. The ledger had her name in it all along, on the Syndicate's payroll. She used you to clear the other bosses out of the way, and now the Syndicate is hers.
+- Her last words to you: *“You cleaned up this city for me. Thank you.”*
+- Then every light in Bangalore goes out, and the story leads straight into **Season 4 · Blackout**, with Devi as its villain.
+
+### How it plays
+- **Territory map:**
+  - the phone map shows which districts the Syndicate controls;
+  - you free each one by breaking its racket: rescue stall owners, smash collection points, beat its crew;
+  - freed districts change: the stamps come off the doors, music comes back and stalls reopen.
+- **Heat:** the more trouble you cause, the more the Syndicate hunts you with goon cars and roadblocks. Lie low and it cools down. This would reuse the existing police-chase code with Syndicate cars.
+- **Heists:** you can play them quietly or loudly. The challenge skin rewards doing them quietly.
+- **Car combat:** chases, ramming and tyre spikes.
+- **Tone:** fights stay cartoon-style. Enemies are knocked out, there's no gore, and Marigold's death happens off-screen.
+
+### What you keep
+- **Vehicle:** the Comet, a souped-up getaway car with nitro, parked in your garage afterwards.
+- **Weapons:**
+  - stun baton (melee);
+  - tyre-spike launcher (for chases);
+  - flashbangs (for heists).
+- **Skins:**
+  - Undercover: finish the story;
+  - Clean Hands: do the Ledger heist without being seen;
+  - Marigold's Suit: beat the finale.
+- **Left on the map:** Marigold's tower, taken over by Devi, and marigold graffiti across the city.
 
 ## The Moon (saved for a future season)
 
