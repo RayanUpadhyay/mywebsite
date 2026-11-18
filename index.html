@@ -6968,6 +6968,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function mkWeapon(id){
     if (id === 'defib' || String(id).startsWith('thr_')) return kitMesh(id);
+    if (/^s1_/.test(id)) return ssWeaponMesh(id);
     const g = new THREE.Group(), metal = (c) => mat(c, { metalness: .75, roughness: .3 });
     if (id === 'knife') { cyl(.018, .02, .12, mat(0x2A1E16), 0, 0, 0, g, 8); box(.03, .2, .006, metal(0xD8DEE4), 0, .16, 0, g); return g; }
     if (id === 'cleaver') { cyl(.02, .022, .13, mat(0x3A2A1E), 0, 0, 0, g, 8); box(.11, .17, .008, metal(0xC9CFD8), .035, .15, 0, g); box(.11, .015, .009, metal(0xEEF2F6), .035, .065, 0, g); return g; }
@@ -8491,7 +8492,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 
   // ---------- third person, and the character screen ----------
   let EV = null;   // the event you're playing, if any (it can put you in a hero's suit)
-  const curLook = () => { if (EV && EV.look) return EV.look; if (afKidOn()) return afKidLook(); if (typeof afDadOn === 'function' && afDadOn()) return afDadLook(); try { if (SG.active && chId() === 'echo') return Object.assign({}, look, { outfit: 'copycat', mask: 1, cape: 1 }, SG.flags.old ? { hairC: 5, mask: 0 } : {}); } catch (e) {} return look; };
+  const curLook = () => { if (EV && EV.look) return EV.look; if (afKidOn()) return afKidLook(); if (typeof afDadOn === 'function' && afDadOn()) return afDadLook(); try { if (SG.active && chId() === 'echo') return Object.assign({}, look, { outfit: 'copycat', mask: 1, cape: 1 }, SG.flags.old ? { hairC: 5, mask: 0 } : {}); } catch (e) {} return arsLook(look); };
   let tpv = false; try { tpv = localStorage.getItem('ru-pov') === '3'; } catch (e) {}
   let mirror = false, me = null, meKey = '', meHeld, meLast = V(0, 0, 0), meMv = 0;
   const povBtn = $('#povBtn');
@@ -8705,7 +8706,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   let soloRec = {}; try { soloRec = JSON.parse(localStorage.getItem('ru-evsolo') || '{}'); } catch (e) {}
   let evDone = []; try { evDone = JSON.parse(localStorage.getItem('ru-evdone') || '[]'); } catch (e) {}
   const incOpen = () => true;
-  const heroLook = h => HEROES[h].self ? Object.assign({}, look) : Object.assign({}, look, { outfit: HEROES[h].outfit, mask: 1, cape: 1 });
+  const heroLook = h => HEROES[h].self ? arsLook(Object.assign({}, look)) : Object.assign({}, look, { outfit: HEROES[h].outfit, mask: 1, cape: 1 });
   // ---------- the global leaderboard (kept on the relay; the public relay can reset it now and then) ----------
   let pid = null; try { pid = localStorage.getItem('ru-pid'); if (!pid) { pid = Math.random().toString(36).slice(2, 12); localStorage.setItem('ru-pid', pid); } } catch (e) { pid = Math.random().toString(36).slice(2, 12); }
   let myLb = { a: 0, x: 0, h: 0, r: 0, d: 0, w: 0, l: 0, i: 0, f: 0, c: 0, m: 0, g: 0, y: 0, z: 0, k: 0, v: 0, mo: '' }; try { Object.assign(myLb, JSON.parse(localStorage.getItem('ru-lb') || '{}')); } catch (e) {}
@@ -8872,7 +8873,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function place(u){ const [x, z] = spawnOf(u.team); u.x = x; u.z = z; u.yaw = z > 0 ? 0 : Math.PI; return u; }
   function stopEvent(quiet){
-    if (EV && EV.camT > 0) tpv = EV.camSaved; document.body.classList.remove('possessed'); document.body.classList.remove('pain'); dlgClear();
+    if (EV && EV.camT > 0) tpv = EV.camSaved; document.body.classList.remove('possessed', 'ssf'); document.body.classList.remove('pain'); dlgClear();
     if (!EV) return; kitClear(); EV.units.slice().forEach(dropUnit); EV.shots.forEach(s => s.m && s.m.parent && s.m.parent.remove(s.m)); EV.fx.forEach(f => f.m.parent && f.m.parent.remove(f.m));
     const wasHome = EV.home, wasMap = EV.inMap, wasTwr = EV.inTwr, wasDsp = EV.inDsp, wasMed = EV.inMed, wasTdy = EV.inTdy, wasXc = EV.inXc, wasMoon = !!EV.moon, wasBk = !!(EV.opts && EV.opts.bk); EV = null; evHud.hidden = true; evHurt.style.opacity = 0; document.body.classList.remove('inevent'); if (document.pointerLockElement) document.exitPointerLock();
     if (wasTdy) tdBack();
@@ -8938,7 +8939,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (u.boss && EV.k === 'cv') d *= EV.weak > 0 ? 1.6 : 1;
     if (EV.k === 'st' && EV.st && EV.st.part && EV.st.part[0] === 'z') { d = zHit(u, d, from); if (!d) return; }
     if (EV.k === 'st' && EV.st && EV.st.part === 'k3') d = kHit(u, d, from);
-    { const d2 = storyHit(u, d, from); if (!d2) return; d = d2; } { const d3 = cbHit(u, d, from); if (!d3) return; d = d3; } d = kitHit(u, d, from); if (bkGuard(u, from) || bkQGuard(u, from)) return; if (from === 'me' && EV.opts && EV.opts.bk) d *= bkPow();
+    { const d2 = storyHit(u, d, from); if (!d2) return; d = d2; } { const d3 = cbHit(u, d, from); if (!d3) return; d = d3; } d = kitHit(u, d, from); if (EV.k === 'st' && EV.st && EV.st.ss) { d = ssHit(u, d, from); if (!(d > 0)) return; } if (bkGuard(u, from) || bkQGuard(u, from)) return; if (from === 'me' && EV.opts && EV.opts.bk) d *= bkPow();
     if (u.hero === 'scrb' && EV.st && EV.st.ph !== 'open') { if (EV.st.ph === 'shield' && from === 'me' && EV.hero === 'hero18') { EV.st.shHp -= d; tone(1400, .05, 'square', .03, 900); if (EV.st.shHp <= 0) { EV.st.ph = 'hit'; EV.st.bigT = 2.5; say('The hero smashes the shield apart!', 2600); } } else if (from === 'me' && !EV.st.toldSh) { EV.st.toldSh = 1; say(EV.st.ph === 'shield' ? 'Nothing gets through that shield. Only the hero hits hard enough. (Tab)' : 'It shrugs it off. Do the thing only one of you can do.', 2600); } return; }
     if ((EV.k === 'br' || EV.k === 'st') && from === 'me') d *= EV.frailHit || 1;
     if (EV.k === 'br' && EV.part === 2 && from === 'me' && !u.alert) { d *= KIT.crouchK > .5 ? 4 : 2; brAlert(u, 6, true); if (!EV.br.toldTake) { EV.br.toldTake = 1; say('Takedown! Hitting them before they see you hurts a lot more, especially from a crouch.', 3000); } }
@@ -8959,7 +8960,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     u.hp -= d; if (u.hp <= 0) killUnit(u, from);
   }
   function killUnit(u, from){
-    storyKill(u, from);
+    storyKill(u, from); if (EV.k === 'st' && EV.st && EV.st.ss) ssKill(u, from);
     if (u.puppet) say(`The string snaps. ${HEROES[u.hero].name.replace(' (possessed)', '')} slumps, free of her.`, 2200);
     if (EV.k === 'st' && EV.st && EV.st.part === 'd1') EV.st.recent.push({ u, t: performance.now(), x: u.x, z: u.z });
     u.dead = u.ally ? 10 : u.boss || u.hero === 'hulk' || u.hero === 'anchor' || ['st', 'br', 'of'].includes(EV.k) || (EV.k === 'inc' && u.team === 'inc') ? 999 : u.hero === 'trooper' ? 8 : 6; u.hp = 0; u.av.g.visible = false;
@@ -8993,6 +8994,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function checkGoal(){ if (scored(EV.k) && !EV.over) { const t = Object.keys(EV.score).find(t => EV.score[t] >= EVENTS[EV.k].goal); if (t) endMatch(t === EV.team); } }
   function endMatch(won){
+    if (EV && EV.opts && EV.opts.ss && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return ssFightEnd(won); }
     if (EV && EV.opts && EV.opts.bk && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return bkFightEnd(won); }
     if (EV && EV.opts && EV.opts.cb && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return cbFightEnd(won); }
     if (EV && EV.opts && EV.opts.xc && !EV.over) { EV.over = true; if (document.pointerLockElement) document.exitPointerLock(); return xcFightEnd(won); }
@@ -10378,7 +10380,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function stSetup(part){
     const S = EV.st = { part, trick: 0, possT: 12, wave: 0, fires: [], people: [], tags: 0, ready: false }, add = (h, x, z) => { const u = addUnit({ hero: h, team: 'en' }); u.x = x; u.z = z; if (S.ready) { u.hp = u.max = Math.round(u.max * EV.foeHp); drawTag(u); } if (h === 'udrone') droneAv(u); return u; }, ring = (n, R) => Array.from({ length: n }, (_, i) => [Math.cos(i / n * Math.PI * 2) * R, Math.sin(i / n * Math.PI * 2) * R - 4]);
     S.add = add; S.ring = ring;
-    stSetup2(part); sbSetup(part); cbSetup(part); if (EV.opts && EV.opts.sf) sfSetupMap(part); gangSetup(part); moonSetup(part); bkFSetup(part); bk7Setup(part); zSetup(part); kSetup(part); vSetup(part); xSetup(part); actSetup(part); a5Setup(part); tdSetup(part); xcSetup(part);
+    stSetup2(part); sbSetup(part); cbSetup(part); if (EV.opts && EV.opts.sf) sfSetupMap(part); gangSetup(part); moonSetup(part); bkFSetup(part); bk7Setup(part); zSetup(part); kSetup(part); vSetup(part); xSetup(part); actSetup(part); a5Setup(part); tdSetup(part); xcSetup(part); ssSetup(part);
     if (part === 'u1') S.wave = 0;
     if (part === 'u2') { S.targets = (EV.inMap ? U2_TARGETS.map(([x, z, h]) => [...toLocal(x, z), h]) : [[-16, -12, 'ustation'], [16, -12, 'ustation'], [0, -20, 'ustation'], [-12, 10, 'userver'], [12, 10, 'userver']]).map(([x, z, h]) => { const u = add(h, x, z); staticAv(u, h); return u; }); S.droneT = 2; }
     if (part === 'u3') { const b = add('ultronx', 0, -14); ultronAv(b); b.boss = 1; EV.boss = b; S.cables = [[-12, -18], [12, -18], [0, -24]].map(([x, z]) => { const u = add('ucable', x, z); staticAv(u, 'ucable'); return u; }); S.cableLine = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0xFF3030 })); eventScene.add(S.cableLine); for (let i = 0; i < 3; i++) add('udrone', (i - 1) * 6, -8); }
@@ -10430,7 +10432,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if ((P === 'm3' || P === 'n2') && !alive2(() => true).length && !EV.over) endMatch(true);
     if (P === 'n1' && !S.stop && EV.boss && EV.boss.dead <= 0 && EV.boss.hp < EV.boss.max * .5 && !EV.over && !EV.intro) { S.stop = 1; EV.boss.stun = 999; endMatch(true); }
     if (P === 'n3' && !EV.over) repStep(dt);
-    stStep2(dt, t, P, S, alive2); sbStep(dt, t, P, S, alive2); cbStep(dt, t, P, S); if (EV.opts && EV.opts.sf) sfStepMap(dt, t, P, S); bmStep(dt, P, S, alive2); moonStep(dt, P, S, alive2); bkFStep(dt, P, S, alive2); bk7FStep(dt, P, S, alive2); zStep(dt, P, S, alive2); kStep(dt, P, S); vStep(dt, P, S, alive2); xStep(dt, P, S, alive2);
+    stStep2(dt, t, P, S, alive2); sbStep(dt, t, P, S, alive2); cbStep(dt, t, P, S); if (EV.opts && EV.opts.sf) sfStepMap(dt, t, P, S); bmStep(dt, P, S, alive2); moonStep(dt, P, S, alive2); bkFStep(dt, P, S, alive2); bk7FStep(dt, P, S, alive2); zStep(dt, P, S, alive2); kStep(dt, P, S); vStep(dt, P, S, alive2); xStep(dt, P, S, alive2); ssStep(dt, t, P, S, alive2);
     if (P === 'l4' && !S.impaled && EV.boss && EV.boss.dead <= 0 && EV.boss.hp < EV.boss.max * .35 && !EV.over && !EV.intro) lastStand();
     if (P === 'c1' || P === 'l2') {
       S.fires.forEach(f => { if (f.out) return; f.g.children.forEach((c, i) => { if (c.isMesh) c.scale.y = 1 + Math.sin(t * 8 + i) * .2; }); if (Math.hypot(pos.x - f.x, pos.z - f.z) < 1.8) { f.t += dt; if (f.t > 2) { f.out = true; f.g.visible = false; say(`Fire out. ${S.fires.filter(q => !q.out).length} left.`, 1600); tone(300, .3, 'sine', .04, 120); } } else f.t = Math.max(0, f.t - dt); });
@@ -10460,6 +10462,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   
   function stHud(){
     const S = EV.st, P = S.part, n = f => EV.units.filter(u => u.team === 'en' && u.dead <= 0 && f(u)).length, tag = (EV.lockT > 0 ? ' \u00B7 <b style="color:#B07CFF">YOU CAN\u2019T MOVE</b>' : '') + (EV.mindT > 0 ? ' \u00B7 <b style="color:#B07CFF">CONTROLS REVERSED</b>' : '') + ' \u00B7 <small>recovering</small>';
+    if (S.ss) { let h = ''; try { h = S.ss.o.hud ? S.ss.o.hud(S.ss.api) : ''; } catch (e) {} return esc(h || S.ss.o.goal || 'Win the fight'); }
     return (P === 'b9e' ? 'Stay inside the pink line. Dodge the pink circles' : P === 'b9a' ? (S.au && S.au.ph >= 0 ? { clock: 'Slow zones: get out of the blue', mirror: 'It’s guarding. Wait for the opening', past: fine ? 'In the past: press G to drag it back' : 'In the past: tap Rewind', stare: 'Don’t look straight at it' }[BK_AU[S.au.ph]] : 'Beat the Author') + (fine ? ' · B: beam' : '') : P === 'b7q' ? (S.qn && S.qn.past ? (fine ? 'She’s in the past! Press G to drag her back' : 'She’s in the past! Tap Rewind') : 'She’s here. Hit her!') : P === 'b7f' ? `Copies left ${n(() => true)}` : P === 'b7s' ? (S.s7 && S.s7.called ? 'Troopers incoming. Take the Overseer down' : 'Take the Overseer down') : P === 'bk8' ? (S.ck && S.ck.pend.some(u => u.dead <= 0) ? `Pendulums left ${S.ck.pend.filter(u => u.dead <= 0).length}/3 · he can rewind himself` : 'His pendulums are down. Hit him!') : P === 'bk4' ? (S.q && S.q.g ? 'He’s guarding. Wait for an opening' : 'His guard is down. Hit him!') : P === 'u1' ? `Wave ${S.wave}/3 \u00B7 enemies left ${n(() => true)}` : P === 'u2' ? `Connections left ${S.targets.filter(u => u.dead <= 0).length}/5` : P === 'u3' ? (S.cables.some(c => c.dead <= 0) ? `Cables left ${S.cables.filter(c => c.dead <= 0).length}/3` : 'Take him apart') : P === 'p3' ? (S.exposed > 0 ? '<b style="color:#FFC93C">SHE\u2019S EXPOSED</b>' : `Puppets shielding her: ${n(u => u.puppet)}`) : P[0] === 'p' ? `Puppets left ${n(u => u.puppet)}` : P === 'y1' ? `Real people found ${S.found}/3 \u00B7 fakes loose ${n(() => true)}` : P === 'y2' ? `Servers left ${S.targets.filter(u => u.dead <= 0).length}/3` : P === 'y3' ? `Replay ${S.wave}/3` : P === 'y4' ? 'Stop the Synthetic' : P === 'd1' ? `Wave ${S.wave}/2 \u00B7 left ${n(() => true)}` : P === 'd2' ? `Guards left ${n(() => true)}` : P === 'd3' ? 'You can see it coming' : P === 'd4' ? 'Stop the Deadline' : P === 's1' || P === 's2' ? `Left ${n(() => true)}` : P === 'e1' || P === 'e2' || P === 'e3' ? 'Get past them and keep going' : P[0] === 'v' || P === 'w2' || P === 'w3' ? `Security clones left ${n(() => true)} \u00B7 on your own` : P === 'w1' ? '<b style="color:#FF6A4E">KILL SWITCH ARMED</b> \u00B7 you can\u2019t save them' : P === 'x1' || P === 'x2' ? `Doombots left ${n(() => true)}` : P === 'o1' ? 'Stand on the pages: he can\u2019t rewrite them' : /^q\d$/.test(P) ? `Ink left ${n(() => true)}` : P === 'x3' ? 'Only the real Doom doesn\u2019t spark \u00B7 the Earths are falling' : P === 'w4' ? 'End the Broker' : P === 'k1' ? 'Hold him in your street' : P === 'k2' ? 'Keep him away from the market' : P === 'k3' ? (S.edge ? '<b>DRIVE HIM OFF THE EDGE</b>' : 'Wear him down') : P === 'z1' ? `Pieces left ${n(() => true)} \u00B7 they learn whoever hit them last` : P === 'z2' ? `Copies left ${n(() => true)} \u00B7 nobody fights their own copy` : P === 'z3' ? (S.final ? '<b>HIT IT WITH ALL THREE</b>' : `Adapted to: ${PARTY.map(h => `${esc(nmT(HEROES[h].name))} ${Math.round(S.res[h] * 100)}%`).join(' \u00B7 ')}`) : P === 's3' ? ({ shield: '<b>SHIELD</b>: only the hero can break it', hit: '<b>BIG HIT</b>: Echo, block it', scramble: '<b>SCRAMBLE</b>: Copycat, copy it (E)', open: '<b>IT\u2019S OPEN</b>' })[S.ph] : P === 'm1' || P === 'm2' ? 'Stop the clone' : P === 'm3' ? `Clones left ${n(() => true)}` : P === 'n1' ? 'Stop it. Don\u2019t kill it.' : P === 'n2' ? `The buyers\u2019 men left ${n(() => true)}` : P === 'n3' ? `Replicator cores left ${S.cores.filter(u => u.dead <= 0).length}/3` : P === 'l1' ? `The Broker\u2019s men left ${n(() => true)}` : P === 'l3' ? 'Stop the Broker' : P === 'l4' ? (EV.laststand ? '<b style="color:#FF6A4E">LAST STAND</b>' : `Stop the clone \u00B7 the dam holds ${Math.max(0, Math.ceil(S.dam == null ? 150 : S.dam))}s`) : P === 'c1' || P === 'l2' ? `${P === 'l2' ? `Men left ${n(() => true)} \u00B7 ` : ''}Fires out ${S.fires.filter(f => f.out).length}/4 \u00B7 people freed ${S.people.filter(q => q.free).length}/3` : P === 'c2' ? `Caught him ${S.tags}/5` : S.sb ? `Beat ${S.sb.B.name}${S.sb.mad ? ' · he’s angry now' : ''}` : P === 'td1' || P === 'td2' ? (S.td && S.td.final ? `Beat The Tidy Man${S.td.ph === 2 ? ' · lights out' : S.td.ph === 3 ? ' · he’s desperate' : ''}` : 'Survive The Tidy Man') : 'Beat the Copycat') + tag;
   }
   
@@ -11618,8 +11621,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || !entered) return; const k = e.key.toLowerCase();
     if (e.key === 'Shift' && !A) KIT.sprint = true;
     if (k === 'c' && !e.repeat && kitOn()) { KIT.crouch = !KIT.crouch; }
-    if (EV && !EV.over && (k === 'q' || k === 'x')) setEvBlock(true);
-    if (EV && EV.kit && !EV.over && /^[1-8]$/.test(k)) { const L = kitList(); if (L[+k - 1]) kitSet(L[+k - 1]); }
+    if (EV && !EV.over && (k === 'q' && !(EV.opts && EV.opts.ss) || k === 'x')) setEvBlock(true);
+    if (EV && EV.kit && !EV.over && /^[1-8]$/.test(k)) { const L = kitList(); if (L[+k - 1]) { if (EV.opts && EV.opts.ss) ssUse(L[+k - 1]); else kitSet(L[+k - 1]); } }
     else if (canClaws() && !EV.over && (k === '1' || k === '2')) evSetWpn(k === '2' ? 'claws' : 'fists'); });
   addEventListener('keyup', e => { const k = e.key.toLowerCase(); if (e.key === 'Shift') KIT.sprint = false; if (k === 'q' || k === 'x') setEvBlock(false); });
   
@@ -11665,6 +11668,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   let wheelT = 0; canvas.addEventListener('wheel', e => { if (!EV || EV.over || performance.now() < wheelT) return; if (EV.kit) { wheelT = performance.now() + 250; return kitCycle(e.deltaY > 0 ? 1 : -1); } if (!canClaws()) return; wheelT = performance.now() + 350; evSetWpn(EV.wpn === 'claws' ? 'fists' : 'claws'); }, { passive: true });
   function evKitHud(){
     if (!EV) return; const rayan = EV.hero === 'rayan';
+    if (EV.kit && EV.opts && EV.opts.ss) { const t2 = ssHud(); if (evWpnEl.textContent !== t2) evWpnEl.textContent = t2; evSwBtn.hidden = true; evBlockBtn.hidden = fine; evBlockBtn.classList.toggle('on', !!EV.blocking); return; }
     if (EV.kit) { const K = EV.kit, L = kitList(), b = EV.boss, T = b && KIT_TRAITS[b.hero], weak = T ? T.weak.filter(kitHas).map(w => KITW[w].s.toLowerCase()) : [];
       const txt = `${K.hold ? `Holding: ${KIT_THROW[K.hold].n} (attack to throw)` : KITW[EV.wpn] ? KITW[EV.wpn].n : 'Fists'}${fine && L.length > 1 ? ` · 1–${L.length} or wheel to switch` : ''}${fine ? ' · Q to block, right on the hit to parry' : ''}${K.counter > 0 ? ' · COUNTER!' : ''}${EV.pain ? ' · CRIPPLING PAIN' : ''}${weak.length ? ` · weak to: ${weak.join(', ')}` : ''}`;
       if (evWpnEl.textContent !== txt) evWpnEl.textContent = txt; const nx = L[(L.indexOf(EV.wpn) + 1) % L.length]; evSwBtn.hidden = fine || L.length < 2; if (!evSwBtn.hidden && evSwBtn.textContent !== '⇄ ' + KITW[nx].s) evSwBtn.textContent = '⇄ ' + KITW[nx].s; evBlockBtn.hidden = fine; evBlockBtn.classList.toggle('on', !!EV.blocking); return; }
@@ -11695,7 +11699,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   };
   const kitOnFor = () => !!EV && EV.hero === 'rayan' && (EV.k === 'st' || EV.k === 'br');
   function kitList(){
-    if (!kitOnFor()) return null; if (EV.opts && EV.opts.tdy) return ['fists', ...TD_WPN.filter(tdHas)]; const L = ['fists']; if (canClaws()) L.push('claws');
+    if (!kitOnFor()) return null; if (EV.opts && EV.opts.ss) return ssKitList(); if (EV.opts && EV.opts.tdy) return ['fists', ...TD_WPN.filter(tdHas)]; const L = ['fists']; if (canClaws()) L.push('claws');
     if (EV.opts && EV.opts.cb) { L.push('defib'); return L; }
     ['mjolnir', 'storm', 'batarang', 'sword', 'shield', 'necro', 'web'].forEach(id => { try { if (inv.includes(id) && !dustedWeapon(id)) L.push(id); } catch (e) {} });
     return L;
@@ -11729,7 +11733,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // pick things up by walking over them; batarangs home in; the counter window ticks down
   function fkStep(dt){
     if (EV && EV.kit === undefined) kitInit(); const K = EV && EV.kit; if (!K) return; if (EV.over) return; K.counter = Math.max(0, K.counter - dt); const t = performance.now() / 1000;
-    if ((K.dropT -= dt) <= 0) { K.dropT = K.props.length < 2 ? 3 : 9; if (K.props.length < 3) kitDrop(); }
+    if (!(EV.opts && EV.opts.ss) && (K.dropT -= dt) <= 0) { K.dropT = K.props.length < 2 ? 3 : 9; if (K.props.length < 3) kitDrop(); }
     K.props = K.props.filter(p => { p.m.rotation.y += dt * 1.2; p.m.position.y = .35 + Math.sin(t * 2 + p.x) * .06;
       if (!K.hold && EV.dead <= 0 && Math.hypot(pos.x - p.x, pos.z - p.z) < 1.2) { K.hold = p.type; EV.prop = p.type; if (p.g.parent) p.g.parent.remove(p.g); disposeDeep(p.g); tone(520, .08, 'triangle', .04, 780); if (!K.told.pick) { K.told.pick = 1; say(`Picked up a ${KIT_THROW[p.type].n}. Attack to throw it.`, 2200); } return false; } return true; });
     EV.shots.forEach(s => { if (!s.home || s.team !== EV.team) return; const tg = EV.units.filter(u => u.team !== EV.team && u.dead <= 0).sort((a, b) => Math.hypot(a.x - s.x, a.z - s.z) - Math.hypot(b.x - s.x, b.z - s.z))[0]; if (!tg) return; const want = Math.atan2(tg.x - s.x, tg.z - s.z), cur = Math.atan2(s.vx, s.vz), d = Math.atan2(Math.sin(want - cur), Math.cos(want - cur)), na = cur + clamp(d, -dt * 5, dt * 5), sp = Math.hypot(s.vx, s.vz); s.vx = Math.sin(na) * sp; s.vz = Math.cos(na) * sp; s.m.rotation.y += dt * 18; });
@@ -11743,6 +11747,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (K.hold) { const T = KIT_THROW[K.hold], s = kitShot({ dmg: base * T.d, stun: T.stun, col: 0xFFC93C, tool: 'throw', mesh: K.hold, aoe: T.aoe, aoeD: base * T.d, bounce: T.bounce }); s.vx *= .8; s.vz *= .8; s.life = 1.3; s.y = 1.2;
       K.hold = null; EV.prop = EV.wpn === 'claws' ? 'claws' : ['fists', 'claws'].includes(EV.wpn) ? H.prop || null : EV.wpn; EV.cd = .55; EV.swing = .3; tone(300, .15, 'triangle', .05, 160); return true; }
     const w = EV.wpn; if (w === 'fists' || w === 'claws') return false;
+    if (SSW[w]) return ssAttack(w, base);
     EV.swing = .3; EV.punchSide = -(EV.punchSide || -1);
     const melee = (range, arc, mult, after) => { const f = []; bodies().forEach(u => { if (u.isMe || !alive(u) || teamOf(u) === EV.team) return; const dx = u.x - pos.x, dz = u.z - pos.z, d = Math.hypot(dx, dz) - (HEROES[u.hero].r || .5); if (d < range && Math.abs(angDiff(Math.atan2(-dx, -dz), yaw)) < arc) { EV.hitTool = w; hitUnit(u, base * mult, 'me'); f.push(u); if (after) after(u); } }); tone(f.length ? 220 : 380, .08, f.length ? 'square' : 'sine', .04, f.length ? 110 : 600); return f; };
     if (w === 'sword') { EV.cd = .62; melee(3, 1.5, 1.5); EV.shots.forEach(s => { if (s.team !== EV.team && Math.hypot(s.x - pos.x, s.z - pos.z) < 3) s.life = 0; }); }
@@ -11782,6 +11787,198 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     EV.wpn = id; if (!EV.kit.hold) EV.prop = id === 'fists' ? HEROES[EV.hero].prop || null : id; tone(id === 'fists' ? 400 : 900, .08, 'triangle', .04, id === 'fists' ? 300 : 1300); say(KITW[id].n + '.', 900); return true;
   }
   function kitCycle(dir){ const L = kitList(); if (!L || L.length < 2) return; const i = L.indexOf(EV.wpn); kitSet(L[(i + (dir || 1) + L.length) % L.length]); }
+  // ======================= Season fights (R.fight), and the weapons and skins you earn in the seasons =======================
+  // A season file stages a fight with R.fight({...}): its own boss (stats and outfit), minions, cover, a step that runs every
+  // frame with helpers (F, below) and a callback when it ends. Under the hood it's a street-boss style story fight
+  // ('st', part 'q' + id) in the real streets, centred on o.at (map coordinates), so inside the fight everything is in local
+  // coordinates round that spot. The weapons and skins are kept for good in ru-arsenal: you carry one gun and one melee
+  // weapon (Q switches, R reloads; on phones, Fire, Swing and Switch buttons), and fists when you have nothing else.
+  var ARS = { own: [], gun: '', mel: '', skins: [], wear: '' };
+  try { const a = JSON.parse(localStorage.getItem('ru-arsenal') || '{}'); if (a && typeof a === 'object') Object.assign(ARS, a); } catch (e) {}
+  ['own', 'skins'].forEach(k => { if (!Array.isArray(ARS[k])) ARS[k] = []; });
+  function arsSave(){ try { localStorage.setItem('ru-arsenal', JSON.stringify(ARS)); } catch (e) {} }
+  const SSW = {
+    s1_blaster: { n: 'Blaster pistol', s: 'Blaster', gun: 1, mag: 14, res: 70, cd: .2, dmg: .75, spd: 36, col: 0x7FE8FF, spread: .025, pel: 1, life: 1.1, rl: 1, snd: 1500, how: 'Fast, light shots.' },
+    s1_scatter: { n: 'Scatter gun', s: 'Scatter', gun: 1, mag: 6, res: 30, cd: .72, dmg: .5, spd: 28, col: 0xFFB04A, spread: .3, pel: 7, life: .32, rl: 1.5, snd: 260, how: 'A wide blast at short range.' },
+    s1_rifle: { n: 'Scrap rifle', s: 'Rifle', gun: 1, mag: 4, res: 20, cd: 1.05, dmg: 3.4, spd: 52, col: 0xC08CFF, spread: 0, pel: 1, life: 1.4, rl: 1.9, snd: 180, pierce: 2, stun: .5, how: 'Slow, and it punches through.' },
+    s1_sword: { n: 'Shard sword', s: 'Sword', cd: .38, dmg: 1.25, range: 2.9, arc: 1.5, col: 0x7CF2FF, how: 'Fast, wide swings. Cuts shots out of the air.' },
+    s1_wrench: { n: 'Heavy wrench', s: 'Wrench', cd: .95, dmg: 2.2, range: 2.4, arc: 1.05, knock: 9, stun: .7, col: 0xFFC93C, how: 'Slow. Knocks them flying.' },
+    s1_spear: { n: 'Harpoon spear', s: 'Spear', cd: .66, dmg: 1.6, range: 4.6, arc: .42, col: 0xFF8A3A, how: 'Long reach, straight ahead.' }
+  };
+  Object.keys(SSW).forEach(k => KITW[k] = { n: SSW[k].n, s: SSW[k].s });
+  const SSKIN = {
+    s1_scout: { n: 'Crater Scout', how: 'Finish the Landfall story (light the core).', o: { hero: 1, c1: '#B8763A', c2: '#3A2E26', gloves: 1, mask: 'visor' } },
+    s1_glow: { n: 'Meteor Glow', how: 'Beat the Foreman without being caught by a searchlight.', o: { hero: 1, c1: '#16181D', c2: '#FF7A2A', gloves: 1, mask: 'helmet', glow: 1, stripes: 1 } },
+    s1_rig: { n: 'Salvager’s Rig', how: 'Beat the Salvager in the finale.', o: { hero: 1, c1: '#E8B82E', c2: '#3A3D44', gloves: 1, metal: 1, mask: 'helmet' } }
+  };
+  Object.keys(SSKIN).forEach(k => OUTFITS[k] = SSKIN[k].o);
+  // the skin you're wearing goes over your own look
+  function arsLook(L){ return ARS.wear && ARS.skins.includes(ARS.wear) && OUTFITS[ARS.wear] ? Object.assign({}, L, { outfit: ARS.wear, mask: 1 }) : L; }
+  function arsGive(id){ if (!SSW[id] || ARS.own.includes(id)) return false; ARS.own.push(id); if (SSW[id].gun) { if (!ARS.gun) ARS.gun = id; } else if (!ARS.mel) ARS.mel = id; arsSave(); return true; }
+  function arsSkin(id){ if (!SSKIN[id] || ARS.skins.includes(id)) return false; ARS.skins.push(id); arsSave(); return true; }
+  function arsEquip(id){ if (!ARS.own.includes(id)) return; if (SSW[id].gun) ARS.gun = id; else ARS.mel = id; arsSave(); }
+  function arsWear(id){ ARS.wear = id && ARS.skins.includes(id) ? id : ''; arsSave(); }
+  // the wardrobe and the loadout, at the bottom of the phone's Season tab
+  function arsTab(){
+    const own = Object.keys(SSW).filter(k => ARS.own.includes(k)), sk = Object.keys(SSKIN);
+    const wpn = own.length ? ['gun', 'mel'].map(slot => { const L = own.filter(k => !!SSW[k].gun === (slot === 'gun')); return L.length ? `<small>${slot === 'gun' ? 'Gun' : 'Melee'}:</small><div class="phrow">${L.map(k => `<button type="button" data-ars-eq="${k}"${ARS[slot] === k ? ' disabled' : ''}>${ARS[slot] === k ? '✓ ' : ''}${esc(SSW[k].n)}</button>`).join('')}</div>` : ''; }).join('') : '<small>No weapons yet. You earn them in the season’s fights.</small>';
+    return `<div class="phcard"><b>Loadout</b><small>You carry one gun and one melee weapon. ${fine ? 'Q switches, R reloads.' : 'Fire, Swing and Switch buttons in a fight.'}</small>${wpn}</div>
+      <div class="phcard"><b>Wardrobe</b>${sk.map(k => ARS.skins.includes(k) ? `<div class="phrow"><button type="button" data-ars-wear="${ARS.wear === k ? '' : k}">${ARS.wear === k ? '✓ Wearing' : 'Wear'} ${esc(SSKIN[k].n)}</button></div>` : `<small>🔒 ${esc(SSKIN[k].n)}: ${esc(SSKIN[k].how)}</small>`).join('')}${ARS.wear ? '<div class="phrow"><button type="button" data-ars-wear="">Your own clothes</button></div>' : ''}</div>`;
+  }
+  function arsWire(B){ B.querySelectorAll('[data-ars-eq]').forEach(b => b.onclick = () => { arsEquip(b.dataset.arsEq); seasonTab(B); }); B.querySelectorAll('[data-ars-wear]').forEach(b => b.onclick = () => { arsWear(b.dataset.arsWear); seasonTab(B); say(ARS.wear ? `You’re wearing ${SSKIN[ARS.wear].n}.` : 'Back in your own clothes.', 1800); }); }
+
+  // ---------- the fight ----------
+  const SSF = {}; ST_FRAIL.q = [1, 1, 1];
+  HEROES.ss_drone = { name: 'Scrapper drone', hp: 34, kind: 'ranged', dmg: 4, cd: 1.1, col: 0xFF8A2E, speed: 5.4, r: .6, fly: 1, grounded: 1 };
+  HEROES.ss_scrap = { name: 'Scrap bot', outfit: 'uscrap', hp: 70, kind: 'melee', dmg: 7, range: 2.2, cd: .9, speed: 4.4, r: .55, grounded: 1 };
+  OUTFITS.ss_crew = { hero: 1, c1: '#5A4632', c2: '#E8B82E', gloves: 1, mask: 'helmet' };
+  HEROES.ss_crew = { name: 'Salvage crew', outfit: 'ss_crew', hp: 60, kind: 'ranged', dmg: 5, cd: 1.2, col: 0xFFC93C, speed: 4, r: .5, grounded: 1 };
+  HEROES.ss_sentry = { name: 'Searchlight sentry', hp: 26, kind: 'static', r: .7 };
+  HEROES.ss_pylon = { name: 'Crystal pylon', hp: 120, kind: 'static', r: .9 };
+  HEROES.ss_joint = { name: 'Glowing joint', hp: 150, kind: 'static', r: .8 };
+  // register a fight's heroes without starting it (the season file wants the boss for its intro scene first)
+  function ssReg(o){
+    if (o.boss) { HEROES['ssb_' + o.id] = Object.assign({ outfit: 'ssb_' + o.id, hp: 700, kind: 'melee', grounded: 1, dmg: 8, range: 2.6, cd: 1, speed: 3.6, r: .8 }, o.boss); OUTFITS['ssb_' + o.id] = Object.assign({ hero: 1 }, o.outfit || {}); }
+    Object.entries(o.units || {}).forEach(([k, h]) => { const id = 'ssu_' + o.id + '_' + k; HEROES[id] = Object.assign({ outfit: id, grounded: 1, hp: 80, kind: 'melee', dmg: 6, range: 2.4, cd: 1, speed: 4, r: .6 }, h.stats || {}); OUTFITS[id] = Object.assign({ hero: 1 }, h.outfit || {}); });
+    return o.boss ? 'ssb_' + o.id : null;
+  }
+  // an avatar of one of the fight's heroes, for the season's scenes
+  function ssAvatar(h){ const H = HEROES[h]; return avatar(heroLook(h), { s: H && H.scale || 1 }); }
+  function ssFight(o){
+    if (!o || !o.id || !o.at || EV || A || !BL.sc || !inWorld || zone !== 'blr') return false;
+    const part = 'q' + o.id; ssReg(o); SSF[part] = o; DIST[part] = { x: o.at[0], z: o.at[1], name: o.where || o.title }; ST_TITLE[part] = o.title || 'A fight';
+    if (DRV.on) getOut(true); startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part, site: part, ss: 1 });
+    if (o.intro) setTimeout(() => { if (EV && EV.opts && EV.opts.ss) say(o.intro, 5200); }, 300);
+    return true;
+  }
+  // inside a fight: what you carry
+  function ssKitList(){ const L = [ARS.gun, ARS.mel].filter(k => k && ARS.own.includes(k)); if (L.length < 2) L.push('fists'); return L; }
+  const ssAmmo = w => { const M = EV.st.ss.ammo; return M[w] || (M[w] = { mag: SSW[w].mag, res: SSW[w].res }); };
+  function ssReload(){ const w = EV.wpn, W = SSW[w]; if (!W || !W.gun || EV.reload > 0) return; const A2 = ssAmmo(w); if (A2.mag >= W.mag || A2.res <= 0) return; EV.reload = W.rl; EV.reloadW = w; tone(420, .12, 'triangle', .03, 260); setTimeout(() => tone(620, .1, 'triangle', .03, 900), Math.max(100, W.rl * 900)); }
+  function ssUse(id){ if (!EV || EV.over || !id || EV.wpn === id || !ssKitList().includes(id)) return; EV.wpn = id; EV.prop = id === 'fists' ? null : id; EV.reload = 0; tone(id === 'fists' ? 400 : 900, .08, 'triangle', .04, 1300); }
+  function ssSwitch(){ const L = ssKitList(); ssUse(L[(L.indexOf(EV.wpn) + 1) % L.length]); }
+  function ssAttack(w, base){
+    const W = SSW[w], F = EV.st.ss; EV.swing = .3;
+    if (W.gun) { const A2 = ssAmmo(w); if (EV.reload > 0) return true;
+      if (A2.mag <= 0) { if (A2.res > 0) ssReload(); else { EV.cd = .4; tone(160, .06, 'square', .03); if (!F.toldAmmo) { F.toldAmmo = 1; say('Out of ammo! Grab a glowing ammo cell, or switch to your melee weapon.', 2800); } } return true; }
+      A2.mag--; EV.cd = W.cd;
+      for (let i = 0; i < W.pel; i++) { const a = yaw + (Math.random() - .5) * W.spread * 2, s = kitShot({ dmg: base * W.dmg, col: W.col, tool: w, stun: W.stun || 0 }); s.vx = -Math.sin(a) * W.spd; s.vz = -Math.cos(a) * W.spd; s.life = W.life; s.pierce = W.pierce || 0; s.y = 1.25; }
+      ssFlash(W.col); tone(W.snd, .08, 'square', .04, W.snd * .45);
+      if (A2.mag <= 0 && A2.res > 0) setTimeout(() => { if (EV && !EV.over && EV.wpn === w) ssReload(); }, 260);
+      return true; }
+    EV.cd = W.cd; let n = 0;
+    bodies().forEach(u => { if (u.isMe || !alive(u) || teamOf(u) === EV.team) return; const dx = u.x - pos.x, dz = u.z - pos.z, dd = Math.hypot(dx, dz), d = dd - (HEROES[u.hero].r || .5); if (d < W.range && Math.abs(angDiff(Math.atan2(-dx, -dz), yaw)) < W.arc) { EV.hitTool = w; hitUnit(u, base * W.dmg, 'me'); n++;
+      if (W.knock && !u.boss && HEROES[u.hero].kind !== 'static') { u.kx = dx / (dd || 1) * W.knock; u.kz = dz / (dd || 1) * W.knock; } if (W.stun && u.hp > 0) u.stun = Math.max(u.stun, u.boss ? W.stun * .4 : W.stun); } });
+    if (w === 's1_sword') EV.shots.forEach(s => { if (s.team !== EV.team && Math.hypot(s.x - pos.x, s.z - pos.z) < 2.6) s.life = 0; });
+    ssArc(W); tone(n ? 200 : 460, .1, n ? 'square' : 'sine', .04, n ? 100 : 760); return true;
+  }
+  // muzzle flash, a swing trail, hit markers and scrap
+  const ssFx = document.createElement('div'); ssFx.className = 'ssfx'; ssFx.innerHTML = '<i class="ssmz"></i><i class="sshit"></i>'; document.body.appendChild(ssFx);
+  { const s = document.createElement('style'); s.textContent = `.ssfx{position:fixed;inset:0;pointer-events:none;z-index:31;display:none}body.ssf .ssfx{display:block}
+.ssmz{position:absolute;right:calc(18% + env(safe-area-inset-right,0px));bottom:16%;width:120px;height:120px;margin:-60px;border-radius:50%;background:radial-gradient(circle,var(--mz,#7FE8FF) 0,rgba(255,255,255,.4) 25%,transparent 65%);opacity:0}
+.ssmz.on{animation:ssmz .09s linear}@keyframes ssmz{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(1.4)}}
+.sshit{position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-14px;opacity:0}.sshit::before,.sshit::after{content:"";position:absolute;left:12px;top:0;width:4px;height:28px;background:#fff;border-radius:2px;box-shadow:0 0 4px rgba(0,0,0,.6)}.sshit::before{transform:rotate(45deg)}.sshit::after{transform:rotate(-45deg)}
+.sshit.kill::before,.sshit.kill::after{background:#FF5A3C}.sshit.dull::before,.sshit.dull::after{background:#8A8F99}.sshit.on{animation:sshit .22s ease-out}@keyframes sshit{from{opacity:1;transform:scale(1.3)}to{opacity:0;transform:scale(.8)}}
+.sspad{display:none}body.ssf .sspad{display:block}body.ssf .fsp{display:none}
+.sspad button{pointer-events:auto;position:absolute;border:0;border-radius:50%;font:800 13px "Instrument Sans",system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.4);cursor:pointer;touch-action:none;color:#16181D}
+.ssfire{right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(20px + env(safe-area-inset-bottom,0px));width:90px;height:90px;background:#FF7A3C}
+.ssswing{right:calc(118px + env(safe-area-inset-right,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));width:68px;height:68px;background:#7CF2FF}
+.ssswap{right:calc(124px + env(safe-area-inset-right,0px));bottom:calc(102px + env(safe-area-inset-bottom,0px));width:58px;height:58px;background:rgba(22,24,29,.88);color:#fff!important;font-size:12px!important}
+body.ssf .fblock{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(196px + env(safe-area-inset-bottom,0px));width:60px;height:60px;font-size:12px}
+body.ssf .jump{right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(122px + env(safe-area-inset-bottom,0px));width:64px;height:64px;font-size:14px}
+body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
+@media (pointer:fine){.sspad{display:none!important}}`; document.head.appendChild(s); }
+  const ssPad = document.createElement('div'); ssPad.className = 'sspad'; ssPad.innerHTML = '<button type="button" class="ssfire">Fire</button><button type="button" class="ssswing">Swing</button><button type="button" class="ssswap">⇄</button>'; $('#evHud').appendChild(ssPad);
+  const padUse = kind => { if (!EV || !EV.opts || !EV.opts.ss) return; const id = kind === 'gun' ? ARS.gun : ARS.mel; ssUse(id && ARS.own.includes(id) ? id : 'fists'); };
+  ssPad.querySelector('.ssfire').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); padUse('gun'); if (EV) { EV.holdAtk = true; evAttack(); } });
+  ssPad.querySelector('.ssswing').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); padUse('mel'); if (EV) { EV.holdAtk = true; evAttack(); } });
+  ssPad.querySelectorAll('.ssfire,.ssswing').forEach(b => ['pointerup', 'pointercancel', 'pointerleave'].forEach(k => b.addEventListener(k, () => { if (EV) EV.holdAtk = false; })));
+  ssPad.querySelector('.ssswap').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (EV && EV.opts && EV.opts.ss) ssSwitch(); });
+  addEventListener('keydown', e => { if (!EV || !EV.opts || !EV.opts.ss || EV.over || e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; const k = e.key.toLowerCase(); if (k === 'q') ssSwitch(); if (k === 'r') ssReload(); });
+  function ssFlash(col){ const m = ssFx.querySelector('.ssmz'); m.style.setProperty('--mz', '#' + col.toString(16).padStart(6, '0')); m.classList.remove('on'); void m.offsetWidth; m.classList.add('on');
+    const f = new THREE.Mesh(new THREE.SphereGeometry(.22, 8, 6), new THREE.MeshBasicMaterial({ color: col, transparent: true, depthWrite: false })); f.position.set(pos.x - Math.sin(yaw) * .9, 1.3, pos.z - Math.cos(yaw) * .9); fxAdd(f, .07); }
+  function ssArc(W){ const m = new THREE.Mesh(new THREE.RingGeometry(Math.max(.3, W.range - .5), W.range, 24, 1, -W.arc, W.arc * 2), new THREE.MeshBasicMaterial({ color: W.col, transparent: true, side: THREE.DoubleSide, depthWrite: false })); m.rotation.x = -Math.PI / 2; m.rotation.z = Math.PI / 2 + yaw; m.position.set(pos.x, 1.05, pos.z); fxAdd(m, .14); }
+  function ssMarker(kind){ const m = ssFx.querySelector('.sshit'); m.className = 'sshit' + (kind ? ' ' + kind : ''); void m.offsetWidth; m.classList.add('on'); }
+  function ssHit(u, d, from){
+    const F = EV.st.ss; if (F.o.hit) { try { d = F.o.hit(u, d, from, F.api); } catch (e) { console.error(e); } }
+    if (from === 'me') { ssMarker(d > 0 && u.hp - d <= 0 ? 'kill' : d > 0 ? '' : 'dull'); if (d > 0) tone(1700, .03, 'square', .02, 1200); }
+    return d;
+  }
+  function ssKill(u, from){
+    const F = EV.st.ss, par = BL.partG || eventScene, cols = [0x5A5E68, 0x8A8F99, 0xE8B82E, 0x3A3D44, 0xFF8A2E], H = HEROES[u.hero], big = (H.scale || 1) * (u.boss ? 1.6 : 1);
+    for (let i = 0; i < (lowFx ? 5 : 9); i++) { const s = (.12 + Math.random() * .22) * big, m = new THREE.Mesh(new THREE.BoxGeometry(s, s * (.4 + Math.random()), s), mat(cols[i % cols.length], { metalness: .5 })); m.position.set(u.x, (u.y || 0) + .9 * big, u.z); par.add(m); const a = Math.random() * 6.28, sp = 2 + Math.random() * 4; F.bits.push({ m, vx: Math.cos(a) * sp, vy: 3 + Math.random() * 4, vz: Math.sin(a) * sp, t: 1.6 + Math.random() * .6 }); }
+    ringFx2(u.x, u.z, 1.4 * big, 0xFFC93C); tone(240, .18, 'square', .04, 80);
+    if (!u.boss && H.kind !== 'static' && Math.random() < .3) ssPick(u.x, u.z);
+    if (F.o.kill) { try { F.o.kill(u, from, F.api); } catch (e) { console.error(e); } }
+  }
+  function ssPick(x, z){ const F = EV.st.ss, par = BL.partG || eventScene, g = new THREE.Group(); g.position.set(x, 0, z); par.add(g);
+    const c = new THREE.Mesh(new THREE.BoxGeometry(.32, .46, .32), new THREE.MeshBasicMaterial({ color: 0x7CF2FF })); c.position.y = .55; g.add(c);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(.5, .6, 24), new THREE.MeshBasicMaterial({ color: 0x7CF2FF, transparent: true, opacity: .7, side: THREE.DoubleSide, depthWrite: false })); ring.rotation.x = -Math.PI / 2; ring.position.y = .04; g.add(ring); F.picks.push({ g, c, x, z }); }
+  // enemies with cover duck behind the nearest crate or car on the far side from you, and lean out to shoot
+  function ssCover(u, T, dt, sp){
+    const F = EV.st && EV.st.ss; if (!F || !F.covers.length) return (u.inCover = false); const t = performance.now() / 1000;
+    const spot = c => { const dx = c.x - T.x, dz = c.z - T.z, d = Math.hypot(dx, dz) || 1; return [c.x + dx / d * (c.r + .8), c.z + dz / d * (c.r + .8), dx / d, dz / d]; };
+    if (!u.cv || (u.cvT = (u.cvT || 0) - dt) <= 0) { u.cvT = 5; let best = null, bd = 1e9; F.covers.forEach(c => { if (EV.units.some(o => o !== u && o.cv === c && o.dead <= 0)) return; const [sx, sz] = spot(c), d = Math.hypot(sx - u.x, sz - u.z); if (d < bd && d < 22) { bd = d; best = c; } }); u.cv = best; }
+    if (!u.cv) return (u.inCover = false); let [sx, sz, nx, nz] = spot(u.cv); const peek = Math.sin(t * .9 + u.x * 1.7) > .35;
+    if (peek) { const s = u.x * 7 % 2 > 1 ? 1 : -1; sx += -nz * s * (u.cv.r + .9); sz += nx * s * (u.cv.r + .9); }
+    const dx = sx - u.x, dz = sz - u.z; if (Math.hypot(dx, dz) > .4) { moveUnit(u, dx, dz, sp * 1.2, dt); u.mv = 1; } else u.mv = 0;
+    u.yaw = Math.atan2(-(T.x - u.x), -(T.z - u.z)); return (u.inCover = true);
+  }
+  function ssCoverAdd(x, z, type, r0){
+    const F = EV.st.ss, par = BL.partG || eventScene; let r = 1;
+    if (type === 'car') { const v = makeVehicle(Math.random() < .5 ? 'car' : 'suv', [0x6A6E78, 0x2E5A9A, 0xB8322A, 0xA8ADB5][F.covers.length % 4], par); v.g.position.set(x, 0, z); v.g.rotation.y = Math.random() * 6.28; r = 1.9; }
+    else if (type !== 'none') { const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = Math.random(); par.add(g); const w = mat(0x7A6242, { roughness: .9 }); box(1.6, 1.3, 1.6, w, 0, .65, 0, g); box(1.64, .12, 1.64, mat(0xE8B82E), 0, 1.0, 0, g); if (Math.random() < .5) box(1.1, .9, 1.1, w, .3, 1.75, -.1, g); r = 1.05; }
+    if (r0) r = r0; const c = { x, z, r }; F.covers.push(c); PILLARS.push({ x, z, r }); return c;
+  }
+  function ssSetup(part){
+    const o = SSF[part]; if (!o || !EV.opts || !EV.opts.ss) return; const S = EV.st;
+    const F = S.ss = { o, t: 0, bits: [], picks: [], covers: [], ammo: {}, pickT: 4, data: {} };
+    S.sb = { B: { name: o.title || '' }, b: { dead: 0, hp: 1, max: 1 }, t: 99, marks: [], tick: 0, mad: true };
+    if (o.boss) { const b = addUnit({ hero: 'ssb_' + o.id, team: 'en' }); const [bx, bz] = o.bossAt || [0, -12]; b.x = bx; b.z = bz; b.boss = 1; EV.boss = b; F.boss = b; }
+    const L = ssKitList(); EV.wpn = L[0]; EV.prop = L[0] === 'fists' ? null : L[0]; EV.reload = 0; $('#evSp').hidden = true; document.body.classList.add('ssf');
+    const api = F.api = {
+      F, S, THREE, data: F.data, get t(){ return F.t; }, get boss(){ return EV.boss; }, set boss(u){ EV.boss = u; }, get me(){ return [pos.x, pos.z]; }, get myYaw(){ return yaw; }, get over(){ return !EV || EV.over; }, get hp(){ return EV.hp; }, get maxHp(){ return EV.max; },
+      add(h, x, z, opt = {}){ const id = HEROES[h] ? h : 'ssu_' + o.id + '_' + h, u = S.add(id, x, z); if (HEROES[id].fly) droneAv(u); if (HEROES[id].kind === 'static') u.hp = u.max = HEROES[id].hp; Object.assign(u, opt); return u; },
+      mark: (x, z, r, col, life, hit, fill) => sbMark(x, z, r, col, life, hit, fill), hurt: (d, from) => hurtMe(d, from || EV.boss || null), near: (x, z, r) => Math.hypot(pos.x - x, pos.z - z) < r,
+      win(){ if (EV && !EV.over) endMatch(true); }, lose(){ if (EV && !EV.over) endMatch(false); }, say, tone, beam: beamFx, ring: ringFx2, shake(v){ EV.shake = Math.max(EV.shake || 0, v); },
+      cover: ssCoverAdd, pick: ssPick, foes: () => EV.units.filter(u => u.team === 'en' && u.dead <= 0), units: () => EV.units, valid: (x, z) => evValid(x, z),
+      move(x, z){ if (evValid(x, z)) { pos.x = x; pos.z = z; return true; } return false; }, par: () => BL.partG || eventScene, mat, glowM, toMap, toLocal, kill(u){ if (u && u.dead <= 0) { u.hp = 0; killUnit(u, null); } },
+      heal(n){ EV.hp = Math.min(EV.max, EV.hp + n); }, get blocking(){ return !!EV.blocking; }, get wpn(){ return EV.wpn; }, melee: w => !SSW[w] ? w === 'fists' || w === 'claws' : !SSW[w].gun
+    };
+    (o.cover || []).forEach(([x, z, type, r]) => ssCoverAdd(x, z, type, r));
+    if (o.setup) { try { o.setup(api); } catch (e) { console.error(e); } }
+  }
+  function ssStep(dt, t, P, S, alive2){
+    const F = S.ss; if (!F) return; F.t += dt;
+    if (EV.reload > 0 && (EV.reload -= dt) <= 0) { const w = EV.reloadW, W = SSW[w], A2 = ssAmmo(w), n = Math.min(W.mag - A2.mag, A2.res); A2.mag += n; A2.res -= n; EV.reload = 0; }
+    F.bits = F.bits.filter(b => { b.t -= dt; b.vy -= 14 * dt; b.m.position.x += b.vx * dt; b.m.position.y += b.vy * dt; b.m.position.z += b.vz * dt; if (b.m.position.y < .08) { b.m.position.y = .08; b.vy *= -.35; b.vx *= .6; b.vz *= .6; } b.m.rotation.x += b.vx * dt; b.m.rotation.z += b.vz * dt; if (b.t > 0) return true; if (b.m.parent) b.m.parent.remove(b.m); b.m.geometry.dispose(); return false; });
+    const guns = ssKitList().filter(k => SSW[k] && SSW[k].gun);
+    if (guns.length && (F.pickT -= dt) <= 0) { F.pickT = 9; if (F.picks.length < 2) for (let k = 0; k < 12; k++) { const a = Math.random() * 6.28, r = 4 + Math.random() * 7, x = pos.x + Math.cos(a) * r, z = pos.z + Math.sin(a) * r; if (evValid(x, z) && !PILLARS.some(p => Math.hypot(x - p.x, z - p.z) < p.r + .5)) { ssPick(x, z); break; } } }
+    F.picks = F.picks.filter(p => { p.c.rotation.y += dt * 2; p.c.position.y = .55 + Math.sin(t * 3 + p.x) * .08; if (EV.dead > 0 || Math.hypot(pos.x - p.x, pos.z - p.z) > 1.3) return true;
+      guns.forEach(w => { const A2 = ssAmmo(w); A2.res = Math.min(SSW[w].res, A2.res + SSW[w].mag * 2); }); if (p.g.parent) p.g.parent.remove(p.g); disposeDeep(p.g); tone(880, .1, 'triangle', .04, 1320); say(guns.length ? 'Ammo cell: +ammo.' : 'An ammo cell, but you’ve no gun with you.', 1200); return false; });
+    if (F.o.step && !EV.over) { try { F.o.step(dt, F.api); } catch (e) { console.error(e); } }
+  }
+  function ssHud(){ const w = EV.wpn, W = SSW[w], A2 = W && W.gun ? ssAmmo(w) : null, L = ssKitList(), nx = L[(L.indexOf(w) + 1) % L.length];
+    const sw = ssPad.querySelector('.ssswap'); sw.hidden = L.length < 2; const t2 = KITW[nx] ? KITW[nx].s : 'Fists'; if (sw.textContent !== '⇄ ' + t2) sw.textContent = '⇄ ' + t2;
+    const fb = ssPad.querySelector('.ssfire'), gun = ARS.gun && ARS.own.includes(ARS.gun); fb.hidden = !gun; const sb = ssPad.querySelector('.ssswing'), ml = ARS.mel && ARS.own.includes(ARS.mel); const st2 = ml ? SSW[ARS.mel].s : 'Punch'; if (sb.textContent !== st2) sb.textContent = st2;
+    if (gun) { const G = ssAmmo(ARS.gun), ft = EV.reload > 0 && EV.reloadW === ARS.gun ? '…' : `${SSW[ARS.gun].s}\n${G.mag}/${G.res}`; if (fb.textContent !== ft) fb.textContent = ft; fb.style.whiteSpace = 'pre-line'; }
+    return `${KITW[w] ? KITW[w].n : 'Fists'}${A2 ? ` · ${EV.reload > 0 ? 'reloading…' : `${A2.mag}/${W.mag}`} · ${A2.res} spare` : ''}${fine ? ` · Q switch${A2 ? ' · R reload' : ''} · X or right-click to block` : ''}`; }
+  function ssFightEnd(won){
+    const F = EV.st.ss, o = F.o; document.body.classList.remove('ssf'); EV.holdAtk = false; BL.lastWon = won;
+    say(won ? (o.winLine || 'You won!') : (o.loseLine || 'You’re down. Get your breath back and try again.'), 3000); tone(won ? 523 : 140, .5, won ? 'triangle' : 'sawtooth', .05, won ? 1046 : 70);
+    setTimeout(() => { if (EV) stopEvent(true); document.body.classList.remove('ssf'); if (o.end) { try { o.end(won); } catch (e) { console.error(e); } } }, 1700);
+  }
+  // the season weapons, held in your hand (the hand's +y points the way you're facing)
+  function ssWeaponMesh(id){
+    const g = new THREE.Group(), metal = c => mat(c, { metalness: .7, roughness: .35 }), glow = c => new THREE.MeshBasicMaterial({ color: c });
+    if (id === 's1_blaster') { box(.07, .12, .1, metal(0x3A3D44), 0, -.02, 0, g); box(.08, .3, .09, metal(0x5A5E68), 0, .14, .03, g); box(.03, .22, .02, glow(0x7FE8FF), 0, .16, .08, g); cyl(.03, .03, .06, glow(0x7FE8FF), 0, .32, .03, g, 10); }
+    else if (id === 's1_scatter') { box(.08, .14, .1, metal(0x5A4632), 0, -.02, 0, g); box(.13, .38, .11, metal(0x3A3D44), 0, .2, .03, g); [-.035, .035].forEach(x => cyl(.028, .032, .14, metal(0x16181D), x, .44, .03, g, 8)); box(.135, .05, .115, glow(0xFFB04A), 0, .12, .03, g); }
+    else if (id === 's1_rifle') { box(.07, .14, .1, metal(0x3A3D44), 0, -.02, 0, g); box(.09, .62, .1, metal(0x6A6E78), 0, .28, .03, g); cyl(.018, .018, .3, metal(0x16181D), 0, .7, .03, g, 8); box(.03, .4, .03, glow(0xC08CFF), .05, .3, .03, g); box(.05, .12, .05, metal(0x16181D), 0, .3, .1, g); }
+    else if (id === 's1_sword') { cyl(.02, .022, .14, mat(0x2A1E16), 0, 0, 0, g, 8); box(.16, .03, .04, metal(0x8A8F99), 0, .08, 0, g); const b = new THREE.Mesh(new THREE.OctahedronGeometry(.07, 0), glow(0x7CF2FF)); b.scale.set(.6, 6, .35); b.position.y = .48; g.add(b); }
+    else if (id === 's1_wrench') { cyl(.024, .024, .5, metal(0xC9CFD8), 0, .15, 0, g, 8); box(.2, .07, .05, metal(0xC9CFD8), 0, .42, 0, g); box(.05, .1, .05, metal(0xC9CFD8), -.075, .49, 0, g); box(.05, .1, .05, metal(0xC9CFD8), .075, .49, 0, g); box(.06, .14, .06, mat(0xC8102E), 0, -.06, 0, g); }
+    else if (id === 's1_spear') { cyl(.018, .018, 1.3, mat(0x6B4A2B), 0, .35, 0, g, 8); const h = cone(.045, .2, metal(0xDCE3EA), 0, 1.08, 0, g); h.userData.noPick = true; box(.12, .03, .02, metal(0xDCE3EA), 0, .96, 0, g); box(.02, .06, .02, glow(0xFF8A3A), 0, .93, 0, g); }
+    return g;
+  }
 
   // ======================= fight scenes: who says what before, during and after each battle =======================
   // Every story fight opens with a short scene (the camera finds whoever you're up against), villains and allies talk
@@ -12091,8 +12288,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   // the lift: walk in and pick a floor
   const liftEl = document.createElement('div'); liftEl.className = 'liftpanel'; liftEl.hidden = true; document.body.appendChild(liftEl);
-  function openLift(){ if (document.pointerLockElement) document.exitPointerLock(); liftEl.innerHTML = '<b>Lift</b>' + TFLOORS.filter(([id]) => id[0] !== 'v' || cvOpen()).map(([id, nm]) => `<button type="button" data-f="${id}" ${id === TWR.floor ? 'disabled' : ''}>${esc(nm)}${id === 'b1' && towerVault() ? ' ⚠' : ''}</button>`).join('') + '<button type="button" data-f="">Close</button>'; liftEl.hidden = false; }
+  function openLift(){ if (document.pointerLockElement) document.exitPointerLock(); liftEl.innerHTML = '<b>Lift</b>' + TFLOORS.filter(([id]) => id[0] !== 'v' || cvOpen()).map(([id, nm]) => `<button type="button" data-f="${id}" ${id === TWR.floor ? 'disabled' : ''}>${esc(nm)}${id === 'b1' && towerVault() ? ' ⚠' : ''}</button>`).join('') + '<button type="button" data-f="garage">Garage</button><button type="button" data-f="">Close</button>'; liftEl.hidden = false; }
   liftEl.addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; liftEl.hidden = true; const f = b.dataset.f; if (!f) return; tone(660, .12, 'sine', .04, 880);
+    if (f === 'garage') return garGo();
     if (f === 'roof') return fade(() => { travel('roof'); pos.set(HUT[0], 1.6, HUT[1] + 1.4); yaw = 0; say('The roof.', 1400); }, '#06070B');
     fade(() => { showFloor(f); pos.set(15.4, 1.6, 0); yaw = Math.PI / 2; pitch = -.05; TWR.liftArm = false; say(`${tName(f)}.`, 1600); setTimeout(() => tone(1175, .15, 'triangle', .05), 150); }, '#06070B'); });
   const towerVault = () => { try { return !!(SG.w && SG.w.vault) || SG.active && chId() === 'pz'; } catch (e) { return false; } };
@@ -12504,7 +12702,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const bg = bake(VT.scooter(0xFFFFFF)[0]), bm = inst(bg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .45, metalness: .35 }), bikes, g, true); bikes.forEach((_, i) => bm.setColorAt(i, new THREE.Color(cols[(i * 7) % cols.length]))); if (bm.instanceColor) bm.instanceColor.needsUpdate = true;
   }
   const VNAME = { car: 'a car', cab: 'a taxi', auto: 'an auto-rickshaw', bus: 'a BMTC bus', truck: 'a lorry', scooter: 'a scooter', jeep: 'a jeep' };
-  const VDRIVE = { car: { max: 22, acc: 6, turn: 1.6 }, cab: { max: 22, acc: 6, turn: 1.6 }, auto: { max: 13, acc: 4.5, turn: 2.2 }, scooter: { max: 17, acc: 6.5, turn: 2.6 }, jeep: { max: 19, acc: 5.5, turn: 1.7 }, bus: { max: 12, acc: 2.5, turn: 1.0 }, truck: { max: 13, acc: 3, turn: 1.1 } };
+  const VDRIVE = { car: { max: 22, acc: 6, turn: 1.6 }, cab: { max: 22, acc: 6, turn: 1.6 }, auto: { max: 13, acc: 4.5, turn: 2.2 }, scooter: { max: 17, acc: 6.5, turn: 2.6 }, jeep: { max: 19, acc: 5.5, turn: 1.7 }, bus: { max: 12, acc: 2.5, turn: 1.0 }, truck: { max: 13, acc: 3, turn: 1.1 }, moto: { max: 25, acc: 8, turn: 2.4 }, suv: { max: 20, acc: 5.5, turn: 1.5 }, van: { max: 17, acc: 4, turn: 1.3 } };
   const vGeo = {}, vBodyM = () => BLC.bodyM || (BLC.bodyM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .45, metalness: .35 })), vLightM = () => BLC.lightM || (BLC.lightM = new THREE.MeshBasicMaterial({ vertexColors: true }));
   function makeVehicle(type, col, parent){
     const k = type + ':' + (col || 0); if (!vGeo[k]) { const [body, lights, L, W, sp] = VT[type](col); vGeo[k] = { body: bake(body), lights: bake(lights), L, W, sp }; }
@@ -12841,7 +13039,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function driveCam(dt){
     const p = DRV.p; if (!p) return; const [lx, lz] = toLocal(p.x, p.z), fx = Math.sin(p.h), fz = Math.cos(p.h);
     // from the driver's seat: right-hand drive (this is India), eyes just under the roof, looking down the road
-    if (DRV.fp) { const eye = p.type === 'bus' ? 2.7 : p.type === 'truck' ? 2.5 : p.type === 'scooter' ? 1.7 : p.type === 'auto' ? 1.5 : 1.32, side = p.type === 'scooter' ? 0 : p.type === 'auto' ? 0 : -.36, sx = Math.cos(p.h), sz = -Math.sin(p.h), y0 = (p.y || 0) - BL.off.y;
+    if (DRV.fp) { const eye = p.type === 'bus' ? 2.7 : p.type === 'truck' ? 2.5 : p.type === 'scooter' || p.type === 'moto' ? 1.7 : p.type === 'auto' ? 1.5 : 1.32, side = p.type === 'scooter' || p.type === 'moto' ? 0 : p.type === 'auto' ? 0 : -.36, sx = Math.cos(p.h), sz = -Math.sin(p.h), y0 = (p.y || 0) - BL.off.y;
       camera.position.set(lx + fx * (p.type === 'bus' ? p.L / 2 - 1.4 : .05) + sx * side, y0 + eye, lz + fz * (p.type === 'bus' ? p.L / 2 - 1.4 : .05) + sz * side); camera.lookAt(camera.position.x + fx * 10, y0 + eye - .35, camera.position.z + fz * 10); viewG.visible = false; return; }
     const back = p.L / 2 + (p.type === 'bus' ? 8 : p.type === 'truck' ? 7 : 5), up = p.type === 'bus' || p.type === 'truck' ? 4.4 : p.type === 'scooter' ? 2.2 : 2.8;
     const want = V(lx - fx * back, up, lz - fz * back); if (!BLC.cam) BLC.cam = want.clone(); BLC.cam.lerp(want, Math.min(1, dt * 5)); camera.position.copy(BLC.cam); camera.lookAt(lx + fx * 5, 1.1, lz + fz * 5); viewG.visible = false;
@@ -12972,6 +13170,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     tone(t.to ? 520 : 390, .25, 'triangle', .03);
   }
   function lvStep(now){
+    garStep();
     if (LV.ride) { const r = LV.ride, k = clamp((now - r.t0) / r.dur, 0, 1), e = k * k * (3 - 2 * k); BL.off.y = r.from + (r.to - r.from) * e; BL.mapG.position.y = -BL.off.y; const [lx, lz] = toLocal(r.x0 + (r.at[0] - r.x0) * e, r.z0 + (r.at[1] - r.z0) * e); pos.x = lx; pos.z = lz; if (k >= 1) { LV.ride = null; r.land(); } return; }
     if (BL.lvl && Math.abs(BL.off.y - BL.lvl.y) > .02) BL.lvl = null;
     if (!inWorld || zone !== 'blr' || BL.ride || EV || A || BL.cine || PL.ride) return;
@@ -13181,6 +13380,55 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     L.exits.push({ x: TW.x - 17.6, z: TW.z + 12, r: 1.6, to: null, at: [ex - 3.6, ez], yaw: Math.PI / 2, fade: true, car: true, msg: 'Back up to the street.' });
     addPlace('carpark', 'Broker Tower car park', () => onLvl('carpark'), { lvl: 'carpark', x: TW.x - 14, z: TW.z + 12, yaw: Math.PI * .5 }); g.traverse(o => o.userData.noPick = true); eg.traverse(o => o.userData.noPick = true);
   }
+  // ---------- your building's garage: down a ramp beside your front door, or by the lift ----------
+  // An underground level under your tower with a row of things to drive. Anything you drive off and leave somewhere is
+  // brought back to its bay the next time you come down here.
+  const GRY = -4.8, GAR = { x0: -36, x1: -4, z0: -42, z1: -12.6, door: [-15.5, -11.8], in: [-15.5, -18.5], out: [-15.5, -9.4], lift: [-4.9, -27], cars: [], pend: false, was: false };
+  const GAR_CARS = [
+    ['car', 0xC8102E, 'the red hatchback', -31, -37.5, 0], ['suv', 0x1F4A3A, 'the green SUV', -25, -37.5, 0], ['car', 0x16181D, 'the black saloon', -19, -37.5, 0],
+    ['van', 0, 'the white van', -12.5, -37.5, 0], ['cab', 0, 'the old taxi', -6.5, -37.5, 0],
+    ['auto', 0, 'the auto-rickshaw', -33.5, -31, Math.PI / 2], ['scooter', 0xFFC93C, 'the yellow scooter', -33.5, -27, Math.PI / 2], ['moto', 0x2E5A9A, 'the blue motorbike', -33.5, -24, Math.PI / 2],
+    ['moto', 0xC8102E, 'the red motorbike', -33.5, -21, Math.PI / 2], ['scooter', 0x3CB0A8, 'the teal scooter', -33.5, -18, Math.PI / 2]
+  ];
+  function buildGarage(){
+    const cx = (GAR.x0 + GAR.x1) / 2, cz = (GAR.z0 + GAR.z1) / 2, W = GAR.x1 - GAR.x0, D = GAR.z1 - GAR.z0, g = new THREE.Group(); g.position.set(cx, 0, cz); BL.mapG.add(g); BLC.garG = g; const P = [];
+    P.push(B3(W + 1, .2, D + 1, 0x4A4E56, 0, GRY - .1, 0), B3(W + 1, .3, D + 1, 0x2E3138, 0, -.35, 0));
+    [[0, -D / 2 - .3, W + 1, .4], [0, D / 2 + .3, W + 1, .4], [-W / 2 - .3, 0, .4, D + 1], [W / 2 + .3, 0, .4, D + 1]].forEach(([x, z, w, d]) => P.push(B3(w, 4.7, d, 0xC9C4B8, x, GRY + 2.35, z), B3(w + .02, .5, d + .02, 0xFFC93C, x, GRY + .25, z)));
+    const L = LVL.garage = { id: 'garage', y: GRY, drive: true, rects: [[GAR.x0, GAR.x1, GAR.z0, GAR.z1]], solid: [], exits: [] };
+    [[-28, -24], [-12, -24], [-28, -31], [-12, -31]].forEach(([x, z]) => { P.push(B3(.8, 4.6, .8, 0xB8B4AA, x - cx, GRY + 2.3, z - cz), B3(.82, .5, .82, 0xFFC93C, x - cx, GRY + .25, z - cz)); L.solid.push([x - .4, x + .4, z - .4, z + .4]); });
+    // bays, the lane arrows, strip lights, and the ramp up to the street
+    GAR_CARS.forEach(([, , , x, z, h]) => { if (h) P.push(B3(4.6, .02, .1, 0xF4F1E8, x + 1.2 - cx, GRY + .02, z - 1.5 - cz), B3(4.6, .02, .1, 0xF4F1E8, x + 1.2 - cx, GRY + .02, z + 1.5 - cz)); else P.push(B3(.1, .02, 5.2, 0xF4F1E8, x - 3 - cx, GRY + .02, z - cz), B3(.1, .02, 5.2, 0xF4F1E8, x + 3 - cx, GRY + .02, z - cz)); });
+    for (let x = -30; x <= -8; x += 5.5) P.push(B3(1.6, .02, .35, 0xF4F1E8, x - cx, GRY + .02, -28 - cz), B3(.5, .02, .5, 0xF4F1E8, x + .9 - cx, GRY + .02, -28 - cz, Math.PI / 4));
+    for (let x = -32; x <= -8; x += 6) [-34, -22].forEach(z => P.push(B3(3.2, .08, .25, 0xFFF6E0, x - cx, -.55, z - cz)));
+    P.push(B3(3.4, .02, 4.6, 0x2A2D33, GAR.door[0] - cx, GRY + .03, -14.6 - cz), B3(.2, 1, 4.6, 0xFFC93C, GAR.door[0] - 1.8 - cx, GRY + .5, -14.6 - cz), B3(.2, 1, 4.6, 0xFFC93C, GAR.door[0] + 1.8 - cx, GRY + .5, -14.6 - cz));
+    P.push(B3(1.8, 2.6, .12, 0x8A8F99, GAR.lift[0] + .2 - cx, GRY + 1.3, GAR.lift[1] - cz, Math.PI / 2), B3(.1, .08, .08, 0x3CE870, GAR.lift[0] + .15 - cx, GRY + 1.4, GAR.lift[1] + 1.2 - cz));
+    decor(P, g);
+    signPlane('GARAGE', 'PICK ONE AND DRIVE OUT', '#16181D', '#FFC93C', 4.4, 1.1, g, 0, GRY + 3.4, D / 2 - .1, Math.PI);
+    signPlane('EXIT ↑', 'TO THE STREET', '#1E7A4A', '#FFFFFF', 2.2, .7, g, GAR.door[0] - cx, GRY + 3.6, -12.9 - cz, Math.PI);
+    signPlane('LIFT ↑', 'TO THE TOWER', '#1E3A5A', '#FFFFFF', 1.8, .6, g, GAR.lift[0] + .1 - cx, GRY + 3.1, GAR.lift[1] - cz, -Math.PI / 2);
+    const lt = new THREE.PointLight(0xFFF1D6, .9, 40, 2); lt.position.set(0, GRY + 4, 0); g.add(lt);
+    // the way down from the street: a roller shutter in your tower's front wall, next to the door
+    const sg = new THREE.Group(); sg.position.set(GAR.door[0], 0, HOUSE.z1); BL.mapG.add(sg);
+    decor([B3(3.4, 2.8, .1, 0x5A5E68, 0, 1.4, .08), ...[0, 1, 2, 3, 4, 5, 6].map(i => B3(3.42, .05, .12, 0x3A3D44, 0, .3 + i * .38, .1)), B3(3.8, .25, .3, 0xFFC93C, 0, 2.92, .15), B3(3.4, .02, 2.6, 0x2A2D33, 0, .02, 1.4)], sg);
+    signPlane('GARAGE', null, '#16181D', '#FFC93C', 2.2, .5, sg, 0, 3.4, .14);
+    // what's parked here
+    GAR.cars = GAR_CARS.map(([type, col, name, x, z, h]) => { const v = makeVehicle(type, col || undefined, BLC.carG); Object.assign(v, { x, z, y: GRY, h, name, parked: true, fx: Math.sin(h), fz: Math.cos(h), bay: [x, z, h], gar: 1 }); v.g.position.set(x, GRY, z); v.g.rotation.y = h; BLC.parked.push(v); return v; });
+    LV.entries.push({ x: GAR.door[0], z: GAR.door[1], r: 1.6, to: 'garage', at: GAR.in, yaw: 0, fade: true, car: true, msg: 'Down the ramp into your building’s garage. Pick anything and drive it out.' });
+    L.exits.push({ x: GAR.door[0], z: -14.2, r: 1.6, to: null, at: GAR.out, yaw: Math.PI, fade: true, car: true, msg: 'Up the ramp and out onto your street.' });
+    addPlace('garage', 'Your building’s garage', () => onLvl('garage'), { lvl: 'garage', x: GAR.in[0], z: GAR.in[1], yaw: 0 });
+    g.traverse(o => o.userData.noPick = true); sg.traverse(o => o.userData.noPick = true);
+  }
+  // put everything back in its bay (not the one you're driving)
+  function garRestock(){ GAR.cars.forEach(v => { if (DRV.p === v) return; const [x, z, h] = v.bay; if (Math.abs(v.x - x) + Math.abs(v.z - z) + Math.abs((v.y || 0) - GRY) < .3) return; Object.assign(v, { x, z, y: GRY, h, fx: Math.sin(h), fz: Math.cos(h), v: 0 }); v.g.position.set(x, GRY, z); v.g.rotation.set(0, h, 0); v.g.visible = true; }); }
+  // from the tower's lift straight down to the garage
+  function garGo(){ if (A || EV) return; GAR.pend = true; enterBlr([GAR.out[0], GAR.out[1], Math.PI]); }
+  function garStep(){
+    if (!LVL.garage) return; const inG = BL.lvl === LVL.garage && inWorld && zone === 'blr';
+    if (GAR.pend && inWorld && zone === 'blr' && BL.sc) { GAR.pend = false; BL.off.y = GRY; BL.mapG.position.y = -GRY; BL.lvl = LVL.garage; const [lx, lz] = toLocal(GAR.lift[0] - 1.6, GAR.lift[1]); pos.x = lx; pos.z = lz; yaw = Math.PI / 2; LV.arm = false; say('The lift opens into the garage. Pick anything and drive it up the ramp.', 3400); }
+    if (inG && !GAR.was) garRestock(); GAR.was = inG;
+    if (!inG || DRV.on || A || EV || BL.cine || GAR.busy) return; const [mx, mz] = toMap(pos.x, pos.z);
+    if (Math.hypot(mx - GAR.lift[0], mz - GAR.lift[1]) < 1.1) { GAR.busy = true; setTimeout(() => GAR.busy = false, 2500); enterTwr('lobby', [15.4, 0], -Math.PI / 2); }
+  }
   function buildSecurity(){
     const g = new THREE.Group(); g.position.set(TW.x, 0, TW.z); BL.mapG.add(g); BLC.secG = g; const P = [], w = 0xDCE3EA, T = (TWP[0] = TWP[0] || []);
     const wallR = (x0, x1, z0, z1) => { P.push(B3(x1 - x0, 3.2, z1 - z0, w, (x0 + x1) / 2, 1.6, (z0 + z1) / 2)); T.push([x0, x1, z0, z1]); };
@@ -13246,7 +13494,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const pick = (ok, minD) => { const b = cand.find(b => !used.includes(b) && ok(b) && used.every(u => Math.hypot((u.x0 + u.x1 - b.x0 - b.x1) / 2, (u.z0 + u.z1 - b.z0 - b.z1) / 2) > minD)); if (b) used.push(b); return b; };
     SHOPS.forEach(S => { const b = pick(() => true, 55); if (b) buildShop(b, facing(b), S); });
     [0, 1, 2].forEach(i => { const b = pick(b => b.h >= 11 && b.h <= 30, 45); if (b) buildRooftop(b, facing(b), i, i === 1); });
-    buildCarPark(); buildSecurity(); try { buildSpaceport(); } catch (err) { console.error(err); } if (!lowFx) grassFields();
+    buildCarPark(); buildGarage(); buildSecurity(); try { buildSpaceport(); } catch (err) { console.error(err); } if (!lowFx) grassFields();
     BLC.placesBuilt = true;
   }
   function grassFields(){
@@ -13908,6 +14156,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     [gC(.3, .1), TYRE, 0, .3, .72, 0, 0, Math.PI / 2], [gC(.3, .12), TYRE, 0, .3, -.66, 0, 0, Math.PI / 2], [gC(.16, .12), HUB, 0, .3, .72, 0, 0, Math.PI / 2], [gC(.16, .14), HUB, 0, .3, -.66, 0, 0, Math.PI / 2], ...rider(col, .78, -.3)],
     [[gB(.16, .14, .05), 0xFFF6D8, 0, .95, .72], [gB(.14, .08, .05), 0xFF2A1A, 0, .85, -.72]], 1.8, .7, 12];
   VT.scooterR = col => { const [b, l, L, W] = VT.scooter(col); return [[...b, ...rider(col + 77, .72, -.25, .1)], l, L, W, 11]; };
+  // a motorbike with nobody on it (the ones parked in your garage)
+  VT.moto = col => { const n = rider(col, .78, -.3).length, [b, l, L, W, sp] = VT.bike(col); return [b.slice(0, b.length - n), l, L, W, sp]; };
   // ---------- the new districts round the old edge of the map ----------
   // North: Whitefield Tech Park, tall glass round a plaza with a fountain. South: the Old Pete, low old houses round a
   // stepped temple tank. East: Indiranagar, round a little lake with a walk. West: Malleshwaram's market street.
@@ -13959,6 +14209,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (BLC.fountain) { const F = BLC.fountain, a = F.geometry.attributes.position, n = a.count, T = now / 1000; if (!F.v) { F.v = new Float32Array(n * 4); for (let i = 0; i < n; i++) F.v[i * 4 + 3] = Math.random() * 1.6; }
       for (let i = 0; i < n; i++) { let t = (T + F.v[i * 4 + 3]) % 1.6; const ang = i * 2.399, sp = 1.3 + (i % 5) * .12; a.setXYZ(i, Math.cos(ang) * sp * t, 3.2 * t - 4.9 * t * t * .9, Math.sin(ang) * sp * t); } a.needsUpdate = true; }
     if (!inWorld || zone !== 'blr' || EV || SG.active && !newTL()) return; const [mx, mz] = toMap(pos.x, pos.z), id = distOf(mx, mz);
+    if (document.body.classList.contains('cine')) return;  // not while a scene's camera flies over the districts
     if (id && id !== BLC.ndLast) { const d = NDIST.find(q => q.id === id); BLC.ndSeen = BLC.ndSeen || new Set(); if (!BLC.ndSeen.has(id)) { BLC.ndSeen.add(id); say(`${d.name[0].toUpperCase() + d.name.slice(1)}. ${d.line}`, 3800); } }
     BLC.ndLast = id;
   }
@@ -14912,7 +15163,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // Each season's story lives in its own file (seasons/s01.js and so on), loaded only while that season is running, and gets
   // this small API instead of reaching into the page. Progress is saved under ru-season. Add ?season=N to preview a season.
   const SEASON0 = new Date(2026, 10, 18), SEASON_LEN = 28;
-  const SEASON_V = '2026-11-18f';  // bump whenever a seasons/*.js file changes
+  const SEASON_V = '2026-11-18h';  // bump whenever a seasons/*.js file changes
   const SEASON_NAMES = ['Landfall', 'High Water', 'The Carnival', 'Blackout', 'The Eruption', 'Deep Freeze', 'Scales', 'Incursion', 'The Rift', 'Skyline', 'Harvest', 'Neon Nights', 'The Drought', 'Festival of Lights', 'Convergence'];
   const SEASON = { S: undefined, mod: null, loading: false, failed: false };
   function seasonInfo(){
@@ -14934,6 +15185,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     get tpv(){ return tpv; }, set tpv(v){ tpv = !!v; }, get zone(){ return zone; }, get inWorld(){ return inWorld; }, get entered(){ return entered; }, get busy(){ return !!(EV || A); }, get lowFx(){ return lowFx; },
     get BL(){ return BL; }, get BLC(){ return BLC; }, get DRV(){ return DRV; }, get PH(){ return PH; }, get DLG(){ return DLG; }, get room(){ return scene; }, get panelOpen(){ return panel.classList.contains('on'); },
     say, tone, toMap, toLocal, onGround, blrBox, avatar, crowdLook, tex, mat, glowM, decor, B3, C3, S3, fade, flakeTex, heroName, cleanName, setName,
+    fight: ssFight, fightReg: ssReg, heroAv: ssAvatar, give: arsGive, skin: arsSkin, equip: arsEquip, get ars(){ return ARS; }, weapons: SSW, skins: SSKIN, get fighting(){ return !!(EV && EV.opts && EV.opts.ss); },
     dlgPlay, dlgNext, dlgSkip, closePanel, phoneClose, panel(html){ panelBody.innerHTML = html; panel.scrollTop = 0; panel.classList.add('on'); return panelBody; }
   }; }
   function seasonStep(dt, now){
@@ -14945,8 +15197,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function seasonTab(B){
     const S = SEASON.S === undefined ? seasonInfo() : SEASON.S;
-    if (SEASON.mod && SEASON.mod.tab) { B.innerHTML = SEASON.mod.tab(); if (SEASON.mod.wire) SEASON.mod.wire(B); return; }
-    B.innerHTML = S ? `<div class="phcard"><b>Season ${S.n} · ${esc(S.name)}</b><small>Day ${S.day} of ${SEASON_LEN} · ${S.left} day${S.left === 1 ? '' : 's'} left.</small><small>${SEASON.failed ? 'This season’s story isn’t here yet.' : 'Loading…'}</small></div>` : '<div class="phcard"><b>Seasons</b><small>The first season starts soon.</small></div>';
+    if (SEASON.mod && SEASON.mod.tab) { B.innerHTML = SEASON.mod.tab() + arsTab(); if (SEASON.mod.wire) SEASON.mod.wire(B); arsWire(B); return; }
+    B.innerHTML = S ? `<div class="phcard"><b>Season ${S.n} · ${esc(S.name)}</b><small>Day ${S.day} of ${SEASON_LEN} · ${S.left} day${S.left === 1 ? '' : 's'} left.</small><small>${SEASON.failed ? 'This season’s story isn’t here yet.' : 'Loading…'}</small></div>` : '<div class="phcard"><b>Seasons</b><small>The first season starts soon.</small></div>'; B.innerHTML += arsTab(); arsWire(B);
   }
 
   // every couple of seconds: achievements, the real night, and the phone light
@@ -14997,8 +15249,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const dx = T.x - u.x, dz = T.z - u.z, d = Math.hypot(dx, dz), want = H.kind === 'melee' ? H.range * .75 + (HEROES[T.hero].r || .5) : 8;
     u.yaw = Math.atan2(-dx, -dz); let mv = 0;
     const sp = H.speed * .85 * (u.rage > 0 ? 1.3 : 1);
-    if (d > want) { moveUnit(u, dx, dz, sp, dt); mv = 1; } else if (H.kind !== 'melee' && d < 5) { moveUnit(u, -dx, -dz, sp * .8, dt); mv = 1; }
-    if (H.kind !== 'melee') { const s = Math.sin(t * .8 + u.x) > 0 ? 1 : -1; moveUnit(u, dz * s, -dx * s, sp * .4, dt); mv = 1; }
+    if (u.cover && ssCover(u, T, dt, sp)) mv = 1; else if (d > want) { moveUnit(u, dx, dz, sp, dt); mv = 1; } else if (H.kind !== 'melee' && d < 5) { moveUnit(u, -dx, -dz, sp * .8, dt); mv = 1; }
+    if (H.kind !== 'melee' && !(u.cover && u.inCover)) { const s = Math.sin(t * .8 + u.x) > 0 ? 1 : -1; moveUnit(u, dz * s, -dx * s, sp * .4, dt); mv = 1; }
     u.mv = mv;
     // Hulk: leap at far targets, thunderclap crowds
     if (u.hero === 'hulk') { const near = bodies().filter(o => alive(o) && teamOf(o) !== u.team && Math.hypot(o.x - u.x, o.z - u.z) < 7).length; if (u.spCd <= 0 && near >= 2) { u.spCd = H.spCd; u.swing = .4; special2(u, 'hulk', u.x, u.z, u.yaw, u); } if (d > 10 && (u.leapCd = (u.leapCd || 0) - dt) <= 0) { u.leapCd = 5; u.leap = { t: 0, x0: u.x, z0: u.z, x1: T.x, z1: T.z }; } }
@@ -15119,6 +15371,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
         hitUnit(o, s.dmg, s.from); if (s.stun && !o.isMe) o.stun = s.stun;
         if (s.aoe) { bodies().forEach(q => { if (q !== o && alive(q) && teamOf(q) !== s.team && Math.hypot(q.x - s.x, q.z - s.z) < s.aoe) hitUnit(q, s.aoeD * .6, s.from); }); ringFx2(s.x, s.z, s.aoe, s.col); }
         if (s.bounce) { s.bounce = 0; s.hit = o; const nt = bodies().find(q => q !== o && alive(q) && teamOf(q) !== s.team && Math.hypot(q.x - s.x, q.z - s.z) < 10); if (nt) { const a = Math.atan2(-(nt.x - s.x), -(nt.z - s.z)); s.vx = -Math.sin(a) * 26; s.vz = -Math.cos(a) * 26; s.life = .8; break; } }
+        if (s.pierce > 0) { s.pierce--; s.hit = o; continue; }
         s.life = 0; break; } }
       if (s.life <= 0) { eventScene.remove(s.m); if (s.big) s.m.geometry.dispose(); return false; } return true; });
     EV.fx = EV.fx.filter(f => { f.life -= dt; if (f.m.material) f.m.material.opacity = clamp(f.life / f.max, 0, 1) * (f.m.isSprite ? 1 : .85); if (f.m.userData.rise) f.m.position.y += dt * 1.2; if (f.life <= 0) { eventScene.remove(f.m); if (f.m.geometry && f.m.geometry !== shotGeo) f.m.geometry.dispose(); return false; } return true; });
@@ -20301,7 +20554,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   });
   // a skip button in every story fight
   const sxFightBtn = document.createElement('button'); sxFightBtn.type = 'button'; sxFightBtn.className = 'btn alt'; sxFightBtn.textContent = 'Skip fight'; sxFightBtn.hidden = true; sxFightBtn.style.cssText = 'position:fixed;top:170px;left:50%;transform:translateX(-50%);z-index:40;padding:8px 16px;font-size:14px'; document.body.appendChild(sxFightBtn);
-  const sxFightOk = () => !!(EV && !EV.over && !EV.intro && !(EV.opts && EV.opts.bk) && (EV.k === 'st' || EV.opts && (EV.opts.cb || EV.opts.sf || EV.opts.xc || EV.opts.tdy)));
+  const sxFightOk = () => !!(EV && !EV.over && !EV.intro && !(EV.opts && (EV.opts.bk || EV.opts.ss)) && (EV.k === 'st' || EV.opts && (EV.opts.cb || EV.opts.sf || EV.opts.xc || EV.opts.tdy)));
   sxFightBtn.addEventListener('click', e => { e.stopPropagation(); if (!sxFightOk()) return; if (!sxFightBtn.dataset.armed) { sxFightBtn.dataset.armed = '1'; sxFightBtn.textContent = 'Sure? Tap again: it counts as a win'; setTimeout(() => { delete sxFightBtn.dataset.armed; sxFightBtn.textContent = 'Skip fight'; }, 3500); return; }
     delete sxFightBtn.dataset.armed; sxFightBtn.textContent = 'Skip fight'; EV.slowMe = 0; endMatch(true); });
   setInterval(() => { const on = sxFightOk(); if (sxFightBtn.hidden === on) sxFightBtn.hidden = !on; }, 300);
