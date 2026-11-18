@@ -34,7 +34,7 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | 6 | **Dark Side** (space; replaces Deep Freeze) | 7 Apr – 4 May 2027 | The meteor was a key, and Cinder turned it. The Vashk Dominion's fleet on the Moon invades. Take the fight to their Moon fortress. Ends with their queen's ship slipping down to Earth. | High Commander Vorrak of the Vashk Dominion | Boost pack, and the Kite (fighter) | The launch pad on Crash Isle, a crashed landing pod, and a cracked Moon | Moonwalker / Ace / Vorrak's Armour |
 | 7 | **Scales** | 5 May – 1 Jun 2027 | Queen Ssera's shapeshifters replace people in Bangalore one by one, Velvet among them. Her crashed ship is a rift ship. Ends with the sky tearing open onto another Bangalore. | Queen Ssera | Truth lens and hover-sled | The wrecked mothership in the Far Range, and the tear in the sky | Alien Hunter / Truth Lens Agent / Vashk Disguise |
 | 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore presses down from the sky. Jump between the two cities and fight your evil double. **Prime wins:** your Bangalore is destroyed, and the Keeper throws you into a new universe with a completely different map. | {N} Prime, the evil version of you | Rift jumper | Your Bangalore is gone. Seasons 9–15 are on a new map | Rift Jumper / Other-Earth You / {N} Prime |
-| 9 | **Neon Nights** (Phase 2 begins) | 30 Jun – 27 Jul 2027 | You wake up in New Bangalore, a neon mega-city in another universe, with no ID and a device everyone wants. Vector, who runs the city's network, hunts you. Ends with the twist that Prime got here first. | Vector, CEO of Vector Systems | Hacking rig and hover-car | A Lowlights hideout and a neon strip in New Bangalore | Stacks Runner / Hologram / Vector |
+| 9 | **Neon Nights** (Phase 2 begins) | 30 Jun – 27 Jul 2027 | You wake up in New Bangalore, a neon mega-city in another universe, with no ID and a device everyone wants. Vector, who runs the city's network, hunts you. Ends with the twist that Prime got here first, and Prime, masked now, beating you down. | Vector, CEO of Vector Systems | Hacking rig and hover-car | A Lowlights hideout and a neon strip in New Bangalore | Stacks Runner / Hologram / Vector |
 | 10 | **Skyline** | 28 Jul – 24 Aug 2027 | Floating islands appear. | Baron Altitude | Glider | An anchored sky island | Glider Pilot / Sky Racer / Baron Altitude |
 | 11 | **Harvest** | 25 Aug – 21 Sep 2027 | A food shortage; farms spread across the island. | The Blight (rot) | Farming | New farmland | Farmer / Scarecrow / The Blight |
 | 12 | **To be re-planned** (Neon Nights moved to Season 9) | 22 Sep – 19 Oct 2027 | – | – | – | – | – |
@@ -501,9 +501,11 @@ This time, it isn't yours.
 **The cast**
 - **{N} Prime (villain):**
   - you, from the other Bangalore, as you would be if you'd won every fight and never stopped;
+  - Prime has made himself **god-emperor** of his world: robed, armoured and enthroned, with a crown of black iron, worshipped from a palace at the top of the red city;
   - same face and same voice, in black and red, using your own weapons;
-  - Prime has already swallowed other worlds this way, and Ssera's was one of them;
+  - he has already swallowed other worlds this way, and Ssera's was one of them;
   - *“I’m not your enemy. I’m your best ending.”*
+  - An original character: the tyrant-emperor in armour is an old archetype, but the look, the name and the story are his own, not Marvel's Doom.
 - **The other Bangalore:** the same streets and towers, under a red sky, with Prime's statues on every corner and patrols in Prime's colours.
 - **Velvet Prime:** the other world's Velvet, Prime's second-in-command. Your Velvet has to face her.
 - **Dr. Neel** turns Ssera's rift ship into a hand-held rift jumper. **Velvet** keeps the ground team together. **The Keeper** knows that only one of the two cities can stay, and starts preparing for the worst.
@@ -520,14 +522,15 @@ This time, it isn't yours.
 | 1 · 2 Jun | Collision Course | Debris rains down and gravity goes wrong in patches, with floating cars and upside-down puddles. Neel turns Ssera's rift drive into the **rift jumper** (the season's tool). Make your first jump into the other city. | **Brass Prime:** the other world's Brass, with a gravity hammer that flips the floor. |
 | 2 · 9 Jun | The Other Side | Sneak through Prime's city, jumping between the two: a wall in one is a doorway in the other, and a flooded street here is dry there. Find out how Prime pulls worlds together. | **Velvet Prime**, in a chase through both cities at once, with your Velvet on the radio, hearing her own voice give the orders. |
 | 3 · 16 Jun | Anchors | Prime is pulling the worlds together with three **anchor towers**. Destroy them, using jump puzzles and defending against Prime's patrols while the timer runs. Then **you meet Prime and lose:** Prime knows every move you have. Prime takes your boost pack and leaves you in the street: *“Go home. Watch.”* | **Prime, the first time:** a fight you're meant to lose. |
-| 4 · 23 Jun | Prime (finale) | The two cities are almost touching, roof to roof, upside down. The last fight is in the gap between them. | Three phases:<br>1. A mirror fight: Prime copies your loadout, so you win by switching weapons in ways Prime doesn't expect.<br>2. On falling debris as gravity flips back and forth.<br>3. A rift duel, jumping between both cities mid-fight. Then the last anchor holds, and Prime wins. |
+| 4 · 23 Jun | Prime (finale) | The two cities are almost touching, roof to roof, upside down. The last fight is in the gap between them. | Three phases:<br>1. A mirror fight: Prime copies your loadout, so you win by switching weapons in ways Prime doesn't expect.<br>2. On falling debris as gravity flips back and forth.<br>3. A rift duel, jumping between both cities mid-fight. Your last blow, through a closing rift, **ruins his face**. Then the last anchor holds, and Prime wins anyway. |
 
 **The finale: you lose (sets up Season 9).**
-1. The final duel goes to the wire, and Prime wins. Prime's foot is on your chest on a rooftop that is coming apart: *“You were never going to win this one. I’ve done this a hundred times.”*
-2. The two cities touch. Your Bangalore starts to come apart, street by street, and everything Seasons 1–7 built goes with it: Crash Isle, the sunken district, Ember Island, the cracked Moon.
-3. The Keeper reaches you through the noise and presses the meteor core and the rift jumper into your hands: *“It can carry one. Go.”*
-4. White light.
-5. **Last shot:** you wake up on unfamiliar ground, under an unfamiliar sky. A different city, a different coast, different stars. A kid stares at you, and behind the kid a skyline of neon towers goes up further than you can see. Your Bangalore is gone. **Season 9.**
+1. The final duel goes to the wire. Your last blow drives Prime through a rift as it snaps shut, and the edge of it **burns and ruins his face**. He screams, and covers it with one gauntlet.
+2. But the last anchor holds, and Prime wins anyway. Half his face hidden behind his hand, his foot on your chest on a rooftop that is coming apart: *“You were never going to win this one. But you’ve given me something to remember you by.”*
+3. The two cities touch. Your Bangalore starts to come apart, street by street, and everything Seasons 1–7 built goes with it: Crash Isle, the sunken district, Ember Island, the cracked Moon.
+4. The Keeper reaches you through the noise and presses the meteor core and the rift jumper into your hands: *“It can carry one. Go.”*
+5. White light.
+6. **Last shot:** you wake up alone on unfamiliar ground, under an unfamiliar sky. A different city, a different coast, different stars. A skyline of neon towers goes up further than you can see. Your Bangalore is gone. **Season 9.**
 
 ### How it plays
 - **The rift jumper (kept):**
@@ -589,7 +592,8 @@ Phase 1 (Seasons 1–8) happened in Bangalore, and ended with Prime winning and 
   - So the site's content stays the same, in a new room.
 - **Your gear comes with you:** weapons, tools, vehicles, skins and saved progress.
 - **{N} Prime is the recurring villain of Phase 2:**
-  - Season 9: Vector has been taking Prime's calls, and Prime got to New Bangalore first.
+  - Since Season 8 he wears a **metal mask**, forged to cover the face your last blow ruined. He calls himself the God-Emperor, and his iron mask becomes the face of Phase 2.
+  - Season 9: Vector has been taking Prime's calls. At the end, Prime comes through himself and beats you down.
   - Seasons 10–14: Prime is behind or alongside each season's villain. Prime sends agents, turns up in person at least once, and keeps getting closer.
   - Season 15 (Convergence): you kill Prime early, in week two, and the Collector of Worlds takes over as the final villain.
 - **The build:** New Bangalore is a new world built from scratch in `index.html`, the biggest build in the series. The new bedroom is a second big piece of work. Both need to be ready by Season 9 (30 June 2027).
@@ -606,21 +610,20 @@ It looks like Bangalore, sort of, and it's called New Bangalore, but nothing is 
 
 **The cast**
 - **Vector (villain, original):** CEO of Vector Systems, which runs New Bangalore's network: every camera, door, drone and ID. He's smiling, polite, and always watching. He picks up the rift jumper's signal the night you arrive. *“Everything in my city has a price, and a serial number. You have neither. Let’s fix that.”*
-- **Pip (ally, new):** a street kid from the Stacks who finds you on the first night. Quick, funny and fearless, Pip shows you how the city works: the shortcuts, the safe spots, and who not to trust.
-- **The Lowlights:** a crew of hackers and couriers living off-grid in the Stacks.
+- **The Lowlights:** a crew of hackers and couriers living off-grid in the Stacks. They find you in week two, and they're the first people who help you.
 - **The meteor core:** quieter here. It's the only thing left of the Keeper, and every so often it shows you a glimpse of Prime's red city, getting closer.
 
 **Cold open (30 Jun).**
 - The last thing you remember is white light.
 - Now: neon rain, the hum of a sky-train overhead, a wall of signs for places you've never heard of.
-- A street kid stares at you, says something you don't understand, then points at the glowing device in your hand and says the one word you do get: *“Run.”*
-- A drone's red eye turns towards you.
+- You're alone, and you're lost. No one you know, no map that makes sense, and the device in your hand glowing brighter the longer you hold it.
+- A drone drops out of the rain, its red eye turns towards you, and it starts to scan.
 
 **Chapters**
 
 | Week | Chapter | What you do | Boss |
 |---|---|---|---|
-| 1 · 30 Jun | Stranger | Survive your first night in the Stacks with no ID. Pip shows you the Stacks: where to hide, where to eat, and which drones to avoid. Get a forged ID chip so doors and trains stop stopping you. | **Glitch**, Vector's bounty hunter, who flickers in and out of sight with a holographic cloak. |
+| 1 · 30 Jun | Stranger | Survive your first night alone in the Stacks with no ID: work out where to hide, where to eat, and which drones to avoid. Steal a forged ID chip so doors and trains stop stopping you. | **Glitch**, Vector's bounty hunter, who flickers in and out of sight with a holographic cloak. |
 | 2 · 7 Jul | Uplink | The Lowlights show you that the core can see New Bangalore's network. **Hacking:** take over cameras, open doors, turn drones against their owners and shut off a block's lights. | **Warden-9**, a security mech hunting you through a market while you hack its weak points in mid-fight. |
 | 3 · 14 Jul | Skyline | Climb from the Stacks to the Spires: wall-running up glass towers, a grappling line between buildings, and a **hover-car** chase through the sky lanes. | **Halo**, Vector's enforcer, in a fight on the outside of a moving sky-train. |
 | 4 · 21 Jul | Vector (finale) | Break into Vector Tower above the clouds. | Three phases:<br>1. Every system in the tower turns on you: turrets, doors and drones you have to hack in mid-fight.<br>2. A rooftop chase across the Spires.<br>3. Vector in a hard-light suit, made of the city's own network. |
@@ -629,7 +632,10 @@ It looks like Bangalore, sort of, and it's called New Bangalore, but nothing is 
 1. You beat Vector and cut him off from the network, and the whole city's ID system goes down for one night. The Stacks celebrate in the streets.
 2. **Twist:** in Vector's private vault, you find a red screen. Vector has been taking calls from someone wearing your face. Prime got to New Bangalore first, and Vector was preparing the city to be handed over.
 3. Vector's last words, as the Lowlights lead him away: *“You think I was building this for me? I was building it for them.”*
-4. Last shot: in the sky over New Bangalore, very faint, a thin red line opens, like the start of a tear. **Season 10.**
+4. In the sky over New Bangalore, a thin red line opens, like the start of a tear.
+5. **Prime comes through it himself.** He's the god-emperor in black and red, and the face you ruined is hidden behind a mask of beaten metal.
+6. **He beats you down.** It's a fight you can't win, on the roof of Vector Tower in the rain. He knows every move you have and he's stronger than in Season 8. He leaves you on the ground with the city's lights coming back on below.
+7. His words, through the mask: *“You took my face. I’ll take everything else.”* Then he's gone back through the tear, and it closes behind him. **Season 10.**
 
 ### How it plays
 - **A whole new map:** New Bangalore.
