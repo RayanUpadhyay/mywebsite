@@ -134,10 +134,22 @@ While Bangalore was underwater, the police stations flooded, the phones went dea
 
 | Week | Chapter | What you do | Boss |
 |---|---|---|---|
-| 1 · 13 Jan | Protection | Your street is paying protection. Help the stall owners stand up to the collectors, chase down a collection van, and free your district. | **Brass**, a big brawler with knuckle-dusters, fought in the market. |
-| 2 · 20 Jan | The Ledger | Steal the Syndicate's ledger (who pays, and who's on the payroll) in a heist on their counting house. Go in quietly with disguises and timing, or go in loud: quiet is optional. | **The Ledger**, who fights with traps, alarms, locking doors and flying safes. |
-| 3 · 27 Jan | The Velvet Run | The ledger points to the smuggling convoys. Get a getaway car of your own and wreck the convoys in car chases across the city and the flyovers. | **Velvet**, in a high-speed chase on the highway. |
-| 4 · 3 Feb | Marigold (finale) | Storm Marigold's tower floor by floor with Inspector Devi. | Three phases:<br>1. A gunfight in the lobby.<br>2. A rooftop chase.<br>3. Marigold in her greenhouse penthouse. |
+| 1 · 13 Jan | Protection | Your street is paying protection. Help the stall owners stand up to the collectors and free your district. You learn to slide and vault in a chase after a collector through the market. The first alley ambushes, and the Syndicate raids your safehouse while you sleep. | **Brass**, a big brawler with knuckle-dusters, fought in the market. |
+| 2 · 20 Jan | The Ledger | Steal the Syndicate's ledger (who pays, and who's on the payroll) in a heist on their counting house. Quiet is optional: disguises, timing and sliding under closing shutters, or go in loud. Then **the fight you lose** (below). | **The Ledger**, who fights with traps, alarms, locking doors and flying safes. He turns out to be **Mr. Ravindran**, the city's old tax inspector, whom everyone thought drowned in the flood. His face is still on the missing-persons posters on every wall. |
+| 3 · 27 Jan | The Velvet Run | Get the ledger back. You get the rope swing and chase the smuggling convoys roof to roof and in a getaway car of your own. One convoy is a decoy, and it's an ambush. | **Velvet**, in a high-speed chase on the highway. Beaten, she switches sides and tells you about the missing payroll page. |
+| 4 · 3 Feb | Marigold (finale) | Storm Marigold's tower with Inspector Devi: a swing route up the outside instead of the stairs, with snipers on the rooftops round it. | Three phases:<br>1. A gunfight in the lobby.<br>2. A rooftop chase.<br>3. Marigold in her greenhouse penthouse. |
+
+**The fight you lose (end of Chapter 2).**
+- You escape the counting house with the ledger and run straight into a trap: Brass and Velvet together. Then Madame Marigold steps out of the car.
+- The fight can't be won. Brass's hits get stronger every round, and when you're on your last heart it stops.
+- Marigold takes the ledger and pins a marigold on your jacket: *“Wear it. Now you belong to me too.”*
+- You wake up in Devi's jeep. She *found* you, of course, and the ledger is gone.
+
+**Plot twists.**
+1. **The Ledger** is Mr. Ravindran, the tax inspector everyone thought had drowned. He faked his death to keep the Syndicate's books.
+2. **Velvet switches sides** after Chapter 3. She tells you a payroll page is missing: the strongest hint at Devi, which most players will still miss.
+3. **The tear connection:** Marigold's greenhouse is full of plants that came through the tear, and she's been selling them.
+4. **Devi** in the finale.
 
 **Devi's betrayal is only hinted at, never stated.**
 - She always arrives just after the Syndicate has cleared out.
@@ -171,6 +183,17 @@ While Bangalore was underwater, the police stations flooded, the phones went dea
   - the quiet way is optional: disguises, guard sight-cones (like the Season 1 searchlights), timing and crouch takedowns;
   - the loud way means alarms, lockdown doors and safe traps;
   - the challenge skin rewards doing the Ledger heist unseen.
+- **Ambushes:**
+  - at high heat, goons jump out of alleys and doorways;
+  - a van screeches up and its side door slides open;
+  - a rooftop sniper's red laser dot gives you about a second and a half to dodge or take cover;
+  - some "chaiwalas" and auto drivers are Syndicate plants who swing at you as you pass (the tell is a marigold pinned somewhere on them);
+  - there's one scripted ambush per chapter.
+- **New ways to move** (the movement code is frozen, so like the flood's swimming these take over after normal movement):
+  - **Rope swing:** the season's tool, a wrist launcher you keep. It fires a line to a rooftop ledge and swings you across a street: hold to swing, let go to fly. Roof to roof only, and phones get a Swing button. Season 9's grappling hook is for climbing instead.
+  - **Slide:** sprint, then crouch, to slide under closing shutters, through gaps and under sniper lines. A slide into an enemy knocks them down.
+  - **Vault:** sprint at a low wall or a car bonnet to go over it.
+  - **Drop takedown:** swing or jump down onto a goon from above.
 - **Car combat:** chases, ramming, tyre spikes and the Comet's nitro.
 - **Weapons:** the Season 1 guns and blades stay, plus the season's gadgets.
 - **Tone:**
@@ -179,6 +202,7 @@ While Bangalore was underwater, the police stations flooded, the phones went dea
 
 ### What you keep
 - **Vehicle:** the Comet, a souped-up getaway car with nitro, parked in your garage afterwards.
+- **Tool:** the rope swing (wrist launcher).
 - **Gadgets:**
   - stun baton (melee);
   - tyre-spike launcher (for chases);
