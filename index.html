@@ -2680,7 +2680,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   badge.textContent = `Secrets 0/${TOTAL}`;
   let toastT;
   // the story's hero is whoever is playing: {N} in any story text becomes their name
-  function heroName(){ if (typeof AF !== 'undefined' && AF && AF.on && AF.s && AF.s.child && !(AF.s.duo && AF.s.as === 'dad')) return 'Kiran'; try { return (localStorage.getItem('ru-heroname') || '').trim() || 'Hero'; } catch (e) { return 'Hero'; } }
+  function heroName(){ if (typeof AF !== 'undefined' && AF && AF.on && AF.s && AF.s.child && !(AF.s.duo && AF.s.as === 'dad')) return 'Kiran'; try { return (localStorage.getItem('ru-heroname') || '').trim() || 'Traveller'; } catch (e) { return 'Traveller'; } }
   function hasHeroName(){ try { return !!(localStorage.getItem('ru-heroname') || '').trim(); } catch (e) { return false; } }
   function nmT(t){ return typeof t === 'string' ? t.replace(/\{N\}/g, heroName()) : t; }
   function say(text, ms = 3200){
@@ -10775,7 +10775,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 .phbody{flex:1;overflow:auto;padding:4px 14px 12px;position:relative}.cardprev{display:block;font-style:normal;font-size:13px;opacity:.85;margin-top:8px;max-width:520px}.phtabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px;border-top:1px solid #222}.phtabs button{background:#16181D;border:0;color:#C8CDD6;border-radius:12px;padding:7px 2px;font:700 11px/1.2 system-ui,sans-serif;cursor:pointer}.phtabs button.on{background:#FFC93C;color:#16181D}
 .phone canvas{width:100%;aspect-ratio:1;border-radius:14px;background:#2A2C30;touch-action:none;display:block}.phrow{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}.phrow button,.phcard button{background:#2A2D33;color:#fff;border:0;border-radius:999px;padding:7px 12px;font:700 12px/1.2 system-ui,sans-serif;cursor:pointer}.phrow button.y,.phcard button.y{background:#FFC93C;color:#16181D}.phrow button:disabled,.phcard button:disabled{opacity:.4;cursor:default}
 .phcard{background:#16181D;border-radius:14px;padding:10px 12px;margin:8px 0}.phcard b{display:block}.phcard small{color:#9AA3AD;display:block}.phnews{border-left:3px solid #C8102E;padding:6px 10px;margin:8px 0;font:800 13px/1.3 ${DISPLAY};background:#16181D;border-radius:0 10px 10px 0}.phleg{font-size:11px;color:#9AA3AD;display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px}.phleg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}`; document.head.appendChild(s); }
-  const PH_TABS = [['map', 'Map'], ['story', 'Story'], ['jobs', 'Jobs'], ['upg', 'Upgrades'], ['news', 'News'], ['contacts', 'Contacts'], ['rayan', 'Rayan'], ['camera', 'Camera']];
+  const PH_TABS = [['map', 'Map'], ['season', 'Season'], ['story', 'Story'], ['jobs', 'Jobs'], ['upg', 'Upgrades'], ['news', 'News'], ['contacts', 'Contacts'], ['rayan', 'Rayan'], ['camera', 'Camera']];
   phEl.querySelector('#phTabs').innerHTML = PH_TABS.map(([k, n]) => `<button type="button" data-t="${k}">${n}</button>`).join('');
   phEl.querySelector('#phTabs').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (b) phShow(b.dataset.t); });
   phEl.querySelector('#phTabs [data-t="story"]').hidden = true; // shown once a story has been started (see phoneOpen)
@@ -10829,6 +10829,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     PH.tab = t; PH.draw = null; phEl.querySelectorAll('#phTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t)); phEl.querySelector('#phTitle').textContent = (PH_TABS.find(q => q[0] === t) || [])[1] || '';
     const B = phEl.querySelector('#phBody'), h = cityHour(); phEl.querySelector('#phClock').textContent = `${String(Math.floor(h)).padStart(2, '0')}:${String(Math.floor(h % 1 * 60)).padStart(2, '0')}`;
     if (t === 'truth') return bzTruthTab(B);
+    if (t === 'season') return seasonTab(B);
     if (bzPhone(t, B)) return;
     if (afPhone(t, B)) return;
     if (t === 'map') return phMap();
@@ -14809,10 +14810,50 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (ok && !C.told && Math.hypot(mx - C.cx, mz - C.cz) < 21) { C.told = true; say('Cubbon Park’s Winter Fair: an ice rink, two stalls, a big tree, and a snowman waiting to be built.', 4600); }
   }
 
+  // ======================= seasons: 15 of them, four weeks each, one after another =======================
+  // Each season's story lives in its own file (seasons/s01.js and so on), loaded only while that season is running, and gets
+  // this small API instead of reaching into the page. Progress is saved under ru-season. Add ?season=N to preview a season.
+  const SEASON0 = new Date(2026, 10, 18), SEASON_LEN = 28;
+  const SEASON_NAMES = ['Landfall', 'High Water', 'The Carnival', 'Blackout', 'The Eruption', 'Deep Freeze', 'Scales', 'Incursion', 'The Rift', 'Skyline', 'Harvest', 'Neon Nights', 'The Drought', 'Festival of Lights', 'Convergence'];
+  const SEASON = { S: undefined, mod: null, loading: false, failed: false };
+  function seasonInfo(){
+    let n = null; try { const q = location.search.match(/[?&]season=(\d+)/); if (q) n = Math.min(15, Math.max(1, +q[1])); } catch (e) {}
+    const d = new Date(); d.setHours(0, 0, 0, 0); const days = Math.round((d - SEASON0) / 864e5);
+    if (n == null) { if (days < 0) return null; n = Math.floor(days / SEASON_LEN) % 15 + 1; }
+    const into = days >= 0 ? days % SEASON_LEN : 0, start = new Date(d.getTime() - into * 864e5);
+    return { n, name: SEASON_NAMES[n - 1], day: into + 1, week: Math.floor(into / 7) + 1, left: SEASON_LEN - into, start, end: new Date(start.getTime() + SEASON_LEN * 864e5), cycle: Math.floor(Math.max(0, days) / (SEASON_LEN * 15)) + 1 };
+  }
+  const seasonGet = () => { try { return JSON.parse(localStorage.getItem('ru-season') || '{}') || {}; } catch (e) { return {}; } };
+  const seasonPut = o => { try { localStorage.setItem('ru-season', JSON.stringify(o)); } catch (e) {} };
+  // names: up to 16 characters, no markup, and nothing on a short list of slurs and swears
+  const NAME_BAD = /f+u+c+k|sh[i1]t|b[i1]tch|cunt|d[i1]ck|c[o0]ck|puss(y|ies)|n[i1]gg|fag|slut|whore|rap(e|ist)|nazi|hitler|retard|porn|penis|vagina|anus/i;
+  function cleanName(v){ const t = String(v || '').replace(/[<>{}`]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16); return t && !NAME_BAD.test(t.replace(/[\s._-]/g, '')) ? t : ''; }
+  function setName(v){ const t = cleanName(v); try { if (t) localStorage.setItem('ru-heroname', t); else localStorage.removeItem('ru-heroname'); } catch (e) {} return t; }
+  function seasonApi(){ return {
+    info: seasonInfo, get: seasonGet, put: seasonPut, names: SEASON_NAMES, THREE, camera, ISLE, fine, reduce,
+    get pos(){ return pos; }, get yaw(){ return yaw; }, set yaw(v){ yaw = v; }, get pitch(){ return pitch; }, set pitch(v){ pitch = v; },
+    get zone(){ return zone; }, get inWorld(){ return inWorld; }, get entered(){ return entered; }, get busy(){ return !!(EV || A); }, get lowFx(){ return lowFx; },
+    get BL(){ return BL; }, get BLC(){ return BLC; }, get DRV(){ return DRV; }, get PH(){ return PH; }, get DLG(){ return DLG; }, get room(){ return scene; }, get panelOpen(){ return panel.classList.contains('on'); },
+    say, tone, toMap, toLocal, onGround, avatar, crowdLook, tex, mat, glowM, decor, B3, C3, S3, fade, flakeTex, heroName, cleanName, setName,
+    dlgPlay, dlgNext, dlgSkip, closePanel, panel(html){ panelBody.innerHTML = html; panel.scrollTop = 0; panel.classList.add('on'); return panelBody; }
+  }; }
+  function seasonStep(dt, now){
+    if (!entered) return; if (SEASON.S === undefined) SEASON.S = seasonInfo(); const S = SEASON.S; if (!S) return;
+    if (!SEASON.mod && !SEASON.loading && !SEASON.failed) { SEASON.loading = true; const sc = document.createElement('script'); sc.src = 'seasons/s' + String(S.n).padStart(2, '0') + '.js';
+      sc.onload = () => { SEASON.loading = false; const f = window['RU_SEASON_' + S.n]; if (typeof f !== 'function') { SEASON.failed = true; return; } try { SEASON.mod = f(seasonApi()) || {}; } catch (e) { console.error(e); SEASON.failed = true; } };
+      sc.onerror = () => { SEASON.loading = false; SEASON.failed = true; }; document.head.appendChild(sc); return; }
+    if (SEASON.mod && SEASON.mod.step) SEASON.mod.step(dt, now);
+  }
+  function seasonTab(B){
+    const S = SEASON.S === undefined ? seasonInfo() : SEASON.S;
+    if (SEASON.mod && SEASON.mod.tab) { B.innerHTML = SEASON.mod.tab(); if (SEASON.mod.wire) SEASON.mod.wire(B); return; }
+    B.innerHTML = S ? `<div class="phcard"><b>Season ${S.n} · ${esc(S.name)}</b><small>Day ${S.day} of ${SEASON_LEN} · ${S.left} day${S.left === 1 ? '' : 's'} left.</small><small>${SEASON.failed ? 'This season’s story isn’t here yet.' : 'Loading…'}</small></div>` : '<div class="phcard"><b>Seasons</b><small>The first season starts soon.</small></div>';
+  }
+
   // every couple of seconds: achievements, the real night, and the phone light
   let nightChecked = false;
   function littleStep(dt, now){
-    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { isleStep(dt, now); } catch (e) { console.error(e); } try { winterStep(dt, now); } catch (e) { console.error(e); }
+    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { isleStep(dt, now); } catch (e) { console.error(e); } try { seasonStep(dt, now); } catch (e) { console.error(e); } try { winterStep(dt, now); } catch (e) { console.error(e); }
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.dz) deathStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.fin) finalStep(dt, now);
