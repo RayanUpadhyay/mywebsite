@@ -40,7 +40,7 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | 12 | **To be re-planned** (Neon Nights moved to Season 9) | 22 Sep – 19 Oct 2027 | – | – | – | – | – |
 | 13 | **The Drought** (to be changed) | 20 Oct – 16 Nov 2027 | The sea pulls back. | The Tide-Taker | Metal detector | A land bridge and a lighthouse | Treasure Hunter / Lighthouse Keeper / Tide-Taker |
 | 14 | **Festival of Lights** | 17 Nov – 14 Dec 2027 | An island-wide lantern festival. | The Snuffer | Fireworks you can launch | Lantern trees | Lantern Robe / Firework Suit / The Snuffer |
-| 15 | **Convergence** (multiversal finale) | 15 Dec 2027 – 11 Jan 2028 | Several incursions hit at once. You use every tool, and your final choice decides how the cycle restarts. | The Collector of Worlds, with variants of past villains (including {N} Prime and the Vashk) | Every tool you've earned | How the cycle restarts | Multiverse Traveller / Collector's Armour (plus The Keeper for owning every skin) |
+| 15 | **Convergence** (Phase 2 finale) | 15 Dec 2027 – 11 Jan 2028 | You kill Prime in week two, as a surprise. Then what Prime was feeding arrives: the Collector of Worlds, with echoes of every villain you've beaten. Your final choice decides how the cycle restarts. | {N} Prime (killed early), then the Collector of Worlds | Every tool you've earned | How the cycle restarts | Multiverse Traveller / Collector's Armour (plus The Keeper for owning every skin) |
 
 After Season 15 the cycle starts again with Season 1.
 
@@ -595,7 +595,7 @@ Phase 1 (Seasons 1–8) happened in Bangalore, and ended with Prime winning and 
 - **{N} Prime is the recurring villain of Phase 2:**
   - Season 9: Vector has been taking Prime's calls, and Prime got to Kaleido first.
   - Seasons 10–14: Prime is behind or alongside each season's villain. Prime sends agents, turns up in person at least once, and keeps getting closer.
-  - Season 15 (Convergence): the final showdown with Prime.
+  - Season 15 (Convergence): you kill Prime early, in week two, and the Collector of Worlds takes over as the final villain.
 - **The build:** Kaleido is a new world built from scratch in `index.html`, the biggest build in the series. The new bedroom is a second big piece of work. Both need to be ready by Season 9 (30 June 2027).
 
 ## Phase 2 · Season 9 · Neon Nights (30 June – 27 July 2027)
@@ -669,8 +669,26 @@ Every sign is in a language you can't read. Every door scans you, and you have n
 - **Type:** glitching neon signage that flickers between the alien script and English as the trailer goes on.
 - **Score:** synthwave and drum and bass, with a pulsing bassline, sky-train rumble and rain, and a vocoded voice saying the city's name.
 
-## Seasons 10–15 (to be re-planned for Kaleido)
-The original list (The Rift, Skyline, Harvest, Neon Nights, The Drought, Festival of Lights, Convergence) was written for Bangalore. Neon Nights is now Season 9's title. Seasons 10–15 need re-planning around Kaleido and the build-up to facing Prime again, with Season 15, Convergence, as the final showdown with Prime, who recurs through all of them.
+## Seasons 10–14 (to be re-planned for Kaleido)
+The original list (The Rift, Skyline, Harvest, The Drought, Festival of Lights) was written for Bangalore, and needs re-planning around Kaleido. Prime recurs through all of them, getting closer each season.
+
+## Phase 2 · Season 15 · Convergence (15 December 2027 – 11 January 2028)
+
+### The surprise
+Phase 2 has built up to one fight: you against {N} Prime. Season 15 gives it to players early, and then pulls the floor out.
+
+**Chapters (outline)**
+
+| Week | Chapter | What happens |
+|---|---|---|
+| 1 · 15 Dec | The Last Hunt | Prime's red city finally breaks through into Kaleido's sky. With everything you've earned across both phases, you take the fight to Prime, and this time you're ready. |
+| 2 · 22 Dec | Prime | **You kill Prime.** It's the fight the whole series has built up to, and it happens in week two, not the finale. Prime's last words, with a laugh that turns into a cough: *“You think I was the end of the line? I was running too. I fed it worlds so it wouldn’t eat mine.”* Then every screen in Kaleido goes dark. |
+| 3 · 29 Dec | The Collector | **The new villain arrives:** **the Collector of Worlds.** It's what Prime was feeding: something vast and patient that eats universes whole. Every villain was running from a bigger one: Ssera fled Prime, and Prime fed the Collector to stay alive. It brings **echoes of every villain you've beaten**, pulled out of the worlds it ate: the Salvager, Captain Brine, Marigold, Devi, Cinder, Vorrak, Ssera, Vector. They come back, one after another. |
+| 4 · 5 Jan | Convergence (finale) | The final showdown with the Collector, using every tool and vehicle from both phases. **Your final choice decides how the cycle restarts:** the seasons loop back to Season 1, and what you choose here changes how Landfall begins next time round. |
+
+**Still to plan:** the Collector's look and voice, how each echo fights, the three phases of the final fight, and the final choice itself.
+
+**Skins:** Multiverse Traveller (story), Collector's Armour (villain), and The Keeper for owning every skin (unchanged from the original list).
 
 ## Deep Freeze (saved for a future season)
 
