@@ -32,7 +32,7 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | 4 | **Blackout** | 10 Feb – 9 Mar 2027 | The city stays dark; Devi rules it, frames you for Marigold's death, and drills into a hot vent under the sea. Ends with the volcano rising and Devi falling into the lava. | Commissioner Devi, with Static (a saboteur in the power lines) working for her | Lantern and toolkit | A new power plant, and the volcano offshore | Lineworker / Lantern Bearer / Commissioner Devi |
 | 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | The new volcano becomes Ember Island and ash falls on the city; a cult uses the stolen meteor core to wake it. Ends with the core firing a beam at the Moon, and something there answering. | Cinder, leader of the Kindled | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |
 | 6 | **Dark Side** (space; replaces Deep Freeze) | 7 Apr – 4 May 2027 | The meteor was a key, and Cinder turned it. The Vashk Dominion's fleet on the Moon invades. Take the fight to their Moon fortress. Ends with their queen's ship slipping down to Earth. | High Commander Vorrak of the Vashk Dominion | Boost pack, and the Kite (fighter) | The launch pad on Crash Isle, a crashed landing pod, and a cracked Moon | Moonwalker / Ace / Vorrak's Armour |
-| 7 | **Scales** | 5 May – 1 Jun 2027 | After Vorrak's defeat, the Vashk queen's ship lands in disguise, and shapeshifters replace townspeople. | Queen Ssera | Truth lens (reveals disguised Vashk) and an alien hover-sled | The wrecked mothership in the mountains | Alien Hunter / Truth Lens Agent / Vashk Disguise |
+| 7 | **Scales** | 5 May – 1 Jun 2027 | Queen Ssera's shapeshifters replace people in Bangalore one by one, Velvet among them. Her crashed ship is a rift ship. Ends with the sky tearing open onto another Bangalore. | Queen Ssera | Truth lens and hover-sled | The wrecked mothership in the Far Range, and the tear in the sky | Alien Hunter / Truth Lens Agent / Vashk Disguise |
 | 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore presses down from the sky; stop the collision before the timer runs out. | {N} Prime, the evil version of you | Rift jumper | A permanent tear in the sky | Rift Jumper / Other-Earth You / {N} Prime |
 | 9 | **The Rift** | 30 Jun – 27 Jul 2027 | The mountains split open. | The Excavator | Grappling hook | The Rift Valley and its caves | Cave Explorer / Ancient Machine / The Excavator |
 | 10 | **Skyline** | 28 Jul – 24 Aug 2027 | Floating islands appear. | Baron Altitude | Glider | An anchored sky island | Glider Pilot / Sky Racer / Baron Altitude |
@@ -426,6 +426,70 @@ The beam the core fired at the end of Season 5 wasn't an accident. It was a sign
   - a war-horn blast and thundering drums for the Dominion, with radio chatter and a launch countdown;
   - then near-silence in space, broken by Vorrak's voice;
   - it ends on a huge orchestral hit as the cannon fires.
+
+## Season 7 · Scales (5 May – 1 June 2027)
+
+### Story
+The Dominion's fleet is gone, and Bangalore celebrates. But Queen Ssera's ship came down in the Far Range, and she didn't come alone. Her people are **shapeshifters**: Vashk who can take any human face, copied down to the voice. One by one, people in Bangalore start getting replaced, and nobody can tell. (They're clearly made-up aliens, nothing to do with real-world conspiracy theories.)
+
+**The cast**
+- **Queen Ssera (villain, original):** ruler of the Vashk. She's patient and charming, and she never stays in one face for long. *“Why conquer a city when you can simply become it?”*
+- **The Mimics:** her shapeshifters, who copy anyone they touch. Little tells give them away: they blink sideways, their shadows lag a beat behind, and they can't stand the smell of filter coffee.
+- **The Keeper:** builds you the truth lens from the wreck of a Vashk landing pod.
+- **Velvet:** your partner since Season 3, or someone wearing her face.
+- **Dr. Neel:** studies the Vashk tech. He works out how their ship flies, and what it's really for.
+
+**Cold open (5 May).**
+- A month after the war, your street is back to normal: a chaiwala, a kid on a cycle, your neighbour waving.
+- The neighbour waves again, exactly the same way, at exactly the same moment as before.
+- His shadow moves a beat after he does.
+- Through the Keeper's prototype lens, his face is green scales.
+
+**Chapters**
+
+| Week | Chapter | What you do | Boss |
+|---|---|---|---|
+| 1 · 5 May | Faces | Get the truth lens (the season's first tool). Walk the markets and the metro scanning people for tells, and question them before you accuse anyone. A wrong guess costs trust. Chase a Mimic through the crowd as it changes faces from stranger to stranger. | **The Mimic** in the market: it shifts into past bosses mid-fight (Brass, Sable, the Torchbearer), and each form fights its own way. |
+| 2 · 12 May | The Hive | Follow the trail to the Far Range on a Vashk **hover-sled** (the season's vehicle): race down valleys, over rivers and across the frozen lakes. Find Ssera's crashed mothership half-buried in the mountains, and the pods where she keeps the people she's copied, still alive and asleep. | **The Brood Warden**, which guards the pods and hatches swarms of small Vashk while you break its egg sacs. |
+| 3 · 19 May | Who Can You Trust | **Twist:** Velvet was replaced at the end of the war. The "Velvet" who has been helping all season has been feeding Ssera everything. Expose her with the lens, then break into the mothership's pods to find the real one. | **Velvet's double:** she fights with Velvet's moves, and drives the Comet straight at you. |
+| 4 · 26 May | Queen Ssera (finale) | The mothership's core, where Neel discovers the ship isn't a warship at all. It's a **rift ship**, built to tear holes between worlds. | Three phases:<br>1. Ssera splits into six copies of herself, and only the lens shows the real one.<br>2. She takes your face, and you fight yourself.<br>3. Ssera in her true form as she powers up the rift drive. |
+
+**The finale (sets up Season 8).**
+1. You beat Ssera, but you're too late to stop the rift drive.
+2. The people in the pods wake up and stumble out, real Velvet among them.
+3. Ssera's last words, as she backs into the light of the opening rift: *“You think we came here to conquer you? We came here running.”*
+4. She's pulled through the rift and gone.
+5. The tear doesn't close. It spreads across the sky above Bangalore.
+6. Last shot: through it, upside down, **another Bangalore** hangs in the sky: the same streets, the same towers, slowly getting closer. **Season 8 · Incursion.**
+
+### How it plays
+- **The truth lens (kept):**
+  - look through it to scan people for tells;
+  - Mimics show green scales, but the lens drains fast, so you have to choose who to check;
+  - you question suspects before accusing them, and wrong accusations lower a trust meter, so fewer people will help you.
+- **Social deduction:** the districts become a quiet detective game. You look for tells, compare stories and catch a Mimic slipping, before any fight starts.
+- **Shapeshifter chases:** a Mimic runs into a crowd and changes faces. Keep your eyes on its tell (the lagging shadow) or lose it.
+- **The hover-sled (kept):** a fast alien sled that floats over water, snow and rough ground. It's great on the Far Range and the sea, and you keep it afterwards.
+- **Pods:** rescue copied people from the mothership's pods. Each rescue brings someone back to the city, and the people they replaced vanish.
+- **Everything from Seasons 1–6 carries over,** including the boost pack and the Kite.
+
+### What you keep
+- **Tools:** the truth lens and the hover-sled.
+- **Skins:**
+  - Alien Hunter: finish the story;
+  - Truth Lens Agent: the challenge, unmask every Mimic in the city without one wrong accusation;
+  - Vashk Disguise: beat Ssera.
+- **Left on the map:**
+  - the wrecked mothership half-buried in the Far Range, which you can explore;
+  - and the tear spreading across the sky.
+
+### The trailer
+- **Look:**
+  - paranoid thriller: CCTV and phone-camera footage, grainy and slightly off;
+  - faces that ripple and glitch for a single frame;
+  - the truth lens's green scan lines over the crowd.
+- **Type:** a cold monospace terminal font, like surveillance logs: "SUBJECT 14 · MATCH 98% · NOT HUMAN".
+- **Score:** a slow heartbeat, whispering voices, unsettling high strings and a distorted bass drop on each reveal, ending on a deep tearing sound as the sky splits.
 
 ## Deep Freeze (saved for a future season)
 
