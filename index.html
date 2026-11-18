@@ -14926,12 +14926,14 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   function floodDoClimb(){ const C = floodClimb; if (!C) return; FLOOD.roof = C.b; const cx = clamp(C.x, C.b.x0 + .8, C.b.x1 - .8), cz = clamp(C.z, C.b.z0 + .8, C.b.z1 - .8), [lx, lz] = toLocal(cx, cz); pos.x = lx; pos.z = lz; pos.y = C.b.h + 1.6; vy = 0; tone(440, .15, 'triangle', .04, 660); floodClimbBtn.hidden = true; KIT.crouch = false; }
   floodClimbBtn.addEventListener('click', e => { e.stopPropagation(); floodDoClimb(); });
   addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; if (e.key.toLowerCase() === 'e' && !floodClimbBtn.hidden) { e.stopImmediatePropagation(); floodDoClimb(); } }, true);
+  // under the water: everything goes blue and close
+  function floodFog(){ if (!BL.sc) return; if (FLOOD.under && !FLOOD.fog) { FLOOD.fog = { c: BL.sc.fog.color.clone(), n: BL.sc.fog.near, f: BL.sc.fog.far }; BL.sc.fog.color.setHex(0x1C5A78); BL.sc.fog.near = 2; BL.sc.fog.far = 38; } else if (!FLOOD.under && FLOOD.fog) { BL.sc.fog.color.copy(FLOOD.fog.c); BL.sc.fog.near = FLOOD.fog.n; BL.sc.fog.far = FLOOD.fog.f; FLOOD.fog = null; } }
   function floodSet(level){
     FLOOD.on = true; FLOOD.level = level; FLOOD.breath = 1; floodGrid();
     if (!FLOOD.mesh && BL.mapG) { const m = FLOOD.mesh = new THREE.Mesh(new THREE.PlaneGeometry(1000, 1000, 1, 1), new THREE.MeshPhongMaterial({ color: 0x2E7A9A, transparent: true, opacity: .74, shininess: 80, specular: 0x88AACC, side: THREE.DoubleSide })); m.rotation.x = -Math.PI / 2; m.userData.noPick = true; m.renderOrder = 2; BL.mapG.add(m); }
     if (FLOOD.mesh) { FLOOD.mesh.position.y = level; FLOOD.mesh.visible = true; }
   }
-  function floodOff(){ FLOOD.on = false; FLOOD.roof = null; FLOOD.under = false; if (FLOOD.mesh) FLOOD.mesh.visible = false; document.body.classList.remove('swimming', 'underwater'); floodClimbBtn.hidden = true; if (BLC.pedG) BLC.pedG.visible = true; if (FLOOD.fog && BL.sc) { BL.sc.fog.color.copy(FLOOD.fog.c); BL.sc.fog.near = FLOOD.fog.n; BL.sc.fog.far = FLOOD.fog.f; FLOOD.fog = null; } }
+  function floodOff(){ if (FLOOD.on && inWorld && zone === 'blr' && !BL.lvl) { pos.y = 1.6; vy = 0; } FLOOD.on = false; FLOOD.roof = null; FLOOD.under = false; FLOOD.depth = 0; if (FLOOD.mesh) FLOOD.mesh.visible = false; document.body.classList.remove('swimming', 'underwater'); floodClimbBtn.hidden = true; if (BLC.pedG) BLC.pedG.visible = true; if (FLOOD.fog && BL.sc) { BL.sc.fog.color.copy(FLOOD.fog.c); BL.sc.fog.near = FLOOD.fog.n; BL.sc.fog.far = FLOOD.fog.f; FLOOD.fog = null; } }
   // set the water level without rebuilding anything (the finale drains it)
   function floodLevel(level){ FLOOD.level = level; if (FLOOD.mesh) FLOOD.mesh.position.y = level; }
   function floodStep(dt){
@@ -14939,18 +14941,19 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     const inB = inWorld && (zone === 'blr' || zone === 'event' && EV && EV.inMap) && !BL.lvl && Math.abs(BL.off.y) < .01 && !LV.ride;
     if (!inB || DRV.on || BL.cine) { document.body.classList.remove('swimming', 'underwater'); floodClimbBtn.hidden = true; FLOOD.swim = false; return; }
     const [mx, mz] = toMap(pos.x, pos.z), L = FLOOD.level;
+    // during a scene the camera goes where the scene puts it; only the look under the water follows it
+    if (document.body.classList.contains('cine')) { vy = 0; grounded = true; FLOOD.under = pos.y < L - .1; floodClimbBtn.hidden = true; floodFog(); document.body.classList.toggle('underwater', FLOOD.under); return; }
     if (FLOOD.roof) { const R = FLOOD.roof; if (mx < R.x0 || mx > R.x1 || mz < R.z0 || mz > R.z1) { const nb = floodBld(mx, mz, 0); if (nb && Math.abs(nb.h - R.h) < 1.3) FLOOD.roof = nb; else { FLOOD.roof = null; tone(160, .3, 'sine', .05, 90); } } }
     if (FLOOD.roof) { pos.y = FLOOD.roof.h + 1.6; vy = 0; grounded = true; FLOOD.swim = false; FLOOD.under = false; FLOOD.breath = Math.min(1, FLOOD.breath + dt * .5); }
     else {
       FLOOD.swim = true; const floor = 1.1, top = L + .75, down = KIT.crouch;
       FLOOD.depth = down ? Math.min(L - floor + .75, FLOOD.depth + dt * 3.2) : Math.max(0, FLOOD.depth - dt * 4.5);
       pos.y = top - FLOOD.depth; vy = 0; grounded = true; FLOOD.under = pos.y < L - .1;
-      if (FLOOD.under) { FLOOD.breath = Math.max(0, FLOOD.breath - dt / 18); if (FLOOD.breath <= 0) { FLOOD.breath = .35; KIT.crouch = false; if (FLOOD.onBreath) FLOOD.onBreath(); else say('Out of breath! You kick for the surface.', 2000); } }
+      if (FLOOD.under) { FLOOD.breath = Math.max(0, FLOOD.breath - dt / (FLOOD.breathTime || 18)); if (FLOOD.breath <= 0) { FLOOD.breath = .35; KIT.crouch = false; if (FLOOD.onBreath) FLOOD.onBreath(); else say('Out of breath! You kick for the surface.', 2000); } }
       else FLOOD.breath = Math.min(1, FLOOD.breath + dt * .4);
     }
     document.body.classList.toggle('swimming', FLOOD.swim && !FLOOD.under); document.body.classList.toggle('underwater', FLOOD.under);
-    // under the water: everything goes blue and close
-    if (BL.sc) { if (FLOOD.under && !FLOOD.fog) { FLOOD.fog = { c: BL.sc.fog.color.clone(), n: BL.sc.fog.near, f: BL.sc.fog.far }; BL.sc.fog.color.setHex(0x1C5A78); BL.sc.fog.near = 2; BL.sc.fog.far = 38; } else if (!FLOOD.under && FLOOD.fog) { BL.sc.fog.color.copy(FLOOD.fog.c); BL.sc.fog.near = FLOOD.fog.n; BL.sc.fog.far = FLOOD.fog.f; FLOOD.fog = null; } }
+    floodFog();
     // a roof you can climb onto: one whose top is just above the water, or one with a ladder
     floodClimb = null;
     if (FLOOD.swim && !FLOOD.under && !EV) { const fx = -Math.sin(yaw), fz = -Math.cos(yaw);
@@ -15266,7 +15269,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // Each season's story lives in its own file (seasons/s01.js and so on), loaded only while that season is running, and gets
   // this small API instead of reaching into the page. Progress is saved under ru-season. Add ?season=N to preview a season.
   const SEASON0 = new Date(2026, 10, 18), SEASON_LEN = 28;
-  const SEASON_V = '2026-11-18j';
+  const SEASON_V = '2026-11-18k';
   const SEASON_FILES = [1, 2];  // the seasons that have a file in seasons/ (add each new one here)  // bump whenever a seasons/*.js file changes
   const SEASON_NAMES = ['Landfall', 'High Water', 'The Carnival', 'Blackout', 'The Eruption', 'Deep Freeze', 'Scales', 'Incursion', 'The Rift', 'Skyline', 'Harvest', 'Neon Nights', 'The Drought', 'Festival of Lights', 'Convergence'];
   const SEASON = { S: undefined, mod: null, loading: false, failed: false };
@@ -15332,7 +15335,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     if (galBeaten && roofScene && !roofHelm) buildGalTrophy();
     if (now < achT) return; achT = now + 2000;
     ACH.forEach(a => { if (!achGot.includes(a[0]) && a[3]()) ach(a[0]); }); shopAuto(); achFirst = false; refreshWallMap(); podTint(); ultronFaces(SG.active && chId() === 'ultron' && !SG.flags.u3 && !normalView);
-    if (entered && !nightChecked) { nightChecked = true; if (phaseNow() === 'night' && !night && !inWorld) { flipLights(); say('It’s night in Bangalore, so the lights are low. The villains in the lair get bolder after dark.', 4600); } }
+    if (entered && !nightChecked) { nightChecked = true; if (phaseNow() === 'night' && !night && !inWorld) { flipLights(); say('It’s night in Bangalore, so the lights are low.', 3600); } }
   }
 
   // ---------- bot brains ----------

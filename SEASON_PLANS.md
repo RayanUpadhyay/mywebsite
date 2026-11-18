@@ -27,7 +27,7 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | # | Season | Dates | What happens | Villain | Tool or vehicle | Left on the map | Skins (story / challenge / villain) |
 |---|---|---|---|---|---|---|---|
 | 1 | **Landfall** ✓ built | 18 Nov – 15 Dec 2026 | A meteor crashes off the west coast. | The Salvager | Scanner | Crash Isle | Crater Scout / Meteor Glow / Salvager's Rig |
-| 2 | **High Water** | 16 Dec 2026 – 12 Jan 2027 | A wave through the tear drowns the city; the whole map is swimmable, with sharks. The city drains at the finale. | Captain Brine, a pirate | Boat and diving gear | The sunken district | Diver / Canal Captain / Brine's Coat |
+| 2 | **High Water** ✓ built | 16 Dec 2026 – 12 Jan 2027 | A wave through the tear drowns the city; the whole map is swimmable, with sharks. The city drains at the finale. | Captain Brine, a pirate | Boat and diving gear | The sunken district | Diver / Canal Captain / Brine's Coat |
 | 3 | **The Syndicate** (replaces The Carnival) | 13 Jan – 9 Feb 2027 | After the flood, a crime syndicate takes over the city. | Madame Marigold, until Inspector Devi betrays you | The Comet (getaway car) | Marigold's tower, now Devi's | Undercover / Clean Hands / Marigold's Suit |
 | 4 | **Blackout** | 10 Feb – 9 Mar 2027 | The power grid fails as Devi takes the Syndicate. | Inspector Devi, with Static (a saboteur in the power lines) working for her | Lantern and toolkit | A new power plant | Lineworker / Lantern Bearer / Static |
 | 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | A volcano rises offshore. | Cinder, a cult leader | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |

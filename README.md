@@ -38,6 +38,21 @@ A meteor crashes into the sea off the west coast, and the Salvager wants every p
 - **Left on the map:** Crash Isle, with the core's beam.
 - Every boss has an intro and an outro scene, and there's a Season 1 trailer in the Season tab.
 
+### Season 2 · High Water (16 December 2026 – 12 January 2027)
+
+A wave pours through the tear and drowns Bangalore. You wake up on a plank in a flooded city you can swim anywhere, with sharks in the water and Captain Brine's pirates on the rooftops.
+
+| Chapter | Unlocks | What happens |
+|---|---|---|
+| 1 · Adrift | 16 Dec | Find a boat, reach the survivors' rooftop camp, get a harpoon gun, rescue three people and survive the great shark. |
+| 2 · Brine's Harbour | 23 Dec | Raiders steal the camp's supplies. Catch their boats, then beat First Mate Sable. |
+| 3 · The Deep | 30 Dec | Dive to the drowned pump house, turn its three valves, and beat Ironjaw. |
+| 4 · High Water | 6 Jan | Board Captain Brine's ship as the pumps start, and the city drains. |
+
+- **Kept:** the boat, the harpoon gun and the diving gear.
+- **Skins:** Diver, Canal Captain (finish Chapter 1 without being bitten) and Brine's Coat.
+- **Left on the map:** the sunken district, with Brine's wreck.
+
 Add `?week=N` to the address to preview a later chapter, or `?season=N` to preview another season.
 
 ## Tech
