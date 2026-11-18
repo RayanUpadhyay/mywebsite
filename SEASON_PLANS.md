@@ -4,6 +4,8 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 
 ## The rules that hold for every season
 
+- **Naming:** the seasons are grouped into phases, and a season is a chapter of its phase (e.g. Season 9 is Phase 2 · Chapter 1). Each season's four weekly sections are its **Parts**, 1 to 4. The built seasons (1 and 2) still say "Chapter" in the game; they'll be renamed to Parts when the game code is next touched.
+
 - The seasons are loosely linked: each has its own story and you can jump in at any one. Light threads run through them all: the Keeper (a mysterious figure), the traces each season leaves on the map, and the tear in the sky.
 - Every season changes the map, gives you one new tool or vehicle to keep, and leaves a permanent trace.
 - Progress is saved in `ru-season` and your name in `ru-heroname` (default "Traveller").
@@ -35,7 +37,7 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | 7 | **Scales** | 5 May – 1 Jun 2027 | Queen Ssera's shapeshifters replace people in Bangalore one by one, Velvet among them. Her crashed ship is a rift ship. Ends with the sky tearing open onto another Bangalore. | Queen Ssera | Truth lens and hover-sled | The wrecked mothership in the Far Range, and the tear in the sky | Alien Hunter / Truth Lens Agent / Vashk Disguise |
 | 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore presses down from the sky. Jump between the two cities and fight your evil double. **Prime wins:** your Bangalore is destroyed, and the Keeper throws you into a new universe with a completely different map. | {N} Prime, the evil version of you | Rift jumper | Your Bangalore is gone. Seasons 9–15 are on a new map | Rift Jumper / Other-Earth You / {N} Prime |
 | 9 | **Neon Nights** (Phase 2 begins) | 30 Jun – 27 Jul 2027 | You wake up in New Bangalore, a neon mega-city in another universe, with no ID and a device everyone wants. Vector, who runs the city's network, hunts you. Ends with the twist that Prime got here first, and Prime, masked now, beating you down. | Vector, CEO of Vector Systems | Hacking rig and hover-car | A Lowlights hideout and a neon strip in New Bangalore | Stacks Runner / Hologram / Vector |
-| 10 | **Skyline** | 28 Jul – 24 Aug 2027 | Floating islands appear. | Baron Altitude | Glider | An anchored sky island | Glider Pilot / Sky Racer / Baron Altitude |
+| 10 | **Skyline** (Phase 2 · Chapter 2) | 28 Jul – 24 Aug 2027 | Prime's viceroy lifts New Bangalore's districts into the sky, people and all, as tribute. Learn to counter, glide between floating islands, and meet this world's Keeper. Ends with a grey dust rotting the city's farms. | Baron Altitude, Prime's viceroy | Glider | An anchored sky island with New Bangalore's Keeper | Sky Diver / Updraft / Baron Altitude |
 | 11 | **Harvest** | 25 Aug – 21 Sep 2027 | A food shortage; farms spread across the island. | The Blight (rot) | Farming | New farmland | Farmer / Scarecrow / The Blight |
 | 12 | **To be re-planned** (Neon Nights moved to Season 9) | 22 Sep – 19 Oct 2027 | – | – | – | – | – |
 | 13 | **The Drought** (to be changed) | 20 Oct – 16 Nov 2027 | The sea pulls back. | The Tide-Taker | Metal detector | A land bridge and a lighthouse | Treasure Hunter / Lighthouse Keeper / Tide-Taker |
@@ -130,9 +132,9 @@ While Bangalore was underwater, the police stations flooded, the phones went dea
 - A collector in a cream suit tells a chaiwala his "protection" is due, and when he can't pay his cart gets tipped over.
 - Inspector Devi pulls up in a mud-caked police jeep: *“My station is underwater and my phone is dead. You’re the only one in this city I’ve seen do anything. Want a job?”*
 
-**Chapters**
+**Parts (one a week)**
 
-| Week | Chapter | What you do | Boss |
+| Week | Part | What you do | Boss |
 |---|---|---|---|
 | 1 · 13 Jan | Protection | Your street is paying protection. Help the stall owners stand up to the collectors and free your district. You learn to slide and vault in a chase after a collector through the market. The first alley ambushes, and the Syndicate raids your safehouse while you sleep. | **Brass**, a big brawler with knuckle-dusters, fought in the market. |
 | 2 · 20 Jan | The Ledger | Steal the Syndicate's ledger (who pays, and who's on the payroll) in a heist on their counting house. Quiet is optional: disguises, timing and sliding under closing shutters, or go in loud. Then **the fight you lose** (below). | **The Ledger**, who fights with traps, alarms, locking doors and flying safes. He turns out to be **Mr. Ravindran**, the city's old tax inspector, whom everyone thought drowned in the flood. His face is still on the missing-persons posters on every wall. |
@@ -237,9 +239,9 @@ Bangalore has been dark since the night Marigold fell. Devi has made herself **A
 - Then your face fills the screen. WANTED.
 - Velvet's van skids up beside you: *“Get in. Now.”*
 
-**Chapters**
+**Parts (one a week)**
 
-| Week | Chapter | What you do | Boss |
+| Week | Part | What you do | Boss |
 |---|---|---|---|
 | 1 · 10 Feb | Lights Out | On the run, framed. Get the lantern and the toolkit from Velvet's hideout, and repair your district's substation in a wire-matching mini-game while Devi's patrols sweep the streets. The lights come back on in one district, for a minute, until Static blacks it out again. | **Static**, in an ambush on the substation: dodge his arcs, and fight with the lantern lit so you can see him move along the wires. |
 | 2 · 17 Feb | Curfew | Devi's curfew. Run Velvet's power cells to the hospitals and the rooftop camps, past patrol cars, drone searchlights and checkpoints, swinging across dark streets. People start to help you, and your wanted poster gets torn down in the districts you help. | **Brass, the rematch:** this time you win the fight you lost in Season 3. |
@@ -304,9 +306,9 @@ The volcano that swallowed Devi doesn't stop growing. Within a week it's an isla
 - A glowing rock smashes through a parked car.
 - Over the sea, Ember Island lights up the clouds from below.
 
-**Chapters**
+**Parts (one a week)**
 
-| Week | Chapter | What you do | Boss |
+| Week | Part | What you do | Boss |
 |---|---|---|---|
 | 1 · 10 Mar | Ashfall | Lava bombs fall on the city: watch the red rings and get people to shelter. Dr. Neel gives you the heat suit (the season's tool). The Kindled are recruiting on every corner. | **The Torchbearer**, the cult's enforcer, in a burning market street. He throws fire and lights the ground around him. |
 | 2 · 17 Mar | The Kindled | Go undercover in the cult in an acolyte's robe, with optional stealth. Find out where Cinder takes her followers. Twist: the meteor core from Crash Isle is in her temple. She stole it, and she's using it to feed the volcano. | **The Choir:** three cult leaders who chant to make the floor crack open with lava. Break their rhythm to stop it. |
@@ -367,9 +369,9 @@ The beam the core fired at the end of Season 5 wasn't an accident. It was a sign
 - A voice cuts into every phone, radio and screen in the city: *“Earth. I am Vorrak of the Dominion. You have one day to kneel.”*
 - The next morning, the first landing pods hit the city.
 
-**Chapters**
+**Parts (one a week)**
 
-| Week | Chapter | What you do | Boss |
+| Week | Part | What you do | Boss |
 |---|---|---|---|
 | 1 · 7 Apr | First Contact | The invasion begins. Landing pods hit the streets, and you hold your district with the people of Bangalore. You take a Vashk boost pack from a downed soldier (the season's first tool) and learn to fly with it: short bursts, hovering and dive attacks. | **A Vashk war-beast**, dropped into Cubbon Park: an armoured monster you have to get above with the boost pack to hit its back. |
 | 2 · 14 Apr | Counterstrike | Build the rocket on Crash Isle from the wreckage of every past villain (the Salvager's mech, Brine's ship, Devi's rig) while gunships attack it. Launch under fire, then fly **the Kite**, a small fighter, in a dogfight in orbit. | **Skarr**, the Dominion's best pilot, in an orbital dogfight around the fleet. |
@@ -445,9 +447,9 @@ The Dominion's fleet is gone, and Bangalore celebrates. But Queen Ssera's ship c
 - His shadow moves a beat after he does.
 - Through the Keeper's prototype lens, his face is green scales.
 
-**Chapters**
+**Parts (one a week)**
 
-| Week | Chapter | What you do | Boss |
+| Week | Part | What you do | Boss |
 |---|---|---|---|
 | 1 · 5 May | Faces | Get the truth lens (the season's first tool). Walk the markets and the metro scanning people for tells, and question them before you accuse anyone. A wrong guess costs trust. Chase a Mimic through the crowd as it changes faces from stranger to stranger. | **The Mimic** in the market: it shifts into past bosses mid-fight (Brass, Sable, the Torchbearer), and each form fights its own way. |
 | 2 · 12 May | The Hive | Follow the trail to the Far Range on a Vashk **hover-sled** (the season's vehicle): race down valleys, over rivers and across the frozen lakes. Find Ssera's crashed mothership half-buried in the mountains, and the pods where she keeps the people she's copied, still alive and asleep. | **The Brood Warden**, which guards the pods and hatches swarms of small Vashk while you break its egg sacs. |
@@ -515,9 +517,9 @@ This time, it isn't yours.
 - Bits of it are breaking off and falling: a bus shelter, a tree, a water tank, crashing into your street.
 - On a giant screen in the other city, a face you know looks straight down at you. It's yours. *“Hello, {N}.”*
 
-**Chapters**
+**Parts (one a week)**
 
-| Week | Chapter | What you do | Boss |
+| Week | Part | What you do | Boss |
 |---|---|---|---|
 | 1 · 2 Jun | Collision Course | Debris rains down and gravity goes wrong in patches, with floating cars and upside-down puddles. Neel turns Ssera's rift drive into the **rift jumper** (the season's tool). Make your first jump into the other city. | **Brass Prime:** the other world's Brass, with a gravity hammer that flips the floor. |
 | 2 · 9 Jun | The Other Side | Sneak through Prime's city, jumping between the two: a wall in one is a doorway in the other, and a flooded street here is dry there. Find out how Prime pulls worlds together. | **Velvet Prime**, in a chase through both cities at once, with your Velvet on the radio, hearing her own voice give the orders. |
@@ -619,9 +621,9 @@ It looks like Bangalore, sort of, and it's called New Bangalore, but nothing is 
 - You're alone, and you're lost. No one you know, no map that makes sense, and the device in your hand glowing brighter the longer you hold it.
 - A drone drops out of the rain, its red eye turns towards you, and it starts to scan.
 
-**Chapters**
+**Parts (one a week)**
 
-| Week | Chapter | What you do | Boss |
+| Week | Part | What you do | Boss |
 |---|---|---|---|
 | 1 · 30 Jun | Stranger | Survive your first night alone in the Stacks with no ID: work out where to hide, where to eat, and which drones to avoid. Steal a forged ID chip so doors and trains stop stopping you. | **Glitch**, Vector's bounty hunter, who flickers in and out of sight with a holographic cloak. |
 | 2 · 7 Jul | Uplink | The Lowlights show you that the core can see New Bangalore's network. **Hacking:** take over cameras, open doors, turn drones against their owners and shut off a block's lights. | **Warden-9**, a security mech hunting you through a market while you hack its weak points in mid-fight. |
@@ -668,17 +670,73 @@ It looks like Bangalore, sort of, and it's called New Bangalore, but nothing is 
 - **Type:** glitching neon signage, flickering and buzzing, that resolves into each title.
 - **Score:** synthwave and drum and bass, with a pulsing bassline, sky-train rumble and rain, and a vocoded voice saying the city's name.
 
-## Phase 2 · Chapters 2–6 (Seasons 10–14, to be re-planned for New Bangalore)
-The original list (The Rift, Skyline, Harvest, The Drought, Festival of Lights) was written for Bangalore, and needs re-planning around New Bangalore. Prime recurs through all of them, getting closer each season.
+## Phase 2 · Chapter 2 (Season 10) · Skyline (28 July – 24 August 2027)
+
+### Story
+Prime beat you on the roof of Vector Tower and went back through his tear. He didn't leave New Bangalore alone. A week later, whole districts start **lifting off the ground**: blocks of the Mids tear free of their foundations and rise into the clouds, people and all, and drift up towards the red line in the sky. Prime is taking New Bangalore up into the sky, piece by piece, as a tribute to his empire.
+
+**The cast**
+- **Baron Altitude (villain, original):** Prime's viceroy in New Bangalore. A tall, theatrical aristocrat in a flight coat and brass goggles, who rules from a sky-fortress built on the first district he lifted. He serves the God-Emperor, and wants his own throne. *“Down there you were a nobody. Up here, you are a long way to fall.”*
+- **The Lowlights:** the hacker crew who patched you up after Prime's beating.
+- **The Keeper of New Bangalore (twist):** this world has a Keeper too. An old woman with the same eyes as yours, who has been waiting for you. **Every world has a Keeper**, and Prime has killed most of them. She's one of the last.
+
+**Cold open (28 Jul).**
+- You wake up in a Lowlights safehouse, bandaged and sore, a week after Prime's beating.
+- The floor shakes. Out of the window, a whole block of flats across the street, lights still on and laundry still on the lines, tears free of the ground and starts to rise.
+- People lean out of its windows, screaming. It rises past you, up into the clouds, and keeps going.
+
+**Parts (one a week)**
+
+| Week | Part | What you do | Boss |
+|---|---|---|---|
+| 1 · 28 Jul | Back on Your Feet | Recover from Prime's beating and learn a new way to fight: a **combo and counter system**, practised against the Lowlights in their training yard, so next time you're not so easy to read. Then a block lifts with people still in it, and you get the **glider** (the season's tool) to go after it. | **The Lifters:** Altitude's gravity engineers, fought on a district as it rises, with the ground falling away around you. |
+| 2 · 4 Aug | The Floating City | Glide between districts drifting in the clouds, linked by cables, gantries and airships. Rescue the people still in them and cut the cables pulling them upwards. Meet New Bangalore's Keeper, hiding on one of the lifted islands. | **The Gale**, Altitude's flagship gunship: a fight in the air with the glider and the boost pack. |
+| 3 · 11 Aug | Freefall | Altitude finds out where the Keeper is hiding and sends the whole island tumbling. Ride it down, then glide and grapple through falling debris to get her out in time. | **Altitude's Wardens:** knights in winged armour, fought in mid-air on falling pieces of the city. |
+| 4 · 18 Aug | Altitude (finale) | Assault the sky-fortress at the top of the lifted city, just below the tear. | Three phases:<br>1. Up the outside of the fortress against cannons and gunships.<br>2. Through its gravity halls, where up keeps changing.<br>3. Baron Altitude on the fortress's open deck, with the tear above you and the city far below. |
+
+**The finale (sets up Season 11).**
+1. You beat Altitude and cut the fortress's engines. The lifted districts sink slowly back down and settle on the ground, people and all.
+2. Altitude's last words, as the God-Emperor's tear pulls him up into it: *“He doesn’t forgive failure. Neither should you.”*
+3. One island doesn't come down: it stays anchored in the sky over the Mids, with the Keeper living on it (the season's trace).
+4. Last shot: the lifted districts brought something down with them from the other side, a grey dust that settles on New Bangalore's vertical farms. By morning, the crops on every farm tower are rotting. **Season 11.**
+
+### How it plays
+- **The glider (kept):**
+  - jump off anything tall and glide;
+  - updrafts from vents and fans carry you higher;
+  - it works with the boost pack, the rope swing and the grapple, so New Bangalore's height becomes a playground.
+- **Floating districts:**
+  - pieces of the city drifting in the clouds, linked by cables, gantries and airships;
+  - some rise and fall over time, so a route that's open now may not be in a minute.
+- **The combo and counter system** (new from Part 1, and it stays): chain light and heavy attacks into combos, and time a counter as an enemy's blow lands to reverse it. Prime will find you harder to read in later seasons.
+- **Freefall:** set pieces where the ground drops away and you fight or glide on falling debris.
+- **Air battles:** gunships and airships you board with the glider or the boost pack.
+- **Everything from Phase 1 and Season 9 carries over.**
+
+### What you keep
+- **Tool:** the glider.
+- **Skins:**
+  - Sky Diver: finish the story;
+  - Updraft: the challenge, cross the floating city from one end to the other without touching the ground;
+  - Baron Altitude: beat the finale.
+- **Left on the map:** the anchored island over the Mids, where New Bangalore's Keeper lives.
+
+### The trailer
+- **Look:** golden-hour clouds, wind and height, with the neon city glowing far below and whole districts drifting past the camera.
+- **Type:** elegant, airy lettering that drifts in and settles, like it's floating.
+- **Score:** soaring strings and wind, the creak of cables, and an airship's deep engine drone, building to a huge swell as the camera drops off the edge and glides.
+
+## Phase 2 · Chapters 3–6 (Seasons 11–14, to be re-planned for New Bangalore)
+The original list (The Rift, Harvest, The Drought, Festival of Lights) was written for Bangalore, and needs re-planning around New Bangalore. Prime recurs through all of them, getting closer each season.
 
 ## Phase 2 · Chapter 7 (Season 15) · Convergence (15 December 2027 – 11 January 2028)
 
 ### The surprise
 Phase 2 has built up to one fight: you against {N} Prime. Season 15 gives it to players early, and then pulls the floor out.
 
-**Chapters (outline)**
+**Parts (outline)**
 
-| Week | Chapter | What happens |
+| Week | Part | What happens |
 |---|---|---|
 | 1 · 15 Dec | The Last Hunt | Prime's red city finally breaks through into New Bangalore's sky. With everything you've earned across both phases, you take the fight to Prime, and this time you're ready. |
 | 2 · 22 Dec | Prime | **You kill Prime.** It's the fight the whole series has built up to, and it happens in week two, not the finale. Prime's last words, with a laugh that turns into a cough: *“You think I was the end of the line? I was running too. I fed it worlds so it wouldn’t eat mine.”* Then every screen in New Bangalore goes dark. |
