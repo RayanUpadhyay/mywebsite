@@ -7,7 +7,10 @@ window.RU_SEASON_1 = function(R){
   const FRAGS = [[-401, -150], [300, 401], [401, -262]];
   const CH = [['Impact', 'Something fell into the sea.'], ['Salvage', 'Someone else wants the pieces.'], ['Crash Isle', 'The steam is turning into land.'], ['The Salvager', 'Finale.']];
   // ---------- saved progress ----------
-  const all = R.get(); const st = all.s1 = Object.assign({ intro: 0, met: 0, scanner: 0, frags: [], ch1: 0 }, all.s1 || {});
+  const all = R.get(); const st = all.s1 = Object.assign({ intro: 0, met: 0, scanner: 0, frags: [], ch1: 0, c2: { start: 0, got: [], lost: [], done: 0 } }, all.s1 || {});
+  st.c2 = Object.assign({ start: 0, got: [], lost: [], done: 0 }, st.c2 || {});
+  // the week of the season (add ?week=N to the address to preview a later chapter)
+  const week = () => { try { const q = location.search.match(/[?&]week=(\d)/); if (q) return +q[1]; } catch (e) {} return R.info().week; };
   const save = () => { const a = R.get(); a.s1 = st; R.put(a); };
   // ---------- a title card and a few UI bits of its own ----------
   const css = document.createElement('style'); css.textContent = `
@@ -147,8 +150,9 @@ window.RU_SEASON_1 = function(R){
       const gl = glowSprite(0xFF7A2A, 2.6, .55); gl.position.y = .4; g.add(gl); g.traverse(o => o.userData.noPick = true); return { i, g, gl, x: p[0], z: p[1] }; });
   }
   function scan(){
-    if (!st.scanner || R.busy) return; const left = (frags || []).filter(Boolean); if (!left.length) return R.say('The scanner is quiet. Nothing left to find, for now.', 2400);
-    const [mx, mz] = R.toMap(R.pos.x, R.pos.z); let best = null, bd = 1e9; left.forEach(f => { const d = Math.hypot(f.x - mx, f.z - mz); if (d < bd) { bd = d; best = f; } });
+    if (!st.scanner || R.busy) return; const [mx, mz] = R.toMap(R.pos.x, R.pos.z); if (c2Jam(mx, mz)) return;
+    const left = (frags || []).filter(Boolean).concat((c2 || []).filter(f => f.g)); if (!left.length) return R.say('The scanner is quiet. Nothing left to find, for now.', 2400);
+    let best = null, bd = 1e9; left.forEach(f => { const d = Math.hypot(f.x - mx, f.z - mz); if (d < bd) { bd = d; best = f; } });
     const a = Math.atan2(best.x - mx, -(best.z - mz)), dirs = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'], dir = dirs[((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8];
     const ring = new THREE.Mesh(new THREE.RingGeometry(.9, 1, 48), new THREE.MeshBasicMaterial({ color: 0xFF9A4A, transparent: true, opacity: .8, side: THREE.DoubleSide, depthWrite: false, fog: false })); ring.rotation.x = -Math.PI / 2; ring.position.set(mx, .15, mz); ring.userData.noPick = true; R.BL.mapG.add(ring);
     let t = 0; const iv = setInterval(() => { t += .05; ring.scale.setScalar(1 + t * 30); ring.material.opacity = Math.max(0, .8 - t); if (t >= .8) { clearInterval(iv); R.BL.mapG.remove(ring); } }, 50);
@@ -164,6 +168,62 @@ window.RU_SEASON_1 = function(R){
       if (n >= FRAGS.length) { st.ch1 = 1; save(); const S = R.info(), d2 = Math.max(0, 8 - S.day); showCard('CHAPTER 1 COMPLETE', 'Impact', d2 ? `Chapter 2 unlocks in ${d2} day${d2 > 1 ? 's' : ''}.` : 'Chapter 2 is on its way.', 5200); }
       else showCard('FRAGMENT FOUND', `${n} of ${FRAGS.length}`, 'Still warm. It hums when you hold it near the scanner.', 3000); } });
   }
+
+  // ---------- Chapter 2: Salvage. The Salvager's scrapper drones race you to four more fragments ----------
+  const C2 = [[61.7, 137.5], [-171.7, -27.5], [226.7, -137.5], [-48.3, 247.5]], C2_FROM = [[300, 330], [-330, -300], [330, -330], [-300, 330]], BARGE = [-505, 40];
+  let c2 = null, barge = null;
+  function buildBarge(){
+    if (barge || !R.BL.mapG) return; const g = barge = new THREE.Group(); g.position.set(BARGE[0], 0, BARGE[1]); g.rotation.y = .3; R.BL.mapG.add(g);
+    const M = c => new THREE.MeshLambertMaterial({ color: c }), box = (w, h, d, c, x, y, z) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), M(c)); m.position.set(x, y, z); g.add(m); return m; };
+    box(34, 2.4, 12, 0x3A3D44, 0, .6, 0); box(34.4, .5, 12.4, 0xC8462E, 0, -.4, 0); box(8, 5, 8, 0xE8B82E, -11, 3.9, 0); box(.8, 18, .8, 0xE8B82E, 6, 10, 0);
+    const arm = box(18, .7, .7, 0xE8B82E, 13, 18.5, 0); arm.rotation.z = -.15; box(.15, 9, .15, 0x16181D, 21, 13.5, 0);
+    const sign = new THREE.Mesh(new THREE.PlaneGeometry(10, 2), new THREE.MeshBasicMaterial({ fog: false, map: R.tex(512, 102, (c, w, h) => { c.fillStyle = '#16181D'; c.fillRect(0, 0, w, h); c.fillStyle = '#E8B82E'; c.font = '900 54px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('SALVAGER & SONS', w / 2, h / 2 + 3); }) }));
+    sign.position.set(-11, 5.2, 4.05); g.add(sign); const lamp = glowSprite(0xFF3A2A, 3, .9); lamp.position.set(6, 19.5, 0); g.add(lamp); barge.lamp = lamp; g.traverse(o => o.userData.noPick = true);
+  }
+  function droneMesh(){
+    const g = new THREE.Group(), M = c => new THREE.MeshLambertMaterial({ color: c });
+    g.add(new THREE.Mesh(new THREE.BoxGeometry(1.4, .5, 1.4), M(0x3A3D44))); g.add(new THREE.Mesh(new THREE.BoxGeometry(1.45, .12, 1.45), M(0xE8B82E)));
+    g.rotors = [[.9, .9], [-.9, .9], [.9, -.9], [-.9, -.9]].map(([x, z]) => { const r = new THREE.Mesh(new THREE.BoxGeometry(1.1, .04, .12), M(0x16181D)); r.position.set(x, .32, z); g.add(r); return r; });
+    const claw = new THREE.Mesh(new THREE.ConeGeometry(.3, .6, 6), M(0xE8B82E)); claw.position.y = -.55; claw.rotation.x = Math.PI; g.add(claw);
+    const eye = glowSprite(0xFF3A2A, 1.2, .95); eye.position.y = -.1; g.add(eye); g.traverse(o => o.userData.noPick = true); return g;
+  }
+  function c2Build(){
+    if (c2 || !R.BL.mapG) return; buildBarge();
+    c2 = C2.map((p, i) => { const done = st.c2.got.includes(i) || st.c2.lost.includes(i);
+      const f = { i, x: p[0], z: p[1], gone: done, g: null, d: null };
+      if (!done) { const g = f.g = new THREE.Group(); g.position.set(p[0], 0, p[1]); R.BL.mapG.add(g);
+        const rock = new THREE.Mesh(new THREE.DodecahedronGeometry(.42, 0), new THREE.MeshStandardMaterial({ color: 0x2A2626, roughness: .7, emissive: 0xFF5A1A, emissiveIntensity: .35 })); rock.position.y = .3; g.add(rock);
+        const gl = glowSprite(0xFF7A2A, 2.6, .55); gl.position.y = .4; g.add(gl); g.traverse(o => o.userData.noPick = true);
+        const dm = droneMesh(); R.BL.mapG.add(dm); f.d = { g: dm, x: C2_FROM[i][0], z: C2_FROM[i][1], y: 14, st: 'go', sp: 1.05 + i * .12, jam: 0 }; dm.position.set(f.d.x, f.d.y, f.d.z); }
+      return f; });
+  }
+  function c2Intro(){
+    st.c2.start = 1; save(); c2Build();
+    const L = ['📻 Attention, Bangalore. This is the Salvager.', '📻 Everything that falls out of the sky is salvage. And salvage is mine.', '📻 My scrappers are already on your streets. Stay out of their way.'];
+    L.forEach((l, i) => setTimeout(() => R.say(l, 3200), i * 3400)); R.tone(220, .3, 'square', .02, 180);
+    setTimeout(() => showCard('CHAPTER 2', 'Salvage', 'The Salvager’s scrapper drones are after four more fragments. Scan, and get there first. Scanning close to a drone jams it.', 6500), 10400);
+  }
+  function c2Settle(){
+    const n = st.c2.got.length + st.c2.lost.length; if (n < C2.length || st.c2.done) return; st.c2.done = 1; save(); const kept = st.c2.got.length, d3 = 15 - R.info().day;
+    setTimeout(() => R.say(kept >= 3 ? 'The Keeper, somewhere close: “You kept most of it from him. He will come for the rest himself.”' : kept ? 'The Keeper, somewhere close: “He has more than you do now. That will make him bold.”' : 'The Keeper, somewhere close: “He has all of it. Then we will have to take it back.”', 6000), 1200);
+    showCard('CHAPTER 2 COMPLETE', 'Salvage', `You kept ${kept} of ${C2.length}. ${d3 > 0 ? `Chapter 3 unlocks in ${d3} day${d3 > 1 ? 's' : ''}.` : 'Chapter 3 is on its way.'}`, 6000);
+  }
+  function c2Step(dt){
+    if (!c2) return; const [mx, mz] = R.toMap(R.pos.x, R.pos.z), t = performance.now() / 1000;
+    if (barge && barge.lamp) barge.lamp.material.opacity = Math.sin(t * 4) > 0 ? .95 : .15;
+    c2.forEach(f => { if (f.gone) return; const D = f.d;
+      if (D) { D.g.rotors.forEach((r, k) => r.rotation.y = t * 30 + k);
+        if (D.st === 'go') { const dx = f.x - D.x, dz = f.z - D.z, d = Math.hypot(dx, dz); if (d < .8) D.st = 'down'; else { D.x += dx / d * D.sp * dt; D.z += dz / d * D.sp * dt; } }
+        else if (D.st === 'down') { D.y = Math.max(1.4, D.y - 3 * dt); if (D.y <= 1.4) { D.st = 'away'; if (f.g) { R.BL.mapG.remove(f.g); f.g = null; } st.c2.lost.push(f.i); save(); R.say('A scrapper drone grabbed a fragment and is flying it out to the barge.', 3000); R.tone(300, .4, 'square', .02, 140); c2Settle(); } }
+        else if (D.st === 'away') { D.y = Math.min(30, D.y + 4 * dt); const dx = BARGE[0] - D.x, dz = BARGE[1] - D.z, d = Math.hypot(dx, dz); D.x += dx / d * 9 * dt; D.z += dz / d * 9 * dt; if (d < 6) { R.BL.mapG.remove(D.g); f.d = null; f.gone = true; } }
+        else if (D.st === 'jam') { D.jam -= dt; D.g.rotation.z = Math.sin(t * 20) * .3; const dx = C2_FROM[f.i][0] - D.x, dz = C2_FROM[f.i][1] - D.z, d = Math.hypot(dx, dz); if (d > 1) { D.x += dx / d * 6 * dt; D.z += dz / d * 6 * dt; } if (D.jam <= 0 && d <= 1) { D.st = 'go'; D.g.rotation.z = 0; } }
+        if (f.d) f.d.g.position.set(D.x, D.y + Math.sin(t * 2 + f.i) * .25, D.z); }
+      if (f.g && Math.hypot(f.x - mx, f.z - mz) < 2.6) { R.BL.mapG.remove(f.g); f.g = null; st.c2.got.push(f.i); save(); R.tone(880, .15, 'triangle', .05); setTimeout(() => R.tone(1320, .2, 'triangle', .05), 140);
+        if (D) { D.st = 'away'; R.say('Got it first. The drone hangs there a moment, then gives up and heads back to the barge.', 3000); }
+        if (!D) f.gone = true; if (st.c2.got.length + st.c2.lost.length < C2.length) showCard('FRAGMENT SAVED', `${st.c2.got.length} kept · ${st.c2.lost.length} lost`, '', 2600); c2Settle(); } });
+  }
+  // scanning near a drone jams it
+  function c2Jam(mx, mz){ let n = 0; (c2 || []).forEach(f => { const D = f.d; if (D && (D.st === 'go' || D.st === 'down') && Math.hypot(D.x - mx, D.z - mz) < 18) { D.st = 'jam'; D.jam = 4; D.y = Math.max(D.y, 8); n++; } }); if (n) { R.tone(160, .5, 'sawtooth', .04, 60); R.say(n > 1 ? 'Your scanner screams on the drones’ frequency. They spark, spin and limp back where they came from.' : 'Your scanner screams on the drone’s frequency. It sparks, spins and limps back where it came from.', 3200); } return n; }
   // ---------- every frame ----------
   let streetT = 0;
   function step(dt, now){
@@ -180,14 +240,16 @@ window.RU_SEASON_1 = function(R){
     if (!st.intro) { streetT = free ? streetT + dt : 0; if (streetT > 1.5 && R.BLC.built) csStart(); return; }
     if (!st.met && free && mx < R.ISLE.px0 + 2 && Math.abs(mz - R.ISLE.pz) < 2.5 && mx < R.ISLE.px1 + 12) keeperMeet();
     if (st.intro && !st.met && !R.PH.wp && free) R.PH.wp = PIER.slice();
-    scanBtn.hidden = !(st.scanner && free && frags && frags.some(Boolean));
-    if (free) fragStep();
+    if (st.ch1 && week() >= 2 && free) { if (!st.c2.start) c2Intro(); else if (!st.c2.done) c2Build(); }
+    if (st.c2.start && !st.c2.done) buildBarge();
+    scanBtn.hidden = !(st.scanner && free && (frags && frags.some(Boolean) || c2 && c2.some(f => f.g || f.d)));
+    if (free) fragStep(); if (!R.busy) c2Step(dt);
   }
   // ---------- the Season tab on the phone ----------
   function tab(){
     const S = R.info(), fd = new Date(S.start.getTime()), unlock = i => { const d = new Date(fd.getTime() + i * 7 * 864e5); return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); };
-    const rows = CH.map(([n, sub], i) => { const open = S.week > i, done = i === 0 && st.ch1, cur = i === 0 && !st.ch1;
-      return `<div class="phcard"><b>${done ? '✓ ' : ''}Chapter ${i + 1}: ${n}</b><small>${!open ? `Unlocks ${unlock(i)}.` : i === 0 ? (done ? 'Done.' : !st.intro ? 'Step out onto the street.' : !st.met ? 'Go to the ferry pier on the west coast.' : `Find the fragments: ${st.frags.length} of ${FRAGS.length}.`) : 'Coming soon.'}</small>${cur ? `<small>${esc(sub)}</small>` : ''}</div>`; }).join('');
+    const wk = week(), rows = CH.map(([n, sub], i) => { const open = wk > i, done = i === 0 && st.ch1 || i === 1 && st.c2.done, cur = open && !done && (i === 0 || i === 1 && st.ch1);
+      return `<div class="phcard"><b>${done ? '✓ ' : ''}Chapter ${i + 1}: ${n}</b><small>${!open ? `Unlocks ${unlock(i)}.` : i === 0 ? (done ? 'Done.' : !st.intro ? 'Step out onto the street.' : !st.met ? 'Go to the ferry pier on the west coast.' : `Find the fragments: ${st.frags.length} of ${FRAGS.length}.`) : i === 1 ? (!st.ch1 ? 'Finish Chapter 1 first.' : done ? `Done: you kept ${st.c2.got.length} of 4.` : !st.c2.start ? 'Go out onto the street.' : `Beat the drones to the fragments: ${st.c2.got.length} kept, ${st.c2.lost.length} lost.`) : 'Coming soon.'}</small>${cur ? `<small>${esc(sub)}</small>` : ''}</div>`; }).join('');
     return `<div class="phcard"><b>Season 1 · Landfall</b><small>Day ${S.day} of 28 · ${S.left} day${S.left === 1 ? '' : 's'} left. A meteor came down off the west coast.</small></div>${rows}
       <div class="phcard"><b>Tools</b><small>${st.scanner ? '✓ Scanner (yours to keep)' : 'Scanner: not yet'}</small></div>
       <div class="phcard"><b>Skins</b><small>Crater Scout · Meteor Glow · Salvager’s Rig. Earn them by playing the season.</small></div>
@@ -195,5 +257,5 @@ window.RU_SEASON_1 = function(R){
   }
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   function wire(B){ const b = B.querySelector('[data-s1="name"]'); if (b) b.onclick = () => { const v = prompt('Your name (up to 16 characters):', R.heroName() === 'Traveller' ? '' : R.heroName()); if (v == null) return; if (v.trim() && !R.cleanName(v)) return R.say('Pick a different name.', 2000); R.setName(v); B.querySelector('.phcard:last-child b').textContent = 'Your name: ' + R.heroName(); }; }
-  return { step, tab, wire, debug: { get cs(){ return CS; }, st, scan } };
+  return { step, tab, wire, debug: { get cs(){ return CS; }, st, scan, get c2(){ return c2; } } };
 };
