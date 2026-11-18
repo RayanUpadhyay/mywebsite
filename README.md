@@ -12,24 +12,48 @@ Instead of a normal portfolio page, the site is a 3D room you can walk around in
 - **Little sites:** small side projects on their own subdomains, linked from the Sites button, the laptop and the simple view: [tools](https://tools.rayanupadhyay.com), [study](https://study.rayanupadhyay.com), [wish](https://wish.rayanupadhyay.com), [links](https://links.rayanupadhyay.com), [agribridge](https://agribridge.rayanupadhyay.com) and [research](https://research.rayanupadhyay.com).
 - **Music:** live charts from my Last.fm, a crate of my vinyl and speakers that play lo-fi.
 - **News pill:** a short announcement driven by `news.json`, plus a news feed pulled from Mandalink's announcement board.
-- **Story mode and mini-games:** a multi-chapter story that runs through the room, the city and several other worlds, with boss fights, side quests, a Mandalink world of radical islands, and a growing list of arcade games.
+- **The city:** step out of the room into an island version of Bangalore, cut off from the other cities and the Far Range mountains by the sea. You can walk, drive, take the ferry or swim. Your tower has an underground garage with about ten vehicles to take out.
+- **Seasons:** a new story every four weeks, starting 18 November 2026 (see below).
+- **Mandalink story and mini-games:** a Mandalink world of radical islands, side quests and a growing list of arcade games.
 - **Private channel:** the walkie-talkie on the desk (or `/#chat`) opens an end-to-end encrypted, password-protected chat. See below.
 - **Simple view** for anyone who just wants the information without the 3D, and a printable layout.
 
+## Seasons
+
+The world runs in seasons of four weeks each, with a new chapter unlocking every week. Each season has its own villain, boss fights, a tool or vehicle you keep, three skins to earn and a change it leaves on the map for good. The phone's Season tab shows your progress, lets you replay the season's scenes, and holds your Loadout and Wardrobe.
+
+### Season 1 · Landfall (18 November – 15 December 2026)
+
+A meteor crashes into the sea off the west coast, and the Salvager wants every piece of it.
+
+| Chapter | Unlocks | What happens |
+|---|---|---|
+| 1 · Impact | 18 Nov | The meteor comes down. The Keeper gives you a scanner at the ferry pier; find three fragments on the beaches, then fight off a scrapper ambush on the west beach. |
+| 2 · Salvage | 25 Nov | The Salvager's drones race you to four more fragments. Take the ferry to his barge and beat the Hauler, an armoured rig you have to get behind. |
+| 3 · Crash Isle | 2 Dec | A new island rises where the meteor fell. Find three crystal shards past the searchlights, beat the Foreman (shielded by crystal pylons) and light the core. |
+| 4 · The Salvager | 9 Dec | The finale, in three phases: his drone swarm and magnet, his salvage mech, then him while the crater floods. |
+
+- **Weapons you keep:** blaster pistol, scatter gun, scrap rifle, shard sword, heavy wrench and harpoon spear. You carry one gun and one melee weapon (Q switches; phones get Fire, Swing and Switch buttons).
+- **Skins:** Crater Scout (light the core), Meteor Glow (beat the Foreman without being spotted) and Salvager's Rig (beat the finale).
+- **Left on the map:** Crash Isle, with the core's beam.
+- Every boss has an intro and an outro scene, and there's a Season 1 trailer in the Season tab.
+
+Add `?week=N` to the address to preview a later chapter, or `?season=N` to preview another season.
+
 ## Tech
 
-The whole site is a single self-contained **`index.html`**: vanilla JavaScript, CSS, and [Three.js r128](https://threejs.org/) from cdnjs. There's no build step and no framework. It's hosted on GitHub Pages with a custom domain (`CNAME`).
+The whole site is a single self-contained **`index.html`** (apart from one small script per season): vanilla JavaScript, CSS, and [Three.js r128](https://threejs.org/) from cdnjs. There's no build step and no framework. It's hosted on GitHub Pages with a custom domain (`CNAME`).
 
 | File | Purpose |
 |---|---|
 | `index.html` | The entire site |
+| `seasons/` | One script per season (`s01.js` is Season 1), loaded only while that season runs |
 | `news.json` | The current news-pill message, link and expiry date |
 | `og-image.png` | Social preview image |
 | `downloads/` | Files offered for download (AgriBridge APK) |
 | `CNAME` | Custom domain for GitHub Pages |
 | `CHAT_SETUP.md` | How to set up the private chat |
-| `STORY_PLAN.md`, `MANDALINK_STORY_PLAN.md` | Design docs for the story modes |
-| `IDEAS.md` | Backlog of future ideas |
+| `CLAUDE.md` | Notes on how the code fits together |
 
 ## Running locally
 
