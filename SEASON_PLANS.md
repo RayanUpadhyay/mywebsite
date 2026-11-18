@@ -574,11 +574,7 @@ This time, it isn't yours.
 ### What this changes for Seasons 9–15
 - From Season 9 the seasons take place in **a new universe with a completely different map**. Seasons 9–15 in the list were written for Bangalore, so they need adapting.
 - **Decided so far:** you arrive with your gear, and the rift jumper and meteor core come with you.
-- **Still to decide:**
-  - What the new world is like.
-  - Whether the bedroom, the site's front door, stays as it is.
-  - Whether the old Bangalore is gone for every visitor from then on, or still there outside the season story.
-  - Whether Season 15 (Convergence) brings your Bangalore back.
+- **Decided since:** the new world is Kaleido, a neon mega-city. It replaces Bangalore and the bedroom for every visitor, for good, and Bangalore doesn't come back (see Phase 2 below).
 
 # Phase 2 · Kaleido (Seasons 9–15)
 
