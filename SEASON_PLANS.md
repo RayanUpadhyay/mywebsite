@@ -42,7 +42,7 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | 14 | **Festival of Lights** | 17 Nov – 14 Dec 2027 | An island-wide lantern festival. | The Snuffer | Fireworks you can launch | Lantern trees | Lantern Robe / Firework Suit / The Snuffer |
 | 15 | **Convergence** (Phase 2 finale) | 15 Dec 2027 – 11 Jan 2028 | You kill Prime in week two, as a surprise. Then what Prime was feeding arrives: the Collector of Worlds, with echoes of every villain you've beaten. Your final choice decides how the cycle restarts. | {N} Prime (killed early), then the Collector of Worlds | Every tool you've earned | How the cycle restarts | Multiverse Traveller / Collector's Armour (plus The Keeper for owning every skin) |
 
-After Season 15, Phase 3 begins with Season 16 · Warped (12 Jan – 8 Feb 2028), in a warped Bangalore; see below.
+After Season 15, Phase 3 begins with Season 16 · Warped (12 Jan – 8 Feb 2028), in a Bangalore that phases between realities; see below.
 
 ## Season 2 · High Water (16 December 2026 – 12 January 2027)
 
@@ -686,39 +686,56 @@ Phase 2 has built up to one fight: you against {N} Prime. Season 15 gives it to 
 
 **Skins:** Multiverse Traveller (story), Collector's Armour (villain), and The Keeper for owning every skin (unchanged from the original list).
 
-# Phase 3 · Warped Bangalore (Season 16 onwards)
+# Phase 3 · Shifting Bangalore (Season 16 onwards)
 
 ## Season 16 · Warped (12 January – 8 February 2028)
 
 ### How it starts
 - At the end of Season 15, your final choice is to use the meteor core one last time: go back to the night it all began, and push the meteor off course so it never hits.
 - You manage it. The meteor misses the sea off the west coast, and comes down instead on the **Kaveri Energy Research Facility**, a (fictional) experimental reactor on the edge of the city.
-- The core and the reactor together don't explode. They **warp**.
+- The core and the reactor together don't explode. They **break space-time**.
 
-### The world
-- **A warped Bangalore.** It's Bangalore again, a new one in a new cycle, and the whole city is bent out of shape.
-- Every district warps differently, with its own rules:
-  - **a time-slow district:** rain hangs in the air, and you can walk up falling water;
-  - **a mirrored district:** left is right, and signs read backwards;
-  - **a giant district:** plants and street dogs ten times their size;
-  - **a district stuck in a loop:** the same two minutes over and over until you break it;
-  - **a gravity district:** buildings bent into arches you can walk up and over.
-- **The reactor** stands at the centre of it all, glowing, with the warp spreading outwards from it a little more each week.
+### The world: a Bangalore phasing between realities
+- **It's Bangalore again**, a new one in a new cycle. It won't stay put: the whole world **phases in and out of different realities**.
+- Every few minutes there's a shimmer, and the city around you swaps for another version of itself. The streets keep roughly the same layout, so you always know where you are, but everything on them changes. Some of the realities it falls into:
+  - **Prehistoric Bangalore:** jungle and swamp, giant ferns, and something large moving between the trees;
+  - **Medieval Bangalore:** a walled fort town, a market of tents, guards on the walls;
+  - **Far-future Bangalore:** gleaming towers, sky-traffic and silent drones;
+  - **Drowned Bangalore:** the flood from Season 2 that never drained;
+  - **Frozen Bangalore:** the ice age that never happened in your world;
+  - **Ruined Bangalore:** empty, overgrown, a hundred years after everyone left;
+  - **Echoes of the old seasons:** Phase 1's Bangalore, and even flashes of Kaleido's neon.
+- **Shifts happen without warning at first,** then you learn to read the signs: a shimmer in the air, a ringing sound, a colour cast creeping in.
+- **The reactor** sits at the centre, in every reality at once: the one thing that never changes. It's where the season ends.
 - **No gore or radiation sickness.** It's played as reality bending, not as a realistic nuclear disaster.
 
 ### Ideas for how it plays
-- **A warp meter:** staying in a warped district too long builds it up. You get a suit that resists it (the season's tool).
-- **District rules:** each district changes how you move and fight, so the city becomes a set of puzzle-levels.
-- **Anomalies:** objects bent by the warp, to collect and study.
-- **Familiar faces, warped:** people you knew in Phase 1, in strange new versions.
+- **Reality shifts as a mechanic:**
+  - a ledge that's too high in one reality is a staircase in another;
+  - a locked door in the future stands open in the ruins;
+  - a river you can't cross in the swamp is a bridge in the medieval fort.
+  - You wait for the right reality, or later force a shift yourself.
+- **The phase anchor (the season's tool):**
+  - built from the meteor core;
+  - early on it holds you in place during a shift, so you don't get carried off into the wrong reality;
+  - later it lets you choose which reality to shift into.
+  - You keep it afterwards.
+- **Things that follow you across shifts:** some enemies and some people come through with you, and some don't. Lose a pursuer by shifting away from them.
+- **People you knew:**
+  - versions of Phase 1 characters in different realities: a medieval Bhaskar, a far-future Velvet, a prehistoric Keeper;
+  - some remember you, and some never met you.
+- **A stability meter** for the whole city, shown on the phone: it drops each week as the shifts get faster and wilder, until the finale at the reactor.
 
 ### Still to plan
-- **The villain:** someone or something born from the warp. Some options:
-  1. **The Director** of the facility, who walked out of the blast changed and wants to warp the whole world;
-  2. **the reactor itself**, waking up with a mind of its own;
-  3. **your own Season 15 choice**, made into a person: a version of you who wanted the Collector's ending.
-- Chapters, bosses, skins, the map trace and the trailer.
-- **The build:** the season engine counts 15 seasons and loops (`seasonInfo`, `SEASON_NAMES`, `SEASON_FILES`). Phase 3 means letting it go past 15. The warped Bangalore is also a third city build, after Bangalore and Kaleido, though it could start from the Phase 1 Bangalore code.
+- **The villain:** someone or something born from the break in space-time. Some options:
+  1. **The Director** of the facility, who walked out of the blast able to choose realities, and wants to keep the one where she rules;
+  2. **the reactor itself**, waking up with a mind of its own and collecting realities;
+  3. **your own Season 15 choice**, made into a person: a version of you from one of the realities, who wanted the Collector's ending.
+- Chapters, bosses (one per reality would suit it), skins, the map trace and the trailer.
+- **The build:**
+  - the season engine counts 15 seasons and loops (`seasonInfo`, `SEASON_NAMES`, `SEASON_FILES`), so Phase 3 means letting it go past 15;
+  - each reality is a reskin of the same street layout, with its own buildings, ground, sky, props and people, swapped as a set when the world shifts;
+  - starting from the Phase 1 Bangalore code keeps that manageable, but it's still the biggest build in Phase 3.
 
 ## Deep Freeze (saved for a future season)
 
