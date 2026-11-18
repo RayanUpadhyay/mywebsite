@@ -31,7 +31,7 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | 3 | **The Syndicate** (replaces The Carnival) | 13 Jan – 9 Feb 2027 | After the flood, a crime syndicate takes over the city. | Madame Marigold, until Inspector Devi betrays you | The Comet (getaway car) | Marigold's tower, now Devi's | Undercover / Clean Hands / Marigold's Suit |
 | 4 | **Blackout** | 10 Feb – 9 Mar 2027 | The city stays dark; Devi rules it, frames you for Marigold's death, and drills into a hot vent under the sea. Ends with the volcano rising and Devi falling into the lava. | Commissioner Devi, with Static (a saboteur in the power lines) working for her | Lantern and toolkit | A new power plant, and the volcano offshore | Lineworker / Lantern Bearer / Commissioner Devi |
 | 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | The new volcano becomes Ember Island and ash falls on the city; a cult uses the stolen meteor core to wake it. Ends with the ash dimming the sun and the sea starting to freeze. | Cinder, leader of the Kindled | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |
-| 6 | **Deep Freeze** | 7 Apr – 4 May 2027 | The sea freezes. | The Frost Warden | Skates | Ice palace ruins | Ice Skater / Snow Ranger / Frost Warden |
+| 6 | **Deep Freeze** | 7 Apr – 4 May 2027 | The ash dims the sun and the sea freezes; an ice palace grows on it. Ends with a scaled alien craft rising from under the ice. | The Frost Warden (Dr. Neel, frozen by a sliver of the meteor core) | Skates | Ice palace ruins | Ice Skater / Snow Ranger / Frost Warden |
 | 7 | **Scales** | 5 May – 1 Jun 2027 | Reptilian aliens, the Vashk, land in disguise, and shapeshifters replace townspeople. | Queen Ssera | Truth lens (reveals disguised Vashk) and an alien hover-sled | The wrecked mothership in the mountains | Alien Hunter / Truth Lens Agent / Vashk Disguise |
 | 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore presses down from the sky; stop the collision before the timer runs out. | {N} Prime, the evil version of you | Rift jumper | A permanent tear in the sky | Rift Jumper / Other-Earth You / {N} Prime |
 | 9 | **The Rift** | 30 Jun – 27 Jul 2027 | The mountains split open. | The Excavator | Grappling hook | The Rift Valley and its caves | Cave Explorer / Ancient Machine / The Excavator |
@@ -345,6 +345,63 @@ The volcano that swallowed Devi doesn't stop growing. Within a week it's an isla
 - **Look:** a smoky orange-red palette, with falling ash, embers drifting up past the camera, and heat shimmer.
 - **Type:** chiselled stone or carved letters that glow from inside like hot coals.
 - **Score:** a deep rumbling drone, distant temple drums and chanting from the Kindled, with crackling fire and lava hiss. It cuts to silence just before the eruption, then hits.
+
+## Season 6 · Deep Freeze (7 April – 4 May 2027)
+
+### Story
+The ash from Ember Island dimmed the sun, and in the middle of April the sea freezes. It starts as a thin skin off the west coast; within days you can walk from the pier to Crash Isle. Snow buries the streets, and out on the ice something is building a palace.
+
+**The cast**
+- **The Frost Warden (villain, original):** a tall figure in armour of blue ice, with a crown of icicles and a voice like cracking glass. It wants the world to stay still, frozen and safe for ever. *“Nothing breaks if nothing moves.”*
+- **Dr. Neel:** the volcanologist from Season 5. He went back to Ember Island to make sure it never erupts again, and nobody has heard from him since.
+- **Velvet:** still the ally, now running supplies by sledge.
+- **The Keeper:** uneasy. The cold is reaching places it shouldn't.
+
+**Cold open (7 Apr).**
+- You wake up to silence. The bedroom window is frosted over.
+- Outside, the city is under snow in April, and the sea to the west is white and still all the way to the horizon.
+- On the ice far out, a spire of blue ice catches the pale sun. It's taller than it was an hour ago.
+
+**Chapters**
+
+| Week | Chapter | What you do | Boss |
+|---|---|---|---|
+| 1 · 7 Apr | Whiteout | The city is snowed in. Get your skates and learn to skate on the frozen roads. Rescue fishermen stranded out on the ice before whiteouts roll in, and stay warm at fires and in the heat suit. | **The Rime Alpha**, leader of a pack of ice wolves that hunt across the frozen sea. |
+| 2 · 14 Apr | The Frozen Sea | Skate out across the sea to Ember Island, now cold and silent, and find Dr. Neel's abandoned lab. His notes describe a cooling machine he built to keep the volcano asleep, powered by a sliver of the Season 1 meteor core. | **The Glacier Golem**, a giant of packed ice guarding the lab. |
+| 3 · 21 Apr | The Ice Palace | Get inside the palace on the ice: sliding-block puzzles, frozen mirrors and floors that crack if you stand still. **Twist:** the Frost Warden is Dr. Neel. The core sliver fused into his cooling suit, froze the sea, and froze his mind with it. | **The Hoarfrost Knights**, the Warden's frozen guards, made from snow and the palace's own walls. |
+| 4 · 28 Apr | Thaw (finale) | The throne room at the top of the palace. Use everything: the heat suit, the lantern and the harpoon. | Three phases:<br>1. Blizzard waves across the throne room.<br>2. Ice spikes erupting from the floor.<br>3. The Warden's armour cracks open, with Neel still inside. |
+
+**The finale (sets up Season 7).**
+1. You break the core sliver out of the Warden's armour, and Neel is freed: shaking, frostbitten and himself again. Unlike Devi, he survives.
+2. His first words: *“I just wanted it to stop moving. Everything kept breaking.”*
+3. The palace cracks, collapses and leaves its ruins on the ice (the season's trace). The sun comes back, and the sea thaws.
+4. Last shot: as the ice breaks up, something huge and dark is revealed under where the palace stood. It's a craft covered in overlapping metal scales, frozen into the seabed for who knows how long. Its lights blink on. It rises out of the water and flies off towards the mountains. **Season 7 · Scales.**
+
+### How it plays
+- **Skates (the season's tool):** fast skating with momentum on frozen roads and the sea: carve turns, jump cracks, and grind along frozen railings. Kept after the season.
+- **Cold:**
+  - a cold meter that rises in wind and snow;
+  - warm up at fires, indoors or in the heat suit from Season 5.
+- **Thin ice:**
+  - darker patches crack under you, and you fall into freezing water and have to swim out (the flood engine's swimming);
+  - you can't skate on thin ice, but you can crawl across it.
+- **Whiteouts:** blizzards cut visibility to a few metres. The lantern from Season 4 and the scanner from Season 1 help you find the way.
+- **The ice palace:** an interior level like the heist rooms in Season 3, with sliding-block puzzles, mirrors and cracking floors.
+- **Winter crossover:** the existing winter decorations, the ice rink and the snowmen fit right in, but it's April, so the real-winter layer stays off.
+- **Everything from Seasons 1–5 carries over.**
+
+### What you keep
+- **Tool:** the skates.
+- **Skins:**
+  - Ice Skater: finish the story;
+  - Snow Ranger: the challenge, e.g. rescue every fisherman before the whiteout;
+  - Frost Warden: beat the finale.
+- **Left on the map:** the ice palace ruins out on the water (they stay frozen all year).
+
+### The trailer
+- **Look:** white and ice blue, crisp and bright, with frost creeping in from the edges of the screen and breath fogging in the air.
+- **Type:** thin, elegant letters that look carved from clear ice.
+- **Score:** a slow music box, wind howling, ice creaking and cracking, and a choir rising at the end. It goes silent, then a deep mechanical hum as the scaled craft wakes.
 
 ## The Moon (saved for a future season)
 
