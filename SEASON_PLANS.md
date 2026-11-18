@@ -34,7 +34,7 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | 6 | **Dark Side** (space; replaces Deep Freeze) | 7 Apr – 4 May 2027 | The meteor was a key, and Cinder turned it. The Vashk Dominion's fleet on the Moon invades. Take the fight to their Moon fortress. Ends with their queen's ship slipping down to Earth. | High Commander Vorrak of the Vashk Dominion | Boost pack, and the Kite (fighter) | The launch pad on Crash Isle, a crashed landing pod, and a cracked Moon | Moonwalker / Ace / Vorrak's Armour |
 | 7 | **Scales** | 5 May – 1 Jun 2027 | Queen Ssera's shapeshifters replace people in Bangalore one by one, Velvet among them. Her crashed ship is a rift ship. Ends with the sky tearing open onto another Bangalore. | Queen Ssera | Truth lens and hover-sled | The wrecked mothership in the Far Range, and the tear in the sky | Alien Hunter / Truth Lens Agent / Vashk Disguise |
 | 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore presses down from the sky. Jump between the two cities and fight your evil double. **Prime wins:** your Bangalore is destroyed, and the Keeper throws you into a new universe with a completely different map. | {N} Prime, the evil version of you | Rift jumper | Your Bangalore is gone. Seasons 9–15 are on a new map | Rift Jumper / Other-Earth You / {N} Prime |
-| 9 | **Neon Nights** (Phase 2 begins) | 30 Jun – 27 Jul 2027 | You wake up in Kaleido, a neon mega-city in another universe, with no ID and a device everyone wants. Vector, who runs the city's network, hunts you. Ends with the twist that Prime got here first. | Vector, CEO of Vector Systems | Hacking rig and hover-car | A Lowlights hideout and a neon strip in Kaleido | Stacks Runner / Hologram / Vector |
+| 9 | **Neon Nights** (Phase 2 begins) | 30 Jun – 27 Jul 2027 | You wake up in New Bangalore, a neon mega-city in another universe, with no ID and a device everyone wants. Vector, who runs the city's network, hunts you. Ends with the twist that Prime got here first. | Vector, CEO of Vector Systems | Hacking rig and hover-car | A Lowlights hideout and a neon strip in New Bangalore | Stacks Runner / Hologram / Vector |
 | 10 | **Skyline** | 28 Jul – 24 Aug 2027 | Floating islands appear. | Baron Altitude | Glider | An anchored sky island | Glider Pilot / Sky Racer / Baron Altitude |
 | 11 | **Harvest** | 25 Aug – 21 Sep 2027 | A food shortage; farms spread across the island. | The Blight (rot) | Farming | New farmland | Farmer / Scarecrow / The Blight |
 | 12 | **To be re-planned** (Neon Nights moved to Season 9) | 22 Sep – 19 Oct 2027 | – | – | – | – | – |
@@ -527,7 +527,7 @@ This time, it isn't yours.
 2. The two cities touch. Your Bangalore starts to come apart, street by street, and everything Seasons 1–7 built goes with it: Crash Isle, the sunken district, Ember Island, the cracked Moon.
 3. The Keeper reaches you through the noise and presses the meteor core and the rift jumper into your hands: *“It can carry one. Go.”*
 4. White light.
-5. **Last shot:** you wake up on unfamiliar ground, under an unfamiliar sky. A different city, a different coast, different stars. A kid stares at you and says something in a language you don't know. Your Bangalore is gone. **Season 9.**
+5. **Last shot:** you wake up on unfamiliar ground, under an unfamiliar sky. A different city, a different coast, different stars. A kid stares at you, and behind the kid a skyline of neon towers goes up further than you can see. Your Bangalore is gone. **Season 9.**
 
 ### How it plays
 - **The rift jumper (kept):**
@@ -574,25 +574,25 @@ This time, it isn't yours.
 ### What this changes for Seasons 9–15
 - From Season 9 the seasons take place in **a new universe with a completely different map**. Seasons 9–15 in the list were written for Bangalore, so they need adapting.
 - **Decided so far:** you arrive with your gear, and the rift jumper and meteor core come with you.
-- **Decided since:** the new world is Kaleido, a neon mega-city. It replaces Bangalore and the bedroom for every visitor, for good, and Bangalore doesn't come back (see Phase 2 below).
+- **Decided since:** the new world is New Bangalore, a neon mega-city. It replaces Bangalore and the bedroom for every visitor, for good, and Bangalore doesn't come back (see Phase 2 below).
 
-# Phase 2 · Kaleido (Seasons 9–15, Phase 2 · Chapters 1–7)
+# Phase 2 · New Bangalore (Seasons 9–15, Phase 2 · Chapters 1–7)
 
-Phase 1 (Seasons 1–8) happened in Bangalore, and ended with Prime winning and your Bangalore destroyed. Phase 2 happens in **Kaleido**, a neon mega-city in another universe, where the Keeper's last act threw you. You arrive with everything you'd earned (weapons, tools, vehicles and skins), plus the meteor core and the rift jumper. The big thread of Phase 2: Prime has swallowed a hundred worlds, Kaleido is the next on the list, and this time you have to be ready.
+Phase 1 (Seasons 1–8) happened in Bangalore, and ended with Prime winning and your Bangalore destroyed. Phase 2 happens in **New Bangalore**, a neon mega-city in another universe, where the Keeper's last act threw you. You arrive with everything you'd earned (weapons, tools, vehicles and skins), plus the meteor core and the rift jumper. The big thread of Phase 2: Prime has swallowed a hundred worlds, New Bangalore is the next on the list, and this time you have to be ready.
 
 ### What Phase 2 changes for everyone (decided)
-- **Kaleido replaces Bangalore for good.** From Season 9 the city every visitor walks out into is Kaleido, not Bangalore, and it stays Kaleido after the seasons, too.
+- **New Bangalore replaces Bangalore for good.** From Season 9 the city every visitor walks out into is New Bangalore, not Bangalore, and it stays New Bangalore after the seasons, too.
   - Bangalore is gone, along with everything Phase 1 left on its map: Crash Isle, the sunken district, Ember Island, the garage under the tower.
   - Season 15 doesn't bring it back.
-- **The bedroom changes too.** The site's front door becomes your new place in Kaleido: a small apartment in the Mids, with rain and neon outside the window and a sky-train going past.
+- **The bedroom changes too.** The site's front door becomes your new place in New Bangalore: a small apartment in the Mids, with rain and neon outside the window and a sky-train going past.
   - Everything the room is there for comes with you: the desk, the laptop (RayanOS), research, projects, music and vinyl, the walkie-talkie and the simple view.
   - So the site's content stays the same, in a new room.
 - **Your gear comes with you:** weapons, tools, vehicles, skins and saved progress.
 - **{N} Prime is the recurring villain of Phase 2:**
-  - Season 9: Vector has been taking Prime's calls, and Prime got to Kaleido first.
+  - Season 9: Vector has been taking Prime's calls, and Prime got to New Bangalore first.
   - Seasons 10–14: Prime is behind or alongside each season's villain. Prime sends agents, turns up in person at least once, and keeps getting closer.
   - Season 15 (Convergence): you kill Prime early, in week two, and the Collector of Worlds takes over as the final villain.
-- **The build:** Kaleido is a new world built from scratch in `index.html`, the biggest build in the series. The new bedroom is a second big piece of work. Both need to be ready by Season 9 (30 June 2027).
+- **The build:** New Bangalore is a new world built from scratch in `index.html`, the biggest build in the series. The new bedroom is a second big piece of work. Both need to be ready by Season 9 (30 June 2027).
 
 ## Phase 2 · Chapter 1 (Season 9) · Neon Nights (30 June – 27 July 2027)
 
@@ -602,17 +602,17 @@ You wake up in the rain at the bottom of a city that goes up for ever. It's buil
 - **the Mids:** markets, sky-trains and noodle bars;
 - **the Spires:** clean glass towers above the clouds, for people who never look down.
 
-Every sign is in a language you can't read. Every door scans you, and you have no ID. And the device in your pocket is the most valuable thing in the city.
+It looks like Bangalore, sort of, and it's called New Bangalore, but nothing is where it should be. Every door scans you, and you have no ID. And the device in your pocket is the most valuable thing in the city.
 
 **The cast**
-- **Vector (villain, original):** CEO of Vector Systems, which runs Kaleido's network: every camera, door, drone and ID. He's smiling, polite, and always watching. He picks up the rift jumper's signal the night you arrive. *“Everything in my city has a price, and a serial number. You have neither. Let’s fix that.”*
-- **Pip (ally, new):** a street kid from the Stacks who finds you on the first night. Quick, funny and fearless, Pip teaches you the language a word at a time.
+- **Vector (villain, original):** CEO of Vector Systems, which runs New Bangalore's network: every camera, door, drone and ID. He's smiling, polite, and always watching. He picks up the rift jumper's signal the night you arrive. *“Everything in my city has a price, and a serial number. You have neither. Let’s fix that.”*
+- **Pip (ally, new):** a street kid from the Stacks who finds you on the first night. Quick, funny and fearless, Pip shows you how the city works: the shortcuts, the safe spots, and who not to trust.
 - **The Lowlights:** a crew of hackers and couriers living off-grid in the Stacks.
 - **The meteor core:** quieter here. It's the only thing left of the Keeper, and every so often it shows you a glimpse of Prime's red city, getting closer.
 
 **Cold open (30 Jun).**
 - The last thing you remember is white light.
-- Now: neon rain, the hum of a sky-train overhead, a wall of signs in letters you don't know.
+- Now: neon rain, the hum of a sky-train overhead, a wall of signs for places you've never heard of.
 - A street kid stares at you, says something you don't understand, then points at the glowing device in your hand and says the one word you do get: *“Run.”*
 - A drone's red eye turns towards you.
 
@@ -620,25 +620,22 @@ Every sign is in a language you can't read. Every door scans you, and you have n
 
 | Week | Chapter | What you do | Boss |
 |---|---|---|---|
-| 1 · 30 Jun | Stranger | Survive your first night in the Stacks with no ID. Pip teaches you words, and signs slowly translate as you learn. Get a forged ID chip so doors and trains stop stopping you. | **Glitch**, Vector's bounty hunter, who flickers in and out of sight with a holographic cloak. |
-| 2 · 7 Jul | Uplink | The Lowlights show you that the core can see Kaleido's network. **Hacking:** take over cameras, open doors, turn drones against their owners and shut off a block's lights. | **Warden-9**, a security mech hunting you through a market while you hack its weak points in mid-fight. |
+| 1 · 30 Jun | Stranger | Survive your first night in the Stacks with no ID. Pip shows you the Stacks: where to hide, where to eat, and which drones to avoid. Get a forged ID chip so doors and trains stop stopping you. | **Glitch**, Vector's bounty hunter, who flickers in and out of sight with a holographic cloak. |
+| 2 · 7 Jul | Uplink | The Lowlights show you that the core can see New Bangalore's network. **Hacking:** take over cameras, open doors, turn drones against their owners and shut off a block's lights. | **Warden-9**, a security mech hunting you through a market while you hack its weak points in mid-fight. |
 | 3 · 14 Jul | Skyline | Climb from the Stacks to the Spires: wall-running up glass towers, a grappling line between buildings, and a **hover-car** chase through the sky lanes. | **Halo**, Vector's enforcer, in a fight on the outside of a moving sky-train. |
 | 4 · 21 Jul | Vector (finale) | Break into Vector Tower above the clouds. | Three phases:<br>1. Every system in the tower turns on you: turrets, doors and drones you have to hack in mid-fight.<br>2. A rooftop chase across the Spires.<br>3. Vector in a hard-light suit, made of the city's own network. |
 
 **The finale (sets up Season 10).**
 1. You beat Vector and cut him off from the network, and the whole city's ID system goes down for one night. The Stacks celebrate in the streets.
-2. **Twist:** in Vector's private vault, you find a red screen. Vector has been taking calls from someone wearing your face. Prime got to Kaleido first, and Vector was preparing the city to be handed over.
+2. **Twist:** in Vector's private vault, you find a red screen. Vector has been taking calls from someone wearing your face. Prime got to New Bangalore first, and Vector was preparing the city to be handed over.
 3. Vector's last words, as the Lowlights lead him away: *“You think I was building this for me? I was building it for them.”*
-4. Last shot: in the sky over Kaleido, very faint, a thin red line opens, like the start of a tear. **Season 10.**
+4. Last shot: in the sky over New Bangalore, very faint, a thin red line opens, like the start of a tear. **Season 10.**
 
 ### How it plays
-- **A whole new map:** Kaleido.
+- **A whole new map:** New Bangalore.
   - It's a vertical neon mega-city with three layers (the Stacks, the Mids, the Spires), sky-trains, rain, giant holograms and markets.
   - It's built from scratch as its own world in `index.html` (the biggest build in the series).
   - It replaces Bangalore for good, for every visitor.
-- **The language:**
-  - signs and voices start as an unreadable script;
-  - every word Pip teaches you translates more of the city, until you can read it all.
 - **Hacking (the season's tool, a hacking rig built on the meteor core):**
   - look at a camera, door, drone or turret and hack it with a quick timing puzzle;
   - then use it: open, switch off, turn around, or take over.
@@ -646,7 +643,7 @@ Every sign is in a language you can't read. Every door scans you, and you have n
   - **wall-running** along glass towers;
   - a **grappling line** between buildings, which works with the rope swing from Season 3;
   - **sky-trains** you can ride and fight on top of.
-- **The hover-car (kept):** flies in the sky lanes between towers. Kaleido's version of the Comet.
+- **The hover-car (kept):** flies in the sky lanes between towers. New Bangalore's version of the Comet.
 - **No ID:** until Chapter 1's forged chip, doors, trains and drones flag you. Afterwards, a wanted level works like Season 4's.
 - **Everything from Phase 1 carries over:** weapons, tools, vehicles and skins.
 
@@ -662,11 +659,11 @@ Every sign is in a language you can't read. Every door scans you, and you have n
 - **Look:**
   - rain-soaked night, pink and cyan neon, giant holograms, steam from street vents;
   - a city so tall you never see the ground or the sky.
-- **Type:** glitching neon signage that flickers between the alien script and English as the trailer goes on.
+- **Type:** glitching neon signage, flickering and buzzing, that resolves into each title.
 - **Score:** synthwave and drum and bass, with a pulsing bassline, sky-train rumble and rain, and a vocoded voice saying the city's name.
 
-## Phase 2 · Chapters 2–6 (Seasons 10–14, to be re-planned for Kaleido)
-The original list (The Rift, Skyline, Harvest, The Drought, Festival of Lights) was written for Bangalore, and needs re-planning around Kaleido. Prime recurs through all of them, getting closer each season.
+## Phase 2 · Chapters 2–6 (Seasons 10–14, to be re-planned for New Bangalore)
+The original list (The Rift, Skyline, Harvest, The Drought, Festival of Lights) was written for Bangalore, and needs re-planning around New Bangalore. Prime recurs through all of them, getting closer each season.
 
 ## Phase 2 · Chapter 7 (Season 15) · Convergence (15 December 2027 – 11 January 2028)
 
@@ -677,8 +674,8 @@ Phase 2 has built up to one fight: you against {N} Prime. Season 15 gives it to 
 
 | Week | Chapter | What happens |
 |---|---|---|
-| 1 · 15 Dec | The Last Hunt | Prime's red city finally breaks through into Kaleido's sky. With everything you've earned across both phases, you take the fight to Prime, and this time you're ready. |
-| 2 · 22 Dec | Prime | **You kill Prime.** It's the fight the whole series has built up to, and it happens in week two, not the finale. Prime's last words, with a laugh that turns into a cough: *“You think I was the end of the line? I was running too. I fed it worlds so it wouldn’t eat mine.”* Then every screen in Kaleido goes dark. |
+| 1 · 15 Dec | The Last Hunt | Prime's red city finally breaks through into New Bangalore's sky. With everything you've earned across both phases, you take the fight to Prime, and this time you're ready. |
+| 2 · 22 Dec | Prime | **You kill Prime.** It's the fight the whole series has built up to, and it happens in week two, not the finale. Prime's last words, with a laugh that turns into a cough: *“You think I was the end of the line? I was running too. I fed it worlds so it wouldn’t eat mine.”* Then every screen in New Bangalore goes dark. |
 | 3 · 29 Dec | The Collector | **The new villain arrives:** **the Collector of Worlds.** It's what Prime was feeding: something vast and patient that eats universes whole. Every villain was running from a bigger one: Ssera fled Prime, and Prime fed the Collector to stay alive. It brings **echoes of every villain you've beaten**, pulled out of the worlds it ate: the Salvager, Captain Brine, Marigold, Devi, Cinder, Vorrak, Ssera, Vector. They come back, one after another. |
 | 4 · 5 Jan | Convergence (finale) | The final showdown with the Collector, using every tool and vehicle from both phases. **Your final choice decides how the cycle restarts:** the seasons loop back to Season 1, and what you choose here changes how Landfall begins next time round. |
 
@@ -704,7 +701,7 @@ Phase 2 has built up to one fight: you against {N} Prime. Season 15 gives it to 
   - **Drowned Bangalore:** the flood from Season 2 that never drained;
   - **Frozen Bangalore:** the ice age that never happened in your world;
   - **Ruined Bangalore:** empty, overgrown, a hundred years after everyone left;
-  - **Echoes of the old seasons:** Phase 1's Bangalore, and even flashes of Kaleido's neon.
+  - **Echoes of the old seasons:** Phase 1's Bangalore, and even flashes of New Bangalore's neon.
 - **Shifts happen without warning at first,** then you learn to read the signs: a shimmer in the air, a ringing sound, a colour cast creeping in.
 - **The reactor** sits at the centre, in every reality at once: the one thing that never changes. It's where the season ends.
 - **No gore or radiation sickness.** It's played as reality bending, not as a realistic nuclear disaster.
