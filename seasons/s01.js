@@ -1,7 +1,7 @@
 // Season 1 · Landfall
 // A meteor crashes into the sea off the west coast. Loaded by index.html only while Season 1 is running; everything it needs
 // from the page comes in through the API object (see seasonApi in index.html). Progress lives in ru-season under "s1".
-window.RU_SEASON_1 = function(R){
+window.RU_SEASON_1 = function(R, opts){
   const THREE = R.THREE, V = (x, y, z) => new THREE.Vector3(x, y, z);
   const IMPACT = [-540, 75], COAST = [-404, 70], PIER = [R.ISLE.px1 + 5, R.ISLE.pz];
   const FRAGS = [[-401, -150], [300, 401], [401, -262]];
@@ -634,9 +634,9 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
     const S = R.info(), fd = new Date(S.start.getTime()), unlock = i => { const d = new Date(fd.getTime() + i * 7 * 864e5); return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); };
     const wk = week(), rows = CH.map(([n, sub], i) => { const open = wk > i, done = i === 0 && st.ch1 || i === 1 && st.c2.done || i === 2 && st.c3.done || i === 3 && st.f.sal, cur = open && !done && (i === 0 || i === 1 && st.ch1 || i === 2 && st.c2.done || i === 3 && st.c3.done);
       return `<div class="phcard"><b>${done ? '✓ ' : ''}Chapter ${i + 1}: ${n}</b><small>${!open ? `Unlocks ${unlock(i)}.` : i === 0 ? (done ? 'Done.' : !st.intro ? 'Step out onto the street.' : !st.met ? 'Go to the ferry pier on the west coast.' : `Find the fragments: ${st.frags.length} of ${FRAGS.length}.`) : i === 1 ? (!st.ch1 ? 'Finish Chapter 1 first.' : done ? `Done: you kept ${st.c2.got.length} of 4.` : !st.c2.start ? 'Go out onto the street.' : `Beat the drones to the fragments: ${st.c2.got.length} kept, ${st.c2.lost.length} lost.`) : i === 2 ? (!st.c2.done ? 'Finish Chapter 2 first.' : done ? 'Done: the core is lit.' : !st.c3.start ? 'Go out onto the street.' : st.c3.got.length < 3 ? `Take the ferry to Crash Isle and find the shards: ${st.c3.got.length} of 3.` : !st.f.for ? 'Beat the Foreman on the north shore of Crash Isle.' : 'Take the shards to the core in the crater.') : i === 3 ? (!st.c3.done ? 'Finish Chapter 3 first.' : st.f.sal ? 'Done: the Salvager is beaten.' : 'Face the Salvager on the east side of Crash Isle.') : ''}</small>${cur ? `<small>${esc(sub)}</small>` : ''}</div>`; }).join('');
-    return `<div class="phcard"><b>Season 1 · Landfall</b><small>Day ${S.day} of 28 · ${S.left} day${S.left === 1 ? '' : 's'} left. A meteor came down off the west coast.</small></div>${rows}
+    return `<div class="phcard"><b>Season 1 · Landfall</b><small>Day ${S.day} of 28 · ${S.left} day${S.left === 1 ? '' : 's'} left. A meteor came down off the west coast.</small><div class="phrow"><button type="button" data-s1="video">▶ Watch the Season 1 trailer</button></div></div>${rows}
       <div class="phcard"><b>Boss fights</b>${FIGHTS_LIST.map(([k, n, how]) => `<small>${st.f[k] ? '✓' : '·'} ${n}: ${st.f[k] ? 'beaten' : how}</small>`).join('')}${st.f.for ? `<small>${st.f.forClean ? '✓' : '·'} Challenge: beat the Foreman without being spotted</small>` : ''}</div>
-      ${st.intro ? `<div class="phcard"><b>Scenes</b><small>Watch them again (out on the street).</small><div class="phrow"><button type="button" data-s1-scene="trailer">▶ Season 1 trailer</button><button type="button" data-s1="replay">▶ Landfall</button>${SCENE_LIST.filter(([id]) => st.seen.includes(id)).map(([id, n]) => `<button type="button" data-s1-scene="${id}">▶ ${n}</button>`).join('')}</div></div>` : ''}
+      ${st.intro ? `<div class="phcard"><b>Scenes</b><small>Watch them again (out on the street).</small><div class="phrow"><button type="button" data-s1-scene="trailer">▶ In-game trailer</button><button type="button" data-s1="replay">▶ Landfall</button>${SCENE_LIST.filter(([id]) => st.seen.includes(id)).map(([id, n]) => `<button type="button" data-s1-scene="${id}">▶ ${n}</button>`).join('')}</div></div>` : ''}
       <div class="phcard"><b>Tools</b><small>${st.scanner ? '✓ Scanner (yours to keep)' : 'Scanner: not yet'}</small></div>
       <div class="phcard" data-s1n><b>Your name: ${esc(R.heroName())}</b><div class="phrow"><button type="button" data-s1="name">Change it</button></div></div>`;
   }
@@ -644,7 +644,14 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
   const SCENE_LIST = [['amb_in', 'Scrappers'], ['amb_out', 'Ambush beaten'], ['hau_in', 'The Hauler'], ['hau_out', 'The barge sinks'], ['for_in', 'The Foreman'], ['for_out', 'The core'], ['sal_in', 'The Salvager'], ['sal_out', 'Finale']];
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   function wire(B){ B.querySelectorAll('[data-s1-scene]').forEach(b => b.onclick = () => { if (!(R.inWorld && R.zone === 'blr') || R.busy || R.DRV.on || R.DRV.lock || R.BL.lvl || !R.onGround()) return R.say('Go out onto the street to watch it again.', 2400); const id = b.dataset.s1Scene; if (id !== 'trailer') R.fightReg(FIGHT[id.split('_')[0]]); R.phoneClose(); setTimeout(() => scene(id, id === 'trailer' ? trailer() : SCN[id]()), 300); });
+    const tv = B.querySelector('[data-s1="video"]'); if (tv) tv.onclick = () => { R.phoneClose(); if (R.video) R.video('seasons/s01-trailer.mp4'); };
     const rp = B.querySelector('[data-s1="replay"]'); if (rp) rp.onclick = () => { if (!(R.inWorld && R.zone === 'blr') || R.busy || R.DRV.on || R.DRV.lock || R.BL.lvl || !R.onGround()) return R.say('Go out onto the street to watch it again.', 2400); R.phoneClose(); setTimeout(() => csStart(true), 300); };
     const b = B.querySelector('[data-s1="name"]'); if (b) b.onclick = () => { const v = prompt('Your name (up to 16 characters):', R.heroName() === 'Traveller' ? '' : R.heroName()); if (v == null) return; if (v.trim() && !R.cleanName(v)) return R.say('Pick a different name.', 2000); R.setName(v); B.querySelector('[data-s1n] b').textContent = 'Your name: ' + R.heroName(); }; }
+  // after the season: only what it left on the map. Crash Isle with its lit core, and its ferry stop
+  if (opts && opts.past) return { step(dt, now){
+    const inB = R.inWorld && R.zone === 'blr'; if (inB && R.BLC.built) { buildIsle(); coreBeam(); addStop(); }
+    if (isle) isleStep(dt, now / 1000); if (!inB) { dockBtn.hidden = true; return; }
+    const [mx, mz] = R.toMap(R.pos.x, R.pos.z), free = !R.busy && !R.DRV.on && !R.DRV.lock && !R.BL.cine && !R.BL.lvl && R.onGround();
+    dockBtn.hidden = !(free && isle && Math.hypot(mx - DOCK[0], mz - DOCK[1]) < 6); } };
   return { step, tab, wire, debug: { get cs(){ return CS; }, st, scan, get c2(){ return c2; }, get c3(){ return c3; }, goIsle, FIGHT, startFight, scene, SCN, get SC(){ return SC; }, fightStep, trailer: () => scene('trailer', trailer()) } };
 };

@@ -2704,6 +2704,38 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, .22, 'square', .05), i * 90));
   }
   const LABELS = { logbook: 'Rayan\u2019s logbook', seed: 'A strange golden seed', lairexit: 'Back upstairs', lairboard: 'The lair scoreboard', rackinfo: 'The weapon rack', telescope: 'Look through the telescope', hatch: 'Back downstairs', ladder: 'Climb to the rooftop', lift: 'Take the lift', window: 'The sky outside', counter: 'Visitors so far', speakers: 'Play lo-fi', portal: 'Through the moon gate: Mandalink world', meddoor: 'Take the lift',  medkiosk: 'Lobby kiosk', cbstart: 'The pager: Code Black', medlift: 'Take the lift', halePlaque: 'A plaque in the lobby', sfClock: 'The Clockmaker’s clock', medexit: 'Back to the room', optable: 'Lift the sheet', whiteboard: 'The whiteboard', swim: 'Swim corner', photos: 'Photo folder', reviews: 'My album reviews', shelfvinyl: 'On the shelf', alexa: 'Alexa', scratch: 'Scratch it', map: 'AgriBridge across India', apk: 'Download AgriBridge (Android)', chat: 'A walkie-talkie', builder: 'Play: block builder', switch: 'Light switch', radicals: 'Play: find the radical', screen: 'Use my laptop', crate: 'Dig through the crate', vaultbook: 'Pull the red book', wardrobe: 'Open the wardrobe', atticdoor: 'A cord hanging from the ceiling', sparelamp: 'The lamp', sparewin: 'The round window', sparebed: 'The mattress', attichome: 'Back downstairs', atticchair: 'An old armchair', attictrunk: 'An old trunk' };
+  // ---------- Season 1 on the north wall, between the desk and the About poster: the Landfall logo, and a TV that plays the trailer ----------
+  // The trailer is a video file (seasons/s01-trailer.mp4); it only downloads when someone presses play.
+  function s1Logo(c, w, h, sub){
+    const bg = c.createLinearGradient(0, 0, w, h); bg.addColorStop(0, '#0B0D14'); bg.addColorStop(1, '#2A1410'); c.fillStyle = bg; c.fillRect(0, 0, w, h);
+    const tr = c.createLinearGradient(w * .95, h * .05, w * .25, h * .7); tr.addColorStop(0, 'rgba(255,240,200,0)'); tr.addColorStop(.75, 'rgba(255,140,60,.65)'); tr.addColorStop(1, 'rgba(255,230,180,1)');
+    c.strokeStyle = tr; c.lineCap = 'round'; c.lineWidth = h * .05; c.beginPath(); c.moveTo(w * .95, h * .05); c.lineTo(w * .27, h * .66); c.stroke();
+    const gl = c.createRadialGradient(w * .26, h * .67, 1, w * .26, h * .67, h * .22); gl.addColorStop(0, 'rgba(255,240,210,1)'); gl.addColorStop(.3, 'rgba(255,140,60,.8)'); gl.addColorStop(1, 'rgba(255,120,40,0)'); c.fillStyle = gl; c.beginPath(); c.arc(w * .26, h * .67, h * .22, 0, 7); c.fill();
+    c.fillStyle = 'rgba(40,60,80,.9)'; c.fillRect(0, h * .78, w, h * .22); c.fillStyle = 'rgba(255,150,80,.35)'; c.fillRect(0, h * .78, w, 3);
+    c.textAlign = 'center'; c.textBaseline = 'middle'; c.shadowColor = 'rgba(255,110,40,.8)'; c.shadowBlur = h * .06;
+    c.fillStyle = '#FFB27A'; c.font = `800 ${Math.round(h * .085)}px ${DISPLAY}`; c.fillText('S E A S O N   1', w / 2, h * .25);
+    c.fillStyle = '#FFFFFF'; c.font = `900 ${Math.round(h * .27)}px ${DISPLAY}`; c.fillText('LANDFALL', w / 2, h * .48); c.shadowBlur = 0;
+    if (sub) { c.fillStyle = '#F4F1E8'; c.font = `700 ${Math.round(h * .07)}px ${DISPLAY}`; c.fillText(sub, w / 2, h * .89); }
+  }
+  {
+    const g = new THREE.Group(); g.userData.egg = 's1tv'; scene.add(g); const x0 = -1.28;
+    box(1.16, .7, .07, mat(0x16181D, { metalness: .4, roughness: .4 }), x0, 1.42, -4.92, g);
+    const scr = new THREE.Mesh(new THREE.PlaneGeometry(1.06, .6), new THREE.MeshBasicMaterial({ map: tex(1024, 576, (c, w, h) => { s1Logo(c, w, h, '▶  WATCH THE TRAILER'); }) }));
+    scr.position.set(x0, 1.42, -4.882); g.add(scr);
+    const ban = new THREE.Mesh(new THREE.PlaneGeometry(1.16, .39), new THREE.MeshStandardMaterial({ roughness: .8, map: tex(900, 300, (c, w, h) => s1Logo(c, w, h, '18 NOV – 15 DEC 2026')) }));
+    ban.position.set(x0, 2.2, -4.92); g.add(ban); box(1.2, .43, .02, mat(0xE8B82E), x0, 2.2, -4.935, g);
+    LABELS.s1tv = 'Season 1 · Landfall: watch the trailer'; addMarker(V(x0, 2.6, -4.72), 0x7C8CFF, { egg: 's1tv' });
+    views.s1tv = { pos: V(x0, 1.55, -2.9), look: V(x0, 1.5, -4.95) };
+  }
+  const tvBox = document.createElement('div'); tvBox.className = 'tvbox'; tvBox.hidden = true; tvBox.setAttribute('role', 'dialog'); tvBox.setAttribute('aria-label', 'Season 1 trailer');
+  tvBox.innerHTML = '<div class="tvin"><video playsinline controls preload="none"></video><button type="button" class="btn tvx">Close ✕</button></div>'; document.body.appendChild(tvBox);
+  { const s = document.createElement('style'); s.textContent = '.tvbox{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:calc(16px + env(safe-area-inset-top,0px)) calc(16px + env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px))}.tvbox[hidden]{display:none}.tvin{width:min(100%,1100px);display:flex;flex-direction:column;align-items:flex-end;gap:10px}.tvin video{width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;display:block}'; document.head.appendChild(s); }
+  function seasonVideo(src){ const v = tvBox.querySelector('video'); if (!v.getAttribute('src') || v.getAttribute('src') !== src) v.setAttribute('src', src); if (document.pointerLockElement) document.exitPointerLock(); tvBox.hidden = false; try { v.currentTime = 0; const p = v.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
+  function trailerOpen(){ seasonVideo('seasons/s01-trailer.mp4'); }
+  function tvClose(){ const v = tvBox.querySelector('video'); try { v.pause(); } catch (e) {} tvBox.hidden = true; }
+  tvBox.querySelector('.tvx').addEventListener('click', e => { e.stopPropagation(); tvClose(); });
+  tvBox.addEventListener('click', e => { if (e.target === tvBox) tvClose(); });
+  addEventListener('keydown', e => { if (!tvBox.hidden && e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); tvClose(); } }, true);
   const bookLabel = () => vaultOpen ? 'Close the bookshelf' : 'Pull the red book';
 
   let night = false;
@@ -7511,8 +7543,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   // outside fights, whatever you're holding is in your hand as you walk around
   let idleShown;
+  let idleWear = null;  // the skin the hands were last built in
   function idleView(){
-    const sc = sceneOf(); if (!sc) return;
+    const sc = sceneOf(); if (!sc) return; if (typeof ARS !== 'undefined' && ARS.wear !== idleWear) { idleWear = ARS.wear; idleShown = undefined; }
     // in a fight you see your own fists (or your hero's hammer, shield or claws), and they punch when you attack
     const old = !EV && SG.flags && SG.flags.old, hk = EV ? 'ev:' + EV.hero + ':' + (EV.prop || 'fists') : inWorld && zone === 'farm' ? 'farm:' + FM.s.tool : old ? 'old' : held;
     if (idleShown !== hk || viewG.parent !== sc) { clearView(); if (viewG.parent) viewG.parent.remove(viewG); sc.add(viewG); idleShown = hk; if (typeof hk === 'string' && hk.startsWith('farm:')) fmView(FM.s.tool); else if (old) { spareHand(-1); const c = new THREE.Group(); c.userData.base = V(.3, -.4, -.55); c.position.copy(c.userData.base); viewG.add(c); const blade = mkWeapon('claws'); blade.scale.setScalar(.5); blade.rotation.set(Math.PI, 0, 0); blade.position.y = -.2; c.add(blade); box(.12, .05, .05, mat(0x6A4E3A), 0, .08, 0, c); c.traverse(o => { if (o.isMesh) { o.castShadow = false; o.userData.noPick = true; } }); } else if (EV) buildView(EV.prop || 'fists', false); else if (held) buildView(held, held === 'claws' && condition('claws').broken); else { spareHand(1); spareHand(-1); } }
@@ -10788,7 +10821,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   phEl.querySelector('#phTabs').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (b) phShow(b.dataset.t); });
   phEl.querySelector('#phTabs [data-t="story"]').hidden = true; // shown once a story has been started (see phoneOpen)
   const phOpen = () => phEl.classList.contains('on');
-  function phoneOpen(t){ if (EV || A || !inWorld) return; if (zone === 'mc' && BZ.s.out && !BZ.s.clear) { bzNoiseAdd(.45); bzMakeNoise(pos.x, pos.z, 120); } if (document.pointerLockElement) document.exitPointerLock(); Object.keys(keys).forEach(k => keys[k] = false); phEl.classList.add('on'); const stOn = storyStarted(), stB = phEl.querySelector('#phTabs [data-t="story"]'); if (stB) stB.hidden = !stOn; phShow(t === 'story' && !stOn || !t && PH.tab === 'story' && !stOn ? 'map' : t || PH.tab); tone(1046, .06, 'sine', .03); }
+  // in the bedroom the phone works too, with the tabs that don't need the city
+  const PH_CITY = ['map', 'jobs', 'camera', 'story'], phRoom = () => entered && !inWorld && !EV && !A && !(RW && RW.on);
+  function phTabsFit(){ const room = !inWorld; PH_CITY.forEach(k => { const b = phEl.querySelector(`#phTabs [data-t="${k}"]`); if (!b) return; if (room) b.hidden = true; else if (k !== 'story') b.hidden = false; }); }
+  function phoneOpen(t){ if (EV || A || !(inWorld || phRoom())) return; if (!inWorld && (!t || PH_CITY.includes(t)) && PH_CITY.includes(t || PH.tab)) t = 'season'; if (zone === 'mc' && BZ.s.out && !BZ.s.clear) { bzNoiseAdd(.45); bzMakeNoise(pos.x, pos.z, 120); } if (document.pointerLockElement) document.exitPointerLock(); Object.keys(keys).forEach(k => keys[k] = false); phEl.classList.add('on'); const stOn = storyStarted(), stB = phEl.querySelector('#phTabs [data-t="story"]'); if (stB) stB.hidden = !stOn; phTabsFit(); phShow(t === 'story' && !stOn || !t && PH.tab === 'story' && !stOn ? (inWorld ? 'map' : 'season') : t || PH.tab); tone(1046, .06, 'sine', .03); }
   function phoneClose(){ phEl.classList.remove('on'); }
   phEl.addEventListener('click', e => { if (e.target.closest('[data-bkskip]')) { phoneClose(); if (!EV && !A) setTimeout(bkSkipAsk, 200); return; } if (e.target.closest('[data-bkres]')) { phoneClose(); if (!EV && !A) bkResume(); return; } if (e.target.closest('[data-st]')) { phoneClose(); if (!EV && !A) enterStation(); } });
   phBtn.addEventListener('click', e => { e.stopPropagation(); phOpen() ? phoneClose() : phoneOpen(); });
@@ -10874,7 +10910,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       B.querySelectorAll('[data-p]').forEach(b => b.onclick = () => { phoneClose(); openPanel(b.dataset.p); }); return; }
     if (t === 'camera') { B.innerHTML = '<div class="phcard"><b>Camera</b><small>Switches to third person and photo mode. Use the shutter at the bottom, change filters, and press P or Esc when you’re done.</small><div class="phrow"><button type="button" class="y" data-a="cam">Take a selfie</button></div></div>'; B.querySelector('[data-a="cam"]').onclick = () => { phoneClose(); if (!tpv) setPov(true); setTimeout(() => setPhoto(true), 200); }; return; }
   }
-  function phStep(){ phBtn.hidden = !(inWorld && ['blr', 'twr', 'lair', 'mc', 'xc', 'xin', 'apt'].includes(zone) && !EV && !A); if (!phBtn.hidden || !phOpen()) {} if (phOpen() && (EV || A || !inWorld)) phoneClose(); if (phOpen() && PH.tab === 'map' && PH.draw && (performance.now() | 0) % 3 === 0) PH.draw();
+  function phStep(){ phBtn.hidden = !(inWorld && ['blr', 'twr', 'lair', 'mc', 'xc', 'xin', 'apt'].includes(zone) && !EV && !A || phRoom() && !panel.classList.contains('on')); if (phOpen() && (EV || A || !(inWorld || phRoom()))) phoneClose(); if (phOpen() && PH.tab === 'map' && PH.draw && (performance.now() | 0) % 3 === 0) PH.draw();
     if (PH.wp && inWorld && zone === 'blr') { const [mx, mz] = toMap(pos.x, pos.z); if (Math.hypot(PH.wp[0] - mx, PH.wp[1] - mz) < 8) { PH.wp = null; say('You’ve reached your pin.', 1600); } } }
   function phContact(o){ const who = (BIN.ppl[0] && BIN.ppl[0].who) || 'Someone', where = o.d.name; if (!PH.contacts.some(c => c.where === where)) { PH.contacts.push({ who, where }); try { localStorage.setItem('ru-contacts', JSON.stringify(PH.contacts)); } catch (e) {} } }
   // the office's hiring board: a way back to the real Rayan
@@ -15163,7 +15199,8 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // Each season's story lives in its own file (seasons/s01.js and so on), loaded only while that season is running, and gets
   // this small API instead of reaching into the page. Progress is saved under ru-season. Add ?season=N to preview a season.
   const SEASON0 = new Date(2026, 10, 18), SEASON_LEN = 28;
-  const SEASON_V = '2026-11-18h';  // bump whenever a seasons/*.js file changes
+  const SEASON_V = '2026-11-18i';
+  const SEASON_FILES = [1];  // the seasons that have a file in seasons/ (add each new one here)  // bump whenever a seasons/*.js file changes
   const SEASON_NAMES = ['Landfall', 'High Water', 'The Carnival', 'Blackout', 'The Eruption', 'Deep Freeze', 'Scales', 'Incursion', 'The Rift', 'Skyline', 'Harvest', 'Neon Nights', 'The Drought', 'Festival of Lights', 'Convergence'];
   const SEASON = { S: undefined, mod: null, loading: false, failed: false };
   function seasonInfo(){
@@ -15185,11 +15222,15 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     get tpv(){ return tpv; }, set tpv(v){ tpv = !!v; }, get zone(){ return zone; }, get inWorld(){ return inWorld; }, get entered(){ return entered; }, get busy(){ return !!(EV || A); }, get lowFx(){ return lowFx; },
     get BL(){ return BL; }, get BLC(){ return BLC; }, get DRV(){ return DRV; }, get PH(){ return PH; }, get DLG(){ return DLG; }, get room(){ return scene; }, get panelOpen(){ return panel.classList.contains('on'); },
     say, tone, toMap, toLocal, onGround, blrBox, avatar, crowdLook, tex, mat, glowM, decor, B3, C3, S3, fade, flakeTex, heroName, cleanName, setName,
-    fight: ssFight, fightReg: ssReg, heroAv: ssAvatar, give: arsGive, skin: arsSkin, equip: arsEquip, get ars(){ return ARS; }, weapons: SSW, skins: SSKIN, get fighting(){ return !!(EV && EV.opts && EV.opts.ss); },
+    fight: ssFight, fightReg: ssReg, heroAv: ssAvatar, give: arsGive, skin: arsSkin, equip: arsEquip, video: seasonVideo, get ars(){ return ARS; }, weapons: SSW, skins: SSKIN, get fighting(){ return !!(EV && EV.opts && EV.opts.ss); },
     dlgPlay, dlgNext, dlgSkip, closePanel, phoneClose, panel(html){ panelBody.innerHTML = html; panel.scrollTop = 0; panel.classList.add('on'); return panelBody; }
   }; }
   function seasonStep(dt, now){
     if (!entered) return; if (SEASON.S === undefined) SEASON.S = seasonInfo(); const S = SEASON.S; if (!S) return;
+    // seasons that have ended leave their mark on the map: their files load again in a traces-only mode ({ past: true })
+    if (!SEASON.past) { SEASON.past = []; SEASON_FILES.filter(k => k !== S.n && (S.cycle > 1 || k < S.n)).forEach(k => { const sc = document.createElement('script'); sc.src = 'seasons/s' + String(k).padStart(2, '0') + '.js?v=' + SEASON_V;
+      sc.onload = () => { const f = window['RU_SEASON_' + k]; if (typeof f !== 'function') return; try { const m = f(seasonApi(), { past: true }); if (m && m.step) SEASON.past.push(m); } catch (e) { console.error(e); } }; document.head.appendChild(sc); }); }
+    SEASON.past.forEach(m => { try { m.step(dt, now); } catch (e) { console.error(e); } });
     if (!SEASON.mod && !SEASON.loading && !SEASON.failed) { SEASON.loading = true; const sc = document.createElement('script'); sc.src = 'seasons/s' + String(S.n).padStart(2, '0') + '.js?v=' + SEASON_V;  // the version tag stops browsers reusing an old copy (or an old 404)
       sc.onload = () => { SEASON.loading = false; const f = window['RU_SEASON_' + S.n]; if (typeof f !== 'function') { SEASON.failed = true; return; } try { SEASON.mod = f(seasonApi()) || {}; } catch (e) { console.error(e); SEASON.failed = true; } };
       sc.onerror = () => { SEASON.loading = false; SEASON.failed = true; }; document.head.appendChild(sc); return; }
@@ -20265,6 +20306,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     if (p.egg === 'window') return say(`It\u2019s ${istClock()} where Rayan is. The sky outside matches.`, 3200);
     if (p.egg === 'counter') return say(visitors ? `You\u2019re one of ${visitors.toLocaleString()} visitors so far. Welcome!` : 'The visitor counter is warming up.', 3000);
     if (p.egg === 'map') return playMap();
+    if (p.egg === 's1tv') return flyTo(views.s1tv.pos.clone(), views.s1tv.look, trailerOpen);
     if (p.egg === 'wtree' || p.egg === 'wglobe' || p.egg === 'wcocoa') return winterEgg(p.egg);
     if (p.egg === 'chat') return chatOpen();
     if (p.egg === 'apk') return flyTo(views.map.pos.clone(), views.map.look, apkPanel);
