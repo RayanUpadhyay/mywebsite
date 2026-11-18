@@ -6292,6 +6292,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const GODS = new Set(['celestial', 'hela', 'loki']);
   // the "reduce effects" setting: no dust clouds or screen shake, no shadows, lower resolution
   // reduce effects: your choice is remembered; until you choose, slower devices start with it on
+  // fancy city graphics (bloom, colour grading, height haze and the city's sun shadows): off unless you turn it on in the menu
+  let fancyFx = false; try { fancyFx = localStorage.getItem('ru-fancy') === '1'; } catch (e) {}
   let lowFx = false, fxChosen = false; try { const v = localStorage.getItem('ru-lowfx'); fxChosen = v !== null; lowFx = v === '1'; } catch (e) {}
   if (!fxChosen && ((navigator.deviceMemory && navigator.deviceMemory <= 4) || (navigator.hardwareConcurrency && navigator.hardwareConcurrency <= 4))) lowFx = true;
   // a frame-rate governor: it watches every scene, all the time, and when frames are slow it steps the graphics down one
@@ -7887,6 +7889,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       ${achMenu()}
       <h3>Settings</h3>
       <div class="prow"><b>Reduce effects<br><small>No dust clouds or screen shake, no shadows, lower resolution. Try it on slower laptops and phones.</small></b><button class="btn" type="button" data-pa="fx">${lowFx ? 'On' : 'Off'}</button></div>
+      <div class="prow"><b>Fancy city graphics<br><small>Bloom, colour grading, haze and sun shadows in Bangalore. Prettier, but much heavier: leave it off if the streets lag.</small></b><button class="btn" type="button" data-pa="fancy">${fancyFx ? 'On' : 'Off'}</button></div>
       <div class="prow"><b>Gore (The Tidy Man)<br><small>Full: blood that splashes, pools and stays, and wounds. Low: dark hit flashes instead of blood.</small></b><button class="btn" type="button" data-pa="gore">${(() => { try { return localStorage.getItem('ru-gore') === 'full' ? 'Full' : 'Low'; } catch (e) { return 'Low'; } })()}</button></div>
       <div class="prow"><b>Scares (The Tidy Man)<br><small>Low: no jump scares or red flashes, and a quieter heartbeat.</small></b><button class="btn" type="button" data-pa="scares">${(() => { try { return localStorage.getItem('ru-scares') === 'full' ? 'Full' : 'Low'; } catch (e) { return 'Low'; } })()}</button></div>
       ${snapState ? '<div class="prow"><b>The snap<br><small>Creatures and weapons are dust, and your room is wrecked.</small></b><button class="btn" type="button" data-pa="unsnap">Undo it</button></div>' : ''}
@@ -7904,6 +7907,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (act2 === 'leave') { closePause(); endFight(); }
     if (act2 === 'unsnap') { unsnap(); renderPause(); }
     if (act2 === 'gore' || act2 === 'scares') { const k = 'ru-' + act2; try { localStorage.setItem(k, localStorage.getItem(k) === 'full' ? 'low' : 'full'); } catch (er) {} renderPause(); }
+    if (act2 === 'fancy') { fancyFx = !fancyFx; try { localStorage.setItem('ru-fancy', fancyFx ? '1' : '0'); } catch (er) {} if (fancyFx) GFX.noPost = false; renderPause(); }
     if (act2 === 'fx') { lowFx = !lowFx; fxChosen = true; try { localStorage.setItem('ru-lowfx', lowFx ? '1' : '0'); } catch (er) {} applyFx(); renderPause(); }
     if (act2 === 'reset' && confirm('Reset all your fight progress? This can\u2019t be undone.')) { ['ru-bosses', 'ru-gauntlet', 'ru-necro', 'ru-storm', 'ru-inv', 'ru-held', 'ru-wear', 'ru-poison', 'ru-snap', 'ru-weapon', 'ru-arm', 'ru-evsolo', 'ru-evdone', 'ru-incursion', 'ru-instab', 'ru-recap', 'ru-lost', 'ru-saviour', 'ru-spark', 'ru-alt', 'ru-altseen', 'ru-metdoom', 'ru-inchero', 'ru-ach', 'ru-pet', 'ru-shop', 'ru-parts', 'ru-wreck', 'ru-cvwon', 'ru-galactus', 'ru-cvforced', 'ru-galbite', 'ru-eaten', 'ru-story', 'ru-cmask', 'ru-ultronred'].forEach(k => { try { localStorage.removeItem(k); } catch (er) {} }); location.reload(); }
   });
@@ -12610,7 +12614,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const hfScene = sc => sc.traverse(o => { if (o.isMesh && !o.isSprite) [].concat(o.material).forEach(hfPatch); });
   // bloom and ambient occlusion: the official add-ons, desktop only, dropped again if frames get slow
   const POST = ['shaders/CopyShader.js', 'shaders/LuminosityHighPassShader.js', 'shaders/SSAOShader.js', 'shaders/GammaCorrectionShader.js', 'math/SimplexNoise.js', 'postprocessing/EffectComposer.js', 'postprocessing/RenderPass.js', 'postprocessing/ShaderPass.js', 'postprocessing/UnrealBloomPass.js', 'postprocessing/SSAOPass.js'];
-  const wantPost = () => fine && !lowFx && !GFX.noPost;
+  const wantPost = () => fancyFx && fine && !lowFx && !GFX.noPost;
   function loadPost(){ if (GFX.loading || GFX.comp || !wantPost()) return; GFX.loading = true; const base = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/';
     // all download at once, and still run in order (async = false); the last one finishing starts the effects
     POST.forEach((f, i) => { const s = document.createElement('script'); s.src = base + f; s.async = false; s.onerror = () => { GFX.noPost = true; }; if (i === POST.length - 1) s.onload = () => initPost(); document.head.appendChild(s); }); }
@@ -12628,25 +12632,22 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const cityLive = () => roofView() || flatView();
   function flatLink(){ if (BL.off.x !== -23 || BL.off.y !== 12.4 || BL.off.z !== -33) { BL.off.set(-23, 12.4, -33); BL.mapG.position.set(23, -12.4, 33); BL.lvl = null; } if (BL.mapG.parent !== BL.sc) BL.sc.add(BL.mapG); }
   function gfxRender(sc){
-    if (GFX.farCut && sc !== BL.sc) { if (camera.far === GFX.farCut) { camera.far = 500; camera.near = .05; camera.updateProjectionMatrix(); } GFX.farCut = 0; if (BLC.sky) BLC.sky.scale.setScalar(1); }
     if (sc === roofScene && roofSky) roofSky.visible = !roofView();
     if (sc === roofScene && roofView()) {
       roofLink(); const C = GFX.cur; if (C) { roofHemi.intensity = C.hemiI * 1.6; roofHemi.color.copy(C.hemiC); roofHemi.groundColor.copy(C.hemiG); roofSun.intensity = C.sunI; roofSun.color.copy(C.sunC); roofSun.position.copy(C.sd).multiplyScalar(40); roofScene.fog.color.copy(C.fog); roofScene.fog.near = C.near; roofScene.fog.far = C.far + 200; BL.sc.fog.color.copy(C.fog); }
-      roofScene.environment = BL.sc.environment; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = GFX.exposure; GFX.haze.value = C ? C.haze : 0; GFX.fogY.value = BL.off.y;
+      roofScene.environment = BL.sc.environment; renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = GFX.exposure; GFX.haze.value = C && fancyFx ? C.haze : 0; GFX.fogY.value = BL.off.y;
       renderer.render(BL.sc, camera); const ac = renderer.autoClear; renderer.autoClear = false; renderer.render(roofScene, camera); renderer.autoClear = ac;
       renderer.toneMapping = THREE.NoToneMapping; renderer.toneMappingExposure = 1; GFX.last = 0; return;
     }
     if (BLC.flatFake) BLC.flatFake.visible = !(sc === TWR.sc && flatView());
     if (sc === TWR.sc && flatView()) {
       flatLink(); const C = GFX.cur; if (C) BL.sc.fog.color.copy(C.fog);
-      renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = GFX.exposure; GFX.haze.value = C ? C.haze : 0; GFX.fogY.value = BL.off.y;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping; renderer.toneMappingExposure = GFX.exposure; GFX.haze.value = C && fancyFx ? C.haze : 0; GFX.fogY.value = BL.off.y;
       renderer.render(BL.sc, camera); const bg = TWR.sc.background, ac = renderer.autoClear; TWR.sc.background = null; renderer.autoClear = false; renderer.clearDepth(); renderer.toneMappingExposure = 1.1; renderer.render(TWR.sc, camera); renderer.autoClear = ac; TWR.sc.background = bg;
       renderer.toneMapping = THREE.NoToneMapping; renderer.toneMappingExposure = 1; GFX.last = 0; return;
     }
-    // in the street the fog hides everything past fog.far, so stop drawing there (and shrink the sky dome to fit inside)
-    if (sc === BL.sc && BL.sc.fog && BLC.sky && BL.sc.fog.far < 460) { const far = Math.max(160, BL.sc.fog.far + 40); if (camera.far !== far || camera.near !== .12) { camera.far = far; camera.near = .12; camera.updateProjectionMatrix(); GFX.farCut = far; } BLC.sky.scale.setScalar(far * .92 / 440); }
     const city = cityScene3(sc); renderer.toneMapping = city ? THREE.ACESFilmicToneMapping : THREE.NoToneMapping; renderer.toneMappingExposure = city ? (sc === BL.sc ? GFX.exposure : 1.1) : 1;
-    GFX.haze.value = sc === BL.sc && GFX.cur ? GFX.cur.haze : 0; GFX.fogY.value = BL.off ? BL.off.y : 0;
+    GFX.haze.value = sc === BL.sc && GFX.cur && fancyFx ? GFX.cur.haze : 0; GFX.fogY.value = BL.off ? BL.off.y : 0;
     const post = city && GFX.comp && wantPost(); if (city && !GFX.comp) loadPost();
     if (sc === BL.sc && BL.sc.fog && GFX.cur) { BL.sc.fog.color.copy(GFX.cur.fog); GFX.sunCol.value.copy(GFX.cur.glow); if (post) { BL.sc.fog.color.convertSRGBToLinear(); GFX.sunCol.value.convertSRGBToLinear(); } }
     if (post) { renderer.getSize(GFX.sz); if (GFX.sz.x !== GFX.w || GFX.sz.y !== GFX.h) { GFX.w = GFX.sz.x; GFX.h = GFX.sz.y; GFX.comp.setSize(GFX.w, GFX.h); }
@@ -12659,13 +12660,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   // once per frame in the city: ease the palette, and push it into the sky, lights, windows and roads
   function skyStep(dt, now){
-    if ((GFX.tick -= dt) <= 0) { GFX.tick = .5; GFX.tgt = palTarget(BL.mood || 'night'); if (!lowFx && (GFX.hf = (GFX.hf || 0) + 1) % 6 === 1) hfScene(BL.sc); }
+    if ((GFX.tick -= dt) <= 0) { GFX.tick = .5; GFX.tgt = palTarget(BL.mood || 'night'); if (fancyFx && !lowFx && (GFX.hf = (GFX.hf || 0) + 1) % 6 === 1) hfScene(BL.sc); }
     const C = GFX.cur, M = BLC.M = C; palEase(C, GFX.tgt, Math.min(1, dt * .7));
     GFX.sunDir.value.copy(C.sd); GFX.sunCol.value.copy(C.glow); GFX.time.value = now / 1000;
     BLC.skyU.top.value.copy(C.top); BLC.skyU.bot.value.copy(C.fog); BLC.skyU.sunC.value.copy(C.glow); BLC.skyU.sun.value.copy(C.sd);
     BL.sc.background.copy(C.fog); BLC.stars.visible = C.stars > .03; BLC.stars.material.opacity = .8 * C.stars;
     BLC.hemi.intensity = C.hemiI; BLC.hemi.color.copy(C.hemiC); BLC.hemi.groundColor.copy(C.hemiG); BLC.sun.intensity = C.sunI; BLC.sun.color.copy(C.sunC); GFX.exposure = C.exp;
-    const sh = C.sunUp && fine && !lowFx; if (BLC.sun.castShadow !== sh) { BLC.sun.castShadow = sh; BL.sc.traverse(o => { if (o.material) [].concat(o.material).forEach(m => m.needsUpdate = true); }); }
+    const sh = C.sunUp && fine && !lowFx && fancyFx; if (BLC.sun.castShadow !== sh) { BLC.sun.castShadow = sh; BL.sc.traverse(o => { if (o.material) [].concat(o.material).forEach(m => m.needsUpdate = true); }); }
     BLC.lamps.forEach(([l, i0]) => l.intensity = i0 * C.lamps); (BLC.facM || []).forEach(m => m.emissiveIntensity = C.win); if (BLC.boardM) BLC.boardM.emissiveIntensity = .05 + C.win * .8;
     if (!EV) { BL.sc.fog.near = C.near; BL.sc.fog.far = C.far; }
     // wet roads when it rains: darker, glossier, with puddles that catch the sky
@@ -14430,11 +14431,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const ground = BL.mapG.children.find(o => o.isMesh && o.geometry.parameters && o.geometry.parameters.width === 900); if (ground) { const k = (E + 3) * 2 / 900; ground.scale.x *= k; ground.scale.y *= k; }
     const wt = tex(256, 256, (c, w, h) => { c.fillStyle = '#2A6E9A'; c.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { c.fillStyle = Math.random() < .5 ? 'rgba(255,255,255,.10)' : 'rgba(0,30,60,.12)'; c.fillRect(Math.random() * w, Math.random() * h, 6 + Math.random() * 14, 2); } }); wt.wrapS = wt.wrapT = THREE.RepeatWrapping; wt.repeat.set(120, 120);
     // the sea is a frame round the island, not a sheet under it: two surfaces 14 cm apart flicker through each other at a distance
-    const seaM = new THREE.MeshStandardMaterial({ color: 0x8FC4E8, map: wt, roughness: .25, metalness: .15 }), R0 = E - 2, R1 = 1500, seaG = [];
+    const seaM = new THREE.MeshStandardMaterial({ color: 0x8FC4E8, map: wt, roughness: .25, metalness: .15, polygonOffset: true, polygonOffsetFactor: 6, polygonOffsetUnits: 6 }), R0 = E - 2, R1 = 1500, seaG = [];
     [[0, (R0 + R1) / 2, R1 * 2, R1 - R0], [0, -(R0 + R1) / 2, R1 * 2, R1 - R0], [(R0 + R1) / 2, 0, R1 - R0, R0 * 2], [-(R0 + R1) / 2, 0, R1 - R0, R0 * 2]].forEach(([x, z, w, d]) => { const geo = new THREE.PlaneGeometry(w, d), uv = geo.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * w / 3000, uv.getY(i) * d / 3000); seaG.push([geo, x, z]); });
     const sea = ISLE.sea = new THREE.Group(); sea.material = seaM; seaG.forEach(([geo, x, z]) => { const m = new THREE.Mesh(geo, seaM); m.rotation.x = -Math.PI / 2; m.position.set(x, -.14, z); m.userData.noPick = true; sea.add(m); }); g.add(sea);
     // a sandy beach all the way round, with a line of surf
-    const sand = new THREE.MeshStandardMaterial({ color: 0xE2CF9E, roughness: 1 }), foam = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: .55, depthWrite: false }), s0 = ISLE.sand0, s1 = E + 4, L = s1 * 2;
+    const sand = new THREE.MeshStandardMaterial({ color: 0xE2CF9E, roughness: 1, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 }), foam = new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: .55, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4, polygonOffsetUnits: -4 }), s0 = ISLE.sand0, s1 = E + 4, L = s1 * 2;
     [[0, (s0 + s1) / 2, L, s1 - s0], [0, -(s0 + s1) / 2, L, s1 - s0], [(s0 + s1) / 2, 0, s1 - s0, s0 * 2], [-(s0 + s1) / 2, 0, s1 - s0, s0 * 2]].forEach(([x, z, w, d]) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), sand); m.rotation.x = -Math.PI / 2; m.position.set(x, .025, z); m.receiveShadow = true; m.userData.noPick = true; g.add(m); });
     ISLE.foam = [[0, s1 + .9, L + 4, 1.4], [0, -s1 - .9, L + 4, 1.4], [s1 + .9, 0, 1.4, L], [-s1 - .9, 0, 1.4, L]].map(([x, z, w, d]) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), foam); m.rotation.x = -Math.PI / 2; m.position.set(x, -.1, z); m.userData.noPick = true; g.add(m); return m; });
     // palms and a few beach things, all in one mesh
@@ -14891,6 +14892,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // Each season's story lives in its own file (seasons/s01.js and so on), loaded only while that season is running, and gets
   // this small API instead of reaching into the page. Progress is saved under ru-season. Add ?season=N to preview a season.
   const SEASON0 = new Date(2026, 10, 18), SEASON_LEN = 28;
+  const SEASON_V = '2026-11-18c';  // bump whenever a seasons/*.js file changes
   const SEASON_NAMES = ['Landfall', 'High Water', 'The Carnival', 'Blackout', 'The Eruption', 'Deep Freeze', 'Scales', 'Incursion', 'The Rift', 'Skyline', 'Harvest', 'Neon Nights', 'The Drought', 'Festival of Lights', 'Convergence'];
   const SEASON = { S: undefined, mod: null, loading: false, failed: false };
   function seasonInfo(){
@@ -14916,7 +14918,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }; }
   function seasonStep(dt, now){
     if (!entered) return; if (SEASON.S === undefined) SEASON.S = seasonInfo(); const S = SEASON.S; if (!S) return;
-    if (!SEASON.mod && !SEASON.loading && !SEASON.failed) { SEASON.loading = true; const sc = document.createElement('script'); sc.src = 'seasons/s' + String(S.n).padStart(2, '0') + '.js';
+    if (!SEASON.mod && !SEASON.loading && !SEASON.failed) { SEASON.loading = true; const sc = document.createElement('script'); sc.src = 'seasons/s' + String(S.n).padStart(2, '0') + '.js?v=' + SEASON_V;  // the version tag stops browsers reusing an old copy (or an old 404)
       sc.onload = () => { SEASON.loading = false; const f = window['RU_SEASON_' + S.n]; if (typeof f !== 'function') { SEASON.failed = true; return; } try { SEASON.mod = f(seasonApi()) || {}; } catch (e) { console.error(e); SEASON.failed = true; } };
       sc.onerror = () => { SEASON.loading = false; SEASON.failed = true; }; document.head.appendChild(sc); return; }
     if (SEASON.mod && SEASON.mod.step) SEASON.mod.step(dt, now);
