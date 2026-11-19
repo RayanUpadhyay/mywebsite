@@ -40,7 +40,7 @@ body.s2cs button:not(.s2skip),body.s2cs .placecard,body.s2cs .s2hearts,body.s2cs
 
   // ---------- scenes with their own camera (same idea as Season 1's) ----------
   let SC = null; const PEND = [];
-  const aimAt = (c, l) => { const [lx, lz] = R.toLocal(c[0], c[2]); R.pos.x = lx; R.pos.z = lz; R.pos.y = c[1]; const dx = l[0] - c[0], dy = l[1] - c[1], dz = l[2] - c[2]; R.yaw = Math.atan2(-dx, -dz); R.pitch = Math.atan2(dy, Math.hypot(dx, dz)); };
+  const aimAt = (c, l) => { if (R.camOut) c = R.camOut(c); const [lx, lz] = R.toLocal(c[0], c[2]); R.pos.x = lx; R.pos.z = lz; R.pos.y = c[1]; const dx = l[0] - c[0], dy = l[1] - c[1], dz = l[2] - c[2]; R.yaw = Math.atan2(-dx, -dz); R.pitch = Math.atan2(dy, Math.hypot(dx, dz)); };
   function scAdd(o){ R.BL.mapG.add(o); (SC ? SC.objs : PEND).push(o); o.traverse(q => q.userData.noPick = true); return o; }
   function scene(id, shots, done){
     if (SC) return false; const [mx, mz] = mapNow(); SC = { id, shots, i: -1, t: 0, done, from: { map: [mx, mz], y: R.pos.y, yaw: R.yaw, pitch: R.pitch, tpv: R.tpv }, objs: PEND.splice(0), shake: 0 };
@@ -53,6 +53,7 @@ body.s2cs button:not(.s2skip),body.s2cs .placecard,body.s2cs .s2hearts,body.s2cs
     if (s.say) setTimeout(() => { if (SC === C) R.say(s.say.replace(/\{N\}/g, R.heroName()), Math.max(1800, s.d * 1000 - 500)); }, 200);
   }
   function scStep(dt){
+    if (R.still) R.still();
     const C = SC, s = C.shots[C.i]; C.t += dt; const f = ease(Math.min(1, C.t / s.d));
     if (s.on) { try { s.on(f, C.t, dt, C); } catch (e) { console.error(e); } } if (SC !== C) return;
     const j = () => (Math.random() - .5) * C.shake; C.shake = Math.max(0, C.shake - dt * .8);
@@ -177,7 +178,7 @@ body.s2cs button:not(.s2skip),body.s2cs .placecard,body.s2cs .s2hearts,body.s2cs
       const flag = glow(0xFFE070, 1.4, .8); flag.position.y = 2.4; g.add(flag); g.traverse(o => o.userData.noPick = true); strand.push({ i, g, a, x, z }); }); }
   function campTalk(){
     st.camp = 1; save(); R.DRV.lock = true; document.body.classList.add('cine');
-    R.dlgPlay([['Bhaskar', 'You came off the river in that? Brave or daft. Either way, welcome to the roof.'], ['Bhaskar', 'We’ve got water, a fire and a radio that only plays static. And sharks. So many sharks.'], ['ME', 'Sharks? In Bangalore?'], ['Bhaskar', 'They came through with the wave. Here: my son’s harpoon gun from the boat club. Better in your hands than his.'], ['Bhaskar', 'There are three more people out there on the wreckage. Bring them home, {N}.']], { block: true, done: () => {
+    R.dlgPlay([['Bhaskar', 'You came off the river on that? Sit down before you fall down.'], ['Bhaskar', 'We have water, a fire, and a radio that picks up one voice. A police inspector, Devi. She reads out which roofs still have people on them.'], ['ME', 'Is anyone coming?'], ['Bhaskar', 'She says so. She’s the only one who’s said anything at all.'], ['Bhaskar', 'This hung on the wall at my son’s boat club. He won’t be needing it.'], ['Bhaskar', 'There are three more people out on the wreckage. The sharks know it too, {N}.']], { block: true, done: () => {
       document.body.classList.remove('cine'); R.DRV.lock = false; st.harpoon = 1; save(); R.tone(660, .2, 'triangle', .05); setTimeout(() => R.tone(990, .3, 'triangle', .05), 150);
       showCard('NEW TOOL', 'Harpoon gun', `${R.fine ? 'Press F' : 'Tap Harpoon'} to fire where you’re looking. One hit drives a shark off, two sink it. Yours to keep.`, 6000); buildStrand(); } });
   }
@@ -187,7 +188,7 @@ body.s2cs button:not(.s2skip),body.s2cs .placecard,body.s2cs .s2hearts,body.s2cs
     scene('shark_in', [{ d: 3.6, start(C){ C.shake = .4; R.tone(48, 3, 'sawtooth', .07, 30); }, cam: f => { const [x, z] = [boss.x + 14, boss.z + 10]; return [x, LEVEL + 2.4 - f, z]; }, look: () => [boss.x, LEVEL, boss.z], name: ['SOMETHING BIGGER', 'THE GREAT SHARK', 'The others just scattered. That fin is the size of a door.'] }], () => R.say('Harpoon it whenever it surfaces. Watch for the ripple ring: that’s it charging.', 4200)); }
   function bossDown(s){ s.mode = 'dead'; boss = null; st.boss1 = 1; st.ch1 = 1; save();
     scene('shark_out', [{ d: 4, on(f){ s.g.position.y = LEVEL - .6 - f * 6; s.g.rotation.z = f * 2.4; }, cam: () => [s.x + 10, LEVEL + 3, s.z + 8], look: () => [s.x, LEVEL - 1, s.z], say: 'The great shark rolls over and slides down into the drowned streets.' },
-      { d: 4.4, start(){ title('PART 1 COMPLETE', 'ADRIFT'); }, cam: f => { const [cx, cz] = places().ctr(places().camp); return [cx + 26, places().camp.h + 6 + f * 3, cz + 22]; }, look: () => { const [cx, cz] = places().ctr(places().camp); return [cx, places().camp.h + 1, cz]; }, say: '📻 …static… *“This is Captain Brine. Every roof in this harbour pays a toll now.”*' }],
+      { d: 4.4, start(){ title('PART 1 COMPLETE', 'ADRIFT'); }, cam: f => { const [cx, cz] = places().ctr(places().camp); return [cx + 26, places().camp.h + 6 + f * 3, cz + 22]; }, look: () => { const [cx, cz] = places().ctr(places().camp); return [cx, places().camp.h + 1, cz]; }, say: '📻 Devi’s voice cuts out mid-sentence. A man takes the channel, unhurried: “Every roof in this harbour pays the toll from tomorrow. Inspector, you can read that out too.”' }],
       () => { dropShark(s); if (st.bites === 0 && R.skin('s2_captain')) setTimeout(() => showCard('NEW SKIN', 'Canal Captain', 'You finished Part 1 without a single bite. Wear it from the Wardrobe.', 5600), 800); const d2 = 8 - R.info().day; showCard('PART 1 COMPLETE', 'Adrift', d2 > 0 ? `Part 2 unlocks in ${d2} day${d2 > 1 ? 's' : ''}.` : 'Part 2 is on its way.', 6000); }); }
 
   // ---------- Part 2 · Brine's Harbour: raiders took the camp's supplies; catch their boats, then his first mate ----------
@@ -213,7 +214,7 @@ body.s2cs button:not(.s2skip),body.s2cs .placecard,body.s2cs .s2hearts,body.s2cs
   function raiderHit(r){ r.hp--; ripple(r.x, r.z, 1.5); R.tone(700, .1, 'square', .04, 300);
     if (r.hp > 0) return R.say(r.big ? `A hit on the first mate’s boat (${r.hp} more).` : 'A hit! The raider swerves.', 1300);
     if (r.big) return mateDown(r); r.mode = 'stopped'; R.say('Their engine dies. The raider dives overboard, and the stolen crate bobs up beside the boat.', 3000);
-    const c = new THREE.Mesh(new THREE.BoxGeometry(1, .8, 1), M(0x8A6A4A)); c.position.set(r.x + 2, LEVEL + .1, r.z); c.userData.noPick = true; R.BL.mapG.add(c); crates.push({ m: c, x: r.x + 2, z: r.z });
+    const c = new THREE.Mesh(new THREE.BoxGeometry(1, .8, 1), M(0x8A6A4A)); c.position.set(r.x + 2, LEVEL + .1, r.z); c.userData.noPick = true; const stp = new THREE.Mesh(new THREE.PlaneGeometry(.55, .55), new THREE.MeshBasicMaterial({ transparent: true, map: R.tex(96, 96, (g, w, h) => { g.translate(w / 2, h / 2); g.fillStyle = '#E8901A'; for (let k = 0; k < 12; k++) { g.rotate(Math.PI / 6); g.beginPath(); g.ellipse(0, -22, 8, 18, 0, 0, 7); g.fill(); } g.fillStyle = '#7A3A08'; g.beginPath(); g.arc(0, 0, 13, 0, 7); g.fill(); }) })); stp.position.set(0, .05, .51); c.add(stp); R.BL.mapG.add(c); crates.push({ m: c, x: r.x + 2, z: r.z });
     setTimeout(() => { if (r.g.parent) r.g.parent.remove(r.g); raiders.splice(raiders.indexOf(r), 1); }, 4000); }
   function c2Start(){ st.c2.start = 1; save(); const [cx, cz] = places().ctr(places().camp), [wx, wz] = places().waterBy(places().camp, [0, 1]);
     scene('raid', [{ d: 4, start(){ for (let i = 0; i < 3; i++) { const g = scAdd(raiderMesh(false)); g.position.set(wx + 8 + i * 6, LEVEL - .3, wz + 14 + i * 4); g.rotation.y = 3.6; } }, cam: f => [wx - 4, LEVEL + 3.5 + f, wz - 2], look: () => [wx + 12, LEVEL, wz + 18], name: ['PART 2', 'BRINE’S HARBOUR', 'Raiders hit the camp at dawn and took every crate of food and water.'] }],

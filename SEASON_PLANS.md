@@ -1,6 +1,103 @@
 # Season plans
 
-The plan for all 15 seasons, plus ideas saved for later. Each season is four weeks with a chapter a week, starting 18 November 2026 and cycling. Every season has its own original villain, an intro cinematic, weekly chapters and a finale. It gives you a tool or vehicle you keep, three skins and a permanent change to the map. See the Seasons section of `CLAUDE.md` for how a season file plugs into the page.
+The plan for all 15 seasons, plus ideas saved for later. Each season is four weeks with a Part a week, starting 18 November 2026 and cycling. Every season has its own original villain, an intro cinematic, weekly chapters and a finale. It gives you a tool or vehicle you keep, three skins and a permanent change to the map. See the Seasons section of `CLAUDE.md` for how a season file plugs into the page.
+
+## The story bible (read this first; where a season's section below disagrees, this wins)
+
+The seasons are one story, told a month at a time. Every season can be played on its own, but none of them is filler: each is caused by the one before, and each causes the next. Live games that tried a loose, villain-of-the-month structure (Fortnite's later chapters, Destiny's early seasons) lost their players' trust; the ones remembered are the ones where the threads connect.
+
+### The spine in one paragraph
+A Bangalore teenager survives the night a meteor lands, and spends the next two years learning that every time you save a city, somebody else pays for it. The meteor is a key, sent by the Keepers to lock a tear in the sky; turned the other way, it opens it. On the other side of the tear is {N} Prime: you, from a Bangalore where you sold the meteor's core on the first night and kept selling until there was nothing left to sell but other worlds. Prime feeds those worlds to the Collector. Every season's villain is somebody who found a way to profit from the tear's crisis, and every season's victory loosens the lock a little more, until Prime walks through. The ending (Season 15) asks you to be the one who pays.
+
+### The theme: everyone pays
+One idea runs through every season and every villain: **a debt**. Somebody always charges for survival.
+- The Salvager sells meteor fragments (S1). Brine charges a toll for every roof (S2). Marigold sells "protection", and the ledger is literally a debt book (S3). Devi bills the city for its own power (S4). Cinder's cult makes offerings (S5). The Vashk demand tribute (S6). Ssera trades Earth for her people's safety (S7). Prime collects worlds (S8), his governors in New Bangalore extract data, land, food and water (S9–S14), and the Collector is the creditor at the end of the chain (S15).
+- You are the only one who never charges. The question the saga keeps asking is whether that can last.
+
+### Cause and effect (each season's ending starts the next)
+| # | You win by… | …and the price is |
+|---|---|---|
+| 1 Landfall | lighting the meteor's core instead of letting the Salvager sell it | the lit core opens the tear wider, and the sea comes through it |
+| 2 High Water | turning on the pumps and draining the city | the pumps, boats and "rescues" were sold by the Marigold Syndicate, which now owns the dry city |
+| 3 The Syndicate | breaking Marigold's grip with Devi's help | Devi was paying for it all; with Marigold gone she owns the police, the ledger and the grid |
+| 4 Blackout | taking the grid back from Devi | her drill into the hot vent under the sea wakes the volcano |
+| 5 The Eruption | stopping Cinder from feeding the core to the volcano | the core fires one beam at the Moon, and the Vashk outpost there wakes up |
+| 6 Dark Side | breaking the Vashk fortress | Queen Ssera's ship escapes to Earth with the truth about the Collector, and her own plan |
+| 7 Scales | exposing Ssera's shapeshifters | her rift ship tears the sky open onto Prime's Bangalore |
+| 8 Incursion | ruining Prime's face in the last fight | he wins anyway. Your Bangalore is collected; the Keeper throws you into another universe |
+| 9–14 New Bangalore | freeing a world Prime conquered years ago, one governor at a time | each victory tells Prime exactly where you are |
+| 15 Convergence | killing Prime | the Collector comes to collect his debt in person, and the cycle has to be paid for |
+| 16 Warped | (Phase 3) the world you chose to restart is not quite the same one | the meteor misses the sea and hits the Kaveri reactor |
+
+### The mythology, and when each piece is revealed
+- **The tear** (seen from Season 1): a wound between universes that Prime keeps open. Seasons 1–7 show it growing.
+- **The meteor is a key** (the Keeper says so at the end of S1: "keys are made to open things"; Vorrak explains it in S6). Turned one way it locks the tear; turned the other, it opens it. It isn't a weapon, which is why everyone who tries to use it as one makes things worse.
+- **The Keepers** (S1's mysterious stranger; New Bangalore has its own in S10). The reveal, saved for S15: **every Keeper is a version of you, from a world where you chose to close the lock yourself.** Plants: the Keeper asks your name, then says "Remember that I asked" (she already knew); she hums the song from your room's speakers; she has a scar on the same hand you burn in S5; New Bangalore's Keeper is an old woman "with your eyes".
+- **{N} Prime** (glimpsed in S7, arrives in S8): the road not taken. In S1 the Salvager offers to buy the core and you refuse; Prime is the version of you who said yes. He isn't a cackling villain. He believes collecting is mercy: worlds that are going to fall anyway, falling quickly.
+- **The Collector** (named by Vorrak in S6, arrives in S15): the creditor. It doesn't hate anyone. It's owed.
+- **The cycle**: the seasons loop after 15. That isn't a technical accident; it's the Keepers' price. Closing the lock resets the world, and someone has to stay behind to keep it shut.
+
+### The people, and how they change
+- **You ({N})**: Phase 1, someone who survives things. Phase 2, someone who starts over with nothing in a world that isn't theirs. The ending is a choice about whether you're willing to pay what everyone else has been charging.
+- **Inspector, then Commissioner, Devi (S2–S4)**: the saga's most human villain. Introduced as a voice on the survivors' radio in S2, organising rescues while every official channel stays silent. She watched the government let the city drown, and decided the city needed someone who'd never let go of the wheel. She is kind to you, and means it, and uses you anyway. She never explains herself in a speech; her one real line of self-justification comes in S4, in a power station at 3 a.m., to nobody in particular.
+- **Velvet (S3, S7)**: switches sides in S3. In S7 she's the first person a Mimic replaces, because walking out on Marigold made her visible. Freeing the real Velvet is the emotional centre of S7.
+- **Bhaskar (S2) and Lata (S3)**: the city's ordinary people, who keep turning up: Bhaskar's camp becomes the shelter in S4's blackout; Lata's chai stall is where the resistance meets in S7, because a Mimic can fake a face but not her tea.
+- **Mr. Ravindran, the Ledger (S3)**: the man who kept the books. He comes back in S4 as the only person who can read Devi's accounts, and he trades them for a new name.
+- **Dr. Neel (S5–S6)**: studied the core before anyone else, and builds the boost pack and the Kite from what he learned. He's the one who says out loud, late in S6, that every time they've won, it's been worse afterwards.
+- **The Salvager (S1)**: his buyer, whom he mentions and never names, is Cinder (S5). He's the first person to offer you a deal, which matters in S8.
+
+### How the story is told (rules for every season)
+- **Show it in the world first.** Graffiti, posters, radio, what's on the shelves, which lights are on. A collector saluting Devi says more than any line of dialogue about her.
+- **Every villain is in the season before their boss fight**, not just at the end of it: a voice, a name on a crate, a car that passes you.
+- **Plant early, pay off late, and never pay off what wasn't planted.** Keep a running list (below) of every plant and where it pays off.
+- **Each season reinvents the look of the whole site** (see Site themes below), so the world feels different before you've read a word.
+- **Trailers are short films, not lists.** No name cards with quotes. Characters are introduced by how they're framed; the title arrives late; the last shot is an image you'll understand only at the end of the season.
+
+### Dialogue rules (no cringe)
+- **No catchphrases, no villain monologues, no "you and I are not so different", no "catch me if you can".** If a line would fit on a T-shirt, cut it.
+- **Subtext over statement.** People talk around what they mean. The information comes out sideways, during an argument about something else, or not at all.
+- **Short lines.** One or two sentences. People interrupt, deflect, and leave things unsaid.
+- **Every line does a job:** reveals who someone is, changes a relationship, or moves the plot. Lines that only explain the plan get cut, and the plan goes into the world.
+- **Villains believe they're right.** Each gets a reason you could almost agree with, and nobody announces that they're evil.
+- **No jokes during grief.** Humour comes from character (Lata's stubbornness, Bhaskar's bad radio), not from one-liners.
+- **Names sparingly.** A character saying {N} should land, not decorate.
+- **Bangalore is home, not flavour.** People talk like people from here; no tourist phrases dropped in for colour.
+
+### Plants and payoffs (running list)
+| Planted | Where | Pays off |
+|---|---|---|
+| The Keeper asks your name: "Remember that I asked." | S1, the pier (built) | S15: she already knew, because she's you |
+| The Salvager's buyer "pays in ash" | S1, after the Hauler (built) | S5: Cinder |
+| The Salvager offers to buy the core; you don't answer | S1 finale (built) | S8: Prime said yes |
+| Devi's voice on the survivors' radio | S2, the camp | S3 (the ally) and S4 (the villain) |
+| Marigold stamps on Brine's supply crates | S2, the raiders' loot | S3: the Syndicate sold the flood |
+| The missing payroll page | S3, Velvet's hint | S4: Devi's name is on it |
+| Ravindran's missing-person posters | S3 | S4: he trades the accounts for a new name |
+| The core's beam | S1 trace, every season after | S5: it's aimed, and something answers |
+| Velvet walks out on Marigold | S3 | S7: first person replaced |
+| The cracked Moon | S6 | S16: it's where the meteor is pushed off course |
+| An old woman "with your eyes" | S10 | S15 |
+| Prime's ruined face | S8 | S9's ending (the mask) and S15 |
+
+### Site themes (each season reinvents the whole site, from Season 2)
+The 3D world, the simple view, the side panel, the phone, the HUD and the fonts all change with the season (`SEASON_THEMES` in `index.html`). The room keeps its layout, but its accent colours follow the theme.
+| # | Season | Look |
+|---|---|---|
+| 1 | Landfall | the site's own look (cream, ink, yellow) |
+| 2 | High Water | teal-grey storm: weathered serif headings, pale blue on slate, a faint rain texture |
+| 3 | The Syndicate | noir: black, white and grey, with marigold orange as the only colour; typewriter type, case-file labels |
+| 4 | Blackout | almost black, lit by lantern amber; everything feels candle-lit |
+| 5 | The Eruption | ash grey and ember red; heavy, cracked display type |
+| 6 | Dark Side | deep navy and cold white; monospaced readouts, thin lines |
+| 7 | Scales | iridescent green on near-black; type that slightly shifts, as if something's wearing it |
+| 8 | Incursion | split: red against blue, one universe bleeding into the other |
+| 9 | Neon Nights | magenta and cyan neon on black |
+| 10 | Skyline | open sky blue and cloud white; thin, airy serif |
+| 11 | Harvest | earth, wheat and rot: brown, gold and a sick grey-green |
+| 12 | (to be planned) | |
+| 13 | The Drought | bleached sand and salt white |
+| 14 | Festival of Lights | deep indigo and gold |
+| 15 | Convergence | monochrome, with every earlier season's accent returning one at a time |
 
 ## The rules that hold for every season
 
@@ -35,14 +132,14 @@ The plan for all 15 seasons, plus ideas saved for later. Each season is four wee
 | 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | The new volcano becomes Ember Island and ash falls on the city; a cult uses the stolen meteor core to wake it. Ends with the core firing a beam at the Moon, and something there answering. | Cinder, leader of the Kindled | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |
 | 6 | **Dark Side** (space; replaces Deep Freeze) | 7 Apr – 4 May 2027 | The meteor was a key, and Cinder turned it. The Vashk Dominion's fleet on the Moon invades. Take the fight to their Moon fortress. Ends with their queen's ship slipping down to Earth. | High Commander Vorrak of the Vashk Dominion | Boost pack, and the Kite (fighter) | The launch pad on Crash Isle, a crashed landing pod, and a cracked Moon | Moonwalker / Ace / Vorrak's Armour |
 | 7 | **Scales** | 5 May – 1 Jun 2027 | Queen Ssera's shapeshifters replace people in Bangalore one by one, Velvet among them. Her crashed ship is a rift ship. Ends with the sky tearing open onto another Bangalore. | Queen Ssera | Truth lens and hover-sled | The wrecked mothership in the Far Range, and the tear in the sky | Alien Hunter / Truth Lens Agent / Vashk Disguise |
-| 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore presses down from the sky. Jump between the two cities and fight your evil double. **Prime wins:** your Bangalore is destroyed, and the Keeper throws you into a new universe with a completely different map. | {N} Prime, the evil version of you | Rift jumper | Your Bangalore is gone. Seasons 9–15 are on a new map | Rift Jumper / Other-Earth You / {N} Prime |
+| 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore presses down from the sky. Jump between the two cities and fight your evil double. **Prime wins:** your Bangalore is destroyed, and the Keeper throws you into a new universe with a completely different map. | {N} Prime: you, from a Bangalore where you sold the core to the Salvager on the first night | Rift jumper | Your Bangalore is gone. Seasons 9–15 are on a new map | Rift Jumper / Other-Earth You / {N} Prime |
 | 9 | **Neon Nights** (Phase 2 begins) | 30 Jun – 27 Jul 2027 | You wake up in New Bangalore, a neon mega-city in another universe, with no ID and a device everyone wants. Vector, who runs the city's network, hunts you. Ends with the twist that Prime got here first, and Prime, masked now, beating you down. | Vector, CEO of Vector Systems | Hacking rig and hover-car | A Lowlights hideout and a neon strip in New Bangalore | Stacks Runner / Hologram / Vector |
 | 10 | **Skyline** (Phase 2 · Chapter 2) | 28 Jul – 24 Aug 2027 | Prime's viceroy lifts New Bangalore's districts into the sky, people and all, as tribute. Learn to counter, glide between floating islands, and meet this world's Keeper. Ends with a grey dust rotting the city's farms. | Baron Altitude, Prime's viceroy | Glider | An anchored sky island with New Bangalore's Keeper | Sky Diver / Updraft / Baron Altitude |
 | 11 | **Harvest** | 25 Aug – 21 Sep 2027 | A food shortage; farms spread across the island. | The Blight (rot) | Farming | New farmland | Farmer / Scarecrow / The Blight |
 | 12 | **To be re-planned** (Neon Nights moved to Season 9) | 22 Sep – 19 Oct 2027 | – | – | – | – | – |
 | 13 | **The Drought** (to be changed) | 20 Oct – 16 Nov 2027 | The sea pulls back. | The Tide-Taker | Metal detector | A land bridge and a lighthouse | Treasure Hunter / Lighthouse Keeper / Tide-Taker |
 | 14 | **Festival of Lights** | 17 Nov – 14 Dec 2027 | An island-wide lantern festival. | The Snuffer | Fireworks you can launch | Lantern trees | Lantern Robe / Firework Suit / The Snuffer |
-| 15 | **Convergence** (Phase 2 finale) | 15 Dec 2027 – 11 Jan 2028 | You kill Prime in week two, as a surprise. Then what Prime was feeding arrives: the Collector of Worlds, with echoes of every villain you've beaten. Your final choice decides how the cycle restarts. | {N} Prime (killed early), then the Collector of Worlds | Every tool you've earned | How the cycle restarts | Multiverse Traveller / Collector's Armour (plus The Keeper for owning every skin) |
+| 15 | **Convergence** (Phase 2 finale) | 15 Dec 2027 – 11 Jan 2028 | You kill Prime in week two, as a surprise. Then what Prime was feeding arrives: the Collector of Worlds, with echoes of every villain you've beaten. Your final choice: close the lock yourself and become this world's Keeper (the cycle restarts, and you're the stranger at the pier), or refuse and let someone else pay. | {N} Prime (killed early), then the Collector of Worlds | Every tool you've earned | How the cycle restarts | Multiverse Traveller / Collector's Armour (plus The Keeper for owning every skin) |
 
 After Season 15, Phase 3 begins with Season 16 · Warped (12 Jan – 8 Feb 2028), in a Bangalore that phases between realities; see below.
 
@@ -293,7 +390,7 @@ Bangalore has been dark since the night Marigold fell. Devi has made herself **A
 The volcano that swallowed Devi doesn't stop growing. Within a week it's an island, **Ember Island**, smoking off the west coast. Ash falls on Bangalore like grey snow, the sky turns orange at noon, and glowing rocks crash into the streets. People are frightened, and someone is offering them an answer.
 
 **The cast**
-- **Cinder (villain, original):** leader of a cult called **the Kindled**. She speaks softly and smiles a lot, and she always has a smouldering coal in a brass locket. *“The water drowned you. The dark starved you. Fire will make you clean.”*
+- **Cinder (villain, original):** leader of a cult called **the Kindled**. She speaks softly, and she always has a smouldering coal in a brass locket. She was the Salvager's buyer in Season 1, the one "who pays in ash", and she's been collecting meteor fragments ever since. Her followers are people the flood and the blackout left with nothing; she gives them something to do with their grief. She doesn't preach in the open: what she believes comes out in how she treats her people, and in the one hymn the Kindled sing.
   - She was the hooded woman on the beach at the end of Season 4.
   - Twist: she was an engineer on Devi's drilling rig. She survived the night it fell, and she believes the volcano spoke to her.
 - **Dr. Neel (ally, new):** a volcanologist who has been measuring Ember Island from a rooftop lab. He's nervous and brilliant, and he builds you the heat suit.
@@ -360,7 +457,7 @@ The beam the core fired at the end of Season 5 wasn't an accident. It was a sign
   - war-beasts;
   - hovering gunships;
   - a fortress built into the Moon itself, with a planet-cracker cannon aimed at Earth.
-- **Queen Ssera:** their ruler, seen only once, at the very end (she's Season 7's villain).
+- **Queen Ssera:** their ruler, seen only once, at the very end (she's Season 7's villain). Vorrak wants to use the meteor's lock to shut the Vashk world away from the Collector. Ssera has decided that can't work, and that the only way to save her people is to hand the Collector a different world: this one.
 - **The Keeper:** finally says what they are, the guard left on Earth to keep the key from ever being used. They failed, and they know it.
 - **Dr. Neel** builds the rocket and runs mission control. **Velvet** flies it.
 
@@ -743,7 +840,9 @@ Phase 2 has built up to one fight: you against {N} Prime. Season 15 gives it to 
 | 3 · 29 Dec | The Collector | **The new villain arrives:** **the Collector of Worlds.** It's what Prime was feeding: something vast and patient that eats universes whole. Every villain was running from a bigger one: Ssera fled Prime, and Prime fed the Collector to stay alive. It brings **echoes of every villain you've beaten**, pulled out of the worlds it ate: the Salvager, Captain Brine, Marigold, Devi, Cinder, Vorrak, Ssera, Vector. They come back, one after another. |
 | 4 · 5 Jan | Convergence (finale) | The final showdown with the Collector, using every tool and vehicle from both phases. **Your final choice decides how the cycle restarts:** the seasons loop back to Season 1, and what you choose here changes how Landfall begins next time round. |
 
-**Still to plan:** the Collector's look and voice, how each echo fights, the three phases of the final fight, and the final choice itself.
+**The final choice (decided in the story bible):** close the lock yourself and become the Keeper. The seasons loop to Season 1, and the stranger who hands you the scanner at the pier is you. Refusing is allowed; then someone you've met across the saga (Devi's radio voice, Lata, Bhaskar, Velvet: whoever you helped most) steps in and pays instead, and that's who meets you at the pier next time.
+
+**Still to plan:** the Collector's look and voice, how each echo fights, and the three phases of the final fight.
 
 **Skins:** Multiverse Traveller (story), Collector's Armour (villain), and The Keeper for owning every skin (unchanged from the original list).
 
@@ -752,8 +851,8 @@ Phase 2 has built up to one fight: you against {N} Prime. Season 15 gives it to 
 ## Phase 3 · Chapter 1 (Season 16) · Warped (12 January – 8 February 2028)
 
 ### How it starts
-- At the end of Season 15, your final choice is to use the meteor core one last time: go back to the night it all began, and push the meteor off course so it never hits.
-- You manage it. The meteor misses the sea off the west coast, and comes down instead on the **Kaveri Energy Research Facility**, a (fictional) experimental reactor on the edge of the city.
+- Season 15 ends with the lock closed and the world restarted, with you (or whoever paid instead) as the Keeper at the pier.
+- But the restarted world isn't quite the old one. The Moon is still cracked from Season 6, and on the night of Landfall its pull bends the meteor's path by a few kilometres. The Keeper sees it happen and can't stop it. The meteor misses the sea off the west coast, and comes down instead on the **Kaveri Energy Research Facility**, a (fictional) experimental reactor on the edge of the city.
 - The core and the reactor together don't explode. They **break space-time**.
 
 ### The world: a Bangalore phasing between realities
