@@ -20,13 +20,13 @@ Instead of a normal portfolio page, the site is a 3D room you can walk around in
 
 ## Seasons
 
-The world runs in seasons of four weeks each, with a new chapter unlocking every week. Each season has its own villain, boss fights, a tool or vehicle you keep, three skins to earn and a change it leaves on the map for good. The phone's Season tab shows your progress, lets you replay the season's scenes, and holds your Loadout and Wardrobe.
+The world runs in seasons of four weeks each, with a new part unlocking every week. Each season has its own villain, boss fights, a tool or vehicle you keep, three skins to earn and a change it leaves on the map for good. The phone's Season tab shows your progress, lets you replay the season's scenes, and holds your Loadout and Wardrobe.
 
 ### Season 1 · Landfall (18 November – 15 December 2026)
 
 A meteor crashes into the sea off the west coast, and the Salvager wants every piece of it.
 
-| Chapter | Unlocks | What happens |
+| Part | Unlocks | What happens |
 |---|---|---|
 | 1 · Impact | 18 Nov | The meteor comes down. The Keeper gives you a scanner at the ferry pier; find three fragments on the beaches, then fight off a scrapper ambush on the west beach. |
 | 2 · Salvage | 25 Nov | The Salvager's drones race you to four more fragments. Take the ferry to his barge and beat the Hauler, an armoured rig you have to get behind. |
@@ -42,7 +42,7 @@ A meteor crashes into the sea off the west coast, and the Salvager wants every p
 
 A wave pours through the tear and drowns Bangalore. You wake up on a plank in a flooded city you can swim anywhere, with sharks in the water and Captain Brine's pirates on the rooftops.
 
-| Chapter | Unlocks | What happens |
+| Part | Unlocks | What happens |
 |---|---|---|
 | 1 · Adrift | 16 Dec | Find a boat, reach the survivors' rooftop camp, get a harpoon gun, rescue three people and survive the great shark. |
 | 2 · Brine's Harbour | 23 Dec | Raiders steal the camp's supplies. Catch their boats, then beat First Mate Sable. |
@@ -50,10 +50,27 @@ A wave pours through the tear and drowns Bangalore. You wake up on a plank in a 
 | 4 · High Water | 6 Jan | Board Captain Brine's ship as the pumps start, and the city drains. |
 
 - **Kept:** the boat, the harpoon gun and the diving gear.
-- **Skins:** Diver, Canal Captain (finish Chapter 1 without being bitten) and Brine's Coat.
+- **Skins:** Diver, Canal Captain (finish Part 1 without being bitten) and Brine's Coat.
 - **Left on the map:** the sunken district, with Brine's wreck.
 
-Add `?week=N` to the address to preview a later chapter, or `?season=N` to preview another season.
+### Season 3 · The Syndicate (13 January – 9 February 2027)
+
+When the water drains, the Marigold Syndicate owns half the city: every shop pays, and their stamp is on every door. Inspector Devi, whose station is still full of mud, asks you to help.
+
+| Part | Unlocks | What happens |
+|---|---|---|
+| 1 · Protection | 13 Jan | Break the rackets on your street, chase a collector through the market (vault the barricades, slide under the shutters), survive the night raid, and beat Brass, the enforcer. |
+| 2 · The Ledger | 20 Jan | Rob the Syndicate's counting house (quiet is optional: sight cones, takedowns, flashbangs), beat the Ledger and find out who he really is. Then a fight you can't win. |
+| 3 · The Velvet Run | 27 Jan | Get a rope launcher and the Comet. Stop three convoys by dropping on them from a roof or spiking their tyres; one is a decoy. Then run Velvet down. |
+| 4 · Marigold | 3 Feb | Storm Marigold's tower: the lobby, a swing route up the outside past the snipers, a rooftop chase, and Marigold in her greenhouse. |
+
+- **Five districts** to free (three of each one's four rackets), and **heat**: with two marigolds or more the Syndicate ambushes you in alleys, from vans and with snipers. Lie low or hide in your garage to cool off.
+- **New moves:** slide (sprint, then crouch) and vault (sprint at a low wall), from the start of the season.
+- **Kept:** the rope launcher, the Comet (nitro and tyre spikes; it waits in your garage) and the stun baton.
+- **Skins:** Undercover (finish the story), Clean Hands (do the heist unseen) and Marigold's Suit (beat the finale).
+- **Left on the map:** Marigold's tower, dark now and Devi's, and marigold graffiti across the city.
+
+Add `?week=N` to the address to preview a later part, or `?season=N` to preview another season.
 
 ## Tech
 

@@ -6408,6 +6408,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // Down in the streets a web sticks to whatever building you're looking at. You swing, let go, fly, and land on a roof
   // (and walk around up there) or back in the street. Step off a roof edge and you fall.
   const SW = { on: false, roof: 0, lx: 0, lz: 0 }, bTops = new Map();
+  // a season can hand out a rope launcher (R.pk.rope): the same swing, with a rope instead of a web, only in the dry streets
+  const ropeOn = () => !!(PK && PK.rope && inWorld && zone === 'blr' && !FLOOD.on);
   function bTop(mx, mz){
     if (!bTops.size && BL.bld) BL.bld.forEach(b => { for (let gx = Math.floor(b.x0 / 16); gx <= Math.floor(b.x1 / 16); gx++) for (let gz = Math.floor(b.z0 / 16); gz <= Math.floor(b.z1 / 16); gz++) { const k = gx + ',' + gz; if (!bTops.has(k)) bTops.set(k, []); bTops.get(k).push(b); } });
     const L = bTops.get(Math.floor(mx / 16) + ',' + Math.floor(mz / 16)); let t = 0; if (L) for (const b of L) if ((!b.hide || b.keep) && mx > b.x0 && mx < b.x1 && mz > b.z0 && mz < b.z1) { const h = (SG.wreck || []).includes(b.key) && !newTL() ? b.h * .22 : b.h; if (h > t) t = h; } if (BL.bld && inTowerZone(mx, mz, -.8) && TW.roof + .2 > t) t = TW.roof + .2; return t;
@@ -6423,7 +6425,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       const off = BL.off.y;
       swingCore(dt, { top: (x, z) => { const [mx, mz] = toMap(x, z); return bTop(mx, mz) - off; }, topAt: (x, z) => { const [mx, mz] = toMap(x, z); return bTop(mx, mz) - off; }, ground: 0,
         wall: (x, z, f) => { const [mx, mz] = toMap(x, z); return swBodyBlocked(mx, mz, f); }, wallPt: (x, z, f) => { const [mx, mz] = toMap(x, z); return swBlocked(mx, mz, f); },
-        land: sup => { pos.y = sup + 1.6; cityV.set(0, 0, 0); web.p = null; SW.on = false; SW.roof = sup > .3 ? sup : 0; vy = 0; grounded = true; tone(140, .08, 'sine', .05); if (!SW.roof) swLandClear(); drawWeb(); } });
+        land: sup => { const fall = -cityV.y; pos.y = sup + 1.6; cityV.set(0, 0, 0); web.p = null; SW.on = false; SW.roof = sup > .3 ? sup : 0; vy = 0; grounded = true; tone(140, .08, 'sine', .05); if (!SW.roof) swLandClear(); drawWeb(); if (PK && PK.onLand) { try { PK.onLand(toMap(pos.x, pos.z), sup, fall); } catch (e) { console.error(e); } } } });
     } else if (SW.roof) {
       const [mx, mz] = toMap(pos.x, pos.z), t = bTop(mx, mz);
       if (t < SW.roof - .35) { SW.on = true; cityV.set(0, 0, 0); SW.roof = 0; } else pos.y = SW.roof + 1.6;
@@ -6488,7 +6490,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (inWorld && zone === 'xc') { if (!EV && !A) xcWeb(); return; }
     if (held !== 'web' && inv.includes('web') && !dustedWeapon('web') && inWorld && (zone === 'blr' || zone === 'roof' || zone === 'city') && !EV && !A) hold('web');
     const street = inWorld && zone === 'blr' && !EV && !A && !BL.lvl && !DRV.on && !BL.cine && Math.abs(BL.off.y) < .01;
-    if (held !== 'web' || dustedWeapon('web') || !inWorld || (zone !== 'roof' && zone !== 'city' && !street) || web.p) return;
+    const rope = ropeOn() && street;
+    if (!rope && (held !== 'web' || dustedWeapon('web')) || !inWorld || (zone !== 'roof' && zone !== 'city' && !street) || web.p) return;
     web.p = swingAnchor(); web.L = pos.distanceTo(web.p);
     // firing a web mid-air keeps your speed; from a standstill it gives you a push forward to start the arc
     if (Math.hypot(cityV.x, cityV.z) < 4 && (SW.on || cityAir)) { cityV.x += -Math.sin(yaw) * 5; cityV.z += -Math.cos(yaw) * 5; }
@@ -6501,6 +6504,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!web.line) { web.line = new THREE.Line(new THREE.BufferGeometry().setFromPoints([V(0, 0, 0), V(0, 1, 0)]), new THREE.LineBasicMaterial({ color: 0xF4F4F4 })); web.line.userData.noPick = true; }
     const wsc = zone === 'blr' ? BL.sc : zone === 'apt' ? APT.sc : zone === 'xc' ? XC.sc : roofScene;
     if (!web.p || !wsc) { if (web.line.parent) web.line.parent.remove(web.line); afWebDraw(null, null, null); return; }
+    web.line.material.color.setHex(ropeOn() && held !== 'web' ? 0xC08A4A : 0xF4F4F4);
     if (web.line.parent !== wsc) wsc.add(web.line);
     const hand = tmpV.set(.3, -.25, -.4).applyQuaternion(camera.quaternion).add(pos);
     const hp = afHandPoint(hand); web.line.geometry.setFromPoints([hp.clone(), web.p]); afWebDraw(wsc, hp, web.p);
@@ -7965,9 +7969,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (menuBtn.hidden) { menuBtn.hidden = false; povBtn.hidden = false; povBtn.textContent = tpv ? '1st person' : '3rd person'; }
     if (!A) idleView();
     // web-shooters on the rooftop (or down in Bangalore): swinging is available
-    const canSwing = (held === 'web' || inv.includes('web') && zone === 'blr') && !dustedWeapon('web') && inWorld && (zone === 'roof' || zone === 'city' || zone === 'blr' && !EV && !BL.lvl && !DRV.on) || inWorld && zone === 'mc' && !EV && !A || inWorld && (zone === 'apt' || zone === 'xc' && !XC.drv && !XC.ride) && !EV && !A && (held === 'web' || inv.includes('web')) && !dustedWeapon('web');
+    const canSwing = ropeOn() && !EV && !BL.lvl && !DRV.on && Math.abs(BL.off.y) < .01 || (held === 'web' || inv.includes('web') && zone === 'blr') && !dustedWeapon('web') && inWorld && (zone === 'roof' || zone === 'city' || zone === 'blr' && !EV && !BL.lvl && !DRV.on) || inWorld && zone === 'mc' && !EV && !A || inWorld && (zone === 'apt' || zone === 'xc' && !XC.drv && !XC.ride) && !EV && !A && (held === 'web' || inv.includes('web')) && !dustedWeapon('web');
     if (swingBtn.hidden === (canSwing && !fine)) swingBtn.hidden = !(canSwing && !fine);
-    if (canSwing && !swingHinted) { swingHinted = true; say(fine ? 'Web-shooters: aim at a building and hold Q to swing. Release to let go; land on any roof. Space jumps off a roof.' : 'Web-shooters: aim at a building and hold Swing. Let go to fly; land on any roof.', 4200); }
+    if (canSwing && !swingHinted && !ropeOn()) { swingHinted = true; say(fine ? 'Web-shooters: aim at a building and hold Q to swing. Release to let go; land on any roof. Space jumps off a roof.' : 'Web-shooters: aim at a building and hold Swing. Let go to fly; land on any roof.', 4200); }
   }
   const swingBtn = $('#swingBtn'); let swingHinted = false;
   swingBtn.addEventListener('pointerdown', e => { e.preventDefault(); webStart(); }); ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => swingBtn.addEventListener(ev, () => webEnd()));
@@ -11470,6 +11474,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (FLOOD.on && BL.off.y <= .01) return td > TW.r + .7 && floodValid(mx, mz);
     if (BL.off.y > .01) return td < TW.r - .6 && !inLift && !twHit(BL.off.y, tx, tz);
     if ((Math.abs(mx) > 372 || Math.abs(mz) > 372) && !(ISLE.built && isleOk(mx, mz)) || inLift && !newTL()) return false;
+    if (PK && (PK.lows.length || PK.gaps.length) && pkBlock(mx, mz)) return false;
     // the tower's glass wall, with its door on the west side
     if (td > TW.r - .7 && td < TW.r + .7 && Math.abs(tz) > 2.6 && !newTL()) return false;
     if (td < TW.r - .7 && twHit(0, tx, tz)) return false;
@@ -11838,7 +11843,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     s1_rifle: { n: 'Scrap rifle', s: 'Rifle', gun: 1, mag: 4, res: 20, cd: 1.05, dmg: 3.4, spd: 52, col: 0xC08CFF, spread: 0, pel: 1, life: 1.4, rl: 1.9, snd: 180, pierce: 2, stun: .5, how: 'Slow, and it punches through.' },
     s1_sword: { n: 'Shard sword', s: 'Sword', cd: .38, dmg: 1.25, range: 2.9, arc: 1.5, col: 0x7CF2FF, how: 'Fast, wide swings. Cuts shots out of the air.' },
     s1_wrench: { n: 'Heavy wrench', s: 'Wrench', cd: .95, dmg: 2.2, range: 2.4, arc: 1.05, knock: 9, stun: .7, col: 0xFFC93C, how: 'Slow. Knocks them flying.' },
-    s1_spear: { n: 'Harpoon spear', s: 'Spear', cd: .66, dmg: 1.6, range: 4.6, arc: .42, col: 0xFF8A3A, how: 'Long reach, straight ahead.' }
+    s1_spear: { n: 'Harpoon spear', s: 'Spear', cd: .66, dmg: 1.6, range: 4.6, arc: .42, col: 0xFF8A3A, how: 'Long reach, straight ahead.' },
+    s3_baton: { n: 'Stun baton', s: 'Baton', cd: .55, dmg: 1.1, range: 2.5, arc: 1.1, stun: 1.1, col: 0x7CB8FF, how: 'Quick hits that leave them dazed.' }
   };
   Object.keys(SSW).forEach(k => KITW[k] = { n: SSW[k].n, s: SSW[k].s });
   const SSKIN = {
@@ -11846,8 +11852,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     s1_glow: { n: 'Meteor Glow', how: 'Beat the Foreman without being caught by a searchlight.', o: { hero: 1, c1: '#16181D', c2: '#FF7A2A', gloves: 1, mask: 'helmet', glow: 1, stripes: 1 } },
     s1_rig: { n: 'Salvager’s Rig', how: 'Beat the Salvager in the finale.', o: { hero: 1, c1: '#E8B82E', c2: '#3A3D44', gloves: 1, metal: 1, mask: 'helmet' } },
     s2_diver: { n: 'Diver', how: 'Finish the High Water story.', o: { hero: 1, c1: '#1E3A5A', c2: '#3CB0A8', gloves: 1, mask: 'visor' } },
-    s2_captain: { n: 'Canal Captain', how: 'Finish High Water Chapter 1 without being bitten.', o: { hero: 1, c1: '#F4F1E8', c2: '#1E3A8A', gloves: 1, stripes: 1 } },
-    s2_brine: { n: 'Brine’s Coat', how: 'Beat Captain Brine in the finale.', o: { hero: 1, c1: '#5A1E1E', c2: '#E8B82E', gloves: 1, cape: 1, mask: 'hood' } }
+    s2_captain: { n: 'Canal Captain', how: 'Finish High Water Part 1 without being bitten.', o: { hero: 1, c1: '#F4F1E8', c2: '#1E3A8A', gloves: 1, stripes: 1 } },
+    s2_brine: { n: 'Brine’s Coat', how: 'Beat Captain Brine in the finale.', o: { hero: 1, c1: '#5A1E1E', c2: '#E8B82E', gloves: 1, cape: 1, mask: 'hood' } },
+    s3_under: { n: 'Undercover', how: 'Finish The Syndicate story.', o: { hero: 1, c1: '#2A2D33', c2: '#E8701A', gloves: 1, mask: 'hood' } },
+    s3_clean: { n: 'Clean Hands', how: 'Do the Ledger heist without being seen.', o: { hero: 1, c1: '#F4F1E8', c2: '#16181D', gloves: 1, stripes: 1 } },
+    s3_suit: { n: 'Marigold’s Suit', how: 'Beat Madame Marigold in the finale.', o: { hero: 1, c1: '#F2E6C8', c2: '#E8901A', gloves: 1, cape: 1 } }
   };
   Object.keys(SSKIN).forEach(k => OUTFITS[k] = SSKIN[k].o);
   // the skin you're wearing goes over your own look
@@ -12014,6 +12023,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     else if (id === 's1_rifle') { box(.07, .14, .1, metal(0x3A3D44), 0, -.02, 0, g); box(.09, .62, .1, metal(0x6A6E78), 0, .28, .03, g); cyl(.018, .018, .3, metal(0x16181D), 0, .7, .03, g, 8); box(.03, .4, .03, glow(0xC08CFF), .05, .3, .03, g); box(.05, .12, .05, metal(0x16181D), 0, .3, .1, g); }
     else if (id === 's1_sword') { cyl(.02, .022, .14, mat(0x2A1E16), 0, 0, 0, g, 8); box(.16, .03, .04, metal(0x8A8F99), 0, .08, 0, g); const b = new THREE.Mesh(new THREE.OctahedronGeometry(.07, 0), glow(0x7CF2FF)); b.scale.set(.6, 6, .35); b.position.y = .48; g.add(b); }
     else if (id === 's1_wrench') { cyl(.024, .024, .5, metal(0xC9CFD8), 0, .15, 0, g, 8); box(.2, .07, .05, metal(0xC9CFD8), 0, .42, 0, g); box(.05, .1, .05, metal(0xC9CFD8), -.075, .49, 0, g); box(.05, .1, .05, metal(0xC9CFD8), .075, .49, 0, g); box(.06, .14, .06, mat(0xC8102E), 0, -.06, 0, g); }
+    else if (id === 's3_baton') { cyl(.026, .026, .2, mat(0x16181D), 0, 0, 0, g, 8); cyl(.02, .02, .42, metal(0x3A3D44), 0, .3, 0, g, 8); cyl(.024, .024, .08, glow(0x7CB8FF), 0, .52, 0, g, 8); }
     else if (id === 's1_spear') { cyl(.018, .018, 1.3, mat(0x6B4A2B), 0, .35, 0, g, 8); const h = cone(.045, .2, metal(0xDCE3EA), 0, 1.08, 0, g); h.userData.noPick = true; box(.12, .03, .02, metal(0xDCE3EA), 0, .96, 0, g); box(.02, .06, .02, glow(0xFF8A3A), 0, .93, 0, g); }
     return g;
   }
@@ -12740,12 +12750,12 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     const bg = bake(VT.scooter(0xFFFFFF)[0]), bm = inst(bg, new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .45, metalness: .35 }), bikes, g, true); bikes.forEach((_, i) => bm.setColorAt(i, new THREE.Color(cols[(i * 7) % cols.length]))); if (bm.instanceColor) bm.instanceColor.needsUpdate = true;
   }
   const VNAME = { car: 'a car', cab: 'a taxi', auto: 'an auto-rickshaw', bus: 'a BMTC bus', truck: 'a lorry', scooter: 'a scooter', jeep: 'a jeep' };
-  const VDRIVE = { car: { max: 22, acc: 6, turn: 1.6 }, cab: { max: 22, acc: 6, turn: 1.6 }, auto: { max: 13, acc: 4.5, turn: 2.2 }, scooter: { max: 17, acc: 6.5, turn: 2.6 }, jeep: { max: 19, acc: 5.5, turn: 1.7 }, bus: { max: 12, acc: 2.5, turn: 1.0 }, truck: { max: 13, acc: 3, turn: 1.1 }, moto: { max: 25, acc: 8, turn: 2.4 }, boat: { max: 16, acc: 5, turn: 1.4 }, raft: { max: 3.6, acc: 1.6, turn: 1.4 }, suv: { max: 20, acc: 5.5, turn: 1.5 }, van: { max: 17, acc: 4, turn: 1.3 } };
+  const VDRIVE = { car: { max: 22, acc: 6, turn: 1.6 }, cab: { max: 22, acc: 6, turn: 1.6 }, auto: { max: 13, acc: 4.5, turn: 2.2 }, scooter: { max: 17, acc: 6.5, turn: 2.6 }, jeep: { max: 19, acc: 5.5, turn: 1.7 }, bus: { max: 12, acc: 2.5, turn: 1.0 }, truck: { max: 13, acc: 3, turn: 1.1 }, moto: { max: 25, acc: 8, turn: 2.4 }, boat: { max: 16, acc: 5, turn: 1.4 }, raft: { max: 3.6, acc: 1.6, turn: 1.4 }, comet: { max: 27, acc: 7.5, turn: 1.8 }, suv: { max: 20, acc: 5.5, turn: 1.5 }, van: { max: 17, acc: 4, turn: 1.3 } };
   const vGeo = {}, vBodyM = () => BLC.bodyM || (BLC.bodyM = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .45, metalness: .35 })), vLightM = () => BLC.lightM || (BLC.lightM = new THREE.MeshBasicMaterial({ vertexColors: true }));
   function makeVehicle(type, col, parent){
     const k = type + ':' + (col || 0); if (!vGeo[k]) { const [body, lights, L, W, sp] = VT[type](col); vGeo[k] = { body: bake(body), lights: bake(lights), L, W, sp }; }
     const G = vGeo[k], g = new THREE.Group(), b = new THREE.Mesh(G.body, vBodyM()), l = new THREE.Mesh(G.lights, vLightM()); b.castShadow = true; g.add(b, l); g.traverse(o => o.userData.noPick = true); parent.add(g);
-    return { g, type, L: G.L, W: G.W, sp: G.sp * (.85 + Math.random() * .3), v: 0, x: 0, z: 0, fx: 0, fz: 1 };
+    return { g, type, L: G.L, W: G.W, sp: G.sp * (.85 + Math.random() * .3), v: 0, x: 0, z: 0, fx: 0, fz: 1, nitro: type === 'comet' };
   }
   // ---------- the road graph traffic drives on (keep left, as in India) ----------
   const nk = (x, z) => x + ',' + z;
@@ -13062,7 +13072,10 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     const p = DRV.p; if (EV || A || !inWorld || zone !== 'blr' || (BL.lvl ? !BL.lvl.drive : Math.abs(BL.off.y) > .01) || BL.cine) return getOut(true);
     let f = (keys.w || keys.arrowup ? 1 : 0) - (keys.s || keys.arrowdown ? 1 : 0), s = (keys.d || keys.arrowright ? 1 : 0) - (keys.a || keys.arrowleft ? 1 : 0);
     if (Math.hypot(joy.x, joy.y) > .15) { f -= joy.y; s += joy.x; } f = clamp(f, -1, 1); s = clamp(s, -1, 1);
-    const M = VDRIVE[p.type] || VDRIVE.car;
+    let M = VDRIVE[p.type] || VDRIVE.car;
+    // cars with nitro (the Comet): hold Shift, or the Nitro button, for a few seconds of boost; it refills while you cruise
+    if (p.nitro) { const on = (keys.shift || PK.nitroBtn) && PK.nitro > 0 && f > 0; if (on) { PK.nitro = Math.max(0, PK.nitro - dt / 3.2); M = { max: M.max * 1.6, acc: M.acc * 3, turn: M.turn }; if (!DRV.boost) tone(120, .5, 'sawtooth', .04, 320); } else PK.nitro = Math.min(1, PK.nitro + dt / 10); DRV.boost = on; }
+    nitroBtn.hidden = !p.nitro || fine;
     if (f > 0) DRV.spd += (DRV.spd < 0 ? M.acc * 2.2 : M.acc) * f * dt; else if (f < 0) DRV.spd -= (DRV.spd > 0 ? M.acc * 2.2 : M.acc * .6) * -f * dt; else DRV.spd *= Math.max(0, 1 - dt * .45);
     DRV.spd = clamp(DRV.spd, -M.max * .3, M.max); if (Math.abs(DRV.spd) < .05 && !f) DRV.spd = 0;
     p.h -= s * M.turn * dt * clamp(DRV.spd / 5, -1, 1);
@@ -13072,7 +13085,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     if (ok && !hit) { p.x = nx; p.z = nz; } else if (Math.abs(DRV.spd) > .5) { if (Math.abs(DRV.spd) > 5) { tone(70, .3, 'sawtooth', .05, 40); say(hit ? 'Bump. Sorry!' : 'Crunch.', 900); if (hit && Math.abs(DRV.spd) > 7 && !HEAT.cops.includes(hit)) heatAdd(1, 'You smashed into another car.'); } DRV.spd *= -.25; }
     p.fx = fx; p.fz = fz; if (DRV.spd) p.moved = true; p.g.position.set(p.x, p.y || 0, p.z); p.g.rotation.y = p.h; p.g.rotation.z = -s * clamp(DRV.spd / M.max, 0, 1) * (p.type === 'scooter' ? .25 : .03);
     const [ax, az] = toLocal(p.x, p.z); pos.set(ax, 1.6, az); yaw = p.h + Math.PI; walkTarget = null;
-    drvHud.hidden = false; drvHud.textContent = `${Math.round(Math.abs(DRV.spd) * 3.6)} km/h${DRV.spd < -.3 ? ' · R' : ''}`;
+    drvHud.hidden = false; drvHud.textContent = `${Math.round(Math.abs(DRV.spd) * 3.6)} km/h${DRV.spd < -.3 ? ' · R' : ''}${p.nitro ? ` · Nitro ${'▮'.repeat(Math.round(PK.nitro * 5))}${'▯'.repeat(5 - Math.round(PK.nitro * 5))}${fine ? ' (Shift)' : ''}` : ''}`;
   }
   function driveCam(dt){
     const p = DRV.p; if (!p) return; const [lx, lz] = toLocal(p.x, p.z), fx = Math.sin(p.h), fz = Math.cos(p.h);
@@ -13435,7 +13448,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     const L = LVL.garage = { id: 'garage', y: GRY, drive: true, rects: [[GAR.x0, GAR.x1, GAR.z0, GAR.z1]], solid: [], exits: [] };
     [[-28, -24], [-12, -24], [-28, -31], [-12, -31]].forEach(([x, z]) => { P.push(B3(.8, 4.6, .8, 0xB8B4AA, x - cx, GRY + 2.3, z - cz), B3(.82, .5, .82, 0xFFC93C, x - cx, GRY + .25, z - cz)); L.solid.push([x - .4, x + .4, z - .4, z + .4]); });
     // bays, the lane arrows, strip lights, and the ramp up to the street
-    GAR_CARS.forEach(([, , , x, z, h]) => { if (h) P.push(B3(4.6, .02, .1, 0xF4F1E8, x + 1.2 - cx, GRY + .02, z - 1.5 - cz), B3(4.6, .02, .1, 0xF4F1E8, x + 1.2 - cx, GRY + .02, z + 1.5 - cz)); else P.push(B3(.1, .02, 5.2, 0xF4F1E8, x - 3 - cx, GRY + .02, z - cz), B3(.1, .02, 5.2, 0xF4F1E8, x + 3 - cx, GRY + .02, z - cz)); });
+    const GL = garList(); GL.forEach(([, , , x, z, h]) => { if (h) P.push(B3(4.6, .02, .1, 0xF4F1E8, x + 1.2 - cx, GRY + .02, z - 1.5 - cz), B3(4.6, .02, .1, 0xF4F1E8, x + 1.2 - cx, GRY + .02, z + 1.5 - cz)); else P.push(B3(.1, .02, 5.2, 0xF4F1E8, x - 3 - cx, GRY + .02, z - cz), B3(.1, .02, 5.2, 0xF4F1E8, x + 3 - cx, GRY + .02, z - cz)); });
     for (let x = -30; x <= -8; x += 5.5) P.push(B3(1.6, .02, .35, 0xF4F1E8, x - cx, GRY + .02, -28 - cz), B3(.5, .02, .5, 0xF4F1E8, x + .9 - cx, GRY + .02, -28 - cz, Math.PI / 4));
     for (let x = -32; x <= -8; x += 6) [-34, -22].forEach(z => P.push(B3(3.2, .08, .25, 0xFFF6E0, x - cx, -.55, z - cz)));
     P.push(B3(3.4, .02, 4.6, 0x2A2D33, GAR.door[0] - cx, GRY + .03, -14.6 - cz), B3(.2, 1, 4.6, 0xFFC93C, GAR.door[0] - 1.8 - cx, GRY + .5, -14.6 - cz), B3(.2, 1, 4.6, 0xFFC93C, GAR.door[0] + 1.8 - cx, GRY + .5, -14.6 - cz));
@@ -13450,13 +13463,16 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     decor([B3(3.4, 2.8, .1, 0x5A5E68, 0, 1.4, .08), ...[0, 1, 2, 3, 4, 5, 6].map(i => B3(3.42, .05, .12, 0x3A3D44, 0, .3 + i * .38, .1)), B3(3.8, .25, .3, 0xFFC93C, 0, 2.92, .15), B3(3.4, .02, 2.6, 0x2A2D33, 0, .02, 1.4)], sg);
     signPlane('GARAGE', null, '#16181D', '#FFC93C', 2.2, .5, sg, 0, 3.4, .14);
     // what's parked here
-    GAR.cars = GAR_CARS.map(([type, col, name, x, z, h]) => { const v = makeVehicle(type, col || undefined, BLC.carG); Object.assign(v, { x, z, y: GRY, h, name, parked: true, fx: Math.sin(h), fz: Math.cos(h), bay: [x, z, h], gar: 1 }); v.g.position.set(x, GRY, z); v.g.rotation.y = h; BLC.parked.push(v); return v; });
+    GAR.cars = GL.map(([type, col, name, x, z, h]) => { const v = makeVehicle(type, col || undefined, BLC.carG); Object.assign(v, { x, z, y: GRY, h, name, parked: true, fx: Math.sin(h), fz: Math.cos(h), bay: [x, z, h], gar: 1 }); v.g.position.set(x, GRY, z); v.g.rotation.y = h; BLC.parked.push(v); return v; });
     LV.entries.push({ x: GAR.door[0], z: GAR.door[1], r: 1.6, to: 'garage', at: GAR.in, yaw: 0, fade: true, car: true, msg: 'Down the ramp into your building’s garage. Pick anything and drive it out.' });
     L.exits.push({ x: GAR.door[0], z: -14.2, r: 1.6, to: null, at: GAR.out, yaw: Math.PI, fade: true, car: true, msg: 'Up the ramp and out onto your street.' });
     addPlace('garage', 'Your building’s garage', () => onLvl('garage'), { lvl: 'garage', x: GAR.in[0], z: GAR.in[1], yaw: 0 });
     g.traverse(o => o.userData.noPick = true); sg.traverse(o => o.userData.noPick = true);
   }
   // put everything back in its bay (not the one you're driving)
+  // the cars in the garage: the fixed ones, plus the Comet once Season 3 has given it to you (seasonGet().s3.comet)
+  function garList(){ let comet = false; try { const s3 = JSON.parse(localStorage.getItem('ru-season') || '{}').s3; comet = !!(s3 && s3.comet); } catch (e) {} return comet ? GAR_CARS.concat([['comet', 0, 'the Comet', -24, -16.2, Math.PI / 2]]) : GAR_CARS; }
+  function garComet(){ if (!GAR.cars.length || GAR.cars.some(v => v.type === 'comet') || !BLC.carG) return; const [type, , name, x, z, h] = garList().find(c => c[0] === 'comet') || []; if (!type) return; const v = makeVehicle(type, undefined, BLC.carG); Object.assign(v, { x, z, y: GRY, h, name, parked: true, fx: Math.sin(h), fz: Math.cos(h), bay: [x, z, h], gar: 1 }); v.g.position.set(x, GRY, z); v.g.rotation.y = h; BLC.parked.push(v); GAR.cars.push(v); }
   function garRestock(){ GAR.cars.forEach(v => { if (DRV.p === v) return; const [x, z, h] = v.bay; if (Math.abs(v.x - x) + Math.abs(v.z - z) + Math.abs((v.y || 0) - GRY) < .3) return; Object.assign(v, { x, z, y: GRY, h, fx: Math.sin(h), fz: Math.cos(h), v: 0 }); v.g.position.set(x, GRY, z); v.g.rotation.set(0, h, 0); v.g.visible = true; }); }
   // from the tower's lift straight down to the garage
   function garGo(){ if (A || EV) return; GAR.pend = true; enterBlr([GAR.out[0], GAR.out[1], Math.PI]); }
@@ -14179,6 +14195,8 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   }
   const carLights2 = (sx = 1, sy = 1) => [[gB(.4, .13, .05), 0xFFF6D8, .58, .72 * sy, 2.2 * sx], [gB(.4, .13, .05), 0xFFF6D8, -.58, .72 * sy, 2.2 * sx], [gB(.42, .13, .05), 0xFF2A1A, .6, .8 * sy, -2.21 * sx], [gB(.42, .13, .05), 0xFF2A1A, -.6, .8 * sy, -2.21 * sx]];
   VT.car = col => [carBody2(col, false), carLights2(), 4.2, 1.8, 13];
+  // the Comet (Season 3): a low orange getaway car with a black racing stripe and a spoiler; it has nitro
+  VT.comet = () => [[...carBody2(0xE8701A, false, 1, .92), [gB(.36, .02, 4.0), 0x16181D, 0, .97, 0], [gB(.36, .02, 1.3), 0x16181D, 0, 1.35, -.4], [gB(1.7, .07, .42), 0x16181D, 0, 1.22, -1.95], [gB(.08, .3, .08), 0x16181D, .6, 1.05, -1.95], [gB(.08, .3, .08), 0x16181D, -.6, 1.05, -1.95]], carLights2(), 4.2, 1.8, 15];
   VT.cab = () => [carBody2(0xE8E8E8, true), carLights2(), 4.2, 1.8, 13];
   VT.police = () => [[...carBody2(0xF4F4F4, false), [gB(1.76, .2, 4.1), 0x1E3A8A, 0, .62, 0], [gB(1.1, .14, .32), 0x16181D, 0, 1.53, -.3], [gB(.5, .1, .03), 0x1E3A8A, 0, 1.0, 2.13]], carLights2(), 4.2, 1.8, 15];
   VT.suv = col => [[...carBody2(col, false, 1.08, 1.2, 1.5), [gB(1.5, .06, 1.6), BLACK, .0, 1.79, -.5], ...[.7, -.7].map(x => [gB(.06, .08, 1.6), HUB, x, 1.79, -.5])], carLights2(1.08, 1.2), 4.6, 1.9, 13];
@@ -14967,6 +14985,36 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   function floodLadder(mx, mz, b){ FLOOD.ladders.push({ x: mx, z: mz, b }); }
   const floodRoofAt = (mx, mz) => floodBld(mx, mz, 0);
   { const s = document.createElement('style'); s.textContent = 'body.underwater::after{content:"";position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at 50% 40%,rgba(40,130,170,.18),rgba(10,50,80,.55))}'; document.head.appendChild(s); }
+  // ======================= moves for the seasons: slide, vault, shutters and low walls (R.pk) =======================
+  // Like the flood's swimming these run after normal movement (which is frozen). Sprint, then crouch, to slide: you shoot forward
+  // low, under shutters (gaps) and into enemies, knocking them down. Sprint at a low wall (lows) to vault it. The rope launcher
+  // reuses the Bangalore swing above (ropeOn), and PK.onLand hears every landing from a swing or a fall (drop takedowns).
+  var PK = { rope: false, lows: [], gaps: [], slide: 0, sx: 0, sz: 0, vault: null, onLand: null, onSlide: null, wasC: false, nitro: 1, nitroBtn: false, slid: 0 };
+  const pkIn = (L, mx, mz, pad) => L.find(b => mx > b.x0 - pad && mx < b.x1 + pad && mz > b.z0 - pad && mz < b.z1 + pad);
+  function pkBlock(mx, mz){ if (PK.vault) return false; if (PK.lows.length && pkIn(PK.lows, mx, mz, .3)) return true; return PK.slide <= 0 && PK.gaps.length > 0 && !!pkIn(PK.gaps, mx, mz, .3); }
+  function pkStep(dt){
+    if (!DRV.on || !DRV.p || !DRV.p.nitro) nitroBtn.hidden = true;
+    const c = KIT.crouch, pressed = c && !PK.wasC; PK.wasC = c;
+    const street = inWorld && (zone === 'blr' || zone === 'event' && EV && EV.inMap) && !BL.lvl && Math.abs(BL.off.y) < .01 && !DRV.on && !FLOOD.on && !SW.on && !SW.roof && !LV.ride && !document.body.classList.contains('cine');
+    if (!street) { if (PK.slide > 0) { PK.slide = 0; KIT.crouch = false; } PK.vault = null; return; }
+    const [mx, mz] = toMap(pos.x, pos.z), fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+    if (PK.vault) { const Q = PK.vault; Q.t += dt; const f = Math.min(1, Q.t / Q.T), [lx, lz] = toLocal(Q.a[0] + (Q.b[0] - Q.a[0]) * f, Q.a[1] + (Q.b[1] - Q.a[1]) * f); pos.x = lx; pos.z = lz; pos.y = 1.6 + Math.sin(Math.PI * f) * (Q.h + .35); vy = 0; grounded = true; if (f >= 1) { PK.vault = null; pos.y = 1.6; } return; }
+    if (PK.slide > 0) {
+      PK.slide -= dt; const sp = 11 * Math.min(1, PK.slide / .3 + .25), nx = mx + PK.sx * sp * dt, nz = mz + PK.sz * sp * dt, [lx, lz] = toLocal(nx, nz);
+      if (blrValid(lx, lz) && !PILLARS.some(q => Math.hypot(lx - q.x, lz - q.z) < q.r)) { pos.x = lx; pos.z = lz; } else PK.slide = Math.min(PK.slide, .05);
+      pos.y = 1.6; vy = 0; grounded = true;  // crouching already drops the camera
+      if (EV && EV.units) EV.units.forEach(u => { if (u.isMe || u.dead > 0 || u.boss || u.slid === PK.slid || teamOf(u) === EV.team || HEROES[u.hero].kind === 'static' || Math.hypot(u.x - pos.x, u.z - pos.z) > 1.7) return; u.slid = PK.slid; u.stun = Math.max(u.stun || 0, 1.8); hitUnit(u, 10, 'me'); tone(160, .15, 'square', .05, 80); });
+      if (PK.onSlide) { try { PK.onSlide(nx, nz); } catch (e) { console.error(e); } }
+      if (PK.slide <= 0) { PK.slide = 0; KIT.crouch = false; PK.wasC = false; }
+      return;
+    }
+    const moving = keys.w || keys.arrowup || Math.hypot(joy.x, joy.y) > .3;
+    if (pressed && KIT.sprint && moving && !KIT.winded) { PK.slide = .7; PK.slid++; PK.sx = fx; PK.sz = fz; KIT.stam = Math.max(0, KIT.stam - .12); tone(90, .35, 'sawtooth', .03, 50); return; }
+    if (KIT.sprinting && PK.lows.length) { const L = pkIn(PK.lows, mx + fx * 1.1, mz + fz * 1.1, .3); if (L && !pkIn(PK.lows, mx, mz, .3)) { let k = 1.1; while (k < 8 && pkIn(PK.lows, mx + fx * k, mz + fz * k, .3)) k += .25; const bx = mx + fx * (k + .5), bz = mz + fz * (k + .5); if (blrValid(...toLocal(bx, bz))) { PK.vault = { a: [mx, mz], b: [bx, bz], t: 0, T: .5, h: L.h || 1 }; tone(300, .12, 'triangle', .04, 520); } } }
+  }
+  // a touch button for the Comet's nitro, shown while you drive a car that has it
+  const nitroBtn = document.createElement('button'); nitroBtn.type = 'button'; nitroBtn.className = 'btn alt'; nitroBtn.hidden = true; nitroBtn.textContent = 'Nitro'; nitroBtn.style.cssText = 'position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(150px + env(safe-area-inset-bottom,0px));z-index:40;width:76px;height:76px;border-radius:50%;padding:0;background:#FF7A1A;color:#16181D;font-weight:800;touch-action:none'; document.body.appendChild(nitroBtn);
+  nitroBtn.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); PK.nitroBtn = true; }); ['pointerup', 'pointercancel', 'pointerleave'].forEach(k => nitroBtn.addEventListener(k, () => { PK.nitroBtn = false; }));
   function mtnStep(dt, now){
     if (!(inWorld && zone === 'mtn') || !MTN.sc) return;
     // stand on the slope (jumps still arc: you only snap down once you reach the ground again)
@@ -15269,9 +15317,9 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // Each season's story lives in its own file (seasons/s01.js and so on), loaded only while that season is running, and gets
   // this small API instead of reaching into the page. Progress is saved under ru-season. Add ?season=N to preview a season.
   const SEASON0 = new Date(2026, 10, 18), SEASON_LEN = 28;
-  const SEASON_V = '2026-11-18k';
-  const SEASON_FILES = [1, 2];  // the seasons that have a file in seasons/ (add each new one here)  // bump whenever a seasons/*.js file changes
-  const SEASON_NAMES = ['Landfall', 'High Water', 'The Carnival', 'Blackout', 'The Eruption', 'Deep Freeze', 'Scales', 'Incursion', 'The Rift', 'Skyline', 'Harvest', 'Neon Nights', 'The Drought', 'Festival of Lights', 'Convergence'];
+  const SEASON_V = '2026-11-19a';
+  const SEASON_FILES = [1, 2, 3];  // the seasons that have a file in seasons/ (add each new one here)  // bump whenever a seasons/*.js file changes
+  const SEASON_NAMES = ['Landfall', 'High Water', 'The Syndicate', 'Blackout', 'The Eruption', 'Dark Side', 'Scales', 'Incursion', 'Neon Nights', 'Skyline', 'Harvest', 'Season 12', 'The Drought', 'Festival of Lights', 'Convergence'];
   const SEASON = { S: undefined, mod: null, loading: false, failed: false };
   function seasonInfo(){
     let n = null; try { const q = location.search.match(/[?&]season=(\d+)/); if (q) n = Math.min(15, Math.max(1, +q[1])); } catch (e) {}
@@ -15292,7 +15340,8 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     get tpv(){ return tpv; }, set tpv(v){ tpv = !!v; }, get zone(){ return zone; }, get inWorld(){ return inWorld; }, get entered(){ return entered; }, get busy(){ return !!(EV || A); }, get lowFx(){ return lowFx; },
     get BL(){ return BL; }, get BLC(){ return BLC; }, get DRV(){ return DRV; }, get PH(){ return PH; }, get DLG(){ return DLG; }, get room(){ return scene; }, get panelOpen(){ return panel.classList.contains('on'); },
     say, tone, toMap, toLocal, onGround, blrBox, avatar, crowdLook, tex, mat, glowM, decor, B3, C3, S3, fade, flakeTex, heroName, cleanName, setName,
-    fight: ssFight, fightReg: ssReg, heroAv: ssAvatar, give: arsGive, skin: arsSkin, equip: arsEquip, getIn, blrValid, flood: { set: floodSet, off: floodOff, level: floodLevel, ladder: floodLadder, roofAt: floodRoofAt, put: floodPut, get state(){ return FLOOD; } }, makeVehicle, getOut, video: seasonVideo, get ars(){ return ARS; }, weapons: SSW, skins: SSKIN, get fighting(){ return !!(EV && EV.opts && EV.opts.ss); },
+    fight: ssFight, fightReg: ssReg, heroAv: ssAvatar, give: arsGive, skin: arsSkin, equip: arsEquip, getIn, blrValid, flood: { set: floodSet, off: floodOff, level: floodLevel, ladder: floodLadder, roofAt: floodRoofAt, put: floodPut, get state(){ return FLOOD; } }, makeVehicle, getOut, video: seasonVideo, garComet, get KIT(){ return KIT; }, get SW(){ return SW; }, cityV: () => cityV, swTop: (mx, mz) => bTop(mx, mz), heat: () => HEAT,
+    pk: { get state(){ return PK; }, rope(on){ PK.rope = !!on; }, low(x0, x1, z0, z1, h){ const b = { x0, x1, z0, z1, h: h || 1 }; PK.lows.push(b); return b; }, gap(x0, x1, z0, z1){ const b = { x0, x1, z0, z1 }; PK.gaps.push(b); return b; }, drop(b){ [PK.lows, PK.gaps].forEach(L => { const i = L.indexOf(b); if (i >= 0) L.splice(i, 1); }); }, set onLand(f){ PK.onLand = f; }, set onSlide(f){ PK.onSlide = f; } }, get ars(){ return ARS; }, weapons: SSW, skins: SSKIN, get fighting(){ return !!(EV && EV.opts && EV.opts.ss); },
     dlgPlay, dlgNext, dlgSkip, closePanel, phoneClose, panel(html){ panelBody.innerHTML = html; panel.scrollTop = 0; panel.classList.add('on'); return panelBody; }
   }; }
   function seasonStep(dt, now){
@@ -15315,7 +15364,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // every couple of seconds: achievements, the real night, and the phone light
   let nightChecked = false;
   function littleStep(dt, now){
-    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { isleStep(dt, now); } catch (e) { console.error(e); } try { mtnStep(dt, now); } catch (e) { console.error(e); } try { floodStep(dt); } catch (e) { console.error(e); } try { seasonStep(dt, now); } catch (e) { console.error(e); } try { winterStep(dt, now); } catch (e) { console.error(e); }
+    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { isleStep(dt, now); } catch (e) { console.error(e); } try { mtnStep(dt, now); } catch (e) { console.error(e); } try { floodStep(dt); } catch (e) { console.error(e); } try { pkStep(dt); } catch (e) { console.error(e); } try { seasonStep(dt, now); } catch (e) { console.error(e); } try { winterStep(dt, now); } catch (e) { console.error(e); }
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.dz) deathStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.fin) finalStep(dt, now);

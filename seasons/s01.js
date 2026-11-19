@@ -11,7 +11,7 @@ window.RU_SEASON_1 = function(R, opts){
   st.c2 = Object.assign({ start: 0, got: [], lost: [], done: 0 }, st.c2 || {});
   st.c3 = Object.assign({ start: 0, got: [], done: 0 }, st.c3 || {});
   st.f = Object.assign({ amb: 0, hau: 0, for: 0, forClean: 0, sal: 0 }, st.f || {}); if (!Array.isArray(st.seen)) st.seen = [];
-  // the week of the season (add ?week=N to the address to preview a later chapter)
+  // the week of the season (add ?week=N to the address to preview a later part)
   const week = () => { try { const q = location.search.match(/[?&]week=(\d)/); if (q) return +q[1]; } catch (e) {} return R.info().week; };
   const save = () => { const a = R.get(); a.s1 = st; R.put(a); };
   // ---------- a title card and a few UI bits of its own ----------
@@ -94,7 +94,7 @@ body.s1cs button:not(.s1skip),body.s1cs .placecard,body.s1cs .s1card{visibility:
     if (!C.crowded && !skipped) crowd(C); const people = C.people; setTimeout(() => people.forEach(a => { if (a.g.parent) a.g.parent.remove(a.g); }), skipped ? 1000 : 16000);
     if (C.replay) return;
     st.intro = 1; save(); R.PH.wp = PIER.slice();
-    showCard('SEASON 1 · CHAPTER 1', 'Impact', 'Something fell into the sea off the west coast. Follow the beacon to the ferry pier.', 5600);
+    showCard('SEASON 1 · PART 1', 'Impact', 'Something fell into the sea off the west coast. Follow the beacon to the ferry pier.', 5600);
   }
   skipBtn.addEventListener('click', e => { e.stopPropagation(); if (SC) scEnd(true); else csEnd(true); });
   addEventListener('keydown', e => { if (e.key !== 'Escape') return; if (SC) scEnd(true); else if (CS) csEnd(true); });
@@ -139,7 +139,7 @@ body.s1cs button:not(.s1skip),body.s1cs .placecard,body.s1cs .s1card{visibility:
     setTimeout(() => R.say('Something just fell into the sea.', 3800), 1300);
   }
   function streakStep(dt){ if (!streak) return; streak.t += dt; const f = Math.min(1, streak.t / 1.1); streak.s.position.set(5.14, 2.7 - 1.45 * f, 3.7 - 1.65 * f); streak.s.material.opacity = 1 - f * .4; if (f >= 1) { R.room.remove(streak.s); streak = null; R.tone(60, .8, 'sine', .05, 30); } }
-  // ---------- Chapter 1: the Keeper at the pier, and the scanner ----------
+  // ---------- Part 1: the Keeper at the pier, and the scanner ----------
   let keeper = null, talk = null, talking = false;
   function keeperMesh(){
     let a; try { a = R.avatar(R.crowdLook(7)); } catch (e) { return null; }
@@ -198,11 +198,11 @@ body.s1cs button:not(.s1skip),body.s1cs .placecard,body.s1cs .s1card{visibility:
     if (!frags) return; const [mx, mz] = R.toMap(R.pos.x, R.pos.z);
     frags.forEach((f, k) => { if (!f) return; if (Math.hypot(f.x - mx, f.z - mz) < 2.6) { R.BL.mapG.remove(f.g); frags[k] = null; st.frags.push(f.i); save(); const n = st.frags.length;
       R.tone(880, .15, 'triangle', .05); setTimeout(() => R.tone(1320, .2, 'triangle', .05), 140);
-      if (n >= FRAGS.length) { st.ch1 = 1; save(); const S = R.info(), d2 = Math.max(0, 8 - S.day); showCard('CHAPTER 1 COMPLETE', 'Impact', d2 ? `Chapter 2 unlocks in ${d2} day${d2 > 1 ? 's' : ''}.` : 'Chapter 2 is on its way.', 5200); }
+      if (n >= FRAGS.length) { st.ch1 = 1; save(); const S = R.info(), d2 = Math.max(0, 8 - S.day); showCard('PART 1 COMPLETE', 'Impact', d2 ? `Part 2 unlocks in ${d2} day${d2 > 1 ? 's' : ''}.` : 'Part 2 is on its way.', 5200); }
       else showCard('FRAGMENT FOUND', `${n} of ${FRAGS.length}`, 'Still warm. It hums when you hold it near the scanner.', 3000); } });
   }
 
-  // ---------- Chapter 2: Salvage. The Salvager's scrapper drones race you to four more fragments ----------
+  // ---------- Part 2: Salvage. The Salvager's scrapper drones race you to four more fragments ----------
   const C2 = [[61.7, 137.5], [-171.7, -27.5], [226.7, -137.5], [-48.3, 247.5]], C2_FROM = [[300, 330], [-330, -300], [330, -330], [-300, 330]], BARGE = [-470, -10];
   let c2 = null, barge = null;
   // a long flat salvage barge, its deck just above the water so you can fight on it
@@ -237,12 +237,12 @@ body.s1cs button:not(.s1skip),body.s1cs .placecard,body.s1cs .s1card{visibility:
     st.c2.start = 1; save(); c2Build();
     const L = ['📻 Attention, Bangalore. This is the Salvager.', '📻 Everything that falls out of the sky is salvage. And salvage is mine.', '📻 My scrappers are already on your streets. Stay out of their way.'];
     L.forEach((l, i) => setTimeout(() => R.say(l, 3200), i * 3400)); R.tone(220, .3, 'square', .02, 180);
-    setTimeout(() => showCard('CHAPTER 2', 'Salvage', 'The Salvager’s scrapper drones are after four more fragments. Scan, and get there first. Scanning close to a drone jams it.', 6500), 10400);
+    setTimeout(() => showCard('PART 2', 'Salvage', 'The Salvager’s scrapper drones are after four more fragments. Scan, and get there first. Scanning close to a drone jams it.', 6500), 10400);
   }
   function c2Settle(){
     const n = st.c2.got.length + st.c2.lost.length; if (n < C2.length || st.c2.done) return; st.c2.done = 1; save(); const kept = st.c2.got.length, d3 = 15 - R.info().day;
     setTimeout(() => R.say(kept >= 3 ? 'The Keeper, somewhere close: “You kept most of it from him. He will come for the rest himself.”' : kept ? 'The Keeper, somewhere close: “He has more than you do now. That will make him bold.”' : 'The Keeper, somewhere close: “He has all of it. Then we will have to take it back.”', 6000), 1200);
-    showCard('CHAPTER 2 COMPLETE', 'Salvage', `You kept ${kept} of ${C2.length}. ${d3 > 0 ? `Chapter 3 unlocks in ${d3} day${d3 > 1 ? 's' : ''}.` : 'Chapter 3 is on its way.'}`, 6000);
+    showCard('PART 2 COMPLETE', 'Salvage', `You kept ${kept} of ${C2.length}. ${d3 > 0 ? `Part 3 unlocks in ${d3} day${d3 > 1 ? 's' : ''}.` : 'Part 3 is on its way.'}`, 6000);
   }
   function c2Step(dt){
     if (!c2) return; const [mx, mz] = R.toMap(R.pos.x, R.pos.z), t = performance.now() / 1000;
@@ -260,7 +260,7 @@ body.s1cs button:not(.s1skip),body.s1cs .placecard,body.s1cs .s1card{visibility:
   // scanning near a drone jams it
   function c2Jam(mx, mz){ let n = 0; (c2 || []).forEach(f => { const D = f.d; if (D && (D.st === 'go' || D.st === 'down') && Math.hypot(D.x - mx, D.z - mz) < 18) { D.st = 'jam'; D.jam = 4; D.y = Math.max(D.y, 8); n++; } }); if (n) { R.tone(160, .5, 'sawtooth', .04, 60); R.say(n > 1 ? 'Your scanner screams on the drones’ frequency. They spark, spin and limp back where they came from.' : 'Your scanner screams on the drone’s frequency. It sparks, spins and limps back where it came from.', 3200); } return n; }
 
-  // ---------- Chapter 3: Crash Isle. The steam has become land; the core is on it, and so is the Salvager's camp ----------
+  // ---------- Part 3: Crash Isle. The steam has become land; the core is on it, and so is the Salvager's camp ----------
   const ISLE_C = IMPACT, ISLE_R = 44, DOCK = [IMPACT[0] + ISLE_R + 3, IMPACT[1]], SHARDS = [[-528, 100], [-566, 62], [-550, 41]];
   const SENTRY = [{ c: [-530, 98], r: 9, sp: .32 }, { c: [-563, 66], r: 8, sp: -.36 }, { c: [-546, 46], r: 10, sp: .28 }];
   let isle = null, c3 = null;
@@ -313,7 +313,7 @@ body.s1cs button:not(.s1skip),body.s1cs .placecard,body.s1cs .s1card{visibility:
   function c3Intro(){
     st.c3.start = 1; save(); addStop(); buildIsle();
     ['📻 …reports that the steam off the west coast has stopped. Fishermen say there’s land out there now.', '📻 The island has no name yet. People are calling it Crash Isle.'].forEach((l, i) => setTimeout(() => R.say(l, 4000), i * 4200));
-    setTimeout(() => showCard('CHAPTER 3', 'Crash Isle', 'The meteor’s core is on the new island, and so is the Salvager’s camp. Take the ferry from the pier, find three crystal shards, and keep out of the searchlights.', 6800), 8600);
+    setTimeout(() => showCard('PART 3', 'Crash Isle', 'The meteor’s core is on the new island, and so is the Salvager’s camp. Take the ferry from the pier, find three crystal shards, and keep out of the searchlights.', 6800), 8600);
     R.PH.wp = PIER.slice();
   }
   function caught(){ R.tone(880, .15, 'square', .04); setTimeout(() => R.tone(660, .25, 'square', .04), 160); R.say('Spotted! A siren whoops and the sentries herd you back to the dock.', 3200); R.fade(() => { const [lx, lz] = R.toLocal(DOCK[0] - 1, DOCK[1]); R.pos.x = lx; R.pos.z = lz; R.yaw = Math.PI / 2; }, '#2A0A0A'); c3.cool = 4; }
@@ -383,7 +383,7 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
   function giveW(id, quiet){ if (!R.give(id)) return; const W = R.weapons[id]; if (!quiet) newCard('NEW WEAPON', W.n, `${W.how} Yours to keep. Change what you carry in the Season tab.`); R.tone(660, .2, 'triangle', .05); setTimeout(() => R.tone(990, .3, 'triangle', .05), 160); }
   function giveSkin(id){ if (!R.skin(id)) return; const S = R.skins[id]; setTimeout(() => showCard('NEW SKIN', S.n, 'Wear it from the Wardrobe in the Season tab.', 5200), 6000); }
 
-  // Chapter 1 · the scrapper ambush on the beach: drones first (shoot them down), then scrap bots round both sides
+  // Part 1 · the scrapper ambush on the beach: drones first (shoot them down), then scrap bots round both sides
   const DRONE_SPOTS = n => Array.from({ length: n }, (_, i) => [-6 - Math.random() * 3, (i - (n - 1) / 2) * 5]);
   const FIGHT = {
     amb: { id: 'amb', title: 'Scrapper ambush', at: AMB, goal: 'Shoot down the drones',
@@ -401,7 +401,7 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
         if (foes.some(u => u.hero === 'ss_drone') && (D.drop -= dt) <= 0) { D.drop = 5.5; const [x, z] = F.me; F.mark(x, z, 2.2, 0xFF8A2E, 1.2, m => { F.ring(m.x, m.z, 2.2, 0xFF8A2E); F.tone(120, .3, 'square', .04, 60); if (F.near(m.x, m.z, m.r)) F.hurt(8); }); } },
       end(won){ if (won) { st.f.amb = 1; save(); unBeacon('amb'); scene('amb_out', SCN.amb_out(), () => { giveW('s1_wrench'); }); } else lost('amb'); } },
 
-    // Chapter 2 · the Hauler on the barge: armoured from the front, charges in a straight line, slams the deck in rings
+    // Part 2 · the Hauler on the barge: armoured from the front, charges in a straight line, slams the deck in rings
     hau: { id: 'hau', title: 'The Hauler', where: 'the Salvager’s barge', at: BARGE, goal: 'Get behind the Hauler: its back is the weak spot', bossAt: [-13, 0],
       boss: { name: 'The Hauler', hp: 950, kind: 'melee', dmg: 11, range: 3, cd: 1.4, speed: 2.9, r: 1.2, scale: 1.85, bk: .2 },
       outfit: { c1: '#E8B82E', c2: '#3A3D44', metal: 1, gloves: 1, mask: 'helmet', stripes: 1 },
@@ -424,7 +424,7 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
         if ((D.crewT -= dt) <= 0) { D.crewT = 16; if (D.extra < 3 && F.foes().filter(u => u.hero === 'ss_crew').length < 2) { D.extra++; F.add('ss_crew', 20, (Math.random() - .5) * 10, { cover: 1 }); F.say('More crew climb up from below deck.', 1600); } } },
       end(won){ if (won) { st.f.hau = 1; save(); unBeacon('hau'); scene('hau_out', SCN.hau_out(), () => { sinkBarge(); giveW('s1_scatter'); ferryBack(); }); } else lost('hau'); } },
 
-    // Chapter 3 · the Foreman: searchlights call in strikes, crystal pylons shield him, then it's blades
+    // Part 3 · the Foreman: searchlights call in strikes, crystal pylons shield him, then it's blades
     for: { id: 'for', title: 'The Foreman', where: 'Crash Isle', at: FOR, goal: '', bossAt: [0, -8],
       boss: { name: 'The Foreman', hp: 820, kind: 'ranged', dmg: 6, cd: .95, col: 0xFFE070, speed: 3.4, r: .7, scale: 1.25 },
       outfit: { c1: '#3A3D44', c2: '#FFE070', gloves: 1, mask: 'visor', cape: 1 },
@@ -457,7 +457,7 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
       end(won){ if (won) { const clean = !FIGHT.for.lastCaught; st.f.for = 1; st.f.forClean = clean ? 1 : st.f.forClean || 0; save(); unBeacon('for'); if (clean) giveSkin('s1_glow');
           scene('for_out', SCN.for_out(), () => { giveW('s1_rifle'); if (!st.c3.done) coreTalk(); }); } else lost('for'); } },
 
-    // Chapter 4 · the Salvager: his drone swarm and magnet, then his mech, then him, while the sea floods the crater
+    // Part 4 · the Salvager: his drone swarm and magnet, then his mech, then him, while the sea floods the crater
     sal: { id: 'sal', title: 'The Salvager', where: 'Crash Isle', at: FIN, goal: '', bossAt: [-11, 0],
       boss: { name: 'The Salvager', hp: 1000, kind: 'ranged', dmg: 6, cd: 1.1, col: 0xFF5A3A, speed: 3.8, r: .7, scale: 1.2 },
       outfit: { c1: '#E8B82E', c2: '#16181D', gloves: 1, mask: 'helmet', cape: 1, stripes: 1 },
@@ -524,18 +524,18 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
       { d: 2.6, on(f, t){ ds.forEach((q, i) => { q.g.position.set(x - 12 + f * 3 + i * .6, 6 - f * 2.5, z + (i - 2) * 4); q.g.rotors.forEach((r, k) => r.rotation.y = t * 30 + k); }); }, cam: f => [x - 4 + f, 4.5, z + 6], look: () => [x - 12, 5, z], say: 'They’re diving at you! Get your blaster up.' }]; },
     amb_out(){ const [x, z] = AMB, ds = []; return [
       { d: 4.2, start(){ for (let i = 0; i < 3; i++) { const g = scAdd(droneMesh()); ds.push({ g, x: x - 14 - i * 4, z: z + (i - 1) * 6, y: 7 + i, v: 0 }); } }, on(f, t, dt){ ds.forEach((q, i) => { if (t > .4 + i * .5) { q.v += 14 * dt; q.y -= q.v * dt; q.x -= 8 * dt; q.g.rotation.z += dt * 6; } if (q.y < 0 && !q.sp) { q.sp = 1; for (let k = 0; k < 10; k++) scPuff([q.x, .2, q.z], 0xEAF4FF, 2, 1.2, new THREE.Vector3((Math.random() - .5) * 6, 6 + Math.random() * 6, (Math.random() - .5) * 6), 14); R.tone(90, .4, 'sawtooth', .04, 40); } q.g.visible = q.y > -1; q.g.position.set(q.x, q.y, q.z); }); }, cam: () => [x + 2, 2.2, z + 4], look: () => [x - 22, 2, z], say: 'The last of them spiral into the sea. The beach is yours.' },
-      { d: 3, cam: f => [x + 3 - f * 2, 1.7, z + 2], look: () => [x - 1, .4, z - 1], name: ['CHAPTER 1', 'AMBUSH BEATEN', 'Something heavy washed up with the drone parts: a wrench as long as your arm.'] }]; },
+      { d: 3, cam: f => [x + 3 - f * 2, 1.7, z + 2], look: () => [x - 1, .4, z - 1], name: ['PART 1', 'AMBUSH BEATEN', 'Something heavy washed up with the drone parts: a wrench as long as your arm.'] }]; },
     hau_in(){ const [x, z] = BARGE, bx = x - 13, a = bossAv('ssb_hau', bx, z, x + 20, z); return [
       { d: 3.4, cam: f => orbit([bx, z], 9 - f * 2, 2.4 + f, .6, 1.9)(f), look: () => [bx, 2.2, z], name: ['THE SALVAGER’S MUSCLE', 'THE HAULER', '“Nobody boards my barge.”'], on(f, t){ a.anim && a.anim(t, 0, 0); } },
       { d: 2.4, cam: f => [bx + 4.2 - f, .6, z + 1.6], look: () => [bx, 3.2, z], say: 'Its front is solid plate. The engine on its back is not.', on(f, t){ a.anim && a.anim(t, 0, 0); } }]; },
     hau_out(){ const [x, z] = BARGE; return [
-      { d: 6.5, start(C){ C.b = barge || scAdd(bargeMesh()); }, on(f, t, dt, C){ const g = C.b; g.position.y = -f * 6; g.rotation.z = f * .35; g.rotation.x = Math.sin(t * 1.5) * .02 + f * .08; if (Math.random() < .5) scPuff([x + (Math.random() - .5) * 40, .3, z + (Math.random() - .5) * 14], 0xEAF4FF, 3 + Math.random() * 3, 1.6, new THREE.Vector3(0, 2 + Math.random() * 3, 0), 0); }, cam: f => [x + 30 - f * 4, 5, z + 24], look: () => [x, 1, z], name: ['CHAPTER 2', 'THE HAULER IS SCRAP', 'And the Salvager’s barge goes down with it.'] },
+      { d: 6.5, start(C){ C.b = barge || scAdd(bargeMesh()); }, on(f, t, dt, C){ const g = C.b; g.position.y = -f * 6; g.rotation.z = f * .35; g.rotation.x = Math.sin(t * 1.5) * .02 + f * .08; if (Math.random() < .5) scPuff([x + (Math.random() - .5) * 40, .3, z + (Math.random() - .5) * 14], 0xEAF4FF, 3 + Math.random() * 3, 1.6, new THREE.Vector3(0, 2 + Math.random() * 3, 0), 0); }, cam: f => [x + 30 - f * 4, 5, z + 24], look: () => [x, 1, z], name: ['PART 2', 'THE HAULER IS SCRAP', 'And the Salvager’s barge goes down with it.'] },
       { d: 3.2, cam: f => [x + 26, 3.4 - f, z + 22], look: () => [x, 0, z], say: '📻 The Salvager: “That was my barge. You’ll pay for that, {N}.”' }]; },
     for_in(){ const [x, z] = FOR, bx = x, bz = z - 8, a = bossAv('ssb_for', bx, bz, x, z + 6), ps = [[-10, -6], [10, -6], [0, 6]].map(([ox, oz]) => { const m = scAdd(new THREE.Mesh(new THREE.OctahedronGeometry(.8, 0), new THREE.MeshBasicMaterial({ color: 0x7CF2FF }))); m.position.set(x + ox, 2.6, z + oz); m.scale.y = 2; return m; }); return [
       { d: 3.2, cam: f => [x + 14 - f * 6, 10 - f * 3, z + 12], look: () => [x, 1, z], on(f, t){ ps.forEach((m, i) => m.rotation.y = t + i); }, say: 'Searchlights sweep the north shore. Crystal pylons hum around a tall figure.' },
       { d: 3.4, cam: f => orbit([bx, bz], 5, 1.9, 1.2, 2)(f), look: () => [bx, 2, bz], on(f, t){ ps.forEach((m, i) => m.rotation.y = t + i); a.anim && a.anim(t, 0, 0); }, name: ['IN CHARGE OF THE DIG', 'THE FOREMAN', '“Lights on. Nobody touches the core.”'] }]; },
     for_out(){ const [x, z] = ISLE_C; return [
-      { d: 5, start(){ buildIsle(); let f = 1; const iv = setInterval(() => { f = Math.min(1.7, f + .04); if (isle) isle.flare = f; if (f >= 1.7) clearInterval(iv); }, 50); R.tone(220, 2.4, 'sine', .04, 440); setTimeout(() => { coreBeam(); R.tone(110, 2.6, 'sawtooth', .05, 55); }, 1600); }, cam: f => [x + 12 - f * 2, 2 + f * 2, z + 6], look: f => [x, 2.2 + f * 14, z], name: ['CHAPTER 3', 'THE CORE IS LIT', 'The Foreman’s pylons fall dark, and the core answers the shards.'] },
+      { d: 5, start(){ buildIsle(); let f = 1; const iv = setInterval(() => { f = Math.min(1.7, f + .04); if (isle) isle.flare = f; if (f >= 1.7) clearInterval(iv); }, 50); R.tone(220, 2.4, 'sine', .04, 440); setTimeout(() => { coreBeam(); R.tone(110, 2.6, 'sawtooth', .05, 55); }, 1600); }, cam: f => [x + 12 - f * 2, 2 + f * 2, z + 6], look: f => [x, 2.2 + f * 14, z], name: ['PART 3', 'THE CORE IS LIT', 'The Foreman’s pylons fall dark, and the core answers the shards.'] },
       { d: 3, cam: f => [x + 40, 30 + f * 10, z + 40], look: () => [x, 60, z], on(){ if (isle) isle.flare = 1; } }]; },
     sal_in(){ const [x, z] = FIN, bx = x - 11, a = bossAv('ssb_sal', bx, z, x + 6, z), ds = []; return [
       { d: 3.6, start(){ for (let i = 0; i < 8; i++) ds.push({ g: scAdd(droneMesh()), i }); }, on(f, t){ ds.forEach(q => { const k = q.i / 8 * 6.28 + t * .6; q.g.position.set(bx + Math.cos(k) * (30 - f * 22), 20 - f * 14 + Math.sin(t * 2 + q.i), z + Math.sin(k) * (30 - f * 22)); q.g.rotors.forEach((r, j) => r.rotation.y = t * 30 + j); }); }, cam: f => [x + 30 - f * 8, 14, z + 26], look: () => [bx, 8, z], say: 'The sky over Crash Isle fills with drones. All of them heading for one man.' },
@@ -559,7 +559,7 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
     R.dlgPlay([['The Keeper', 'It isn’t a rock, {N}. It never was.'], ['The Keeper', 'It’s a key. And keys are made to open things.'], ['ME', 'Open what?'], ['The Keeper', 'Look up.']], { block: true, done: () => {
       R.dlgPlay([['📻 The Salvager', 'Thank you, Traveller. You found my prize, and you lit it up so nicely.'], ['📻 The Salvager', 'I’ll be along to collect it. Don’t get up.']], { block: true, done: () => {
         talking = false; document.body.classList.remove('cine'); R.DRV.lock = false; R.tone(98, 1.8, 'square', .04, 90); const d4 = 22 - R.info().day;
-        showCard('CHAPTER 3 COMPLETE', 'Crash Isle', d4 > 0 ? `The core is lit, and the Salvager is coming. Chapter 4 unlocks in ${d4} day${d4 > 1 ? 's' : ''}.` : 'The core is lit, and the Salvager is coming. Find him on the east side of Crash Isle.', 6000); } }); } });
+        showCard('PART 3 COMPLETE', 'Crash Isle', d4 > 0 ? `The core is lit, and the Salvager is coming. Part 4 unlocks in ${d4} day${d4 > 1 ? 's' : ''}.` : 'The core is lit, and the Salvager is coming. Find him on the east side of Crash Isle.', 6000); } }); } });
   }
   // the barge: you can stand on its deck, take the ferry out to it, and watch it sink
   let sunk = false; const onBarge = (mx, mz) => !!barge && !sunk && Math.abs(mx - BARGE[0]) < 23.5 && Math.abs(mz - BARGE[1]) < 8.5;
@@ -587,14 +587,14 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
         cam: () => [-402, 1.3, 60], look: () => [cx, 18, cz] },
       { d: 3.4, start(){ if (isle) isle.g.visible = true; tint.style.opacity = '0'; title('NOW THERE’S LAND', 'WHERE THERE WASN’T'); beat(); }, cam: f => [cx + 70 - f * 30, 30 - f * 12, cz + 60 - f * 20], look: () => [cx, 4, cz] },
       { d: 3.6, start(C){ untitle(); const k = keeperMesh(); if (k) { k.g.position.set(R.ISLE.px1 + 1.5, 0, R.ISLE.pz); k.g.rotation.y = -Math.PI / 2; scAdd(k.g); } }, cam: f => [R.ISLE.px1 + 5 - f, 1.7, R.ISLE.pz + .6], look: () => [R.ISLE.px1 + 1.5, 1.6, R.ISLE.pz], name: ['THE KEEPER', 'SOMEONE IS WATCHING', '“Things fall into it. Things climb out of it.”'] },
-      { d: 3.2, start(){ ds = []; for (let i = 0; i < 7; i++) ds.push(scAdd(droneMesh())); beat(70); }, on(f, t){ ds.forEach((g, i) => { g.position.set(AMB[0] - 40 + f * 34 + i * 2, 8 + Math.sin(t * 3 + i), AMB[1] + (i - 3) * 4); g.rotors.forEach((r, k) => r.rotation.y = t * 30 + k); }); }, cam: () => [AMB[0] + 6, 1.3, AMB[1] + 2], look: f => [AMB[0] - 20 + f * 10, 7, AMB[1]], name: ['CHAPTER 1', 'SCRAPPERS ON THE BEACH', ''] },
-      { d: 3.2, start(C){ C.b = scAdd(bargeMesh()); const a = R.heroAv('ssb_hau'); a.g.position.set(bx - 13, 0, bz); a.g.rotation.y = -Math.PI / 2; scAdd(a.g); C.h = a; beat(60); }, on(f, t, dt, C){ C.h.anim && C.h.anim(t, 0, 0); }, cam: f => orbit([bx - 13, bz], 8, 2.6, .5, 1.6)(f), look: () => [bx - 13, 2.4, bz], name: ['CHAPTER 2', 'THE HAULER', '“Nobody boards my barge.”'] },
+      { d: 3.2, start(){ ds = []; for (let i = 0; i < 7; i++) ds.push(scAdd(droneMesh())); beat(70); }, on(f, t){ ds.forEach((g, i) => { g.position.set(AMB[0] - 40 + f * 34 + i * 2, 8 + Math.sin(t * 3 + i), AMB[1] + (i - 3) * 4); g.rotors.forEach((r, k) => r.rotation.y = t * 30 + k); }); }, cam: () => [AMB[0] + 6, 1.3, AMB[1] + 2], look: f => [AMB[0] - 20 + f * 10, 7, AMB[1]], name: ['PART 1', 'SCRAPPERS ON THE BEACH', ''] },
+      { d: 3.2, start(C){ C.b = scAdd(bargeMesh()); const a = R.heroAv('ssb_hau'); a.g.position.set(bx - 13, 0, bz); a.g.rotation.y = -Math.PI / 2; scAdd(a.g); C.h = a; beat(60); }, on(f, t, dt, C){ C.h.anim && C.h.anim(t, 0, 0); }, cam: f => orbit([bx - 13, bz], 8, 2.6, .5, 1.6)(f), look: () => [bx - 13, 2.4, bz], name: ['PART 2', 'THE HAULER', '“Nobody boards my barge.”'] },
       { d: 3.2, start(C){ const a = R.heroAv('ssb_for'); a.g.position.set(FOR[0], 0, FOR[1] - 8); scAdd(a.g); C.f = a; C.ps = [[-10, -6], [10, -6], [0, 6]].map(([ox, oz]) => { const m = scAdd(new THREE.Mesh(new THREE.OctahedronGeometry(.8, 0), new THREE.MeshBasicMaterial({ color: 0x7CF2FF }))); m.position.set(FOR[0] + ox, 2.6, FOR[1] + oz); m.scale.y = 2; return m; }); beat(65); },
-        on(f, t, dt, C){ C.ps.forEach((m, i) => m.rotation.y = t + i); C.f.anim && C.f.anim(t, 0, 0); }, cam: f => [FOR[0] + 3.5 - f * 1.2, 1.3 + f * .8, FOR[1] - 3.5], look: () => [FOR[0], 2, FOR[1] - 8], name: ['CHAPTER 3', 'THE FOREMAN', '“Lights on. Nobody touches the core.”'] },
+        on(f, t, dt, C){ C.ps.forEach((m, i) => m.rotation.y = t + i); C.f.anim && C.f.anim(t, 0, 0); }, cam: f => [FOR[0] + 3.5 - f * 1.2, 1.3 + f * .8, FOR[1] - 3.5], look: () => [FOR[0], 2, FOR[1] - 8], name: ['PART 3', 'THE FOREMAN', '“Lights on. Nobody touches the core.”'] },
       { d: 2.4, start(){ title('6 WEAPONS TO EARN', 'BLASTERS · BLADES · A HARPOON'); beat(80); }, cam: f => [cx + 36 - f * 4, 9 + f * 3, cz + 30], look: () => [cx, 8, cz] },
       { d: 2.4, start(){ title('3 SKINS TO KEEP', 'CRATER SCOUT · METEOR GLOW · SALVAGER’S RIG'); beat(90); }, cam: f => [cx - 34 + f * 4, 11, cz + 32 - f * 6], look: () => [cx, 8, cz] },
       { d: 4, start(C){ untitle(); const a = R.heroAv('ssb_sal'); a.g.position.set(FIN[0] - 11, 0, FIN[1]); a.g.rotation.y = -Math.PI / 2; scAdd(a.g); C.s = a; ds = []; for (let i = 0; i < 8; i++) ds.push(scAdd(droneMesh())); R.tone(45, 3.5, 'sawtooth', .08, 30); },
-        on(f, t, dt, C){ C.s.anim && C.s.anim(t, 0, 0); ds.forEach((g, i) => { const k = i / 8 * 6.28 + t * .8; g.position.set(FIN[0] - 11 + Math.cos(k) * 4, 3.4 + Math.sin(t * 3 + i) * .4, FIN[1] + Math.sin(k) * 4); }); }, cam: f => [FIN[0] - 5 - f * 2, .9, FIN[1] + 2.4], look: () => [FIN[0] - 11, 2.4, FIN[1]], name: ['CHAPTER 4 · 9 DECEMBER', 'THE SALVAGER', '“Everything that falls is mine.”'] },
+        on(f, t, dt, C){ C.s.anim && C.s.anim(t, 0, 0); ds.forEach((g, i) => { const k = i / 8 * 6.28 + t * .8; g.position.set(FIN[0] - 11 + Math.cos(k) * 4, 3.4 + Math.sin(t * 3 + i) * .4, FIN[1] + Math.sin(k) * 4); }); }, cam: f => [FIN[0] - 5 - f * 2, .9, FIN[1] + 2.4], look: () => [FIN[0] - 11, 2.4, FIN[1]], name: ['PART 4 · 9 DECEMBER', 'THE SALVAGER', '“Everything that falls is mine.”'] },
       { d: 2.6, start(C){ const m = R.heroAv('ssu_sal_mech'); m.g.position.set(FIN[0] - 4, 0, FIN[1]); m.g.rotation.y = -Math.PI / 2; scAdd(m.g); C.m = m; R.tone(38, 2.4, 'sawtooth', .1, 25); }, on(f, t, dt, C){ C.m.g.position.y = -3 + Math.min(1, f * 1.6) * 3; }, cam: () => [FIN[0] + 3, .5, FIN[1] + 1.5], look: () => [FIN[0] - 4, 5, FIN[1]], say: 'And he didn’t come alone.' },
       { d: 5.5, start(){ title('SEASON 1', 'LANDFALL'); tint.style.opacity = '1'; R.tone(110, 4, 'sine', .06, 220); R.tone(55, 4, 'sawtooth', .04, 55); }, on(f, t){ if (t > 4.6) untitle(); }, cam: f => [cx + 90 - f * 20, 25 + f * 10, cz + 70 - f * 10], look: () => [cx, 10, cz] },
       { d: 3.2, start(){ tint.style.opacity = '0'; title('NOW PLAYING · 18 NOV – 15 DEC', 'STEP OUTSIDE'); }, cam: f => [-20, 2 + f * 40, 8], look: () => [-300, 10, 40] }
@@ -633,14 +633,14 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
   function tab(){
     const S = R.info(), fd = new Date(S.start.getTime()), unlock = i => { const d = new Date(fd.getTime() + i * 7 * 864e5); return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' }); };
     const wk = week(), rows = CH.map(([n, sub], i) => { const open = wk > i, done = i === 0 && st.ch1 || i === 1 && st.c2.done || i === 2 && st.c3.done || i === 3 && st.f.sal, cur = open && !done && (i === 0 || i === 1 && st.ch1 || i === 2 && st.c2.done || i === 3 && st.c3.done);
-      return `<div class="phcard"><b>${done ? '✓ ' : ''}Chapter ${i + 1}: ${n}</b><small>${!open ? `Unlocks ${unlock(i)}.` : i === 0 ? (done ? 'Done.' : !st.intro ? 'Step out onto the street.' : !st.met ? 'Go to the ferry pier on the west coast.' : `Find the fragments: ${st.frags.length} of ${FRAGS.length}.`) : i === 1 ? (!st.ch1 ? 'Finish Chapter 1 first.' : done ? `Done: you kept ${st.c2.got.length} of 4.` : !st.c2.start ? 'Go out onto the street.' : `Beat the drones to the fragments: ${st.c2.got.length} kept, ${st.c2.lost.length} lost.`) : i === 2 ? (!st.c2.done ? 'Finish Chapter 2 first.' : done ? 'Done: the core is lit.' : !st.c3.start ? 'Go out onto the street.' : st.c3.got.length < 3 ? `Take the ferry to Crash Isle and find the shards: ${st.c3.got.length} of 3.` : !st.f.for ? 'Beat the Foreman on the north shore of Crash Isle.' : 'Take the shards to the core in the crater.') : i === 3 ? (!st.c3.done ? 'Finish Chapter 3 first.' : st.f.sal ? 'Done: the Salvager is beaten.' : 'Face the Salvager on the east side of Crash Isle.') : ''}</small>${cur ? `<small>${esc(sub)}</small>` : ''}</div>`; }).join('');
+      return `<div class="phcard"><b>${done ? '✓ ' : ''}Part ${i + 1}: ${n}</b><small>${!open ? `Unlocks ${unlock(i)}.` : i === 0 ? (done ? 'Done.' : !st.intro ? 'Step out onto the street.' : !st.met ? 'Go to the ferry pier on the west coast.' : `Find the fragments: ${st.frags.length} of ${FRAGS.length}.`) : i === 1 ? (!st.ch1 ? 'Finish Part 1 first.' : done ? `Done: you kept ${st.c2.got.length} of 4.` : !st.c2.start ? 'Go out onto the street.' : `Beat the drones to the fragments: ${st.c2.got.length} kept, ${st.c2.lost.length} lost.`) : i === 2 ? (!st.c2.done ? 'Finish Part 2 first.' : done ? 'Done: the core is lit.' : !st.c3.start ? 'Go out onto the street.' : st.c3.got.length < 3 ? `Take the ferry to Crash Isle and find the shards: ${st.c3.got.length} of 3.` : !st.f.for ? 'Beat the Foreman on the north shore of Crash Isle.' : 'Take the shards to the core in the crater.') : i === 3 ? (!st.c3.done ? 'Finish Part 3 first.' : st.f.sal ? 'Done: the Salvager is beaten.' : 'Face the Salvager on the east side of Crash Isle.') : ''}</small>${cur ? `<small>${esc(sub)}</small>` : ''}</div>`; }).join('');
     return `<div class="phcard"><b>Season 1 · Landfall</b><small>Day ${S.day} of 28 · ${S.left} day${S.left === 1 ? '' : 's'} left. A meteor came down off the west coast.</small><div class="phrow"><button type="button" data-s1="video">▶ Watch the Season 1 trailer</button></div></div>${rows}
       <div class="phcard"><b>Boss fights</b>${FIGHTS_LIST.map(([k, n, how]) => `<small>${st.f[k] ? '✓' : '·'} ${n}: ${st.f[k] ? 'beaten' : how}</small>`).join('')}${st.f.for ? `<small>${st.f.forClean ? '✓' : '·'} Challenge: beat the Foreman without being spotted</small>` : ''}</div>
       ${st.intro ? `<div class="phcard"><b>Scenes</b><small>Watch them again (out on the street).</small><div class="phrow"><button type="button" data-s1-scene="trailer">▶ In-game trailer</button><button type="button" data-s1="replay">▶ Landfall</button>${SCENE_LIST.filter(([id]) => st.seen.includes(id)).map(([id, n]) => `<button type="button" data-s1-scene="${id}">▶ ${n}</button>`).join('')}</div></div>` : ''}
       <div class="phcard"><b>Tools</b><small>${st.scanner ? '✓ Scanner (yours to keep)' : 'Scanner: not yet'}</small></div>
       <div class="phcard" data-s1n><b>Your name: ${esc(R.heroName())}</b><div class="phrow"><button type="button" data-s1="name">Change it</button></div></div>`;
   }
-  const FIGHTS_LIST = [['amb', 'Scrapper ambush', 'on the west beach, after Chapter 1'], ['hau', 'The Hauler', 'on the Salvager’s barge, after Chapter 2 (take the ferry)'], ['for', 'The Foreman', 'on Crash Isle, once you have the three shards'], ['sal', 'The Salvager', 'on Crash Isle, in Chapter 4']];
+  const FIGHTS_LIST = [['amb', 'Scrapper ambush', 'on the west beach, after Part 1'], ['hau', 'The Hauler', 'on the Salvager’s barge, after Part 2 (take the ferry)'], ['for', 'The Foreman', 'on Crash Isle, once you have the three shards'], ['sal', 'The Salvager', 'on Crash Isle, in Part 4']];
   const SCENE_LIST = [['amb_in', 'Scrappers'], ['amb_out', 'Ambush beaten'], ['hau_in', 'The Hauler'], ['hau_out', 'The barge sinks'], ['for_in', 'The Foreman'], ['for_out', 'The core'], ['sal_in', 'The Salvager'], ['sal_out', 'Finale']];
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   function wire(B){ B.querySelectorAll('[data-s1-scene]').forEach(b => b.onclick = () => { if (!(R.inWorld && R.zone === 'blr') || R.busy || R.DRV.on || R.DRV.lock || R.BL.lvl || !R.onGround()) return R.say('Go out onto the street to watch it again.', 2400); const id = b.dataset.s1Scene; if (id !== 'trailer') R.fightReg(FIGHT[id.split('_')[0]]); R.phoneClose(); setTimeout(() => scene(id, id === 'trailer' ? trailer() : SCN[id]()), 300); });
