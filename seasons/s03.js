@@ -112,7 +112,7 @@ body.s3tr .s3bn{background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,0))}
     pylon: { stats: { name: 'Alarm', hp: 60, kind: 'static', r: .6 }, outfit: {} } } };
   R.fightReg(CAST);
   const H = k => 'ssu_s3c_' + k;
-  function who(k, x, z, y = 0, face){ let a = null; try { a = R.heroAv(H(k)); } catch (e) { return null; } a.g.position.set(x, y, z); if (face) a.g.rotation.y = Math.atan2(face[0] - x, face[1] - z); noPick(a.g); return a; }
+  function who(k, x, z, y = 0, face){ let a = null; try { a = R.heroAv(H(k)); } catch (e) { return null; } a.g.position.set(x, y, z); if (face) a.g.rotation.y = Math.atan2(-(face[0] - x), -(face[1] - z)); noPick(a.g); return a; }
 
   // ---------- places: picked from the city as it's built this time ----------
   const valid = (x, z) => { const [lx, lz] = R.toLocal(x, z); return R.blrValid(lx, lz); };
@@ -234,7 +234,7 @@ body.s3tr .s3bn{background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,0))}
     R.say(kind === 'van' ? 'Tyres screech: a van slews across the road and its side door slides open!' : 'Goons pour out of an alley!', 2600); R.tone(kind === 'van' ? 300 : 180, .6, 'sawtooth', .05, 90);
     streetFight('amb', at, { title: kind === 'van' ? 'Van ambush' : 'Alley ambush', goons: kind === 'van' ? 4 : 3, gunners: n >= 3 ? 1 : 0, sniper, cover: kind === 'van' ? [[6, 0, 'car']] : [] }, () => { st.heat = Math.max(1, n - 1); save(); });
   }
-  function plantStep(dt, t, mx, mz){ const P0 = plant; if (!P0) return; P0.t -= dt; const dx = mx - P0.x, dz = mz - P0.z, d = Math.hypot(dx, dz); P0.x += dx / (d || 1) * 3 * dt; P0.z += dz / (d || 1) * 3 * dt; P0.av.g.position.set(P0.x, 0, P0.z); P0.av.g.rotation.y = Math.atan2(dx, dz); try { P0.av.anim(t, 1, 0); } catch (e) {}
+  function plantStep(dt, t, mx, mz){ const P0 = plant; if (!P0) return; P0.t -= dt; const dx = mx - P0.x, dz = mz - P0.z, d = Math.hypot(dx, dz); P0.x += dx / (d || 1) * 3 * dt; P0.z += dz / (d || 1) * 3 * dt; P0.av.g.position.set(P0.x, 0, P0.z); P0.av.g.rotation.y = Math.atan2(-dx, -dz); try { P0.av.anim(t, 1, 0); } catch (e) {}
     if (d < 2.2 || P0.t <= 0) { R.BL.mapG.remove(P0.av.g); plant = null; if (d < 2.2 && !R.busy) { R.say('The chaiwala swings at you. There’s a marigold pinned to his shirt: he’s one of theirs!', 3000); streetFight('amb', mapNow(), { title: 'A Syndicate plant', goons: 2, collector: 1 }, () => {}); } } }
 
   // ---------- beacons: walk into one to start what's there ----------
@@ -283,7 +283,7 @@ body.s3tr .s3bn{background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,0))}
   function chaseStep(dt, t, mx, mz){
     const C = chase; if (!C) return; const px = C.mx + C.ux * C.k, pz = C.mz + C.uz * C.k, d = Math.hypot(px - mx, pz - mz);
     const sp = d > 22 ? 2.6 : d < 7 ? 6.4 : 5.2; let hop = 0; const o = C.obs.find(q => Math.abs(q.k - C.k) < 1.2); if (o) hop = o.kind === 'low' ? Math.sin((C.k - o.k + 1.2) / 2.4 * Math.PI) * .9 : -.6;
-    if (C.k < C.L) C.k = Math.min(C.L, C.k + sp * dt); C.av.g.position.set(px, Math.max(-.5, hop), pz); C.av.g.rotation.y = Math.atan2(C.ux, C.uz); C.av.g.rotation.x = o && o.kind === 'gap' ? -1.1 : 0; try { C.av.anim(t * 1.6, C.k < C.L ? 1 : 0, 0); } catch (e) {}
+    if (C.k < C.L) C.k = Math.min(C.L, C.k + sp * dt); C.av.g.position.set(px, Math.max(-.5, hop), pz); C.av.g.rotation.y = Math.atan2(-C.ux, -C.uz); C.av.g.rotation.x = o && o.kind === 'gap' ? -1.1 : 0; try { C.av.anim(t * 1.6, C.k < C.L ? 1 : 0, 0); } catch (e) {}
     C.obs.forEach(q => { const qd = Math.hypot((q.b.x0 + q.b.x1) / 2 - mx, (q.b.z0 + q.b.z1) / 2 - mz); if (qd < 7 && !C.told[q.kind]) { C.told[q.kind] = 1; R.say(q.kind === 'low' ? `A barricade! Sprint straight at it to vault over${R.fine ? ' (hold Shift)' : ''}.` : `A half-shut shutter! Sprint, then crouch to slide under it${R.fine ? ' (Shift, then C)' : ''}.`, 3200); } });
     if (d < 2.4) { // caught
       chase = null; st.p1.chase = 1; save(); R.tone(523, .2, 'triangle', .05); setTimeout(() => R.tone(784, .3, 'triangle', .05), 140);
@@ -494,8 +494,8 @@ body.s3tr .s3bn{background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,0))}
   let mgRun = null;
   function chaseSetup(){ if (mgRun) return; route(); const L = places().chase, a = who('marigold', 0, 0); if (!a) return; R.BL.mapG.add(a.g); mgRun = { a, i: 0, L, hop: null }; const [x, z] = ctr(L[0]); a.g.position.set(x, L[0].h, z); roofMark(null); R.PH.wp = [x, z]; }
   function mgStep(dt, t){ const C = mgRun; if (!C) return; const b = C.L[C.i], [bx, bz] = ctr(b), [mx, mz] = mapNow(), py = R.pos.y - 1.6;
-    if (C.hop) { const Q = C.hop; Q.t += dt; const f = Math.min(1, Q.t / 1.3), [ax, az] = ctr(Q.a), [cx, cz] = ctr(Q.b); C.a.g.position.set(ax + (cx - ax) * f, Q.a.h + (Q.b.h - Q.a.h) * f + Math.sin(f * Math.PI) * 6, az + (cz - az) * f); C.a.g.rotation.y = Math.atan2(cx - ax, cz - az); if (f >= 1) C.hop = null; try { C.a.anim(t * 1.5, 1, 0); } catch (e) {} return; }
-    C.a.g.position.set(bx, b.h, bz); C.a.g.rotation.y = Math.atan2(mx - bx, mz - bz); try { C.a.anim(t, 0, 0); } catch (e) {} const d3 = Math.hypot(mx - bx, mz - bz, py - b.h);
+    if (C.hop) { const Q = C.hop; Q.t += dt; const f = Math.min(1, Q.t / 1.3), [ax, az] = ctr(Q.a), [cx, cz] = ctr(Q.b); C.a.g.position.set(ax + (cx - ax) * f, Q.a.h + (Q.b.h - Q.a.h) * f + Math.sin(f * Math.PI) * 6, az + (cz - az) * f); C.a.g.rotation.y = Math.atan2(-(cx - ax), -(cz - az)); if (f >= 1) C.hop = null; try { C.a.anim(t * 1.5, 1, 0); } catch (e) {} return; }
+    C.a.g.position.set(bx, b.h, bz); C.a.g.rotation.y = Math.atan2(-(mx - bx), -(mz - bz)); try { C.a.anim(t, 0, 0); } catch (e) {} const d3 = Math.hypot(mx - bx, mz - bz, py - b.h);
     if (C.i < C.L.length - 1 && d3 < 16) { C.hop = { a: b, b: C.L[C.i + 1], t: 0 }; C.i++; R.say(['She runs for the edge and jumps to the next roof, petals trailing from her lapel!', 'Over another gap. She’s heading for her greenhouse!'][Math.min(1, C.i - 1)], 2400); R.PH.wp = ctr(C.L[C.i]); return; }
     if (C.i === C.L.length - 1 && d3 < 4.5) { C.a.g.parent && C.a.g.parent.remove(C.a.g); mgRun = null; st.p4.chase = 1; save(); R.say('You grab her sleeve. She twists free and dives through a glass door into her greenhouse. Follow her in!', 4000); const at = towerAt(); beacon('green', at, 'The greenhouse'); R.PH.wp = at.slice(); } }
   BEACON.green = () => { const at = beacons.green.at;
@@ -540,26 +540,89 @@ body.s3tr .s3bn{background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,0))}
     places().D.forEach((d, j) => places().B.filter(b => Math.hypot(ctr(b)[0] - d.c[0], ctr(b)[1] - d.c[1]) < 60).slice(0, 4).forEach((b, i) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 2.4), stampMat()); g.add(onWall(b, d.c[0] - 20 + i * 13, d.c[1] + 18 - j * 3, 2.6, m)); }));
     noPick(g); }
 
-  // ---------- the Season 3 trailer: noir. Black and white, only the marigold orange left in colour; case-file type ----------
+  // ---------- the Season 3 trailer: a short film, not a list. Black and white, with marigold orange the only colour ----------
+  // No name cards and no quotes: a strip of police tape, a crime scene in fog, a line-up against a height chart, slow push-ins,
+  // a run of fast whip-cut action, then a long push-in on the mourners while the title writes itself, and her garlanded portrait.
+  // The orange things (tape, siren light, title, garland, the lamp) are drawn over the black-and-white 3D view.
+  css.textContent += `
+.s3fx{position:absolute;inset:0;display:none;overflow:hidden}body.s3tr .s3fx{display:block}
+body.s3tr #scene{transform:rotate(var(--dutch,0deg)) scale(var(--zoom,1));transition:transform .25s}
+.s3dof{position:absolute;inset:0;-webkit-backdrop-filter:blur(var(--blur,5px));backdrop-filter:blur(var(--blur,5px));-webkit-mask-image:radial-gradient(ellipse 60% 55% at 50% 46%,transparent 30%,#000 80%);mask-image:radial-gradient(ellipse 60% 55% at 50% 46%,transparent 30%,#000 80%);opacity:0;transition:opacity .6s}.s3dof.on{opacity:1}.s3dof.full{-webkit-mask-image:none;mask-image:none}
+.s3whip{position:absolute;inset:0;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:0}.s3whip.on{opacity:1}
+.s3siren{position:absolute;inset:0;background:radial-gradient(ellipse 45% 70% at 92% 60%,rgba(232,144,26,.55),rgba(232,144,26,0) 70%);mix-blend-mode:screen;opacity:0}
+.s3tape{position:absolute;left:-20%;right:-20%;top:38%;height:22vh;transform:rotate(-9deg);background:#E8A01A;box-shadow:0 0 40px rgba(0,0,0,.6);display:none;align-items:center;white-space:nowrap;overflow:hidden;filter:blur(.4px)}
+.s3tape span{font:900 clamp(40px,11vh,120px)/1 "Courier New",monospace;color:#111;letter-spacing:.06em;animation:s3tape 9s linear infinite}
+.s3tape.b{top:58%;transform:rotate(5deg);height:14vh;filter:blur(5px);opacity:.9}.s3tape.b span{font-size:clamp(26px,7vh,80px);animation-duration:12s}
+@keyframes s3tape{to{transform:translateX(-30%)}}
+.s3script{position:absolute;left:0;right:0;top:56%;text-align:center;font:400 clamp(54px,11vw,140px)/1 "Parisienne",cursive;color:#F2A23A;text-shadow:0 2px 30px rgba(0,0,0,.7)}
+.s3script i{font-style:normal;display:inline-block;clip-path:inset(0 100% 0 0);transition:clip-path 1.6s ease-out}.s3script i.on{clip-path:inset(0 -10% 0 0)}
+.s3frame{position:absolute;left:50%;top:47%;width:min(38vh,60vw);height:min(48vh,76vw);transform:translate(-50%,-50%);background:radial-gradient(ellipse at 50% 40%,#2A2A28,#121211 75%);border:clamp(10px,2vh,18px) solid #1A120C;box-shadow:inset 0 0 0 3px #3A2A1A,0 20px 60px rgba(0,0,0,.8);opacity:0;transition:opacity .8s}
+.s3garland{position:absolute;inset:calc(-1 * clamp(26px,5vh,46px));padding:clamp(18px,3.4vh,32px);background:radial-gradient(circle,#F2A23A 0 32%,#C8701A 34% 48%,transparent 50%) 0 0/clamp(16px,3vh,26px) clamp(16px,3vh,26px);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
+.s3swag{position:absolute;left:8%;right:8%;bottom:calc(-1 * clamp(70px,13vh,120px));height:clamp(60px,11vh,100px);border-radius:0 0 50% 50%;border:clamp(10px,2vh,16px) dotted #E8901A;border-top:0}
+.s3lamp{position:absolute;left:50%;top:84%;width:14px;height:22px;margin-left:-7px;border-radius:50% 50% 45% 45%;background:radial-gradient(ellipse at 50% 70%,#FFF4C8,#F2A23A 45%,rgba(232,144,26,0) 72%);box-shadow:0 0 60px 30px rgba(232,144,26,.35);animation:s3lamp .18s infinite alternate;opacity:0;transition:opacity .8s}
+@keyframes s3lamp{to{transform:scale(1.08,1.12) translateY(-1px)}}
+.s3date{position:absolute;left:0;right:0;bottom:13vh;text-align:center;font:700 clamp(14px,2.4vw,22px)/1 "Courier New",monospace;letter-spacing:.5em;color:#E8901A;opacity:0;transition:opacity 1s}
+.s3frame.on,.s3lamp.on,.s3date.on{opacity:1}`;
+  const fxEl = el('s3fx', '<div class="s3dof"></div><div class="s3siren"></div><div class="s3tape"><span></span></div><div class="s3tape b"><span></span></div><div class="s3script"><i>The</i> <i>Syndicate</i></div><div class="s3frame"><div class="s3garland"></div><div class="s3swag"></div></div><div class="s3lamp"></div><div class="s3date">13 JANUARY</div><div class="s3whip"></div>', cine);
+  fxEl.querySelectorAll('.s3tape span').forEach(sp => sp.textContent = 'POLICE LINE · DO NOT CROSS · '.repeat(8));
+  const fx = sel => fxEl.querySelector(sel), dutch = (deg, zoom = 1) => { const sc = document.getElementById('scene'); if (sc) { sc.style.setProperty('--dutch', deg + 'deg'); sc.style.setProperty('--zoom', zoom); } };
+  const whip = () => { const w = fx('.s3whip'); w.classList.add('on'); setTimeout(() => w.classList.remove('on'), 140); };
   function trailer(){
+    if (!document.getElementById('s3font')) { const ln = document.createElement('link'); ln.id = 's3font'; ln.rel = 'stylesheet'; ln.href = 'https://fonts.googleapis.com/css2?family=Parisienne&display=swap'; document.head.appendChild(ln); }
     const Pl = places(), [hx, hz] = spot(Pl.home[0] + 6, Pl.home[1] + 2), T = Pl.tower, [tx, tz] = ctr(T), cat = countAt(); let k = 0;
     const bass = n => { const f = [55, 65.4, 73.4, 82.4, 98, 110][n % 6]; R.tone(f, .5, 'triangle', .06, f * .98); }, stab = () => { R.tone(440, .25, 'sawtooth', .025, 430); R.tone(523, .25, 'sawtooth', .02, 515); }, snare = () => R.tone(2200, .06, 'square', .008, 1800);
-    const walk = (t, C) => { const b = Math.floor(t * 2.4); if (b !== C.b) { C.b = b; bass(k++); if (b % 2) snare(); } };
-    const a = {}; const A = (key, x, z, y, face) => { a[key] = who(key, x, z, y || 0, face); if (a[key]) scAdd(a[key].g); return a[key]; };
+    const walk = (t, C, sp = 2.4) => { const b = Math.floor(t * sp); if (b !== C.b) { C.b = b; bass(k++); if (b % 2) snare(); } };
+    const wipe = () => { if (SC) SC.objs.forEach(o => o.visible = false); };
+    const fog = R.BL.sc.fog, fog0 = { c: fog.color.getHex(), n: fog.near, f: fog.far }, A = (key, x, z, y, face) => { const a = who(key, x, z, y || 0, face); if (a) scAdd(a.g); return a; };
+    // the line-up wall: the street face of a building near home, with a height chart on it
+    const wb = Pl.near(Pl.home, b => b.h > 8 && b.x1 - b.x0 > 14) || T, lz = wb.z1 + 1.1, lx0 = wb.x0 + 3;
+    const chart = new THREE.Mesh(new THREE.PlaneGeometry(14, 2.6), new THREE.MeshBasicMaterial({ map: R.tex(1024, 192, (c, w, h) => { c.fillStyle = '#C8C8C4'; c.fillRect(0, 0, w, h); c.strokeStyle = '#2A2A2A'; c.fillStyle = '#2A2A2A'; c.font = '700 14px monospace';
+      for (let cm = 100; cm <= 230; cm += 5) { const y = h - (cm - 100) / 130 * h; c.lineWidth = cm % 10 ? 1 : 2; c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke(); if (!(cm % 10)) for (let x = 6; x < w; x += 170) c.fillText(cm, x, y - 3); } }) }));
+    chart.position.set(lx0 + 7, 1 + 1.3, wb.z1 + .06);
+    const lineup = ['velvet', 'brass', 'ledger', 'collector', 'goon2', 'goon3', 'marigold'];
+    const mourn = ['devi', 'lata', 'velvet'];
     return [
-      { d: 4, start(C){ document.body.classList.add('s3tr'); if (comet) comet.g.visible = false; C.onEnd = () => { document.body.classList.remove('s3tr'); if (comet) comet.g.visible = true; }; buildStamps(dist('market')); stamp('CASE NO. 3 · THE SYNDICATE'); stab(); }, on(f, t, dt, C){ walk(t, C); }, cam: f => [hx - 8 + f * 4, 1.6, hz + 6], look: () => [hx, 1.9, hz], name: ['AFTER THE FLOOD', 'THE CITY PAID', 'For pumps. For boats. For protection.'] },
-      { d: 3.4, start(){ A('collector', hx - 1.4, hz, 0, [hx, hz]); try { const q = R.avatar(R.crowdLook(51)); q.g.position.set(hx + .6, 0, hz - .4); scAdd(q.g); } catch (e) {} }, on(f, t, dt, C){ walk(t, C); a.collector && a.collector.anim(t, 0, 0); }, cam: () => [hx - 3, 1.5, hz + 3], look: () => [hx - .3, 1.4, hz], say: '“Protection’s due. Same as everyone on this street.”' },
-      { d: 3.6, start(){ stab(); A('devi', hx + 2, hz + 3, 0, [hx - 3, hz + 3]); }, on(f, t, dt, C){ walk(t, C); a.devi && a.devi.anim(t, 0, 0); }, cam: () => [hx - .6, 1.6, hz + 5.4], look: () => [hx + 2, 1.6, hz + 3], name: ['INSPECTOR DEVI', 'THE LAST HONEST COP', '“Trust me.”'] },
-      { d: 3.4, start(){ stab(); A('brass', hx - 6, hz - 2, 0, [hx, hz]); }, on(f, t, dt, C){ walk(t, C); a.brass && a.brass.anim(t, 0, 0); }, cam: f => [hx - 2.4, .7, hz - .6 - f], look: () => [hx - 6, 2.6, hz - 2], name: ['THE ENFORCER', 'BRASS', ''] },
-      { d: 3.4, start(){ stab(); A('ledger', cat[0], cat[1] - 4, 0, cat); }, on(f, t, dt, C){ walk(t, C); a.ledger && a.ledger.anim(t, 0, 0); }, cam: f => [cat[0] + 2, 1.5, cat[1] + 1 - f], look: () => [cat[0], 1.6, cat[1] - 4], name: ['THE ACCOUNTANT', 'THE LEDGER', '“Every rupee in this city passes through my hands.”'] },
-      { d: 3.4, start(){ stab(); A('velvet', hx + 6, hz - 6, 0, [hx, hz]); }, on(f, t, dt, C){ walk(t * 1.3, C); a.velvet && a.velvet.anim(t, 0, 0); }, cam: () => [hx + 3.6, 1.4, hz - 3.6], look: () => [hx + 6, 1.5, hz - 6], name: ['THE DRIVER', 'VELVET', '“Catch me if you can.”'] },
-      { d: 3.6, start(C){ C.car = R.makeVehicle('car', 0x16181D, R.BL.mapG); SC.objs.push(C.car.g); const tl = glow(0xFF3A1A, 1.2, 1); tl.position.set(0, .8, -2.2); C.car.g.add(tl); }, on(f, t, dt, C){ walk(t * 1.6, C); C.car.g.position.set(hx - 30 + f * 60, 0, hz + 9); C.car.g.rotation.y = Math.PI / 2; }, cam: f => [hx - 10 + f * 18, 1.1, hz + 13], look: f => [hx - 30 + f * 60, .8, hz + 9], say: 'Rooftops. Getaways. Nitro.' },
-      { d: 3.6, start(){ stab(); A('marigold', tx, tz, T.h, [tx, tz + 20]); }, on(f, t, dt, C){ walk(t, C); a.marigold && a.marigold.anim(t, 0, 0); }, cam: f => [tx + 3, T.h + 1.4, tz + 5 - f], look: () => [tx, T.h + 1.5, tz], name: ['HEAD OF THE SYNDICATE', 'MADAME MARIGOLD', '“A city this beautiful needs someone to look after it.”'] },
-      { d: 4.6, start(){ title('SEASON 3', 'THE SYNDICATE'); R.tone(55, 2.4, 'sawtooth', .05, 40); }, cam: f => [tx + 40, 6 + f * (T.h + 10), tz + 40], look: () => [tx, T.h * .7, tz] },
-      { d: 3.2, start(){ title('13 JANUARY – 9 FEBRUARY', 'EVERYONE PAYS'); stab(); }, cam: () => [hx - 6, 1.6, hz + 6], look: () => [hx, 1.9, hz] }
+      // 1 · the tape
+      { d: 3.6, start(C){ document.body.classList.add('s3tr'); C.onEnd = () => { document.body.classList.remove('s3tr'); dutch(0); fog.color.setHex(fog0.c); fog.near = fog0.n; fog.far = fog0.f; fxEl.querySelectorAll('.on').forEach(e => e.classList.remove('on')); fxEl.querySelectorAll('.s3tape').forEach(e => e.style.display = 'none'); fx('.s3siren').style.opacity = 0; if (comet) comet.g.visible = true; }; if (comet) comet.g.visible = false;
+          fog.color.setHex(0x2A2A2A); fog.near = 3; fog.far = 46; fxEl.querySelectorAll('.s3tape').forEach(e => e.style.display = 'flex'); fx('.s3dof').classList.add('on', 'full'); fx('.s3dof').style.setProperty('--blur', '7px'); dutch(-3, 1.08); },
+        on(f, t, dt, C){ walk(t, C); fx('.s3siren').style.opacity = (.35 + .35 * Math.sin(t * 9)).toFixed(2); }, cam: f => [hx - 4 + f * .6, .9, hz + 5], look: () => [hx + 4, 1, hz - 4] },
+      // 2 · the crime scene in fog: a chalk outline in petals, and three people who don't move
+      { d: 3.6, start(C){ wipe(); fxEl.querySelectorAll('.s3tape').forEach(e => e.style.display = 'none'); fx('.s3dof').classList.remove('full'); fx('.s3dof').style.setProperty('--blur', '4px'); dutch(0, 1.04); stab();
+          const ol = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.2), new THREE.MeshBasicMaterial({ transparent: true, map: R.tex(256, 140, (c, w, h) => { c.strokeStyle = '#F4F4F4'; c.lineWidth = 6; c.beginPath(); c.ellipse(60, 70, 24, 22, 0, 0, 7); c.moveTo(84, 70); c.lineTo(180, 64); c.lineTo(240, 30); c.moveTo(180, 64); c.lineTo(240, 110); c.moveTo(110, 66); c.lineTo(140, 20); c.moveTo(110, 74); c.lineTo(150, 124); c.stroke(); }) }));
+          ol.rotation.x = -Math.PI / 2; ol.position.set(hx, .03, hz); scAdd(ol); for (let i = 0; i < 40; i++) { const pt = new THREE.Mesh(new THREE.PlaneGeometry(.16, .1), new THREE.MeshBasicMaterial({ color: 0xE8901A, side: THREE.DoubleSide })); pt.rotation.set(-Math.PI / 2, 0, Math.random() * 6); pt.position.set(hx + (Math.random() - .5) * 2.6, .035, hz + (Math.random() - .5) * 1.6); scAdd(pt); }
+          C.p = [A('devi', hx - 2.2, hz - 2.4, 0, [hx, hz]), A('goon', hx + 2.4, hz - 2, 0, [hx, hz]), A('collector', hx + .4, hz - 3.6, 0, [hx, hz])]; C.j = R.makeVehicle('jeep', 0x5A6A3A, R.BL.mapG); C.j.g.position.set(hx + 6, 0, hz - 5); C.j.g.rotation.y = .6; SC.objs.push(C.j.g); },
+        on(f, t, dt, C){ walk(t, C); fx('.s3siren').style.opacity = (.3 + .3 * Math.sin(t * 9)).toFixed(2); }, cam: f => [hx + 3 - f * .6, 1.75, hz + 3.2 - f * .4], look: () => [hx, .9, hz - 2] },
+      // 3 · the line-up against the height chart
+      { d: 4.4, start(C){ fx('.s3siren').style.opacity = 0; fx('.s3dof').classList.remove('on'); dutch(0, 1); stab(); fog.color.setHex(fog0.c); fog.near = fog0.n; fog.far = fog0.f; wipe(); scAdd(chart); C.L = lineup.map((key, i) => A(key, lx0 + 1 + i * 1.75, lz, 0, [lx0 + 1 + i * 1.75, lz + 10])); },
+        on(f, t, dt, C){ walk(t, C); }, cam: f => [lx0 + 1.4 + f * 7.8, 1.45, lz + 4.2], look: f => [lx0 + 1.4 + f * 7.8 + .6, 1.3, lz] },
+      // 4–7 · single shots, slow push-ins
+      { d: 2.6, start(){ wipe(); stab(); A('devi', hx, hz - 2, 0, [hx, hz + 5]); fx('.s3dof').classList.add('on'); fx('.s3dof').style.setProperty('--blur', '6px'); }, on(f, t, dt, C){ walk(t, C); }, cam: f => [hx + .1, 1.62, hz - .2 - f * .5], look: () => [hx, 1.6, hz - 2] },
+      { d: 2.8, start(C){ wipe(); stab(); C.car = R.makeVehicle('car', 0x16181D, R.BL.mapG); C.car.g.position.set(hx + 7, 0, hz - 4); C.car.g.rotation.y = 1.4; SC.objs.push(C.car.g); A('brass', hx + 6.8, hz - 2.6, 0, [hx + 4, hz + 2]); dutch(4, 1.06); }, on(f, t, dt, C){ walk(t, C); }, cam: f => [hx + 4.6 - f * .5, .55, hz + .6], look: () => [hx + 6.8, 2.1, hz - 2.6] },
+      { d: 2.6, start(){ wipe(); stab(); dutch(0, 1.03); A('ledger', cat[0], cat[1] - 3.2, 0, cat); }, on(f, t, dt, C){ walk(t, C); }, cam: f => [cat[0] + .3, 1.35, cat[1] + 1.4 - f * 1.2], look: () => [cat[0], 1.4, cat[1] - 3.2] },
+      { d: 2.6, start(C){ wipe(); stab(); dutch(-3, 1.05); C.car = R.makeVehicle('car', 0x2A1030, R.BL.mapG); C.car.g.position.set(hx - 6, 0, hz + 6); C.car.g.rotation.y = -1.2; SC.objs.push(C.car.g); A('velvet', hx - 4.6, hz + 5.2, 0, [hx, hz]); }, on(f, t, dt, C){ walk(t, C); }, cam: f => [hx - 2.6 - f * .5, 1.55, hz + 3.4 + f * .3], look: () => [hx - 4.6, 1.55, hz + 5.2] },
+      // 8 · the run: six fast cuts, whip-panned
+      { d: 7.2, start(C){ wipe(); fx('.s3dof').classList.remove('on'); C.tr = R.makeVehicle('truck', 0x16181D, R.BL.mapG); SC.objs.push(C.tr.g); C.g = [0, 1, 2].map(i => A(['goon', 'goon2', 'goon3'][i], hx, hz)); C.br = A('brass', hx + 3, hz + 3, 0, [hx, hz]); C.gd = A('guard', cat[0], cat[1] - 2, 0, cat); C.mg = A('marigold', tx, tz, T.h, [tx, tz + 20]);
+          const cone = new THREE.Mesh(new THREE.ConeGeometry(1.4, 6, 18, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: .22, side: THREE.DoubleSide, depthWrite: false })); cone.rotation.x = Math.PI / 2; cone.position.set(cat[0], 1.4, cat[1] - 2 + 3); scAdd(cone); C.sub = -1; },
+        on(f, t, dt, C){ const s = Math.min(5, Math.floor(t / 1.2)), u = (t - s * 1.2) / 1.2; if (s !== C.sub) { C.sub = s; whip(); snare(); R.tone(90, .2, 'square', .04, 60); dutch([5, -6, 0, 7, -4, 2][s], [1.08, 1.1, 1.04, 1.12, 1.06, 1.05][s]); } walk(t, C, 4.8);
+          C.tr.g.position.set(hx - 14 + (s === 0 ? u * 28 : 0), 0, hz + 3); C.tr.g.rotation.y = Math.PI / 2; C.tr.g.visible = s === 0;
+          C.g.forEach((a, i) => { if (!a) return; a.g.visible = s === 1; a.g.position.set(hx - 1.4 + i * 1.4, 0, hz - 9 + u * 6 + i * .4); a.g.rotation.y = Math.PI; a.anim(t * 1.8 + i, 1, 0); });
+          if (C.br) { C.br.g.visible = s === 3; C.br.anim(t, 0, s === 3 ? Math.min(1, u * 1.6) : 0); } if (C.gd) C.gd.anim(t, 1, 0); if (C.mg) { C.mg.g.rotation.y = s === 5 ? Math.PI * u : 0; C.mg.anim(t, 0, 0); } },
+        cam: (f, t) => { const s = Math.min(5, Math.floor(t / 1.2)), u = (t - s * 1.2) / 1.2;
+          return [[hx, .6, hz + 5.5], [hx + .2, 1.1, hz - 1.4], [hx - 12 + u * 24, T.h * .45 + Math.sin(u * Math.PI) * -6 + 8, hz + 10], [hx + 2.2, .5, hz + 4.6], [cat[0] + 1.6, 1.5, cat[1] + 2.4], [tx + 1.6, T.h + 1.5, tz + 3.4]][s]; },
+        look: (f, t) => { const s = Math.min(5, Math.floor(t / 1.2)), u = (t - s * 1.2) / 1.2;
+          return [[hx - 4 + u * 10, 1.4, hz + 3], [hx, 1.4, hz - 6 + u * 4], [hx + 12, T.h * .3, hz - 4], [hx + 3, 2.6, hz + 3], [cat[0], 1.4, cat[1] - 2], [tx, T.h + 1.5, tz]][s]; } },
+      // 9 · the mourners, a long push-in, and the title writes itself
+      { d: 8, start(C){ wipe(); dutch(0, 1); fx('.s3dof').classList.add('on'); fx('.s3dof').style.setProperty('--blur', '8px'); R.tone(55, 2.6, 'sawtooth', .05, 40);
+          C.m = mourn.map((key, i) => A(key, hx - 1.6 + i * 1.6, hz - 2, 0, [hx - 1.6 + i * 1.6, hz + 10])); [0, 1, 2, 3].forEach(i => { try { const a = R.avatar(R.crowdLook(80 + i)); a.g.position.set(hx - 3.2 + i * 2.1, 0, hz - 3.4); a.g.rotation.y = Math.PI; scAdd(a.g); } catch (e) {} });
+          for (let i = 0; i < 2; i++) { const fg = who(['goon3', 'collector'][i], hx + (i ? 2.6 : -2.4), hz + 3.2, 0, [hx, hz - 4]); if (fg) scAdd(fg.g); }
+          const w = fx('.s3script').children; setTimeout(() => { if (SC) w[0].classList.add('on'); }, 1600); setTimeout(() => { if (SC) w[1].classList.add('on'); }, 2400); },
+        on(f, t, dt, C){ if (Math.floor(t / 2.2) !== C.b2) { C.b2 = Math.floor(t / 2.2); R.tone(41.2, 1.6, 'triangle', .05, 41); } }, cam: f => [hx + .2, 1.6, hz + 7.5 - f * 4], look: () => [hx, 1.55, hz - 2.2] },
+      // 10 · the empty frame: the garland and the lamp, and nobody in the picture yet; then the date
+      { d: 4, start(C){ wipe(); fx('.s3dof').classList.remove('on'); fx('.s3script').querySelectorAll('i').forEach(e => e.classList.remove('on')); cine.querySelector('.s3black').style.opacity = '1';
+          setTimeout(() => { if (SC) { fx('.s3frame').classList.add('on'); fx('.s3lamp').classList.add('on'); } }, 500); setTimeout(() => { if (SC) fx('.s3date').classList.add('on'); }, 2200); R.tone(311, 2.6, 'triangle', .03, 300); },
+        cam: () => [hx, 1.66, hz + 4], look: () => [hx, 1.66, hz] }
     ];
   }
-
   // ---------- each frame ----------
   let ready = false, inited = false, opening = false, raidT = 15;
   function step(dt, now){
