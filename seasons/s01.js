@@ -352,7 +352,7 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
     if (s.name) setTimeout(() => { if (SC !== C || C.shots[C.i] !== s) return; bossCard.innerHTML = `<small>${esc(s.name[0])}</small><b>${esc(s.name[1])}</b>${s.name[2] ? `<span>${esc(R.heroName ? s.name[2].replace(/\{N\}/g, R.heroName()) : s.name[2])}</span>` : ''}`; bossCard.classList.add('on'); R.tone(140, .8, 'sawtooth', .04, 70); }, 500);
     if (s.say) setTimeout(() => { if (SC === C) R.say(s.say.replace(/\{N\}/g, R.heroName()), Math.max(1800, s.d * 1000 - 600)); }, 250);
   }
-  function scStep(dt){
+  function scStep(dt){ if (R.still) R.still();
     const C = SC, s = C.shots[C.i]; C.t += dt; const f = ease(Math.min(1, C.t / s.d));
     if (s.on) { try { s.on(f, C.t, dt, C); } catch (e) { console.error(e); } } if (SC !== C) return;
     const c = s.cam(f, C.t), l = s.look(f, C.t); aimAt(c[0], c[1], c[2], l[0], l[1], l[2]);

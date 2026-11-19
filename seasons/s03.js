@@ -75,6 +75,7 @@ body.s3tr .s3bn{background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,0))}
     if (s.say) setTimeout(() => { if (SC === C) R.say(s.say.replace(/\{N\}/g, R.heroName()), Math.max(1800, s.d * 1000 - 500)); }, 200);
   }
   function scStep(dt){
+    if (R.still) R.still();
     const C = SC, s = C.shots[C.i]; C.t += dt; const f = ease(Math.min(1, C.t / s.d));
     if (s.on) { try { s.on(f, C.t, dt, C); } catch (e) { console.error(e); } } if (SC !== C) return;
     const j = () => (Math.random() - .5) * C.shake; C.shake = Math.max(0, C.shake - dt * .8);

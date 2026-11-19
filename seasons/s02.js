@@ -53,6 +53,7 @@ body.s2cs button:not(.s2skip),body.s2cs .placecard,body.s2cs .s2hearts,body.s2cs
     if (s.say) setTimeout(() => { if (SC === C) R.say(s.say.replace(/\{N\}/g, R.heroName()), Math.max(1800, s.d * 1000 - 500)); }, 200);
   }
   function scStep(dt){
+    if (R.still) R.still();
     const C = SC, s = C.shots[C.i]; C.t += dt; const f = ease(Math.min(1, C.t / s.d));
     if (s.on) { try { s.on(f, C.t, dt, C); } catch (e) { console.error(e); } } if (SC !== C) return;
     const j = () => (Math.random() - .5) * C.shake; C.shake = Math.max(0, C.shake - dt * .8);
