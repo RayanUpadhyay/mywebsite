@@ -607,12 +607,12 @@ body.s3tr #scene{transform:rotate(var(--dutch,0deg)) scale(var(--zoom,1));transi
           const cone = new THREE.Mesh(new THREE.ConeGeometry(1.4, 6, 18, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: .22, side: THREE.DoubleSide, depthWrite: false })); cone.rotation.x = Math.PI / 2; cone.position.set(cat[0], 1.4, cat[1] - 2 + 3); scAdd(cone); C.sub = -1; },
         on(f, t, dt, C){ const s = Math.min(5, Math.floor(t / 1.2)), u = (t - s * 1.2) / 1.2; if (s !== C.sub) { C.sub = s; whip(); snare(); R.tone(90, .2, 'square', .04, 60); dutch([5, -6, 0, 7, -4, 2][s], [1.08, 1.1, 1.04, 1.12, 1.06, 1.05][s]); } walk(t, C, 4.8);
           C.tr.g.position.set(hx - 14 + (s === 0 ? u * 28 : 0), 0, hz + .6); C.tr.g.rotation.y = Math.PI / 2; C.tr.g.visible = s === 0;
-          C.g.forEach((a, i) => { if (!a) return; a.g.visible = s === 1; a.g.position.set(hx - 1.4 + i * 1.4, 0, hz - 9 + u * 6 + i * .4); a.g.rotation.y = Math.PI; a.anim(t * 1.8 + i, 1, 0); });
+          C.g.forEach((a, i) => { if (!a) return; a.g.visible = s === 1; a.g.position.set(hx - 1.4 + i * 1.4, 0, hz + 13 - u * 6 - i * .4); a.g.rotation.y = 0; a.anim(t * 1.8 + i, 1, 0); });
           if (C.br) { C.br.g.visible = s === 3; C.br.anim(t, 0, s === 3 ? Math.min(1, u * 1.6) : 0); } if (C.gd) C.gd.anim(t, 1, 0); if (C.mg) { C.mg.g.rotation.y = s === 5 ? Math.PI * u : 0; C.mg.anim(t, 0, 0); } },
         cam: (f, t) => { const s = Math.min(5, Math.floor(t / 1.2)), u = (t - s * 1.2) / 1.2;
-          return [[hx, 1.1, hz + 6.2], [hx + .2, 1.1, hz - 1.4], [hx - 12 + u * 24, T.h * .45 + Math.sin(u * Math.PI) * -6 + 8, hz + 10], [hx + 2.2, .5, hz + 4.6], [cat[0] + 1.6, 1.5, cat[1] + 2.4], [tx + 1.6, T.h + 1.5, tz + 3.4]][s]; },
+          return [[hx, 1.1, hz + 6.2], [hx + .2, 1.1, hz + 1.6], [hx - 12 + u * 24, T.h * .45 + Math.sin(u * Math.PI) * -6 + 8, hz + 10], [hx + 2.2, .5, hz + 4.6], [cat[0] + 1.6, 1.5, cat[1] + 2.4], [tx + 1.6, T.h + 1.5, tz + 3.4]][s]; },
         look: (f, t) => { const s = Math.min(5, Math.floor(t / 1.2)), u = (t - s * 1.2) / 1.2;
-          return [[hx - 4 + u * 10, 1.4, hz + 3], [hx, 1.4, hz - 6 + u * 4], [hx + 12, T.h * .3, hz - 4], [hx + 3, 2.6, hz + 3], [cat[0], 1.4, cat[1] - 2], [tx, T.h + 1.5, tz]][s]; } },
+          return [[hx - 4 + u * 10, 1.4, hz + 3], [hx, 1.4, hz + 10 - u * 2], [hx + 12, T.h * .3, hz - 4], [hx + 3, 2.6, hz + 3], [cat[0], 1.4, cat[1] - 2], [tx, T.h + 1.5, tz]][s]; } },
       // 9 · the mourners, a long push-in, and the title writes itself
       { d: 8, start(C){ wipe(); dutch(0, 1); fx('.s3dof').classList.add('on'); fx('.s3dof').style.setProperty('--blur', '8px'); R.tone(55, 2.6, 'sawtooth', .05, 40);
           C.m = mourn.map((key, i) => A(key, hx - 1.6 + i * 1.6, hz - 2, 0, [hx - 1.6 + i * 1.6, hz + 10])); [0, 1, 2, 3].forEach(i => { try { const a = R.avatar(R.crowdLook(80 + i)); a.g.position.set(hx - 3.2 + i * 2.1, 0, hz - 3.4); a.g.rotation.y = Math.PI; scAdd(a.g); } catch (e) {} });
