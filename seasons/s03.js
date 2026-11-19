@@ -543,8 +543,8 @@ body.s3tr .s3bn{background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,0))}
 
   // ---------- the Season 3 trailer: a short film, not a list. Black and white, with marigold orange the only colour ----------
   // No name cards and no quotes: a strip of police tape, a crime scene in fog, a line-up against a height chart, slow push-ins,
-  // a run of fast whip-cut action, then a long push-in on the mourners while the title writes itself, and her garlanded portrait.
-  // The orange things (tape, siren light, title, garland, the lamp) are drawn over the black-and-white 3D view.
+  // a run of fast whip-cut action, then a long push-in on the mourners while the title writes itself, then black and the date.
+  // The orange things (tape, siren light, title, date) are drawn over the black-and-white 3D view.
   css.textContent += `
 .s3fx{position:absolute;inset:0;display:none;overflow:hidden}body.s3tr .s3fx{display:block}
 body.s3tr #scene{transform:rotate(var(--dutch,0deg)) scale(var(--zoom,1));transition:transform .25s}
@@ -557,14 +557,9 @@ body.s3tr #scene{transform:rotate(var(--dutch,0deg)) scale(var(--zoom,1));transi
 @keyframes s3tape{to{transform:translateX(-30%)}}
 .s3script{position:absolute;left:0;right:0;top:56%;text-align:center;font:400 clamp(54px,11vw,140px)/1 "Parisienne",cursive;color:#F2A23A;text-shadow:0 2px 30px rgba(0,0,0,.7)}
 .s3script i{font-style:normal;display:inline-block;clip-path:inset(0 100% 0 0);transition:clip-path 1.6s ease-out}.s3script i.on{clip-path:inset(0 -10% 0 0)}
-.s3frame{position:absolute;left:50%;top:47%;width:min(38vh,60vw);height:min(48vh,76vw);transform:translate(-50%,-50%);background:radial-gradient(ellipse at 50% 40%,#2A2A28,#121211 75%);border:clamp(10px,2vh,18px) solid #1A120C;box-shadow:inset 0 0 0 3px #3A2A1A,0 20px 60px rgba(0,0,0,.8);opacity:0;transition:opacity .8s}
-.s3garland{position:absolute;inset:calc(-1 * clamp(26px,5vh,46px));padding:clamp(18px,3.4vh,32px);background:radial-gradient(circle,#F2A23A 0 32%,#C8701A 34% 48%,transparent 50%) 0 0/clamp(16px,3vh,26px) clamp(16px,3vh,26px);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
-.s3swag{position:absolute;left:8%;right:8%;bottom:calc(-1 * clamp(70px,13vh,120px));height:clamp(60px,11vh,100px);border-radius:0 0 50% 50%;border:clamp(10px,2vh,16px) dotted #E8901A;border-top:0}
-.s3lamp{position:absolute;left:50%;top:84%;width:14px;height:22px;margin-left:-7px;border-radius:50% 50% 45% 45%;background:radial-gradient(ellipse at 50% 70%,#FFF4C8,#F2A23A 45%,rgba(232,144,26,0) 72%);box-shadow:0 0 60px 30px rgba(232,144,26,.35);animation:s3lamp .18s infinite alternate;opacity:0;transition:opacity .8s}
-@keyframes s3lamp{to{transform:scale(1.08,1.12) translateY(-1px)}}
 .s3date{position:absolute;left:0;right:0;bottom:13vh;text-align:center;font:700 clamp(14px,2.4vw,22px)/1 "Courier New",monospace;letter-spacing:.5em;color:#E8901A;opacity:0;transition:opacity 1s}
-.s3frame.on,.s3lamp.on,.s3date.on{opacity:1}`;
-  const fxEl = el('s3fx', '<div class="s3dof"></div><div class="s3siren"></div><div class="s3tape"><span></span></div><div class="s3tape b"><span></span></div><div class="s3script"><i>The</i> <i>Syndicate</i></div><div class="s3frame"><div class="s3garland"></div><div class="s3swag"></div></div><div class="s3lamp"></div><div class="s3date">13 JANUARY</div><div class="s3whip"></div>', cine);
+.s3date.on{opacity:1}`;
+  const fxEl = el('s3fx', '<div class="s3dof"></div><div class="s3siren"></div><div class="s3tape"><span></span></div><div class="s3tape b"><span></span></div><div class="s3script"><i>The</i> <i>Syndicate</i></div><div class="s3date">13 JANUARY</div><div class="s3whip"></div>', cine);
   fxEl.querySelectorAll('.s3tape span').forEach(sp => sp.textContent = 'POLICE LINE · DO NOT CROSS · '.repeat(8));
   const fx = sel => fxEl.querySelector(sel), dutch = (deg, zoom = 1) => { const sc = document.getElementById('scene'); if (sc) { sc.style.setProperty('--dutch', deg + 'deg'); sc.style.setProperty('--zoom', zoom); } };
   const whip = () => { const w = fx('.s3whip'); w.classList.add('on'); setTimeout(() => w.classList.remove('on'), 140); };
@@ -573,20 +568,26 @@ body.s3tr #scene{transform:rotate(var(--dutch,0deg)) scale(var(--zoom,1));transi
     const Pl = places(), [hx, hz] = spot(Pl.home[0] + 6, Pl.home[1] + 2), T = Pl.tower, [tx, tz] = ctr(T), cat = countAt(); let k = 0;
     const bass = n => { const f = [55, 65.4, 73.4, 82.4, 98, 110][n % 6]; R.tone(f, .5, 'triangle', .06, f * .98); }, stab = () => { R.tone(440, .25, 'sawtooth', .025, 430); R.tone(523, .25, 'sawtooth', .02, 515); }, snare = () => R.tone(2200, .06, 'square', .008, 1800);
     const walk = (t, C, sp = 2.4) => { const b = Math.floor(t * sp); if (b !== C.b) { C.b = b; bass(k++); if (b % 2) snare(); } };
-    const wipe = () => { if (SC) SC.objs.forEach(o => o.visible = false); };
+    const wipe = () => { if (SC) SC.objs.forEach(o => o.visible = false); }, SCP = new Proxy({}, { get: (o, k) => SC && SC[k] ? SC[k] : [0, 0] });
     const fog = R.BL.sc.fog, fog0 = { c: fog.color.getHex(), n: fog.near, f: fog.far }, A = (key, x, z, y, face) => { const a = who(key, x, z, y || 0, face); if (a) scAdd(a.g); return a; };
-    // the line-up wall: the street face of a building near home, with a height chart on it
-    const wb = Pl.near(Pl.home, b => b.h > 8 && b.x1 - b.x0 > 14) || T, lz = wb.z1 + 1.1, lx0 = wb.x0 + 3;
-    const chart = new THREE.Mesh(new THREE.PlaneGeometry(14, 2.6), new THREE.MeshBasicMaterial({ map: R.tex(1024, 192, (c, w, h) => { c.fillStyle = '#C8C8C4'; c.fillRect(0, 0, w, h); c.strokeStyle = '#2A2A2A'; c.fillStyle = '#2A2A2A'; c.font = '700 14px monospace';
-      for (let cm = 100; cm <= 230; cm += 5) { const y = h - (cm - 100) / 130 * h; c.lineWidth = cm % 10 ? 1 : 2; c.beginPath(); c.moveTo(0, y); c.lineTo(w, y); c.stroke(); if (!(cm % 10)) for (let x = 6; x < w; x += 170) c.fillText(cm, x, y - 3); } }) }));
-    chart.position.set(lx0 + 7, 1 + 1.3, wb.z1 + .06);
+    // the line-up room: its own little set, high above the city, so nothing else can wander into it
+    const LY = 260, lx0 = hx - 7, lz = hz, room = new THREE.Group(); room.position.set(0, 0, 0);
+    { const wallM = new THREE.MeshLambertMaterial({ color: 0x55575C }), floorM = new THREE.MeshLambertMaterial({ color: 0x2E3034 }), add = (geo, m, x, y, z, ry) => { const o = new THREE.Mesh(geo, m); o.position.set(x, y, z); if (ry) o.rotation.y = ry; room.add(o); return o; };
+      add(new THREE.BoxGeometry(16, .2, 9), floorM, hx, LY - .1, hz + 3); add(new THREE.BoxGeometry(16, .2, 9), wallM, hx, LY + 3.6, hz + 3);
+      add(new THREE.BoxGeometry(16, 3.8, .2), wallM, hx, LY + 1.8, hz - .9); add(new THREE.BoxGeometry(.2, 3.8, 9), wallM, hx - 8, LY + 1.8, hz + 3); add(new THREE.BoxGeometry(.2, 3.8, 9), wallM, hx + 8, LY + 1.8, hz + 3);
+      const chartT = R.tex(1024, 256, (c, w, h) => { c.fillStyle = '#3A3C40'; c.fillRect(0, 0, w, h); c.fillStyle = '#E8E8E4'; c.strokeStyle = '#E8E8E4'; c.font = '700 15px monospace';
+        for (let cm = 0; cm <= 240; cm += 5) { const y = h - cm / 240 * h; c.lineWidth = cm % 10 ? 1 : 2.5; c.beginPath(); c.moveTo(cm % 10 ? 40 : 0, y); c.lineTo(cm % 10 ? w - 40 : w, y); c.stroke(); if (!(cm % 20) && cm) { c.fillText(cm, 4, y - 3); c.fillText(cm, w - 34, y - 3); } } });
+      const ch = new THREE.Mesh(new THREE.PlaneGeometry(15.6, 3.6), new THREE.MeshBasicMaterial({ map: chartT })); ch.position.set(hx, LY + 1.8, hz - .79); room.add(ch);
+      for (let i = 0; i < 7; i++) { const n = new THREE.Mesh(new THREE.PlaneGeometry(.5, .5), new THREE.MeshBasicMaterial({ map: R.tex(64, 64, (c, w, h) => { c.fillStyle = '#F4F1E8'; c.fillRect(0, 0, w, h); c.fillStyle = '#111'; c.font = '900 44px monospace'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(i + 1, w / 2, h / 2 + 2); }) })); n.position.set(lx0 + 1 + i * 2, LY + .02, hz + .9); n.rotation.x = -Math.PI / 2; room.add(n); }
+      for (let i = 0; i < 4; i++) { const l = new THREE.Mesh(new THREE.BoxGeometry(2.4, .06, .4), new THREE.MeshBasicMaterial({ color: 0xFFFFFF })); l.position.set(hx - 6 + i * 4, LY + 3.47, hz + 1.5); room.add(l); }
+      const pl = new THREE.PointLight(0xFFFFFF, 1.4, 22); pl.position.set(hx, LY + 3.2, hz + 3); room.add(pl); const pl2 = new THREE.PointLight(0xFFFFFF, .8, 22); pl2.position.set(hx, LY + 2, hz + 7); room.add(pl2); }
     const lineup = ['velvet', 'brass', 'ledger', 'collector', 'goon2', 'goon3', 'marigold'];
     const mourn = ['devi', 'lata', 'velvet'];
     return [
       // 1 · the tape
-      { d: 3.6, start(C){ document.body.classList.add('s3tr'); C.onEnd = () => { document.body.classList.remove('s3tr'); dutch(0); fog.color.setHex(fog0.c); fog.near = fog0.n; fog.far = fog0.f; fxEl.querySelectorAll('.on').forEach(e => e.classList.remove('on')); fxEl.querySelectorAll('.s3tape').forEach(e => e.style.display = 'none'); fx('.s3siren').style.opacity = 0; if (comet) comet.g.visible = true; }; if (comet) comet.g.visible = false;
+      { d: 3.6, start(C){ document.body.classList.add('s3tr'); if (R.hush) R.hush(true); C.onEnd = () => { if (R.hush) R.hush(false); document.body.classList.remove('s3tr'); dutch(0); fog.color.setHex(fog0.c); fog.near = fog0.n; fog.far = fog0.f; fxEl.querySelectorAll('.on').forEach(e => e.classList.remove('on')); fxEl.querySelectorAll('.s3tape').forEach(e => e.style.display = 'none'); fx('.s3siren').style.opacity = 0; if (comet) comet.g.visible = true; }; if (comet) comet.g.visible = false;
           fog.color.setHex(0x2A2A2A); fog.near = 3; fog.far = 46; fxEl.querySelectorAll('.s3tape').forEach(e => e.style.display = 'flex'); fx('.s3dof').classList.add('on', 'full'); fx('.s3dof').style.setProperty('--blur', '7px'); dutch(-3, 1.08); },
-        on(f, t, dt, C){ walk(t, C); fx('.s3siren').style.opacity = (.35 + .35 * Math.sin(t * 9)).toFixed(2); }, cam: f => [hx - 4 + f * .6, .9, hz + 5], look: () => [hx + 4, 1, hz - 4] },
+        on(f, t, dt, C){ walk(t, C); fx('.s3siren').style.opacity = (.35 + .35 * Math.sin(t * 9)).toFixed(2); }, cam: f => [hx - 4 + f * .6, 1.5, hz + 5], look: () => [hx + 4, 1.1, hz - 4] },
       // 2 · the crime scene in fog: a chalk outline in petals, and three people who don't move
       { d: 3.6, start(C){ wipe(); fxEl.querySelectorAll('.s3tape').forEach(e => e.style.display = 'none'); fx('.s3dof').classList.remove('full'); fx('.s3dof').style.setProperty('--blur', '4px'); dutch(0, 1.04); stab();
           const ol = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 1.2), new THREE.MeshBasicMaterial({ transparent: true, map: R.tex(256, 140, (c, w, h) => { c.strokeStyle = '#F4F4F4'; c.lineWidth = 6; c.beginPath(); c.ellipse(60, 70, 24, 22, 0, 0, 7); c.moveTo(84, 70); c.lineTo(180, 64); c.lineTo(240, 30); c.moveTo(180, 64); c.lineTo(240, 110); c.moveTo(110, 66); c.lineTo(140, 20); c.moveTo(110, 74); c.lineTo(150, 124); c.stroke(); }) }));
@@ -594,13 +595,13 @@ body.s3tr #scene{transform:rotate(var(--dutch,0deg)) scale(var(--zoom,1));transi
           C.p = [A('devi', hx - 2.2, hz + 2.8, 0, [hx, hz + 5]), A('goon', hx + 2.4, hz + 3.2, 0, [hx, hz + 5]), A('collector', hx + .4, hz + 1.8, 0, [hx, hz + 5])]; C.j = R.makeVehicle('jeep', 0x5A6A3A, R.BL.mapG); C.j.g.position.set(hx + 6, 0, hz + 1); C.j.g.rotation.y = .6; SC.objs.push(C.j.g); },
         on(f, t, dt, C){ walk(t, C); fx('.s3siren').style.opacity = (.3 + .3 * Math.sin(t * 9)).toFixed(2); }, cam: f => [hx + 3 - f * .6, 1.75, hz + 9.6 - f * .5], look: () => [hx, .9, hz + 3.6] },
       // 3 · the line-up against the height chart
-      { d: 4.4, start(C){ fx('.s3siren').style.opacity = 0; fx('.s3dof').classList.remove('on'); dutch(0, 1); stab(); fog.color.setHex(fog0.c); fog.near = fog0.n; fog.far = fog0.f; wipe(); scAdd(chart); C.L = lineup.map((key, i) => A(key, lx0 + 1 + i * 1.75, lz, 0, [lx0 + 1 + i * 1.75, lz + 10])); },
-        on(f, t, dt, C){ walk(t, C); }, cam: f => [lx0 + 1.4 + f * 7.8, 1.45, lz + 4.2], look: f => [lx0 + 1.4 + f * 7.8 + .6, 1.3, lz] },
+      { d: 4.4, start(C){ fx('.s3siren').style.opacity = 0; fx('.s3dof').classList.remove('on'); dutch(0, 1); stab(); fog.color.setHex(fog0.c); fog.near = 400; fog.far = 900; wipe(); scAdd(room); C.L = lineup.map((key, i) => A(key, lx0 + 1 + i * 2, lz + .5, LY, [lx0 + 1 + i * 2, lz + 10])); },
+        on(f, t, dt, C){ walk(t, C); }, cam: f => [lx0 + 1.6 + f * 9, LY + 1.5, lz + 6.4], look: f => [lx0 + 1.6 + f * 9 + .4, LY + 1.35, lz] },
       // 4–7 · single shots, slow push-ins
-      { d: 2.6, start(){ wipe(); stab(); A('devi', hx, hz + 3, 0, [hx, hz + 9]); fx('.s3dof').classList.add('on'); fx('.s3dof').style.setProperty('--blur', '6px'); }, on(f, t, dt, C){ walk(t, C); }, cam: f => [hx + .1, 1.62, hz + 4.9 - f * .55], look: () => [hx, 1.6, hz + 3] },
-      { d: 2.8, start(C){ wipe(); stab(); C.car = R.makeVehicle('car', 0x16181D, R.BL.mapG); C.car.g.position.set(hx + 7, 0, hz - 4); C.car.g.rotation.y = 1.4; SC.objs.push(C.car.g); A('brass', hx + 6.8, hz - 2.6, 0, [hx + 4, hz + 2]); dutch(4, 1.06); }, on(f, t, dt, C){ walk(t, C); }, cam: f => [hx + 4.6 - f * .5, .55, hz + .6], look: () => [hx + 6.8, 2.1, hz - 2.6] },
+      { d: 2.6, start(){ wipe(); fog.near = fog0.n; fog.far = fog0.f; stab(); A('devi', hx, hz + 3, 0, [hx, hz + 9]); fx('.s3dof').classList.add('on'); fx('.s3dof').style.setProperty('--blur', '6px'); }, on(f, t, dt, C){ walk(t, C); }, cam: f => [hx + .1, 1.62, hz + 4.9 - f * .55], look: () => [hx, 1.6, hz + 3] },
+      { d: 2.8, start(C){ wipe(); stab(); const [cx, cz] = spot(hx + 2, hz + 7), h = Math.PI / 2, rx = Math.cos(h), rz = -Math.sin(h); C.car = R.makeVehicle('car', 0x16181D, R.BL.mapG); C.car.g.position.set(cx, 0, cz); C.car.g.rotation.y = h; SC.objs.push(C.car.g); C.b = [cx + rx * 2.4, cz + rz * 2.4]; C.c = [cx + rx * 7.5 + 2, cz + rz * 7.5]; A('brass', C.b[0], C.b[1], 0, C.c); dutch(4, 1.06); }, on(f, t, dt, C){ walk(t, C); }, cam: f => [SCP.c[0] - f * .4, 1.05, SCP.c[1]], look: () => [SCP.b[0], 2.0, SCP.b[1]] },
       { d: 2.6, start(){ wipe(); stab(); dutch(0, 1.03); A('ledger', cat[0], cat[1] - 3.2, 0, cat); }, on(f, t, dt, C){ walk(t, C); }, cam: f => [cat[0] + .3, 1.35, cat[1] + 1.4 - f * 1.2], look: () => [cat[0], 1.4, cat[1] - 3.2] },
-      { d: 2.6, start(C){ wipe(); stab(); dutch(-3, 1.05); C.car = R.makeVehicle('car', 0x2A1030, R.BL.mapG); C.car.g.position.set(hx - 6, 0, hz + 6); C.car.g.rotation.y = -1.2; SC.objs.push(C.car.g); A('velvet', hx - 4.6, hz + 5.2, 0, [hx, hz]); }, on(f, t, dt, C){ walk(t, C); }, cam: f => [hx - 2.6 - f * .5, 1.55, hz + 3.4 + f * .3], look: () => [hx - 4.6, 1.55, hz + 5.2] },
+      { d: 2.6, start(C){ wipe(); stab(); dutch(-3, 1.05); const [cx, cz] = spot(hx - 3, hz + 7), h = -Math.PI / 2, rx = Math.cos(h), rz = -Math.sin(h); C.car = R.makeVehicle('car', 0x2A1030, R.BL.mapG); C.car.g.position.set(cx, 0, cz); C.car.g.rotation.y = h; SC.objs.push(C.car.g); C.b = [cx + rx * 2.3, cz + rz * 2.3]; C.c = [cx + rx * 6.5 - 1.5, cz + rz * 6.5]; A('velvet', C.b[0], C.b[1], 0, C.c); }, on(f, t, dt, C){ walk(t, C); }, cam: f => [SCP.c[0] + f * .4, 1.55, SCP.c[1]], look: () => [SCP.b[0], 1.55, SCP.b[1]] },
       // 8 · the run: six fast cuts, whip-panned
       { d: 7.2, start(C){ wipe(); fx('.s3dof').classList.remove('on'); C.tr = R.makeVehicle('truck', 0x16181D, R.BL.mapG); SC.objs.push(C.tr.g); C.g = [0, 1, 2].map(i => A(['goon', 'goon2', 'goon3'][i], hx, hz)); C.br = A('brass', hx + 3, hz + 3, 0, [hx, hz]); C.gd = A('guard', cat[0], cat[1] - 2, 0, cat); C.mg = A('marigold', tx, tz, T.h, [tx, tz + 20]);
           const cone = new THREE.Mesh(new THREE.ConeGeometry(1.4, 6, 18, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFFFFF, transparent: true, opacity: .22, side: THREE.DoubleSide, depthWrite: false })); cone.rotation.x = Math.PI / 2; cone.position.set(cat[0], 1.4, cat[1] - 2 + 3); scAdd(cone); C.sub = -1; },
@@ -618,9 +619,8 @@ body.s3tr #scene{transform:rotate(var(--dutch,0deg)) scale(var(--zoom,1));transi
           for (let i = 0; i < 2; i++) { const fg = who(['goon3', 'collector'][i], hx + (i ? 2.6 : -2.4), hz + 3.2, 0, [hx, hz - 4]); if (fg) scAdd(fg.g); }
           const w = fx('.s3script').children; setTimeout(() => { if (SC) w[0].classList.add('on'); }, 1600); setTimeout(() => { if (SC) w[1].classList.add('on'); }, 2400); },
         on(f, t, dt, C){ if (Math.floor(t / 2.2) !== C.b2) { C.b2 = Math.floor(t / 2.2); R.tone(41.2, 1.6, 'triangle', .05, 41); } }, cam: f => [hx + .2, 1.6, hz + 7.5 - f * 4], look: () => [hx, 1.55, hz - 2.2] },
-      // 10 · the empty frame: the garland and the lamp, and nobody in the picture yet; then the date
-      { d: 4, start(C){ wipe(); fx('.s3dof').classList.remove('on'); fx('.s3script').querySelectorAll('i').forEach(e => e.classList.remove('on')); cine.querySelector('.s3black').style.opacity = '1';
-          setTimeout(() => { if (SC) { fx('.s3frame').classList.add('on'); fx('.s3lamp').classList.add('on'); } }, 500); setTimeout(() => { if (SC) fx('.s3date').classList.add('on'); }, 2200); R.tone(311, 2.6, 'triangle', .03, 300); },
+      // 10 · black, and the date
+      { d: 4, start(){ wipe(); fx('.s3dof').classList.remove('on'); fx('.s3script').querySelectorAll('i').forEach(e => e.classList.remove('on')); cine.querySelector('.s3black').style.opacity = '1'; setTimeout(() => { if (SC) fx('.s3date').classList.add('on'); }, 900); R.tone(311, 2.6, 'triangle', .03, 300); },
         cam: () => [hx, 1.66, hz + 4], look: () => [hx, 1.66, hz] }
     ];
   }

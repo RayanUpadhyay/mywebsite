@@ -13005,10 +13005,10 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     // asphalt with lane markings, and paving everywhere else
     const road = BL.mapG.children.find(o => o.isMesh && o.geometry.parameters && o.geometry.parameters.width === 10 && o.geometry.parameters.height === 770);
     if (road) { const rt = tex(128, 1024, (c, w, h) => { c.fillStyle = '#3A3C41'; c.fillRect(0, 0, w, h); for (let i = 0; i < 5000; i++) { const v = 40 + Math.random() * 40; c.fillStyle = `rgb(${v},${v},${v + 4})`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); } c.fillStyle = 'rgba(0,0,0,.18)'; c.fillRect(w * .22, 0, w * .1, h); c.fillRect(w * .68, 0, w * .1, h); c.fillStyle = '#E8E6DC'; c.fillRect(7, 0, 4, h); c.fillRect(w - 11, 0, 4, h); c.fillStyle = '#E8C04A'; for (let y = 0; y < h; y += 128) c.fillRect(w / 2 - 2, y, 4, 70); });
-      rt.wrapS = rt.wrapT = THREE.RepeatWrapping; rt.repeat.set(1, 46); road.material.map = rt; road.material.roughness = .92; road.material.needsUpdate = true; BL.mapG.children.forEach(o => { if (o.material === road.material) o.receiveShadow = true; }); }
+      rt.wrapS = rt.wrapT = THREE.RepeatWrapping; rt.repeat.set(1, 46); rt.anisotropy = renderer.capabilities.getMaxAnisotropy(); road.material.map = rt; road.material.roughness = .92; road.material.needsUpdate = true; BL.mapG.children.forEach(o => { if (o.material === road.material) o.receiveShadow = true; }); }
     const ground = BL.mapG.children.find(o => o.isMesh && o.geometry.parameters && o.geometry.parameters.width === 900);
     if (ground) { const gt = tex(256, 256, (c, w, h) => { c.fillStyle = '#6A665E'; c.fillRect(0, 0, w, h); c.strokeStyle = 'rgba(0,0,0,.22)'; c.lineWidth = 2; for (let i = 0; i <= 8; i++) { c.beginPath(); c.moveTo(i * 32, 0); c.lineTo(i * 32, h); c.stroke(); c.beginPath(); c.moveTo(0, i * 32); c.lineTo(w, i * 32); c.stroke(); } for (let i = 0; i < 2500; i++) { c.fillStyle = `rgba(${Math.random() < .5 ? '255,255,255' : '0,0,0'},.05)`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); } });
-      gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(225, 225); ground.material = new THREE.MeshStandardMaterial({ map: gt, roughness: 1 }); ground.receiveShadow = true; }
+      gt.wrapS = gt.wrapT = THREE.RepeatWrapping; gt.repeat.set(225, 225); gt.anisotropy = renderer.capabilities.getMaxAnisotropy(); ground.material = new THREE.MeshStandardMaterial({ map: gt, roughness: 1 }); ground.receiveShadow = true; }
     // pavements with kerbs, in 5 m pieces so they stop at junctions, the tower and the lake
     const kerb = [], lineK = [];
     ROADS.forEach(l => [0, 1].forEach(dir => [-1, 1].forEach(side => { let run = null; const flush = () => { if (!run) return; const c = (run[0] + run[1]) / 2, n = (run[1] - run[0]) / 5, o = l + side * 6.2, ry = dir ? Math.PI / 2 : 0; kerb.push([dir ? c : o, .08, dir ? o : c, ry, 1, 1, n]); const e = l + side * 5.05; lineK.push([dir ? c : e, .13, dir ? e : c, ry, 1, 1, n]); run = null; };
@@ -13019,7 +13019,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     inst(gB(.55, .02, 2.4), mat(0xEDEBE3, { roughness: .8 }), zeb, g);
     // a plain patch of asphalt where two roads cross, so neither road's markings run through the junction
     { const jt = tex(128, 128, (c, w, h) => { c.fillStyle = '#3A3C41'; c.fillRect(0, 0, w, h); for (let i = 0; i < 900; i++) { const v = 40 + Math.random() * 40; c.fillStyle = `rgb(${v},${v},${v + 4})`; c.fillRect(Math.random() * w, Math.random() * h, 2, 2); } });
-      const jm = new THREE.MeshStandardMaterial({ map: jt, roughness: .92 }), js = []; ROADS.forEach(x => ROADS.forEach(z => { if (!(x < -126 && z > -168 && z < -60)) js.push([x, .05, z, 0, 1, 1, 1, -Math.PI / 2]); }));
+      jt.anisotropy = renderer.capabilities.getMaxAnisotropy(); const jm = new THREE.MeshStandardMaterial({ map: jt, roughness: .92 }), js = []; ROADS.forEach(x => ROADS.forEach(z => { if (!(x < -126 && z > -168 && z < -60)) js.push([x, .05, z, 0, 1, 1, 1, -Math.PI / 2]); }));
       const jim = inst(new THREE.PlaneGeometry(10, 10), jm, js, g); jim.receiveShadow = true; BLC.junctM = jm; }
     // traffic lights at the kerb on the left of every approach, one set of lamps per direction
     const poles = [], heads = [], lamps = { nsR: [], nsG: [], ewR: [], ewG: [] };
@@ -14043,7 +14043,8 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     if (!PED.ims) return;
     { const tg = !fine && pedTarget(); punchBtn.hidden = !tg; }
     const roofV = cityLive(), mood = BL.mood || 'night', I = PED.ims;
-    const show = (roofV || inWorld && zone === 'blr') && !EV && !BL.cine && mood !== 'burn' && mood !== 'scr';
+    const show = (roofV || inWorld && zone === 'blr') && !EV && !BL.cine && !PED.hush && mood !== 'burn' && mood !== 'scr';
+    if (PED.hush || PED.hushed) { (BLC.cars || []).forEach(v => { if (v.g) v.g.visible = !PED.hush; }); PED.hushed = !!PED.hush; }
     Object.values(I).forEach(im => im.visible = show); if (BLC.cartM) BLC.cartM.visible = !(mood === 'burn' || mood === 'scr');
     if (!show) { PED.bub.forEach(b => { b.s.visible = false; b.p = null; }); return; }
     const T = now / 1000, [cx, cz] = toMap(pos.x, pos.z), ground = onGround(), night = !!(GFX.cur && GFX.cur.win > .55), rain = !!(BL.rain && BL.rain.visible), story = SG.active && !newTL();
@@ -15375,7 +15376,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // Each season's story lives in its own file (seasons/s01.js and so on), loaded only while that season is running, and gets
   // this small API instead of reaching into the page. Progress is saved under ru-season. Add ?season=N to preview a season.
   const SEASON0 = new Date(2026, 10, 18), SEASON_LEN = 28;
-  const SEASON_V = '2026-11-19g';
+  const SEASON_V = '2026-11-19h';
   const SEASON_FILES = [1, 2, 3];  // the seasons that have a file in seasons/ (add each new one here)  // bump whenever a seasons/*.js file changes
   const SEASON_NAMES = ['Landfall', 'High Water', 'The Syndicate', 'Blackout', 'The Eruption', 'Dark Side', 'Scales', 'Incursion', 'Neon Nights', 'Skyline', 'Harvest', 'Season 12', 'The Drought', 'Festival of Lights', 'Convergence'];
   const SEASON = { S: undefined, mod: null, loading: false, failed: false };
@@ -15463,7 +15464,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     get tpv(){ return tpv; }, set tpv(v){ tpv = !!v; }, get zone(){ return zone; }, get inWorld(){ return inWorld; }, get entered(){ return entered; }, get busy(){ return !!(EV || A); }, get lowFx(){ return lowFx; },
     get BL(){ return BL; }, get BLC(){ return BLC; }, get DRV(){ return DRV; }, get PH(){ return PH; }, get DLG(){ return DLG; }, get room(){ return scene; }, get panelOpen(){ return panel.classList.contains('on'); },
     say, tone, toMap, toLocal, onGround, blrBox, avatar, crowdLook, tex, mat, glowM, decor, B3, C3, S3, fade, flakeTex, heroName, cleanName, setName,
-    fight: ssFight, fightReg: ssReg, heroAv: ssAvatar, give: arsGive, skin: arsSkin, equip: arsEquip, getIn, blrValid, flood: { set: floodSet, off: floodOff, level: floodLevel, ladder: floodLadder, roofAt: floodRoofAt, put: floodPut, get state(){ return FLOOD; } }, makeVehicle, getOut, video: seasonVideo, garComet, camOut, still(){ vy = 0; grounded = true; }, get KIT(){ return KIT; }, get SW(){ return SW; }, cityV: () => cityV, swTop: (mx, mz) => bTop(mx, mz), heat: () => HEAT,
+    fight: ssFight, fightReg: ssReg, heroAv: ssAvatar, give: arsGive, skin: arsSkin, equip: arsEquip, getIn, blrValid, flood: { set: floodSet, off: floodOff, level: floodLevel, ladder: floodLadder, roofAt: floodRoofAt, put: floodPut, get state(){ return FLOOD; } }, makeVehicle, getOut, video: seasonVideo, garComet, camOut, hush(on){ PED.hush = !!on; }, still(){ vy = 0; grounded = true; }, get KIT(){ return KIT; }, get SW(){ return SW; }, cityV: () => cityV, swTop: (mx, mz) => bTop(mx, mz), heat: () => HEAT,
     pk: { get state(){ return PK; }, rope(on){ PK.rope = !!on; }, low(x0, x1, z0, z1, h){ const b = { x0, x1, z0, z1, h: h || 1 }; PK.lows.push(b); return b; }, gap(x0, x1, z0, z1){ const b = { x0, x1, z0, z1 }; PK.gaps.push(b); return b; }, drop(b){ [PK.lows, PK.gaps].forEach(L => { const i = L.indexOf(b); if (i >= 0) L.splice(i, 1); }); }, set onLand(f){ PK.onLand = f; }, set onSlide(f){ PK.onSlide = f; } }, get ars(){ return ARS; }, weapons: SSW, skins: SSKIN, get fighting(){ return !!(EV && EV.opts && EV.opts.ss); },
     dlgPlay, dlgNext, dlgSkip, closePanel, phoneClose, panel(html){ panelBody.innerHTML = html; panel.scrollTop = 0; panel.classList.add('on'); return panelBody; }
   }; }
