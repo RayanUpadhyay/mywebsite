@@ -96,16 +96,18 @@ body.s3tr .s3bn{background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,0))}
 
   // ---------- the cast: registered as fight heroes so the same people turn up in scenes, on the street and in fights ----------
   const CAST = { id: 's3c', units: {
-    goon: { stats: { name: 'Syndicate goon', hp: 70, kind: 'melee', dmg: 7, range: 2.3, cd: 1, speed: 4.3, r: .55 }, outfit: { c1: '#2A2D33', c2: '#E8901A', gloves: 1 } },
-    gunner: { stats: { name: 'Syndicate gunner', hp: 55, kind: 'ranged', dmg: 5, cd: 1.3, speed: 3.8, r: .5, col: 0xFFA02A }, outfit: { c1: '#3A3D44', c2: '#E8901A', mask: 'hood' } },
-    guard: { stats: { name: 'Counting-house guard', hp: 60, kind: 'ranged', dmg: 6, cd: 1.2, speed: 4, r: .5, col: 0xFFA02A }, outfit: { c1: '#1E2A3A', c2: '#E8901A', mask: 'visor' } },
-    collector: { stats: { name: 'Collector', hp: 140, kind: 'melee', dmg: 9, range: 2.4, cd: 1.1, speed: 4, r: .6 }, outfit: { c1: '#F2E6C8', c2: '#E8901A' } },
-    brass: { stats: { name: 'Brass', hp: 99999, kind: 'melee', dmg: 12, range: 2.8, cd: 1.1, speed: 3.6, r: .9, scale: 1.45 }, outfit: { c1: '#8A6A2A', c2: '#E8B82E', gloves: 1, metal: 1 } },
-    velvet: { stats: { name: 'Velvet', hp: 99999, kind: 'ranged', dmg: 6, cd: .9, speed: 5, r: .5, col: 0xC86AE8 }, outfit: { c1: '#5A1E4A', c2: '#16181D', gloves: 1 } },
-    marigold: { stats: { name: 'Madame Marigold', hp: 500, kind: 'melee', r: .6 }, outfit: { c1: '#F4F1E8', c2: '#E8901A', cape: 1 } },
-    ledger: { stats: { name: 'The Ledger', hp: 500, kind: 'ranged', r: .6 }, outfit: { c1: '#4A4E56', c2: '#F4F1E8', mask: 'visor' } },
-    devi: { stats: { name: 'Inspector Devi', hp: 500, kind: 'ranged', r: .6 }, outfit: { c1: '#6A5A3A', c2: '#1E3A5A' } },
-    lata: { stats: { name: 'Lata', hp: 500, kind: 'melee', r: .6 }, outfit: { c1: '#C8462E', c2: '#E8B82E' } },
+    goon: { stats: { name: 'Syndicate goon', hp: 70, kind: 'melee', dmg: 7, range: 2.3, cd: 1, speed: 4.3, r: .55 }, outfit: { c1: '#2A2D33', c2: '#E8901A', gloves: 1, skin: '#A0673D', hair: 'buzz', hairCol: '#16181D', moustache: 1, build: { h: 1.02, w: 1.12, sh: 1.08 } } },
+    goon2: { stats: { name: 'Syndicate heavy', hp: 110, kind: 'melee', dmg: 9, range: 2.4, cd: 1.25, speed: 3.6, r: .7 }, outfit: { c1: '#3A2E26', c2: '#E8901A', sleeveless: 1, skin: '#7A4A2A', hair: 'bald', beard: 1, hairCol: '#16181D', build: { h: 1.1, w: 1.38, belly: .7, sh: 1.15 } } },
+    goon3: { stats: { name: 'Syndicate runner', hp: 50, kind: 'melee', dmg: 6, range: 2.2, cd: .8, speed: 5.2, r: .45 }, outfit: { c1: '#4A4E56', c2: '#E8901A', skin: '#C68B59', hair: 'curly', hairCol: '#2A1A10', cap: 1, capC: '#16181D', build: { h: .93, w: .84 } } },
+    gunner: { stats: { name: 'Syndicate gunner', hp: 55, kind: 'ranged', dmg: 5, cd: 1.3, speed: 3.8, r: .5, col: 0xFFA02A }, outfit: { c1: '#3A3D44', c2: '#E8901A', mask: 'hood', skin: '#C68B59', hairCol: '#16181D', build: { h: 1.08, w: .9 } } },
+    guard: { stats: { name: 'Counting-house guard', hp: 60, kind: 'ranged', dmg: 6, cd: 1.2, speed: 4, r: .5, col: 0xFFA02A }, outfit: { c1: '#1E2A3A', c2: '#C9CFD8', peak: 1, capC: '#1E2A3A', skin: '#A0673D', hair: 'short', hairCol: '#16181D', moustache: 1, build: { h: 1.04, w: 1.1 } } },
+    collector: { stats: { name: 'Collector', hp: 140, kind: 'melee', dmg: 9, range: 2.4, cd: 1.1, speed: 4, r: .6 }, outfit: { c1: '#F2E6C8', c2: '#7A5A3A', coat: 'short', coatC: '#F2E6C8', flower: 1, skin: '#C68B59', hair: 'side', hairCol: '#16181D', moustache: 1, build: { h: 1.03, w: 1.16, belly: .45 } } },
+    brass: { stats: { name: 'Brass', hp: 99999, kind: 'melee', dmg: 12, range: 2.8, cd: 1.1, speed: 3.6, r: .9, scale: 1.45 }, outfit: { c1: '#2A2420', c2: '#E8B82E', gloves: 1, sleeveless: 1, skin: '#6B4430', hair: 'bald', beard: 'long', hairCol: '#1A1410', build: { h: 1.16, w: 1.5, belly: .8, sh: 1.25, head: .92 } } },
+    velvet: { stats: { name: 'Velvet', hp: 99999, kind: 'ranged', dmg: 6, cd: .9, speed: 5, r: .5, col: 0xC86AE8 }, outfit: { c1: '#16181D', c2: '#5A1E4A', gloves: 1, coat: 'long', coatC: '#2A1E26', skin: '#E0B08A', hair: 'ponytail', hairCol: '#2A1A10', build: { h: 1.1, w: .86, sh: .95 } } },
+    marigold: { stats: { name: 'Madame Marigold', hp: 500, kind: 'melee', r: .6 }, outfit: { c1: '#F4F1E8', c2: '#B8862E', coat: 'long', coatC: '#EDE4CC', flower: 1, skin: '#C68B59', hair: 'bun', hairCol: '#E8E8E8', build: { h: 1.02, w: .92 } } },
+    ledger: { stats: { name: 'The Ledger', hp: 500, kind: 'ranged', r: .6 }, outfit: { c1: '#F4F1E8', c2: '#6A5A4A', vest: 1, glasses: 1, moustache: 1, skin: '#A0673D', hair: 'side', hairCol: '#B8B8B2', build: { h: .88, w: .86, sh: .92, head: 1.05 } } },
+    devi: { stats: { name: 'Inspector Devi', hp: 500, kind: 'ranged', r: .6 }, outfit: { c1: '#B8A27A', c2: '#3A2E20', peak: 1, capC: '#3A3020', skin: '#A0673D', hair: 'bun', hairCol: '#16181D', build: { h: .98, w: 1.08, sh: 1.04 } } },
+    lata: { stats: { name: 'Lata', hp: 500, kind: 'melee', r: .6 }, outfit: { c1: '#B8322A', c2: '#E8B82E', saree: 1, glasses: 1, skin: '#7A4A2A', hair: 'bun', hairCol: '#4A4A48', build: { h: .9, w: 1.22, belly: .5 } } },
     pod: { stats: { name: 'Tear-plant pod', hp: 130, kind: 'static', r: .9 }, outfit: {} },
     pylon: { stats: { name: 'Alarm', hp: 60, kind: 'static', r: .6 }, outfit: {} } } };
   R.fightReg(CAST);
@@ -182,7 +184,7 @@ body.s3tr .s3bn{background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,0))}
   // a street fight: spec = { goons, gunners, collector, cover, sniper, setup, step, title, intro, hud }
   function streetFight(id, at, spec, end){
     const o = { id, title: spec.title || 'Syndicate crew', at: at.slice(), goal: spec.goal || 'Knock them all out', intro: spec.intro, cover: spec.cover || [],
-      setup(F){ F.data.snipe = 5; ring(spec.goons || 0, 9, .3).forEach(([x, z]) => F.add(H('goon'), x, z)); ring(spec.gunners || 0, 12, 1.1).forEach(([x, z]) => F.add(H('gunner'), x, z, { cover: 1 }));
+      setup(F){ F.data.snipe = 5; ring(spec.goons || 0, 9, .3).forEach(([x, z], i) => F.add(H(['goon', 'goon2', 'goon3'][i % 3]), x, z)); ring(spec.gunners || 0, 12, 1.1).forEach(([x, z]) => F.add(H('gunner'), x, z, { cover: 1 }));
         if (spec.collector) F.add(H('collector'), -8, 0); if (spec.setup) spec.setup(F); },
       hud: F => spec.hud ? spec.hud(F) : `${F.foes().length} left${spec.sniper ? ' · watch for the red dot' : ''}`,
       step(dt, F){ if (spec.sniper && (F.data.snipe -= dt) <= 0) { F.data.snipe = 4.5; const [x, z] = F.me; if (!F.data.toldS) { F.data.toldS = 1; F.say('A red laser dot! A rooftop sniper: keep moving!', 2400); } F.tone(1400, .1, 'square', .02); F.mark(x, z, 1.1, 0xFF2A2A, 1.5, m => { if (F.near(m.x, m.z, m.r)) { F.hurt(15); F.shake(.4); } }); }
@@ -202,7 +204,7 @@ body.s3tr .s3bn{background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,0))}
     places().D.forEach(d => { buildStamps(d); buildStalls(d); if (freed(d.k)) return; d.r.forEach(r => { if ((st.dist[d.k] || []).includes(r.kind)) return; const [x, z] = r.at, g = new THREE.Group(); g.position.set(x, 0, z); R.BL.mapG.add(g); r.g = g; r.x = x; r.z = z;
       if (r.kind === 'collect') { const s = stallMesh(0x8A8F99); s.position.set(1.4, 0, 0); g.add(s); const a = who('collector', -.6, .8, 0, [x + 1.4, z]); if (a) { g.add(a.g); r.av = a; } try { const k = R.avatar(R.crowdLook(50 + r.j)); k.g.position.set(1.4, 0, 1.2); g.add(k.g); r.k = k; } catch (e) {} }
       if (r.kind === 'box') { const b = new THREE.Mesh(new THREE.BoxGeometry(1, .9, .8), M(0x2E4A3A)); b.position.y = .45; g.add(b); const sm = new THREE.Mesh(new THREE.PlaneGeometry(.6, .6), stampMat()); sm.position.set(0, .5, .41); g.add(sm); const sign = new THREE.Mesh(new THREE.PlaneGeometry(1.6, .5), new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, map: R.tex(256, 80, (c, w, h) => { c.fillStyle = '#16181D'; c.fillRect(0, 0, w, h); c.fillStyle = '#E8901A'; c.font = '800 30px system-ui'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('PAY HERE', w / 2, h / 2); }) })); sign.position.set(0, 1.5, 0); g.add(sign); r.hits = 0; }
-      if (r.kind === 'crew') { [[2, 1], [-2, 1.5], [0, -2]].forEach(([ox, oz], i) => { const c = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1, 1.2), M(0x7A6242)); c.position.set(ox, .5, oz); g.add(c); const a = who('goon', ox + .9, oz + .9, 0, [x, z]); if (a) { g.add(a.g); (r.avs = r.avs || []).push(a); } }); }
+      if (r.kind === 'crew') { [[2, 1], [-2, 1.5], [0, -2]].forEach(([ox, oz], i) => { const c = new THREE.Mesh(new THREE.BoxGeometry(1.2, 1, 1.2), M(0x7A6242)); c.position.set(ox, .5, oz); g.add(c); const a = who(['goon', 'goon2', 'goon3'][i], ox + .9, oz + .9, 0, [x, z]); if (a) { g.add(a.g); (r.avs = r.avs || []).push(a); } }); }
       if (r.kind === 'rescue') { const ch = new THREE.Mesh(new THREE.BoxGeometry(.7, .5, .7), M(0x5A3A22)); ch.position.y = .25; g.add(ch); try { const k = R.avatar(R.crowdLook(60 + r.j)); k.g.position.set(0, .1, 0); g.add(k.g); r.k = k; } catch (e) {} [[1.6, 1], [-1.6, .6]].forEach(([ox, oz]) => { const a = who('goon', ox, oz, 0, [x, z]); if (a) { g.add(a.g); (r.avs = r.avs || []).push(a); } }); }
       const top = glow(ORANGE, 1.6, .85); top.position.y = 3.4; g.add(top); r.top = top; noPick(g); RK.push(r); }); });
   }
@@ -297,7 +299,7 @@ body.s3tr .s3bn{background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,0))}
       () => streetFight('raid', mapNow(), { title: 'The raid', goons: 4, gunners: 2, collector: 1, cover: [[5, 3, 'car'], [-4, -5, 'crate']], intro: 'They came for you in the night. Fight your way out!', after(won){ if (!won) { st.p1.raidGo = 0; save(); raidT = 30; } } }, () => { st.p1.raid = 1; save(); const c = dist('market').c; beacon('brass', c, 'Brass'); R.PH.wp = c.slice(); R.say('One of them gasps out where Brass is waiting: the middle of the market. Go and finish this.', 4000); }));
   }
   const BRASS = { name: 'Brass', hp: 1500, kind: 'melee', dmg: 13, range: 3, cd: 1.15, speed: 3.6, r: 1, scale: 1.5, bk: .25 };
-  const BRASS_O = { c1: '#8A6A2A', c2: '#E8B82E', gloves: 1, metal: 1 };
+  const BRASS_O = CAST.units.brass.outfit;
   BEACON.brass = () => { const at = beacons.brass.at, [mx, mz] = mapNow(), a = who('brass', at[0] - 6, at[1], 0, [mx, mz]);
     const go = () => streetFight('brass', at, { title: 'Brass', boss: BRASS, outfit: BRASS_O, bossAt: [-8, 0], goal: 'Knock out Brass', intro: 'Brass. Dodge the slams, sidestep the charge, and hit him when he’s winded.', cover: [[4, 4, 'crate'], [-3, -5, 'crate'], [6, -4, 'car']], noAutoWin: 1,
       setup(F){ Object.assign(F.data, { slam: 5, ch: 8, thr: 6.5, adds: 0 }); },
@@ -360,7 +362,7 @@ body.s3tr .s3bn{background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,0))}
     fightGo(o);
   };
   function ledgerFight(at){
-    const go = () => streetFight('ledger', at, { title: 'The Ledger', boss: { name: 'The Ledger', hp: 1150, kind: 'ranged', dmg: 6, cd: .85, speed: 3.3, r: .6, col: 0xF4F1E8 }, outfit: { c1: '#4A4E56', c2: '#F4F1E8', mask: 'visor' }, bossAt: [0, -12], goal: 'Beat the Ledger', noAutoWin: 1,
+    const go = () => streetFight('ledger', at, { title: 'The Ledger', boss: { name: 'The Ledger', hp: 1150, kind: 'ranged', dmg: 6, cd: .85, speed: 3.3, r: .6, col: 0xF4F1E8 }, outfit: CAST.units.ledger.outfit, bossAt: [0, -12], goal: 'Beat the Ledger', noAutoWin: 1,
       cover: [[-4, -4, 'crate'], [4, -5, 'crate'], [0, -8, 'none', 1.2]], after(won){ if (!won) beacon('ledger', at); }, intro: 'The accountant himself. Smash his alarms before he calls the whole building, and watch for the traps.',
       setup(F){ Object.assign(F.data, { trap: 4, al: 3, safe: 6, spawn: 4 }); },
       hud: F => `The Ledger ${Math.max(0, Math.round(F.boss ? F.boss.hp / F.boss.max * 100 : 0))}%${F.foes().some(u => u.hero === H('pylon')) ? ' · ALARMS RINGING: smash them' : ''}`,
@@ -497,7 +499,7 @@ body.s3tr .s3bn{background:linear-gradient(90deg,rgba(0,0,0,.78),rgba(0,0,0,0))}
     if (C.i < C.L.length - 1 && d3 < 16) { C.hop = { a: b, b: C.L[C.i + 1], t: 0 }; C.i++; R.say(['She runs for the edge and jumps to the next roof, petals trailing from her lapel!', 'Over another gap. She’s heading for her greenhouse!'][Math.min(1, C.i - 1)], 2400); R.PH.wp = ctr(C.L[C.i]); return; }
     if (C.i === C.L.length - 1 && d3 < 4.5) { C.a.g.parent && C.a.g.parent.remove(C.a.g); mgRun = null; st.p4.chase = 1; save(); R.say('You grab her sleeve. She twists free and dives through a glass door into her greenhouse. Follow her in!', 4000); const at = towerAt(); beacon('green', at, 'The greenhouse'); R.PH.wp = at.slice(); } }
   BEACON.green = () => { const at = beacons.green.at;
-    const go = () => streetFight('marigold', at, { title: 'Madame Marigold', boss: { name: 'Madame Marigold', hp: 1700, kind: 'melee', dmg: 12, range: 2.8, cd: .9, speed: 4.2, r: .6 }, outfit: { c1: '#F4F1E8', c2: '#E8901A', cape: 1 }, bossAt: [0, -9], goal: 'Beat Madame Marigold', noAutoWin: 1,
+    const go = () => streetFight('marigold', at, { title: 'Madame Marigold', boss: { name: 'Madame Marigold', hp: 1700, kind: 'melee', dmg: 12, range: 2.8, cd: .9, speed: 4.2, r: .6 }, outfit: CAST.units.marigold.outfit, bossAt: [0, -9], goal: 'Beat Madame Marigold', noAutoWin: 1,
       intro: 'Her greenhouse is full of plants from the tear. While the glowing pods live, they shield her: smash them first.',
       setup(F){ Object.assign(F.data, { pet: 4, th: 6.5, p2: 0 }); const par = F.par();
         for (let i = 0; i < 12; i++) { const a = i / 12 * 6.283, p = new THREE.Mesh(new THREE.PlaneGeometry(5.6, 4.6), new THREE.MeshPhongMaterial({ color: 0xCFEFF2, transparent: true, opacity: .2, side: THREE.DoubleSide, depthWrite: false, shininess: 90 })); p.position.set(Math.cos(a) * 15, 2.3, Math.sin(a) * 15); p.rotation.y = -a + Math.PI / 2; par.add(noPick(p)); }

@@ -8478,7 +8478,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (O.lines) [-1, 1].forEach(sd => part(new THREE.BoxGeometry(.012, .5, .02), M('#9B7BD6', { emissive: '#6B3FA0', emissiveIntensity: .5 }), sd * .09, 1.2, -.235));
     // arms (the right one is x > 0)
     const arms = [-1, 1].map(sd => { const a = new THREE.Group(); a.position.set(sd * .32 * bulk, 1.47, 0); g.add(a);
-      const burn = sd > 0 && o.burn, am = burn ? armMat() : O.bare ? skinM : L.outfit === 'casual' ? c1M : O.stripes ? c1M : c1M;
+      const burn = sd > 0 && o.burn, am = burn ? armMat() : O.bare || O.sleeveless ? skinM : L.outfit === 'casual' ? c1M : O.stripes ? c1M : c1M;
       const up = part(new THREE.CylinderGeometry(.068 * bulk, .058 * bulk, .64, 10), am, 0, -.32, 0, a);
       const hand = new THREE.Group(); hand.position.y = -.68; a.add(hand);
       part(new THREE.SphereGeometry(.065 * bulk, 10, 8), burn ? armMat() : O.gloves ? (L.outfit === 'bat' || O === OUTFITS.batman ? c2M : O.stripes ? c2M : c1M) : skinM, 0, 0, 0, hand);
@@ -8510,6 +8510,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     let cape = null;
     if (k.cape) { cape = new THREE.Group(); cape.position.set(0, 1.5, .2); g.add(cape); const cm = new THREE.Mesh(new THREE.PlaneGeometry(.56 * bulk, 1.2), M(O === OUTFITS.asgard || O === OUTFITS.thor || O === OUTFITS.superman ? (O === OUTFITS.asgard ? k.c2 : '#B3121E') : k.c2, { side: THREE.DoubleSide, metalness: 0 })); cm.position.y = -.6; cm.castShadow = true; cape.add(cm); }
     if (!o.plain && !mlNow()) try { avRealism({ g, legs, torso, arms, head, skinM, c1M, c2M, hairM, k, O, bulk, L }); } catch (e) { console.error(e); }
+    try { avBuild(g, { L, O, legs, torso, arms, head, skinM, c1M, c2M, hairM, M, part, k }); } catch (e) { console.error(e); }
     g.scale.setScalar(s * (bulk > 1 ? 1.15 : 1));
     g.traverse(q => { if (q.isMesh) q.userData.noPick = true; });
     let held = null;
@@ -12221,7 +12222,12 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       outro: w => w ? [] : [['The Scrambler', 'THE END. MINE.']] }
   });
   // ---------- small helpers ----------
-  const crowdLook = i => Object.assign({}, LOOK0, { c1: (i * 3 + 2) % SUITC.length, c2: (i * 7 + 1) % SUITC.length, hair: i % 3 ? 'short' : 'long', skin: i % 5 });
+  // people in scenes: every index gives a different build, hair, skin and clothes (beards, glasses, kurtas, saris, caps)
+  const crowdLook = i => { const f = i % 2 === 1, r = n => ((i * 2654435761) >>> n) % 997 / 997;
+    return Object.assign({}, LOOK0, { c1: (i * 3 + 2) % SUITC.length, c2: (i * 7 + 1) % SUITC.length, skin: 1 + i % 5, hairC: r(3) < .12 ? 5 : [0, 0, 1, 0, 2, 1][i % 6],
+      hair: f ? ['long', 'bun', 'ponytail', 'curly'][i % 4] : ['short', 'side', 'buzz', 'bald', 'curly', 'short'][i % 6],
+      build: { h: .9 + r(5) * .22, w: .86 + r(7) * .42, belly: r(9) > .72 ? .5 + r(11) * .5 : 0, sh: .94 + r(13) * .14 },
+      x: f ? { saree: r(15) < .35, glasses: r(17) < .25 } : { beard: r(19) < .3 ? (r(21) < .4 ? 'long' : 1) : 0, moustache: r(23) < .3, glasses: r(25) < .22, kurta: r(27) < .3, cap: r(29) < .15 } }); };
   function stArena2(sc, part){
     if (part === 's1') { const w = new THREE.Mesh(new THREE.CircleGeometry(ER, 48), new THREE.MeshStandardMaterial({ color: 0x3A6A9A, transparent: true, opacity: .55, roughness: .1, metalness: .3 })); w.rotation.x = -Math.PI / 2; w.position.y = .12; sc.add(w); }
     if (part === 's2') { const r = new THREE.Mesh(new THREE.CylinderGeometry(15, 15, 1.1, 48, 1, true), mat(0x8A8F99, { side: THREE.DoubleSide })); r.position.y = .55; sc.add(r); const pad = new THREE.Mesh(new THREE.RingGeometry(5, 5.6, 40), new THREE.MeshBasicMaterial({ color: 0xFFC93C, side: THREE.DoubleSide })); pad.rotation.x = -Math.PI / 2; pad.position.y = .03; sc.add(pad); box(4.8, 6, 5.8, mat(0x2A2D33, { metalness: .5 }), 17, 3, 0, sc); PILLARS.push({ x: 17, z: 0, r: 3 }); }
@@ -13876,6 +13882,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   const P_LEG = [0x2B3A55, 0x1A1B1F, 0x3A3D44, 0xB8A27A, 0x2B3A55, 0x5A4632, 0x16181D, 0x4A4E58];
   const P_SAREE = [0xD94C8A, 0x1F7A45, 0xE07A1E, 0x6B3FA0, 0xC8102E, 0x3CB0A8, 0xF2C230, 0x8A1A2E, 0x1E5AA8];
   const PSAY = {
+    ow: ['Ow!', 'Hey!', 'What was that for?', 'Are you mad?'], flee: ['Help!', 'Somebody call the police!', 'Run!', 'Leave me alone!'], fight: ['Oh, you want to go?', 'Big mistake.', 'Come on then.', 'You picked the wrong person.'], up: ['My head…', 'I’m calling the police.', 'Never again.', 'What just happened?'],
     hi: ['Namaskara!', 'Hello, hello!', 'Oota aytha? Have you eaten?', 'Traffic is too much today.', 'Super weather, macha.', 'Coffee time, no?', 'Busy day, busy day.', 'Did you see the match last night?', 'They dug up this road again.', 'Hey! How are you?'],
     morn: ['Good morning!', 'Off to work. Again.', 'Morning walk! Very good for health.'], night: ['Good night!', 'Late walk, eh?', 'Go home, it’s late!'],
     hero: ['Hey! You’re the hero from the news!', 'Selfie! Selfie, please!', 'Nice suit!', 'Can you fly? Show me!'], rain: ['So much rain, yaar.', 'Forgot my umbrella again.'],
@@ -13942,9 +13949,15 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       umb: bk([[new THREE.ConeGeometry(.62, .3, 8), 0xFFFFFF, 0, .15, 0], [new THREE.CylinderGeometry(.012, .012, 1, 5), 0x2A2A2A, 0, -.5, 0]])
     };
     Object.assign(G, cityPedGeo(lowFx));
+    // what makes the crowd less samey: bellies, beards, glasses, caps and buns (heights and widths come from each person's scale)
+    G.belly = bk([[new THREE.SphereGeometry(.2, 10, 8).scale(1.08, .92, 1.15), 0xFFFFFF, 0, 1.08, .035]]);
+    G.beard = bk([[new THREE.SphereGeometry(.125, 10, 6, 0, Math.PI * 2, Math.PI * .45, Math.PI * .55), 0xFFFFFF, 0, 0, .012], [gB(.09, .02, .03), 0xFFFFFF, 0, -.04, .135]]);
+    G.specs = bk([[new THREE.TorusGeometry(.028, .006, 5, 10), 0x16181D, .05, .025, .142], [new THREE.TorusGeometry(.028, .006, 5, 10), 0x16181D, -.05, .025, .142], [gB(.04, .006, .006), 0x16181D, 0, .03, .144]]);
+    G.cap = bk([[new THREE.CylinderGeometry(.155, .158, .07, 10), 0xFFFFFF, 0, .12, 0], [gB(.22, .014, .11), 0xFFFFFF, 0, .09, .15, -.12, 0, 0]]);
+    G.bun = bk([[new THREE.SphereGeometry(.152, 10, 4, 0, Math.PI * 2, 0, Math.PI / 2.1), 0xFFFFFF, 0, .025, -.008], [new THREE.SphereGeometry(.072, 8, 6), 0xFFFFFF, 0, .09, -.13]]);
     // every frame the people in view are packed into the front of each mesh, so nobody hidden costs anything
     const m0 = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .62 }), mF = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: .9, map: txFabric() }), mk = (geo, n, shadow, m = m0) => { const im = new THREE.InstancedMesh(geo, m, n); im.frustumCulled = false; im.castShadow = !!shadow; im.userData.noPick = true; im.setColorAt(0, new THREE.Color(1, 1, 1)); im.count = 0; g.add(im); return im; };
-    PED.ims = { leg: mk(G.leg, N * 2, 1, mF), body: mk(G.body, N, 1, mF), skirt: mk(G.skirt, N, 1, mF), drape: mk(G.drape, N, 0, mF), arm: mk(G.arm, N * 2, 1), sleeve: mk(G.sleeve, N * 2, 0, mF), head: mk(G.head, N, 1), eyes: mk(G.eyes, N), lid: mk(G.lid, N), hair: mk(G.hair, N), hairL: mk(G.hairL, N), bag: mk(G.bag, N, 0, mF), umb: mk(G.umb, N, 1) };
+    PED.ims = { leg: mk(G.leg, N * 2, 1, mF), body: mk(G.body, N, 1, mF), skirt: mk(G.skirt, N, 1, mF), drape: mk(G.drape, N, 0, mF), arm: mk(G.arm, N * 2, 1), sleeve: mk(G.sleeve, N * 2, 0, mF), head: mk(G.head, N, 1), eyes: mk(G.eyes, N), lid: mk(G.lid, N), hair: mk(G.hair, N), hairL: mk(G.hairL, N), bag: mk(G.bag, N, 0, mF), umb: mk(G.umb, N, 1), belly: mk(G.belly, N, 1, mF), beard: mk(G.beard, N), specs: mk(G.specs, N), cap: mk(G.cap, N), bun: mk(G.bun, N) };
     for (let k = 0; k < N; k++) PED.list.push({ k, placed: false, cool: 0, cool2: 0 });
     for (let i = 0; i < 4; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false })); s.visible = false; s.renderOrder = 5; g.add(s); PED.bub.push({ s, p: null, until: 0 }); }
   }
@@ -13954,6 +13967,9 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       top: type === 's' ? pickA(P_SAREE) : pickA(P_TOP), leg: type === 's' ? 0 : type === 'f' ? pickA([0xEEF1F5, 0x16181D, 0xD8C8A8, 0x8A1A2E]) : pickA(P_LEG), bag: type !== 'k' && Math.random() < .3 ? pickA([0x3A2A1E, 0x16181D, 0xC8102E, 0x2E5A9A, 0xB07C4A]) : 0,
       umb: Math.random() < .75 ? (Math.random() < .6 ? 0x1A1B1F : pickA([0x2E5A9A, 0xC8102E, 0x1F7A45, 0x6B3FA0])) : 0, phone: type !== 'k' && Math.random() < .14, lo: (Math.random() - .5) * .9, ph: Math.random() * 6 });
     if (p.type === 's') p.leg = p.top;
+    const R0 = Math.random; p.w = type === 'k' ? .92 + R0() * .14 : .86 + R0() * .44; p.hh = type === 'k' ? .95 + R0() * .1 : type === 'o' ? .9 + R0() * .1 : .9 + R0() * .2; p.belly = type !== 'k' && p.w > 1.05 && R0() < .6;
+    p.beard = (type === 'm' || type === 'o') && R0() < .32; p.specs = type !== 'k' && R0() < (type === 'o' ? .55 : .18); p.cap = type === 'm' && R0() < .16 ? pickA([0x16181D, 0xF4F1E8, 0x2E5A9A, 0xC8102E]) : 0; p.bun = p.long && type !== 'k' && R0() < .4;
+    p.hit = 0; p.down = 0;
     p.sp = type === 'o' ? .75 + Math.random() * .2 : type === 'k' ? 1.4 + Math.random() * .3 : p.phone ? .9 + Math.random() * .2 : 1.15 + Math.random() * .35;
   }
   function pedPlace(p, cx, cz, init){
@@ -13983,12 +13999,49 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   }
   function pedPm(pm){ if (!PED.ims || !PED.ims.body.visible) return; PED.list.forEach(p => { if (p.placed && p.vis && p.edge && p.edge.cross && p.mode === 'walk' && p.pi === 2) pm.push([p.x, p.z, .4]); }); }
   const _pB = new THREE.Matrix4(), _pL = new THREE.Matrix4(), _pM = new THREE.Matrix4(), _pq = new THREE.Quaternion(), _pe = new THREE.Euler(), _pv = new THREE.Vector3(), _ps = new THREE.Vector3();
-  const _pc = new THREE.Color();
+  const _pc = new THREE.Color(), _pe2 = new THREE.Euler();
   function pedPart(im, col, x, y, z, rx, ry, rz, sx = 1, sy = 1, sz = 1){ const i = im.userData.n++; _pL.compose(_pv.set(x, y, z), _pq.setFromEuler(_pe.set(rx, ry, rz)), _ps.set(sx, sy, sz)); _pM.multiplyMatrices(_pB, _pL); im.setMatrixAt(i, _pM); im.setColorAt(i, _pc.setHex(col)); }
   function pedHide(p){ p.vis = false; }
+  // ---------- the people on the street can be hit ----------
+  // F (or the Punch button) when you're facing someone close: kids, older people and vendors fall over and run; anyone else either
+  // runs or fights back, and a fight back is a real street fight (ssFight) against them, plus whoever they were chatting with.
+  // Whoever loses lies on the pavement for a while, the people round about scatter, and the police hear about it.
+  const punchBtn = document.createElement('button'); punchBtn.type = 'button'; punchBtn.className = 'btn alt'; punchBtn.hidden = true; punchBtn.textContent = 'Punch'; punchBtn.style.cssText = 'position:fixed;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(236px + env(safe-area-inset-bottom,0px));z-index:40;width:70px;height:70px;border-radius:50%;padding:0;font-weight:800'; document.body.appendChild(punchBtn);
+  const pedHex = c => '#' + (c || 0).toString(16).padStart(6, '0');
+  function pedTarget(){
+    if (!PED.ims || EV || A || DRV.on || !inWorld || zone !== 'blr' || BL.lvl || BL.cine || FLOOD.on || Math.abs(BL.off.y) > .01 || document.body.classList.contains('cine') || !onGround()) return null;
+    const [cx, cz] = toMap(pos.x, pos.z), fx = -Math.sin(yaw), fz = -Math.cos(yaw); let best = null, bd = 2.1;
+    PED.list.forEach(p => { if (!p.placed || !p.vis || p.mode === 'down' || p.mode === 'vendor' && p.cart && Math.hypot(p.x - cx, p.z - cz) > 1.6) return; const dx = (p.rx ?? p.x) - cx, dz = (p.rz ?? p.z) - cz, d = Math.hypot(dx, dz); if (d < bd && (dx * fx + dz * fz) / (d || 1) > .45) { bd = d; best = p; } });
+    return best;
+  }
+  function pedScatter(cx, cz, r){ PED.list.forEach(q => { if (q.placed && q.mode !== 'down' && q.mode !== 'vendor' && Math.hypot(q.x - cx, q.z - cz) < r) { q.mode = 'flee'; q.t = 3 + Math.random() * 3; q.cool = performance.now() + 20000; } }); }
+  function pedPunch(){
+    const p = pedTarget(); if (!p) return false; const [cx, cz] = toMap(pos.x, pos.z); p.hit = (p.hit || 0) + 1; tone(170, .12, 'square', .05, 90);
+    if (p.mode === 'vendor' && p.cart) { p.cart.v = null; p.cart = null; }
+    const meek = p.type === 'k' || p.type === 'o' || p.phone && p.hit < 2;
+    if (meek || Math.random() < (p.hit > 1 ? .2 : .5)) { if (meek) { p.mode = 'down'; p.t = 2.5; pedSay(p, pickA(PSAY.ow)); } else { p.mode = 'flee'; p.t = 6; pedSay(p, pickA(PSAY.flee)); } pedScatter(p.x, p.z, 9); heatAdd(1, 'You hit someone in the street.'); return true; }
+    pedSay(p, pickA(PSAY.fight)); setTimeout(() => pedBrawl(p), 700); return true;
+  }
+  addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || e.key.toLowerCase() !== 'f') return; pedPunch(); });
+  punchBtn.addEventListener('click', e => { e.stopPropagation(); pedPunch(); });
+  function pedBrawl(p){
+    if (EV || A || !inWorld || zone !== 'blr') return;
+    const crew = [p, ...(p.grp || []).filter(q => q !== p && q.placed && q.mode !== 'down')].slice(0, 3), ids = crew.map((q, i) => { const id = 'pedb' + i;
+      OUTFITS[id] = { hero: 1, c1: pedHex(q.top), c2: pedHex(q.type === 's' ? q.top : q.leg || q.top), skin: pedHex(q.skin), hair: q.long ? (q.bun ? 'bun' : 'long') : 'short', hairCol: pedHex(q.hairC), saree: q.type === 's', beard: q.beard ? 1 : 0, glasses: q.specs, cap: !!q.cap, capC: q.cap ? pedHex(q.cap) : null, build: { h: (q.hh || 1) * q.sc / .99, w: q.w || 1, belly: q.belly ? .6 : 0 } };
+      HEROES[id] = { name: i ? 'Their friend' : 'Angry local', outfit: id, hp: Math.round(70 + ((q.w || 1) - .9) * 120), kind: 'melee', dmg: 5 + Math.round(((q.w || 1) - .9) * 6), range: 2.2, cd: 1.05, speed: 4.1, r: .5, grounded: 1 }; return id; });
+    const at = [p.x, p.z], o = { id: 'brawl', title: 'Street fight', where: 'the street', at, goal: 'Win the fight', intro: crew.length > 1 ? 'They’re fighting back, and their friends are in too!' : 'They’re fighting back!',
+      setup(F){ crew.forEach((q, i) => F.add(ids[i], (q.x - at[0]) || 0, (q.z - at[1]) || 0)); },
+      step(dt, F){ if (!F.foes().length) F.win(); },
+      end(won){ if (won) crew.forEach(q => { q.mode = 'down'; q.t = 10 + Math.random() * 6; }); else crew.forEach(q => { q.mode = 'walk'; q.lo = 0; }); pedScatter(at[0], at[1], 16); crew.forEach(q => { q.cool = performance.now() + 40000; });
+        heatAdd(won ? 2 : 1, won ? 'You knocked someone out in the street.' : 'You lost a street fight.'); if (!won) setTimeout(() => say('They walk off, shaking their heads. You sit on the kerb for a minute.', 3600), 400); },
+      winLine: 'They stay down.', loseLine: 'You’re on the pavement. They win this one.' };
+    if (ssFight(o)) { yaw = Math.atan2(-(p.x - toMap(pos.x, pos.z)[0]), -(p.z - toMap(pos.x, pos.z)[1])); pitch = 0; [150, 500, 1000].forEach(ms => setTimeout(() => { if (EV && EV.opts && EV.opts.ss) pitch = 0; }, ms)); }
+  }
+
   function pedStep(dt, now){
     if (!PED.built) { if (BLC.built && BLC.streetG && BL.grid) { PED.built = true; try { pedBuild(); } catch (err) { console.error(err); } } return; }
     if (!PED.ims) return;
+    { const tg = !fine && pedTarget(); punchBtn.hidden = !tg; }
     const roofV = cityLive(), mood = BL.mood || 'night', I = PED.ims;
     const show = (roofV || inWorld && zone === 'blr') && !EV && !BL.cine && mood !== 'burn' && mood !== 'scr';
     Object.values(I).forEach(im => im.visible = show); if (BLC.cartM) BLC.cartM.visible = !(mood === 'burn' || mood === 'scr');
@@ -14004,10 +14057,10 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       if (!p.placed || Math.hypot(p.x - cx, p.z - cz) > R) { if (p.cart) { p.cart.v = null; p.cart = null; } if (p.cust) { p.cust.p = null; p.cust = null; } if (p.grp) { p.grp.forEach(q => { if (q !== p && q.mode === 'chat') { q.mode = 'walk'; q.grp = null; } }); p.grp = null; } pedPlace(p, cx, cz, init); if (!p.placed) { if (p.vis !== false) pedHide(p); return; } newOnes.push(p); }
       p.vis = true; let mv = 0;
       let dpx = p.x - cx, dpz = p.z - cz, dp = Math.hypot(dpx, dpz);
-      if (ground && dp < 1.5 && p.mode !== 'vendor' && p.mode !== 'chat') { const k2 = (1.5 - dp) / (dp || 1); p.x += dpx * k2; p.z += dpz * k2; dpx = p.x - cx; dpz = p.z - cz; dp = 1.5; }
+      if (ground && dp < 1.5 && p.mode !== 'vendor' && p.mode !== 'chat' && p.mode !== 'down') { const k2 = (1.5 - dp) / (dp || 1); p.x += dpx * k2; p.z += dpz * k2; dpx = p.x - cx; dpz = p.z - cz; dp = 1.5; }
       // you: they say hello, get out of your way, and jump clear of your car
       if (ground && !DRV.on && dp < 2.3 && now > p.cool && (p.mode === 'walk' || p.mode === 'idle' || p.mode === 'wait')) { p.back = p.mode; p.backT = p.t; p.mode = 'look'; p.t = 2.6; p.cool = now + 30000; pedSay(p, greet(p)); }
-      if (ground && !DRV.on && dp < .7 && p.mode !== 'vendor') { p.lo = clamp(p.lo + (Math.sign(-(dpx * Math.cos(p.h) - dpz * Math.sin(p.h))) || 1) * dt * 1.5, -1.3, 1.3); if (now > p.cool2) { p.cool2 = now + 9000; pedSay(p, pickA(PSAY.bump)); } }
+      if (ground && !DRV.on && dp < .7 && p.mode !== 'vendor' && p.mode !== 'down' && p.mode !== 'flee') { p.lo = clamp(p.lo + (Math.sign(-(dpx * Math.cos(p.h) - dpz * Math.sin(p.h))) || 1) * dt * 1.5, -1.3, 1.3); if (now > p.cool2) { p.cool2 = now + 9000; pedSay(p, pickA(PSAY.bump)); } }
       if (car && p.mode !== 'vendor' && Math.hypot(p.x - car.x, p.z - car.z) < 6.5) { const fx = Math.sin(car.h), fz = Math.cos(car.h), rx = p.x - car.x, rz = p.z - car.z; if (rx * fx + rz * fz > -1) { p.dside = Math.sign(rx * fz - rz * fx) || 1; if (Math.hypot(p.x - car.x, p.z - car.z) < 2.4 && Math.abs(DRV.spd) > 8) heatAdd(1, 'You nearly ran someone over!'); if (p.mode !== 'dodge') { p.back = p.mode === 'look' ? 'walk' : p.mode; p.backT = p.t; p.mode = 'dodge'; p.t = .9; if (now > p.cool2) { p.cool2 = now + 6000; pedSay(p, pickA(PSAY.car)); } } } }
       if (p.mode === 'walk') {
         const tg = p.edge.poly[p.pi], dx = tg[0] - p.x, dz = tg[1] - p.z, d = Math.hypot(dx, dz), st = p.sp * dt; mv = 1;
@@ -14024,6 +14077,8 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
         let df = Math.atan2(cx - p.x, cz - p.z) - p.h; df = Math.atan2(Math.sin(df), Math.cos(df)); p.h += df * Math.min(1, dt * 6); if ((p.t -= dt) <= 0) { p.mode = p.back || 'walk'; p.t = p.backT || 0; }
       } else if (p.mode === 'dodge') {
         p.lo = clamp(p.lo + p.dside * dt * 3.2, -1.6, 1.6); mv = 1.4; if ((p.t -= dt) <= 0) { p.mode = p.back === 'dodge' || !p.back ? 'walk' : p.back; p.t = p.backT || 0; }
+      } else if (p.mode === 'flee') { const fx = p.x - cx, fz = p.z - cz, fd = Math.hypot(fx, fz) || 1; let hd = Math.atan2(fx / fd, fz / fd); for (const o2 of [0, .6, -.6, 1.3, -1.3]) { const nx = p.x + Math.sin(hd + o2) * 4 * dt, nz = p.z + Math.cos(hd + o2) * 4 * dt; if (blrValid(...toLocal(nx, nz))) { p.x = nx; p.z = nz; hd += o2; break; } } p.h = hd; mv = 1.9; if ((p.t -= dt) <= 0) { p.mode = 'walk'; p.lo = 0; }
+      } else if (p.mode === 'down') { if ((p.t -= dt) <= 0) { p.mode = 'flee'; p.t = 4; pedSay(p, pickA(PSAY.up)); }
       } else if (p.mode === 'idle') { if ((p.t -= dt) <= 0) { p.mode = 'walk'; p.lo = (Math.random() - .5) * .9; }
       } else if (p.mode === 'chat') { if (p.grp && p.grp[0] === p && dp < 4 && ground && now > (p.cool3 || 0)) { p.cool3 = now + 14000; pedSay(pickA(p.grp), pickA(PSAY.chat)); } if ((p.t -= dt) <= 0) { p.mode = 'walk'; p.grp = null; p.gx = p.gz = 0; p.lo = (Math.random() - .5) * .9; }
       } else if (p.mode === 'vendor') { const c = p.cart; if (ground && dp < 7 && now > c.cool) { c.cool = now + 16000; pedSay(p, CARTS[c.type][0]); }
@@ -14036,22 +14091,25 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       const ch = Math.cos(p.h), sh = Math.sin(p.h), lo = p.mode === 'walk' || p.mode === 'wait' || p.mode === 'dodge' || p.mode === 'idle' || p.mode === 'look' ? p.lo : 0;
       p.ph += dt * p.sp * 5.4 * (mv ? mv : 0); const sw = mv ? Math.sin(p.ph) * .5 : 0, bob = mv ? Math.abs(Math.sin(p.ph)) * .03 : 0, k = p.k;
       const rx0 = p.x + ch * lo + (p.gx || 0), rz0 = p.z - sh * lo + (p.gz || 0); p.rx = rx0; p.rz = rz0;
-      _pB.compose(_pv.set(rx0, 0, rz0), _pq.setFromEuler(_pe.set(0, p.mode === 'chat' ? Math.atan2(-(p.gx || 0), -(p.gz || 0)) : p.h, 0)), _ps.set(p.sc, p.sc, p.sc));
+      const pw = p.w || 1, ph2 = p.hh || 1, iw = 1 / pw, ih = 1 / ph2;
+      if (p.mode === 'down') _pB.compose(_pv.set(rx0, .2, rz0), _pq.setFromEuler(_pe2.set(-Math.PI / 2, p.h, 0, 'YXZ')), _ps.set(p.sc * pw, p.sc * ph2, p.sc * pw));
+      else _pB.compose(_pv.set(rx0, 0, rz0), _pq.setFromEuler(_pe.set(0, p.mode === 'chat' ? Math.atan2(-(p.gx || 0), -(p.gz || 0)) : p.h, 0)), _ps.set(p.sc * pw, p.sc * ph2, p.sc * pw));
       const stoop = p.type === 'o' ? .14 : 0, skirt = p.type === 's' || p.type === 'f';
       pedPart(I.leg, p.leg, .1, .86, 0, sw, 0, 0); pedPart(I.leg, p.leg, -.1, .86, 0, -sw, 0, 0);
       pedPart(I.body, p.top, 0, bob, 0, stoop, 0, 0);
       if (skirt) pedPart(I.skirt, p.top, 0, .98 + bob, 0, 0, 0, 0, 1, p.type === 's' ? .9 : .52, 1);
       if (p.type === 's') pedPart(I.drape, p.top, .02, 1.22 + bob, .2, 0, 0, -.62);
       const umb = rain && p.umb && p.mode !== 'vendor', ph = p.phone && (p.mode === 'walk' || p.mode === 'idle' || p.mode === 'wait'), t2 = T * 2.4 + p.ph;
-      const armA = [ph ? -2.75 : p.mode === 'dodge' ? -2.6 : p.mode === 'chat' ? -.35 + Math.sin(t2) * .35 : p.mode === 'vendor' ? -.5 + Math.max(0, Math.sin(T * 1.3 + p.ph)) * -.7 : -sw * .8, umb ? -1.1 : p.mode === 'dodge' ? -2.6 : p.mode === 'buy' && p.stage === 1 ? -.9 : sw * .8];
+      const armA = [ph ? -2.75 : p.mode === 'dodge' || p.mode === 'flee' ? -2.6 : p.mode === 'chat' ? -.35 + Math.sin(t2) * .35 : p.mode === 'vendor' ? -.5 + Math.max(0, Math.sin(T * 1.3 + p.ph)) * -.7 : -sw * .8, umb ? -1.1 : p.mode === 'dodge' || p.mode === 'flee' ? -2.6 : p.mode === 'buy' && p.stage === 1 ? -.9 : sw * .8];
       const armZ = [ph ? -.35 : .06, umb ? -.25 : .06], sl = p.type === 'f' ? 2.3 : p.type === 's' ? .7 : 1;
       [[.31, 0], [-.31, 1]].forEach(([ax, i]) => { pedPart(I.arm, p.skin, ax, 1.46 + bob - stoop * .1, stoop * .2, armA[i], 0, Math.sign(ax) * armZ[i]); pedPart(I.sleeve, p.top, ax, 1.46 + bob - stoop * .1, stoop * .2, armA[i], 0, Math.sign(ax) * armZ[i], 1, sl, 1); });
       const hy = 1.71 + bob - stoop * .15, hz = stoop * .12;
       // the head turns to look at you when you're close, and the eyes blink every few seconds
       let hl = 0; if (ground && dp < 7 && p.mode !== 'vendor' && p.mode !== 'buy') { const by = p.mode === 'chat' ? Math.atan2(-(p.gx || 0), -(p.gz || 0)) : p.h; let df = Math.atan2(cx - rx0, cz - rz0) - by; df = Math.atan2(Math.sin(df), Math.cos(df)); hl = clamp(df, -1, 1); }
       p.hl = (p.hl || 0) + (hl - (p.hl || 0)) * Math.min(1, dt * 4);
-      pedPart(I.head, p.skin, 0, hy, hz, 0, p.hl, 0); pedPart(p.long ? I.hairL : I.hair, p.hairC, 0, hy, hz, 0, p.hl, 0); pedPart(I.eyes, 0xFFFFFF, 0, hy, hz, 0, p.hl, 0);
-      if ((T + p.ph * 1.7) % 3.6 < .14) pedPart(I.lid, p.skin, 0, hy, hz, 0, p.hl, 0);
+      pedPart(I.head, p.skin, 0, hy, hz, 0, p.hl, 0, iw, ih, iw); pedPart(p.bun ? I.bun : p.long ? I.hairL : I.hair, p.hairC, 0, hy, hz, 0, p.hl, 0, iw, ih, iw); pedPart(I.eyes, 0xFFFFFF, 0, hy, hz, 0, p.hl, 0, iw, ih, iw);
+      if ((T + p.ph * 1.7) % 3.6 < .14 || p.mode === 'down') pedPart(I.lid, p.skin, 0, hy, hz, 0, p.hl, 0, iw, ih, iw);
+      if (p.belly) pedPart(I.belly, p.top, 0, bob, 0, stoop, 0, 0); if (p.beard) pedPart(I.beard, p.hairC, 0, hy, hz, 0, p.hl, 0, iw, ih, iw); if (p.specs) pedPart(I.specs, 0x16181D, 0, hy, hz, 0, p.hl, 0, iw, ih, iw); if (p.cap) pedPart(I.cap, p.cap, 0, hy, hz, 0, p.hl, 0, iw, ih, iw);
       if (p.bag) pedPart(I.bag, p.bag, -.27, 1.02 + bob, 0, 0, 0, 0);
       if (umb) pedPart(I.umb, p.umb, -.22, 2.2, .1, -.08, 0, .12);
     });
@@ -15317,7 +15375,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // Each season's story lives in its own file (seasons/s01.js and so on), loaded only while that season is running, and gets
   // this small API instead of reaching into the page. Progress is saved under ru-season. Add ?season=N to preview a season.
   const SEASON0 = new Date(2026, 10, 18), SEASON_LEN = 28;
-  const SEASON_V = '2026-11-19b';
+  const SEASON_V = '2026-11-19c';
   const SEASON_FILES = [1, 2, 3];  // the seasons that have a file in seasons/ (add each new one here)  // bump whenever a seasons/*.js file changes
   const SEASON_NAMES = ['Landfall', 'High Water', 'The Syndicate', 'Blackout', 'The Eruption', 'Dark Side', 'Scales', 'Incursion', 'Neon Nights', 'Skyline', 'Harvest', 'Season 12', 'The Drought', 'Festival of Lights', 'Convergence'];
   const SEASON = { S: undefined, mod: null, loading: false, failed: false };
@@ -20675,6 +20733,42 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       if (m.emissive && m.emissiveIntensity > .3 && (m.emissive.r + m.emissive.g + m.emissive.b) > .4) return; if (m.metalness >= .4) panelize(m, .35); else organicize(m); }); }
   // every frame: blink, breathe, and look at you if you're close (never the body you're wearing)
   const _avV = new THREE.Vector3();
+  // ---------- body types and clothes ----------
+  // Outfits (and looks, through L.x) can say how someone is built and what they wear, so the cast and the crowd aren't all one
+  // body: build { h: height, w: width, belly, sh: shoulders, head } and pieces: coat, kurta, saree, vest, cap, peak (a peaked cap),
+  // glasses, beard, moustache, flower (a pinned marigold), and hair styles bun, ponytail, curly and side. The body goes in an
+  // inner group that is scaled, with the head scaled back so heads stay a natural size; the outer group's scale is untouched.
+  function avBuild(g, P){
+    const { L, O, legs, torso, arms, head, skinM, c1M, c2M, hairM, M, part, k } = P, X = Object.assign({}, L.x || {}, O), B = Object.assign({ h: 1, w: 1, belly: 0, sh: 1, head: 1 }, L.build || {}, O.build || {});
+    const coatM = X.coatC ? M(X.coatC) : c2M, sd = lowFx ? 8 : 12, hs = X.hairStyle || k.hair;
+    if (B.belly > 0) { const b = part(new THREE.SphereGeometry(.2, sd, 10), X.coat ? coatM : c1M, 0, 1.08, -.03); b.scale.set(1.06 + B.belly * .12, .92, .95 + B.belly * .32); }
+    if (X.vest) { const v = part(new THREE.CylinderGeometry(.258, .23, .44, sd), c2M, 0, 1.24, 0); v.scale.z = .98; }
+    if (X.kurta) part(new THREE.CylinderGeometry(.215, .28, .5, sd, 1, true), c1M, 0, .66, 0).material.side = THREE.DoubleSide;
+    if (X.saree) { const sk = part(new THREE.CylinderGeometry(.2, .31, .84, sd, 1, true), c1M, 0, .44, 0); sk.material.side = THREE.DoubleSide; const bd = part(new THREE.CylinderGeometry(.312, .315, .06, sd, 1, true), c2M, 0, .05, 0); bd.material.side = THREE.DoubleSide;
+      const dr = part(new THREE.BoxGeometry(.13, .9, .035), c1M, .05, 1.2, -.225); dr.rotation.z = .62; const db = part(new THREE.BoxGeometry(.03, .9, .04), c2M, .1, 1.23, -.228); db.rotation.z = .62; }
+    if (X.coat) { [-1, 1].forEach(s2 => { const p2 = part(new THREE.BoxGeometry(.2, X.coat === 'short' ? .62 : 1.05, .035), coatM, s2 * .13, X.coat === 'short' ? 1.12 : .88, -.235); p2.rotation.y = s2 * -.25; p2.rotation.x = -.05; });
+      const back = part(new THREE.CylinderGeometry(.27, X.coat === 'short' ? .29 : .36, X.coat === 'short' ? .62 : 1.05, sd, 1, true, Math.PI * .22, Math.PI * 1.56), coatM, 0, X.coat === 'short' ? 1.12 : .88, 0); back.material.side = THREE.DoubleSide; back.rotation.y = Math.PI;
+      [-1, 1].forEach(s2 => { const c = part(new THREE.BoxGeometry(.09, .2, .04), coatM, s2 * .1, 1.47, -.2); c.rotation.z = s2 * .5; });
+      arms.forEach(A2 => { if (A2.up) A2.up.material = coatM; }); }
+    if (X.flower) { const fl = new THREE.Group(); fl.position.set(-.13, 1.38, -.25); g.add(fl); const fm = M('#E8901A', { metalness: 0, emissive: '#5A2A00', emissiveIntensity: .4 }); for (let i = 0; i < 7; i++) { const q = new THREE.Mesh(new THREE.SphereGeometry(.025, 6, 4), fm); q.position.set(Math.cos(i) * .03, Math.sin(i) * .03, Math.sin(i * 2) * .01); fl.add(q); } }
+    // the face and the head
+    if (X.glasses) { const gm = M('#16181D', { metalness: .3 }); [-1, 1].forEach(s2 => { const r = new THREE.Mesh(new THREE.TorusGeometry(.03, .006, 6, 14), gm); r.position.set(s2 * .05, .022, -.15); head.add(r); }); const br = new THREE.Mesh(new THREE.BoxGeometry(.04, .006, .006), gm); br.position.set(0, .03, -.152); head.add(br); }
+    if (X.beard) { const bd = new THREE.Mesh(new THREE.SphereGeometry(.13, sd, 8, 0, Math.PI * 2, Math.PI * .45, Math.PI * .55), hairM); bd.position.set(0, .0, -.015); bd.scale.set(1, X.beard === 'long' ? 1.35 : 1, 1.05); head.add(bd); }
+    if (X.beard || X.moustache) { const ms = new THREE.Mesh(new THREE.BoxGeometry(.1, .022, .03), hairM); ms.position.set(0, -.042, -.142); head.add(ms); }
+    if (hs === 'bun' || hs === 'ponytail' || hs === 'side' || hs === 'curly') {
+      head.children.filter(c => c.material === hairM && c.geometry && c.geometry.type === 'BoxGeometry' && c.position.y < -.05).forEach(c => c.visible = false);
+      if (!head.children.some(c => c.material === hairM && c.geometry && c.geometry.type === 'SphereGeometry')) { const c = new THREE.Mesh(new THREE.SphereGeometry(.158, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2.1), hairM); c.position.set(0, .02, .01); head.add(c); }
+      if (hs === 'bun') { const b2 = new THREE.Mesh(new THREE.SphereGeometry(.075, 10, 8), hairM); b2.position.set(0, .1, .13); head.add(b2); }
+      if (hs === 'ponytail') { const t = new THREE.Mesh(new THREE.ConeGeometry(.05, .32, 8), hairM); t.position.set(0, -.08, .17); t.rotation.x = Math.PI + .3; head.add(t); }
+      if (hs === 'side') { const sp = new THREE.Mesh(new THREE.BoxGeometry(.2, .05, .26), hairM); sp.position.set(.03, .13, 0); sp.rotation.z = -.2; head.add(sp); }
+      if (hs === 'curly') for (let i = 0; i < 14; i++) { const a = i * 2.4, r = .13, q = new THREE.Mesh(new THREE.SphereGeometry(.05, 7, 5), hairM); q.position.set(Math.cos(a) * r * .9, .07 + (i % 3) * .035, Math.sin(a) * r * .9 + .02); head.add(q); } }
+    if (X.cap || X.peak) { const cm = X.capC ? M(X.capC) : c2M, cp = new THREE.Mesh(new THREE.CylinderGeometry(X.peak ? .175 : .158, .16, X.peak ? .09 : .07, sd), cm); cp.position.y = .12; head.add(cp); const brim = new THREE.Mesh(new THREE.BoxGeometry(.24, .015, .12), X.peak ? M('#16181D') : cm); brim.position.set(0, .085, -.16); brim.rotation.x = .12; head.add(brim); }
+    // the build: everything goes in a scaled inner group, and the head is scaled back to a natural size
+    if (B.h === 1 && B.w === 1 && B.sh === 1 && B.head === 1) return;
+    arms.forEach(A2 => { A2.a.position.x *= B.sh; });
+    const body = new THREE.Group(); g.children.slice().forEach(c => body.add(c)); g.add(body); body.scale.set(B.w, B.h, B.w);
+    head.scale.set(B.head / B.w, B.head / B.h, B.head / B.w); g.userData.build = B;
+  }
   function avLive(g, head, t){ if (!head || !g.parent) return; const U = g.userData;
     if (U.lids) { const b = (t + U.ph) % 3.7 < .13; U.lids.forEach(l => l.visible = b); }
     if (me && me.g === g) { head.rotation.y = 0; return; }
