@@ -15375,7 +15375,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // Each season's story lives in its own file (seasons/s01.js and so on), loaded only while that season is running, and gets
   // this small API instead of reaching into the page. Progress is saved under ru-season. Add ?season=N to preview a season.
   const SEASON0 = new Date(2026, 10, 18), SEASON_LEN = 28;
-  const SEASON_V = '2026-11-19c';
+  const SEASON_V = '2026-11-19d';
   const SEASON_FILES = [1, 2, 3];  // the seasons that have a file in seasons/ (add each new one here)  // bump whenever a seasons/*.js file changes
   const SEASON_NAMES = ['Landfall', 'High Water', 'The Syndicate', 'Blackout', 'The Eruption', 'Dark Side', 'Scales', 'Incursion', 'Neon Nights', 'Skyline', 'Harvest', 'Season 12', 'The Drought', 'Festival of Lights', 'Convergence'];
   const SEASON = { S: undefined, mod: null, loading: false, failed: false };
@@ -15386,23 +15386,89 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     const into = days >= 0 ? days % SEASON_LEN : 0, start = new Date(d.getTime() - into * 864e5);
     return { n, name: SEASON_NAMES[n - 1], day: into + 1, week: Math.floor(into / 7) + 1, left: SEASON_LEN - into, start, end: new Date(start.getTime() + SEASON_LEN * 864e5), cycle: Math.floor(Math.max(0, days) / (SEASON_LEN * 15)) + 1 };
   }
+
+  // ---------- each season reinvents the look of the whole site (from Season 2) ----------
+  // A theme sets the colour tokens (light and dark), the body and display fonts (loaded from Google Fonts only while that
+  // season runs), a grade on the 3D view (off with Reduce effects) and the room's accent wall. Season 1 keeps the site's own look.
+  // l / d: bg, tile, ink, muted, line, accent, on-accent, sun, coral, glass, b-gold, b-green, b-pink, b-dark
+  const SEASON_THEMES = {
+    2: { fonts: 'Spectral:wght@500;700', display: '"Spectral", Georgia, serif', grade: 'saturate(.8) hue-rotate(-6deg) brightness(.97)', wall: 0x2E5A6A,
+      l: ['#DCE6EA', '#EEF3F5', '#12262E', '#4A626C', '#B8CBD2', '#1F6E86', '#FFFFFF', '#9CC3D0', '#3C8FA8', 'rgba(238,243,245,.9)', '#D7E7EC', '#D5E8E3', '#E2E4EC', '#12262E'],
+      d: ['#0C171C', '#13232A', '#DCEBF2', '#8FAAB5', '#22363F', '#6FC3DC', '#06141A', '#9CC3D0', '#3C8FA8', 'rgba(19,35,42,.9)', '#14262C', '#13261F', '#1A2128', '#060D10'] },
+    3: { fonts: 'Special+Elite&family=Courier+Prime:wght@400;700', body: '"Courier Prime", "Courier New", monospace', display: '"Special Elite", "Courier New", monospace', grade: 'saturate(.32) contrast(1.12) sepia(.1)', wall: 0x2A2622,
+      l: ['#EDEBE6', '#F7F6F2', '#111111', '#55534E', '#CFCCC4', '#C8701A', '#FFFFFF', '#E8901A', '#C0561A', 'rgba(247,246,242,.92)', '#F3E6D2', '#E8E6E0', '#EFE3DA', '#111111'],
+      d: ['#0B0B0B', '#161616', '#EDEBE6', '#A09C94', '#2A2A2A', '#E8901A', '#111111', '#E8901A', '#C0561A', 'rgba(22,22,22,.92)', '#241A0E', '#1A1A1A', '#22160F', '#050505'] },
+    4: { fonts: 'Oswald:wght@500;700&family=Source+Sans+3:wght@400;600', body: '"Source Sans 3", sans-serif', display: '"Oswald", sans-serif', grade: 'brightness(.84) sepia(.28) saturate(.9)', wall: 0x3A2A16,
+      l: ['#1A150E', '#241D13', '#F2E2C2', '#B59E78', '#3A3024', '#FFB347', '#1A1206', '#FFB347', '#D8742A', 'rgba(36,29,19,.92)', '#2E2412', '#20241A', '#2E1E16', '#0C0904'], dark: 1 },
+    5: { fonts: 'Anton&family=Barlow:wght@400;600', body: '"Barlow", sans-serif', display: '"Anton", sans-serif', grade: 'sepia(.22) saturate(1.1) hue-rotate(-10deg) contrast(1.04)', wall: 0x5A2416,
+      l: ['#E7E3DF', '#F3F0ED', '#1C1714', '#5E544E', '#CFC6BF', '#D2401E', '#FFFFFF', '#FF7A2A', '#B8321A', 'rgba(243,240,237,.9)', '#F2E2D6', '#E6E2DC', '#F0DCD4', '#1C1714'],
+      d: ['#15110F', '#211A17', '#F0E6E0', '#A8968C', '#3A2C26', '#FF5A2A', '#1A0A04', '#FF7A2A', '#B8321A', 'rgba(33,26,23,.92)', '#2C1C12', '#1E1C18', '#2C1814', '#080605'] },
+    6: { fonts: 'Michroma&family=Space+Mono:wght@400;700', body: '"Space Mono", monospace', display: '"Michroma", sans-serif', grade: 'saturate(.7) hue-rotate(12deg) brightness(.94)', wall: 0x18213C,
+      l: ['#0A0F1E', '#121A30', '#E8EEFF', '#8A97B8', '#24304F', '#9FB4FF', '#0A0F1E', '#E8EEFF', '#6A8CFF', 'rgba(18,26,48,.92)', '#1A2038', '#14223A', '#1E1C38', '#04060C'], dark: 1 },
+    7: { fonts: 'Syne:wght@600;800&family=Inter:wght@400;600', body: '"Inter", sans-serif', display: '"Syne", sans-serif', grade: 'hue-rotate(-14deg) saturate(.92) contrast(1.05)', wall: 0x1A4A3A,
+      l: ['#E6EFEA', '#F2F7F4', '#0E1A14', '#4E6258', '#C2D6CB', '#1FA876', '#FFFFFF', '#7BE8B8', '#2A8A6A', 'rgba(242,247,244,.9)', '#DDF0E4', '#D4EEE0', '#E0E8EC', '#0E1A14'],
+      d: ['#07110D', '#0F1E17', '#DFF5EA', '#8AB4A0', '#1C3328', '#4FE0A8', '#04140C', '#7BE8B8', '#2A8A6A', 'rgba(15,30,23,.92)', '#12261C', '#0E2A1E', '#16222A', '#030806'] },
+    8: { fonts: 'Archivo+Black&family=Archivo:wght@400;600', body: '"Archivo", sans-serif', display: '"Archivo Black", sans-serif', grade: 'contrast(1.1) saturate(1.2)', wall: 0x5A1424,
+      l: ['#F2ECEC', '#FFFFFF', '#16111A', '#5C5060', '#DCCFD4', '#D81E3C', '#FFFFFF', '#FF4A5E', '#2244D8', 'rgba(255,255,255,.9)', '#F6DEE2', '#E2E6F6', '#F4DADF', '#16111A'],
+      d: ['#0E0B12', '#18131E', '#F2E8F0', '#A898AC', '#2E2434', '#FF4A64', '#14040A', '#FF4A5E', '#4A6CFF', 'rgba(24,19,30,.92)', '#2A1218', '#141A30', '#2A1420', '#060408'] },
+    9: { fonts: 'Audiowide&family=Rajdhani:wght@500;700', body: '"Rajdhani", sans-serif', display: '"Audiowide", sans-serif', grade: 'saturate(1.35) contrast(1.06)', wall: 0x3A0E3A,
+      l: ['#0A0710', '#140E1E', '#F4E8FF', '#A08CB8', '#2A1E3A', '#FF2E9A', '#14040C', '#2EF0FF', '#FF2E9A', 'rgba(20,14,30,.92)', '#24102A', '#0E2430', '#2A0E22', '#040208'], dark: 1 },
+    10: { fonts: 'Cormorant+Garamond:wght@500;700&family=Karla:wght@400;600', body: '"Karla", sans-serif', display: '"Cormorant Garamond", Georgia, serif', grade: 'brightness(1.05) saturate(.9)', wall: 0x5A8AC0,
+      l: ['#EAF3FB', '#FFFFFF', '#13263A', '#5A7088', '#C8DAEA', '#3C8CE0', '#FFFFFF', '#8CC8FF', '#5AA0E0', 'rgba(255,255,255,.88)', '#E6F0FA', '#E2F2EE', '#EEE8F6', '#13263A'],
+      d: ['#0D1826', '#15243A', '#E6F1FB', '#8EA8C2', '#24384F', '#8CC8FF', '#061020', '#8CC8FF', '#5AA0E0', 'rgba(21,36,58,.9)', '#16243A', '#122A30', '#1C2038', '#050A12'] },
+    11: { fonts: 'Fraunces:opsz,wght@9..144,600;9..144,800&family=Lora:wght@400;600', body: '"Lora", Georgia, serif', display: '"Fraunces", Georgia, serif', grade: 'sepia(.25) saturate(.9)', wall: 0x6A5428,
+      l: ['#EFE8D8', '#F8F3E8', '#2A2116', '#6A5C48', '#D8CCB2', '#B88A2E', '#FFFFFF', '#E0B84A', '#6E7A4A', 'rgba(248,243,232,.9)', '#F2E6C4', '#E2E6CC', '#EEDCCC', '#2A2116'],
+      d: ['#17130C', '#221C12', '#F0E6D2', '#B0A080', '#3A3020', '#E0B84A', '#1A1204', '#E0B84A', '#8A9A5A', 'rgba(34,28,18,.92)', '#2C2410', '#1E2414', '#2A1C14', '#080604'] },
+    13: { fonts: 'Josefin+Sans:wght@400;700&family=Work+Sans:wght@400;600', body: '"Work Sans", sans-serif', display: '"Josefin Sans", sans-serif', grade: 'sepia(.35) brightness(1.04) saturate(.75)', wall: 0xB89A6A,
+      l: ['#F3EDE2', '#FBF8F2', '#3A2E20', '#7A6A54', '#E2D6C2', '#C89A5A', '#FFFFFF', '#E8D2A8', '#B87A4A', 'rgba(251,248,242,.9)', '#F6EAD2', '#EEEADA', '#F4E2D6', '#3A2E20'],
+      d: ['#1A1610', '#251F16', '#F3EDE2', '#B8A88C', '#3A3022', '#E0B880', '#1A1206', '#E8D2A8', '#B87A4A', 'rgba(37,31,22,.92)', '#2C2414', '#22221A', '#2A1E16', '#0A0806'] },
+    14: { fonts: 'Yeseva+One&family=Mukta:wght@400;600', body: '"Mukta", sans-serif', display: '"Yeseva One", serif', grade: 'saturate(1.15) contrast(1.03)', wall: 0x2A2470,
+      l: ['#EDEAF5', '#FFFFFF', '#1A1640', '#5A5680', '#D2CEE6', '#3A2E9A', '#FFFFFF', '#E8B82E', '#C8501A', 'rgba(255,255,255,.9)', '#F6ECCC', '#E2EEE6', '#F0E2EC', '#1A1640'],
+      d: ['#0E0B24', '#18143A', '#F2EEFF', '#A8A2D0', '#2A2454', '#E8B82E', '#140E02', '#E8B82E', '#FF7A3A', 'rgba(24,20,58,.92)', '#2A2410', '#14242A', '#2A1630', '#05040E'] },
+    15: { fonts: 'Bodoni+Moda:opsz,wght@6..96,600;6..96,800&family=Inter:wght@400;600', body: '"Inter", sans-serif', display: '"Bodoni Moda", Georgia, serif', grade: 'grayscale(.6) contrast(1.08)', wall: 0x2A2A2A,
+      l: ['#EEEEEE', '#FFFFFF', '#111111', '#5A5A5A', '#D4D4D4', '#111111', '#FFFFFF', '#888888', '#444444', 'rgba(255,255,255,.9)', '#F0F0F0', '#EAEAEA', '#F2F2F2', '#111111'],
+      d: ['#0A0A0A', '#151515', '#EEEEEE', '#9A9A9A', '#2A2A2A', '#EEEEEE', '#0A0A0A', '#888888', '#BBBBBB', 'rgba(21,21,21,.92)', '#1E1E1E', '#1A1A1A', '#202020', '#000000'] }
+  };
+  const THEME_KEYS = ['bg', 'tile', 'ink', 'muted', 'line', 'accent', 'on-accent', 'sun', 'coral', 'glass', 'b-gold', 'b-green', 'b-pink', 'b-dark'];
+  let themeOn = 0;
+  function seasonTheme(n){
+    const T = SEASON_THEMES[n], root = document.documentElement; if (!T || themeOn === n) return; themeOn = n; root.dataset.season = n;
+    const vars = L => THEME_KEYS.map((k, i) => `--${k}:${L[i]}`).join(';'), sel = `:root[data-season="${n}"]`;
+    let css = `${sel}{${vars(T.l)}}`;
+    if (T.d) css += `@media (prefers-color-scheme: dark){${sel}:not([data-theme="light"]){${vars(T.d)}}}${sel}[data-theme="dark"]{${vars(T.d)}}`;
+    else css += `${sel}[data-theme="dark"]{${vars(T.l)}}`;
+    if (T.body) css += `${sel} body{font-family:${T.body}}`;
+    css += `${sel} .display,${sel} h1,${sel} h2,${sel} h3{font-family:${T.display}}${sel} #scene{filter:${T.grade}}${sel}.lowfx #scene{filter:none}`;
+    const st = document.createElement('style'); st.id = 'seasonTheme'; st.textContent = css; document.head.appendChild(st);
+    const ln = document.createElement('link'); ln.rel = 'stylesheet'; ln.href = `https://fonts.googleapis.com/css2?family=${T.fonts}&display=swap`; document.head.appendChild(ln);
+    try { if (T.wall != null) accentWall.color.setHex(T.wall); } catch (e) {}
+  }
   const seasonGet = () => { try { return JSON.parse(localStorage.getItem('ru-season') || '{}') || {}; } catch (e) { return {}; } };
   const seasonPut = o => { try { localStorage.setItem('ru-season', JSON.stringify(o)); } catch (e) {} };
+  try { const S0 = seasonInfo(); if (S0) seasonTheme(S0.n); document.documentElement.classList.toggle('lowfx', lowFx); } catch (e) { console.error(e); }
   // names: up to 16 characters, no markup, and nothing on a short list of slurs and swears
   const NAME_BAD = /f+u+c+k|sh[i1]t|b[i1]tch|cunt|d[i1]ck|c[o0]ck|puss(y|ies)|n[i1]gg|fag|slut|whore|rap(e|ist)|nazi|hitler|retard|porn|penis|vagina|anus/i;
   function cleanName(v){ const t = String(v || '').replace(/[<>{}`]/g, '').replace(/\s+/g, ' ').trim().slice(0, 16); return t && !NAME_BAD.test(t.replace(/[\s._-]/g, '')) ? t : ''; }
   function setName(v){ const t = cleanName(v); try { if (t) localStorage.setItem('ru-heroname', t); else localStorage.removeItem('ru-heroname'); } catch (e) {} return t; }
+  // scene cameras never sit inside a building (its walls are one-sided, so from inside you'd see straight through them):
+  // a point inside a footprint, below the roof, is pushed out past the nearest wall
+  function camOut(c){ const [x, y, z] = c, cell = BL.grid && BL.grid.get(Math.floor(x / 16) + ',' + Math.floor(z / 16)); if (!cell) return c;
+    for (const b of cell) { if (b.hide || !(b.h > 0) || y > b.h + .3 || x < b.x0 - .35 || x > b.x1 + .35 || z < b.z0 - .35 || z > b.z1 + .35) continue;
+      const d = [[x - (b.x0 - .4), -1, 0], [(b.x1 + .4) - x, 1, 0], [z - (b.z0 - .4), 0, -1], [(b.z1 + .4) - z, 0, 1]].sort((p, q) => p[0] - q[0])[0];
+      return [d[1] < 0 ? b.x0 - .4 : d[1] > 0 ? b.x1 + .4 : x, y, d[2] < 0 ? b.z0 - .4 : d[2] > 0 ? b.z1 + .4 : z]; }
+    return c; }
   function seasonApi(){ return {
     info: seasonInfo, get: seasonGet, put: seasonPut, names: SEASON_NAMES, THREE, camera, ISLE, fine, reduce,
     get pos(){ return pos; }, get yaw(){ return yaw; }, set yaw(v){ yaw = v; }, get pitch(){ return pitch; }, set pitch(v){ pitch = v; },
     get tpv(){ return tpv; }, set tpv(v){ tpv = !!v; }, get zone(){ return zone; }, get inWorld(){ return inWorld; }, get entered(){ return entered; }, get busy(){ return !!(EV || A); }, get lowFx(){ return lowFx; },
     get BL(){ return BL; }, get BLC(){ return BLC; }, get DRV(){ return DRV; }, get PH(){ return PH; }, get DLG(){ return DLG; }, get room(){ return scene; }, get panelOpen(){ return panel.classList.contains('on'); },
     say, tone, toMap, toLocal, onGround, blrBox, avatar, crowdLook, tex, mat, glowM, decor, B3, C3, S3, fade, flakeTex, heroName, cleanName, setName,
-    fight: ssFight, fightReg: ssReg, heroAv: ssAvatar, give: arsGive, skin: arsSkin, equip: arsEquip, getIn, blrValid, flood: { set: floodSet, off: floodOff, level: floodLevel, ladder: floodLadder, roofAt: floodRoofAt, put: floodPut, get state(){ return FLOOD; } }, makeVehicle, getOut, video: seasonVideo, garComet, get KIT(){ return KIT; }, get SW(){ return SW; }, cityV: () => cityV, swTop: (mx, mz) => bTop(mx, mz), heat: () => HEAT,
+    fight: ssFight, fightReg: ssReg, heroAv: ssAvatar, give: arsGive, skin: arsSkin, equip: arsEquip, getIn, blrValid, flood: { set: floodSet, off: floodOff, level: floodLevel, ladder: floodLadder, roofAt: floodRoofAt, put: floodPut, get state(){ return FLOOD; } }, makeVehicle, getOut, video: seasonVideo, garComet, camOut, get KIT(){ return KIT; }, get SW(){ return SW; }, cityV: () => cityV, swTop: (mx, mz) => bTop(mx, mz), heat: () => HEAT,
     pk: { get state(){ return PK; }, rope(on){ PK.rope = !!on; }, low(x0, x1, z0, z1, h){ const b = { x0, x1, z0, z1, h: h || 1 }; PK.lows.push(b); return b; }, gap(x0, x1, z0, z1){ const b = { x0, x1, z0, z1 }; PK.gaps.push(b); return b; }, drop(b){ [PK.lows, PK.gaps].forEach(L => { const i = L.indexOf(b); if (i >= 0) L.splice(i, 1); }); }, set onLand(f){ PK.onLand = f; }, set onSlide(f){ PK.onSlide = f; } }, get ars(){ return ARS; }, weapons: SSW, skins: SSKIN, get fighting(){ return !!(EV && EV.opts && EV.opts.ss); },
     dlgPlay, dlgNext, dlgSkip, closePanel, phoneClose, panel(html){ panelBody.innerHTML = html; panel.scrollTop = 0; panel.classList.add('on'); return panelBody; }
   }; }
   function seasonStep(dt, now){
+    if (document.documentElement.classList.contains('lowfx') !== lowFx) document.documentElement.classList.toggle('lowfx', lowFx);
     if (!entered) return; if (SEASON.S === undefined) SEASON.S = seasonInfo(); const S = SEASON.S; if (!S) return;
     // seasons that have ended leave their mark on the map: their files load again in a traces-only mode ({ past: true })
     if (!SEASON.past) { SEASON.past = []; SEASON_FILES.filter(k => k !== S.n && (S.cycle > 1 || k < S.n)).forEach(k => { const sc = document.createElement('script'); sc.src = 'seasons/s' + String(k).padStart(2, '0') + '.js?v=' + SEASON_V;
