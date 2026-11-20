@@ -9683,7 +9683,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       + `<div class="phhours">${[0, 1, 2, 3, 4, 5].map(i => { const x = (Math.floor(h) + i * 2) % 24; return `<span><small>${i ? String(x).padStart(2, '0') : 'Now'}</small><b>${x >= 6 && x < 18 ? cond[0] : '🌙'}</b>${temp(x)}°</span>`; }).join('')}</div>`;
   }
   // the home screen
-  const APPS = [['msgs', 'Messages', '💬', '#34C759'], ['feed', 'Flock', '🐦', '#1D9BF0'], ['map', 'Maps', '🗺', '#E8B82E'], ['season', 'Season', '☄', '#FF7A2A'], ['camera', 'Camera', '📷', '#5A5E68'], ['weather', 'Weather', '⛅', '#3C8CE0'], ['bank', 'Bank', '₹', '#0B6E4F'], ['jobs', 'Jobs', '💼', '#6B3FA0'], ['upg', 'Upgrades', '⬆', '#1F7A45'], ['contacts', 'Contacts', '👥', '#8A8F99'], ['rayan', 'Rayan', 'R', '#16181D'], ['story', 'Story', '📖', '#B8862E']];
+  const APPS = [['msgs', 'Messages', '💬', '#34C759'], ['feed', 'Flock', '🐦', '#1D9BF0'], ['map', 'Maps', '🗺', '#E8B82E'], ['season', 'Season', '☄', '#FF7A2A'], ['camera', 'Camera', '📷', '#5A5E68'], ['weather', 'Weather', '⛅', '#3C8CE0'], ['bank', 'Bank', '₹', '#0B6E4F'], ['homes', 'Homes', '🏠', '#C8862E'], ['jobs', 'Jobs', '💼', '#6B3FA0'], ['upg', 'Upgrades', '⬆', '#1F7A45'], ['contacts', 'Contacts', '👥', '#8A8F99'], ['rayan', 'Rayan', 'R', '#16181D'], ['story', 'Story', '📖', '#B8862E']];
   function phHomeScreen(B){
     const h = cityHour(), d = new Date(), stOn = storyStarted(), un = phUnreadAll(), apps = APPS.filter(([k]) => k !== 'story' || stOn);
     B.innerHTML = `<div class="phlock"><b>${String(Math.floor(h)).padStart(2, '0')}:${String(Math.floor(h % 1 * 60)).padStart(2, '0')}</b><small>${d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</small></div>`
@@ -9696,6 +9696,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (t === 'home') { phHomeScreen(B); return true; }
     // the same apps at home as outside; the ones that need the city say so instead of vanishing
     if (!inWorld && (t === 'map' || t === 'jobs')) { B.innerHTML = `<div class="phcard"><b>${t === 'map' ? 'Maps' : 'Jobs'}</b><small>You’re at home. ${t === 'map' ? 'The map, pins and “Bring me a car” work once you’re out in the city.' : 'People post jobs from the street. Head out and check again.'}</small><div class="phrow"><button type="button" class="y" data-goout>Head out to the city</button></div></div>`; B.querySelector('[data-goout]').onclick = () => { phoneClose(); travel('city'); }; return true; }
+    if (t === 'homes') { B.innerHTML = '<div class="phcard"><b>Homes</b><small>Buy a place at its key box or sales office. Your home is where you sleep and where you wake up.</small></div>' + Object.keys(HOMES).map(k => { const H = HOMES[k], own = HOME.own.includes(k); return `<div class="phcard"><b>${esc(H.n)}${HOME.cur === k ? ' · home' : ''}</b><small>${esc(H.d)}</small><small>${own ? 'You own this.' : inr(H.p)}</small><div class="phrow">${own ? `<button type="button" class="y" data-hg="${k}">Take me there</button>` : HSPOT[k] ? `<button type="button" data-hg="${k}">Show me the way</button>` : '<small>Head into the city to find it.</small>'}</div></div>`; }).join('');
+      B.querySelectorAll('[data-hg]').forEach(b => b.onclick = () => { const k = b.dataset.hg; phoneClose(); if (HOME.own.includes(k)) homeGo(k); else { const a = HSPOT[k]; if (a) { PH.wp = a.slice(); say(`Pinned on your map: ${HOMES[k].n}.`, 2200); } } }); return true; }
     if (t === 'bank') { const tx = CASH.tx.slice(-12).reverse();
       B.innerHTML = `<div class="phbank"><small>Available balance</small><b>${inr(CASH.v)}</b><span>Savings ·· 4417</span></div><div class="phrow"><button type="button" data-bk="mum">Send Mum ₹500</button></div><div class="phcard"><b>Recent</b>${tx.length ? tx.map(([n, w, ts]) => `<div class="phtx"><span>${esc(w)}<small>${ago(ts)}</small></span><em class="${n > 0 ? 'in' : ''}">${n > 0 ? '+' : '−'}${inr(Math.abs(n))}</em></div>`).join('') : '<small>No transactions yet.</small>'}</div>`;
       B.querySelector('[data-bk="mum"]').onclick = () => { if (!cashSpend(500, 'Sent to Mum')) return; phShow('bank'); setTimeout(() => { try { phMsg('amma', ['Why are you sending me money?? Buy yourself proper food.', 'I’m putting this in your savings. Don’t argue.', 'Thank you beta ❤️ Now come home.'][Math.floor(Math.random() * 3)]); } catch (e) {} }, 3000); };
@@ -10968,7 +10970,17 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       const ex = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, map: tex(512, 96, (c, w, h) => { c.fillStyle = 'rgba(11,13,20,.85)'; c.fillRect(0, 0, w, h); c.fillStyle = '#3CE870'; c.font = `800 50px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('EXIT → STREET', w / 2, h / 2 + 3); }) })); ex.scale.set(3, .56, 1); ex.position.set(-19.5, 3.6, 0); g.add(ex);
       for (let i = 0; i < 12; i++) box(.4, .5, .05, mat(0x8A8F99, { metalness: .6 }), -14 + (i % 6) * .5, 1 + Math.floor(i / 6) * .6, -13.9, g); }
     // gym and pool
-    { const { g, R } = mk('gym', 0xB8BCC4, 0xEEF1F5, 0xFFFFFF); const pool = new THREE.Mesh(new THREE.PlaneGeometry(12, 9), new THREE.MeshStandardMaterial({ color: 0x3C9CFF, roughness: .1, metalness: .2, emissive: 0x0A3A6A, emissiveIntensity: .4 })); pool.rotation.x = -Math.PI / 2; pool.position.set(-10, .03, 6.5); g.add(pool); R.push([-16, -4, 2, 11]);
+    { const { g, R } = mk('gym', 0xB8BCC4, 0xEEF1F5, 0xFFFFFF); const pool = new THREE.Mesh(new THREE.PlaneGeometry(12, 9), new THREE.MeshStandardMaterial({ color: 0x3C9CFF, roughness: .1, metalness: .2, emissive: 0x0A3A6A, emissiveIntensity: .4 })); pool.rotation.x = -Math.PI / 2; pool.position.set(-10, .03, 6.5); pool.visible = false; g.add(pool);
+      // a real pool you can swim in: the floor is cut round it, a tiled basin 1.8 m deep, a water surface and a rim
+      { const fl = g.children[0], fm = fl.material; fl.visible = false; fl.userData.walk = false; const piece = (x0, x1, z0, z1) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0), fm); m.rotation.x = -Math.PI / 2; m.position.set((x0 + x1) / 2, 0, (z0 + z1) / 2); m.userData.walk = true; g.add(m); };
+        piece(-20, -16, -14, 14); piece(-4, 20, -14, 14); piece(-16, -4, -14, 2); piece(-16, -4, 11, 14);
+        const tile = tex(256, 256, (c, w, h) => { c.fillStyle = '#7FD0F0'; c.fillRect(0, 0, w, h); c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 3; for (let i = 0; i <= w; i += 32) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i, h); c.stroke(); c.beginPath(); c.moveTo(0, i); c.lineTo(w, i); c.stroke(); } }); tile.wrapS = tile.wrapT = THREE.RepeatWrapping; tile.repeat.set(6, 3);
+        const basin = new THREE.Mesh(new THREE.BoxGeometry(12, 1.8, 9), new THREE.MeshStandardMaterial({ map: tile, side: THREE.BackSide, roughness: .4 })); basin.position.set(-10, -.9, 6.5); g.add(basin);
+        const lane = mat(0x1E4A8A); [-12.5, -10, -7.5].forEach(x => box(.2, .01, 8, lane, x, -1.79, 6.5, g));
+        const water = TWR.water = new THREE.Mesh(new THREE.PlaneGeometry(12, 9, 24, 18), new THREE.MeshStandardMaterial({ color: 0x3CA8E8, transparent: true, opacity: .55, roughness: .05, metalness: .3, side: THREE.DoubleSide, depthWrite: false })); water.rotation.x = -Math.PI / 2; water.position.set(-10, -.15, 6.5); g.add(water);
+        const rim = mat(0xEEF1F5, { roughness: .5 }); box(12.4, .06, .2, rim, -10, .03, 1.9, g); box(12.4, .06, .2, rim, -10, .03, 11.1, g); box(.2, .06, 9.4, rim, -16.1, .03, 6.5, g); box(.2, .06, 9.4, rim, -3.9, .03, 6.5, g);
+        [-14, -6].forEach(x => { [-.25, .25].forEach(o => { const r = cyl(.025, .025, 1.1, mat(0xC9CFD8, { metalness: .8 }), x + o, .2, 2.05, g, 8); }); }); }
+      R.push([-16, -4, 2, 11]);
       for (let i = 0; i < 4; i++) solid(R, g, 1, 1.2, 2, mat(0x2A2D33), -8 + i * 3, .6, -11); solid(R, g, 3, .6, 1, mat(0x5A5E68), 8, .3, 6); }
     // flats: a row of front doors
     { const { g, R } = mk('flats', 0x8A6B4A, 0xE6DFD2, 0xFFD6A0); for (let i = 0; i < 6; i++) [[-13.95, 0], [13.95, Math.PI]].forEach(([z, ry], k) => { const d = box(1.3, 2.4, .08, mat([0x6A4E3A, 0x3A5A7A, 0x7A3A3A][(i + k) % 3]), -15 + i * 6, 1.2, z, g); d.rotation.y = ry; }); solid(R, g, 1, 1.2, 1, mat(0x3F6B4A), 0, .6, 0); }
@@ -11678,7 +11690,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   let svcNear = null;
   const svcBox = document.createElement('div'); svcBox.className = 'game'; svcBox.setAttribute('role', 'dialog'); svcBox.innerHTML = '<div class="gbox svcbox"></div>'; document.body.appendChild(svcBox);
   function svcOpen(kind){
-    const M = MENUS[kind]; if (!M) return; if (document.pointerLockElement) document.exitPointerLock();
+    const M = kind.startsWith('home:') ? homeMenu(kind.slice(5)) : MENUS[kind]; if (!M) return; if (document.pointerLockElement) document.exitPointerLock();
     const draw = () => { const L = M.items(); svcBox.querySelector('.gbox').innerHTML = `<div class="ghead"><h2 class="display">${esc(M.title)}</h2><button class="close" type="button" data-sv="x" aria-label="Close">✕</button></div><p class="psub">${esc(M.sub)} You have <b>${inr(CASH.v)}</b>.</p>`
       + L.map((it, i) => `<div class="prow"><b>${esc(it.n)}<br><small>${esc(it.d)}</small></b><button class="btn" type="button" data-sv="${i}" ${it.own ? 'disabled' : ''}>${it.own ? 'Owned' : it.p ? inr(it.p) : 'Free'}</button></div>`).join('')
       + (kind === 'bar' && DRUNK.l > .3 ? `<p class="gmsg">${DRUNK.l >= 4.5 ? 'The bartender slides you a glass of water instead.' : DRUNK.l >= 3 ? 'You’re properly drunk.' : DRUNK.l >= 1.5 ? 'You’re tipsy.' : 'You feel a little warm.'}</p>` : ''); svcBox._L = L; };
@@ -11690,7 +11702,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'e' && svcNear && !svcBtn.hidden) svcOpen(svcNear.kind); });
   function svcStep(){
     let near = null; if (inWorld && zone === 'blr' && !EV && !A && !DRV.on && !svcBox.classList.contains('on')) { const [mx, mz] = toMap(pos.x, pos.z); near = SVC.find(q => Math.hypot(mx - q.x, mz - q.z) < 2.4 && onGround()) || null; }
-    svcNear = near; svcBtn.hidden = !near; if (near) { const t = { guns: 'Browse weapons', bar: 'Order a drink', resto: 'Order food' }[near.kind] + (fine ? ' (E)' : ''); if (svcBtn.textContent !== t) svcBtn.textContent = t; }
+    svcNear = near; svcBtn.hidden = !near; if (near) { const t = (near.kind.startsWith('home:') ? (HOME.own.includes(near.kind.slice(5)) ? 'Your place' : 'Buy this place') : { guns: 'Browse weapons', bar: 'Order a drink', resto: 'Order food' }[near.kind]) + (fine ? ' (E)' : ''); if (svcBtn.textContent !== t) svcBtn.textContent = t; }
   }
   // ---------- drunk ----------
   const DRUNK = { l: 0, sw: 0, sp: 0, heatT: 0, last: null };
@@ -11703,7 +11715,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     const lost = Math.min(CASH.v, Math.round(CASH.v * (.1 + Math.random() * .15)));
     setTimeout(() => fade(() => {
       const home = Math.random() < .5 || !(inWorld && zone === 'blr'); CLOCK.off = (CLOCK.off + 4 + Math.floor(Math.random() * 3)) % 24; DRUNK.l = .8;
-      if (home) travel('room'); else { const bx = (PARK_B[0] + PARK_B[1]) / 2 + 6, bz = (PARK_B[2] + PARK_B[3]) / 2 + 4, [lx, lz] = toLocal(bx, bz); if (blrValid(lx, lz)) { pos.x = lx; pos.z = lz; } }
+      if (HOME.cur && HSPOT[HOME.cur] && inWorld && zone === 'blr') { const [lx, lz] = toLocal(...HSPOT[HOME.cur]); pos.x = lx; pos.z = lz; } else if (home) travel('room'); else { const bx = (PARK_B[0] + PARK_B[1]) / 2 + 6, bz = (PARK_B[2] + PARK_B[3]) / 2 + 4, [lx, lz] = toLocal(bx, bz); if (blrValid(lx, lz)) { pos.x = lx; pos.z = lz; } }
       if (lost) cashAdd(-lost, 'Lost while you were out', true);
       setTimeout(() => { say(`${home ? 'You wake up in your own bed. No idea how you got here.' : 'You wake up on a park bench, hours later.'} ${lost ? `Your wallet is ${inr(lost)} lighter.` : ''}`, 4200); try { phMsg('amma', home ? 'Beta, the watchman had to help you up the stairs. We will talk about this in the morning.' : 'Where ARE you?? You didn’t come home last night. Call me RIGHT NOW.'); } catch (e) {} DRUNK.passing = false; }, 900);
     }, '#000000'), 1600);
@@ -11723,12 +11735,78 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     if (l >= 6.2 && !DRUNK.passing) passOut();
   }
   { const st = document.createElement('style'); st.textContent = '.drunkfx{position:fixed;inset:0;z-index:2;pointer-events:none;display:none}.svcbtn{bottom:calc(150px + env(safe-area-inset-bottom,0px))}.svcbox{width:min(460px,100%)}.svcbox .prow .btn{min-width:84px}'; document.head.appendChild(st); }
+  // ======================= homes: buy a place of your own and move out =======================
+  // Three places in the city: the Old Town walk-up and Lakeside Residency (walk-in flats built like the shops) and Palm
+  // Grove Villas (a gated compound with four villas, yours walk-in, a shared pool and a sales office). Buy one at its key
+  // box or sales counter (SVC kind 'home:<id>'), make it your home, sleep there. HOME (ru-home) keeps what you own and
+  // where you live; HSPOT has each place's spot on the map. The phone's Homes app takes you to any place you own.
+  const HOMES = { old: { n: 'Old Town walk-up', p: 6000, d: 'One room over a sweet shop. Noisy, cheap and yours.' }, lake: { n: 'Lakeside Residency, flat 7C', p: 18000, d: 'Two bedrooms, a balcony and a view of the water.' }, villa: { n: 'Palm Grove Villas, villa 1', p: 45000, d: 'A gated villa with a garden and a shared pool.' } };
+  const HOME = { own: [], cur: null }, HSPOT = {};
+  try { const h = JSON.parse(localStorage.getItem('ru-home') || 'null'); if (h && Array.isArray(h.own)) { HOME.own = h.own.filter(k => HOMES[k]); HOME.cur = HOMES[h.cur] && HOME.own.includes(h.cur) ? h.cur : null; } } catch (e) {}
+  const homeSave = () => { try { localStorage.setItem('ru-home', JSON.stringify(HOME)); } catch (e) {} };
+  function homeMenu(id){
+    const H = HOMES[id], own = HOME.own.includes(id), cur = HOME.cur === id;
+    return { title: H.n, sub: H.d, items: () => own ? [{ id: 'move', n: cur ? 'This is your home' : 'Make this your home', d: cur ? 'You live here.' : 'You’ll come back here instead of your parents’ place.', p: 0, own: cur }, { id: 'sleep', n: 'Sleep (8 hours)', d: 'Sober up, skip to morning.', p: 0 }] : [{ id: 'buy', n: 'Buy it', d: 'Keys today. No deposit, no broker fee.', p: H.p }],
+      buy(it){
+        if (it.id === 'buy') { if (!cashSpend(it.p, H.n)) return; HOME.own.push(id); if (!HOME.cur) HOME.cur = id; homeSave(); tone(523, .1, 'triangle', .04); setTimeout(() => tone(784, .2, 'triangle', .04), 120); say(`The keys are yours. ${H.n} is your home now.`, 3200); setTimeout(() => { try { phMsg('amma', HOME.own.length === 1 ? 'You BOUGHT a place?? Without telling me?? …Send photos. And come for dinner on Sunday.' : 'Another one? Are you a landlord now?'); } catch (e) {} }, 4000); return; }
+        if (it.id === 'move') { HOME.cur = id; homeSave(); return say(`You live at ${H.n} now.`, 2200); }
+        if (it.id === 'sleep') { svcBox.classList.remove('on'); fade(() => { CLOCK.off = (CLOCK.off + 8) % 24; DRUNK.l = 0; setTimeout(() => say('You sleep like a log. Eight hours later, the city sounds different.', 3200), 600); }, '#000000'); }
+      } };
+  }
+  function homeGo(id){
+    const at = HSPOT[id]; if (!at) return say('Head out into the city first.', 2000); if (EV || A) return say('Not right now.', 1600);
+    const put = () => { const [lx, lz] = toLocal(at[0], at[1]); pos.x = lx; pos.z = lz; say(`${HOMES[id].n}.`, 1800); };
+    if (inWorld && zone === 'blr' && !BL.lvl) return fade(put, '#000000');
+    if (DRV.on) getOut(true); travel('city'); setTimeout(() => { if (inWorld && zone === 'blr') put(); }, 2600);
+  }
+  // furnished flats (shopInside calls this for the two flats)
+  function homeInside(S, F, Wr, Dr, P, so){
+    const hw = Wr / 2, id = S.id.slice(5);
+    P.push(B3(3, .7, 1, 0x5A6E8A, -hw + 2, .35, Dr - 1.2), B3(3, .7, .3, 0x5A6E8A, -hw + 2, .85, Dr - .8)); so(-hw + .5, -hw + 3.5, Dr - 1.7, Dr - .6);
+    P.push(B3(1.4, .4, .8, 0x6A4E3A, -hw + 2, .2, Dr - 2.6), B3(2.4, .03, 2.2, 0x7A3A3A, -hw + 2, .03, Dr - 2.4));
+    P.push(B3(2.2, .45, 1.6, 0x6A4E3A, hw - 1.6, .22, Dr - 1.3), B3(2.1, .2, 1.5, 0xEEF1F5, hw - 1.6, .55, Dr - 1.3), B3(1.2, .06, 1.52, 0x2E5A9A, hw - 1.3, .66, Dr - 1.3)); so(hw - 2.7, hw - .5, Dr - 2.1, Dr - .5);
+    P.push(B3(2.6, .9, .6, 0xEEF1F5, hw - 1.8, .45, 1.2), B3(2.62, .05, .62, 0x3A3D44, hw - 1.8, .92, 1.2)); so(hw - 3.1, hw - .5, .9, 1.5);
+    P.push(B3(2.2, .5, .5, 0x2A2D33, 0, .25, Dr - .4), B3(2, 1.1, .06, 0x16181D, 0, 1.25, Dr - .32)); so(-1.1, 1.1, Dr - .7, Dr - .1);
+    P.push(C3(.3, .5, 0xB8906A, -hw + .5, .25, .9, 10), S3(.45, 0x3F7A44, -hw + .5, .85, .9));
+    P.push(B3(.6, .9, .05, 0xFFE8B0, -hw + .3, 1.9, 2.4));
+    const [x, z] = F.toM(0, Dr / 2); HSPOT[id] = [x, z]; const [kx, kz] = F.toM(-hw + 1.2, 1.3); SVC.push({ x: kx, z: kz, kind: 'home:' + id });
+    P.push(B3(.4, .5, .12, 0x8A6B4A, -hw + 1.2, 1.3, .9));
+  }
+  // Palm Grove Villas: a gated compound on a big lot
+  function buildVillas(b, f){
+    hideLot(b); b.keep = true; const F = lotFrame(b, f), W = F.W, D = F.D, hw = W / 2, P = [], wallC = 0xEDE3CF, H = 2.2;
+    P.push(B3(W, .05, D, 0x6FA05A, 0, .025, D / 2));
+    [[-hw, -2.2], [2.2, hw]].forEach(([u0, u1]) => { P.push(B3(u1 - u0, H, .3, wallC, (u0 + u1) / 2, H / 2, .15)); F.solid(u0, u1, 0, .3); });
+    P.push(B3(W, H, .3, wallC, 0, H / 2, D - .15), B3(.3, H, D, wallC, -hw + .15, H / 2, D / 2), B3(.3, H, D, wallC, hw - .15, H / 2, D / 2)); F.solid(-hw, hw, D - .3, D); F.solid(-hw, -hw + .3, 0, D); F.solid(hw - .3, hw, 0, D);
+    P.push(B3(.5, 2.8, .5, 0xC8B89A, -2.4, 1.4, .15), B3(.5, 2.8, .5, 0xC8B89A, 2.4, 1.4, .15), B3(5.3, .4, .5, 0xC8B89A, 0, 2.9, .15));
+    P.push(B3(3.4, .05, D - 1, 0xC8BCA4, 0, .05, D / 2));
+    // four villas, two each side of the drive; the first one (front left) is yours and you can walk in
+    const vw = Math.min(9, hw - 3.6), vd = Math.min(8, D / 2 - 2.5), spots = [[-(hw + 1.7) / 2 - .2, 2.2], [(hw + 1.7) / 2 + .2, 2.2], [-(hw + 1.7) / 2 - .2, D / 2 + 1.2], [(hw + 1.7) / 2 + .2, D / 2 + 1.2]];
+    spots.forEach(([u, v0], i) => { const v1 = v0 + vd, col = [0xF4E8D0, 0xE8D8C0, 0xF2EDE3, 0xE0D2BC][i];
+      if (i === 0) { const w2 = vw / 2; P.push(B3(.25, 3.2, vd, col, u - w2, 1.6, v0 + vd / 2), B3(.25, 3.2, vd, col, u + w2, 1.6, v0 + vd / 2), B3(vw, 3.2, .25, col, u, 1.6, v1)); F.solid(u - w2 - .1, u - w2 + .15, v0, v1); F.solid(u + w2 - .15, u + w2 + .1, v0, v1); F.solid(u - w2, u + w2, v1 - .15, v1 + .1);
+        P.push(B3(w2 - .8, 3.2, .25, col, u - (w2 + .8) / 2, 1.6, v0), B3(w2 - .8, 3.2, .25, col, u + (w2 + .8) / 2, 1.6, v0)); F.solid(u - w2, u - .8, v0 - .1, v0 + .15); F.solid(u + .8, u + w2, v0 - .1, v0 + .15);
+        P.push(B3(vw, .05, vd, 0xD8C8A8, u, .04, v0 + vd / 2), B3(vw, .2, vd, 0xF4F1E8, u, 3.25, v0 + vd / 2), B3(vw + .6, 3, vd + .6, col, u, 4.85, v0 + vd / 2));
+        P.push(B3(3, .7, 1, 0x3A5A7A, u - w2 + 2, .35, v1 - 1), B3(3, .7, .3, 0x3A5A7A, u - w2 + 2, .85, v1 - .6), B3(2.2, .45, 1.6, 0x6A4E3A, u + w2 - 1.6, .22, v1 - 1.2), B3(2.1, .2, 1.5, 0xEEF1F5, u + w2 - 1.6, .55, v1 - 1.2), B3(2.4, .03, 2.2, 0x8A3A3A, u - w2 + 2, .05, v1 - 2.6), B3(2, 1.1, .06, 0x16181D, u, 1.4, v1 - .2), B3(.6, .9, .05, 0xFFE8B0, u - w2 + .2, 2, v0 + 2));
+        F.solid(u - w2 + .5, u - w2 + 3.5, v1 - 1.5, v1 - .4); F.solid(u + w2 - 2.7, u + w2 - .5, v1 - 2, v1 - .4);
+        const lt = new THREE.PointLight(0xFFD9A8, .8, 10, 2); lt.position.set(u, 2.9, v0 + vd / 2); F.g.add(lt);
+        const [x, z] = F.toM(u, v0 + vd / 2); HSPOT.villa = [x, z]; }
+      else { P.push(B3(vw, 6, vd, col, u, 3, v0 + vd / 2)); F.solid(u - vw / 2, u + vw / 2, v0, v1); for (let k = 0; k < 3; k++) P.push(B3(1.1, 1.3, .06, 0x3A5A7A, u - vw / 3 + k * vw / 3, 1.6, v0 - .03), B3(1.1, 1.3, .06, 0x3A5A7A, u - vw / 3 + k * vw / 3, 4.4, v0 - .03)); P.push(B3(1.2, 2.2, .07, 0x6A4E3A, u, 1.1, v0 - .04)); }
+      const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.max(vw, vd) * .75, 2.2, 4), mat(0xA0462A, { roughness: .8 })); roof.rotation.y = Math.PI / 4; roof.scale.set(vw / Math.max(vw, vd), 1, vd / Math.max(vw, vd)); roof.position.set(u, 6 + 1.1 + (i === 0 ? .35 : 0), v0 + vd / 2); F.g.add(roof); });
+    // the shared pool, palms and the sales office by the gate
+    const pv = D / 2 - .4; P.push(B3(3.2, .25, 5, 0xEEF1F5, 0, .12, pv)); const water = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 4.6), new THREE.MeshStandardMaterial({ color: 0x3CA8E8, roughness: .05, metalness: .3, emissive: 0x0A3A5A, emissiveIntensity: .3 })); water.rotation.x = -Math.PI / 2; water.position.set(0, .26, pv); F.g.add(water); F.solid(-1.6, 1.6, pv - 2.5, pv + 2.5);
+    [[-hw + 1.2, 1.2], [hw - 1.2, 1.2], [-hw + 1.2, D - 1.2], [hw - 1.2, D - 1.2], [-2.2, D / 2], [2.2, D / 2 + 3]].forEach(([u, v]) => { P.push(C3(.15, 4, 0x8A6B4A, u, 2, v, 6)); for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; P.push(B3(.25, .05, 1.6, 0x3F8A3A, u + Math.sin(a) * .7, 4, v + Math.cos(a) * .7, a)); } });
+    P.push(B3(2, 1.05, .8, 0xC8B89A, hw - 3.5, .52, 1.5), B3(2.2, .1, 1, 0x6A4E3A, hw - 3.5, 1.1, 1.5)); F.solid(hw - 4.5, hw - 2.5, 1.1, 1.9); const [sx, sz] = F.toM(hw - 3.5, 2.4); SVC.push({ x: sx, z: sz, kind: 'home:villa' });
+    decor(P, F.g); signPlane('PALM GROVE VILLAS', 'A GATED COMMUNITY · VILLAS FOR SALE', '#2E5A3A', '#F4E8C0', 4.6, .9, F.g, 0, 3.6, -.1, Math.PI);
+    F.g.traverse(o => { if (o.isMesh) o.userData.noPick = true; });
+  }
   // ---------- the street-level places: shops, a weapon dealer, a bar and a restaurant ----------
   const SHOPS = [
     { id: 'darshini', name: 'Sri Krishna Darshini', sub: 'IDLI · VADA · DOSA · KAAPI', bg: '#1F6A3A', fg: '#FFE08A', floor: 0xD8D0C0, wall: 0xE8E0B8, who: 'The man at the counter', line: 'Two idli-vada? Kaapi’s fresh. Stand anywhere, no chairs here, this is a darshini.' },
     { id: 'guns', name: 'Ironside Arms', sub: 'LICENSED DEALER · SINCE 1988', bg: '#1E2026', fg: '#E8701A', floor: 0x4A4E58, wall: 0x3A3D44, who: 'The dealer', line: 'Look all you like. Paying is the part I care about.' },
     { id: 'bar', name: 'The Copper Tap', sub: 'CRAFT BEER · COCKTAILS · LATE', bg: '#3A1E12', fg: '#E8B04A', floor: 0x4A3020, wall: 0x5A3A28, who: 'The bartender', line: 'What’ll it be? Water’s free, by the way.' },
     { id: 'resto', name: 'Saffron Table', sub: 'NORTH · SOUTH · CHINESE', bg: '#8A1E1E', fg: '#FFE08A', floor: 0xD8C8A8, wall: 0xE8D8B8, who: 'The waiter', line: 'Table for one? Order at the counter, I’ll bring it over.' },
+    { id: 'home_old', name: 'Old Town Walk-up', sub: 'ROOM TO LET · KEYS INSIDE', bg: '#6A4E3A', fg: '#FFE8B0', floor: 0xB08A5A, wall: 0xE8DCC8, who: 'The landlady', line: 'Small, but it’s quiet. Mostly. The key box is by the door.' },
+    { id: 'home_lake', name: 'Lakeside Residency', sub: 'FLAT 7C · FOR SALE', bg: '#1E5A8A', fg: '#FFFFFF', floor: 0xC8B898, wall: 0xF2EDE3, who: 'The estate agent', line: 'Lovely light in the evenings. The keys are in the box by the door.' },
     { id: 'books', name: 'Page Turner Books', sub: 'NEW · OLD · COMICS', bg: '#3A2A1A', fg: '#F6EFDD', floor: 0x8A6B4A, wall: 0xEADFC8, who: 'The bookseller', line: 'Comics are at the back. Somebody keeps asking for a Multiverse Saga issue we never stocked.' },
     { id: 'medical', name: 'City Medicals', sub: 'OPEN 24 HOURS', bg: '#1E7A4A', fg: '#FFFFFF', floor: 0xE8ECEF, wall: 0xF4F6F8, who: 'The pharmacist', line: 'Paracetamol? Plasters? You look like you’ve been in a few fights.' },
     { id: 'barber', name: 'Style Point Saloon', sub: 'HAIR CUT · SHAVE · MASSAGE', bg: '#C8102E', fg: '#FFFFFF', floor: 0xE8E3D6, wall: 0xC8E0E8, who: 'The barber', line: 'Sit, sit. Only cutting, no copying. One style per customer.' },
@@ -11745,6 +11823,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
           [['Idli Vada', '40'], ['Masala Dosa', '60'], ['Khara Bath', '35'], ['Kesari Bath', '35'], ['Mangalore Buns', '30'], ['Filter Kaapi', '20']].forEach(([n, pr], i) => { const x = i % 2 ? w * .54 : w * .06, y = h * (.42 + (i >> 1) * .2); c.fillText(n, x, y); c.fillText('₹' + pr, x + w * .32, y); }); }, .35);
         mb.position.set(0, 2.6, Dr - .1); mb.rotation.y = Math.PI; F.g.add(mb); } person(0, Dr - .7); }
     const counter = (kind, u, v) => { const [x, z] = F.toM(u, v); SVC.push({ x, z, kind }); };
+    if (S.id.startsWith('home_')) { homeInside(S, F, Wr, Dr, P, so); person(hw - 2.4, 2.6); }
     if (S.id === 'guns') { P.push(B3(Wr - 2, 1.05, .8, 0x2A2D33, 0, .52, Dr - 2), B3(Wr - 2, .05, .86, 0x8A8F99, 0, 1.07, Dr - 2)); so(-hw + 1, hw - 1, Dr - 2.4, Dr - 1.6);
       P.push(B3(Wr - 1, 2.4, .1, 0x5A4632, 0, 2.2, Dr - .1)); Object.keys(SSW).forEach((k, i) => { try { const m = mkWeapon(k); m.scale.setScalar(1.6); m.position.set(-hw + 1.4 + i * ((Wr - 2.8) / 6), 2.2, Dr - .25); m.rotation.set(0, Math.PI, Math.PI / 2); F.g.add(m); } catch (e) {} });
       person(0, Dr - 1.2); counter('guns', 0, Dr - 2.9); }
@@ -11980,7 +12059,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       [[4.88, 1.75, 16.6, 0xC8102E], [4.88, 1.75, 17.6, 0x2E5A9A], [4.88, 2.4, 17.1, 0xF2C230]].forEach(([x, y, z, c]) => P.push(B3(.03, .5, .4, 0xF4F1E8, x, y, z), B3(.035, .4, .3, c, x, y, z)));
       P.push(B3(.03, .7, 1, 0xF4F1E8, 8.68, 1.9, 24.2), B3(.035, .6, .9, 0x3C7CA8, 8.67, 1.9, 24.2));
       P.push(B3(.7, 3, .1, 0xC8864A, -2.25, 1.6, 25.05), B3(.7, 3, .1, 0xC8864A, 8.25, 1.6, 25.05), B3(11, .05, .05, 0x8A8F99, 3, 3.15, 25.05));
-      P.push(B3(10, .015, .015, 0xEEF1F5, 3, 2.2, 26.7)); [[-1, 0xC8102E], [.2, 0x2E5A9A], [1.4, 0xF2C230], [2.6, 0xEEF1F5], [5, 0x1F7A45], [6.3, 0xD94C8A]].forEach(([x, c]) => P.push(B3(.55, .7, .02, c, x, 1.85, 26.7)));
+      P.push(B3(.015, .015, 1.9, 0xEEF1F5, -2.45, 2.8, 26.1)); [[25.4, 0xC8102E], [25.9, 0x2E5A9A], [26.4, 0xF2C230], [26.85, 0x1F7A45]].forEach(([z, c]) => P.push(B3(.02, .55, .4, c, -2.45, 2.48, z)));  // the washing hangs along the side wall, above head height, not across the view
       P.push(B3(.9, .4, .3, 0x6A4E3A, 1.4, .2, 15), B3(1.1, .01, .7, 0x8A6B4A, 3, .045, 15.2), C3(.15, .25, 0xC9CFD8, 8.3, 1.08, 16.1, 12), B3(.05, .06, .05, 0x16181D, 8.3, 1.24, 16.1), B3(.12, .5, 1.2, 0x8A6B4A, 8.72, 1.6, 17.6)); so([.9, 1.9, 14.8, 15.2]);
       for (let k = 0; k < 6; k++) P.push(C3(.04, .1, [0xC8102E, 0xF2C230, 0x8A4A1E, 0x1F7A45, 0xE07A1E, 0xEEF1F5][k], 8.6, 1.42 + (k % 2) * .25, 17.2 + (k >> 1) * .35, 8));
       decor(P, F);
@@ -12005,6 +12084,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     const cand = BL.bld.filter(b => !b.hide && facing(b) && b.x1 - b.x0 >= 12.5 && b.z1 - b.z0 >= 12.5 && b.h >= 9 && farFromFights([b.x0, b.x1, b.z0, b.z1], 40) && !offMap((b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2) && Math.abs((b.z0 + b.z1) / 2 - MZ) > 22 && !(b.x1 > HOUSE.x0 - 6 && b.x0 < HOUSE.x1 + 6 && b.z1 > HOUSE.z0 - 6 && b.z0 < HOUSE.z1 + 6)).sort((a, c) => hash(a) - hash(c));
     const pick = (ok, minD) => { const b = cand.find(b => !used.includes(b) && ok(b) && used.every(u => Math.hypot((u.x0 + u.x1 - b.x0 - b.x1) / 2, (u.z0 + u.z1 - b.z0 - b.z1) / 2) > minD)); if (b) used.push(b); return b; };
     SHOPS.forEach(S => { const b = pick(() => true, 55); if (b) buildShop(b, facing(b), S); });
+    try { const vb = pick(b => b.x1 - b.x0 >= 24 && b.z1 - b.z0 >= 24, 45) || pick(b => b.x1 - b.x0 >= 18 && b.z1 - b.z0 >= 18, 40); if (vb) buildVillas(vb, facing(vb)); } catch (err) { console.error(err); }
     [0, 1, 2].forEach(i => { const b = pick(b => b.h >= 11 && b.h <= 30, 45); if (b) buildRooftop(b, facing(b), i, i === 1); });
     buildCarPark(); buildGarage(); buildSecurity(); try { buildSpaceport(); } catch (err) { console.error(err); } if (!lowFx) grassFields();
     BLC.placesBuilt = true;
@@ -13982,6 +14062,22 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
 
   // every couple of seconds: achievements, the real night, and the phone light
   let nightChecked = false;
+  // ---------- swimming in the tower pool (gym floor) ----------
+  const SWIM = { on: false, under: false, t: 0, dy: 0 }, swimFx = document.createElement('div'); swimFx.className = 'swimfx'; swimFx.setAttribute('aria-hidden', 'true'); document.body.appendChild(swimFx);
+  { const st = document.createElement('style'); st.textContent = '.swimfx{position:fixed;inset:0;z-index:2;pointer-events:none;background:radial-gradient(ellipse at 50% 40%,rgba(60,170,230,.25),rgba(10,60,110,.6));opacity:0;transition:opacity .3s}.swimfx.on{opacity:1}'; document.head.appendChild(st); }
+  function poolStep(dt, now){
+    const here = inWorld && zone === 'twr' && TWR.floor === 'gym' && !EV && !A, inP = here && pos.x > -15.7 && pos.x < -4.3 && pos.z > 2.3 && pos.z < 10.7;
+    if (TWR.water && here) { const P = TWR.water.geometry.attributes.position, t = now / 1000; for (let i = 0; i < P.count; i++) P.setZ(i, Math.sin(P.getX(i) * 1.3 + t * 1.6) * .025 + Math.cos(P.getY(i) * 1.1 + t * 1.2) * .02); P.needsUpdate = true; }
+    if (inP) {
+      if (!SWIM.on) { SWIM.on = true; tone(220, .4, 'sine', .05, 90); say('Splash. You’re in the pool. Hold C to dive, swim to the edge to climb out.', 3200); }
+      SWIM.under = !!(keys.c || (KIT && KIT.crouch));
+      if ((SWIM.t -= dt) <= 0) { SWIM.t = SWIM.under ? .9 : 1.6; tone(SWIM.under ? 160 : 320, .1, 'sine', .02, SWIM.under ? 120 : 260); }
+    } else if (SWIM.on) { SWIM.on = false; SWIM.under = false; if (here) say('You climb out, dripping.', 1600); }
+    swimFx.classList.toggle('on', SWIM.on && SWIM.under && SWIM.dy > 2.2);
+  }
+  // your feet stay on the floor as far as the walking code is concerned; the camera goes down into the water instead
+  let poolLast = 0;
+  function poolCam(now){ const dt = Math.min(.05, (now - (poolLast || now)) / 1000); poolLast = now; poolStep(dt, now); const want = SWIM.on ? (SWIM.under ? 2.65 : 1.32) : 0; SWIM.dy += (want - SWIM.dy) * Math.min(1, dt * (want > SWIM.dy ? 6 : 4)); if (SWIM.dy > .01) camera.position.y -= SWIM.dy - (SWIM.on && !SWIM.under ? Math.sin(now / 600) * .03 : 0); }
   function littleStep(dt, now){
     try { svcStep(); drunkStep(dt, now); } catch (e) {}
     try { paper2Step(now); } catch (e) {}
@@ -18813,6 +18909,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     if (A) { try { fightFrame(dt); } catch (err) { console.error(err); try { endFight(true); } catch (e2) { A = null; } say('Something went wrong, so the fight ended.', 3000); } }
     try { bzIdle(); spIdle(); evStep(dt, now); bossLook(); scarStep(dt, now); areaStep(dt, now); lapTick(dt, now); collideStep(dt); voidStep(dt, now); littleStep(dt, now); altStep(dt, now); instabStep(dt, now); } catch (err) { console.error(err); }
     try { meStep(dt, now); camStep(); mkwCam(); if (DRV.on) driveCam(dt); bzCam(dt); } catch (err) { console.error(err); }
+    try { poolCam(now); } catch (e) {}
     { const sc0 = sceneOf(); if (sc0) gfxRender(sc0); }
     requestAnimationFrame(frame);
   }
