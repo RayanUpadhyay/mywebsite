@@ -3326,6 +3326,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (c === 'hanzi' || c === 'radicals') { const ch = [...arg][0]; if (!ch) return P('usage: hanzi 学'); const r = ROS_HANZI[ch]; return P(r ? `<span class="y" style="font-size:28px">${esc(ch)}</span>  =  ${esc(r)}` : `${esc(ch)} isn't in my pocket dictionary yet. <span class="y">open mandalink</span> knows a lot more.`); }
     if (c === 'music' || c === 'spotify') { P('opening Music…'); return rosApp('music'); }
     // secret: unlock every season skin (try it on the laptop in the room)
+    if ((c === 'sudo' && /^travel\s+--secret$/.test(arg.trim())) || c === 'xyzzy') { tone(392, .12, 'sine', .04); setTimeout(() => tone(587, .14, 'sine', .04), 140); setTimeout(() => tone(880, .3, 'sine', .04), 300);
+      setTimeout(() => { try { secretGo(); } catch (e) {} }, 1600); return P('<span class="y">route found.</span> it isn’t on any map, and the map would like to keep it that way. hold on to something…'); }
     if ((c === 'sudo' && /^money\s+--infinite$/.test(arg.trim())) || c === 'motherlode') { let on; try { on = cashInfinite(); } catch (e) { return P('<span class="er">money: the bank said no</span>'); }
       tone(on ? 880 : 330, .12, 'square', .04); setTimeout(() => tone(on ? 1320 : 220, .18, 'square', .04), 120);
       return P(on ? '<span class="y">ka-ching.</span> the bank\'s database just got a lot more generous. balance: ∞. (run it again to go back to being broke.)' : '<span class="y">audit complete.</span> the glitch is patched. balance: back to normal.'); }
@@ -11956,6 +11958,70 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     entered = true; entering = false; enterUI.style.display = 'none'; dock.classList.add('on'); badge.hidden = false; if (!fine) joyEl.classList.add('on');
     homeGo(HOME.cur, true); return true;
   }
+  // ======================= Lanternfall: the secret city (RayanOS terminal: `sudo travel --secret`, or `xyzzy`) =======================
+  // A night city under its own starry dome, built once as a level far under the map (LVL.secret, like the home rooms): a plaza
+  // with a fountain of light and lantern stalls, four streets of lit houses ending at a lantern tower (north), a canal (east),
+  // a tea house (west) and the gate you arrive by (south), which takes you back to your room. A few locals talk (addTalk on
+  // the level) and ninety lanterns float up out of the streets (one InstancedMesh, drifted in secretStep). The first visit
+  // is remembered in ru-secretcity.
+  const SC = { x: 1200, z: 1200, y: -80, built: false, t: 0, busy: false };
+  function secretBuild(){
+    if (SC.built || !BL.mapG) return SC.built; SC.built = true; const g = SC.g = new THREE.Group(); g.position.set(SC.x, SC.y, SC.z); BL.mapG.add(g); g.visible = false; const P = [], sol = [], r = (x0, x1, z0, z1) => [SC.x + x0, SC.x + x1, SC.z + z0, SC.z + z1];
+    // the sky: a dome of stars with a big low moon
+    const sky = tex(1024, 512, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h / 2); gr.addColorStop(0, '#04051A'); gr.addColorStop(.7, '#1A1440'); gr.addColorStop(1, '#4A2458'); c.fillStyle = gr; c.fillRect(0, 0, w, h); let s = 99; const q = () => (s = (s * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < 1100; i++) { c.fillStyle = `rgba(255,255,255,${.25 + q() * .75})`; const z = q() < .08 ? 2 : 1; c.fillRect(q() * w, q() * h * .48, z, z); } c.fillStyle = 'rgba(255,236,190,.12)'; c.beginPath(); c.arc(w * .3, h * .36, 60, 0, Math.PI * 2); c.fill(); c.fillStyle = '#FFF0CC'; c.beginPath(); c.arc(w * .3, h * .36, 28, 0, Math.PI * 2); c.fill(); });
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(95, 32, 16), new THREE.MeshBasicMaterial({ map: sky, side: THREE.BackSide, fog: false })); dome.userData.noPick = true; g.add(dome);
+    // ground, the plaza and the streets
+    P.push(B3(190, .1, 190, 0x121019, 0, -.05, 0), B3(24, .02, 24, 0x2C2838, 0, .01, 0), B3(6, .02, 84, 0x221F2C, 0, .012, 0), B3(84, .02, 6, 0x221F2C, 0, .013, 0));
+    for (let i = -11; i <= 11; i += 2) P.push(B3(24, .021, .05, 0x3A3448, 0, .02, i), B3(.05, .021, 24, 0x3A3448, i, .02, 0));
+    // the fountain of light
+    P.push(C3(3.2, .55, 0x5A5468, 0, .27, 0, 28), C3(2.8, .1, 0x2A2440, 0, .5, 0, 28), C3(.5, 1.6, 0x6A6480, 0, .8, 0, 10)); sol.push(r(-3.3, 3.3, -3.3, 3.3));
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(.18, .35, 7, 12, 1, true), glowM(0xFFD27A, { transparent: true, opacity: .55, side: THREE.DoubleSide, depthWrite: false })); beam.position.set(0, 5, 0); beam.userData.noPick = true; g.add(beam); SC.beam = beam;
+    const pool = new THREE.Mesh(new THREE.CircleGeometry(2.75, 28), glowM(0x7AD8FF, { emissiveIntensity: .9 })); pool.rotation.x = -Math.PI / 2; pool.position.set(0, .56, 0); pool.userData.noPick = true; g.add(pool);
+    // houses along the four streets, with lit windows (one instanced mesh)
+    const win = [], cols = [0x221B2C, 0x1B1F2E, 0x2A1C22, 0x20261D, 0x281F2E]; let k = 0;
+    const house = (cx, cz, w, d, h, face) => { P.push(B3(w, h, d, cols[k++ % cols.length], cx, h / 2, cz), B3(w + .4, .3, d + .4, 0x1A1824, cx, h + .15, cz));
+      const [nx, nz] = face, along = nz ? w : d; for (let y = 1.4; y < h - .8; y += 1.6) for (let a = -along / 2 + .9; a < along / 2 - .5; a += 1.4) if (((k * 7 + Math.round(a * 3) + Math.round(y)) % 5) < 3) win.push([cx + (nz ? a : nx * (w / 2 + .03)), y, cz + (nz ? nz * (d / 2 + .03) : a), nz ? 0 : Math.PI / 2]); };
+    for (const s of [-1, 1]) for (let t = 15; t <= 39; t += 8) { const h1 = 5 + ((t * 3 + (s > 0 ? 4 : 0)) % 7), h2 = 5 + ((t * 5 + (s > 0 ? 1 : 3)) % 8);
+      house(-6.6, s * t, 6.6, 6.6, h1, [1, 0]); house(6.6, s * t, 6.6, 6.6, h2, [-1, 0]); house(s * t, -6.6, 6.6, 6.6, h2 + 1, [0, 1]); house(s * t, 6.6, 6.6, 6.6, h1 + 1, [0, -1]); }
+    for (const [sx, sz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) { house(sx * 19, sz * 19, 11, 11, 13 + (sx + sz + 2) * 2, [0, -sz]); }
+    const wm = new THREE.InstancedMesh(new THREE.PlaneGeometry(.6, .85), new THREE.MeshBasicMaterial({ color: 0xF2A850, side: THREE.DoubleSide }), win.length), o3 = new THREE.Object3D();
+    win.forEach(([x, y, z, ry], i) => { o3.position.set(x, y, z); o3.rotation.set(0, ry, 0); o3.updateMatrix(); wm.setMatrixAt(i, o3.matrix); }); wm.userData.noPick = true; g.add(wm);
+    // lantern stalls round the plaza
+    const awn = [0xC0271C, 0x1E5AA8, 0xE8B04A, 0x3F7A44]; [[-8.6, -8.6], [8.6, -8.6], [-8.6, 8.6], [8.6, 8.6]].forEach(([x, z], i) => { P.push(B3(2.4, .9, 1, 0x5A4030, x, .45, z), B3(.08, 2.4, .08, 0x2A2030, x - 1.1, 1.2, z - .45), B3(.08, 2.4, .08, 0x2A2030, x + 1.1, 1.2, z - .45), B3(.08, 2.4, .08, 0x2A2030, x - 1.1, 1.2, z + .45), B3(.08, 2.4, .08, 0x2A2030, x + 1.1, 1.2, z + .45), B3(2.7, .1, 1.4, awn[i], x, 2.45, z)); sol.push(r(x - 1.3, x + 1.3, z - .6, z + .6));
+      for (let j = 0; j < 4; j++) { const l = new THREE.Mesh(new THREE.BoxGeometry(.22, .3, .22), glowM([0xFFA040, 0xFF6B8B, 0x8CE0FF, 0xFFE070][(i + j) % 4], { emissiveIntensity: 1 })); l.position.set(x - .75 + j * .5, 1.05, z); l.userData.noPick = true; g.add(l); } });
+    // north: a lantern tower; east: a canal with railings; west: the tea house; south: the gate home
+    P.push(B3(5, 22, 5, 0x2E2A40, 0, 11, -48), B3(6, .5, 6, 0x1A1824, 0, 22.2, -48)); const top = new THREE.Mesh(new THREE.BoxGeometry(3, 3, 3), glowM(0xFFB04A, { emissiveIntensity: 1.2 })); top.position.set(0, 24, -48); top.userData.noPick = true; g.add(top);
+    const water = new THREE.Mesh(new THREE.PlaneGeometry(6, 120), glowM(0x2A8AAA, { emissiveIntensity: .45, roughness: .1 })); water.rotation.x = -Math.PI / 2; water.position.set(46, -.2, 0); water.userData.noPick = true; g.add(water); P.push(B3(.15, 1, 10, 0x6A6480, 42.3, .5, 0), B3(2, .25, 7.6, 0x6A4E3A, 44.2, .08, 0));
+    P.push(B3(9, 5, 9, 0x5A3A2A, -48, 2.5, 0), B3(10.5, .4, 10.5, 0x8A2A2A, -48, 5.2, 0), B3(7, .3, 7, 0x8A2A2A, -48, 6, 0)); const tw = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.2), glowM(0xFFC870, { emissiveIntensity: 1 })); tw.position.set(-43.48, 2.2, 0); tw.rotation.y = Math.PI / 2; tw.userData.noPick = true; g.add(tw);
+    P.push(B3(.8, 5, .8, 0x6A6480, -2.4, 2.5, 42.6), B3(.8, 5, .8, 0x6A6480, 2.4, 2.5, 42.6), B3(5.6, .8, .8, 0x6A6480, 0, 5.4, 42.6)); const gate = SC.gate = new THREE.Mesh(new THREE.PlaneGeometry(4, 4.8), glowM(0xB07AFF, { transparent: true, opacity: .55, side: THREE.DoubleSide, depthWrite: false })); gate.position.set(0, 2.5, 42.6); gate.userData.noPick = true; g.add(gate);
+    signPlane('LANTERNFALL', 'NOT ON ANY MAP', '#1A1440', '#FFC870', 4.4, 1, g, 0, 6.6, 42.1, Math.PI);
+    // the floating lanterns
+    const N = 90, lm = SC.lan = new THREE.InstancedMesh(new THREE.BoxGeometry(.32, .42, .32), glowM(0xFFA040, { emissiveIntensity: 1.1 }), N); lm.userData.noPick = true; g.add(lm); SC.lp = [];
+    for (let i = 0; i < N; i++) { const a = (i * 137.5) * Math.PI / 180, rad = 4 + (i * 7.3) % 40; SC.lp.push({ x: Math.cos(a) * rad, z: Math.sin(a) * rad, y: 2 + (i * 3.7) % 30, v: .35 + (i % 5) * .12, ph: i }); }
+    // lights, the locals
+    [[0, 4, 0, 2.2, 34], [0, 4, -27, 1.2, 22], [0, 4, 27, 1.2, 22], [27, 4, 0, 1.2, 22], [-27, 4, 0, 1.2, 22]].forEach(([x, y, z, i, d]) => { const l = new THREE.PointLight(0xFFC27A, i, d, 2); l.position.set(x, y, z); g.add(l); });
+    const hemi = new THREE.HemisphereLight(0x5A4A9A, 0x1A1424, .5); hemi.position.set(0, 20, 0); g.add(hemi); SC.hemi = hemi;
+    [[2.6, 39.4, Math.PI, 'The gatekeeper', 'Most people find this place by accident. You typed your way in. That’s new.'], [8.6, 7.4, Math.PI, 'The lantern-maker', 'Every lantern is a wish somebody forgot they made. I just light them.'],
+     [-4.2, 3.6, -2.4, 'A kid by the fountain', 'It doesn’t use water. Don’t ask what it uses.'], [-40.5, 1.6, -Math.PI / 2, 'The tea-house keeper', 'Tea’s free. Nobody down here has worked out what money is for.'], [40.8, -1.6, Math.PI / 2, 'A boatman', 'The canal goes all the way round. I’ve never found where it starts.']].forEach(([x, z, ry, who, line], i) => {
+      try { const a = avatar(crowdLook(40 + i * 3)); a.g.position.set(x, 0, z); a.g.rotation.y = ry; a.g.traverse(o => { if (o.isMesh) o.userData.noPick = true; }); g.add(a.g); } catch (e) {} addTalk(SC.x + x, SC.z + z + (Math.abs(ry) === Math.PI ? -1 : 0), 'secret', who, line); sol.push(r(x - .4, x + .4, z - .4, z + .4)); });
+    decor(P, g);
+    LVL.secret = { id: 'secret', y: SC.y, drive: false, rects: [r(-11.6, 11.6, -11.6, 11.6), r(-2.6, 2.6, -42, -11), r(-2.6, 2.6, 11, 42.4), r(11, 42, -2.6, 2.6), r(-42, -11, -2.6, 2.6)], solid: sol, exits: [] };
+    return true;
+  }
+  function secretGo(){
+    if (EV || A || SC.busy) return; SC.busy = true; try { rosClose(); } catch (e) {} if (DRV.on) getOut(true);
+    const go = () => { secretBuild(); SC.g.visible = true; lvGo({ to: 'secret', at: [SC.x, SC.z + 37], yaw: 0, fade: true, msg: 'You step through. The air smells of lamp oil and rain.' }); SC.busy = false;
+      let first = true; try { first = !localStorage.getItem('ru-secretcity'); localStorage.setItem('ru-secretcity', '1'); } catch (e) {} if (first) setTimeout(() => say('Lanternfall. A city that isn’t on any map. The gate behind you leads home.', 4200), 2600); };
+    if (inWorld && zone === 'blr' && BLC.placesBuilt) return go();
+    travel('city'); let n = 0; const w = setInterval(() => { if (inWorld && zone === 'blr' && BLC.placesBuilt && !BL.cine && !document.body.classList.contains('cine')) { clearInterval(w); go(); } else if (++n > 240) { clearInterval(w); SC.busy = false; } }, 250);
+  }
+  function secretStep(dt, now){
+    if (!SC.built) return; const here = inWorld && zone === 'blr' && BL.lvl === LVL.secret; if (SC.g.visible !== here && !(SC.busy)) SC.g.visible = here; if (!here) return;
+    const t = now / 1000, o3 = SC.o3 || (SC.o3 = new THREE.Object3D()); SC.lp.forEach((p, i) => { p.y += p.v * dt; if (p.y > 34) p.y = 1; o3.position.set(p.x + Math.sin(t * .4 + p.ph) * .6, p.y, p.z + Math.cos(t * .3 + p.ph) * .6); o3.rotation.set(0, t * .2 + p.ph, Math.sin(t + p.ph) * .08); o3.updateMatrix(); SC.lan.setMatrixAt(i, o3.matrix); }); SC.lan.instanceMatrix.needsUpdate = true;
+    SC.beam.material.opacity = .45 + Math.sin(t * 2) * .12; SC.gate.material.opacity = .45 + Math.sin(t * 3) * .12;
+    const [mx, mz] = toMap(pos.x, pos.z); if (!SC.leaving && mz > SC.z + 41.6 && Math.abs(mx - SC.x) < 2.4) { SC.leaving = true; fade(() => { BL.off.y = 0; BL.mapG.position.y = 0; BL.lvl = null; SC.g.visible = false; travel('room'); say('Back in your room. The laptop fan is still whirring.', 2600); setTimeout(() => SC.leaving = false, 1500); }, '#1A1440'); }
+  }
   // Palm Grove Villas: a gated compound on a big lot
   function buildVillas(b, f){
     hideLot(b); b.keep = true; const F = lotFrame(b, f), W = F.W, D = F.D, hw = W / 2, P = [], wallC = 0xEDE3CF, H = 2.2;
@@ -14325,6 +14391,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     try { paper2Step(now); } catch (e) {}
     try { cityLifeStep(dt); } catch (e) { console.error(e); }
     try { hroomStep(); } catch (e) {}
+    try { secretStep(dt, now); } catch (e) { console.error(e); }
     try { voiceStep(now); } catch (e) {}
     sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { isleStep(dt, now); } catch (e) { console.error(e); } try { mtnStep(dt, now); } catch (e) { console.error(e); } try { floodStep(dt); } catch (e) { console.error(e); } try { pkStep(dt); } catch (e) { console.error(e); } try { phxStep(dt); } catch (e) { console.error(e); } try { seasonStep(dt, now); } catch (e) { console.error(e); } try { winterStep(dt, now); } catch (e) { console.error(e); }
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
