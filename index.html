@@ -2704,8 +2704,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     [523, 659, 784].forEach((f, i) => setTimeout(() => tone(f, .22, 'square', .05), i * 90));
   }
   const LABELS = { logbook: 'Rayan\u2019s logbook', seed: 'A strange golden seed', lairexit: 'Back upstairs', lairboard: 'The lair scoreboard', rackinfo: 'The weapon rack', telescope: 'Look through the telescope', hatch: 'Back downstairs', ladder: 'Climb to the rooftop', lift: 'Take the lift', window: 'The sky outside', counter: 'Visitors so far', speakers: 'Play lo-fi', portal: 'Through the moon gate: Mandalink world', meddoor: 'Take the lift',  medkiosk: 'Lobby kiosk', cbstart: 'The pager: Code Black', medlift: 'Take the lift', halePlaque: 'A plaque in the lobby', sfClock: 'The Clockmaker’s clock', medexit: 'Back to the room', optable: 'Lift the sheet', whiteboard: 'The whiteboard', swim: 'Swim corner', photos: 'Photo folder', reviews: 'My album reviews', shelfvinyl: 'On the shelf', alexa: 'Alexa', scratch: 'Scratch it', map: 'AgriBridge across India', apk: 'Download AgriBridge (Android)', chat: 'A walkie-talkie', builder: 'Play: block builder', switch: 'Light switch', radicals: 'Play: find the radical', screen: 'Use my laptop', crate: 'Dig through the crate', vaultbook: 'Pull the red book', wardrobe: 'Open the wardrobe', atticdoor: 'A cord hanging from the ceiling', sparelamp: 'The lamp', sparewin: 'The round window', sparebed: 'The mattress', attichome: 'Back downstairs', atticchair: 'An old armchair', attictrunk: 'An old trunk' };
-  // ---------- Season 1 on the south wall, between the swim medals and the east corner: a TV that shows the Landfall logo and plays the trailer ----------
-  // The trailer is a video file (seasons/s01-trailer.mp4); it only downloads when someone presses play.
+  // ---------- the season's trailer: a projector on the ceiling throws the season's poster onto the south wall ----------
+  // Whichever season is running (or ?season=N) decides the poster and the trailer; clicking the picture plays that season's
+  // video (seasons/sNN-trailer.mp4, which only downloads when someone presses play). The room is built before the season code,
+  // so the season is worked out here from the same start date.
   function s1Logo(c, w, h, sub){
     const bg = c.createLinearGradient(0, 0, w, h); bg.addColorStop(0, '#0B0D14'); bg.addColorStop(1, '#2A1410'); c.fillStyle = bg; c.fillRect(0, 0, w, h);
     const tr = c.createLinearGradient(w * .95, h * .05, w * .25, h * .7); tr.addColorStop(0, 'rgba(255,240,200,0)'); tr.addColorStop(.75, 'rgba(255,140,60,.65)'); tr.addColorStop(1, 'rgba(255,230,180,1)');
@@ -2717,19 +2719,46 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     c.fillStyle = '#FFFFFF'; c.font = `900 ${Math.round(h * .27)}px ${DISPLAY}`; c.fillText('LANDFALL', w / 2, h * .48); c.shadowBlur = 0;
     if (sub) { c.fillStyle = '#F4F1E8'; c.font = `700 ${Math.round(h * .07)}px ${DISPLAY}`; c.fillText(sub, w / 2, h * .89); }
   }
-  {
-    const g = new THREE.Group(); g.userData.egg = 's1tv'; scene.add(g); const x0 = 4.0;
-    box(1.16, .7, .07, mat(0x16181D, { metalness: .4, roughness: .4 }), x0, 1.98, 4.92, g);
-    const scr = new THREE.Mesh(new THREE.PlaneGeometry(1.06, .6), new THREE.MeshBasicMaterial({ map: tex(1024, 576, (c, w, h) => { s1Logo(c, w, h, '▶  WATCH THE TRAILER'); }) }));
-    scr.rotation.y = Math.PI; scr.position.set(x0, 1.98, 4.882); g.add(scr);
-    LABELS.s1tv = 'Season 1 · Landfall: watch the trailer'; addMarker(V(x0, 2.6, 4.72), 0x7C8CFF, { egg: 's1tv' });
-    views.s1tv = { pos: V(x0 - .2, 1.9, 2.75), look: V(x0, 1.98, 4.95) };
+  const roomSeason = (() => { try { const q = location.search.match(/[?&]season=(\d+)/); if (q) return Math.min(15, Math.max(1, +q[1])); } catch (e) {} const d = new Date(); d.setHours(0, 0, 0, 0); const days = Math.round((d - new Date(2026, 10, 18)) / 864e5); return days < 0 ? 1 : Math.floor(days / 28) % 15 + 1; })();
+  const TRAILERS = { 1: 'seasons/s01-trailer.mp4', 2: 'seasons/s02-trailer.mp4', 3: 'seasons/s03-trailer.mp4' };
+  const ROOM_SEASON_NAMES = ['Landfall', 'High Water', 'The Syndicate', 'Blackout', 'The Eruption', 'Dark Side', 'Scales', 'Incursion', 'Neon Nights', 'Skyline', 'Harvest', 'Season 12', 'The Drought', 'Festival of Lights', 'Convergence'];
+  function seasonPoster(c, w, h, n){
+    if (n === 1) return s1Logo(c, w, h, TRAILERS[1] ? '▶  WATCH THE TRAILER' : null);
+    c.textAlign = 'center'; c.textBaseline = 'middle';
+    if (n === 2) { const bg = c.createLinearGradient(0, 0, 0, h); bg.addColorStop(0, '#5E7378'); bg.addColorStop(1, '#12262E'); c.fillStyle = bg; c.fillRect(0, 0, w, h);
+      c.fillStyle = 'rgba(220,235,242,.12)'; for (let i = 0; i < 160; i++) c.fillRect(Math.random() * w, Math.random() * h, 1.2, 14);
+      c.fillStyle = '#2E5A6A'; c.beginPath(); c.moveTo(0, h * .72); for (let x = 0; x <= w; x += 8) c.lineTo(x, h * .72 - Math.sin(x / w * 9) * h * .03 - (x > w * .55 ? Math.pow((x - w * .55) / (w * .45), 2) * h * .3 : 0)); c.lineTo(w, h); c.lineTo(0, h); c.fill();
+      c.fillStyle = '#9CC3D0'; c.font = `italic 600 ${Math.round(h * .07)}px Georgia, serif`; c.fillText('S E A S O N   2', w / 2, h * .26);
+      c.fillStyle = '#DCEBF2'; c.font = `700 ${Math.round(h * .2)}px Georgia, serif`; c.fillText('HIGH WATER', w / 2, h * .46); }
+    else if (n === 3) { const bg = c.createRadialGradient(w / 2, h * .45, h * .1, w / 2, h * .5, w * .7); bg.addColorStop(0, '#5A5A5A'); bg.addColorStop(1, '#0B0B0B'); c.fillStyle = bg; c.fillRect(0, 0, w, h);
+      c.fillStyle = '#161616'; for (let i = 0; i < 14; i++) { const bw = w * (.04 + Math.random() * .06), bh = h * (.18 + Math.random() * .35); c.fillRect(i * w / 14, h * .82 - bh, bw, bh); } c.fillRect(0, h * .82, w, h * .18);
+      c.save(); c.translate(w * .78, h * .3); c.fillStyle = '#E8901A'; for (let i = 0; i < 14; i++) { c.rotate(Math.PI / 7); c.beginPath(); c.ellipse(0, -h * .06, h * .022, h * .05, 0, 0, 7); c.fill(); } c.fillStyle = '#7A3A08'; c.beginPath(); c.arc(0, 0, h * .03, 0, 7); c.fill(); c.restore();
+      c.fillStyle = '#E8901A'; c.font = `700 ${Math.round(h * .06)}px "Courier New", monospace`; c.fillText('S E A S O N   3', w / 2, h * .3);
+      c.fillStyle = '#F2A23A'; c.font = `italic 400 ${Math.round(h * .2)}px "Parisienne", "Brush Script MT", Georgia, serif`; c.fillText('The Syndicate', w / 2, h * .5); }
+    else { c.fillStyle = '#121418'; c.fillRect(0, 0, w, h); c.fillStyle = '#9AA3AD'; c.font = `800 ${Math.round(h * .07)}px ${DISPLAY}`; c.fillText('S E A S O N   ' + n, w / 2, h * .32); c.fillStyle = '#FFFFFF'; c.font = `900 ${Math.round(h * .16)}px ${DISPLAY}`; c.fillText(ROOM_SEASON_NAMES[n - 1].toUpperCase(), w / 2, h * .5); }
+    c.fillStyle = 'rgba(255,255,255,.85)'; c.font = `700 ${Math.round(h * .055)}px ${DISPLAY}`; c.fillText(TRAILERS[n] ? '▶  WATCH THE TRAILER' : 'TRAILER COMING SOON', w / 2, h * .9);
   }
-  const tvBox = document.createElement('div'); tvBox.className = 'tvbox'; tvBox.hidden = true; tvBox.setAttribute('role', 'dialog'); tvBox.setAttribute('aria-label', 'Season 1 trailer');
+  {
+    const g = new THREE.Group(); g.userData.egg = 'proj'; scene.add(g); const ix = 3.95, iy = 1.9, iz = 4.935, IW = 1.66, IH = .93, px = 3.1, py = 2.72, pz = 2.3;
+    const img = new THREE.Mesh(new THREE.PlaneGeometry(IW, IH), new THREE.MeshBasicMaterial({ map: tex(1024, 576, (c, w, h) => seasonPoster(c, w, h, roomSeason)), transparent: true, opacity: .93 }));
+    img.rotation.y = Math.PI; img.position.set(ix, iy, iz); g.add(img);
+    // the projector: a box with a lens, hanging from the ceiling on a rod
+    const pm = mat(0x2A2D33, { metalness: .4, roughness: .5 }); box(.36, .14, .3, pm, px, py, pz, g); box(.03, .3, .03, pm, px, py + .22, pz, g);
+    const lens = cyl(.05, .05, .05, mat(0x16181D), px + .06, py, pz + .17, g, 16); lens.rotation.x = Math.PI / 2;
+    const glass = cyl(.04, .04, .01, new THREE.MeshBasicMaterial({ color: 0xFFF6DD }), px + .06, py, pz + .195, g, 16); glass.rotation.x = Math.PI / 2;
+    // the beam: a faint pyramid of light from the lens to the picture's corners
+    const L = [px + .06, py, pz + .2], C = [[ix - IW / 2, iy - IH / 2], [ix + IW / 2, iy - IH / 2], [ix + IW / 2, iy + IH / 2], [ix - IW / 2, iy + IH / 2]].map(([x, y]) => [x, y, iz - .01]), P = [];
+    for (let k = 0; k < 4; k++) P.push(...L, ...C[k], ...C[(k + 1) % 4]);
+    const bg = new THREE.BufferGeometry(); bg.setAttribute('position', new THREE.Float32BufferAttribute(P, 3));
+    const beam = new THREE.Mesh(bg, new THREE.MeshBasicMaterial({ color: 0xFFF2D6, transparent: true, opacity: .06, side: THREE.DoubleSide, depthWrite: false, blending: THREE.AdditiveBlending })); beam.userData.noPick = true; g.add(beam);
+    LABELS.proj = `Season ${roomSeason} · ${ROOM_SEASON_NAMES[roomSeason - 1]}: ${TRAILERS[roomSeason] ? 'watch the trailer' : 'trailer coming soon'}`; addMarker(V(ix, iy + .72, iz - .2), 0x7C8CFF, { egg: 'proj' });
+    views.proj = { pos: V(ix - .15, 1.75, 2.35), look: V(ix, iy, iz) };
+  }
+  const tvBox = document.createElement('div'); tvBox.className = 'tvbox'; tvBox.hidden = true; tvBox.setAttribute('role', 'dialog'); tvBox.setAttribute('aria-label', 'Season trailer');
   tvBox.innerHTML = '<div class="tvin"><video playsinline controls preload="none"></video><button type="button" class="btn tvx">Close ✕</button></div>'; document.body.appendChild(tvBox);
   { const s = document.createElement('style'); s.textContent = '.tvbox{position:fixed;inset:0;z-index:90;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:calc(16px + env(safe-area-inset-top,0px)) calc(16px + env(safe-area-inset-right,0px)) calc(16px + env(safe-area-inset-bottom,0px)) calc(16px + env(safe-area-inset-left,0px))}.tvbox[hidden]{display:none}.tvin{width:min(100%,1100px);display:flex;flex-direction:column;align-items:flex-end;gap:10px}.tvin video{width:100%;aspect-ratio:16/9;background:#000;border-radius:12px;display:block}'; document.head.appendChild(s); }
   function seasonVideo(src){ const v = tvBox.querySelector('video'); if (!v.getAttribute('src') || v.getAttribute('src') !== src) v.setAttribute('src', src); if (document.pointerLockElement) document.exitPointerLock(); tvBox.hidden = false; try { v.currentTime = 0; const p = v.play(); if (p && p.catch) p.catch(() => {}); } catch (e) {} }
-  function trailerOpen(){ seasonVideo('seasons/s01-trailer.mp4'); }
+  function trailerOpen(){ if (TRAILERS[roomSeason]) seasonVideo(TRAILERS[roomSeason]); else say('This season’s trailer isn’t out yet.', 2400); }
   function tvClose(){ const v = tvBox.querySelector('video'); try { v.pause(); } catch (e) {} tvBox.hidden = true; }
   tvBox.querySelector('.tvx').addEventListener('click', e => { e.stopPropagation(); tvClose(); });
   tvBox.addEventListener('click', e => { if (e.target === tvBox) tvClose(); });
@@ -10718,7 +10747,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     HEAT.cops.push(v); }
   function copsClear(){ HEAT.cops.forEach(v => { if (v.g.parent) v.g.parent.remove(v.g); }); HEAT.cops = []; }
   const roadOK = (x, z) => blrValid(...toLocal(x, z)) && !PILLARS.some(q => Math.hypot(toLocal(x, z)[0] - q.x, toLocal(x, z)[1] - q.z) < q.r);
-  function busted(){ const lost = Math.min(JOB.rep, 15); JOB.rep -= lost; jobSave(); HEAT.lv = 0; copsClear(); if (DRV.on) getOut(true);
+  function busted(){ if (JAIL.rec >= 3) { HEAT.lv = 0; copsClear(); if (DRV.on) getOut(true); return jailGo(); } const lost = Math.min(JOB.rep, 15); JOB.rep -= lost; jobSave(); HEAT.lv = 0; copsClear(); if (DRV.on) getOut(true);
     fade(() => say(`Busted. You spend an hour explaining that you’re one of the good guys.${lost ? ` Reputation -${lost}.` : ''}`, 4600), '#0B0D14'); tone(220, .5, 'sawtooth', .05, 110); }
   function heatStep(dt, now){
     const inB = inWorld && zone === 'blr' && !EV && !A && !BL.lvl && Math.abs(BL.off.y) < .01;
@@ -14002,6 +14031,53 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   const _pc = new THREE.Color(), _pe2 = new THREE.Euler();
   function pedPart(im, col, x, y, z, rx, ry, rz, sx = 1, sy = 1, sz = 1){ const i = im.userData.n++; _pL.compose(_pv.set(x, y, z), _pq.setFromEuler(_pe.set(rx, ry, rz)), _ps.set(sx, sy, sz)); _pM.multiplyMatrices(_pB, _pL); im.setMatrixAt(i, _pM); im.setColorAt(i, _pc.setHex(col)); }
   function pedHide(p){ p.vis = false; }
+  // ---------- jail: pick enough fights and you serve time ----------
+  // Every punch adds to your record (a knockout adds two), and it fades by one every 90 seconds of good behaviour (ru-record).
+  // With a record of three or more, being caught by the police means a cell, not a lecture; at eight, they come for you straight
+  // after the fight. The cell is a level underground (like the garage): you serve 15 seconds plus 10 per point, up to two minutes,
+  // then they let you out where they picked you up.
+  const JAIL = { rec: 0, t: 0, until: 0, at: null, built: false, el: null, decay: 0 };
+  try { JAIL.rec = Math.max(0, Math.min(20, +localStorage.getItem('ru-record') || 0)); } catch (e) {}
+  const jailSave = () => { try { localStorage.setItem('ru-record', String(JAIL.rec)); } catch (e) {} };
+  function jailRec(n){ JAIL.rec = Math.min(20, JAIL.rec + n); JAIL.decay = 0; jailSave(); if (JAIL.rec >= 5 && !JAIL.told) { JAIL.told = true; say('You’re building a record. Keep this up and the police won’t just let you go.', 3600); } }
+  const JX = 300, JZ = -300, JYL = -40;
+  function jailBuild(){
+    if (JAIL.built || !BL.mapG) return; JAIL.built = true; const g = new THREE.Group(); g.position.set(JX, JYL, JZ); BL.mapG.add(g); JAIL.g = g;
+    const concrete = mat(0x8A8C88, { roughness: .95 }), dark = mat(0x5A5C5A, { roughness: .95 }), floorM = mat(0x6E6C66, { roughness: .9 }), steel = mat(0x3A3D44, { metalness: .6, roughness: .4 });
+    const bx = (w, h, d, m, x, y, z) => { const o = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), m); o.position.set(x, y, z); g.add(o); return o; };
+    bx(12, .2, 9, floorM, 0, -.1, 0); bx(12, .2, 9, dark, 0, 3.3, 0);
+    bx(12, 3.4, .3, concrete, 0, 1.6, -4.5); bx(12, 3.4, .3, concrete, 0, 1.6, 4.5); bx(.3, 3.4, 9, concrete, -6, 1.6, 0); bx(.3, 3.4, 9, concrete, 6, 1.6, 0);
+    bx(.25, 3.4, 4.2, concrete, -2.2, 1.6, -2.4); bx(.25, 3.4, 4.2, concrete, 2.2, 1.6, -2.4);
+    for (let x = -2.05; x <= 2.06; x += .22) bx(.05, 3.2, .05, steel, x, 1.6, -.3);
+    bx(4.4, .08, .08, steel, 0, .1, -.3); bx(4.4, .08, .08, steel, 0, 1.1, -.3); bx(4.4, .08, .08, steel, 0, 3.15, -.3);
+    bx(2.8, .45, .7, dark, 0, .25, -3.95); bx(.5, .45, .5, mat(0xD8D8D2), 1.6, .23, -3.6);
+    const win = bx(1, .5, .05, new THREE.MeshBasicMaterial({ color: 0xDDE8F0 }), 0, 2.7, -4.33); for (let x = -.4; x <= .41; x += .2) bx(.04, .5, .06, steel, x, 2.7, -4.31);
+    bx(2.2, .9, .8, mat(0x6A4A2A), 3.6, .45, 2.6); bx(.5, .05, .4, new THREE.MeshBasicMaterial({ color: 0x9FD8FF }), 3.6, .93, 2.5);
+    try { const gd = avatar(Object.assign({}, crowdLook(7), { x: { cap: 1 } })); gd.g.position.set(3.6, 0, 3.6); gd.g.rotation.y = 0; g.add(gd.g); JAIL.guard = gd; } catch (e) {}
+    const lp = new THREE.PointLight(0xFFF2D8, 1.1, 14); lp.position.set(0, 3, -2.2); g.add(lp); const lp2 = new THREE.PointLight(0xFFF2D8, .7, 14); lp2.position.set(0, 3, 2.5); g.add(lp2);
+    bx(.6, .04, .3, new THREE.MeshBasicMaterial({ color: 0xFFFFFF }), 0, 3.18, -2.2); bx(.6, .04, .3, new THREE.MeshBasicMaterial({ color: 0xFFFFFF }), 0, 3.18, 2.5);
+    g.traverse(o => o.userData.noPick = true); g.visible = false;
+    LVL.jail = { id: 'jail', y: JYL, drive: false, rects: [[JX - 1.85, JX + 1.85, JZ - 3.9, JZ - .65]], solid: [[JX - 1.4, JX + 1.4, JZ - 4.3, JZ - 3.55]], exits: [] };
+    const el = JAIL.el = document.createElement('div'); el.className = 'jailhud'; el.hidden = true; document.body.appendChild(el);
+    const st = document.createElement('style'); st.textContent = '.jailhud{position:fixed;left:50%;top:calc(66px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:40;background:rgba(16,16,18,.82);color:#fff;border-radius:999px;padding:7px 16px;font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.04em;white-space:nowrap;pointer-events:none}'; document.head.appendChild(st);
+  }
+  function jailGo(){
+    if (JAIL.until || EV || A || !inWorld || zone !== 'blr') return; jailBuild(); if (!LVL.jail) return; if (DRV.on) getOut(true); if (phOpen()) phoneClose();
+    const secs = Math.min(120, 15 + JAIL.rec * 10); JAIL.at = toMap(pos.x, pos.z); JAIL.until = performance.now() + secs * 1000; JAIL.g.visible = true;
+    lvGo({ to: 'jail', at: [JX, JZ - 2.4], yaw: 0, fade: true, msg: `Arrested. The door slams. ${secs} seconds to think about it.` }); tone(110, .6, 'sawtooth', .05, 60);
+  }
+  function jailStep(now, dt){
+    if (!JAIL.until) { if (JAIL.rec > 0 && (JAIL.decay += dt) > 90) { JAIL.decay = 0; JAIL.rec--; jailSave(); } return; }
+    const left = Math.max(0, Math.ceil((JAIL.until - now) / 1000)), inCell = BL.lvl === LVL.jail;
+    if (JAIL.el) { JAIL.el.hidden = !inCell; JAIL.el.textContent = `In custody · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; }
+    if (JAIL.guard) try { JAIL.guard.anim(now / 1000, 0, 0); } catch (e) {}
+    if (inCell && !JAIL.said && left < 8) { JAIL.said = true; say('The guard looks up from his screen. “Your ride’s here. Don’t make me see you again.”', 3600); }
+    if (left > 0) return;
+    const at = JAIL.at || [0, 0]; JAIL.until = 0; JAIL.said = false; JAIL.rec = 0; jailSave(); if (JAIL.el) JAIL.el.hidden = true;
+    if (inCell) lvGo({ to: null, at, yaw: 0, fade: true, msg: 'They let you out with a warning and your record wiped. Behave.' });
+    setTimeout(() => { if (JAIL.g) JAIL.g.visible = false; }, 1200);
+  }
+
   // ---------- the people on the street can be hit ----------
   // F (or the Punch button) when you're facing someone close: kids, older people and vendors fall over and run; anyone else either
   // runs or fights back, and a fight back is a real street fight (ssFight) against them, plus whoever they were chatting with.
@@ -14019,6 +14095,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     const p = pedTarget(); if (!p) return false; const [cx, cz] = toMap(pos.x, pos.z); p.hit = (p.hit || 0) + 1; tone(170, .12, 'square', .05, 90);
     if (p.mode === 'vendor' && p.cart) { p.cart.v = null; p.cart = null; }
     const meek = p.type === 'k' || p.type === 'o' || p.phone && p.hit < 2;
+    jailRec(1);
     if (meek || Math.random() < (p.hit > 1 ? .2 : .5)) { if (meek) { p.mode = 'down'; p.t = 2.5; pedSay(p, pickA(PSAY.ow)); } else { p.mode = 'flee'; p.t = 6; pedSay(p, pickA(PSAY.flee)); } pedScatter(p.x, p.z, 9); heatAdd(1, 'You hit someone in the street.'); return true; }
     pedSay(p, pickA(PSAY.fight)); setTimeout(() => pedBrawl(p), 700); return true;
   }
@@ -14033,13 +14110,14 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       setup(F){ crew.forEach((q, i) => F.add(ids[i], (q.x - at[0]) || 0, (q.z - at[1]) || 0)); },
       step(dt, F){ if (!F.foes().length) F.win(); },
       end(won){ if (won) crew.forEach(q => { q.mode = 'down'; q.t = 10 + Math.random() * 6; }); else crew.forEach(q => { q.mode = 'walk'; q.lo = 0; }); pedScatter(at[0], at[1], 16); crew.forEach(q => { q.cool = performance.now() + 40000; });
-        heatAdd(won ? 2 : 1, won ? 'You knocked someone out in the street.' : 'You lost a street fight.'); if (!won) setTimeout(() => say('They walk off, shaking their heads. You sit on the kerb for a minute.', 3600), 400); },
+        heatAdd(won ? 2 : 1, won ? 'You knocked someone out in the street.' : 'You lost a street fight.'); jailRec(won ? 2 : 1); if (JAIL.rec >= 8) setTimeout(() => { if (!EV && !A && inWorld && zone === 'blr') { say('Sirens, from both ends of the street. Two officers have you face-down on the pavement before you can run.', 4200); setTimeout(jailGo, 2600); } }, 1800); if (!won) setTimeout(() => say('They walk off, shaking their heads. You sit on the kerb for a minute.', 3600), 400); },
       winLine: 'They stay down.', loseLine: 'You’re on the pavement. They win this one.' };
     if (ssFight(o)) { yaw = Math.atan2(-(p.x - toMap(pos.x, pos.z)[0]), -(p.z - toMap(pos.x, pos.z)[1])); pitch = 0; [150, 500, 1000].forEach(ms => setTimeout(() => { if (EV && EV.opts && EV.opts.ss) pitch = 0; }, ms)); }
   }
 
   function pedStep(dt, now){
     if (!PED.built) { if (BLC.built && BLC.streetG && BL.grid) { PED.built = true; try { pedBuild(); } catch (err) { console.error(err); } } return; }
+    try { jailStep(now, dt); } catch (e) { console.error(e); }
     if (!PED.ims) return;
     { const tg = !fine && pedTarget(); punchBtn.hidden = !tg; }
     const roofV = cityLive(), mood = BL.mood || 'night', I = PED.ims;
@@ -20550,7 +20628,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     if (p.egg === 'window') return say(`It\u2019s ${istClock()} where Rayan is. The sky outside matches.`, 3200);
     if (p.egg === 'counter') return say(visitors ? `You\u2019re one of ${visitors.toLocaleString()} visitors so far. Welcome!` : 'The visitor counter is warming up.', 3000);
     if (p.egg === 'map') return playMap();
-    if (p.egg === 's1tv') return flyTo(views.s1tv.pos.clone(), views.s1tv.look, trailerOpen);
+    if (p.egg === 'proj') return flyTo(views.proj.pos.clone(), views.proj.look, trailerOpen);
     if (p.egg === 'wtree' || p.egg === 'wglobe' || p.egg === 'wcocoa') return winterEgg(p.egg);
     if (p.egg === 'chat') return chatOpen();
     if (p.egg === 'apk') return flyTo(views.map.pos.clone(), views.map.look, apkPanel);
