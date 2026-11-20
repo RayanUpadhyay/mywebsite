@@ -2692,7 +2692,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const inRoom = (x, z) => x >= -4.2 && x <= 4.2 && z >= -3.6 && z <= 4.3;
   const inDoor = (x, z) => vaultOpen && x > 4.2 && x <= 5.7 && z >= -.25 && z <= .85;
   const inVault = (x, z) => vaultOpen && Object.values(VR).some(r => inRect(r, x, z));
-  const inHall = (x, z) => entered && ((Math.abs(x) < .45 && z > 4.2 && z <= 5.5) || (Math.abs(x) < 1.2 && z > 5.5 && z < 10.3));
+  const inHall = (x, z) => entered && ((Math.abs(x) < .45 && z > 4.2 && z <= 5.5 && (z < 4.62 || doorPivot.rotation.y > .8)) || (Math.abs(x) < 1.2 && z > 5.5 && z < 10.3));
   const valid = (x, z) => inWorld ? WD_PL[zone] ? wdValid(x, z) : zone === 'med' ? medValid(x, z) : zone === 'tidy' ? tdValid(x, z) : zone === 'apt' ? aptValid(x, z) : zone === 'fly' ? false : zone === 'xc' ? xcValid(x, z) : zone === 'xin' ? xinValid(x, z) : zone === 'farm' ? farmValid(x, z) : zone === 'mtn' ? mtnValid(x, z) : zone === 'event' ? evValid(x, z) : zone === 'collapse' ? runValid(x, z) : (zone === 'lair' ? (x > -16.8 && x < 7.2 && z > -8.1 && z < 10.3 && !(x > 5.75 && x < 7.45 && z > 7.2)) || onStairs(x, z) || inDeep(x, z) : zone === 'city' ? cityOK(x, z) : zone === 'blr' ? (SW.roof ? swRoofOK(x, z) : blrValid(x, z)) : zone === 'twr' ? twrValid(x, z) : zone === 'dsp' ? dspValid(x, z) : zone !== 'roof' || (Math.abs(x) < 5.5 && Math.abs(z) < 3.5)) : (inRoom(x, z) || inDoor(x, z) || inVault(x, z) || inHall(x, z));
   const region = x => x > 4.9 ? 'vault' : 'room';
   function flyTo(target, dir, done){
@@ -9164,7 +9164,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   let sbNear = null, sbBuilt = false;
   function sbWorld(){
     if (!BL.sc || !BLC.built) return;
-    if (!sbBuilt) { sbBuilt = true; SBOSS.forEach(B => { const g = new THREE.Group(); g.position.set(B.at[0], 0, B.at[1]); BL.mapG.add(g);
+    if (!sbBuilt) { sbBuilt = true; SBOSS.forEach(B => { const g = new THREE.Group(); g.position.set(B.at[0], 0, B.at[1]); g.userData.sb = 1; BL.mapG.add(g);
       const col = new THREE.Mesh(new THREE.CylinderGeometry(1, 1.4, 70, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xFF3030, transparent: true, opacity: .2, depthWrite: false, side: THREE.DoubleSide })); col.position.y = 35; g.add(col);
       const mk = done => tex(512, 160, (c, w, h) => { c.fillStyle = done ? 'rgba(20,60,30,.85)' : 'rgba(80,8,8,.85)'; c.beginPath(); c.roundRect ? c.roundRect(4, 4, w - 8, h - 8, 30) : c.rect(4, 4, w - 8, h - 8); c.fill(); c.fillStyle = '#fff'; c.textAlign = 'center'; c.textBaseline = 'middle'; c.font = `900 60px ${DISPLAY}`; c.fillText(B.name.toUpperCase(), w / 2, 64); c.font = '700 30px sans-serif'; c.fillStyle = done ? '#9FE8A8' : '#FFB0A8'; c.fillText(done ? 'BEATEN · REMATCH?' : 'STREET BOSS', w / 2, 120); });
       const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: mk(!!SBK[B.id]), transparent: true, depthWrite: false })); sp.scale.set(6, 1.9, 1); sp.position.y = 7; g.add(sp);
@@ -9255,7 +9255,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     jobHud.hidden = !show;
     if (!BL.mapG) return;
     if (!JOB.beacon && BLC.built) { const g = JOB.beacon = new THREE.Group(); BL.mapG.add(g); const c = new THREE.Mesh(new THREE.CylinderGeometry(.8, 1.1, 80, 14, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFC93C, transparent: true, opacity: .28, depthWrite: false, side: THREE.DoubleSide })); c.position.y = 40; g.add(c); g.traverse(o => o.userData.noPick = true); g.visible = false; }
-    const tg = jobTarget() || PH.wp; if (JOB.beacon) { JOB.beacon.visible = !!tg && (inB || cityLive()) && !EV; if (tg) JOB.beacon.position.set(tg[0], 0, tg[1]); }
+    const tg = PH.wp || jobTarget(); if (JOB.beacon) { JOB.beacon.visible = !!tg && (inB || cityLive()) && !EV; if (tg) JOB.beacon.position.set(tg[0], 0, tg[1]); }
     if (!q) return;
     if (inB && !EV) {
       const [mx, mz] = toMap(pos.x, pos.z);
@@ -9797,7 +9797,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (!inWorld && (t === 'map' || t === 'jobs')) { B.innerHTML = `<div class="phcard"><b>${t === 'map' ? 'Maps' : 'Jobs'}</b><small>You’re at home. ${t === 'map' ? 'The map, pins and “Bring me a car” work once you’re out in the city.' : 'People post jobs from the street. Head out and check again.'}</small><div class="phrow"><button type="button" class="y" data-goout>Head out to the city</button></div></div>`; B.querySelector('[data-goout]').onclick = () => { phoneClose(); travel('city'); }; return true; }
     if (t === 'homes') { B.innerHTML = '<div class="phcard"><b>Homes</b><small>Buy a place at its key box or sales office. Your main home is where you start when you open the site.</small></div>' + `<div class="phcard"><b>Your bedroom${HOME.cur ? '' : ' · main home'}</b><small>Your room at your parents’ place.</small><div class="phrow">${HOME.cur ? '<button type="button" data-hm="room">Make this my main home</button>' : ''}</div></div>` + Object.keys(HOMES).map(k => { const H = HOMES[k], own = HOME.own.includes(k); return `<div class="phcard"><b>${esc(H.n)}${HOME.cur === k ? ' · main home' : ''}</b><small>${esc(H.d)}</small><small>${own ? 'You own this.' : inr(H.p)}</small><div class="phrow">${own ? `<button type="button" class="y" data-hg="${k}">Take me there</button>${HOME.cur === k ? '' : `<button type="button" data-hm="${k}">Make this my main home</button>`}` : HSPOT[k] ? `<button type="button" data-hg="${k}">Show me the way</button>` : '<small>Head into the city to find it.</small>'}</div></div>`; }).join('');
       B.querySelectorAll('[data-hm]').forEach(b => b.onclick = () => { const k = b.dataset.hm; HOME.cur = k === 'room' ? null : k; homeSave(); say(k === 'room' ? 'Your bedroom is your main home again.' : `${HOMES[k].n} is your main home now.`, 2200); phShow('homes'); });
-      B.querySelectorAll('[data-hg]').forEach(b => b.onclick = () => { const k = b.dataset.hg; phoneClose(); if (HOME.own.includes(k)) homeGo(k); else { const a = HSPOT[k]; if (a) { PH.wp = a.slice(); say(`Pinned on your map: ${HOMES[k].n}.`, 2200); } } }); return true; }
+      B.querySelectorAll('[data-hg]').forEach(b => b.onclick = () => { const k = b.dataset.hg; phoneClose(); if (HOME.own.includes(k)) homeGo(k); else { const a = HSPOT[k]; if (a) { PH.wp = a.slice(); PH.focus = true; say(`Pinned on your map: ${HOMES[k].n}.`, 2200); } } }); return true; }
     if (t === 'bank') { const tx = CASH.tx.slice(-12).reverse();
       B.innerHTML = `<div class="phbank"><small>Available balance</small><b>${bal()}</b><span>Savings ·· 4417</span></div><div class="phrow"><button type="button" data-bk="mum">Send Mum ₹500</button></div><div class="phcard"><b>Recent</b>${tx.length ? tx.map(([n, w, ts]) => `<div class="phtx"><span>${esc(w)}<small>${ago(ts)}</small></span><em class="${n >= 0 ? 'in' : ''}">${txAmt(n)}</em></div>`).join('') : '<small>No transactions yet.</small>'}</div>`;
       B.querySelector('[data-bk="mum"]').onclick = () => { if (!cashSpend(500, 'Sent to Mum')) return; phShow('bank'); setTimeout(() => { try { phMsg('amma', ['Why are you sending me money?? Buy yourself proper food.', 'I’m putting this in your savings. Don’t argue.', 'Thank you beta ❤️ Now come home.'][Math.floor(Math.random() * 3)]); } catch (e) {} }, 3000); };
@@ -9866,7 +9866,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   phEl.addEventListener('click', e => { if (e.target.closest('[data-apt]')) { e.stopPropagation(); aptPhoneGo(); } });
   phEl.addEventListener('click', e => { const b = e.target.closest('[data-dk]'); if (!b) return; e.stopPropagation(); if (EV || A) return; phoneClose(); skipTo(+b.dataset.dk); });
   function phMap(){
-    const B = phEl.querySelector('#phBody'); B.innerHTML = `<canvas id="phCv" width="640" height="640"></canvas><div class="phrow"><button type="button" data-z="1">＋ Zoom in</button><button type="button" data-z="-1">－ Zoom out</button><button type="button" data-z="0">Centre on me</button><button type="button" data-z="x">Clear pin</button><button type="button" data-car="1">🚗 Bring me a car</button></div><div class="phleg"><span><i style="background:#FFC93C"></i>You / job</span><span><i style="background:#35C8F0"></i>Pin / help needed</span><span><i style="background:#FF3C3C"></i>Street boss</span><span><i style="background:#7A2A2A"></i>Stash house</span><span><i style="background:#fff"></i>Place found</span><span><i style="background:#2A6AFF"></i>Police</span><span><i style="background:#FFC93C"></i>✈ Airport taxis</span></div><p style="color:#9AA3AD;font-size:12px">Tap the map to drop a pin. A beacon will show you the way.</p><div class="phrow">${aptPhoneOk() ? '<button type="button" class="y" data-apt="1">✈ Go to the airport</button>' : ''}<button type="button" class="y" data-st="1">🚀 Fly up to the space station</button></div>`;
+    const B = phEl.querySelector('#phBody'); B.innerHTML = `<canvas id="phCv" width="640" height="640"></canvas><div class="phrow"><button type="button" data-z="1">＋ Zoom in</button><button type="button" data-z="-1">－ Zoom out</button><button type="button" data-z="0">Centre on me</button><button type="button" data-z="x">Clear pin</button><button type="button" data-z="b">⚔️ Boss fights: ${PH.boss ? 'On' : 'Off'}</button><button type="button" data-car="1">🚗 Bring me a car</button></div><div class="phleg"><span><i style="background:#FFC93C"></i>You / job</span><span><i style="background:#35C8F0"></i>Pin / help needed</span><span><i style="background:#FF3C3C"></i>Street boss (if on)</span><span>🍺🍛🔫 Places: tap one to pin it</span><span><i style="background:#7A2A2A"></i>Stash house</span><span><i style="background:#fff"></i>Place found</span><span><i style="background:#2A6AFF"></i>Police</span><span><i style="background:#FFC93C"></i>✈ Airport taxis</span></div><p style="color:#9AA3AD;font-size:12px">Tap the map to drop a pin. A beacon will show you the way.</p><div class="phrow">${aptPhoneOk() ? '<button type="button" class="y" data-apt="1">✈ Go to the airport</button>' : ''}<button type="button" class="y" data-st="1">🚀 Fly up to the space station</button></div>`;
     if (!PH.base && BL.bld && BLC.built) phMapBase();
     const cv = B.querySelector('#phCv'), [mx, mz] = BL.sc ? toMap(pos.x, pos.z) : [0, 0]; if (PH.cx == null || zone !== 'blr') { PH.cx = zone === 'blr' ? mx : -20; PH.cz = zone === 'blr' ? mz : -20; }
     const draw = () => { const g = cv.getContext('2d'), W = cv.width, span = 780 / PH.zoom, sc = W / span, P = (x, z) => [(x - PH.cx) * sc + W / 2, (z - PH.cz) * sc + W / 2];
@@ -9875,15 +9875,17 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       const lbl = (x, z, t) => { if (PH.zoom < 2.5) return; const [px, py] = P(x, z); g.font = '700 15px system-ui'; g.fillStyle = '#16181D'; g.textAlign = 'center'; g.fillText(t, px, py - 12); };
       PL.list.forEach(p => { if (!p.view || p.view.lvl) return; const f = PL.found.has(p.id); dot(p.view.x, p.view.z, f ? '#fff' : 'rgba(255,255,255,.35)', 5, '#16181D'); if (f) lbl(p.view.x, p.view.z, p.name); });
       DOORS.filter(d => d.type === 'stash').forEach(d => dot(d.front[0], d.front[1], JOB.sealed.has(d) ? '#8A8F99' : '#7A2A2A', 7, '#fff'));
-      SBOSS.forEach(Bq => { dot(Bq.at[0], Bq.at[1], SBK[Bq.id] ? '#3CE870' : '#FF3C3C', 9, '#16181D'); lbl(Bq.at[0], Bq.at[1], Bq.name); });
+      const act = wpActive(); if (PH.boss) SBOSS.forEach(Bq => { dot(Bq.at[0], Bq.at[1], SBK[Bq.id] ? '#3CE870' : '#FF3C3C', 9, '#16181D'); lbl(Bq.at[0], Bq.at[1], Bq.name); });
+      mapPOIs().forEach(q => { const [px, py] = P(q.x, q.z); if (px < -20 || py < -20 || px > W + 20 || py > W + 20) return; const r = q.small ? 12 : 19; g.fillStyle = '#FFFFFF'; g.strokeStyle = q.col; g.lineWidth = 4; g.beginPath(); g.arc(px, py, r, 0, 7); g.fill(); g.stroke(); g.font = `${q.small ? 14 : 22}px system-ui`; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(q.ic, px, py + 1); g.textBaseline = 'alphabetic';
+        if (PH.zoom >= (q.small ? 3 : 1.6)) { g.font = '800 18px system-ui'; g.lineWidth = 4; g.strokeStyle = '#FFFFFF'; g.strokeText(q.n, px, py - r - 5); g.fillStyle = '#16181D'; g.fillText(q.n, px, py - r - 5); } });
       dot(HOUSE.door[0], HOUSE.door[1], '#FFC93C', 8, '#16181D'); lbl(HOUSE.door[0], HOUSE.door[1], 'Home');
       HEAT.cops.forEach(v => dot(v.x, v.z, '#2A6AFF', 6, '#fff')); MET.st.forEach(S => { dot(S.x, S.z, '#1F9A4A', 8, '#fff'); lbl(S.x, S.z, S.name + ' Metro'); }); dot(SPC.x, SPC.z, '#E8501E', 10, '#fff'); lbl(SPC.x, SPC.z, 'Space Centre'); try { islePhMap(g, P, W); } catch (e) {} try { winterPhMap(g, P, W); } catch (e) {}
       if (APT.stand) { const [px, py] = P(APT.stand[0], APT.stand[1]); g.fillStyle = '#FFC93C'; g.strokeStyle = '#16181D'; g.lineWidth = 3; g.beginPath(); g.arc(px, py - 16, 13, Math.PI * .8, Math.PI * .2); g.lineTo(px, py); g.closePath(); g.fill(); g.stroke(); g.fillStyle = '#16181D'; g.font = '900 14px system-ui'; g.textAlign = 'center'; g.fillText('✈', px, py - 11); g.font = '800 15px system-ui'; g.lineWidth = 4; g.strokeStyle = '#FFFFFF'; g.strokeText('Airport Taxis', px, py - 34); g.fillText('Airport Taxis', px, py - 34); }
-      const rt = reTarget(); if (rt) dot(rt[0], rt[1], '#35C8F0', 9, '#fff'); if (PH.wp) dot(PH.wp[0], PH.wp[1], '#35C8F0', 10, '#16181D'); const jt = jobTarget(); if (jt) { dot(jt[0], jt[1], '#FFC93C', 11, '#16181D'); const [px, py] = P(jt[0], jt[1]); g.fillStyle = '#16181D'; g.font = '900 14px system-ui'; g.textAlign = 'center'; g.fillText('!', px, py + 5); }
+      const rt = reTarget(); if (rt && !act) dot(rt[0], rt[1], '#35C8F0', 9, '#fff'); if (PH.wp) dot(PH.wp[0], PH.wp[1], '#35C8F0', 10, '#16181D'); const jt = !PH.wp && jobTarget(); if (jt) { dot(jt[0], jt[1], '#FFC93C', 11, '#16181D'); const [px, py] = P(jt[0], jt[1]); g.fillStyle = '#16181D'; g.font = '900 14px system-ui'; g.textAlign = 'center'; g.fillText('!', px, py + 5); }
       if (zone === 'blr' && BL.sc) { const [px, py] = P(...toMap(pos.x, pos.z)), a = Math.atan2(-Math.sin(yaw), -Math.cos(yaw)); g.save(); g.translate(px, py); g.rotate(a + Math.PI / 2); g.fillStyle = '#FFC93C'; g.strokeStyle = '#16181D'; g.lineWidth = 3; g.beginPath(); g.moveTo(14, 0); g.lineTo(-9, -9); g.lineTo(-4, 0); g.lineTo(-9, 9); g.closePath(); g.fill(); g.stroke(); g.restore(); } };
     draw(); PH.draw = draw;
-    cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(), span = 780 / PH.zoom, x = PH.cx + ((e.clientX - r.left) / r.width - .5) * span, z = PH.cz + ((e.clientY - r.top) / r.height - .5) * span; PH.wp = [clamp(x, -372, 372), clamp(z, -372, 372)]; tone(880, .06, 'sine', .03); draw(); });
-    B.querySelector('.phrow').addEventListener('click', e => { const b = e.target.closest('[data-z]'); if (!b) return; const z = b.dataset.z; if (z === '1') PH.zoom = Math.min(8, PH.zoom * 1.6); else if (z === '-1') PH.zoom = Math.max(1, PH.zoom / 1.6); else if (z === '0') { const [mx2, mz2] = zone === 'blr' ? toMap(pos.x, pos.z) : [-20, -20]; PH.cx = mx2; PH.cz = mz2; } else PH.wp = null; draw(); });
+    cv.addEventListener('pointerdown', e => { const r = cv.getBoundingClientRect(), span = 780 / PH.zoom, x = PH.cx + ((e.clientX - r.left) / r.width - .5) * span, z = PH.cz + ((e.clientY - r.top) / r.height - .5) * span; const near = mapPOIs().map(q => [q, Math.hypot(q.x - x, q.z - z)]).filter(([, d]) => d < 14 * span / 640).sort((a, b) => a[1] - b[1])[0]; PH.wp = near ? [near[0].x, near[0].z] : [clamp(x, -372, 372), clamp(z, -372, 372)]; if (near) say(`Pinned: ${near[0].n}.`, 1800); tone(880, .06, 'sine', .03); draw(); });
+    B.querySelector('.phrow').addEventListener('click', e => { const b = e.target.closest('[data-z]'); if (!b) return; const z = b.dataset.z; if (z === '1') PH.zoom = Math.min(8, PH.zoom * 1.6); else if (z === '-1') PH.zoom = Math.max(1, PH.zoom / 1.6); else if (z === '0') { const [mx2, mz2] = zone === 'blr' ? toMap(pos.x, pos.z) : [-20, -20]; PH.cx = mx2; PH.cz = mz2; } else if (z === 'b') { PH.boss = !PH.boss; try { localStorage.setItem('ru-mapboss', PH.boss ? '1' : '0'); } catch (er) {} b.textContent = `⚔️ Boss fights: ${PH.boss ? 'On' : 'Off'}`; WPF.t = 0; } else PH.wp = null; draw(); });
   }
   function phShow(t){
     PH.tab = t; PH.draw = null; phEl.querySelectorAll('#phTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t)); phEl.querySelector('#phTitle').textContent = (PH_TABS.find(q => q[0] === t) || [])[1] || '';
@@ -9919,7 +9921,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function phStep(){ stBtn.hidden = menuBtn.hidden || !!EV || photoOn || !entered; if (!stBtn.hidden) { const w = typeof ARS !== 'undefined' && ARS.wear && typeof SSKIN !== 'undefined' && SSKIN[ARS.wear], c = w ? w.o.c1 : SUITC[look.c1] || '#888'; if (stBtn.dataset.c !== c) { stBtn.dataset.c = c; stBtn.style.setProperty('--stc', c); } }
     phBtn.hidden = !(inWorld && ['blr', 'twr', 'lair', 'mc', 'xc', 'xin', 'apt'].includes(zone) && !EV && !A || phRoom() && !panel.classList.contains('on')); if (phOpen() && (EV || A || !(inWorld || phRoom()))) phoneClose(); if (phOpen() && PH.tab === 'map' && PH.draw && (performance.now() | 0) % 3 === 0) PH.draw();
-    if (PH.wp && inWorld && zone === 'blr') { const [mx, mz] = toMap(pos.x, pos.z); if (Math.hypot(PH.wp[0] - mx, PH.wp[1] - mz) < 8) { PH.wp = null; say('You’ve reached your pin.', 1600); } } }
+    if (PH.wp && inWorld && zone === 'blr') { const [mx, mz] = toMap(pos.x, pos.z); if (Math.hypot(PH.wp[0] - mx, PH.wp[1] - mz) < 8) { PH.wp = null; PH.focus = false; say('You’ve reached your pin.', 1600); } } }
   function phContact(o){ const who = (BIN.ppl[0] && BIN.ppl[0].who) || 'Someone', where = o.d.name; if (!PH.contacts.some(c => c.where === where)) { PH.contacts.push({ who, where }); try { localStorage.setItem('ru-contacts', JSON.stringify(PH.contacts)); } catch (e) {} } }
   // the office's hiring board: a way back to the real Rayan
   const kioskBtn = document.createElement('button'); kioskBtn.type = 'button'; kioskBtn.className = 'btn alt drvbtn'; kioskBtn.hidden = true; document.body.appendChild(kioskBtn);
@@ -10540,7 +10542,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // where to go next, in map coordinates
   const siteXZ = S => S.p || [DIST[S.at].x, DIST[S.at].z];
   function navTarget(){
-    if (!BL.sc) return null; { const t = afBlNav(); if (t) return t; }
+    if (!BL.sc) return null; if (PH.wp) return PH.wp; { const t = afBlNav(); if (t) return t; }
     const [mx, mz] = toMap(pos.x, pos.z), inTower = Math.hypot(mx - TW.x, mz - TW.z) < TW.r;
     if (EV && EV.inMap) {
       if (EV.k === 'st' && EV.st.part === 'u2') { const t = EV.st.targets.filter(u => u.dead <= 0).sort((a, b) => Math.hypot(a.x - pos.x, a.z - pos.z) - Math.hypot(b.x - pos.x, b.z - pos.z))[0]; return t ? toMap(t.x, t.z) : null; }
@@ -11871,10 +11873,10 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     P.push(B3(.06, 1.2, 1.5, 0x8A8F99, -.75, 1.2, Dr - 1), B3(.06, 1.2, 1.5, 0x8A8F99, .75, 1.2, Dr - 1));
     P.push(B3(1.3, .9, .25, 0x6A6E78, hw - 1, 1.3, Dr - .15)); for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) P.push(B3(.26, .22, .02, 0x9AA0AA, hw - 1.45 + c * .3, 1.05 + r * .27, Dr - .27)); so(hw - 1.7, hw - .3, Dr - .3, Dr);
     P.push(C3(.3, .5, 0xB8906A, -hw + .5, .25, Dr - .6, 10), S3(.45, 0x3F7A44, -hw + .5, .85, Dr - .6)); so(-hw + .2, -hw + .8, Dr - .9, Dr - .3);
-    signPlane('RESIDENTS', 'STAIRS TO THE FLATS', '#2A2D33', '#FFE8B0', 1.5, .45, F.g, 0, 3.2, Dr - .1, Math.PI);
+    signPlane('RESIDENTS', 'STAIRS TO THE FLATS', '#2A2D33', '#FFE8B0', 1.5, .45, F.g, 0, 3.2, Dr - .16, Math.PI);
     const lob = F.toM(0, 1.6); HSPOT[id] = lob; const [kx, kz] = F.toM(-hw + 1.2, 1.3); SVC.push({ x: kx, z: kz, kind: 'home:' + id });
     P.push(B3(.4, .5, .12, 0x8A6B4A, -hw + 1.2, 1.3, .9));
-    hroomBuild(id, lob, F.g.rotation.y); const [ex, ez] = F.toM(0, Dr - 2.3);
+    hroomBuild(id, lob, F.g.rotation.y); const [ex, ez] = F.toM(0, Dr - 2.3); HENT.push({ x: ex, z: ez, id });
     LV.entries.push({ x: ex, z: ez, r: .9, to: 'h_' + id, at: [HROOM[id].x, HROOM[id].z + HROOM[id].d / 2 - 1.4], yaw: 0, fade: true, ok: () => HOME.own.includes(id), msg: `Up the stairs. Home: ${HROOM[id].name}.` });
   }
   // ---------- the rooms you live in: every home you can buy has its own furnished room ----------
@@ -11888,7 +11890,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     old: { x: 840, z: 840, w: 7, d: 6, h: 2.9, floor: 0x9A6E44, wall: 0xEADCC4, trim: 0x6A4E3A, bed: 0x8A3A2A, sofa: 0x5A6E4A, rug: 0xB8583A, sky: ['#F4A65A', '#3A2A4A'], win: 1.8, name: 'your Old Town room' },
     lake: { x: 880, z: 840, w: 10, d: 8, h: 3.1, floor: 0xC8B898, wall: 0xF4F2EE, trim: 0x2A2D33, bed: 0x2E5A9A, sofa: 0x8A9098, rug: 0x3A4A5A, sky: ['#8AC8F0', '#2A5A8A'], win: 3.6, name: 'flat 7C', lake: 1 },
     villa: { x: 930, z: 840, w: 14, d: 10, h: 3.4, floor: 0xE8E2D6, wall: 0xF6EEDC, trim: 0x6A4E3A, bed: 0xEFE6D2, sofa: 0x3A6A4A, rug: 0xA87A4A, sky: ['#9FD8A8', '#4A8A5A'], win: 5, name: 'your villa', villa: 1 } };
-  const HRM = {};
+  const HRM = {}, HENT = [];
   function hroomBuild(id, out, outYaw){
     if (HRM[id] || !BL.mapG) return HRM[id]; const R = HROOM[id], g = new THREE.Group(), hw = R.w / 2, hd = R.d / 2, P = [], sol = [], so = (x0, x1, z0, z1) => sol.push([R.x + x0, R.x + x1, R.z + z0, R.z + z1]);
     g.position.set(R.x, HRY, R.z); BL.mapG.add(g); g.visible = false;
@@ -11948,10 +11950,37 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   function hroomGo(id, quiet){ const H = HRM[id]; if (!H) return false; if (DRV.on) getOut(true); H.g.visible = true; lvGo({ to: 'h_' + id, at: [H.R.x, H.R.z + H.R.d / 2 - 1.4], yaw: 0, fade: true, msg: quiet ? null : `Home: ${H.R.name}.` }); return true; }
   function homeEgg(k){ if (k === 'ros') return openROS(); if (k.startsWith('sec:')) return openPanel(k.split(':')[1]); }
   function inHomeRoom(){ return !!(BL.lvl && Object.values(HRM).some(H => H.L === BL.lvl)); }
-  function hroomStep(){ const inR = inWorld && zone === 'blr'; Object.values(HRM).forEach(H => { const on = inR && BL.lvl === H.L; if (H.g.visible !== on) H.g.visible = on; });
+  // places on the phone map (always shown, with an icon and, zoomed in, a name): the shops from SHOPS (found through their
+  // addPlace entries, shop-<id>), the villas and the bus stops
+  const POI_IC = { guns: ['🔫', '#C0271C'], bar: ['🍺', '#E8B04A'], resto: ['🍛', '#8A1E1E'], darshini: ['☕', '#1F6A3A'], mobile: ['📱', '#1E5AA8'], medical: ['💊', '#1E7A4A'], barber: ['✂️', '#C8102E'], books: ['📚', '#6A4E3A'], home_old: ['🏠', '#6A4E3A'], home_lake: ['🏠', '#1E5A8A'] };
+  function mapPOIs(){ const out = []; PL.list.forEach(p => { if (!p.view || !p.id || !p.id.startsWith('shop-')) return; const k = p.id.slice(5), ic = POI_IC[k] || ['🛍️', '#16181D']; out.push({ x: p.view.x, z: p.view.z, ic: ic[0], col: ic[1], n: p.name }); });
+    if (HSPOT.villa) out.push({ x: HSPOT.villa[0], z: HSPOT.villa[1], ic: '🏡', col: '#2E5A3A', n: 'Palm Grove Villas' }); BUS.stops.forEach(s => out.push({ x: s.x, z: s.z, ic: '🚌', col: '#2A6A4A', n: s.name, small: 1 })); return out; }
+  // one waypoint at a time: with a pin (PH.wp) or a job running, that's the only beacon left in the world; every other
+  // beacon (a tall see-through light pillar in BL.mapG: season beacons, street bosses...) moves to a hidden render layer.
+  // Street bosses only show when you switch them on in the map (PH.boss, saved as ru-mapboss), and then always.
+  const WPF = { t: 0 };
+  try { PH.boss = localStorage.getItem('ru-mapboss') === '1'; } catch (e) {}
+  const isBeacon = g => g.userData.bcn != null ? g.userData.bcn : (g.userData.bcn = g.children.some(c => c.isMesh && c.geometry && c.geometry.type === 'CylinderGeometry' && c.geometry.parameters.height >= 30 && c.material && c.material.transparent));
+  const wpActive = () => !!(PH.wp || jobTarget());
+  function wpFocusStep(){
+    if (!(inWorld && zone === 'blr' && BL.mapG) || (WPF.t++ % 15)) return; const act = wpActive();
+    BL.mapG.children.forEach(g => { if (g === JOB.beacon || !(g.isGroup || g.type === 'Object3D') || !isBeacon(g)) return; const show = g.userData.sb ? PH.boss : !act, L = show ? 0 : 5;
+      if (g.userData.wpl !== L) { g.userData.wpl = L; g.traverse(o => o.layers.set(L)); } });
+  }
+  function hroomStep(){ try { wpFocusStep(); } catch (e) {} const inR = inWorld && zone === 'blr';
+    if (inR && !BL.lvl && !EV) { const [mx, mz] = toMap(pos.x, pos.z); HENT.forEach(e => { const d = Math.hypot(mx - e.x, mz - e.z); if (d < 1.6 && !HOME.own.includes(e.id) && !e.said) { e.said = true; say(e.id === 'villa' ? `Villa 1 is locked. It’s for sale: ${inr(HOMES.villa.p)} at the sales office by the gate.` : `Residents only. The flat’s for sale: ${inr(HOMES[e.id].p)} at the key box by the front.`, 3400); } else if (d > 3.5) e.said = false; }); } Object.values(HRM).forEach(H => { const on = inR && BL.lvl === H.L; if (H.g.visible !== on) H.g.visible = on; });
     const wb = $('#worldBack'); if (inR && !EV && !A && wb && !wb.hidden) { const t = inHomeRoom() ? 'To the bedroom' : 'Go home'; if (wb.textContent !== t && (wb.textContent === 'Go home' || wb.textContent === 'To the bedroom')) wb.textContent = t; } }
   // Go home: your main home if you have one (and you're not already in it), otherwise the bedroom
   function goHomeBtn(){ if (HOME.cur && HOME.own.includes(HOME.cur) && !inHomeRoom()) return homeGo(HOME.cur); leaveBlr(); }
+  // the bedroom's front door: click it to open or close it (a closed door blocks the doorway, inHall). Walking out to the
+  // end of the hallway leaves the room: to your main home if you have one, otherwise down to your street (roomDoorStep).
+  const RDOOR = { busy: false, out: false };
+  function roomDoor(){ if (RDOOR.busy) return; const open = doorPivot.rotation.y > .8; if (open && Math.abs(pos.x) < .7 && pos.z > 4.35 && pos.z < 5.7) return say('You’re standing in the doorway.', 1600);
+    RDOOR.busy = true; const a = doorPivot.rotation.y, b = open ? 0 : 1.75; tone(open ? 300 : 420, .12, 'triangle', .04); tween(.6, e => doorPivot.rotation.y = a + (b - a) * e, () => { RDOOR.busy = false; }); }
+  function roomDoorStep(){
+    if (inWorld || !entered || A || EV) { RDOOR.out = false; return; } if (pos.z < 9) RDOOR.out = false;
+    if (!RDOOR.out && pos.z > 9.8 && Math.abs(pos.x) < 1.3) { RDOOR.out = true; if (HOME.cur && HOME.own.includes(HOME.cur)) { say(`Off to ${HOMES[HOME.cur].n}.`, 2000); homeGo(HOME.cur, true); } else { say('Down the stairs and out onto your street.', 2200); travel('city'); } }
+  }
   // entering the site with a main home: skip the bedroom and wake up there
   function homeSpawn(){
     if (!HOME.cur || !HOME.own.includes(HOME.cur)) return false;
@@ -12036,9 +12065,9 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       if (i === 0) { const w2 = vw / 2; P.push(B3(.25, 3.2, vd, col, u - w2, 1.6, v0 + vd / 2), B3(.25, 3.2, vd, col, u + w2, 1.6, v0 + vd / 2), B3(vw, 3.2, .25, col, u, 1.6, v1)); F.solid(u - w2 - .1, u - w2 + .15, v0, v1); F.solid(u + w2 - .15, u + w2 + .1, v0, v1); F.solid(u - w2, u + w2, v1 - .15, v1 + .1);
         P.push(B3(w2 - .8, 3.2, .25, col, u - (w2 + .8) / 2, 1.6, v0), B3(w2 - .8, 3.2, .25, col, u + (w2 + .8) / 2, 1.6, v0)); F.solid(u - w2, u - .8, v0 - .1, v0 + .15); F.solid(u + .8, u + w2, v0 - .1, v0 + .15);
         P.push(B3(vw, .05, vd, 0xD8C8A8, u, .04, v0 + vd / 2), B3(vw, .2, vd, 0xF4F1E8, u, 3.25, v0 + vd / 2), B3(vw + .6, 3, vd + .6, col, u, 4.85, v0 + vd / 2));
-        P.push(B3(1.5, 2.3, .08, 0x6A4E3A, u, 1.15, v0 + .6)); F.solid(u - w2, u + w2, v0 + .6, v1);
+        P.push(B3(1.4, 2.25, .08, 0xB07A44, u, 1.13, v0 + .6), B3(1.62, .12, .14, 0xF4F1E8, u, 2.32, v0 + .58), B3(.1, 2.3, .14, 0xF4F1E8, u - .76, 1.15, v0 + .58), B3(.1, 2.3, .14, 0xF4F1E8, u + .76, 1.15, v0 + .58), B3(.06, .06, .14, 0xC9CFD8, u + .5, 1.05, v0 + .52)); F.solid(u - w2, u + w2, v0 + .6, v1); signPlane('VILLA 1', 'PRIVATE', '#2E5A3A', '#F4E8C0', .7, .26, F.g, u, 1.7, v0 + .54, Math.PI);
         const out = F.toM(u, v0 - 1.6); HSPOT.villa = out; hroomBuild('villa', out, F.g.rotation.y); const [ex, ez] = F.toM(u, v0 + .25);
-        LV.entries.push({ x: ex, z: ez, r: .8, to: 'h_villa', at: [HROOM.villa.x, HROOM.villa.z + HROOM.villa.d / 2 - 1.4], yaw: 0, fade: true, ok: () => HOME.own.includes('villa'), msg: `Home: ${HROOM.villa.name}.` }); }
+        HENT.push({ x: ex, z: ez, id: 'villa' }); LV.entries.push({ x: ex, z: ez, r: .8, to: 'h_villa', at: [HROOM.villa.x, HROOM.villa.z + HROOM.villa.d / 2 - 1.4], yaw: 0, fade: true, ok: () => HOME.own.includes('villa'), msg: `Home: ${HROOM.villa.name}.` }); }
       else { P.push(B3(vw, 6, vd, col, u, 3, v0 + vd / 2)); F.solid(u - vw / 2, u + vw / 2, v0, v1); for (let k = 0; k < 3; k++) P.push(B3(1.1, 1.3, .06, 0x3A5A7A, u - vw / 3 + k * vw / 3, 1.6, v0 - .03), B3(1.1, 1.3, .06, 0x3A5A7A, u - vw / 3 + k * vw / 3, 4.4, v0 - .03)); P.push(B3(1.2, 2.2, .07, 0x6A4E3A, u, 1.1, v0 - .04)); }
       const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.max(vw, vd) * .75, 2.2, 4), mat(0xA0462A, { roughness: .8 })); roof.rotation.y = Math.PI / 4; roof.scale.set(vw / Math.max(vw, vd), 1, vd / Math.max(vw, vd)); roof.position.set(u, 6 + 1.1 + (i === 0 ? .35 : 0), v0 + vd / 2); F.g.add(roof); });
     // the shared pool, palms and the sales office by the gate
@@ -14391,6 +14420,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     try { paper2Step(now); } catch (e) {}
     try { cityLifeStep(dt); } catch (e) { console.error(e); }
     try { hroomStep(); } catch (e) {}
+    try { roomDoorStep(); } catch (e) {}
     try { secretStep(dt, now); } catch (e) { console.error(e); }
     try { voiceStep(now); } catch (e) {}
     sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { isleStep(dt, now); } catch (e) { console.error(e); } try { mtnStep(dt, now); } catch (e) { console.error(e); } try { floodStep(dt); } catch (e) { console.error(e); } try { pkStep(dt); } catch (e) { console.error(e); } try { phxStep(dt); } catch (e) { console.error(e); } try { seasonStep(dt, now); } catch (e) { console.error(e); } try { winterStep(dt, now); } catch (e) { console.error(e); }
@@ -18944,6 +18974,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   function labelFor(p){
     if (!p) return null;
     if (!entered) return p.door ? 'Open the door' : null;
+    if (p.door && !inWorld) return doorPivot.rotation.y > .8 ? 'Close the door' : 'Open the door';
     if (inWorld && zone === 'farm' && p.egg) return farmLabelFor(p);
     if (p.hanzi) return `${HANZI[p.hanzi.userData.hanzi][0]}: tap to ${p.hanzi.userData.open ? 'put it back together' : 'split it'}`;
     if (p.page) return 'A journal page';
@@ -19017,7 +19048,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   const usable = p => !!(p && p.egg !== 'pod' && labelFor(p));
   function act(p){
     if (!p) return;
-    if (p.door) return enter();
+    if (p.door) return entered ? (inWorld ? null : roomDoor()) : enter();
     if (!entered) return;
     if (p.egg === 'upbench') return openBench();
     if (typeof p.egg === 'string' && p.egg.startsWith('clue:')) { const c = activeClues().find(q => 'clue:' + q.id === p.egg); if (c) grabClue(c); return; }
