@@ -14861,7 +14861,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
         entered = true; entering = false; enterUI.style.display = 'none';
         dock.classList.add('on'); badge.hidden = false;
         if (!fine) joyEl.classList.add('on');
-        hint.textContent = (fine ? 'Drag to look around. Walk with WASD or click the floor.' : 'Drag to look around. Walk with the joystick or tap the floor.') + ' Yellow dots are about me, blue dots are things to play with. Psst: pull the red book on the shelf.';
+        hint.textContent = (fine ? 'Drag to look around. Walk with WASD.' : 'Drag to look around. Walk with the joystick.') + ' Yellow dots are about me, blue dots are things to play with. Psst: pull the red book on the shelf.';
         hint.classList.add('on'); setTimeout(() => hint.classList.remove('on'), 9000);
       });
     });
@@ -18839,7 +18839,6 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       if (u.door) return { door: true };
       o = o.parent;
     }
-    if (hit.object.userData.walk) return { walk: hit.point };
     return null;
   }
   function labelFor(p){
@@ -18915,7 +18914,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     if (inWorld && zone === 'sp') { spFire(); return; }
     act(pick(e.clientX, e.clientY));
   });
-  const usable = p => !!(p && !p.walk && p.egg !== 'pod' && labelFor(p));
+  const usable = p => !!(p && p.egg !== 'pod' && labelFor(p));
   function act(p){
     if (!p) return;
     if (p.door) return enter();
@@ -18965,7 +18964,6 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       if (p.collect) return collect(p.collect);
       if (p.shrine) return combine();
       if (p.terminal) return openAIBox();
-      if (p.walk) { closePanel(); walkTarget = zone === 'roof' ? { x: clamp(p.walk.x, -5.4, 5.4), z: clamp(p.walk.z, -3.4, 3.4) } : zone === 'lair' ? (valid(p.walk.x, p.walk.z) ? { x: p.walk.x, z: p.walk.z } : { x: clamp(p.walk.x, -16.7, 8.2), z: clamp(p.walk.z, -8, 10.2) }) : zone === 'med' ? (medValid(p.walk.x, p.walk.z) ? { x: p.walk.x, z: p.walk.z } : null) : zone === 'farm' ? (farmValid(p.walk.x, p.walk.z) ? { x: p.walk.x, z: p.walk.z } : null) : { x: p.walk.x, z: p.walk.z }; }
       return;
     }
     if (p.page) return collectPage(p.page);
@@ -19015,14 +19013,6 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     if (p.egg === 'otherme') { tone(520, .1, 'sine', .05); { const E = ALT_EARTHS[altK]; return say(`${E.name}\u2019s {N}: ${E.lines[otherI++ % E.lines.length]}`, 4600); } }
     if (p.egg === 'alexa') { tone(660, .12, 'sine', .08); setTimeout(() => tone(880, .18, 'sine', .08), 120); return say('Alexa: \u201cPlaying your top artist, as usual.\u201d'); }
     if (p.section) return goTo(p.section);
-    if (p.walk) {
-      let x = p.walk.x, z = p.walk.z;
-      if (region(x) === 'vault') { if (!vaultOpen || !inVault(x, z)) return; }
-      else if (z > 4.7) { x = clamp(x, -1.1, 1.1); z = clamp(z, 5.6, 10.2); }
-      else { x = clamp(x, -4.2, 4.2); z = clamp(z, -3.6, 4.3); }
-      closePanel();
-      flyTo(V(x, 1.6, z), null);
-    }
   }
   canvas.addEventListener('pointercancel', () => { down = null; canvas.classList.remove('grabbing'); });
   canvas.addEventListener('pointerleave', () => tip.classList.remove('on'));
