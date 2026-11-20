@@ -55,7 +55,7 @@ A wave pours through the tear and drowns Bangalore. You wake up on a plank in a 
 
 ### Season 3 · The Syndicate (13 January – 9 February 2027)
 
-When the water drains, the Marigold Syndicate owns half the city: every shop pays, and their stamp is on every door. Inspector Devi, whose station is still full of mud, asks you to help.
+When the water drains, the Marigold Syndicate owns half the city: every shop pays, and their stamp is on every door. Inspector Reyes, whose station is still full of mud, asks you to help.
 
 | Part | Unlocks | What happens |
 |---|---|---|
@@ -68,7 +68,7 @@ When the water drains, the Marigold Syndicate owns half the city: every shop pay
 - **New moves:** slide (sprint, then crouch) and vault (sprint at a low wall), from the start of the season.
 - **Kept:** the rope launcher, the Comet (nitro and tyre spikes; it waits in your garage) and the stun baton.
 - **Skins:** Undercover (finish the story), Clean Hands (do the heist unseen) and Marigold's Suit (beat the finale).
-- **Left on the map:** Marigold's tower, dark now and Devi's, and marigold graffiti across the city.
+- **Left on the map:** Marigold's tower, dark now and Reyes's, and marigold graffiti across the city.
 
 Add `?week=N` to the address to preview a later part, or `?season=N` to preview another season.
 
