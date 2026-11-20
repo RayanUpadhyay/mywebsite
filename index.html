@@ -3315,6 +3315,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (c === 'hanzi' || c === 'radicals') { const ch = [...arg][0]; if (!ch) return P('usage: hanzi 学'); const r = ROS_HANZI[ch]; return P(r ? `<span class="y" style="font-size:28px">${esc(ch)}</span>  =  ${esc(r)}` : `${esc(ch)} isn't in my pocket dictionary yet. <span class="y">open mandalink</span> knows a lot more.`); }
     if (c === 'music' || c === 'spotify') { P('opening Music…'); return rosApp('music'); }
     // secret: unlock every season skin (try it on the laptop in the room)
+    if ((c === 'sudo' && /^money\s+--infinite$/.test(arg.trim())) || c === 'motherlode') { let on; try { on = cashInfinite(); } catch (e) { return P('<span class="er">money: the bank said no</span>'); }
+      tone(on ? 880 : 330, .12, 'square', .04); setTimeout(() => tone(on ? 1320 : 220, .18, 'square', .04), 120);
+      return P(on ? '<span class="y">ka-ching.</span> the bank\'s database just got a lot more generous. balance: ∞. (run it again to go back to being broke.)' : '<span class="y">audit complete.</span> the glitch is patched. balance: back to normal.'); }
     if ((c === 'sudo' && /^wardrobe\s+--all$/.test(arg.trim())) || c === 'iddqd') { try { Object.keys(SSKIN).forEach(k => { if (!ARS.skins.includes(k)) ARS.skins.push(k); }); arsSave(); try { if (LAX) LAX.sig = ''; } catch (e) {} } catch (e) { return P('<span class="er">wardrobe: not found</span>'); }
       tone(523, .1, 'square', .04); setTimeout(() => tone(784, .14, 'square', .04), 110); setTimeout(() => tone(1046, .2, 'square', .04), 230);
       return P(`<span class="y">access granted.</span> ${Object.keys(SSKIN).length} suits unlocked. open Style (or the suit gallery in the lair) and pick one.`); }
@@ -9781,7 +9784,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (t === 'homes') { B.innerHTML = '<div class="phcard"><b>Homes</b><small>Buy a place at its key box or sales office. Your home is where you sleep and where you wake up.</small></div>' + Object.keys(HOMES).map(k => { const H = HOMES[k], own = HOME.own.includes(k); return `<div class="phcard"><b>${esc(H.n)}${HOME.cur === k ? ' · home' : ''}</b><small>${esc(H.d)}</small><small>${own ? 'You own this.' : inr(H.p)}</small><div class="phrow">${own ? `<button type="button" class="y" data-hg="${k}">Take me there</button>` : HSPOT[k] ? `<button type="button" data-hg="${k}">Show me the way</button>` : '<small>Head into the city to find it.</small>'}</div></div>`; }).join('');
       B.querySelectorAll('[data-hg]').forEach(b => b.onclick = () => { const k = b.dataset.hg; phoneClose(); if (HOME.own.includes(k)) homeGo(k); else { const a = HSPOT[k]; if (a) { PH.wp = a.slice(); say(`Pinned on your map: ${HOMES[k].n}.`, 2200); } } }); return true; }
     if (t === 'bank') { const tx = CASH.tx.slice(-12).reverse();
-      B.innerHTML = `<div class="phbank"><small>Available balance</small><b>${inr(CASH.v)}</b><span>Savings ·· 4417</span></div><div class="phrow"><button type="button" data-bk="mum">Send Mum ₹500</button></div><div class="phcard"><b>Recent</b>${tx.length ? tx.map(([n, w, ts]) => `<div class="phtx"><span>${esc(w)}<small>${ago(ts)}</small></span><em class="${n > 0 ? 'in' : ''}">${n > 0 ? '+' : '−'}${inr(Math.abs(n))}</em></div>`).join('') : '<small>No transactions yet.</small>'}</div>`;
+      B.innerHTML = `<div class="phbank"><small>Available balance</small><b>${bal()}</b><span>Savings ·· 4417</span></div><div class="phrow"><button type="button" data-bk="mum">Send Mum ₹500</button></div><div class="phcard"><b>Recent</b>${tx.length ? tx.map(([n, w, ts]) => `<div class="phtx"><span>${esc(w)}<small>${ago(ts)}</small></span><em class="${n >= 0 ? 'in' : ''}">${txAmt(n)}</em></div>`).join('') : '<small>No transactions yet.</small>'}</div>`;
       B.querySelector('[data-bk="mum"]').onclick = () => { if (!cashSpend(500, 'Sent to Mum')) return; phShow('bank'); setTimeout(() => { try { phMsg('amma', ['Why are you sending me money?? Buy yourself proper food.', 'I’m putting this in your savings. Don’t argue.', 'Thank you beta ❤️ Now come home.'][Math.floor(Math.random() * 3)]); } catch (e) {} }, 3000); };
       return true; }
     if (t === 'msgs') { phMsgs(B); return true; } if (t === 'feed') { phFeed(B); return true; } if (t === 'weather') { phWeather(B); return true; }
@@ -11754,11 +11757,15 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // does your aim, because the sway moves where you look), it wears off, and too much makes you pass out. Driving drunk
   // brings the police. Reduce effects tones the sway and blur down.
   const CASH = { v: 2000, tx: [] };
-  try { const c = JSON.parse(localStorage.getItem('ru-cash') || 'null'); if (c && typeof c.v === 'number') { CASH.v = Math.max(0, Math.round(c.v)); CASH.tx = Array.isArray(c.tx) ? c.tx.slice(-30) : []; } } catch (e) {}
-  const cashSave = () => { try { localStorage.setItem('ru-cash', JSON.stringify({ v: CASH.v, tx: CASH.tx.slice(-30) })); } catch (e) {} };
+  try { const c = JSON.parse(localStorage.getItem('ru-cash') || 'null'); if (c && typeof c.v === 'number') { CASH.v = Math.max(0, Math.round(c.v)); CASH.tx = Array.isArray(c.tx) ? c.tx.slice(-30) : []; CASH.inf = !!c.inf; } } catch (e) {}
+  const cashSave = () => { try { localStorage.setItem('ru-cash', JSON.stringify({ v: CASH.v, tx: CASH.tx.slice(-30), inf: CASH.inf ? 1 : 0 })); } catch (e) {} };
   const inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
-  function cashAdd(n, why, quiet){ n = Math.round(n); if (!n) return; CASH.v = Math.max(0, CASH.v + n); CASH.tx.push([n, why || '', Date.now()]); cashSave(); if (!quiet) setTimeout(() => say(`${n > 0 ? '+' : '−'}${inr(Math.abs(n))} · ${why}`, 2400), 600); }
-  function cashSpend(n, why){ if (CASH.v < n) { say(`Not enough cash. You have ${inr(CASH.v)}.`, 2200); tone(160, .2, 'sawtooth', .03); return false; } cashAdd(-n, why, true); tone(1320, .05, 'square', .03); return true; }
+  // the secret `sudo money --infinite` (or `motherlode`) in RayanOS's terminal: spending never lowers the balance, which shows as ∞
+  const bal = () => CASH.inf ? '∞' : inr(CASH.v);
+  function cashInfinite(){ CASH.inf = !CASH.inf; cashAdd(0, CASH.inf ? 'Infinite money glitch' : 'Glitch patched', true, true); return CASH.inf; }
+  function txAmt(n){ return n === 0 ? '∞' : `${n > 0 ? '+' : '−'}${inr(Math.abs(n))}`; }
+  function cashAdd(n, why, quiet, log){ n = Math.round(n); if (!n && !log) return; if (!(CASH.inf && n < 0)) CASH.v = Math.max(0, CASH.v + n); CASH.tx.push([n, why || '', Date.now()]); cashSave(); if (!quiet) setTimeout(() => say(`${n > 0 ? '+' : '−'}${inr(Math.abs(n))} · ${why}`, 2400), 600); }
+  function cashSpend(n, why){ if (!CASH.inf && CASH.v < n) { say(`Not enough cash. You have ${inr(CASH.v)}.`, 2200); tone(160, .2, 'sawtooth', .03); return false; } cashAdd(-n, why, true); tone(1320, .05, 'square', .03); return true; }
   // what's for sale
   const MENUS = {
     guns: { title: 'Ironside Arms', sub: 'Weapons go straight into your season loadout.', items: () => Object.keys(SSW).map(k => ({ id: k, n: SSW[k].n, d: SSW[k].how || '', p: { s1_blaster: 2500, s1_scatter: 4200, s1_rifle: 5600, s1_sword: 3600, s1_wrench: 1500, s1_spear: 3200, s3_baton: 1800 }[k] || 3000, own: ARS.own.includes(k) })),
@@ -11773,7 +11780,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   const svcBox = document.createElement('div'); svcBox.className = 'game'; svcBox.setAttribute('role', 'dialog'); svcBox.innerHTML = '<div class="gbox svcbox"></div>'; document.body.appendChild(svcBox);
   function svcOpen(kind){
     const M = kind.startsWith('home:') ? homeMenu(kind.slice(5)) : kind.startsWith('bus:') ? busMenu(+kind.slice(4)) : kind === 'atm' ? atmMenu() : MENUS[kind]; if (!M) return; if (document.pointerLockElement) document.exitPointerLock();
-    const draw = () => { const L = M.items(); svcBox.querySelector('.gbox').innerHTML = `<div class="ghead"><h2 class="display">${esc(M.title)}</h2><button class="close" type="button" data-sv="x" aria-label="Close">✕</button></div><p class="psub">${esc(M.sub)} You have <b>${inr(CASH.v)}</b>.</p>`
+    const draw = () => { const L = M.items(); svcBox.querySelector('.gbox').innerHTML = `<div class="ghead"><h2 class="display">${esc(M.title)}</h2><button class="close" type="button" data-sv="x" aria-label="Close">✕</button></div><p class="psub">${esc(M.sub)} You have <b>${bal()}</b>.</p>`
       + L.map((it, i) => `<div class="prow"><b>${esc(it.n)}<br><small>${esc(it.d)}</small></b><button class="btn" type="button" data-sv="${i}" ${it.own || it.tag ? 'disabled' : ''}>${it.tag || (it.own ? 'Owned' : it.p ? inr(it.p) : 'Free')}</button></div>`).join('')
       + (kind === 'bar' && DRUNK.l > .3 ? `<p class="gmsg">${DRUNK.l >= 4.5 ? 'The bartender slides you a glass of water instead.' : DRUNK.l >= 3 ? 'You’re properly drunk.' : DRUNK.l >= 1.5 ? 'You’re tipsy.' : 'You feel a little warm.'}</p>` : ''); svcBox._L = L; };
     svcBox._M = M; svcBox._draw = draw; draw(); svcBox.classList.add('on');
@@ -11917,7 +11924,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   function busMenu(i){ const here = BUS.stops[i];
     return { title: `${here.name} · BMTC`, sub: 'Hop on the next bus. Any stop is ₹20.', items: () => BUS.stops.filter(s => s.i !== i).map(s => ({ id: s.i, n: `To ${s.name}`, d: `${Math.round(Math.hypot(s.x - here.x, s.z - here.z))} m away · route ${BUS_ROUTES[s.i % BUS_ROUTES.length]}`, p: 20 })),
       buy(it){ if (!cashSpend(20, 'Bus fare')) return; svcBox.classList.remove('on'); const s = BUS.stops.find(q => q.i === it.id); tone(330, .2, 'triangle', .04); say('The bus doors hiss shut. You find a seat by the window.', 2200); fade(() => { const [lx, lz] = toLocal(s.x, s.z); pos.x = lx; pos.z = lz; setTimeout(() => say(`${s.name}. You step off into the noise.`, 1800), 500); }, '#000000'); } }; }
-  function atmMenu(){ return { title: 'ATM · 24×7', sub: 'Mini statement: your last five transactions.', items: () => CASH.tx.length ? CASH.tx.slice(-5).reverse().map((t, i) => ({ id: i, n: `${t[0] > 0 ? '+' : '−'}${inr(Math.abs(t[0]))}`, d: (t[1] || '') + (t[2] ? ' · ' + new Date(t[2]).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''), tag: t[0] > 0 ? 'In' : 'Out' })) : [{ id: 0, n: 'No transactions yet', d: '', tag: '—' }], buy(){} }; }
+  function atmMenu(){ return { title: 'ATM · 24×7', sub: 'Mini statement: your last five transactions.', items: () => CASH.tx.length ? CASH.tx.slice(-5).reverse().map((t, i) => ({ id: i, n: txAmt(t[0]), d: (t[1] || '') + (t[2] ? ' · ' + new Date(t[2]).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''), tag: t[0] > 0 ? 'In' : t[0] < 0 ? 'Out' : '∞' })) : [{ id: 0, n: 'No transactions yet', d: '', tag: '—' }], buy(){} }; }
   MENUS.tech = { title: 'Fix-It Mobiles', sub: 'Gadgets for the phone you keep running down.', items: () => [{ id: 'pb', n: 'Power bank, 10,000 mAh', d: 'Your battery drains half as fast outside.', p: 1200, own: !!PHX.gear.pb }, { id: 'chg', n: 'Charge it here', d: 'Plug in at the counter: back to 100%.', p: 50 }, { id: 'guard', n: 'Tempered-glass screen guard', d: 'Fitted while you wait.', p: 300, own: !!PHX.gear.guard }, { id: 'buds', n: 'Wireless earbuds', d: 'Calls sound better. Probably.', p: 1800, own: !!PHX.gear.buds }],
     buy(it){ if (it.own) return; if (!cashSpend(it.p, it.n)) return; if (it.id === 'chg') { PHX.bat = 100; say('Back to 100%. He unplugs it with a flourish.', 2200); } else { PHX.gear[it.id] = 1; say(`${it.n}. ${it.id === 'pb' ? 'It lives in your pocket now.' : 'Nice.'}`, 2200); } phxSave(); if (phOpen()) phStatus(); } };
   const SHOPS = [
@@ -12720,7 +12727,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   }
   function jailStep(now, dt){
     if (!JAIL.until) { if (JAIL.rec > 0 && (JAIL.decay += dt) > 90) { JAIL.decay = 0; JAIL.rec--; jailSave(); } return; }
-    const inCell = BL.lvl === LVL.jail; if (JAIL.el) JAIL.el.hidden = !inCell; if (JAIL.bail) { JAIL.bail.hidden = !inCell; if (inCell) { const l = `Pay bail ${inr(bailCost())}${fine ? ' (B)' : ''}`; if (JAIL.bail.textContent !== l) JAIL.bail.textContent = l; } } if (!inCell) { if (JAIL.btn) JAIL.btn.hidden = true; return; }
+    const inCell = BL.lvl === LVL.jail; if (JAIL.el) JAIL.el.hidden = !inCell; if (JAIL.bail) { JAIL.bail.hidden = !inCell; if (inCell) { const l = `Pay bail ${inr(bailCost())}${CASH.inf ? ' · you have ∞' : ''}${fine ? ' (B)' : ''}`; if (JAIL.bail.textContent !== l) JAIL.bail.textContent = l; } } if (!inCell) { if (JAIL.btn) JAIL.btn.hidden = true; return; }
     JAIL.inT += dt; if (JAIL.inT > 240 && !JAIL.asleep) { JAIL.asleep = true; JAIL.look = 0; say('The guard’s head drops onto his chest. He’s snoring.', 3600); }
     const [mx, mz] = toMap(pos.x, pos.z), out = mz > JZ - .55, G = JAIL.guard, t = now / 1000;
     // the guard: back to you, watching his screen, then turning round to check on you
