@@ -11,7 +11,7 @@ A Bangalore teenager survives the night a meteor lands, and spends the next two 
 
 ### The theme: everyone pays
 One idea runs through every season and every villain: **a debt**. Somebody always charges for survival.
-- The Salvager sells meteor fragments (S1). Brine charges a toll for every roof (S2). Marigold sells "protection", and the ledger is literally a debt book (S3). Devi bills the city for its own power (S4). Cinder's cult makes offerings (S5). The Vashk demand tribute (S6). Ssera trades Earth for her people's safety (S7). Prime collects worlds (S8), his governors in New Bangalore extract data, land, food and water (S9–S14), and the Collector is the creditor at the end of the chain (S15).
+- The Salvager sells meteor fragments (S1). Brine charges a toll for every roof (S2). Marigold sells "protection", and the ledger is literally a debt book (S3). Reyes bills the city for its own power (S4). Cinder's cult makes offerings (S5). The Vashk demand tribute (S6). Ssera trades Earth for her people's safety (S7). Prime collects worlds (S8), his governors in New Bangalore extract data, land, food and water (S9–S14), and the Collector is the creditor at the end of the chain (S15).
 - You are the only one who never charges. The question the saga keeps asking is whether that can last.
 
 ### Cause and effect (each season's ending starts the next)
@@ -19,8 +19,8 @@ One idea runs through every season and every villain: **a debt**. Somebody alway
 |---|---|---|
 | 1 Landfall | lighting the meteor's core instead of letting the Salvager sell it | the lit core opens the tear wider, and the sea comes through it |
 | 2 High Water | turning on the pumps and draining the city | the pumps, boats and "rescues" were sold by the Marigold Syndicate, which now owns the dry city |
-| 3 The Syndicate | breaking Marigold's grip with Devi's help | Devi was paying for it all; with Marigold gone she owns the police, the ledger and the grid |
-| 4 Blackout | taking the grid back from Devi | her drill into the hot vent under the sea wakes the volcano |
+| 3 The Syndicate | breaking Marigold's grip with Reyes's help | Reyes was paying for it all; with Marigold gone she owns the police, the ledger and the grid |
+| 4 Blackout | taking the grid back from Reyes | her drill into the hot vent under the sea wakes the volcano |
 | 5 The Eruption | stopping Cinder from feeding the core to the volcano | the core fires one beam at the Moon, and the Vashk outpost there wakes up |
 | 6 Dark Side | breaking the Vashk fortress | Queen Ssera's ship escapes to Earth with the truth about the Collector, and her own plan |
 | 7 Scales | exposing Ssera's shapeshifters | her rift ship tears the sky open onto Prime's Bangalore |
@@ -39,28 +39,28 @@ One idea runs through every season and every villain: **a debt**. Somebody alway
 
 ### The people, and how they change
 - **You ({N})**: Phase 1, someone who survives things. Phase 2, someone who starts over with nothing in a world that isn't theirs. The ending is a choice about whether you're willing to pay what everyone else has been charging.
-- **Inspector, then Commissioner, Devi (S2–S4)**: the saga's most human villain. Introduced as a voice on the survivors' radio in S2, organising rescues while every official channel stays silent. She watched the government let the city drown, and decided the city needed someone who'd never let go of the wheel. She is kind to you, and means it, and uses you anyway. She never explains herself in a speech; her one real line of self-justification comes in S4, in a power station at 3 a.m., to nobody in particular.
+- **Inspector, then Commissioner, Reyes (S2–S4)**: the saga's most human villain. Introduced as a voice on the survivors' radio in S2, organising rescues while every official channel stays silent. She watched the government let the city drown, and decided the city needed someone who'd never let go of the wheel. She is kind to you, and means it, and uses you anyway. She never explains herself in a speech; her one real line of self-justification comes in S4, in a power station at 3 a.m., to nobody in particular.
 - **Velvet (S3, S7)**: switches sides in S3. In S7 she's the first person a Mimic replaces, because walking out on Marigold made her visible. Freeing the real Velvet is the emotional centre of S7.
-- **Arjun (S2, S3)**: your friend. It's his flat you're in when the wave hits (S2's cold open). Brine's crew pull him out of the water and put him on the ship's pumps; you find his voice note in a dry bag and free him in the finale. In S3 he's in Dubai, working off the family's debt to the Syndicate, and the Comet is his car.
-- **Bhaskar (S2) and Lata (S3)**: brother and sister, Arjun's father and aunt; the city's ordinary people, who keep turning up: Bhaskar's camp becomes the shelter in S4's blackout; Lata's chai stall is where the resistance meets in S7, because a Mimic can fake a face but not her tea.
-- **Mr. Ravindran, the Ledger (S3)**: the man who kept the books. He comes back in S4 as the only person who can read Devi's accounts, and he trades them for a new name.
+- **Leo (S2, S3)**: your friend. It's his flat you're in when the wave hits (S2's cold open). Brine's crew pull him out of the water and put him on the ship's pumps; you find his voice note in a dry bag and free him in the finale. In S3 he's in Dubai, working off the family's debt to the Syndicate, and the Comet is his car.
+- **Frank (S2) and Rosa (S3)**: brother and sister, Leo's father and aunt; the city's ordinary people, who keep turning up: Frank's camp becomes the shelter in S4's blackout; Rosa's chai stall is where the resistance meets in S7, because a Mimic can fake a face but not her tea.
+- **Mr. Whitlock, the Ledger (S3)**: the man who kept the books. He comes back in S4 as the only person who can read Reyes's accounts, and he trades them for a new name.
 - **Dr. Neel (S5–S6)**: studied the core before anyone else, and builds the boost pack and the Kite from what he learned. He's the one who says out loud, late in S6, that every time they've won, it's been worse afterwards.
 - **The Salvager (S1)**: his buyer, whom he mentions and never names, is Cinder (S5). He's the first person to offer you a deal, which matters in S8.
 
 ### How the story is told (rules for every season)
-- **Show it in the world first.** Graffiti, posters, radio, what's on the shelves, which lights are on. A collector saluting Devi says more than any line of dialogue about her.
+- **Show it in the world first.** Graffiti, posters, radio, what's on the shelves, which lights are on. A collector saluting Reyes says more than any line of dialogue about her.
 - **Every villain is in the season before their boss fight**, not just at the end of it: a voice, a name on a crate, a car that passes you.
 - **Plant early, pay off late, and never pay off what wasn't planted.** Keep a running list (below) of every plant and where it pays off.
 - **Each season reinvents the look of the whole site** (see Site themes below), so the world feels different before you've read a word.
 - **Trailers are short films, not lists.** No name cards with quotes. Characters are introduced by how they're framed; the title arrives late; the last shot is an image you'll understand only at the end of the season.
 
 ### How Seasons 2 and 3 tell their stories (from research into games that do it well)
-- **A relationship is the spine** (The Last of Us). S2 is about getting Arjun home; Bhaskar hands you his son's harpoon "for when he wants it back", and the season ends on the two of them at the foot of the camp building.
-- **Quiet scenes between the fights** (The Last of Us). After each of S2's first three Parts, a short night at the camp fire: no exposition, just people (`evening` in `s02.js`). In S3, Devi brings you chai after Brass and talks about her father's cycle shop.
-- **The world tells the story** (Subnautica). Dry bags float in S2's flooded streets, each holding a phone with a voice note from the night of the wave; one is Arjun's, and it's how you learn he's alive. The phone's Flock feed and Messages carry the city's reaction to every season.
-- **The villain has a reason, early** (Spider-Man's Doctor Octopus). Brine's crew came through the tear from a world with no land left; the pumps end the only life they know. Devi is kind to you from the first scene, and her reason (her father paid men like Brass for twenty years) is the same reason she betrays you.
-- **Cover costs something** (Sleeping Dogs). S3 Part 2 opens with an undercover day collecting for the Syndicate; the second stop is Lata's cart, and you choose whether to take her money or pay it yourself. She remembers, in person and by text.
-- **Light beside heavy** (Yakuza). Shopkeepers you rescue text you afterwards; Lata's lines stay dry and stubborn even when the story isn't.
+- **A relationship is the spine** (The Last of Us). S2 is about getting Leo home; Frank hands you his son's harpoon "for when he wants it back", and the season ends on the two of them at the foot of the camp building.
+- **Quiet scenes between the fights** (The Last of Us). After each of S2's first three Parts, a short night at the camp fire: no exposition, just people (`evening` in `s02.js`). In S3, Reyes brings you chai after Brass and talks about her father's cycle shop.
+- **The world tells the story** (Subnautica). Dry bags float in S2's flooded streets, each holding a phone with a voice note from the night of the wave; one is Leo's, and it's how you learn he's alive. The phone's Flock feed and Messages carry the city's reaction to every season.
+- **The villain has a reason, early** (Spider-Man's Doctor Octopus). Brine's crew came through the tear from a world with no land left; the pumps end the only life they know. Reyes is kind to you from the first scene, and her reason (her father paid men like Brass for twenty years) is the same reason she betrays you.
+- **Cover costs something** (Sleeping Dogs). S3 Part 2 opens with an undercover day collecting for the Syndicate; the second stop is Rosa's cart, and you choose whether to take her money or pay it yourself. She remembers, in person and by text.
+- **Light beside heavy** (Yakuza). Shopkeepers you rescue text you afterwards; Rosa's lines stay dry and stubborn even when the story isn't.
 
 ### Dialogue rules (no cringe)
 - **No catchphrases, no villain monologues, no "you and I are not so different", no "catch me if you can".** If a line would fit on a T-shirt, cut it.
@@ -68,7 +68,7 @@ One idea runs through every season and every villain: **a debt**. Somebody alway
 - **Short lines.** One or two sentences. People interrupt, deflect, and leave things unsaid.
 - **Every line does a job:** reveals who someone is, changes a relationship, or moves the plot. Lines that only explain the plan get cut, and the plan goes into the world.
 - **Villains believe they're right.** Each gets a reason you could almost agree with, and nobody announces that they're evil.
-- **No jokes during grief.** Humour comes from character (Lata's stubbornness, Bhaskar's bad radio), not from one-liners.
+- **No jokes during grief.** Humour comes from character (Rosa's stubbornness, Frank's bad radio), not from one-liners.
 - **Names sparingly.** A character saying {N} should land, not decorate.
 - **Bangalore is home, not flavour.** People talk like people from here; no tourist phrases dropped in for colour.
 
@@ -78,14 +78,14 @@ One idea runs through every season and every villain: **a debt**. Somebody alway
 | The Keeper asks your name: "Remember that I asked." | S1, the pier (built) | S15: she already knew, because she's you |
 | The Salvager's buyer "pays in ash" | S1, after the Hauler (built) | S5: Cinder |
 | The Salvager offers to buy the core; you don't answer | S1 finale (built) | S8: Prime said yes |
-| Devi's voice on the survivors' radio | S2, the camp | S3 (the ally) and S4 (the villain) |
-| Arjun's harpoon, "he'll want it back" | S2, the camp | S2 finale: you free him from Brine's pumps |
-| "They sold us our own rescue, on credit" | S3, Lata | S3: why the Syndicate owns the city; S4: Devi holds the debts |
-| Devi's father "paid men like Brass for twenty years" | S3, the chai | S4: why she wants total control |
-| Lata's collection (took or paid) | S3 Part 2 | S7: whether Lata's stall shelters you |
+| Reyes's voice on the survivors' radio | S2, the camp | S3 (the ally) and S4 (the villain) |
+| Leo's harpoon, "he'll want it back" | S2, the camp | S2 finale: you free him from Brine's pumps |
+| "They sold us our own rescue, on credit" | S3, Rosa | S3: why the Syndicate owns the city; S4: Reyes holds the debts |
+| Reyes's father "paid men like Brass for twenty years" | S3, the chai | S4: why she wants total control |
+| Rosa's collection (took or paid) | S3 Part 2 | S7: whether Rosa's stall shelters you |
 | Marigold stamps on Brine's supply crates | S2, the raiders' loot | S3: the Syndicate sold the flood |
-| The missing payroll page | S3, Velvet's hint | S4: Devi's name is on it |
-| Ravindran's missing-person posters | S3 | S4: he trades the accounts for a new name |
+| The missing payroll page | S3, Velvet's hint | S4: Reyes's name is on it |
+| Whitlock's missing-person posters | S3 | S4: he trades the accounts for a new name |
 | The core's beam | S1 trace, every season after | S5: it's aimed, and something answers |
 | Velvet walks out on Marigold | S3 | S7: first person replaced |
 | The cracked Moon | S6 | S16: it's where the meteor is pushed off course |
@@ -140,8 +140,8 @@ The 3D world, the simple view, the side panel, the phone, the HUD and the fonts 
 |---|---|---|---|---|---|---|---|
 | 1 | **Landfall** ✓ built | 18 Nov – 15 Dec 2026 | A meteor crashes off the west coast. | The Salvager | Scanner | Crash Isle | Crater Scout / Meteor Glow / Salvager's Rig |
 | 2 | **High Water** ✓ built | 16 Dec 2026 – 12 Jan 2027 | A wave through the tear drowns the city; the whole map is swimmable, with sharks. The city drains at the finale. | Captain Brine, a pirate | Boat and diving gear | The sunken district | Diver / Canal Captain / Brine's Coat |
-| 3 | **The Syndicate** ✓ built (replaces The Carnival) | 13 Jan – 9 Feb 2027 | After the flood, a crime syndicate takes over the city. | Madame Marigold, until Inspector Devi betrays you | The Comet (getaway car) | Marigold's tower, now Devi's | Undercover / Clean Hands / Marigold's Suit |
-| 4 | **Blackout** | 10 Feb – 9 Mar 2027 | The city stays dark; Devi rules it, frames you for Marigold's death, and drills into a hot vent under the sea. Ends with the volcano rising and Devi falling into the lava. | Commissioner Devi, with Static (a saboteur in the power lines) working for her | Lantern and toolkit | A new power plant, and the volcano offshore | Lineworker / Lantern Bearer / Commissioner Devi |
+| 3 | **The Syndicate** ✓ built (replaces The Carnival) | 13 Jan – 9 Feb 2027 | After the flood, a crime syndicate takes over the city. | Madame Marigold, until Inspector Reyes betrays you | The Comet (getaway car) | Marigold's tower, now Reyes's | Undercover / Clean Hands / Marigold's Suit |
+| 4 | **Blackout** | 10 Feb – 9 Mar 2027 | The city stays dark; Reyes rules it, frames you for Marigold's death, and drills into a hot vent under the sea. Ends with the volcano rising and Reyes falling into the lava. | Commissioner Reyes, with Static (a saboteur in the power lines) working for her | Lantern and toolkit | A new power plant, and the volcano offshore | Lineworker / Lantern Bearer / Commissioner Reyes |
 | 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | The new volcano becomes Ember Island and ash falls on the city; a cult uses the stolen meteor core to wake it. Ends with the core firing a beam at the Moon, and something there answering. | Cinder, leader of the Kindled | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |
 | 6 | **Dark Side** (space; replaces Deep Freeze) | 7 Apr – 4 May 2027 | The meteor was a key, and Cinder turned it. The Vashk Dominion's fleet on the Moon invades. Take the fight to their Moon fortress. Ends with their queen's ship slipping down to Earth. | High Commander Vorrak of the Vashk Dominion | Boost pack, and the Kite (fighter) | The launch pad on Crash Isle, a crashed landing pod, and a cracked Moon | Moonwalker / Ace / Vorrak's Armour |
 | 7 | **Scales** | 5 May – 1 Jun 2027 | Queen Ssera's shapeshifters replace people in Bangalore one by one, Velvet among them. Her crashed ship is a rift ship. Ends with the sky tearing open onto another Bangalore. | Queen Ssera | Truth lens and hover-sled | The wrecked mothership in the Far Range, and the tear in the sky | Alien Hunter / Truth Lens Agent / Vashk Disguise |
@@ -233,37 +233,37 @@ While Bangalore was underwater, the police stations flooded, the phones went dea
   - Brass, the enforcer;
   - the Ledger, the accountant;
   - Velvet, the getaway driver.
-- **Inspector Devi:** an honest police inspector whose station is still full of mud. Officially she has no power left, so she works with you. Or so it seems.
+- **Inspector Reyes:** an honest police inspector whose station is still full of mud. Officially she has no power left, so she works with you. Or so it seems.
 - **The Keeper:** in the background. The Syndicate is looking for something that came through the tear.
 
 **Cold open (13 Jan).**
 - The morning after the drain, the city is mud and wreckage, and people are trying to reopen.
 - You walk down your street and every shutter has a fresh marigold stamp.
 - A collector in a cream suit tells a chaiwala his "protection" is due, and when he can't pay his cart gets tipped over.
-- Inspector Devi pulls up in a mud-caked police jeep: *“My station is underwater and my phone is dead. You’re the only one in this city I’ve seen do anything. Want a job?”*
+- Inspector Reyes pulls up in a mud-caked police jeep: *“My station is underwater and my phone is dead. You’re the only one in this city I’ve seen do anything. Want a job?”*
 
 **Parts (one a week)**
 
 | Week | Part | What you do | Boss |
 |---|---|---|---|
 | 1 · 13 Jan | Protection | Your street is paying protection. Help the stall owners stand up to the collectors and free your district. You learn to slide and vault in a chase after a collector through the market. The first alley ambushes, and the Syndicate raids your safehouse while you sleep. | **Brass**, a big brawler with knuckle-dusters, fought in the market. |
-| 2 · 20 Jan | The Ledger | Steal the Syndicate's ledger (who pays, and who's on the payroll) in a heist on their counting house. Quiet is optional: disguises, timing and sliding under closing shutters, or go in loud. Then **the fight you lose** (below). | **The Ledger**, who fights with traps, alarms, locking doors and flying safes. He turns out to be **Mr. Ravindran**, the city's old tax inspector, whom everyone thought drowned in the flood. His face is still on the missing-persons posters on every wall. |
+| 2 · 20 Jan | The Ledger | Steal the Syndicate's ledger (who pays, and who's on the payroll) in a heist on their counting house. Quiet is optional: disguises, timing and sliding under closing shutters, or go in loud. Then **the fight you lose** (below). | **The Ledger**, who fights with traps, alarms, locking doors and flying safes. He turns out to be **Mr. Whitlock**, the city's old tax inspector, whom everyone thought drowned in the flood. His face is still on the missing-persons posters on every wall. |
 | 3 · 27 Jan | The Velvet Run | Get the ledger back. You get the rope swing and chase the smuggling convoys roof to roof and in a getaway car of your own. One convoy is a decoy, and it's an ambush. | **Velvet**, in a high-speed chase on the highway. Beaten, she switches sides and tells you about the missing payroll page. |
-| 4 · 3 Feb | Marigold (finale) | Storm Marigold's tower with Inspector Devi: a swing route up the outside instead of the stairs, with snipers on the rooftops round it. | Three phases:<br>1. A gunfight in the lobby.<br>2. A rooftop chase.<br>3. Marigold in her greenhouse penthouse. |
+| 4 · 3 Feb | Marigold (finale) | Storm Marigold's tower with Inspector Reyes: a swing route up the outside instead of the stairs, with snipers on the rooftops round it. | Three phases:<br>1. A gunfight in the lobby.<br>2. A rooftop chase.<br>3. Marigold in her greenhouse penthouse. |
 
 **The fight you lose (end of Chapter 2).**
 - You escape the counting house with the ledger and run straight into a trap: Brass and Velvet together. Then Madame Marigold steps out of the car.
 - The fight can't be won. Brass's hits get stronger every round, and when you're on your last heart it stops.
 - Marigold takes the ledger and pins a marigold on your jacket: *“Wear it. Now you belong to me too.”*
-- You wake up in Devi's jeep. She *found* you, of course, and the ledger is gone.
+- You wake up in Reyes's jeep. She *found* you, of course, and the ledger is gone.
 
 **Plot twists.**
-1. **The Ledger** is Mr. Ravindran, the tax inspector everyone thought had drowned. He faked his death to keep the Syndicate's books.
-2. **Velvet switches sides** after Chapter 3. She tells you a payroll page is missing: the strongest hint at Devi, which most players will still miss.
+1. **The Ledger** is Mr. Whitlock, the tax inspector everyone thought had drowned. He faked his death to keep the Syndicate's books.
+2. **Velvet switches sides** after Chapter 3. She tells you a payroll page is missing: the strongest hint at Reyes, which most players will still miss.
 3. **The tear connection:** Marigold's greenhouse is full of plants that came through the tear, and she's been selling them.
-4. **Devi** in the finale.
+4. **Reyes** in the finale.
 
-**Devi's betrayal is only hinted at, never stated.**
+**Reyes's betrayal is only hinted at, never stated.**
 - She always arrives just after the Syndicate has cleared out.
 - She asks for the ledger "for evidence", and the page with the payroll is missing when it comes back.
 - One collector salutes her by mistake, then pretends he was waving.
@@ -271,14 +271,14 @@ While Bangalore was underwater, the police stations flooded, the phones went dea
 
 **The finale (sets up Season 4).**
 1. You beat Marigold in her greenhouse penthouse. She backs out onto the terrace, against the railing, bleeding marigold petals from a torn lapel.
-2. As you go to arrest her, she looks past you at Devi and laughs. Her last words:
+2. As you go to arrest her, she looks past you at Reyes and laughs. Her last words:
    *“You’re arresting the wrong woman, {N}. She paid for every stamp on every door. She’ll make you miss me.”*
-3. Devi steps forward: *“Enough.”* She shoves Marigold over the railing.
+3. Reyes steps forward: *“Enough.”* She shoves Marigold over the railing.
 4. **Marigold's fall:**
    - the camera follows her down past the glass floors of her own tower, petals streaming up behind her;
    - it cuts to the petals settling on the street before she lands.
-5. **Devi runs off.** She grabs the ledger and sprints for the stairwell, and you chase her down two floors. She stops on the landing just long enough to say *“You cleaned up this city for me. Thank you.”* Then she's gone.
-6. Every light in Bangalore goes out, leading straight into **Season 4 · Blackout**, with Devi as its villain.
+5. **Reyes runs off.** She grabs the ledger and sprints for the stairwell, and you chase her down two floors. She stops on the landing just long enough to say *“You cleaned up this city for me. Thank you.”* Then she's gone.
+6. Every light in Bangalore goes out, leading straight into **Season 4 · Blackout**, with Reyes as its villain.
 
 ### How it plays
 - **Territory map:**
@@ -323,29 +323,29 @@ While Bangalore was underwater, the police stations flooded, the phones went dea
   - Undercover: finish the story;
   - Clean Hands: do the Ledger heist without being seen;
   - Marigold's Suit: beat the finale.
-- **Left on the map:** Marigold's tower, now Devi's, with its lights off, and marigold graffiti across the city.
+- **Left on the map:** Marigold's tower, now Reyes's, with its lights off, and marigold graffiti across the city.
 
 ### The trailer (a third look, different from Seasons 1 and 2)
 - **Look:** noir. Desaturated black and white, with only marigold orange left in colour: the stamps, Marigold's flower, and the brake lights in the chase.
 - **Type:** 1970s crime film, with a condensed typewriter or slab-serif and title cards like case-file stamps (“CASE NO. 3 · THE SYNDICATE”).
 - **Score:** walking upright bass, brushed snare, a muted trumpet and a tense string stab on each cut, building into a car-chase beat.
-- **Ending:** the betrayal stays secret. The only hint is one line from Devi: *“Trust me.”*
+- **Ending:** the betrayal stays secret. The only hint is one line from Reyes: *“Trust me.”*
 
 ## Season 4 · Blackout (10 February – 9 March 2027)
 
 ### Story
-Bangalore has been dark since the night Marigold fell. Devi has made herself **Acting Commissioner**, declared a state of emergency and put the city under curfew. She holds the only working generators, and she sells power the way Marigold sold protection. To most people she's the woman holding the city together. To you she's a murderer, and she's made sure the city thinks the murderer is **you**.
+Bangalore has been dark since the night Marigold fell. Reyes has made herself **Acting Commissioner**, declared a state of emergency and put the city under curfew. She holds the only working generators, and she sells power the way Marigold sold protection. To most people she's the woman holding the city together. To you she's a murderer, and she's made sure the city thinks the murderer is **you**.
 
 **The cast**
-- **Inspector (now Commissioner) Devi:** the villain. She's calm and reasonable on every radio broadcast, and ruthless everywhere else. *“A city in the dark needs one light to follow.”*
+- **Inspector (now Commissioner) Reyes:** the villain. She's calm and reasonable on every radio broadcast, and ruthless everywhere else. *“A city in the dark needs one light to follow.”*
 - **Static:** her saboteur. He lives in the power lines, blacks out a district the moment it's fixed, and fights with arcs of electricity.
-- **Velvet:** the ally since Season 3. She runs smuggled power cells to the people Devi cuts off.
-- **Brass:** he survived Season 3, and now he's Devi's muscle.
+- **Velvet:** the ally since Season 3. She runs smuggled power cells to the people Reyes cuts off.
+- **Brass:** he survived Season 3, and now he's Reyes's muscle.
 - **The Keeper:** in the background. Something under the sea to the west is getting warmer.
 
 **Cold open (10 Feb).**
 - The city is pitch-black at night, with only candles in windows and police searchlights sweeping the streets.
-- A giant screen on Devi's tower flickers on, running on her generators: *“Citizens: the person responsible for Madame Marigold’s death is still at large.”*
+- A giant screen on Reyes's tower flickers on, running on her generators: *“Citizens: the person responsible for Madame Marigold’s death is still at large.”*
 - Then your face fills the screen. WANTED.
 - Velvet's van skids up beside you: *“Get in. Now.”*
 
@@ -353,19 +353,19 @@ Bangalore has been dark since the night Marigold fell. Devi has made herself **A
 
 | Week | Part | What you do | Boss |
 |---|---|---|---|
-| 1 · 10 Feb | Lights Out | On the run, framed. Get the lantern and the toolkit from Velvet's hideout, and repair your district's substation in a wire-matching mini-game while Devi's patrols sweep the streets. The lights come back on in one district, for a minute, until Static blacks it out again. | **Static**, in an ambush on the substation: dodge his arcs, and fight with the lantern lit so you can see him move along the wires. |
-| 2 · 17 Feb | Curfew | Devi's curfew. Run Velvet's power cells to the hospitals and the rooftop camps, past patrol cars, drone searchlights and checkpoints, swinging across dark streets. People start to help you, and your wanted poster gets torn down in the districts you help. | **Brass, the rematch:** this time you win the fight you lost in Season 3. |
-| 3 · 24 Feb | Live Wire | Break into the old power station, Static's lair, and fight through the turbine hall in the dark. Beaten, Static tells you the truth: Devi isn't saving the city's power, she's draining it into a rig out at sea, drilling into the hot vent under the seabed west of Crash Isle. | **Static** in the turbine hall: live floors, a turbine you shut down to ground him, and a final chase along the high-voltage lines. |
-| 4 · 3 Mar | Overload (finale) | Take the boat out to Devi's drilling rig at night, in a storm. She's overloading the vent to power a city that only she controls. | Three phases:<br>1. The rig deck, dark except for your lantern and the lightning.<br>2. The control room, as she overloads the drill and the rig starts to shake.<br>3. Devi in a stolen powered work suit on the drill platform, as the sea starts to boil. |
+| 1 · 10 Feb | Lights Out | On the run, framed. Get the lantern and the toolkit from Velvet's hideout, and repair your district's substation in a wire-matching mini-game while Reyes's patrols sweep the streets. The lights come back on in one district, for a minute, until Static blacks it out again. | **Static**, in an ambush on the substation: dodge his arcs, and fight with the lantern lit so you can see him move along the wires. |
+| 2 · 17 Feb | Curfew | Reyes's curfew. Run Velvet's power cells to the hospitals and the rooftop camps, past patrol cars, drone searchlights and checkpoints, swinging across dark streets. People start to help you, and your wanted poster gets torn down in the districts you help. | **Brass, the rematch:** this time you win the fight you lost in Season 3. |
+| 3 · 24 Feb | Live Wire | Break into the old power station, Static's lair, and fight through the turbine hall in the dark. Beaten, Static tells you the truth: Reyes isn't saving the city's power, she's draining it into a rig out at sea, drilling into the hot vent under the seabed west of Crash Isle. | **Static** in the turbine hall: live floors, a turbine you shut down to ground him, and a final chase along the high-voltage lines. |
+| 4 · 3 Mar | Overload (finale) | Take the boat out to Reyes's drilling rig at night, in a storm. She's overloading the vent to power a city that only she controls. | Three phases:<br>1. The rig deck, dark except for your lantern and the lightning.<br>2. The control room, as she overloads the drill and the rig starts to shake.<br>3. Reyes in a stolen powered work suit on the drill platform, as the sea starts to boil. |
 
 **The finale (sets up Season 5).**
-1. You beat Devi on the drill platform. The overload can't be stopped, and the drill punches through into the vent.
+1. You beat Reyes on the drill platform. The overload can't be stopped, and the drill punches through into the vent.
 2. The seabed cracks. Below the rig, the sea glows orange.
-3. Devi clings to the platform as it tips towards the glow. Her last words: *“I only wanted the lights to stay on… for me.”*
+3. Reyes clings to the platform as it tips towards the glow. Her last words: *“I only wanted the lights to stay on… for me.”*
 4. The platform gives way and she falls into the rising lava. The camera holds on her silhouette as she sinks into the glow and melts away into it. No gore: it fades into the light.
 5. You get to the boat as the rig collapses.
 6. Behind you, **a volcano rises out of the sea**, steam and fire pouring up into the sky.
-7. Across Bangalore every light comes back on at once, because the city's new power plant is finally free of Devi's control.
+7. Across Bangalore every light comes back on at once, because the city's new power plant is finally free of Reyes's control.
 8. **Last shot:** on the beach, a row of figures in ash-grey robes kneels facing the volcano. One of them lowers her hood. **Season 5 · The Eruption.**
 
 ### How it plays
@@ -373,7 +373,7 @@ Bangalore has been dark since the night Marigold fell. Devi has made herself **A
   - nights are much darker, with street lights out across districts you haven't fixed;
   - your lantern lights the way, but it also makes you easier to spot;
   - it's the season's tool, and you keep it.
-- **Wanted level:** Devi's police are hunting you. Patrol cars, drone searchlights (like Season 1's sentries) and checkpoints, with disguises and the rope swing to slip past.
+- **Wanted level:** Reyes's police are hunting you. Patrol cars, drone searchlights (like Season 1's sentries) and checkpoints, with disguises and the rope swing to slip past.
 - **Fixing the grid:**
   - each district has a substation, with a quick wire-and-fuse puzzle from the toolkit;
   - a district you fix lights up and stays lit, and its people start to help you;
@@ -389,7 +389,7 @@ Bangalore has been dark since the night Marigold fell. Devi has made herself **A
 - **Skins:**
   - Lineworker: finish the story;
   - Lantern Bearer: the challenge, e.g. fix every district's substation;
-  - Commissioner Devi: beat her in the finale.
+  - Commissioner Reyes: beat her in the finale.
 - **Left on the map:** the new power plant, and the city lit again. Offshore, the new volcano that becomes Season 5's Ember Island.
 
 ### The trailer
@@ -400,12 +400,12 @@ Bangalore has been dark since the night Marigold fell. Devi has made herself **A
 ## Season 5 · The Eruption (10 March – 6 April 2027)
 
 ### Story
-The volcano that swallowed Devi doesn't stop growing. Within a week it's an island, **Ember Island**, smoking off the west coast. Ash falls on Bangalore like grey snow, the sky turns orange at noon, and glowing rocks crash into the streets. People are frightened, and someone is offering them an answer.
+The volcano that swallowed Reyes doesn't stop growing. Within a week it's an island, **Ember Island**, smoking off the west coast. Ash falls on Bangalore like grey snow, the sky turns orange at noon, and glowing rocks crash into the streets. People are frightened, and someone is offering them an answer.
 
 **The cast**
 - **Cinder (villain, original):** leader of a cult called **the Kindled**. She speaks softly, and she always has a smouldering coal in a brass locket. She was the Salvager's buyer in Season 1, the one "who pays in ash", and she's been collecting meteor fragments ever since. Her followers are people the flood and the blackout left with nothing; she gives them something to do with their grief. She doesn't preach in the open: what she believes comes out in how she treats her people, and in the one hymn the Kindled sing.
   - She was the hooded woman on the beach at the end of Season 4.
-  - Twist: she was an engineer on Devi's drilling rig. She survived the night it fell, and she believes the volcano spoke to her.
+  - Twist: she was an engineer on Reyes's drilling rig. She survived the night it fell, and she believes the volcano spoke to her.
 - **Dr. Neel (ally, new):** a volcanologist who has been measuring Ember Island from a rooftop lab. He's nervous and brilliant, and he builds you the heat suit.
 - **Velvet:** still the ally, now ferrying people away from the worst of the ashfall.
 - **The Keeper:** worried, for once. The core of the meteor from Season 1 is missing from Crash Isle.
@@ -484,7 +484,7 @@ The beam the core fired at the end of Season 5 wasn't an accident. It was a sign
 | Week | Part | What you do | Boss |
 |---|---|---|---|
 | 1 · 7 Apr | First Contact | The invasion begins. Landing pods hit the streets, and you hold your district with the people of Bangalore. You take a Vashk boost pack from a downed soldier (the season's first tool) and learn to fly with it: short bursts, hovering and dive attacks. | **A Vashk war-beast**, dropped into Cubbon Park: an armoured monster you have to get above with the boost pack to hit its back. |
-| 2 · 14 Apr | Counterstrike | Build the rocket on Crash Isle from the wreckage of every past villain (the Salvager's mech, Brine's ship, Devi's rig) while gunships attack it. Launch under fire, then fly **the Kite**, a small fighter, in a dogfight in orbit. | **Skarr**, the Dominion's best pilot, in an orbital dogfight around the fleet. |
+| 2 · 14 Apr | Counterstrike | Build the rocket on Crash Isle from the wreckage of every past villain (the Salvager's mech, Brine's ship, Reyes's rig) while gunships attack it. Launch under fire, then fly **the Kite**, a small fighter, in a dogfight in orbit. | **Skarr**, the Dominion's best pilot, in an orbital dogfight around the fleet. |
 | 3 · 21 Apr | The Moon Fortress | Land on the Moon. Low gravity, oxygen, and the boost pack for big leaps across craters. Sneak or fight into the fortress and sabotage the planet-cracker cannon before it fires at Earth: hack its three power relays, and turn captured Vashk turrets against their own guards. | **The Fortress Titan**, a giant walking war machine guarding the cannon. Disable its legs, then climb it. |
 | 4 · 28 Apr | Vorrak (finale) | Storm Vorrak's command deck as the cannon charges. | Three phases:<br>1. A zero-gravity fight through the fortress core.<br>2. A boost-pack duel around the cannon's barrel.<br>3. Vorrak himself in full battle armour, while the cannon overloads. |
 
@@ -850,10 +850,10 @@ Phase 2 has built up to one fight: you against {N} Prime. Season 15 gives it to 
 |---|---|---|
 | 1 · 15 Dec | The Last Hunt | Prime's red city finally breaks through into New Bangalore's sky. With everything you've earned across both phases, you take the fight to Prime, and this time you're ready. |
 | 2 · 22 Dec | Prime | **You kill Prime.** It's the fight the whole series has built up to, and it happens in week two, not the finale. Prime's last words, with a laugh that turns into a cough: *“You think I was the end of the line? I was running too. I fed it worlds so it wouldn’t eat mine.”* Then every screen in New Bangalore goes dark. |
-| 3 · 29 Dec | The Collector | **The new villain arrives:** **the Collector of Worlds.** It's what Prime was feeding: something vast and patient that eats universes whole. Every villain was running from a bigger one: Ssera fled Prime, and Prime fed the Collector to stay alive. It brings **echoes of every villain you've beaten**, pulled out of the worlds it ate: the Salvager, Captain Brine, Marigold, Devi, Cinder, Vorrak, Ssera, Vector. They come back, one after another. |
+| 3 · 29 Dec | The Collector | **The new villain arrives:** **the Collector of Worlds.** It's what Prime was feeding: something vast and patient that eats universes whole. Every villain was running from a bigger one: Ssera fled Prime, and Prime fed the Collector to stay alive. It brings **echoes of every villain you've beaten**, pulled out of the worlds it ate: the Salvager, Captain Brine, Marigold, Reyes, Cinder, Vorrak, Ssera, Vector. They come back, one after another. |
 | 4 · 5 Jan | Convergence (finale) | The final showdown with the Collector, using every tool and vehicle from both phases. **Your final choice decides how the cycle restarts:** the seasons loop back to Season 1, and what you choose here changes how Landfall begins next time round. |
 
-**The final choice (decided in the story bible):** close the lock yourself and become the Keeper. The seasons loop to Season 1, and the stranger who hands you the scanner at the pier is you. Refusing is allowed; then someone you've met across the saga (Devi's radio voice, Lata, Bhaskar, Velvet: whoever you helped most) steps in and pays instead, and that's who meets you at the pier next time.
+**The final choice (decided in the story bible):** close the lock yourself and become the Keeper. The seasons loop to Season 1, and the stranger who hands you the scanner at the pier is you. Refusing is allowed; then someone you've met across the saga (Reyes's radio voice, Rosa, Frank, Velvet: whoever you helped most) steps in and pays instead, and that's who meets you at the pier next time.
 
 **Still to plan:** the Collector's look and voice, how each echo fights, and the three phases of the final fight.
 
@@ -895,7 +895,7 @@ Phase 2 has built up to one fight: you against {N} Prime. Season 15 gives it to 
   - You keep it afterwards.
 - **Things that follow you across shifts:** some enemies and some people come through with you, and some don't. Lose a pursuer by shifting away from them.
 - **People you knew:**
-  - versions of Phase 1 characters in different realities: a medieval Bhaskar, a far-future Velvet, a prehistoric Keeper;
+  - versions of Phase 1 characters in different realities: a medieval Frank, a far-future Velvet, a prehistoric Keeper;
   - some remember you, and some never met you.
 - **A stability meter** for the whole city, shown on the phone: it drops each week as the shifts get faster and wilder, until the finale at the reactor.
 

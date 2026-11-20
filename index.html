@@ -8086,6 +8086,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     else canvas.style.filter = '';
   }
   function renderPhotoBar(){ canvas.style.filter = FILTERS[photoF][1] === 'none' ? '' : FILTERS[photoF][1]; $('#phFilter').textContent = `Filter: ${FILTERS[photoF][0]}`; }
+  let PHOTO_LAST = null;
   function takePhoto(){
     gfxRender(sceneOf());
     const c = document.createElement('canvas'); c.width = canvas.width; c.height = canvas.height;
@@ -8093,6 +8094,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     g.drawImage(canvas, 0, 0); g.filter = 'none';
     const s = Math.max(1, c.width / 1200); g.font = `700 ${Math.round(18 * s)}px "Bricolage Grotesque", sans-serif`; g.fillStyle = 'rgba(255,255,255,.85)'; g.textAlign = 'right'; g.shadowColor = 'rgba(0,0,0,.6)'; g.shadowBlur = 6 * s;
     g.fillText('rayan upadhyay', c.width - 18 * s, c.height - 18 * s);
+    try { const t = document.createElement('canvas'), w = 360; t.width = w; t.height = Math.round(w * c.height / c.width); t.getContext('2d').drawImage(c, 0, 0, t.width, t.height); PHOTO_LAST = t.toDataURL('image/jpeg', .72); } catch (e) {}
     const a = document.createElement('a'); a.download = `rayan-room-${Date.now()}.png`; a.href = c.toDataURL('image/png'); document.body.appendChild(a); a.click(); a.remove();
     const fl = $('#fade'); fl.style.background = '#FFFFFF'; fl.classList.add('on'); setTimeout(() => fl.classList.remove('on'), 90); tone(1800, .05, 'square', .04);
   }
@@ -10847,8 +10849,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 .phtop{display:flex;align-items:center;gap:8px;padding:12px 16px 8px}.phtop b{flex:1;text-align:center;font:800 16px/1.2 ${DISPLAY}}.phtop span{font-weight:700;font-size:12px;width:48px}.phx{background:#2A2D33;color:#fff;border:0;border-radius:999px;width:32px;height:32px;cursor:pointer}
 .phbody{flex:1;overflow:auto;padding:4px 14px 12px;position:relative}.cardprev{display:block;font-style:normal;font-size:13px;opacity:.85;margin-top:8px;max-width:520px}.phtabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px;border-top:1px solid #222}.phtabs button{background:#16181D;border:0;color:#C8CDD6;border-radius:12px;padding:7px 2px;font:700 11px/1.2 system-ui,sans-serif;cursor:pointer}.phtabs button.on{background:#FFC93C;color:#16181D}
 .phone canvas{width:100%;aspect-ratio:1;border-radius:14px;background:#2A2C30;touch-action:none;display:block}.phrow{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}.phrow button,.phcard button{background:#2A2D33;color:#fff;border:0;border-radius:999px;padding:7px 12px;font:700 12px/1.2 system-ui,sans-serif;cursor:pointer}.phrow button.y,.phcard button.y{background:#FFC93C;color:#16181D}.phrow button:disabled,.phcard button:disabled{opacity:.4;cursor:default}
-.phcard{background:#16181D;border-radius:14px;padding:10px 12px;margin:8px 0}.phcard b{display:block}.phcard small{color:#9AA3AD;display:block}.phnews{border-left:3px solid #C8102E;padding:6px 10px;margin:8px 0;font:800 13px/1.3 ${DISPLAY};background:#16181D;border-radius:0 10px 10px 0}.phleg{font-size:11px;color:#9AA3AD;display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px}.phleg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}`; document.head.appendChild(s); }
-  const PH_TABS = [['map', 'Map'], ['season', 'Season'], ['story', 'Story'], ['jobs', 'Jobs'], ['upg', 'Upgrades'], ['news', 'News'], ['contacts', 'Contacts'], ['rayan', 'Rayan'], ['camera', 'Camera'], ['home', ''], ['msgs', 'Messages'], ['feed', 'Flock'], ['weather', 'Weather']];
+.phcard{background:#16181D;border-radius:14px;padding:10px 12px;margin:8px 0}.phcard b{display:block}.phcard small{color:#9AA3AD;display:block}.phleg{font-size:11px;color:#9AA3AD;display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px}.phleg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}`; document.head.appendChild(s); }
+  const PH_TABS = [['map', 'Map'], ['season', 'Season'], ['story', 'Story'], ['jobs', 'Jobs'], ['upg', 'Upgrades'], ['contacts', 'Contacts'], ['rayan', 'Rayan'], ['camera', 'Camera'], ['home', ''], ['msgs', 'Messages'], ['feed', 'Flock'], ['weather', 'Weather']];
   phEl.querySelector('#phTabs').innerHTML = PH_TABS.map(([k, n]) => `<button type="button" data-t="${k}">${n}</button>`).join('');
   phEl.querySelector('#phTabs').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (b) phShow(b.dataset.t); });
   phEl.querySelector('#phTabs [data-t="story"]').hidden = true; // shown once a story has been started (see phoneOpen)
@@ -10861,7 +10863,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   phEl.addEventListener('click', e => { if (e.target.closest('[data-bkskip]')) { phoneClose(); if (!EV && !A) setTimeout(bkSkipAsk, 200); return; } if (e.target.closest('[data-bkres]')) { phoneClose(); if (!EV && !A) bkResume(); return; } if (e.target.closest('[data-st]')) { phoneClose(); if (!EV && !A) enterStation(); } });
   phBtn.addEventListener('click', e => { e.stopPropagation(); phOpen() ? phoneClose() : phoneOpen(); });
   phEl.querySelector('#phClose').onclick = phoneClose;
-  addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; const k = e.key.toLowerCase();
+  addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) { if (phOpen() && phEl.contains(e.target) && e.key !== 'Escape') { e.stopImmediatePropagation(); if (e.key === 'Enter' && e.target.tagName === 'INPUT') { const bt = e.target.closest('.fkbox'); if (bt && bt.querySelector('button')) bt.querySelector('button').click(); } } return; } const k = e.key.toLowerCase();
     if (phOpen()) { if (k === 'escape' || k === 'm') { e.preventDefault(); e.stopImmediatePropagation(); phoneClose(); } else if (!e.metaKey && !e.ctrlKey) e.stopImmediatePropagation(); return; }
     if (k === 'm' && !e.repeat && !phBtn.hidden) { e.preventDefault(); phoneOpen(); } }, true);
 
@@ -10872,7 +10874,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   try { Object.assign(PHX, JSON.parse(localStorage.getItem('ru-phone') || '{}')); } catch (e) {}
   ['th', 'rd', 'fl'].forEach(k => { if (!PHX[k] || typeof PHX[k] !== 'object' || Array.isArray(PHX[k])) PHX[k] = {}; }); ['lk', 'pp'].forEach(k => { if (!Array.isArray(PHX[k])) PHX[k] = []; });
   const phxSave = () => { try { localStorage.setItem('ru-phone', JSON.stringify({ th: PHX.th, rd: PHX.rd, lk: PHX.lk.slice(-200), pp: PHX.pp.slice(-60), fl: PHX.fl, bat: Math.round(PHX.bat) })); } catch (e) {} };
-  const THREADS = { amma: ['Amma', '#C8462E'], unknown: ['Unknown number', '#5A5E68'], devi: ['Inspector Devi', '#3A5A7A'], bhaskar: ['Bhaskar', '#2E7A6A'], lata: ['Lata (chai)', '#B8862E'], velvet: ['V', '#5A1E4A'] };
+  const THREADS = { amma: ['Mum', '#C8462E'], unknown: ['Unknown number', '#5A5E68'], devi: ['Inspector Reyes', '#3A5A7A'], bhaskar: ['Frank', '#2E7A6A'], lata: ['Rosa', '#B8862E'], velvet: ['V', '#5A1E4A'] };
   const nowS = () => Date.now();
   // a message arrives: stored, a banner shows if the phone isn't on that thread
   function phMsg(th, text, from){ if (!THREADS[th]) THREADS[th] = [from || th, '#5A5E68']; (PHX.th[th] = PHX.th[th] || []).push([from || THREADS[th][0], text, nowS(), 0]); phxSave(); if (!(phOpen() && PH.tab === 'msgs' && PHX.open === th)) phBanner('msgs', THREADS[th][0], text, th); else phShow('msgs'); }
@@ -10886,21 +10888,21 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function phStatus(){ const room = !inWorld, sig = FLOOD.on ? 'No service' : '▂▄▆█', b = Math.max(1, Math.round(PHX.bat));
     phEl.querySelector('#phSig').innerHTML = `<small>${sig}</small> <small>${FLOOD.on ? '' : '5G'}</small> <span class="phbat${b < 20 ? ' low' : ''}"><i style="width:${b}%"></i></span><small>${room ? '⚡' : ''}${b}%</small>`; }
   let phBatT = 0;
-  function phxStep(dt){ if (!entered) return; phBatT += dt; if (phBatT < 5) return; const step = phBatT; phBatT = 0; PHX.bat = !inWorld ? Math.min(100, PHX.bat + step / 6) : Math.max(4, PHX.bat - step / (phOpen() ? 60 : 150)); if (phOpen()) phStatus(); phxRules(); }
+  function phxStep(dt){ if (!entered) return; phBatT += dt; if (phBatT < 5) return; const step = phBatT; phBatT = 0; PHX.bat = !inWorld ? Math.min(100, PHX.bat + step / 6) : Math.max(4, PHX.bat - step / (phOpen() ? 60 : 150)); if (phOpen()) phStatus(); phxRules(); try { flockTick(); } catch (e) {} }
   // things that happen whether or not a season file is loaded: Amma, the unknown number, and the feed noticing you
   function phxRules(){
     const F = PHX.fl, S = (() => { try { return seasonGet(); } catch (e) { return {}; } })(), s1 = S.s1 || {}, s2 = S.s2 || {}, s3 = S.s3 || {}, h = cityHour(), once = (k, fn) => { if (!F[k]) { F[k] = 1; phxSave(); fn(); } };
-    once('hi', () => { PHX.th.amma = [['Amma', 'Did you eat?', nowS() - 864e5, 0], ['Amma', 'And don’t stay out late.', nowS() - 864e5 + 6e4, 0]]; PHX.rd.amma = 2; phxSave(); });
+    once('hi', () => { PHX.th.amma = [['Mum', 'Did you eat?', nowS() - 864e5, 0], ['Mum', 'And don’t stay out late.', nowS() - 864e5 + 6e4, 0]]; PHX.rd.amma = 2; phxSave(); });
     if (s1.intro) once('meteor', () => setTimeout(() => phMsg('amma', 'Something fell in the sea!! It’s on every channel. Stay away from the beach, I mean it.'), 4000));
     if (s1.scanner || s1.keeper) once('keeper', () => setTimeout(() => phMsg('unknown', 'You’ll know what it’s for when you need to. Keep it charged.'), 9000));
     if (s2.open && !s2.drained) once('flood', () => setTimeout(() => phMsg('amma', 'Where are you?? Lines are down, this only sent on the fourth try. Are you on a roof? Tell me you’re on a roof.'), 6000));
     if (s2.drained) once('drained', () => setTimeout(() => phMsg('amma', 'Water’s gone from our road. Come home and see the state of the kitchen.'), 5000));
-    if (s3.open) once('stamps', () => setTimeout(() => phMsg('amma', 'Aunty downstairs says the marigold people came again. She paid. Everyone pays. Don’t get involved.'), 7000));
-    if ((JAIL.rec >= 3 || JAIL.until) && !F.amj) once('amj', () => setTimeout(() => phMsg('amma', 'Mrs Rao says she saw you fighting outside the bakery. Tell me she’s wrong.'), 3000));
+    if (s3.open) once('stamps', () => setTimeout(() => phMsg('amma', 'The lady downstairs says the marigold people came again. She paid. Everyone pays. Don’t get involved.'), 7000));
+    if ((JAIL.rec >= 3 || JAIL.until) && !F.amj) once('amj', () => setTimeout(() => phMsg('amma', 'Mrs Novak says she saw you fighting outside the bakery. Tell me she’s wrong.'), 3000));
     const day = new Date().toDateString(); if (F.day !== day && entered) { F.day = day; phxSave(); if (h >= 18 || h < 5) setTimeout(() => phMsg('amma', 'It’s getting dark. Where are you?'), 20000); }
   }
   // Messages
-  const REPLIES = { amma: [['On my way', 'Good. Your food is on the table.'], ['I ate', 'What did you eat? Chips is not food.'], ['Love you', '❤️ Come home.']], unknown: [['Who is this?', null], ['What is it for?', null]], devi: [['On it', null], ['Who else knows?', null]], bhaskar: [['How is everyone?', 'Dry, for once. Come by.'], ['Thank you', null]], lata: [['Coming', 'I’ll keep the chai hot.'], ['Is Arjun okay?', 'He calls on Sundays. Mostly.']], velvet: [['Why are you helping me?', null], ['Thanks', null]] };
+  const REPLIES = { amma: [['On my way', 'Good. Your food is on the table.'], ['I ate', 'What did you eat? Chips is not food.'], ['Love you', '❤️ Come home.']], unknown: [['Who is this?', null], ['What is it for?', null]], devi: [['On it', null], ['Who else knows?', null]], bhaskar: [['How is everyone?', 'Dry, for once. Come by.'], ['Thank you', null]], lata: [['Coming', 'I’ll keep the chai hot.'], ['Is Leo okay?', 'He calls on Sundays. Mostly.']], velvet: [['Why are you helping me?', null], ['Thanks', null]] };
   const ago = ts => { const m = Math.max(0, Math.round((nowS() - ts) / 6e4)); return m < 1 ? 'now' : m < 60 ? m + 'm' : m < 1440 ? Math.round(m / 60) + 'h' : Math.round(m / 1440) + 'd'; };
   function phMsgs(B){
     const th = PHX.open && PHX.th[PHX.open] ? PHX.open : null;
@@ -10914,29 +10916,153 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     B.querySelectorAll('[data-rp]').forEach(b => b.onclick = () => { const [q, a] = R0[+b.dataset.rp]; PHX.th[th].push(['You', q, nowS(), 1]); PHX.rd[th] = PHX.th[th].length; phxSave(); tone(988, .05, 'sine', .03); phShow('msgs');
       if (a) setTimeout(() => { PHX.th[th].push([THREADS[th][0], a, nowS(), 0]); phxSave(); if (phOpen() && PH.tab === 'msgs' && PHX.open === th) phShow('msgs'); else phBanner('msgs', THREADS[th][0], a, th); }, 2500 + Math.random() * 3000); });
   }
-  // Flock: the city's feed. Everyday posts by the hour, posts about whatever this season is doing, posts the seasons pushed, and you
-  const FLOCK = [['bmtc_rider', 'Ravi K', ['Silk Board at 6pm is a spiritual experience.', 'Bus 500D just skipped my stop like we have beef.', 'The metro was on time today. Write that down.']], ['indiranagar_eats', 'Meera eats', ['New filter coffee place on 12th Main. The decoction is no joke.', 'Masala dosa ranking thread. 1. CTR. 2. Also CTR. 3. Fine, Vidyarthi Bhavan.']], ['rain_in_blr', 'Bangalore Weather Watch', ['Clouds building over the west. Umbrella day.', 'Lovely evening. Twenty-two degrees. This is why we live here.']], ['terrace_aunty', 'Lakshmi aunty', ['Who keeps parking in front of my gate. I have your number plate.', 'Made too much bisi bele bath again. Neighbours, come.']], ['cubbon_runner', 'Kiran runs', ['5k round Cubbon Park before the walkers took over. Peacock sighting at the bandstand.']], ['kannada_memes_', 'Swalpa Adjust Maadi', ['"Swalpa adjust maadi" is a lifestyle, not a request.', 'Traffic so bad I learned a new language in the auto.']], ['techpark_tales', 'Ananya · Whitefield', ['Standup at 10, standup at 11, standup at 12. When do we sit down.', 'Office cafeteria has started serving "fusion dosa". Pray for us.']]];
+  // ---------- Flock: the city's social network (the phone's News app is gone; the news lives here, as the Bulletin's posts) ----------
+  // Accounts have bios and follower counts. Home has For you and Following, posts open into threads with replies, names open
+  // profiles you can follow, Explore has trending tags, search and who to follow, and Notifications tell you when people like or
+  // answer what you posted. You can post (text, plus the last photo you took in photo mode) and reply. Saved in ru-phone:
+  // PHX.fo (who you follow), PHX.rp (reposts), PHX.my (your posts), PHX.ur (your replies), PHX.ns (notifications seen up to).
+  const ACC = {
+    bmtc_rider: ['Sam K', 'Bus commuter. Strong opinions about the 500D.', 2140], indiranagar_eats: ['Mia eats', 'Eating my way through the city, one breakfast at a time.', 18400],
+    rain_in_blr: ['Bangalore Weather Watch', 'Amateur, enthusiastic, mostly right about the rain.', 52100, 1], terrace_linda: ['Linda, 2nd floor', 'Retired. Terrace garden. I see everything.', 310],
+    cubbon_runner: ['Kit runs', 'Running before the city wakes up.', 4020], blr_memes: ['City Memes', 'We post so you can cope.', 231000, 1],
+    techpark_tales: ['Zoe · Whitefield', 'Product manager. Here for the memes and the outages.', 1880], blr_bulletin: ['Bangalore Bulletin', 'News for the city, as it happens.', 412000, 1],
+    blr_alerts: ['BLR Emergency Alerts', 'Official alerts for the city. Turn on notifications.', 890000, 1], sky_over_blr: ['Night Sky Bangalore', 'Telescopes, meteors, and complaining about light pollution.', 9800],
+    fisher_pete: ['Pete · Ullal', 'Fishing the same stretch of coast for thirty years.', 640], rooftop_camp: ['Survivors · Roof 14', 'Twelve of us. One radio. Still here.', 15200],
+    marketstreet_: ['Market Street Traders', 'Forty stalls, one street, open every day.', 7300], mg_road_watch: ['MG Road Watch', 'What’s happening on MG Road, from the people on it.', 26700],
+    noor_draws: ['Noor', 'I draw buildings.', 3300], dan_fixes: ['Dan', 'Bikes, scooters, kettles. If it’s broken, bring it.', 870], ana_on_film: ['Ana Ruiz', 'Film photos of a city that doesn’t sit still.', 12100], theo_codes: ['Theo', 'Writes code, drinks coffee, mostly in that order.', 1450]
+  };
+  const FOLLOW0 = ['bmtc_rider', 'indiranagar_eats', 'rain_in_blr', 'blr_memes', 'blr_bulletin', 'blr_alerts', 'terrace_linda'];
+  const FLOCK = [['bmtc_rider', ['Silk Board at 6pm is a spiritual experience. #SilkBoard', 'Bus 500D just skipped my stop like we have beef.', 'The metro was on time today. Write that down.', 'Conductor gave me exact change without a sigh. Something is wrong.']], ['indiranagar_eats', ['New filter coffee place on 12th Main. The decoction is no joke. #FilterCoffee', 'Best breakfast in the city thread. Go. Wrong answers only.', 'Ranking every masala dosa I’ve had this month. Thread soon.']], ['rain_in_blr', ['Clouds building over the west. Umbrella day. #BLRrains', 'Lovely evening. Twenty-two degrees. This is why we live here.', 'Wind picking up from the coast tonight. Bring the washing in.']], ['terrace_linda', ['Who keeps parking in front of my gate. I have your number plate.', 'Made too much lasagne again. Neighbours, come.', 'My tomatoes are finally red. Nobody touch them.']], ['cubbon_runner', ['5k round Cubbon Park before the walkers took over. Peacock sighting at the bandstand.', 'Personal best this morning. The dogs at the gate were not impressed.']], ['blr_memes', ['Me: I’ll leave early to beat traffic. Traffic: I am inevitable.', 'Traffic so bad I finished a whole audiobook between two signals.', 'Bangalore weather: hoodie at 7, sunscreen at 1, hoodie at 7.']], ['techpark_tales', ['Standup at 10, standup at 11, standup at 12. When do we sit down.', 'Office cafeteria has started serving "fusion dosa". Pray for us.', 'The Wi-Fi went down and forty people discovered the window.']], ['noor_draws', ['Sketched the old post office from the bus stop today. The bus never came, so I finished it.', 'Every balcony on this street is a different colour and I love it.']], ['dan_fixes', ['Fixed a 1998 kettle today. They don’t make them like that.', 'If your scooter makes a noise like a goose, bring it in. Do not ride it.']], ['ana_on_film', ['Golden hour on MG Road. One roll left.', 'Developing yesterday’s photos. Three good ones out of thirty-six is a great day.']], ['theo_codes', ['Pushed to production on a Friday. Pray for me.', 'Rubber-duck debugging, but the duck is my neighbour’s cat.']]];
+  const REPL = { life: ['This is so real.', 'Okay but same.', '😂😂', 'Not the 500D again 😭', 'Same here in Jayanagar.', 'Underrated post.', 'Every single day.', 'Who asked? (me. I asked. thank you)', 'Saving this.', 'Where is this?'], news: ['Finally some good news.', 'Is the Outer Ring Road open?', 'Who is this masked person though', 'Source?', 'My cousin saw it happen.', 'Police should be doing this, not some random kid.'], alert: ['Thank you for the updates.', 'Stay safe everyone.', 'Is anyone checking on the old folks on our road?', 'Sharing.', 'My building is fine, just no power.'], you: ['Love this.', 'Real.', 'Okay but where are you?', 'Say less.', 'Who is this person and why are they always outside', 'Hope you’re okay out there.', '🔥', 'Same tbh.'], pic: ['Great shot!', 'The light in this 😍', 'Where was this taken?', 'Wallpaper material.', 'Okay photographer.'] };
+  ['fo', 'rp', 'my'].forEach(k => { if (!Array.isArray(PHX[k])) PHX[k] = k === 'fo' ? FOLLOW0.slice() : []; }); if (!PHX.ur || typeof PHX.ur !== 'object' || Array.isArray(PHX.ur)) PHX.ur = {}; PHX.ns = +PHX.ns || 0;
+  const flSave = (() => { const o = phxSave; return () => { o(); try { const S = JSON.parse(localStorage.getItem('ru-phone') || '{}'); let my = PHX.my.slice(-30); const pics = my.filter(q => q.img && q.img.startsWith('data:')); pics.slice(0, -6).forEach(q => q.img = null); Object.assign(S, { fo: PHX.fo, rp: PHX.rp.slice(-100), my, ur: PHX.ur, ns: PHX.ns }); localStorage.setItem('ru-phone', JSON.stringify(S)); } catch (e) {} }; })();
+  const fkHash = s => { let h = 7; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; };
+  const fkN = n => n >= 1e6 ? (n / 1e6).toFixed(1).replace(/\.0$/, '') + 'M' : n >= 1e4 ? Math.round(n / 1e3) + 'K' : n >= 1e3 ? (n / 1e3).toFixed(1).replace(/\.0$/, '') + 'K' : String(n);
+  const myH = () => (heroName().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'traveller').slice(0, 15);
+  const fkName = h => h === myH() ? heroName() : ACC[h] ? ACC[h][0] : h;
+  const fkCol = h => `hsl(${fkHash(h) % 360},45%,42%)`;
+  const FK = { v: 'home', tab: 'fy', id: null, q: '', back: [] };
+  // the Bulletin: the city's news, from what you've actually done
+  function fkNews(){
+    const L = [], sc = s => s.toLowerCase().replace(/(^|[.:!?]\s+|“)([a-z])/g, (m, a, b) => a + b.toUpperCase());
+    try { if (festNow()) L.push('Fireworks light up the city tonight. Best spots, from readers, in the replies.'); } catch (e) {}
+    try { if (HEAT.lv) L.push('Police are searching the city for a reckless vigilante. Avoid the area around MG Road.'); } catch (e) {}
+    try { const won = SBOSS.filter(q => SBK[q.id]).map(q => q.name); if (won.length) L.push(`Masked hero beats ${won.slice(0, -1).join(', ')}${won.length > 1 ? ' and ' : ''}${won.slice(-1)[0]}. Police say they’re “looking into it”.`); } catch (e) {}
+    try { if (JOB.sealed.size) L.push(`${JOB.sealed.size} drug den${JOB.sealed.size > 1 ? 's' : ''} shut down. Police say they “had some help”.`); } catch (e) {}
+    try { if (JOB.done) L.push(`“${heroName()} found my cat,” says grateful neighbour.`); } catch (e) {}
+    try { Object.keys(XC_P).filter(c => c !== 'bfa').forEach(c => { let s = null; try { s = JSON.parse(localStorage.getItem('ru-xc-' + c) || 'null'); } catch (e) {} if (!s || !s.visits) return; const P = XC_P[c];
+      (s.bosses || []).forEach(id => { const B0 = P.bosses.find(q => q.id === id); if (B0) L.push(`${P.name}: ${B0.name} beaten by a masked visitor.`); }); if (s.raids) L.push(`${P.name}: ${s.raids} godown raid${s.raids > 1 ? 's' : ''} leave crews taped up for police.`); const n = P.news[(s.visits - 1) % P.news.length]; if (n) L.push(sc(nmT(n))); }); } catch (e) {}
+    return L;
+  }
   function phFeedPosts(){
     const S = (() => { try { return seasonGet(); } catch (e) { return {}; } })(), s1 = S.s1 || {}, s2 = S.s2 || {}, s3 = S.s3 || {}, day = Math.floor(nowS() / 864e5), P = [];
     let seed = day * 9301 + 49297; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-    FLOCK.forEach(([h, n, L], i) => { const t = L[Math.floor(rnd() * L.length)]; P.push({ id: 'a' + day + i, h, n, t, ts: nowS() - (20 + rnd() * 600) * 6e4 }); });
-    const ev = (id, h, n, t, mins, img) => P.push({ id, h, n, t, ts: nowS() - mins * 6e4, img });
-    if (s1.intro) ev('s1a', 'sky_over_blr', 'Night Sky Bangalore', 'Did anyone else see that?? Fireball over the city, then a boom from the west coast. My windows rattled. #Landfall', 140, 'meteor');
-    if (s1.c3) ev('s1b', 'fisher_gopal', 'Gopal · Ullal', 'There’s an ISLAND where it came down. It wasn’t there yesterday. I fish here every day.', 90, 'isle');
-    if (s2.open && !s2.drained) { ev('s2a', 'rooftop_camp', 'Survivors · Roof 14', 'Water at the third floor. We have a fire and a radio. If you can read this, you’re not alone.', 60, 'flood'); ev('s2b', 'blr_alerts', 'BLR Emergency Alerts', 'Do not enter the water. Sharks confirmed in flooded streets. Stay on rooftops.', 120); }
-    if (s2.drained) ev('s2c', 'blr_alerts', 'BLR Emergency Alerts', 'Floodwater has drained from most districts. One block remains under water and is closed.', 200);
-    if (s3.open) { ev('s3a', 'marketstreet_', 'Market Street Traders', 'Every shutter on our street has their flower stamped on it now. Nobody stamped it. Everybody pays.', 80, 'stamp'); const fr = Object.values(s3.dist || {}).filter(L => L.length >= 3).length; if (fr) ev('s3b', 'marketstreet_', 'Market Street Traders', `Stalls back open in ${fr} district${fr > 1 ? 's' : ''}. Music on the street tonight.`, 30); }
-    if (s3.done) ev('s3c', 'blr_alerts', 'BLR Emergency Alerts', 'Citywide power failure. Stay indoors. Updates when we have them.', 15);
-    if (JAIL.rec >= 2) ev('me1', 'mg_road_watch', 'MG Road Watch', 'Some kid just walked up and punched a man outside the bakery. Police on the way. What is wrong with people.', 12);
-    if (JAIL.until) ev('me2', 'mg_road_watch', 'MG Road Watch', 'Update: they got arrested. Took two constables.', 3);
-    PHX.pp.forEach(q => P.push(q));
-    return P.sort((a, b) => b.ts - a.ts).slice(0, 30);
+    FLOCK.forEach(([h, L], i) => { const a = Math.floor(rnd() * L.length); P.push({ id: 'a' + day + i, h, t: L[a], ts: nowS() - (20 + rnd() * 600) * 6e4 }); if (L.length > 2 && rnd() < .5) P.push({ id: 'b' + day + i, h, t: L[(a + 1) % L.length], ts: nowS() - (700 + rnd() * 600) * 6e4 }); });
+    const ev = (id, h, t, mins, img) => P.push({ id, h, t, ts: nowS() - mins * 6e4, img });
+    fkNews().forEach((t, i) => ev('n' + fkHash(t), 'blr_bulletin', t, 25 + i * 47));
+    if (s1.intro) ev('s1a', 'sky_over_blr', 'Did anyone else see that?? Fireball over the city, then a boom from the west coast. My windows rattled. #Landfall', 140, 'meteor');
+    if (s1.c3) ev('s1b', 'fisher_pete', 'There’s an ISLAND where it came down. It wasn’t there yesterday. I fish here every day. #CrashIsle', 90, 'isle');
+    if (s2.open && !s2.drained) { ev('s2a', 'rooftop_camp', 'Water at the third floor. We have a fire and a radio. If you can read this, you’re not alone. #HighWater', 60, 'flood'); ev('s2b', 'blr_alerts', 'Do not enter the water. Sharks confirmed in flooded streets. Stay on rooftops. #HighWater', 120); }
+    if (s2.drained) ev('s2c', 'blr_alerts', 'Floodwater has drained from most districts. One block remains under water and is closed.', 200);
+    if (s3.open) { ev('s3a', 'marketstreet_', 'Every shutter on our street has their flower stamped on it now. Nobody stamped it. Everybody pays. #Marigold', 80, 'stamp'); const fr = Object.values(s3.dist || {}).filter(L => L.length >= 3).length; if (fr) ev('s3b', 'marketstreet_', `Stalls back open in ${fr} district${fr > 1 ? 's' : ''}. Music on the street tonight. #Marigold`, 30); }
+    if (s3.done) ev('s3c', 'blr_alerts', 'Citywide power failure. Stay indoors. Updates when we have them.', 15);
+    if (JAIL.rec >= 2) ev('me1', 'mg_road_watch', 'Someone just walked up and punched a man outside the bakery. Police on the way. What is wrong with people.', 12);
+    if (JAIL.until) ev('me2', 'mg_road_watch', 'Update: they got arrested. Took two constables.', 3);
+    PHX.pp.forEach(q => { if (!ACC[q.h]) ACC[q.h] = [q.n || q.h, '', 500 + fkHash(q.h) % 5000]; P.push(q); });
+    PHX.my.forEach(q => P.push(Object.assign({ h: myH(), me: 1 }, q)));
+    return P.filter(q => q.ts <= nowS()).sort((a, b) => b.ts - a.ts).slice(0, 50);
   }
+  // numbers: other people's posts are fixed by their id; yours fill in over the first half hour
+  function fkCount(q){
+    const k = fkHash(q.id + q.t), big = ACC[q.h] ? Math.min(30, 1 + ACC[q.h][2] / 3e4) : 1;
+    let likes = q.me ? Math.floor(Math.sqrt(Math.min(1, (nowS() - q.ts) / 18e5)) * (6 + k % 30 + (q.img ? 25 : 0))) : Math.floor((3 + k % 300) * big);
+    if (PHX.lk.includes(q.id)) likes++;
+    return { likes, rp: Math.floor(likes / (7 + k % 6)) + (PHX.rp.includes(q.id) ? 1 : 0), views: likes * (28 + k % 40) + 40 };
+  }
+  // replies: picked from a pool by the kind of post; replies to yours arrive one by one
+  function fkReplies(q){
+    const k = fkHash(q.id), pool = q.me ? (q.img ? REPL.pic.concat(REPL.you) : REPL.you) : q.h === 'blr_bulletin' ? REPL.news : q.h === 'blr_alerts' || q.h === 'rooftop_camp' ? REPL.alert : REPL.life;
+    const who = Object.keys(ACC).filter(h => h !== q.h && !['blr_bulletin', 'blr_alerts'].includes(h)), n = q.me ? 2 + k % 3 : 1 + k % 4, R = [];
+    for (let i = 0; i < n; i++) { const t = q.ts + (q.me ? 45e3 + i * 80e3 + (k >> i) % 4e4 : (i + 1) * 9e5); if (t > nowS()) break; R.push({ h: who[(k >> (i * 3)) % who.length], t: pool[(k + i * 7) % pool.length], ts: t, me: 0 }); }
+    (PHX.ur[q.id] || []).forEach(([t, ts]) => R.push({ h: myH(), t, ts, me: 1 }));
+    return R.sort((a, b) => a.ts - b.ts);
+  }
+  // notifications: likes, replies and follows on what you posted
+  function fkNotes(){
+    const N = [];
+    PHX.my.forEach(q0 => { const q = Object.assign({ h: myH(), me: 1 }, q0), c = fkCount(q), short = q.t.length > 40 ? q.t.slice(0, 38) + '…' : q.t || 'your photo';
+      if (c.likes) { const k = fkHash(q.id), w = Object.keys(ACC)[k % Object.keys(ACC).length]; N.push({ ic: '♥', ts: q.ts + Math.min(18e5, 6e4 + c.likes * 2e4), h: w, t: `<b>${esc(fkName(w))}</b>${c.likes > 1 ? ` and ${c.likes - 1} other${c.likes > 2 ? 's' : ''}` : ''} liked your post: ${esc(short)}`, id: q.id }); }
+      fkReplies(q).filter(r => !r.me).forEach(r => N.push({ ic: '💬', ts: r.ts, h: r.h, t: `<b>${esc(fkName(r.h))}</b> replied: ${esc(r.t)}`, id: q.id })); });
+    PHX.my.slice(0, 4).forEach((q, i) => { const h = ['noor_draws', 'ana_on_film', 'dan_fixes', 'theo_codes'][i]; if (q.ts + 24e4 < nowS()) N.push({ ic: '👤', ts: q.ts + 24e4, h, t: `<b>${esc(fkName(h))}</b> followed you`, user: h }); });
+    return N.filter(n => n.ts <= nowS()).sort((a, b) => b.ts - a.ts);
+  }
+  const fkUnseen = () => fkNotes().filter(n => n.ts > PHX.ns).length;
+  let fkLastBn = nowS();
+  function flockTick(){ const N = fkNotes().filter(n => n.ts > fkLastBn); fkLastBn = nowS(); if (!N.length || (phOpen() && PH.tab === 'feed' && FK.v === 'notif')) return; const n = N[0]; phBanner('feed', 'Flock', n.t.replace(/<[^>]+>/g, ''), 'notif'); }
+  const fkText = t => esc(t).replace(/#(\w+)/g, '<a class="fktag" data-fq="#$1">#$1</a>').replace(/@(\w+)/g, '<a class="fktag" data-fu="$1">@$1</a>');
   const imgCss = k => ({ meteor: 'linear-gradient(160deg,#0B0D14 30%,#2A1410),radial-gradient(circle at 30% 70%,#FFB27A,transparent 40%)', isle: 'linear-gradient(#9CC8EE 55%,#2E7A9A 55%)', flood: 'linear-gradient(#5E7378 50%,#2E5A6A 50%)', stamp: 'radial-gradient(circle,#E8901A 0 28%,#7A3A08 30% 36%,#E8E6E0 38%)' }[k] || '#2A2D33');
+  const fkImg = img => !img ? '' : String(img).startsWith('data:image/') ? `<img class="phimg" alt="Photo" src="${esc(img)}">` : `<div class="phimg" style="background:${imgCss(img)}"></div>`;
+  const fkAv = (h, big) => `<i class="fkav${big ? ' big' : ''}" data-fu="${esc(h)}" style="background:${fkCol(h)}">${esc((fkName(h) || '?')[0].toUpperCase())}</i>`;
+  const fkTick = h => ACC[h] && ACC[h][3] ? '<em class="fkv" title="Verified">✓</em>' : '';
+  function fkCard(q, big){
+    const c = fkCount(q), liked = PHX.lk.includes(q.id), rp = PHX.rp.includes(q.id), nr = fkReplies(q).length + (q.me ? 0 : Math.floor(c.likes / 25));
+    return `<div class="phpost${big ? ' big' : ''}">${rp ? '<small class="fkrp">↻ You reposted</small>' : ''}<div class="phph">${fkAv(q.h)}<span data-fu="${esc(q.h)}"><b>${esc(fkName(q.h))}${fkTick(q.h)}</b><small>@${esc(q.h)} · ${ago(q.ts)}</small></span></div>`
+      + `<p data-fp="${esc(q.id)}">${fkText(q.t)}</p>${fkImg(q.img)}<div class="phact"><button type="button" data-fp="${esc(q.id)}">💬 ${fkN(nr)}</button><button type="button" data-frp="${esc(q.id)}" class="${rp ? 'rp' : ''}">↻ ${fkN(c.rp)}</button><button type="button" data-lk="${esc(q.id)}" class="${liked ? 'on' : ''}">${liked ? '♥' : '♡'} ${fkN(c.likes)}</button><span>📊 ${fkN(c.views)}</span></div></div>`;
+  }
+  function fkGo(v, id){ FK.back.push([FK.v, FK.id]); FK.v = v; FK.id = id == null ? null : id; phShow('feed'); }
+  function fkBack(){ const p = FK.back.pop(); if (!p) return false; [FK.v, FK.id] = p; phShow('feed'); return true; }
+  function fkSuggest(){
+    const S = (() => { try { return seasonGet(); } catch (e) { return {}; } })(), L = [];
+    if (!inWorld) L.push('Can’t sleep. Anyone else up?', 'Staying in tonight.'); else L.push('This city at night though.', 'Filter coffee and no plans.');
+    try { if (FLOOD.on) L.unshift('Still on a roof. Still wet. #HighWater'); } catch (e) {}
+    try { if (HEAT.lv) L.unshift('That was NOT me on MG Road.'); } catch (e) {}
+    if (S.s3 && S.s3.open && !S.s3.done) L.unshift('Not paying them. Not today. #Marigold');
+    if (S.s1 && S.s1.intro && !(S.s2 && S.s2.open)) L.unshift('Went down to the beach to see where it landed. #Landfall');
+    return L.slice(0, 4);
+  }
   function phFeed(B){
-    const P = phFeedPosts(); B.innerHTML = P.map(q => { const liked = PHX.lk.includes(q.id), base = 3 + (q.id.charCodeAt(1) * 7 + q.t.length * 3) % 400;
-      return `<div class="phpost"><div class="phph"><i style="background:hsl(${(q.h.charCodeAt(0) * 37) % 360},45%,42%)">${esc(q.n[0])}</i><span><b>${esc(q.n)}</b><small>@${esc(q.h)} · ${ago(q.ts)}</small></span></div><p>${esc(q.t)}</p>${q.img ? `<div class="phimg" style="background:${imgCss(q.img)}"></div>` : ''}<div class="phact"><button type="button" data-lk="${q.id}" class="${liked ? 'on' : ''}">${liked ? '♥' : '♡'} ${base + (liked ? 1 : 0)}</button><span>💬 ${Math.floor(base / 9)}</span><span>↻ ${Math.floor(base / 14)}</span></div></div>`; }).join('');
-    B.querySelectorAll('[data-lk]').forEach(b => b.onclick = () => { const id = b.dataset.lk, i = PHX.lk.indexOf(id); if (i >= 0) PHX.lk.splice(i, 1); else PHX.lk.push(id); phxSave(); tone(1100, .04, 'sine', .02); phShow('feed'); });
+    if (PHX.open === 'notif') { PHX.open = null; FK.back = []; FK.v = 'notif'; }
+    const P = phFeedPosts(), un = fkUnseen(), me = myH(), v = FK.v; let body = '';
+    const list = L => L.length ? L.map(q => fkCard(q)).join('') : '<div class="phcard"><small>Nothing here yet.</small></div>';
+    if (v === 'home') { const L = FK.tab === 'fo' ? P.filter(q => q.me || PHX.fo.includes(q.h) || PHX.rp.includes(q.id)) : P;
+      body = `<div class="fktop"><b class="fklogo">flock</b><div class="fktabs"><button type="button" data-ftab="fy" class="${FK.tab === 'fy' ? 'on' : ''}">For you</button><button type="button" data-ftab="fo" class="${FK.tab === 'fo' ? 'on' : ''}">Following</button></div></div>${list(L)}`; }
+    else if (v === 'post') { const q = P.find(x => x.id === FK.id); if (!q) { FK.v = 'home'; return phFeed(B); }
+      body = fkCard(q, true) + `<div class="fkrep">${fkReplies(q).map(r => `<div class="phpost rep"><div class="phph">${fkAv(r.h)}<span data-fu="${esc(r.h)}"><b>${esc(fkName(r.h))}${fkTick(r.h)}</b><small>@${esc(r.h)} · ${ago(r.ts)}</small></span></div><p>${fkText(r.t)}</p></div>`).join('')}</div>`
+        + `<div class="fkbox"><input type="text" maxlength="200" placeholder="Post your reply" aria-label="Reply" data-fin="1"><button type="button" class="fkpost" data-fsend="${esc(q.id)}">Reply</button></div>`; }
+    else if (v === 'user') { const h = FK.id, mine = h === me, A0 = ACC[h] || [h, '', 100], fol = PHX.fo.includes(h), L = P.filter(q => q.h === h || (mine && PHX.rp.includes(q.id)));
+      const followers = mine ? Math.min(4, PHX.my.length) + PHX.my.length * 2 : A0[2] + (fol ? 1 : 0);
+      body = `<div class="fkban" style="background:linear-gradient(120deg,${fkCol(h)},#0B0D14)"></div><div class="fkprof">${fkAv(h, true)}${mine ? '' : `<button type="button" class="fkfol${fol ? ' on' : ''}" data-ffol="${esc(h)}">${fol ? 'Following' : 'Follow'}</button>`}<b>${esc(fkName(h))}${fkTick(h)}</b><small>@${esc(h)}</small><p>${esc(mine ? 'Out in the city more than is probably healthy.' : A0[1])}</p><small><b>${fkN(mine ? PHX.fo.length : 80 + fkHash(h) % 600)}</b> Following · <b>${fkN(followers)}</b> Followers</small></div>${list(L)}`; }
+    else if (v === 'explore') { const q = FK.q.trim().toLowerCase();
+      if (q) body = `<div class="fkbox fks"><input type="search" placeholder="Search Flock" aria-label="Search" value="${esc(FK.q)}" data-fq-in="1"><button type="button" class="fkpost" data-fgo>Search</button></div>${list(P.filter(x => (x.t + ' ' + fkName(x.h) + ' @' + x.h).toLowerCase().includes(q)))}`;
+      else { const T = {}; P.forEach(x => (x.t.match(/#\w+/g) || []).forEach(t => T[t] = (T[t] || 0) + 1)); const tags = Object.keys(T).sort((a, b) => T[b] - T[a]).slice(0, 6);
+        const who = Object.keys(ACC).filter(h => !PHX.fo.includes(h) && h !== me).sort((a, b) => fkHash(a + Math.floor(nowS() / 864e5)) - fkHash(b + Math.floor(nowS() / 864e5))).slice(0, 3);
+        body = `<div class="fkbox fks"><input type="search" placeholder="Search Flock" aria-label="Search" value="" data-fq-in="1"><button type="button" class="fkpost" data-fgo>Search</button></div><h4 class="fkh">Trending in Bangalore</h4>${tags.map((t, i) => `<button type="button" class="fktr" data-fq="${esc(t)}"><small>${i + 1} · Trending</small><b>${esc(t)}</b><small>${fkN(T[t] * (900 + fkHash(t) % 4000))} posts</small></button>`).join('') || '<div class="phcard"><small>Nothing trending.</small></div>'}`
+          + `<h4 class="fkh">Who to follow</h4>${who.map(h => `<div class="fkwho">${fkAv(h)}<span data-fu="${esc(h)}"><b>${esc(fkName(h))}${fkTick(h)}</b><small>${esc(ACC[h][1])}</small></span><button type="button" class="fkfol" data-ffol="${esc(h)}">Follow</button></div>`).join('')}`; } }
+    else if (v === 'notif') { const N = fkNotes(); body = `<h4 class="fkh">Notifications</h4>` + (N.length ? N.slice(0, 30).map(n => `<button type="button" class="fknote${n.ts > PHX.ns ? ' new' : ''}" ${n.id ? `data-fp="${esc(n.id)}"` : `data-fu="${esc(n.user)}"`}><i>${n.ic}</i><span>${n.t}<small>${ago(n.ts)}</small></span></button>`).join('') : '<div class="phcard"><small>Post something and see who answers.</small></div>'); PHX.ns = nowS(); flSave(); }
+    else if (v === 'compose') { const pic = typeof PHOTO_LAST !== 'undefined' && PHOTO_LAST;
+      body = `<h4 class="fkh">New post</h4><div class="fkcomp">${fkAv(me)}<textarea maxlength="280" rows="4" placeholder="What’s happening?" aria-label="Post text" data-fin="1"></textarea></div><div class="fkcnt"><small data-fcnt>0/280</small></div>`
+        + (pic ? `<label class="fkpic"><input type="checkbox" data-fpic> Attach your last photo<img alt="" src="${esc(pic)}"></label>` : '<small class="fkhint">Take a photo with the Camera app to attach it.</small>')
+        + `<div class="fksug">${fkSuggest().map(t => `<button type="button" data-fsug="${esc(t)}">${esc(t)}</button>`).join('')}</div><button type="button" class="fkpost wide" data-fpub>Post</button>`; }
+    const nav = `<nav class="fknav"><button type="button" data-fv="home" class="${v === 'home' ? 'on' : ''}" aria-label="Home">⌂</button><button type="button" data-fv="explore" class="${v === 'explore' ? 'on' : ''}" aria-label="Explore">⌕</button><button type="button" data-fv="compose" class="fknew" aria-label="New post">＋</button><button type="button" data-fv="notif" class="${v === 'notif' ? 'on' : ''}" aria-label="Notifications">🔔${un && v !== 'notif' ? `<u>${un}</u>` : ''}</button><button type="button" data-fv="me" class="${v === 'user' && FK.id === me ? 'on' : ''}" aria-label="Your profile">👤</button></nav>`;
+    B.innerHTML = `<div class="fk">${body}${nav}</div>`; if (['home', 'explore', 'notif'].includes(v) && !FK.keep) B.scrollTop = 0; FK.keep = false;
+    const W = B.firstChild, ta = W.querySelector('textarea');
+    if (ta) ta.oninput = () => { W.querySelector('[data-fcnt]').textContent = ta.value.length + '/280'; };
+    const si = W.querySelector('[data-fq-in]');
+    const clean = s => String(s || '').replace(/[\u0000-\u001F\u007F]/g, ' ').replace(/\s+/g, ' ').trim();
+    W.onclick = e => { const el = e.target.closest('[data-fgo],[data-fv],[data-ftab],[data-fp],[data-fu],[data-fq],[data-lk],[data-frp],[data-ffol],[data-fsug],[data-fpub],[data-fsend]'); if (!el) return; const d = el.dataset;
+      if (d.fgo !== undefined) { FK.q = clean(si && si.value).slice(0, 60); FK.keep = true; return phShow('feed'); }
+      if (d.fv) { FK.back = []; FK.q = ''; if (d.fv === 'me') { FK.v = 'user'; FK.id = me; } else { FK.v = d.fv; FK.id = null; } return phShow('feed'); }
+      if (d.ftab) { FK.tab = d.ftab; return phShow('feed'); }
+      if (d.lk) { const i = PHX.lk.indexOf(d.lk); if (i >= 0) PHX.lk.splice(i, 1); else PHX.lk.push(d.lk); flSave(); tone(1100, .04, 'sine', .02); FK.keep = true; const st = B.scrollTop; phShow('feed'); B.scrollTop = st; return; }
+      if (d.frp) { const i = PHX.rp.indexOf(d.frp); if (i >= 0) PHX.rp.splice(i, 1); else PHX.rp.push(d.frp); flSave(); tone(880, .04, 'sine', .02); FK.keep = true; const st = B.scrollTop; phShow('feed'); B.scrollTop = st; return; }
+      if (d.ffol) { const i = PHX.fo.indexOf(d.ffol); if (i >= 0) PHX.fo.splice(i, 1); else PHX.fo.push(d.ffol); flSave(); tone(990, .05, 'sine', .02); FK.keep = true; const st = B.scrollTop; phShow('feed'); B.scrollTop = st; return; }
+      if (d.fsug) { const t = W.querySelector('textarea'); if (t) { t.value = d.fsug; t.oninput(); } return; }
+      if (d.fpub !== undefined) { const t = clean(W.querySelector('textarea').value).slice(0, 280), pc = W.querySelector('[data-fpic]'), img = pc && pc.checked ? PHOTO_LAST : null; if (!t && !img) return say('Write something first.', 1600);
+        const q = { id: 'm' + nowS().toString(36), t, img, ts: nowS() }; PHX.my.push(q); flSave(); tone(1320, .06, 'sine', .03); FK.back = []; FK.v = 'user'; FK.id = me; return phShow('feed'); }
+      if (d.fsend) { const inp = W.querySelector('[data-fin]'), t = clean(inp && inp.value).slice(0, 200); if (!t) return; (PHX.ur[d.fsend] = PHX.ur[d.fsend] || []).push([t, nowS()]); flSave(); tone(1200, .05, 'sine', .03); FK.keep = true; phShow('feed'); B.scrollTop = B.scrollHeight; return; }
+      if (d.fq) { FK.q = d.fq; return fkGo('explore'); }
+      if (d.fu) return fkGo('user', d.fu);
+      if (d.fp && FK.v !== 'post') return fkGo('post', d.fp); };
   }
   // Weather: Bangalore, by the hour, with whatever the season is doing to it
   function phWeather(B){
@@ -10947,11 +11073,11 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       + `<div class="phhours">${[0, 1, 2, 3, 4, 5].map(i => { const x = (Math.floor(h) + i * 2) % 24; return `<span><small>${i ? String(x).padStart(2, '0') : 'Now'}</small><b>${x >= 6 && x < 18 ? cond[0] : '🌙'}</b>${temp(x)}°</span>`; }).join('')}</div>`;
   }
   // the home screen
-  const APPS = [['msgs', 'Messages', '💬', '#34C759'], ['feed', 'Flock', '🐦', '#1D9BF0'], ['map', 'Maps', '🗺', '#E8B82E'], ['season', 'Season', '☄', '#FF7A2A'], ['camera', 'Camera', '📷', '#5A5E68'], ['weather', 'Weather', '⛅', '#3C8CE0'], ['news', 'News', '📰', '#C8102E'], ['jobs', 'Jobs', '💼', '#6B3FA0'], ['upg', 'Upgrades', '⬆', '#1F7A45'], ['contacts', 'Contacts', '👥', '#8A8F99'], ['rayan', 'Rayan', 'R', '#16181D'], ['story', 'Story', '📖', '#B8862E']];
+  const APPS = [['msgs', 'Messages', '💬', '#34C759'], ['feed', 'Flock', '🐦', '#1D9BF0'], ['map', 'Maps', '🗺', '#E8B82E'], ['season', 'Season', '☄', '#FF7A2A'], ['camera', 'Camera', '📷', '#5A5E68'], ['weather', 'Weather', '⛅', '#3C8CE0'], ['jobs', 'Jobs', '💼', '#6B3FA0'], ['upg', 'Upgrades', '⬆', '#1F7A45'], ['contacts', 'Contacts', '👥', '#8A8F99'], ['rayan', 'Rayan', 'R', '#16181D'], ['story', 'Story', '📖', '#B8862E']];
   function phHomeScreen(B){
     const h = cityHour(), d = new Date(), stOn = storyStarted(), un = phUnreadAll(), apps = APPS.filter(([k]) => (k !== 'story' || stOn) && (inWorld || !PH_CITY.includes(k)));
     B.innerHTML = `<div class="phlock"><b>${String(Math.floor(h)).padStart(2, '0')}:${String(Math.floor(h % 1 * 60)).padStart(2, '0')}</b><small>${d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</small></div>`
-      + `<div class="phapps">${apps.map(([k, n, ic, col]) => `<button type="button" data-app="${k}"><i style="background:${col}">${ic}</i>${esc(n)}${k === 'msgs' && un ? `<u>${un}</u>` : ''}</button>`).join('')}</div>`;
+      + `<div class="phapps">${apps.map(([k, n, ic, col]) => `<button type="button" data-app="${k}"><i style="background:${col}">${ic}</i>${esc(n)}${k === 'msgs' && un ? `<u>${un}</u>` : ''}${k === 'feed' && fkUnseen() ? `<u>${fkUnseen()}</u>` : ''}</button>`).join('')}</div>`;
     B.querySelectorAll('[data-app]').forEach(b => b.onclick = () => { PHX.open = null; phShow(b.dataset.app); });
   }
   function phxShow(t, B){
@@ -10961,8 +11087,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (t === 'msgs') { phMsgs(B); return true; } if (t === 'feed') { phFeed(B); return true; } if (t === 'weather') { phWeather(B); return true; }
     return false;
   }
-  phEl.querySelector('#phBack').onclick = () => { if (PH.tab === 'msgs' && PHX.open) { PHX.open = null; phShow('msgs'); } else phShow('home'); };
-  phEl.querySelector('#phHome').onclick = () => { PHX.open = null; phShow('home'); };
+  phEl.querySelector('#phBack').onclick = () => { if (PH.tab === 'msgs' && PHX.open) { PHX.open = null; phShow('msgs'); } else if (PH.tab === 'feed' && fkBack()) {} else { FK.back = []; FK.v = 'home'; phShow('home'); } };
+  phEl.querySelector('#phHome').onclick = () => { PHX.open = null; FK.back = []; FK.v = 'home'; phShow('home'); };
   { const s = document.createElement('style'); s.textContent = `.phtabs{display:none!important}.phstat{display:flex;align-items:center;justify-content:space-between;padding:8px 18px 0;font:700 12px/1 system-ui,sans-serif}.phstat #phClock{width:auto}.phnotch{display:block;width:84px;height:20px;border-radius:12px;background:#000}
 .phstat #phSig{display:flex;align-items:center;gap:5px}.phbat{display:inline-block;width:22px;height:10px;border:1.5px solid #EEF1F5;border-radius:3px;position:relative;padding:1px}.phbat i{display:block;height:100%;background:#EEF1F5;border-radius:1px}.phbat.low i{background:#FF453A}
 .phback{background:none;border:0;color:#7CB8FF;font:400 30px/1 system-ui;width:32px;height:32px;cursor:pointer;padding:0}.phhome{display:block;width:120px;height:5px;margin:6px auto 9px;border:0;border-radius:3px;background:#EEF1F5;opacity:.7;cursor:pointer}
@@ -10972,7 +11098,19 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 .phth{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-bottom:1px solid #1E2128;color:#EEF1F5;padding:10px 2px;text-align:left;cursor:pointer;position:relative}.phth i{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;font:800 17px system-ui;font-style:normal;color:#fff}.phth span{flex:1;min-width:0}.phth small{display:block;color:#9AA3AD;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.phth em{font-style:normal;font-size:11px;color:#9AA3AD;align-self:flex-start}.phth u{position:static;display:inline-block;margin-left:6px}
 .phchat{display:flex;flex-direction:column;gap:6px;padding:6px 0}.phchat p{max-width:80%;background:#26292F;border-radius:16px 16px 16px 4px;padding:8px 11px;margin:0;align-self:flex-start;font-size:14px}.phchat p.me{align-self:flex-end;background:#0A84FF;border-radius:16px 16px 4px 16px}.phchat small{display:block;font-size:10px;opacity:.6;margin-top:2px}
 .phpost{border-bottom:1px solid #1E2128;padding:10px 0}.phph{display:flex;gap:9px;align-items:center}.phph i{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;font:800 15px system-ui;font-style:normal;color:#fff}.phph small{display:block;color:#8A939D}.phpost p{margin:6px 0 0;font-size:14px}.phimg{height:150px;border-radius:12px;margin-top:8px}
-.phact{display:flex;gap:18px;margin-top:8px;color:#8A939D;font-size:12px}.phact button{background:none;border:0;color:#8A939D;font:600 12px system-ui;cursor:pointer;padding:0}.phact button.on{color:#FF3B6A}
+.fk{position:relative;min-height:100%;padding-bottom:4px}.fktop{position:sticky;top:-4px;z-index:2;background:#0B0D14;margin:0 -2px;padding:4px 2px 0}.fklogo{display:block;text-align:center;font:800 20px/1.2 system-ui,sans-serif;letter-spacing:-.5px;color:#1D9BF0}.fktabs{display:flex;border-bottom:1px solid #1E2128}.fktabs button{flex:1;background:none;border:0;color:#8A939D;font:700 13px system-ui,sans-serif;padding:9px 0;cursor:pointer;border-bottom:3px solid transparent}.fktabs button.on{color:#EEF1F5;border-color:#1D9BF0}
+.fkav{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:50%;font:800 15px system-ui;font-style:normal;color:#fff;cursor:pointer}.fkav.big{width:64px;height:64px;font-size:26px;border:3px solid #0B0D14;margin-top:-34px}.phph span{cursor:pointer;min-width:0}.fkv{display:inline-grid;place-items:center;width:14px;height:14px;border-radius:50%;background:#1D9BF0;color:#fff;font:900 9px/1 system-ui;font-style:normal;margin-left:4px;vertical-align:1px}
+.phpost p{cursor:pointer;overflow-wrap:anywhere}.phpost.big p{font-size:16px}.phpost.rep{padding-left:8px;border-left:2px solid #1E2128}.fkrp{display:block;color:#8A939D;font-size:11px;margin:0 0 4px 44px}.fktag{color:#4AA8FF;cursor:pointer;text-decoration:none}img.phimg{display:block;width:100%;height:auto;max-height:240px;object-fit:cover}
+.phact button.rp{color:#00BA7C}.phact span{white-space:nowrap}.fkbox{display:flex;gap:6px;padding:10px 0}.fkbox.fks{padding-top:4px}.fkbox input{flex:1;min-width:0;background:#16181D;border:1px solid #2A2D33;border-radius:999px;color:#EEF1F5;padding:9px 14px;font:500 14px system-ui,sans-serif}
+.fkpost{background:#1D9BF0;color:#fff;border:0;border-radius:999px;padding:8px 14px;font:800 13px system-ui,sans-serif;cursor:pointer}.fkpost.wide{display:block;width:100%;margin-top:12px;padding:11px}
+.fkban{height:70px;border-radius:12px 12px 0 0;margin-top:4px}.fkprof{position:relative;padding:0 4px 10px;border-bottom:1px solid #1E2128}.fkprof>b{display:block;font-size:17px;margin-top:4px}.fkprof>small{display:block;color:#8A939D}.fkprof>small b{color:#EEF1F5}.fkprof p{margin:8px 0;font-size:14px}.fkfol{background:#EEF1F5;color:#0E1013;border:0;border-radius:999px;padding:7px 14px;font:800 12px system-ui,sans-serif;cursor:pointer;flex:none}.fkfol.on{background:none;color:#EEF1F5;border:1px solid #3A3D44}.fkprof .fkfol{position:absolute;right:4px;top:8px}
+.fkh{margin:10px 0 4px;font:800 16px system-ui,sans-serif}.fktr{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid #1E2128;color:#EEF1F5;padding:8px 2px;cursor:pointer}.fktr b{display:block;font-size:15px}.fktr small{display:block;color:#8A939D;font-size:11px}
+.fkwho{display:flex;gap:9px;align-items:center;padding:8px 0;border-bottom:1px solid #1E2128}.fkwho span{flex:1;min-width:0;cursor:pointer}.fkwho small{display:block;color:#8A939D;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fknote{display:flex;gap:10px;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid #1E2128;color:#EEF1F5;padding:10px 2px;font:500 13px/1.35 system-ui,sans-serif;cursor:pointer}.fknote.new{background:rgba(29,155,240,.08)}.fknote i{font-style:normal;font-size:18px;width:24px;text-align:center}.fknote small{display:block;color:#8A939D;margin-top:2px}
+.fkcomp{display:flex;gap:9px}.fkcomp textarea{flex:1;min-width:0;background:none;border:0;color:#EEF1F5;font:500 16px/1.4 system-ui,sans-serif;resize:none;outline:none}.fkcnt{text-align:right;color:#8A939D;border-bottom:1px solid #1E2128;padding-bottom:6px}.fkpic{display:flex;align-items:center;gap:8px;margin:10px 0;font-size:13px;cursor:pointer}.fkpic img{width:64px;height:40px;object-fit:cover;border-radius:6px;margin-left:auto}.fkhint{display:block;color:#8A939D;margin:10px 0}
+.fksug{display:flex;flex-wrap:wrap;gap:6px}.fksug button{background:#16181D;border:1px solid #2A2D33;color:#C8CDD6;border-radius:999px;padding:6px 10px;font:600 12px system-ui,sans-serif;cursor:pointer;text-align:left}
+.fknav{position:sticky;bottom:0;display:flex;justify-content:space-around;align-items:center;background:rgba(11,13,20,.96);border-top:1px solid #1E2128;margin:10px -2px -12px;padding:6px 0;z-index:2}.fknav button{position:relative;background:none;border:0;color:#8A939D;font:400 21px/1 system-ui;width:44px;height:36px;cursor:pointer}.fknav button.on{color:#EEF1F5}.fknav .fknew{background:#1D9BF0;color:#fff;border-radius:50%;width:40px;height:40px;font-size:22px}.fknav u{position:absolute;top:0;right:4px;background:#1D9BF0;color:#fff;text-decoration:none;border-radius:999px;min-width:16px;height:16px;padding:0 4px;font:800 10px/16px system-ui}
+.phact{display:flex;justify-content:space-between;gap:8px;margin-top:8px;color:#8A939D;font-size:12px}.phact button{background:none;border:0;color:#8A939D;font:600 12px system-ui;cursor:pointer;padding:0}.phact button.on{color:#FF3B6A}
 .phwx{text-align:center;padding:20px 0 14px}.phwx b{display:block;font:200 70px/1 system-ui}.phwx span{display:block;font-weight:600}.phwx small{display:block;color:#9AA3AD;margin:4px 0}.phwx em{display:block;font-style:normal;color:#FFB04A;margin-top:8px;font-weight:700}
 .phhours{display:flex;justify-content:space-between;background:#16181D;border-radius:14px;padding:10px}.phhours span{display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:700;font-size:13px}.phhours small{color:#9AA3AD;font-size:11px}
 .phbanner{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translate(-50%,-140%);z-index:80;width:min(420px,calc(100% - 20px));display:flex;align-items:center;gap:10px;background:rgba(30,32,38,.94);color:#fff;border:0;border-radius:18px;padding:10px 14px;text-align:left;box-shadow:0 10px 30px rgba(0,0,0,.4);cursor:pointer;transition:transform .35s;font:500 13px/1.3 system-ui,sans-serif;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}.phbanner.on{transform:translate(-50%,0)}.phbanner i{font-style:normal;font-size:22px}.phbanner span{flex:1;min-width:0}.phbanner small{display:block;color:#C8CDD6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.phbanner em{font-style:normal;font-size:11px;color:#9AA3AD}`; document.head.appendChild(s); }
@@ -11047,8 +11185,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       + SUITS2.map(([k, c]) => { const got = shopGot.includes(k); return `<div class="phcard"><b>${OUTFITS[k].name}</b><small>${got ? 'Yours. Change into it from the mirror or the Look menu.' : 'A new suit.'}</small><div class="phrow">${got ? '<button type="button" disabled>Owned</button>' : `<button type="button" class="y" data-s="${k}" data-c="${c}" ${JOB.rep < c ? 'disabled' : ''}>Buy for ${c}</button>`}</div></div>`; }).join('');
       B.querySelectorAll('[data-u]').forEach(b => b.onclick = () => { const k = b.dataset.u, c = UPG2_DEF[k][2][UPG2[k]]; if (JOB.rep < c) return; JOB.rep -= c; UPG2[k]++; jobSave(); upgSave(); tone(784, .15, 'triangle', .05); say(`${UPG2_DEF[k][0]} upgraded to level ${UPG2[k]}.`, 2200); phShow('upg'); });
       B.querySelectorAll('[data-s]').forEach(b => b.onclick = () => { const k = b.dataset.s, c = +b.dataset.c; if (JOB.rep < c) return; JOB.rep -= c; jobSave(); shopGot.push(k); try { localStorage.setItem('ru-shop', JSON.stringify(shopGot)); } catch (e) {} look.outfit = k; look.cape = OUTFITS[k].cape ? 1 : 0; saveLook(); idleShown = undefined; tone(988, .2, 'triangle', .05); say(`You’re wearing the ${OUTFITS[k].name} now.`, 2400); phShow('upg'); }); return; }
-    if (t === 'news') { const H = []; try { H.push(...storyHeadlines()); } catch (e) {} try { H.unshift(...tdNews()); } catch (e) {} try { H.push(...xcNews()); } catch (e) {} if (JOB.sealed.size) H.unshift(`${JOB.sealed.size} DRUG DEN${JOB.sealed.size > 1 ? 'S' : ''} SHUT DOWN. POLICE SAY THEY ‘HAD SOME HELP’`); if (Object.keys(SBK).length) H.unshift(`MASKED HERO BEATS ${SBOSS.filter(q => SBK[q.id]).map(q => q.name.toUpperCase()).join(', ')}`); if (HEAT.lv) H.unshift('POLICE HUNT RECKLESS VIGILANTE ACROSS CITY'); if (JOB.done) H.push(`“${heroName().toUpperCase()} FOUND MY CAT,” SAYS GRATEFUL AUNTY`); if (festNow()) H.unshift('FIREWORKS LIGHT UP THE CITY TONIGHT');
-      B.innerHTML = '<div class="phcard"><b>The Daily Bugle · Bangalore edition</b><small>Today’s headlines</small></div>' + (H.length ? H.slice(0, 8) : ['QUIET DAY IN THE GARDEN CITY']).map(x => `<div class="phnews">${esc(nmT(x))}</div>`).join(''); return; }
     if (t === 'contacts') { B.innerHTML = '<div class="phcard"><b>Contacts</b><small>People you’ve helped. Call them for another job.</small></div>' + (PH.contacts.length ? PH.contacts.map((c, i) => `<div class="phcard"><b>${esc(c.who)}</b><small>${esc(c.where)}</small><div class="phrow"><button type="button" class="y" data-c="${i}" ${JOB.q ? 'disabled' : ''}>Call</button></div></div>`).join('') : '<div class="phcard"><small>No contacts yet. Take a job from someone first.</small></div>');
       B.querySelectorAll('[data-c]').forEach(b => b.onclick = () => { const c = PH.contacts[+b.dataset.c], d = DOORS.find(x => x.name === c.where); if (!d || JOB.q) return; const keep = BIN.d; BIN.d = d; const o = jobOffer(d); BIN.d = keep; tone(523, .1, 'sine', .04); if (!o) return say(`${c.who}: “Nothing today. Thanks for calling!”`, 2600); phoneClose(); askChoice('job', v => { if (v === 'yes') jobStart(o); }, { q: `${c.who} (on the phone): “${o.ask}”`, a: [['yes', 'On my way'], ['no', 'Not right now']] }); }); return; }
     if (t === 'rayan') { B.innerHTML = '<div class="phcard"><b>Rayan Upadhyay</b><small>The person who built this city. Student, builder of AI tools, Mandarin learner, record collector.</small></div><div class="phrow">' + [['about', 'About me'], ['projects', 'Projects'], ['research', 'Research'], ['highlights', 'Highlights'], ['contact', 'Contact / hire me']].map(([k, n]) => `<button type="button" class="${k === 'contact' ? 'y' : ''}" data-p="${k}">${n}</button>`).join('') + '</div>';
@@ -12366,10 +12502,10 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // ---------- small helpers ----------
   // people in scenes: every index gives a different build, hair, skin and clothes (beards, glasses, kurtas, saris, caps)
   const crowdLook = i => { const f = i % 2 === 1, r = n => ((i * 2654435761) >>> n) % 997 / 997;
-    return Object.assign({}, LOOK0, { c1: (i * 3 + 2) % SUITC.length, c2: (i * 7 + 1) % SUITC.length, skin: 1 + i % 5, hairC: r(3) < .12 ? 5 : [0, 0, 1, 0, 2, 1][i % 6],
+    return Object.assign({}, LOOK0, { c1: (i * 3 + 2) % SUITC.length, c2: (i * 7 + 1) % SUITC.length, skin: i % 6, hairC: r(3) < .12 ? 5 : [0, 3, 1, 4, 2, 0, 1, 3][i % 8],
       hair: f ? ['long', 'bun', 'ponytail', 'curly'][i % 4] : ['short', 'side', 'buzz', 'bald', 'curly', 'short'][i % 6],
       build: { h: .9 + r(5) * .22, w: .86 + r(7) * .42, belly: r(9) > .72 ? .5 + r(11) * .5 : 0, sh: .94 + r(13) * .14 },
-      x: f ? { saree: r(15) < .35, glasses: r(17) < .25 } : { beard: r(19) < .3 ? (r(21) < .4 ? 'long' : 1) : 0, moustache: r(23) < .3, glasses: r(25) < .22, kurta: r(27) < .3, cap: r(29) < .15 } }); };
+      x: f ? { saree: r(15) < .08, glasses: r(17) < .25 } : { beard: r(19) < .3 ? (r(21) < .4 ? 'long' : 1) : 0, moustache: r(23) < .2, glasses: r(25) < .22, kurta: r(27) < .08, cap: r(29) < .2 } }); };
   function stArena2(sc, part){
     if (part === 's1') { const w = new THREE.Mesh(new THREE.CircleGeometry(ER, 48), new THREE.MeshStandardMaterial({ color: 0x3A6A9A, transparent: true, opacity: .55, roughness: .1, metalness: .3 })); w.rotation.x = -Math.PI / 2; w.position.y = .12; sc.add(w); }
     if (part === 's2') { const r = new THREE.Mesh(new THREE.CylinderGeometry(15, 15, 1.1, 48, 1, true), mat(0x8A8F99, { side: THREE.DoubleSide })); r.position.y = .55; sc.add(r); const pad = new THREE.Mesh(new THREE.RingGeometry(5, 5.6, 40), new THREE.MeshBasicMaterial({ color: 0xFFC93C, side: THREE.DoubleSide })); pad.rotation.x = -Math.PI / 2; pad.position.y = .03; sc.add(pad); box(4.8, 6, 5.8, mat(0x2A2D33, { metalness: .5 }), 17, 3, 0, sc); PILLARS.push({ x: 17, z: 0, r: 3 }); }
@@ -13888,7 +14024,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       const nb = textPlane(1.2, .8, (c, w, h) => { c.fillStyle = '#B88A5A'; c.fillRect(0, 0, w, h); ['#FFFFF0', '#FFF2A8', '#CFE3FF', '#FFD0D0'].forEach((col, i) => { c.fillStyle = col; c.fillRect(w * (.06 + (i % 2) * .48), h * (.08 + (i >> 1) * .46), w * .42, h * .38); }); c.fillStyle = '#2A2D33'; c.font = `700 ${h * .07}px sans-serif`; ['WATER: 6-8 AM', 'MAINTENANCE DUE', 'YOGA, SUNDAY 7AM', 'NO PARKING'].forEach((t, i) => c.fillText(t, w * (.08 + (i % 2) * .48), h * (.2 + (i >> 1) * .46))); }, .08);
       nb.position.set(-1, 1.6, hz - .02); nb.rotation.y = Math.PI; g.add(nb);
       person(1, -hx + 2.4, hz - .25, [0, -1], 'The watchman', 'Who do you want to see? Just looking? Okay, okay. The lift is not working. Take the stairs.', 'sit', { outfit: 'casual', c1: 4, c2: 4 });
-      person(2, 1, 0, [-1, 0], 'An aunty from the second floor', S2(['The water tanker is late again. Third time this week!', 'Are you the new tenant? The rent is too much, I’m telling you.', 'My son is in America. Did I tell you? He’s in America.']), 'talk');
+      person(2, 1, 0, [-1, 0], 'A neighbour from the second floor', S2(['The water tanker is late again. Third time this week!', 'Are you the new tenant? The rent is too much, I’m telling you.', 'My son is in America. Did I tell you? He’s in America.']), 'talk');
     } else if (T === 'tiffin') {
       BIN.hello = 'It smells of ghee and filter coffee.';
       box2(1.1, 1.05, Z - 3, 0x8A8F99, hx - 1.7, .52, 0); bx(1.2, .06, Z - 2.9, 0x2A2D33, hx - 1.7, 1.08, 0);
@@ -14018,14 +14154,14 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // wait for the lights at the zebra crossings, stop to chat, buy chai, talk on the phone, open umbrellas in the rain,
   // and notice you.
   const PED = { list: [], nodes: [], carts: [], built: false, ims: null, bub: [], btx: new Map(), R: 100, N: 0 };
-  const P_SKIN = [0x8D5A3B, 0xA0694A, 0x6B4430, 0xC08A64, 0x7A4E34, 0xB57B55, 0x5A3A28];
-  const P_HAIR = [0x16120F, 0x1E1712, 0x2A1E16, 0x16120F, 0x3A2A1E];
+  const P_SKIN = [0xF2D3B8, 0xE8C4A0, 0xD9A87E, 0xC08A64, 0xA0694A, 0x8D5A3B, 0x6B4430, 0x4E2E1C, 0xF0C8A8, 0xB57B55];
+  const P_HAIR = [0x16120F, 0x2A1E16, 0x3A2A1E, 0x6A4A2E, 0xC8A060, 0x8A3A1E, 0x16120F, 0x4A3424];
   const P_TOP = [0xF4F1E8, 0xEEF1F5, 0x9FC4E8, 0x2E5A9A, 0x8A1A2E, 0xE07A1E, 0x1F7A45, 0xD94C8A, 0xF2C230, 0x5A5E68, 0x16181D, 0xC8102E, 0x6B3FA0, 0x3CB0A8, 0xE8D8B0, 0xB8C4D0];
   const P_LEG = [0x2B3A55, 0x1A1B1F, 0x3A3D44, 0xB8A27A, 0x2B3A55, 0x5A4632, 0x16181D, 0x4A4E58];
   const P_SAREE = [0xD94C8A, 0x1F7A45, 0xE07A1E, 0x6B3FA0, 0xC8102E, 0x3CB0A8, 0xF2C230, 0x8A1A2E, 0x1E5AA8];
   const PSAY = {
     ow: ['Ow!', 'Hey!', 'What was that for?', 'Are you mad?'], flee: ['Help!', 'Somebody call the police!', 'Run!', 'Leave me alone!'], fight: ['Oh, you want to go?', 'Big mistake.', 'Come on then.', 'You picked the wrong person.'], up: ['My head…', 'I’m calling the police.', 'Never again.', 'What just happened?'],
-    hi: ['Namaskara!', 'Hello, hello!', 'Oota aytha? Have you eaten?', 'Traffic is too much today.', 'Super weather, macha.', 'Coffee time, no?', 'Busy day, busy day.', 'Did you see the match last night?', 'They dug up this road again.', 'Hey! How are you?'],
+    hi: ['Morning!', 'Hello, hello!', 'Have you eaten?', 'Traffic is too much today.', 'Super weather today.', 'Coffee time, no?', 'Busy day, busy day.', 'Did you see the match last night?', 'They dug up this road again.', 'Hey! How are you?'],
     morn: ['Good morning!', 'Off to work. Again.', 'Morning walk! Very good for health.'], night: ['Good night!', 'Late walk, eh?', 'Go home, it’s late!'],
     hero: ['Hey! You’re the hero from the news!', 'Selfie! Selfie, please!', 'Nice suit!', 'Can you fly? Show me!'], rain: ['So much rain, yaar.', 'Forgot my umbrella again.'],
     bump: ['Arey, careful!', 'Sorry, sorry.', 'Watch where you’re going!', 'Oho!'], car: ['Arey! Slow down!', 'Is this a race track?', 'Aiyo!', 'Learn to drive!'],
@@ -14104,7 +14240,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     for (let i = 0; i < 4; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false })); s.visible = false; s.renderOrder = 5; g.add(s); PED.bub.push({ s, p: null, until: 0 }); }
   }
   function pedLook(p){
-    const r = Math.random(), type = r < .08 ? 'k' : r < .16 ? 'o' : r < .34 ? 's' : r < .5 ? 'f' : 'm';
+    const r = Math.random(), type = r < .08 ? 'k' : r < .16 ? 'o' : r < .21 ? 's' : r < .46 ? 'f' : 'm';
     Object.assign(p, { type, sc: type === 'k' ? .62 + Math.random() * .1 : .93 + Math.random() * .12, skin: pickA(P_SKIN), hairC: type === 'o' ? 0xA8A8A2 : pickA(P_HAIR), long: type === 's' || type === 'f' ? Math.random() < .85 : type === 'k' && Math.random() < .35,
       top: type === 's' ? pickA(P_SAREE) : pickA(P_TOP), leg: type === 's' ? 0 : type === 'f' ? pickA([0xEEF1F5, 0x16181D, 0xD8C8A8, 0x8A1A2E]) : pickA(P_LEG), bag: type !== 'k' && Math.random() < .3 ? pickA([0x3A2A1E, 0x16181D, 0xC8102E, 0x2E5A9A, 0xB07C4A]) : 0,
       umb: Math.random() < .75 ? (Math.random() < .6 ? 0x1A1B1F : pickA([0x2E5A9A, 0xC8102E, 0x1F7A45, 0x6B3FA0])) : 0, phone: type !== 'k' && Math.random() < .14, lo: (Math.random() - .5) * .9, ph: Math.random() * 6 });
@@ -14144,16 +14280,19 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   const _pc = new THREE.Color(), _pe2 = new THREE.Euler();
   function pedPart(im, col, x, y, z, rx, ry, rz, sx = 1, sy = 1, sz = 1){ const i = im.userData.n++; _pL.compose(_pv.set(x, y, z), _pq.setFromEuler(_pe.set(rx, ry, rz)), _ps.set(sx, sy, sz)); _pM.multiplyMatrices(_pB, _pL); im.setMatrixAt(i, _pM); im.setColorAt(i, _pc.setHex(col)); }
   function pedHide(p){ p.vis = false; }
-  // ---------- jail: pick enough fights and you serve time ----------
+  // ---------- jail: pick enough fights and you end up in a cell, and you have to get yourself out ----------
   // Every punch adds to your record (a knockout adds two), and it fades by one every 90 seconds of good behaviour (ru-record).
-  // With a record of three or more, being caught by the police means a cell, not a lecture; at eight, they come for you straight
-  // after the fight. The cell is a level underground (like the garage): you serve 15 seconds plus 10 per point, up to two minutes,
-  // then they let you out where they picked you up.
-  const JAIL = { rec: 0, t: 0, until: 0, at: null, built: false, el: null, decay: 0 };
+  // With a record of three or more, being caught by the police means a cell; at eight, they come for you straight after the fight.
+  // The cell is a level underground (like the garage). There's no sentence to wait out: one bar is loose. Work it free while the
+  // guard has his back to you (he turns round every few seconds), squeeze into the corridor, take the keys off his desk, and
+  // unlock the door at the end. If he sees you out of the cell, or hears you at the bar, he hauls you back and fixes it. Getting
+  // out puts every police car in the city on you. If you're stuck for four minutes he falls asleep.
+  const JAIL = { rec: 0, until: 0, at: null, built: false, el: null, decay: 0, stage: 0, bar: 0, look: 0, lt: 6, keys: false, inT: 0 };
   try { JAIL.rec = Math.max(0, Math.min(20, +localStorage.getItem('ru-record') || 0)); } catch (e) {}
   const jailSave = () => { try { localStorage.setItem('ru-record', String(JAIL.rec)); } catch (e) {} };
   function jailRec(n){ JAIL.rec = Math.min(20, JAIL.rec + n); JAIL.decay = 0; jailSave(); if (JAIL.rec >= 5 && !JAIL.told) { JAIL.told = true; say('You’re building a record. Keep this up and the police won’t just let you go.', 3600); } }
-  const JX = 760, JZ = 760, JYL = -40;
+  const JX = 760, JZ = 760, JYL = -40, J_CELL = [JX - 1.85, JX + 1.85, JZ - 3.9, JZ - .65], J_HALL = [JX - 5.6, JX + 5.6, JZ + .05, JZ + 4.1], J_GAP = [JX + .98, JX + 1.5, JZ - .75, JZ + .15];
+  const J_KEYS = [JX + 2.9, JZ + 2.25], J_DOOR = [JX - 5.3, JZ + 2.4];
   function jailBuild(){
     if (JAIL.built || !BL.mapG) return; JAIL.built = true; const g = new THREE.Group(); g.position.set(JX, JYL, JZ); BL.mapG.add(g); JAIL.g = g;
     const concrete = mat(0x8A8C88, { roughness: .95 }), dark = mat(0x5A5C5A, { roughness: .95 }), floorM = mat(0x6E6C66, { roughness: .9 }), steel = mat(0x3A3D44, { metalness: .6, roughness: .4 });
@@ -14161,34 +14300,57 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     bx(12, .2, 9, floorM, 0, -.1, 0); bx(12, .2, 9, dark, 0, 3.3, 0);
     bx(12, 3.4, .3, concrete, 0, 1.6, -4.5); bx(12, 3.4, .3, concrete, 0, 1.6, 4.5); bx(.3, 3.4, 9, concrete, -6, 1.6, 0); bx(.3, 3.4, 9, concrete, 6, 1.6, 0);
     bx(.25, 3.4, 4.2, concrete, -2.2, 1.6, -2.4); bx(.25, 3.4, 4.2, concrete, 2.2, 1.6, -2.4);
-    for (let x = -2.05; x <= 2.06; x += .22) bx(.05, 3.2, .05, steel, x, 1.6, -.3);
-    bx(4.4, .08, .08, steel, 0, .1, -.3); bx(4.4, .08, .08, steel, 0, 1.1, -.3); bx(4.4, .08, .08, steel, 0, 3.15, -.3);
+    JAIL.bars = []; for (let x = -2.05; x <= 2.06; x += .22) JAIL.bars.push(bx(.05, 3.2, .05, steel, x, 1.6, -.3));
+    JAIL.loose = JAIL.bars.reduce((b, q) => Math.abs(q.position.x - 1.24) < Math.abs(b.position.x - 1.24) ? q : b);
+    bx(4.4, .08, .08, steel, 0, .1, -.3); bx(4.4, .08, .08, steel, 0, 3.15, -.3);
     bx(2.8, .45, .7, dark, 0, .25, -3.95); bx(.5, .45, .5, mat(0xD8D8D2), 1.6, .23, -3.6);
-    const win = bx(1, .5, .05, new THREE.MeshBasicMaterial({ color: 0xDDE8F0 }), 0, 2.7, -4.33); for (let x = -.4; x <= .41; x += .2) bx(.04, .5, .06, steel, x, 2.7, -4.31);
-    bx(2.2, .9, .8, mat(0x6A4A2A), 3.6, .45, 2.6); bx(.5, .05, .4, new THREE.MeshBasicMaterial({ color: 0x9FD8FF }), 3.6, .93, 2.5);
-    try { const gd = avatar(Object.assign({}, crowdLook(7), { x: { cap: 1 } })); gd.g.position.set(3.6, 0, 3.6); gd.g.rotation.y = 0; g.add(gd.g); JAIL.guard = gd; } catch (e) {}
-    const lp = new THREE.PointLight(0xFFF2D8, 1.1, 14); lp.position.set(0, 3, -2.2); g.add(lp); const lp2 = new THREE.PointLight(0xFFF2D8, .7, 14); lp2.position.set(0, 3, 2.5); g.add(lp2);
+    bx(1, .5, .05, new THREE.MeshBasicMaterial({ color: 0xDDE8F0 }), 0, 2.7, -4.33); for (let x = -.4; x <= .41; x += .2) bx(.04, .5, .06, steel, x, 2.7, -4.31);
+    // the guard's desk and screen, his back to the cells while he watches it
+    bx(2.2, .9, .8, mat(0x6A4A2A), 3.6, .45, 2.9); const scr = bx(.7, .45, .05, new THREE.MeshBasicMaterial({ color: 0x9FD8FF }), 3.6, 1.15, 3.2);
+    JAIL.keyM = bx(.16, .03, .1, mat(0xD8B84A, { metalness: .8, roughness: .3 }), J_KEYS[0] - JX, .92, 2.62);
+    try { const gd = avatar(Object.assign({}, crowdLook(7), { x: { cap: 1 } })); gd.g.position.set(3.6, 0, 2.1); gd.g.rotation.y = Math.PI; g.add(gd.g); JAIL.guard = gd; } catch (e) {}
+    // the door out, at the end of the corridor
+    bx(.12, 2.3, 1.2, mat(0x4A3A2A), -5.83, 1.15, 2.4); bx(.06, .06, .2, mat(0xC9CFD8, { metalness: .8 }), -5.75, 1.1, 2.0);
+    const lp = new THREE.PointLight(0xFFF2D8, 1.1, 14); lp.position.set(0, 3, -2.2); g.add(lp); const lp2 = new THREE.PointLight(0xFFF2D8, .8, 14); lp2.position.set(0, 3, 2.5); g.add(lp2);
     bx(.6, .04, .3, new THREE.MeshBasicMaterial({ color: 0xFFFFFF }), 0, 3.18, -2.2); bx(.6, .04, .3, new THREE.MeshBasicMaterial({ color: 0xFFFFFF }), 0, 3.18, 2.5);
     g.traverse(o => o.userData.noPick = true); g.visible = false;
-    LVL.jail = { id: 'jail', y: JYL, drive: false, rects: [[JX - 1.85, JX + 1.85, JZ - 3.9, JZ - .65]], solid: [[JX - 1.4, JX + 1.4, JZ - 4.3, JZ - 3.55]], exits: [] };
+    LVL.jail = { id: 'jail', y: JYL, drive: false, rects: [J_CELL, J_HALL], solid: [[JX - 1.4, JX + 1.4, JZ - 4.3, JZ - 3.55], [JX + 2.45, JX + 4.75, JZ + 2.45, JZ + 3.35]], exits: [] };
     const el = JAIL.el = document.createElement('div'); el.className = 'jailhud'; el.hidden = true; document.body.appendChild(el);
-    const st = document.createElement('style'); st.textContent = '.jailhud{position:fixed;left:50%;top:calc(66px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:40;background:rgba(16,16,18,.82);color:#fff;border-radius:999px;padding:7px 16px;font:800 13px/1.2 system-ui,sans-serif;letter-spacing:.04em;white-space:nowrap;pointer-events:none}'; document.head.appendChild(st);
+    const ab = JAIL.btn = document.createElement('button'); ab.type = 'button'; ab.className = 'btn alt jailact'; ab.hidden = true; document.body.appendChild(ab); ab.addEventListener('click', e => { e.stopPropagation(); if (JAIL.act) JAIL.act.go(); });
+    addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; if (e.key.toLowerCase() === 'e' && JAIL.act && !ab.hidden) { e.stopImmediatePropagation(); JAIL.act.go(); } }, true);
+    const st = document.createElement('style'); st.textContent = '.jailhud{position:fixed;left:50%;top:calc(140px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:40;background:rgba(16,16,18,.82);color:#fff;border-radius:16px;padding:8px 16px;font:700 13px/1.35 system-ui,sans-serif;text-align:center;max-width:calc(100% - 24px);pointer-events:none}.jailhud b{display:block;font-size:11px;letter-spacing:.16em;color:#FFB04A}.jailact{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40}'; document.head.appendChild(st);
   }
   function jailGo(){
     if (JAIL.until || EV || A || !inWorld || zone !== 'blr') return; jailBuild(); if (!LVL.jail) return; if (DRV.on) getOut(true); if (phOpen()) phoneClose();
-    const secs = Math.min(120, 15 + JAIL.rec * 10); HEAT.lv = 0; copsClear(); JAIL.at = toMap(pos.x, pos.z); JAIL.until = performance.now() + secs * 1000; JAIL.g.visible = true;
-    lvGo({ to: 'jail', at: [JX, JZ - 2.4], yaw: Math.PI, fade: true, msg: `Arrested. The door slams. ${secs} seconds to think about it.` }); tone(110, .6, 'sawtooth', .05, 60);
+    HEAT.lv = 0; copsClear(); JAIL.at = toMap(pos.x, pos.z); JAIL.until = 1; JAIL.inT = 0; JAIL.keys = false; JAIL.keyM.visible = true; JAIL.asleep = false; jailReset(); JAIL.g.visible = true;
+    lvGo({ to: 'jail', at: [JX, JZ - 2.4], yaw: Math.PI, fade: true, msg: 'The door slams. Nobody is coming to let you out.' }); tone(110, .6, 'sawtooth', .05, 60);
+    setTimeout(() => { if (JAIL.until) say('One of the bars in this cell moves when you lean on it. The guard only watches his screen… most of the time.', 4600); }, 3500);
+  }
+  // back to square one: the bar fixed, the gap closed
+  function jailReset(){ JAIL.stage = 0; JAIL.bar = 0; if (JAIL.loose) { JAIL.loose.rotation.set(0, 0, 0); JAIL.loose.position.y = 1.6; } if (LVL.jail) LVL.jail.rects = [J_CELL, J_HALL]; }
+  function jailCaught(why){ say(why, 3200); tone(220, .4, 'sawtooth', .05, 110); fade(() => { const [lx, lz] = toLocal(JX, JZ - 2.4); pos.x = lx; pos.z = lz; yaw = Math.PI; jailReset(); if (JAIL.keys) { JAIL.keys = false; JAIL.keyM.visible = true; } JAIL.look = 0; JAIL.lt = 7; }, '#000000'); }
+  function jailOut(){
+    const at = JAIL.at || [0, 0]; JAIL.until = 0; JAIL.act = null; if (JAIL.btn) JAIL.btn.hidden = true; if (JAIL.el) JAIL.el.hidden = true;
+    lvGo({ to: null, at, yaw: 0, fade: true, msg: 'You walk out into the street like you own it. Then you hear the sirens.' });
+    setTimeout(() => { if (JAIL.g) JAIL.g.visible = false; HEAT.lv = Math.max(HEAT.lv, 3); HEAT.cool = 0; say('You escaped custody. Every police car in the city is looking for you.', 4200); }, 1400);
   }
   function jailStep(now, dt){
     if (!JAIL.until) { if (JAIL.rec > 0 && (JAIL.decay += dt) > 90) { JAIL.decay = 0; JAIL.rec--; jailSave(); } return; }
-    const left = Math.max(0, Math.ceil((JAIL.until - now) / 1000)), inCell = BL.lvl === LVL.jail;
-    if (JAIL.el) { JAIL.el.hidden = !inCell; JAIL.el.textContent = `In custody · ${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}`; }
-    if (JAIL.guard) try { JAIL.guard.anim(now / 1000, 0, 0); } catch (e) {}
-    if (inCell && !JAIL.said && left < 8) { JAIL.said = true; say('The guard looks up from his screen. “Your ride’s here. Don’t make me see you again.”', 3600); }
-    if (left > 0) return;
-    const at = JAIL.at || [0, 0]; JAIL.until = 0; JAIL.said = false; JAIL.rec = 0; jailSave(); if (JAIL.el) JAIL.el.hidden = true;
-    if (inCell) lvGo({ to: null, at, yaw: 0, fade: true, msg: 'They let you out with a warning and your record wiped. Behave.' });
-    setTimeout(() => { if (JAIL.g) JAIL.g.visible = false; }, 1200);
+    const inCell = BL.lvl === LVL.jail; if (JAIL.el) JAIL.el.hidden = !inCell; if (!inCell) { if (JAIL.btn) JAIL.btn.hidden = true; return; }
+    JAIL.inT += dt; if (JAIL.inT > 240 && !JAIL.asleep) { JAIL.asleep = true; JAIL.look = 0; say('The guard’s head drops onto his chest. He’s snoring.', 3600); }
+    const [mx, mz] = toMap(pos.x, pos.z), out = mz > JZ - .55, G = JAIL.guard, t = now / 1000;
+    // the guard: back to you, watching his screen, then turning round to check on you
+    if (!JAIL.asleep) { if (JAIL.look > 0) { JAIL.look -= dt; if (JAIL.look <= 0) JAIL.lt = 5 + Math.random() * 4; } else if ((JAIL.lt -= dt) <= 0) { JAIL.look = 2.6; tone(300, .15, 'triangle', .03, 260); } }
+    const watching = JAIL.look > 0; if (G) { const want = watching ? 0 : Math.PI; G.g.rotation.y += (want - G.g.rotation.y) * Math.min(1, dt * 6); try { G.anim(t, 0, 0); } catch (e) {} G.g.position.y = JAIL.asleep ? -.25 : 0; }
+    if (watching && out && Math.hypot(mx - (JX + 3.6), mz - (JZ + 2.1)) < 10) return jailCaught('“Oi! Back in your box.” The guard hauls you back by the collar and wedges the bar back in.');
+    // what you can do from where you're standing
+    let A2 = null;
+    if (JAIL.stage === 0 && Math.hypot(mx - (JX + 1.24), mz - (JZ - .55)) < 1.1) A2 = { label: `Work the loose bar (${JAIL.bar}/5)`, go(){ if (JAIL.look > 0) return jailCaught('He turns round just as the bar scrapes. “I heard that.” He wedges it back with a chair leg.'); JAIL.bar++; tone(140, .12, 'square', .04, 90); JAIL.loose.rotation.z = JAIL.bar * .07; if (JAIL.bar >= 5) { JAIL.stage = 1; JAIL.loose.rotation.z = .5; JAIL.loose.position.y = 1.45; LVL.jail.rects = [J_CELL, J_HALL, J_GAP]; say('The bar bends far enough. You can squeeze through. Keys are on the guard’s desk.', 3600); } } };
+    else if (JAIL.stage >= 1 && !JAIL.keys && Math.hypot(mx - J_KEYS[0], mz - (J_KEYS[1] - .35)) < 1.2) A2 = { label: 'Take the keys', go(){ if (JAIL.look > 0) return jailCaught('His hand closes over yours, on the keys. “Nice try.”'); JAIL.keys = true; JAIL.keyM.visible = false; tone(1200, .08, 'triangle', .03); say('Keys. Now the door at the end of the corridor.', 2600); } };
+    else if (Math.hypot(mx - J_DOOR[0], mz - J_DOOR[1]) < 1.4) A2 = JAIL.keys ? { label: 'Unlock the door', go(){ tone(600, .1, 'square', .04); setTimeout(() => tone(900, .12, 'square', .04), 120); jailOut(); } } : { label: 'Locked', go(){ say('Locked. The keys are on the guard’s desk.', 2000); } };
+    JAIL.act = A2; if (JAIL.btn) { JAIL.btn.hidden = !A2; if (A2) { const l = A2.label + (fine ? ' (E)' : ''); if (JAIL.btn.textContent !== l) JAIL.btn.textContent = l; } }
+    const obj = JAIL.stage === 0 ? 'Get out: one bar in your cell is loose. Work it while his back is turned.' : !JAIL.keys ? 'Through the gap. Take the keys from his desk while he watches his screen.' : 'The door at the end of the corridor.';
+    if (JAIL.el) JAIL.el.innerHTML = `<b>${JAIL.asleep ? 'THE GUARD IS ASLEEP' : watching ? 'HE’S LOOKING' : 'IN CUSTODY'}</b>${obj}`;
   }
 
   // ---------- the people on the street can be hit ----------
@@ -15567,7 +15729,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // Each season's story lives in its own file (seasons/s01.js and so on), loaded only while that season is running, and gets
   // this small API instead of reaching into the page. Progress is saved under ru-season. Add ?season=N to preview a season.
   const SEASON0 = new Date(2026, 10, 18), SEASON_LEN = 28;
-  const SEASON_V = '2026-11-20a';
+  const SEASON_V = '2026-11-20b';
   const SEASON_FILES = [1, 2, 3];  // the seasons that have a file in seasons/ (add each new one here)  // bump whenever a seasons/*.js file changes
   const SEASON_NAMES = ['Landfall', 'High Water', 'The Syndicate', 'Blackout', 'The Eruption', 'Dark Side', 'Scales', 'Incursion', 'Neon Nights', 'Skyline', 'Harvest', 'Season 12', 'The Drought', 'Festival of Lights', 'Convergence'];
   const SEASON = { S: undefined, mod: null, loading: false, failed: false };
