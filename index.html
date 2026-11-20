@@ -9406,10 +9406,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ======================= the phone as a phone: status bar, home screen, Messages, Flock (social), Weather, notifications =======================
   // Everything lives in ru-phone: message threads and what you've read, liked posts, posts and messages the seasons pushed, and
   // the battery (it drains slowly while you're out and charges in your room). Seasons add messages and posts with R.phone.msg/post.
-  const PHX = { th: {}, rd: {}, lk: [], pp: [], fl: {}, bat: 82, open: null };
+  const PHX = { th: {}, rd: {}, lk: [], pp: [], fl: {}, bat: 82, open: null, gear: {} };
   try { Object.assign(PHX, JSON.parse(localStorage.getItem('ru-phone') || '{}')); } catch (e) {}
   ['th', 'rd', 'fl'].forEach(k => { if (!PHX[k] || typeof PHX[k] !== 'object' || Array.isArray(PHX[k])) PHX[k] = {}; }); ['lk', 'pp'].forEach(k => { if (!Array.isArray(PHX[k])) PHX[k] = []; });
-  const phxSave = () => { try { const my = (PHX.my || []).slice(-30), pics = my.filter(q => q.img && String(q.img).startsWith('data:')); pics.slice(0, -6).forEach(q => q.img = null); localStorage.setItem('ru-phone', JSON.stringify({ th: PHX.th, rd: PHX.rd, lk: PHX.lk.slice(-200), pp: PHX.pp.slice(-60), fl: PHX.fl, bat: Math.round(PHX.bat), fo: PHX.fo, rp: (PHX.rp || []).slice(-100), my, ur: PHX.ur, ns: PHX.ns, calls: (PHX.calls || []).slice(-20), notes: (PHX.notes || []).slice(-30), roll: (PHX.roll || []).slice(-12), st: PHX.st, set: PHX.set, lastOpen: PHX.lastOpen })); } catch (e) {} };
+  const phxSave = () => { try { const my = (PHX.my || []).slice(-30), pics = my.filter(q => q.img && String(q.img).startsWith('data:')); pics.slice(0, -6).forEach(q => q.img = null); localStorage.setItem('ru-phone', JSON.stringify({ th: PHX.th, rd: PHX.rd, lk: PHX.lk.slice(-200), pp: PHX.pp.slice(-60), fl: PHX.fl, bat: Math.round(PHX.bat), fo: PHX.fo, rp: (PHX.rp || []).slice(-100), my, ur: PHX.ur, ns: PHX.ns, calls: (PHX.calls || []).slice(-20), notes: (PHX.notes || []).slice(-30), roll: (PHX.roll || []).slice(-12), st: PHX.st, set: PHX.set, gear: PHX.gear, lastOpen: PHX.lastOpen })); } catch (e) {} };
   const THREADS = { amma: ['Mum', '#C8462E'], unknown: ['+91 80 4417 1811', '#5A5E68'], sam: ['Sam', '#E8701A'], leo: ['Leo', '#3CB0A8'], devi: ['Inspector Reyes', '#3A5A7A'], bhaskar: ['Frank', '#2E7A6A'], lata: ['Rosa', '#B8862E'], velvet: ['V', '#5A1E4A'] };
   const nowS = () => Date.now();
   // a message arrives: stored, a banner shows if the phone isn't on that thread
@@ -9424,7 +9424,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function phStatus(){ const room = !inWorld, sig = FLOOD.on ? 'No service' : '▂▄▆█', b = Math.max(1, Math.round(PHX.bat));
     phEl.querySelector('#phSig').innerHTML = `<small>${sig}</small> <small>${FLOOD.on ? '' : '5G'}</small> <span class="phbat${b < 20 ? ' low' : ''}"><i style="width:${b}%"></i></span><small>${room ? '⚡' : ''}${b}%</small>`; }
   let phBatT = 0;
-  function phxStep(dt){ if (!entered) return; phBatT += dt; if (phBatT < 5) return; const step = phBatT; phBatT = 0; PHX.bat = !inWorld ? Math.min(100, PHX.bat + step / 6) : Math.max(4, PHX.bat - step / (phOpen() ? 60 : 150)); if (phOpen()) phStatus(); phxRules(); try { flockTick(); phScreenTime(step); } catch (e) {} }
+  function phxStep(dt){ if (!entered) return; phBatT += dt; if (phBatT < 5) return; const step = phBatT; phBatT = 0; PHX.bat = !inWorld ? Math.min(100, PHX.bat + step / 6) : Math.max(4, PHX.bat - step / (phOpen() ? 60 : 150) / (PHX.gear.pb ? 2 : 1)); if (phOpen()) phStatus(); phxRules(); try { flockTick(); phScreenTime(step); } catch (e) {} }
   // things that happen whether or not a season file is loaded: Amma, the unknown number, and the feed noticing you
   function phxRules(){
     const F = PHX.fl, S = (() => { try { return seasonGet(); } catch (e) { return {}; } })(), s1 = S.s1 || {}, s2 = S.s2 || {}, s3 = S.s3 || {}, h = cityHour(), once = (k, fn) => { if (!F[k]) { F[k] = 1; phxSave(); fn(); } };
@@ -9733,7 +9733,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // Notes, the camera roll (thumbnails from photo mode), screen time and the toggles are saved in ru-phone (PHX.notes,
   // PHX.roll, PHX.st, PHX.set). The lock screen shows when you pick the phone up after a minute or more.
   ['notes', 'roll'].forEach(k => { if (!Array.isArray(PHX[k])) PHX[k] = k === 'notes' ? [{ t: 'Shopping: milk, Maggi, AA batteries, phone charger', ts: Date.now() - 2 * 864e5 }, { t: 'Ask Sam about the thing at the port', ts: Date.now() - 864e5 }] : []; });
-  if (!PHX.st || typeof PHX.st !== 'object') PHX.st = { day: '', s: 0 }; if (!PHX.set || typeof PHX.set !== 'object') PHX.set = { wifi: 1, bt: 1, dnd: 0 };
+  if (!PHX.st || typeof PHX.st !== 'object') PHX.st = { day: '', s: 0 }; if (!PHX.set || typeof PHX.set !== 'object') PHX.set = { wifi: 1, bt: 1, dnd: 0 }; if (!PHX.gear || typeof PHX.gear !== 'object') PHX.gear = {};
   function phRollAdd(img){ if (!img) return; PHX.roll.push({ img, ts: Date.now() }); PHX.roll = PHX.roll.slice(-12); phxSave(); }
   function phScreenTime(step){ const d = new Date().toDateString(); if (PHX.st.day !== d) { PHX.st.day = d; PHX.st.s = 0; } if (phOpen()) PHX.st.s += step; }
   const tog = (k, on) => `<button type="button" class="phtog${on ? ' on' : ''}" data-tog="${k}" aria-pressed="${!!on}"><i></i></button>`;
@@ -9743,7 +9743,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       B.querySelector('[data-unlock]').onclick = () => { tone(1320, .04, 'sine', .02); phShow('home'); }; return true; }
     if (t === 'settings') { const room = !inWorld, net = FLOOD.on ? null : room ? 'Home_WiFi_5G' : zone === 'blr' ? 'BLR_Free_WiFi' : null, photosMB = PHX.roll.length * 3.1, apps = 6.4, sys = 9.8, tot = 64, used = apps + sys + photosMB / 1000, mins = Math.round(PHX.st.s / 60);
       B.innerHTML = `<div class="phcard"><div class="phset"><span>Wi-Fi<small>${PHX.set.wifi ? (net ? 'Connected · ' + net : 'Searching…') : 'Off'}</small></span>${tog('wifi', PHX.set.wifi)}</div><div class="phset"><span>Bluetooth<small>${PHX.set.bt ? 'On · Earbuds (last used)' : 'Off'}</small></span>${tog('bt', PHX.set.bt)}</div><div class="phset"><span>Do Not Disturb<small>Silences message banners</small></span>${tog('dnd', PHX.set.dnd)}</div></div>`
-        + `<div class="phcard"><b>Battery</b><div class="phset"><span>Level<small>${Math.round(PHX.bat)}% · ${room ? 'charging' : 'on battery'}</small></span><em>${Math.round(PHX.bat)}%</em></div><div class="phset"><span>Battery health<small>Maximum capacity</small></span><em>91%</em></div></div>`
+        + `<div class="phcard"><b>Battery</b><div class="phset"><span>Level<small>${Math.round(PHX.bat)}% · ${room ? 'charging' : 'on battery'}</small></span><em>${Math.round(PHX.bat)}%</em></div><div class="phset"><span>Battery health<small>Maximum capacity</small></span><em>91%</em></div>${PHX.gear.pb ? '<div class="phset"><span>Power bank<small>Connected · drain halved</small></span><em>On</em></div>' : ''}</div>`
         + `<div class="phcard"><b>Storage</b><div class="phbar"><i style="width:${sys / tot * 100}%;background:#8A8F99"></i><i style="width:${apps / tot * 100}%;background:#3C8CE0"></i><i style="width:${Math.max(.5, photosMB / 1000 / tot * 100)}%;background:#FF9F40"></i></div><small>${used.toFixed(1)} GB of ${tot} GB used · System, apps, photos (${PHX.roll.length})</small></div>`
         + `<div class="phcard"><b>Screen time</b><small>Today: ${mins < 1 ? 'under a minute' : mins + ' min'} on this phone</small></div>`
         + `<div class="phcard"><b>About</b><small>Model: RU-15 · Software 26.1 · Network: ${FLOOD.on ? 'No service' : 'Airwave 5G'}</small></div>`;
@@ -11772,9 +11772,9 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   let svcNear = null;
   const svcBox = document.createElement('div'); svcBox.className = 'game'; svcBox.setAttribute('role', 'dialog'); svcBox.innerHTML = '<div class="gbox svcbox"></div>'; document.body.appendChild(svcBox);
   function svcOpen(kind){
-    const M = kind.startsWith('home:') ? homeMenu(kind.slice(5)) : MENUS[kind]; if (!M) return; if (document.pointerLockElement) document.exitPointerLock();
+    const M = kind.startsWith('home:') ? homeMenu(kind.slice(5)) : kind.startsWith('bus:') ? busMenu(+kind.slice(4)) : kind === 'atm' ? atmMenu() : MENUS[kind]; if (!M) return; if (document.pointerLockElement) document.exitPointerLock();
     const draw = () => { const L = M.items(); svcBox.querySelector('.gbox').innerHTML = `<div class="ghead"><h2 class="display">${esc(M.title)}</h2><button class="close" type="button" data-sv="x" aria-label="Close">✕</button></div><p class="psub">${esc(M.sub)} You have <b>${inr(CASH.v)}</b>.</p>`
-      + L.map((it, i) => `<div class="prow"><b>${esc(it.n)}<br><small>${esc(it.d)}</small></b><button class="btn" type="button" data-sv="${i}" ${it.own ? 'disabled' : ''}>${it.own ? 'Owned' : it.p ? inr(it.p) : 'Free'}</button></div>`).join('')
+      + L.map((it, i) => `<div class="prow"><b>${esc(it.n)}<br><small>${esc(it.d)}</small></b><button class="btn" type="button" data-sv="${i}" ${it.own || it.tag ? 'disabled' : ''}>${it.tag || (it.own ? 'Owned' : it.p ? inr(it.p) : 'Free')}</button></div>`).join('')
       + (kind === 'bar' && DRUNK.l > .3 ? `<p class="gmsg">${DRUNK.l >= 4.5 ? 'The bartender slides you a glass of water instead.' : DRUNK.l >= 3 ? 'You’re properly drunk.' : DRUNK.l >= 1.5 ? 'You’re tipsy.' : 'You feel a little warm.'}</p>` : ''); svcBox._L = L; };
     svcBox._M = M; svcBox._draw = draw; draw(); svcBox.classList.add('on');
   }
@@ -11784,7 +11784,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'e' && svcNear && !svcBtn.hidden) svcOpen(svcNear.kind); });
   function svcStep(){
     let near = null; if (inWorld && zone === 'blr' && !EV && !A && !DRV.on && !svcBox.classList.contains('on')) { const [mx, mz] = toMap(pos.x, pos.z); near = SVC.find(q => Math.hypot(mx - q.x, mz - q.z) < 2.4 && onGround()) || null; }
-    svcNear = near; svcBtn.hidden = !near; if (near) { const t = (near.kind.startsWith('home:') ? (HOME.own.includes(near.kind.slice(5)) ? 'Your place' : 'Buy this place') : { guns: 'Browse weapons', bar: 'Order a drink', resto: 'Order food' }[near.kind]) + (fine ? ' (E)' : ''); if (svcBtn.textContent !== t) svcBtn.textContent = t; }
+    svcNear = near; svcBtn.hidden = !near; if (near) { const t = (near.kind.startsWith('home:') ? (HOME.own.includes(near.kind.slice(5)) ? 'Your place' : 'Buy this place') : (near.kind.startsWith('bus:') ? 'Bus stop: take a bus' : { guns: 'Browse weapons', bar: 'Order a drink', resto: 'Order food', atm: 'Use the ATM', tech: 'Browse gadgets' }[near.kind])) + (fine ? ' (E)' : ''); if (svcBtn.textContent !== t) svcBtn.textContent = t; }
   }
   // ---------- drunk ----------
   const DRUNK = { l: 0, sw: 0, sp: 0, heatT: 0, last: null };
@@ -11882,6 +11882,44 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     F.g.traverse(o => { if (o.isMesh) o.userData.noPick = true; });
   }
   // ---------- the street-level places: shops, a weapon dealer, a bar and a restaurant ----------
+  // ======================= city life: bus stops with live boards, ATMs, billboards =======================
+  // Bus stops (BUS.stops) sit on the pavement of a few north-south roads, each with a shelter, a bench and an arrivals
+  // board that counts down; take a bus to any other stop for ₹20 (SVC kind 'bus:<i>'). Some stops have an ATM (balance and
+  // a mini statement). Billboards on a handful of rooftops cycle through ads for places in the city (cityLifeStep).
+  const BUS = { stops: [], boards: [], ads: [], t: 0 };
+  const BUS_NAMES = ['Church Street', 'Lake Road', '5th Cross', 'Market Circle', 'Tower Junction', 'Theatre Road', 'Old Mill', 'Data Park'];
+  const BUS_ROUTES = ['500D', '335E', '201R', 'G-4', '356C', '410FA', 'V-500K'];
+  const ADS = [['FIX-IT MOBILES', 'Cracked screen? 20 minutes.', '#1E5AA8', '#FFC93C'], ['SAFFRON TABLE', 'Biryani till midnight', '#8A1E1E', '#FFE08A'], ['THE COPPER TAP', 'Craft beer · open late', '#3A1E12', '#E8B04A'], ['PALM GROVE VILLAS', 'Villas for sale. Gated. Green.', '#2E5A3A', '#F4E8C0'], ['MANDALINK', 'Learn the radicals behind Chinese', '#C0271C', '#FFE29A'], ['CIRCUIT STREET', 'Phones · laptops · power banks', '#16181D', '#3CE8E8'], ['GREEN LINE METRO', 'Faster than Silk Board', '#1F7A45', '#FFFFFF']];
+  function drawBoard(c, i){ const g = c.getContext('2d'), W = c.width, H = c.height, now = Date.now() / 1000; g.fillStyle = '#0A0C10'; g.fillRect(0, 0, W, H); g.fillStyle = '#FFB000'; g.font = `700 ${H * .12}px ui-monospace,monospace`; g.textBaseline = 'top'; g.fillText('BMTC · ARRIVALS', 10, 8);
+    for (let r = 0; r < 4; r++) { const route = BUS_ROUTES[(i * 3 + r) % BUS_ROUTES.length], period = 360 + ((i * 7 + r * 13) % 5) * 120, mins = Math.ceil(((period - ((now + i * 97 + r * 211) % period)) / 60)); g.fillStyle = r === 0 && mins <= 1 ? '#3CE870' : '#FFB000'; g.font = `600 ${H * .13}px ui-monospace,monospace`; g.fillText(route.padEnd(7) + (mins <= 1 ? 'Due' : mins + ' min'), 10, H * .26 + r * H * .18); } }
+  function drawAd(c, k){ const [t, sub, bg, fg] = ADS[k % ADS.length], g = c.getContext('2d'), W = c.width, H = c.height; g.fillStyle = bg; g.fillRect(0, 0, W, H); g.fillStyle = fg; g.textAlign = 'center'; g.textBaseline = 'middle'; g.font = `900 ${H * .26}px ${DISPLAY}`; g.fillText(t, W / 2, H * .4); g.font = `600 ${H * .13}px "Instrument Sans", sans-serif`; g.fillText(sub, W / 2, H * .72); g.textAlign = 'left'; }
+  function buildCityLife(){
+    if (BUS.built || !BL.mapG) return; BUS.built = true; const G = new THREE.Group(); BL.mapG.add(G); const P = [];
+    // bus stops on the east pavement of a few north-south roads, halfway between cross streets
+    let n = 0; for (const l of [-165, -55, 55, 165, 275]) for (const zm of [-137.5, -27.5, 82.5]) { if (n >= 8) break; const x = l + 5.6, z = zm; const ok = (a, b) => blrValid(...toLocal(a, b)) && !offMap(a, b); if (![[x, z], [x, z - 3], [x, z + 2], [l + 6.9, z - 2], [l + 6.9, z + 2], [l + 6.9, z - 3.4]].every(p => ok(...p))) continue;
+      P.push(B3(.08, 2.6, .08, 0x3A3D44, x + .9, 1.3, z - 1.6), B3(.08, 2.6, .08, 0x3A3D44, x + .9, 1.3, z + 1.6), B3(1.5, .08, 3.6, 0x2A6A4A, x + .65, 2.62, z), B3(.05, 2.2, 3.3, 0x9FD8FF, x + 1.25, 1.4, z), B3(.45, .1, 2.6, 0x6A4E3A, x + .9, .5, z), B3(.06, 2.4, .06, 0x16181D, x - .2, 1.2, z + 2.1), B3(.5, .5, .04, 0x2A6A4A, x - .2, 2.5, z + 2.1)); blrBox(x + 1.15, x + 1.35, z - 1.7, z + 1.7);
+      const c = document.createElement('canvas'); c.width = 256; c.height = 120; drawBoard(c, n); const tx = new THREE.CanvasTexture(c), bd = new THREE.Mesh(new THREE.PlaneGeometry(1.2, .56), new THREE.MeshBasicMaterial({ map: tx })); bd.position.set(x + 1.21, 2.0, z); bd.rotation.y = -Math.PI / 2; G.add(bd); BUS.boards.push({ c, tx, i: n });
+      BUS.stops.push({ x: x - .3, z, name: BUS_NAMES[n], i: n }); SVC.push({ x: x - .3, z, kind: 'bus:' + n });
+      if (n % 2 === 0) { P.push(B3(.7, 2, .7, 0x2A2D33, x + .95, 1, z - 3), B3(.04, .3, .5, 0x3CE8E8, x + .58, 1.4, z - 3)); blrBox(x + .6, x + 1.3, z - 3.35, z - 2.65); const atm = document.createElement('canvas'); atm.width = 128; atm.height = 48; const ag = atm.getContext('2d'); ag.fillStyle = '#1E5AA8'; ag.fillRect(0, 0, 128, 48); ag.fillStyle = '#fff'; ag.font = '800 26px sans-serif'; ag.textAlign = 'center'; ag.textBaseline = 'middle'; ag.fillText('ATM 24×7', 64, 25); const am = new THREE.Mesh(new THREE.PlaneGeometry(.6, .22), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(atm) })); am.position.set(x + .58, 1.85, z - 3); am.rotation.y = -Math.PI / 2; G.add(am); SVC.push({ x: x - .1, z: z - 3, kind: 'atm' }); }
+      n++; }
+    decor(P, G);
+    // billboards on a few rooftops facing the street
+    const cand = BL.bld.filter(b => !b.hide && !b.keep && !(BLC.usedLots || []).includes(b) && b.h >= 12 && b.h <= 30 && b.x1 - b.x0 >= 10 && facing(b) && !offMap((b.x0 + b.x1) / 2, (b.z0 + b.z1) / 2)); let k = 0;
+    for (let i = 0; i < cand.length && k < 7; i += Math.max(1, Math.floor(cand.length / 9))) { const b = cand[i], F = lotFrame(b, facing(b)); const c = document.createElement('canvas'); c.width = 512; c.height = 200; drawAd(c, k); const tx = new THREE.CanvasTexture(c);
+      const bp = []; bp.push(B3(.15, 3, .15, 0x3A3D44, -2.6, b.h + 1.5, 1.2), B3(.15, 3, .15, 0x3A3D44, 2.6, b.h + 1.5, 1.2)); decor(bp, F.g);
+      const m = new THREE.Mesh(new THREE.PlaneGeometry(6.4, 2.5), new THREE.MeshStandardMaterial({ map: tx, emissive: 0xFFFFFF, emissiveMap: tx, emissiveIntensity: .35 })); m.position.set(0, b.h + 3.4, 1.15); m.rotation.y = Math.PI; F.g.add(m); BUS.ads.push({ c, tx, k }); k++; }
+    G.traverse(o => { if (o.isMesh) o.userData.noPick = true; });
+  }
+  function cityLifeStep(dt){
+    if (!BUS.built) { if (BLC.placesBuilt && inWorld && zone === 'blr') { buildCityLife(); } return; } if (!(inWorld && zone === 'blr')) return;
+    if ((BUS.t += dt) < 4) return; BUS.t = 0; BUS.boards.forEach(q => { drawBoard(q.c, q.i); q.tx.needsUpdate = true; }); BUS.ads.forEach(q => { q.k++; if (q.k % 2 === 0) { drawAd(q.c, q.k / 2); q.tx.needsUpdate = true; } });
+  }
+  function busMenu(i){ const here = BUS.stops[i];
+    return { title: `${here.name} · BMTC`, sub: 'Hop on the next bus. Any stop is ₹20.', items: () => BUS.stops.filter(s => s.i !== i).map(s => ({ id: s.i, n: `To ${s.name}`, d: `${Math.round(Math.hypot(s.x - here.x, s.z - here.z))} m away · route ${BUS_ROUTES[s.i % BUS_ROUTES.length]}`, p: 20 })),
+      buy(it){ if (!cashSpend(20, 'Bus fare')) return; svcBox.classList.remove('on'); const s = BUS.stops.find(q => q.i === it.id); tone(330, .2, 'triangle', .04); say('The bus doors hiss shut. You find a seat by the window.', 2200); fade(() => { const [lx, lz] = toLocal(s.x, s.z); pos.x = lx; pos.z = lz; setTimeout(() => say(`${s.name}. You step off into the noise.`, 1800), 500); }, '#000000'); } }; }
+  function atmMenu(){ return { title: 'ATM · 24×7', sub: 'Mini statement: your last five transactions.', items: () => CASH.tx.length ? CASH.tx.slice(-5).reverse().map((t, i) => ({ id: i, n: `${t[0] > 0 ? '+' : '−'}${inr(Math.abs(t[0]))}`, d: (t[1] || '') + (t[2] ? ' · ' + new Date(t[2]).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) : ''), tag: t[0] > 0 ? 'In' : 'Out' })) : [{ id: 0, n: 'No transactions yet', d: '', tag: '—' }], buy(){} }; }
+  MENUS.tech = { title: 'Fix-It Mobiles', sub: 'Gadgets for the phone you keep running down.', items: () => [{ id: 'pb', n: 'Power bank, 10,000 mAh', d: 'Your battery drains half as fast outside.', p: 1200, own: !!PHX.gear.pb }, { id: 'chg', n: 'Charge it here', d: 'Plug in at the counter: back to 100%.', p: 50 }, { id: 'guard', n: 'Tempered-glass screen guard', d: 'Fitted while you wait.', p: 300, own: !!PHX.gear.guard }, { id: 'buds', n: 'Wireless earbuds', d: 'Calls sound better. Probably.', p: 1800, own: !!PHX.gear.buds }],
+    buy(it){ if (it.own) return; if (!cashSpend(it.p, it.n)) return; if (it.id === 'chg') { PHX.bat = 100; say('Back to 100%. He unplugs it with a flourish.', 2200); } else { PHX.gear[it.id] = 1; say(`${it.n}. ${it.id === 'pb' ? 'It lives in your pocket now.' : 'Nice.'}`, 2200); } phxSave(); if (phOpen()) phStatus(); } };
   const SHOPS = [
     { id: 'darshini', name: 'Sri Krishna Darshini', sub: 'IDLI · VADA · DOSA · KAAPI', bg: '#1F6A3A', fg: '#FFE08A', floor: 0xD8D0C0, wall: 0xE8E0B8, who: 'The man at the counter', line: 'Two idli-vada? Kaapi’s fresh. Stand anywhere, no chairs here, this is a darshini.' },
     { id: 'guns', name: 'Ironside Arms', sub: 'LICENSED DEALER · SINCE 1988', bg: '#1E2026', fg: '#E8701A', floor: 0x4A4E58, wall: 0x3A3D44, who: 'The dealer', line: 'Look all you like. Paying is the part I care about.' },
@@ -11925,7 +11963,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     if (S.id === 'barber') { [-hw + 2, 0, hw - 2].slice(0, Wr > 9 ? 3 : 2).forEach(u => { P.push(C3(.35, .5, 0x3A3D44, u, .25, Dr - 2, 10), B3(.8, .15, .8, 0xC8102E, u, .6, Dr - 2), B3(.8, .8, .15, 0xC8102E, u, 1.05, Dr - 1.65), B3(1.4, .12, .5, 0xEEF1F5, u, .9, Dr - .5), B3(1.1, 1.3, .05, 0xDCE8F0, u, 1.9, Dr - .12)); so(u - .5, u + .5, Dr - 2.5, Dr - .3); });
       P.push(B3(3, .45, .6, 0x5A4632, -hw + 2, .45, 1.2)); so(-hw + .5, -hw + 3.5, .9, 1.5); P.push(C3(.12, 1.2, 0xFFFFFF, hw - .4, 2.2, .3, 10)); person(hw - 2, Dr - 2.6); }
     if (S.id === 'mobile') { P.push(B3(Wr - 1.5, 1.05, .7, 0x2A2D33, 0, .52, 2.4), B3(Wr - 1.5, .5, .66, 0x9FD8FF, 0, 1.3, 2.4)); so(-hw + .75, hw - .75, 2.05, 2.75); for (let i = 0; i < 12; i++) P.push(B3(.18, .34, .03, [0x16181D, 0xE8E8E8, 0x3C7CFF][i % 3], -hw + 1.2 + i * ((Wr - 2.4) / 12), 1.15, 2.4));
-      shelf(0, Dr - .4, Wr - 1, .5, 2.6, 0x3A3D44); for (let i = 0; i < 6; i++) P.push(B3(1, .7, .02, [0xFFC93C, 0xC8102E, 0x3CE8E8][i % 3], -hw + 1 + i * ((Wr - 2) / 6), 2.9, Dr - .66)); person(0, 3.3); }
+      shelf(0, Dr - .4, Wr - 1, .5, 2.6, 0x3A3D44); for (let i = 0; i < 6; i++) P.push(B3(1, .7, .02, [0xFFC93C, 0xC8102E, 0x3CE8E8][i % 3], -hw + 1 + i * ((Wr - 2) / 6), 2.9, Dr - .66)); person(0, 3.3); counter('tech', 0, 1.6); }
     decor(P, F.g); sol.forEach(([u0, u1, v0, v1]) => F.solid(u0, u1, v0, v1));
   }
   function buildShop(b, f, S){
@@ -12169,7 +12207,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     try { const vb = pick(b => b.x1 - b.x0 >= 24 && b.z1 - b.z0 >= 24, 45) || pick(b => b.x1 - b.x0 >= 18 && b.z1 - b.z0 >= 18, 40); if (vb) buildVillas(vb, facing(vb)); } catch (err) { console.error(err); }
     [0, 1, 2].forEach(i => { const b = pick(b => b.h >= 11 && b.h <= 30, 45); if (b) buildRooftop(b, facing(b), i, i === 1); });
     buildCarPark(); buildGarage(); buildSecurity(); try { buildSpaceport(); } catch (err) { console.error(err); } if (!lowFx) grassFields();
-    BLC.placesBuilt = true;
+    BLC.usedLots = used; BLC.placesBuilt = true;
   }
   function grassFields(){
     const pts = [], add = (x0, x1, z0, z1, n, skip) => { for (let i = 0, k = 0; i < n && k < n * 3; k++) { const x = x0 + Math.random() * (x1 - x0), z = z0 + Math.random() * (z1 - z0); if (skip(x - (x0 + x1) / 2, z - (z0 + z1) / 2) || gridHit(x, z, .2)) continue; const s = .6 + Math.random() * .7; pts.push([x, 0, z, Math.random() * 6, s, s * (.8 + Math.random() * .6), s]); i++; } };
@@ -14163,6 +14201,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   function littleStep(dt, now){
     try { svcStep(); drunkStep(dt, now); } catch (e) {}
     try { paper2Step(now); } catch (e) {}
+    try { cityLifeStep(dt); } catch (e) { console.error(e); }
     try { voiceStep(now); } catch (e) {}
     sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { isleStep(dt, now); } catch (e) { console.error(e); } try { mtnStep(dt, now); } catch (e) { console.error(e); } try { floodStep(dt); } catch (e) { console.error(e); } try { pkStep(dt); } catch (e) { console.error(e); } try { phxStep(dt); } catch (e) { console.error(e); } try { seasonStep(dt, now); } catch (e) { console.error(e); } try { winterStep(dt, now); } catch (e) { console.error(e); }
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
