@@ -10838,7 +10838,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const PH = { tab: 'map', zoom: 1.6, cx: null, cz: null, base: null, wp: null, contacts: [] };
   try { PH.contacts = JSON.parse(localStorage.getItem('ru-contacts') || '[]'); } catch (e) {}
   const phEl = document.createElement('div'); phEl.className = 'phone'; phEl.setAttribute('role', 'dialog'); phEl.setAttribute('aria-label', 'Your phone');
-  phEl.innerHTML = '<div class="phtop"><span id="phClock"></span><b id="phTitle">Map</b><button type="button" class="phx" id="phClose" aria-label="Close phone">✕</button></div><div class="phbody" id="phBody"></div><nav class="phtabs" id="phTabs"></nav>';
+  phEl.innerHTML = '<div class="phstat"><span id="phClock"></span><i class="phnotch"></i><span id="phSig"></span></div><div class="phtop"><button type="button" class="phback" id="phBack" aria-label="Home">‹</button><b id="phTitle">Map</b><button type="button" class="phx" id="phClose" aria-label="Close phone">✕</button></div><div class="phbody" id="phBody"></div><nav class="phtabs" id="phTabs"></nav><button type="button" class="phhome" id="phHome" aria-label="Home screen"></button>';
   document.body.appendChild(phEl);
   const phBtn = document.createElement('button'); phBtn.type = 'button'; phBtn.className = 'btn phbtn'; phBtn.textContent = '📱 Phone'; phBtn.hidden = true; document.body.appendChild(phBtn);
   { const s = document.createElement('style'); s.textContent = `.phbtn{position:fixed;left:18px;top:calc(184px + env(safe-area-inset-top,0px));z-index:6}.jobhud{top:calc(238px + env(safe-area-inset-top,0px))!important}
@@ -10848,7 +10848,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 .phbody{flex:1;overflow:auto;padding:4px 14px 12px;position:relative}.cardprev{display:block;font-style:normal;font-size:13px;opacity:.85;margin-top:8px;max-width:520px}.phtabs{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;padding:8px;border-top:1px solid #222}.phtabs button{background:#16181D;border:0;color:#C8CDD6;border-radius:12px;padding:7px 2px;font:700 11px/1.2 system-ui,sans-serif;cursor:pointer}.phtabs button.on{background:#FFC93C;color:#16181D}
 .phone canvas{width:100%;aspect-ratio:1;border-radius:14px;background:#2A2C30;touch-action:none;display:block}.phrow{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}.phrow button,.phcard button{background:#2A2D33;color:#fff;border:0;border-radius:999px;padding:7px 12px;font:700 12px/1.2 system-ui,sans-serif;cursor:pointer}.phrow button.y,.phcard button.y{background:#FFC93C;color:#16181D}.phrow button:disabled,.phcard button:disabled{opacity:.4;cursor:default}
 .phcard{background:#16181D;border-radius:14px;padding:10px 12px;margin:8px 0}.phcard b{display:block}.phcard small{color:#9AA3AD;display:block}.phnews{border-left:3px solid #C8102E;padding:6px 10px;margin:8px 0;font:800 13px/1.3 ${DISPLAY};background:#16181D;border-radius:0 10px 10px 0}.phleg{font-size:11px;color:#9AA3AD;display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:6px}.phleg i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}`; document.head.appendChild(s); }
-  const PH_TABS = [['map', 'Map'], ['season', 'Season'], ['story', 'Story'], ['jobs', 'Jobs'], ['upg', 'Upgrades'], ['news', 'News'], ['contacts', 'Contacts'], ['rayan', 'Rayan'], ['camera', 'Camera']];
+  const PH_TABS = [['map', 'Map'], ['season', 'Season'], ['story', 'Story'], ['jobs', 'Jobs'], ['upg', 'Upgrades'], ['news', 'News'], ['contacts', 'Contacts'], ['rayan', 'Rayan'], ['camera', 'Camera'], ['home', ''], ['msgs', 'Messages'], ['feed', 'Flock'], ['weather', 'Weather']];
   phEl.querySelector('#phTabs').innerHTML = PH_TABS.map(([k, n]) => `<button type="button" data-t="${k}">${n}</button>`).join('');
   phEl.querySelector('#phTabs').addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (b) phShow(b.dataset.t); });
   phEl.querySelector('#phTabs [data-t="story"]').hidden = true; // shown once a story has been started (see phoneOpen)
@@ -10856,7 +10856,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // in the bedroom the phone works too, with the tabs that don't need the city
   const PH_CITY = ['map', 'jobs', 'camera', 'story'], phRoom = () => entered && !inWorld && !EV && !A && !(RW && RW.on);
   function phTabsFit(){ const room = !inWorld; PH_CITY.forEach(k => { const b = phEl.querySelector(`#phTabs [data-t="${k}"]`); if (!b) return; if (room) b.hidden = true; else if (k !== 'story') b.hidden = false; }); }
-  function phoneOpen(t){ if (EV || A || !(inWorld || phRoom())) return; if (!inWorld && (!t || PH_CITY.includes(t)) && PH_CITY.includes(t || PH.tab)) t = 'season'; if (zone === 'mc' && BZ.s.out && !BZ.s.clear) { bzNoiseAdd(.45); bzMakeNoise(pos.x, pos.z, 120); } if (document.pointerLockElement) document.exitPointerLock(); Object.keys(keys).forEach(k => keys[k] = false); phEl.classList.add('on'); const stOn = storyStarted(), stB = phEl.querySelector('#phTabs [data-t="story"]'); if (stB) stB.hidden = !stOn; phTabsFit(); phShow(t === 'story' && !stOn || !t && PH.tab === 'story' && !stOn ? (inWorld ? 'map' : 'season') : t || PH.tab); tone(1046, .06, 'sine', .03); }
+  function phoneOpen(t){ if (EV || A || !(inWorld || phRoom())) return; if (!inWorld && t && PH_CITY.includes(t)) t = 'season'; if (zone === 'mc' && BZ.s.out && !BZ.s.clear) { bzNoiseAdd(.45); bzMakeNoise(pos.x, pos.z, 120); } if (document.pointerLockElement) document.exitPointerLock(); Object.keys(keys).forEach(k => keys[k] = false); phEl.classList.add('on'); const stOn = storyStarted(), stB = phEl.querySelector('#phTabs [data-t="story"]'); if (stB) stB.hidden = !stOn; phTabsFit(); phShow(t === 'story' && !stOn ? (inWorld ? 'map' : 'season') : t || 'home'); tone(1046, .06, 'sine', .03); }
   function phoneClose(){ phEl.classList.remove('on'); }
   phEl.addEventListener('click', e => { if (e.target.closest('[data-bkskip]')) { phoneClose(); if (!EV && !A) setTimeout(bkSkipAsk, 200); return; } if (e.target.closest('[data-bkres]')) { phoneClose(); if (!EV && !A) bkResume(); return; } if (e.target.closest('[data-st]')) { phoneClose(); if (!EV && !A) enterStation(); } });
   phBtn.addEventListener('click', e => { e.stopPropagation(); phOpen() ? phoneClose() : phoneOpen(); });
@@ -10864,6 +10864,118 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   addEventListener('keydown', e => { if (/INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; const k = e.key.toLowerCase();
     if (phOpen()) { if (k === 'escape' || k === 'm') { e.preventDefault(); e.stopImmediatePropagation(); phoneClose(); } else if (!e.metaKey && !e.ctrlKey) e.stopImmediatePropagation(); return; }
     if (k === 'm' && !e.repeat && !phBtn.hidden) { e.preventDefault(); phoneOpen(); } }, true);
+
+  // ======================= the phone as a phone: status bar, home screen, Messages, Flock (social), Weather, notifications =======================
+  // Everything lives in ru-phone: message threads and what you've read, liked posts, posts and messages the seasons pushed, and
+  // the battery (it drains slowly while you're out and charges in your room). Seasons add messages and posts with R.phone.msg/post.
+  const PHX = { th: {}, rd: {}, lk: [], pp: [], fl: {}, bat: 82, open: null };
+  try { Object.assign(PHX, JSON.parse(localStorage.getItem('ru-phone') || '{}')); } catch (e) {}
+  ['th', 'rd', 'fl'].forEach(k => { if (!PHX[k] || typeof PHX[k] !== 'object' || Array.isArray(PHX[k])) PHX[k] = {}; }); ['lk', 'pp'].forEach(k => { if (!Array.isArray(PHX[k])) PHX[k] = []; });
+  const phxSave = () => { try { localStorage.setItem('ru-phone', JSON.stringify({ th: PHX.th, rd: PHX.rd, lk: PHX.lk.slice(-200), pp: PHX.pp.slice(-60), fl: PHX.fl, bat: Math.round(PHX.bat) })); } catch (e) {} };
+  const THREADS = { amma: ['Amma', '#C8462E'], unknown: ['Unknown number', '#5A5E68'], devi: ['Inspector Devi', '#3A5A7A'], bhaskar: ['Bhaskar', '#2E7A6A'], lata: ['Lata (chai)', '#B8862E'], velvet: ['V', '#5A1E4A'] };
+  const nowS = () => Date.now();
+  // a message arrives: stored, a banner shows if the phone isn't on that thread
+  function phMsg(th, text, from){ if (!THREADS[th]) THREADS[th] = [from || th, '#5A5E68']; (PHX.th[th] = PHX.th[th] || []).push([from || THREADS[th][0], text, nowS(), 0]); phxSave(); if (!(phOpen() && PH.tab === 'msgs' && PHX.open === th)) phBanner('msgs', THREADS[th][0], text, th); else phShow('msgs'); }
+  function phPost(handle, name, text, img){ PHX.pp.push({ id: 'p' + nowS() + Math.random().toString(36).slice(2, 5), h: handle, n: name, t: text, img: img || null, ts: nowS() }); phxSave(); }
+  const phUnread = th => Math.max(0, (PHX.th[th] || []).length - (PHX.rd[th] || 0)), phUnreadAll = () => Object.keys(PHX.th).reduce((n, k) => n + phUnread(k), 0);
+  // the banner at the top of the screen
+  const bnEl = document.createElement('button'); bnEl.type = 'button'; bnEl.className = 'phbanner'; bnEl.hidden = true; document.body.appendChild(bnEl);
+  function phBanner(app, title, text, th){ if (!entered) return; bnEl.innerHTML = `<i>${app === 'feed' ? '🐦' : '💬'}</i><span><b>${esc(title)}</b><small>${esc(text.length > 90 ? text.slice(0, 88) + '…' : text)}</small></span><em>now</em>`; bnEl.hidden = false; bnEl.classList.remove('on'); void bnEl.offsetWidth; bnEl.classList.add('on');
+    bnEl.onclick = () => { bnEl.hidden = true; PHX.open = th || null; phoneOpen(app); }; clearTimeout(phBanner.t); phBanner.t = setTimeout(() => { bnEl.classList.remove('on'); setTimeout(() => bnEl.hidden = true, 400); }, 4600); tone(1318, .08, 'sine', .03); setTimeout(() => tone(1760, .1, 'sine', .03), 90); }
+  // the status bar: signal (none in the flood), battery (charging in your room)
+  function phStatus(){ const room = !inWorld, sig = FLOOD.on ? 'No service' : '▂▄▆█', b = Math.max(1, Math.round(PHX.bat));
+    phEl.querySelector('#phSig').innerHTML = `<small>${sig}</small> <small>${FLOOD.on ? '' : '5G'}</small> <span class="phbat${b < 20 ? ' low' : ''}"><i style="width:${b}%"></i></span><small>${room ? '⚡' : ''}${b}%</small>`; }
+  let phBatT = 0;
+  function phxStep(dt){ if (!entered) return; phBatT += dt; if (phBatT < 5) return; const step = phBatT; phBatT = 0; PHX.bat = !inWorld ? Math.min(100, PHX.bat + step / 6) : Math.max(4, PHX.bat - step / (phOpen() ? 60 : 150)); if (phOpen()) phStatus(); phxRules(); }
+  // things that happen whether or not a season file is loaded: Amma, the unknown number, and the feed noticing you
+  function phxRules(){
+    const F = PHX.fl, S = (() => { try { return seasonGet(); } catch (e) { return {}; } })(), s1 = S.s1 || {}, s2 = S.s2 || {}, s3 = S.s3 || {}, h = cityHour(), once = (k, fn) => { if (!F[k]) { F[k] = 1; phxSave(); fn(); } };
+    once('hi', () => { PHX.th.amma = [['Amma', 'Did you eat?', nowS() - 864e5, 0], ['Amma', 'And don’t stay out late.', nowS() - 864e5 + 6e4, 0]]; PHX.rd.amma = 2; phxSave(); });
+    if (s1.intro) once('meteor', () => setTimeout(() => phMsg('amma', 'Something fell in the sea!! It’s on every channel. Stay away from the beach, I mean it.'), 4000));
+    if (s1.scanner || s1.keeper) once('keeper', () => setTimeout(() => phMsg('unknown', 'You’ll know what it’s for when you need to. Keep it charged.'), 9000));
+    if (s2.open && !s2.drained) once('flood', () => setTimeout(() => phMsg('amma', 'Where are you?? Lines are down, this only sent on the fourth try. Are you on a roof? Tell me you’re on a roof.'), 6000));
+    if (s2.drained) once('drained', () => setTimeout(() => phMsg('amma', 'Water’s gone from our road. Come home and see the state of the kitchen.'), 5000));
+    if (s3.open) once('stamps', () => setTimeout(() => phMsg('amma', 'Aunty downstairs says the marigold people came again. She paid. Everyone pays. Don’t get involved.'), 7000));
+    if ((JAIL.rec >= 3 || JAIL.until) && !F.amj) once('amj', () => setTimeout(() => phMsg('amma', 'Mrs Rao says she saw you fighting outside the bakery. Tell me she’s wrong.'), 3000));
+    const day = new Date().toDateString(); if (F.day !== day && entered) { F.day = day; phxSave(); if (h >= 18 || h < 5) setTimeout(() => phMsg('amma', 'It’s getting dark. Where are you?'), 20000); }
+  }
+  // Messages
+  const REPLIES = { amma: [['On my way', 'Good. Your food is on the table.'], ['I ate', 'What did you eat? Chips is not food.'], ['Love you', '❤️ Come home.']], unknown: [['Who is this?', null], ['What is it for?', null]], devi: [['On it', null], ['Who else knows?', null]], bhaskar: [['How is everyone?', 'Dry, for once. Come by.'], ['Thank you', null]], lata: [['Coming', 'I’ll keep the chai hot.'], ['Is Arjun okay?', 'He calls on Sundays. Mostly.']], velvet: [['Why are you helping me?', null], ['Thanks', null]] };
+  const ago = ts => { const m = Math.max(0, Math.round((nowS() - ts) / 6e4)); return m < 1 ? 'now' : m < 60 ? m + 'm' : m < 1440 ? Math.round(m / 60) + 'h' : Math.round(m / 1440) + 'd'; };
+  function phMsgs(B){
+    const th = PHX.open && PHX.th[PHX.open] ? PHX.open : null;
+    if (!th) { const ids = Object.keys(PHX.th).sort((a, b) => ((PHX.th[b].slice(-1)[0] || [])[2] || 0) - ((PHX.th[a].slice(-1)[0] || [])[2] || 0));
+      B.innerHTML = ids.length ? ids.map(k => { const L = PHX.th[k].slice(-1)[0], u = phUnread(k); return `<button type="button" class="phth" data-th="${k}"><i style="background:${THREADS[k] ? THREADS[k][1] : '#5A5E68'}">${esc((THREADS[k] ? THREADS[k][0] : k)[0])}</i><span><b>${esc(THREADS[k] ? THREADS[k][0] : k)}</b><small>${L[3] ? 'You: ' : ''}${esc(L[1])}</small></span><em>${ago(L[2])}${u ? `<u>${u}</u>` : ''}</em></button>`; }).join('') : '<div class="phcard"><small>No messages yet.</small></div>';
+      B.querySelectorAll('[data-th]').forEach(b => b.onclick = () => { PHX.open = b.dataset.th; phShow('msgs'); }); return; }
+    PHX.rd[th] = PHX.th[th].length; phxSave(); phEl.querySelector('#phTitle').textContent = THREADS[th] ? THREADS[th][0] : th;
+    const R0 = (REPLIES[th] || [['OK', null]]), last = PHX.th[th].slice(-1)[0];
+    B.innerHTML = `<div class="phchat">${PHX.th[th].map(m => `<p class="${m[3] ? 'me' : ''}">${esc(m[1])}<small>${ago(m[2])}</small></p>`).join('')}</div>` + (last && !last[3] ? `<div class="phrow phreply">${R0.map(([q], i) => `<button type="button" data-rp="${i}">${esc(q)}</button>`).join('')}</div>` : '');
+    const ch = B.querySelector('.phchat'); B.scrollTop = B.scrollHeight;
+    B.querySelectorAll('[data-rp]').forEach(b => b.onclick = () => { const [q, a] = R0[+b.dataset.rp]; PHX.th[th].push(['You', q, nowS(), 1]); PHX.rd[th] = PHX.th[th].length; phxSave(); tone(988, .05, 'sine', .03); phShow('msgs');
+      if (a) setTimeout(() => { PHX.th[th].push([THREADS[th][0], a, nowS(), 0]); phxSave(); if (phOpen() && PH.tab === 'msgs' && PHX.open === th) phShow('msgs'); else phBanner('msgs', THREADS[th][0], a, th); }, 2500 + Math.random() * 3000); });
+  }
+  // Flock: the city's feed. Everyday posts by the hour, posts about whatever this season is doing, posts the seasons pushed, and you
+  const FLOCK = [['bmtc_rider', 'Ravi K', ['Silk Board at 6pm is a spiritual experience.', 'Bus 500D just skipped my stop like we have beef.', 'The metro was on time today. Write that down.']], ['indiranagar_eats', 'Meera eats', ['New filter coffee place on 12th Main. The decoction is no joke.', 'Masala dosa ranking thread. 1. CTR. 2. Also CTR. 3. Fine, Vidyarthi Bhavan.']], ['rain_in_blr', 'Bangalore Weather Watch', ['Clouds building over the west. Umbrella day.', 'Lovely evening. Twenty-two degrees. This is why we live here.']], ['terrace_aunty', 'Lakshmi aunty', ['Who keeps parking in front of my gate. I have your number plate.', 'Made too much bisi bele bath again. Neighbours, come.']], ['cubbon_runner', 'Kiran runs', ['5k round Cubbon Park before the walkers took over. Peacock sighting at the bandstand.']], ['kannada_memes_', 'Swalpa Adjust Maadi', ['"Swalpa adjust maadi" is a lifestyle, not a request.', 'Traffic so bad I learned a new language in the auto.']], ['techpark_tales', 'Ananya · Whitefield', ['Standup at 10, standup at 11, standup at 12. When do we sit down.', 'Office cafeteria has started serving "fusion dosa". Pray for us.']]];
+  function phFeedPosts(){
+    const S = (() => { try { return seasonGet(); } catch (e) { return {}; } })(), s1 = S.s1 || {}, s2 = S.s2 || {}, s3 = S.s3 || {}, day = Math.floor(nowS() / 864e5), P = [];
+    let seed = day * 9301 + 49297; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+    FLOCK.forEach(([h, n, L], i) => { const t = L[Math.floor(rnd() * L.length)]; P.push({ id: 'a' + day + i, h, n, t, ts: nowS() - (20 + rnd() * 600) * 6e4 }); });
+    const ev = (id, h, n, t, mins, img) => P.push({ id, h, n, t, ts: nowS() - mins * 6e4, img });
+    if (s1.intro) ev('s1a', 'sky_over_blr', 'Night Sky Bangalore', 'Did anyone else see that?? Fireball over the city, then a boom from the west coast. My windows rattled. #Landfall', 140, 'meteor');
+    if (s1.c3) ev('s1b', 'fisher_gopal', 'Gopal · Ullal', 'There’s an ISLAND where it came down. It wasn’t there yesterday. I fish here every day.', 90, 'isle');
+    if (s2.open && !s2.drained) { ev('s2a', 'rooftop_camp', 'Survivors · Roof 14', 'Water at the third floor. We have a fire and a radio. If you can read this, you’re not alone.', 60, 'flood'); ev('s2b', 'blr_alerts', 'BLR Emergency Alerts', 'Do not enter the water. Sharks confirmed in flooded streets. Stay on rooftops.', 120); }
+    if (s2.drained) ev('s2c', 'blr_alerts', 'BLR Emergency Alerts', 'Floodwater has drained from most districts. One block remains under water and is closed.', 200);
+    if (s3.open) { ev('s3a', 'marketstreet_', 'Market Street Traders', 'Every shutter on our street has their flower stamped on it now. Nobody stamped it. Everybody pays.', 80, 'stamp'); const fr = Object.values(s3.dist || {}).filter(L => L.length >= 3).length; if (fr) ev('s3b', 'marketstreet_', 'Market Street Traders', `Stalls back open in ${fr} district${fr > 1 ? 's' : ''}. Music on the street tonight.`, 30); }
+    if (s3.done) ev('s3c', 'blr_alerts', 'BLR Emergency Alerts', 'Citywide power failure. Stay indoors. Updates when we have them.', 15);
+    if (JAIL.rec >= 2) ev('me1', 'mg_road_watch', 'MG Road Watch', 'Some kid just walked up and punched a man outside the bakery. Police on the way. What is wrong with people.', 12);
+    if (JAIL.until) ev('me2', 'mg_road_watch', 'MG Road Watch', 'Update: they got arrested. Took two constables.', 3);
+    PHX.pp.forEach(q => P.push(q));
+    return P.sort((a, b) => b.ts - a.ts).slice(0, 30);
+  }
+  const imgCss = k => ({ meteor: 'linear-gradient(160deg,#0B0D14 30%,#2A1410),radial-gradient(circle at 30% 70%,#FFB27A,transparent 40%)', isle: 'linear-gradient(#9CC8EE 55%,#2E7A9A 55%)', flood: 'linear-gradient(#5E7378 50%,#2E5A6A 50%)', stamp: 'radial-gradient(circle,#E8901A 0 28%,#7A3A08 30% 36%,#E8E6E0 38%)' }[k] || '#2A2D33');
+  function phFeed(B){
+    const P = phFeedPosts(); B.innerHTML = P.map(q => { const liked = PHX.lk.includes(q.id), base = 3 + (q.id.charCodeAt(1) * 7 + q.t.length * 3) % 400;
+      return `<div class="phpost"><div class="phph"><i style="background:hsl(${(q.h.charCodeAt(0) * 37) % 360},45%,42%)">${esc(q.n[0])}</i><span><b>${esc(q.n)}</b><small>@${esc(q.h)} · ${ago(q.ts)}</small></span></div><p>${esc(q.t)}</p>${q.img ? `<div class="phimg" style="background:${imgCss(q.img)}"></div>` : ''}<div class="phact"><button type="button" data-lk="${q.id}" class="${liked ? 'on' : ''}">${liked ? '♥' : '♡'} ${base + (liked ? 1 : 0)}</button><span>💬 ${Math.floor(base / 9)}</span><span>↻ ${Math.floor(base / 14)}</span></div></div>`; }).join('');
+    B.querySelectorAll('[data-lk]').forEach(b => b.onclick = () => { const id = b.dataset.lk, i = PHX.lk.indexOf(id); if (i >= 0) PHX.lk.splice(i, 1); else PHX.lk.push(id); phxSave(); tone(1100, .04, 'sine', .02); phShow('feed'); });
+  }
+  // Weather: Bangalore, by the hour, with whatever the season is doing to it
+  function phWeather(B){
+    const h = cityHour(), S = (() => { try { return seasonGet(); } catch (e) { return {}; } })(), flood = FLOOD.on, dark = S.s3 && S.s3.done, mon = new Date().getMonth();
+    const temp = x => Math.round((mon === 11 || mon < 2 ? 15 : 19) + 9 * Math.max(0, Math.sin((x - 6) / 24 * Math.PI * 2 - .3)) + (mon > 2 && mon < 6 ? 5 : 0));
+    const cond = flood ? ['🌧', 'Heavy rain · flood warning'] : (mon === 11 || mon === 0) ? ['🌤', 'Clear and cool'] : (mon >= 5 && mon <= 9) ? ['🌦', 'Passing showers'] : ['⛅', 'Partly cloudy'];
+    B.innerHTML = `<div class="phwx"><small>Bengaluru</small><b>${temp(h)}°</b><span>${cond[0]} ${cond[1]}</span><small>H ${temp(15)}° · L ${temp(5)}°</small>${dark ? '<em>⚠ Power outage across the city</em>' : ''}${flood ? '<em>⚠ Do not enter floodwater</em>' : ''}</div>`
+      + `<div class="phhours">${[0, 1, 2, 3, 4, 5].map(i => { const x = (Math.floor(h) + i * 2) % 24; return `<span><small>${i ? String(x).padStart(2, '0') : 'Now'}</small><b>${x >= 6 && x < 18 ? cond[0] : '🌙'}</b>${temp(x)}°</span>`; }).join('')}</div>`;
+  }
+  // the home screen
+  const APPS = [['msgs', 'Messages', '💬', '#34C759'], ['feed', 'Flock', '🐦', '#1D9BF0'], ['map', 'Maps', '🗺', '#E8B82E'], ['season', 'Season', '☄', '#FF7A2A'], ['camera', 'Camera', '📷', '#5A5E68'], ['weather', 'Weather', '⛅', '#3C8CE0'], ['news', 'News', '📰', '#C8102E'], ['jobs', 'Jobs', '💼', '#6B3FA0'], ['upg', 'Upgrades', '⬆', '#1F7A45'], ['contacts', 'Contacts', '👥', '#8A8F99'], ['rayan', 'Rayan', 'R', '#16181D'], ['story', 'Story', '📖', '#B8862E']];
+  function phHomeScreen(B){
+    const h = cityHour(), d = new Date(), stOn = storyStarted(), un = phUnreadAll(), apps = APPS.filter(([k]) => (k !== 'story' || stOn) && (inWorld || !PH_CITY.includes(k)));
+    B.innerHTML = `<div class="phlock"><b>${String(Math.floor(h)).padStart(2, '0')}:${String(Math.floor(h % 1 * 60)).padStart(2, '0')}</b><small>${d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</small></div>`
+      + `<div class="phapps">${apps.map(([k, n, ic, col]) => `<button type="button" data-app="${k}"><i style="background:${col}">${ic}</i>${esc(n)}${k === 'msgs' && un ? `<u>${un}</u>` : ''}</button>`).join('')}</div>`;
+    B.querySelectorAll('[data-app]').forEach(b => b.onclick = () => { PHX.open = null; phShow(b.dataset.app); });
+  }
+  function phxShow(t, B){
+    try { phxRules(); } catch (e) { console.error(e); }
+    phEl.querySelector('#phBack').style.visibility = t === 'home' ? 'hidden' : 'visible';
+    if (t === 'home') { phHomeScreen(B); return true; }
+    if (t === 'msgs') { phMsgs(B); return true; } if (t === 'feed') { phFeed(B); return true; } if (t === 'weather') { phWeather(B); return true; }
+    return false;
+  }
+  phEl.querySelector('#phBack').onclick = () => { if (PH.tab === 'msgs' && PHX.open) { PHX.open = null; phShow('msgs'); } else phShow('home'); };
+  phEl.querySelector('#phHome').onclick = () => { PHX.open = null; phShow('home'); };
+  { const s = document.createElement('style'); s.textContent = `.phtabs{display:none!important}.phstat{display:flex;align-items:center;justify-content:space-between;padding:8px 18px 0;font:700 12px/1 system-ui,sans-serif}.phstat #phClock{width:auto}.phnotch{display:block;width:84px;height:20px;border-radius:12px;background:#000}
+.phstat #phSig{display:flex;align-items:center;gap:5px}.phbat{display:inline-block;width:22px;height:10px;border:1.5px solid #EEF1F5;border-radius:3px;position:relative;padding:1px}.phbat i{display:block;height:100%;background:#EEF1F5;border-radius:1px}.phbat.low i{background:#FF453A}
+.phback{background:none;border:0;color:#7CB8FF;font:400 30px/1 system-ui;width:32px;height:32px;cursor:pointer;padding:0}.phhome{display:block;width:120px;height:5px;margin:6px auto 9px;border:0;border-radius:3px;background:#EEF1F5;opacity:.7;cursor:pointer}
+.phone.athome{background:linear-gradient(160deg,var(--accent,#2B45E0),#0B0D14 75%)}.phone.athome .phtop{display:none}
+.phlock{text-align:center;padding:26px 0 18px}.phlock b{display:block;font:200 64px/1 system-ui,sans-serif;letter-spacing:-2px}.phlock small{font-weight:600;opacity:.85}
+.phapps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 6px;padding:6px 4px}.phapps button{background:none;border:0;color:#fff;font:600 11px/1.2 system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;position:relative}.phapps i{display:grid;place-items:center;width:52px;height:52px;border-radius:14px;font:800 24px/1 system-ui;font-style:normal;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.3)}.phapps u,.phth u{position:absolute;top:-4px;right:12px;background:#FF3B30;color:#fff;text-decoration:none;border-radius:999px;min-width:18px;height:18px;padding:0 5px;font:800 11px/18px system-ui}
+.phth{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-bottom:1px solid #1E2128;color:#EEF1F5;padding:10px 2px;text-align:left;cursor:pointer;position:relative}.phth i{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;font:800 17px system-ui;font-style:normal;color:#fff}.phth span{flex:1;min-width:0}.phth small{display:block;color:#9AA3AD;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.phth em{font-style:normal;font-size:11px;color:#9AA3AD;align-self:flex-start}.phth u{position:static;display:inline-block;margin-left:6px}
+.phchat{display:flex;flex-direction:column;gap:6px;padding:6px 0}.phchat p{max-width:80%;background:#26292F;border-radius:16px 16px 16px 4px;padding:8px 11px;margin:0;align-self:flex-start;font-size:14px}.phchat p.me{align-self:flex-end;background:#0A84FF;border-radius:16px 16px 4px 16px}.phchat small{display:block;font-size:10px;opacity:.6;margin-top:2px}
+.phpost{border-bottom:1px solid #1E2128;padding:10px 0}.phph{display:flex;gap:9px;align-items:center}.phph i{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;font:800 15px system-ui;font-style:normal;color:#fff}.phph small{display:block;color:#8A939D}.phpost p{margin:6px 0 0;font-size:14px}.phimg{height:150px;border-radius:12px;margin-top:8px}
+.phact{display:flex;gap:18px;margin-top:8px;color:#8A939D;font-size:12px}.phact button{background:none;border:0;color:#8A939D;font:600 12px system-ui;cursor:pointer;padding:0}.phact button.on{color:#FF3B6A}
+.phwx{text-align:center;padding:20px 0 14px}.phwx b{display:block;font:200 70px/1 system-ui}.phwx span{display:block;font-weight:600}.phwx small{display:block;color:#9AA3AD;margin:4px 0}.phwx em{display:block;font-style:normal;color:#FFB04A;margin-top:8px;font-weight:700}
+.phhours{display:flex;justify-content:space-between;background:#16181D;border-radius:14px;padding:10px}.phhours span{display:flex;flex-direction:column;align-items:center;gap:4px;font-weight:700;font-size:13px}.phhours small{color:#9AA3AD;font-size:11px}
+.phbanner{position:fixed;left:50%;top:calc(10px + env(safe-area-inset-top,0px));transform:translate(-50%,-140%);z-index:80;width:min(420px,calc(100% - 20px));display:flex;align-items:center;gap:10px;background:rgba(30,32,38,.94);color:#fff;border:0;border-radius:18px;padding:10px 14px;text-align:left;box-shadow:0 10px 30px rgba(0,0,0,.4);cursor:pointer;transition:transform .35s;font:500 13px/1.3 system-ui,sans-serif;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}.phbanner.on{transform:translate(-50%,0)}.phbanner i{font-style:normal;font-size:22px}.phbanner span{flex:1;min-width:0}.phbanner small{display:block;color:#C8CDD6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.phbanner em{font-style:normal;font-size:11px;color:#9AA3AD}`; document.head.appendChild(s); }
   function phMapBase(){
     const S = 1024, c = document.createElement('canvas'); c.width = c.height = S; const g = c.getContext('2d'), k = S / 780, X = x => (x + 390) * k;
     g.fillStyle = '#C9C4B8'; g.fillRect(0, 0, S, S); g.fillStyle = '#5A9AD0'; g.fillRect(X(-275), X(-168), (-126 + 275) * k, (168 - 60) * k);
@@ -10916,6 +11028,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function phShow(t){
     PH.tab = t; PH.draw = null; phEl.querySelectorAll('#phTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t)); phEl.querySelector('#phTitle').textContent = (PH_TABS.find(q => q[0] === t) || [])[1] || '';
     const B = phEl.querySelector('#phBody'), h = cityHour(); phEl.querySelector('#phClock').textContent = `${String(Math.floor(h)).padStart(2, '0')}:${String(Math.floor(h % 1 * 60)).padStart(2, '0')}`;
+    phEl.classList.toggle('athome', t === 'home'); phStatus(); if (phxShow(t, B)) return;
     if (t === 'truth') return bzTruthTab(B);
     if (t === 'season') return seasonTab(B);
     if (bzPhone(t, B)) return;
@@ -15542,7 +15655,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     get tpv(){ return tpv; }, set tpv(v){ tpv = !!v; }, get zone(){ return zone; }, get inWorld(){ return inWorld; }, get entered(){ return entered; }, get busy(){ return !!(EV || A); }, get lowFx(){ return lowFx; },
     get BL(){ return BL; }, get BLC(){ return BLC; }, get DRV(){ return DRV; }, get PH(){ return PH; }, get DLG(){ return DLG; }, get room(){ return scene; }, get panelOpen(){ return panel.classList.contains('on'); },
     say, tone, toMap, toLocal, onGround, blrBox, avatar, crowdLook, tex, mat, glowM, decor, B3, C3, S3, fade, flakeTex, heroName, cleanName, setName,
-    fight: ssFight, fightReg: ssReg, heroAv: ssAvatar, give: arsGive, skin: arsSkin, equip: arsEquip, getIn, blrValid, flood: { set: floodSet, off: floodOff, level: floodLevel, ladder: floodLadder, roofAt: floodRoofAt, put: floodPut, get state(){ return FLOOD; } }, makeVehicle, getOut, video: seasonVideo, garComet, camOut, hush(on){ PED.hush = !!on; }, still(){ vy = 0; grounded = true; }, get KIT(){ return KIT; }, get SW(){ return SW; }, cityV: () => cityV, swTop: (mx, mz) => bTop(mx, mz), heat: () => HEAT,
+    fight: ssFight, fightReg: ssReg, heroAv: ssAvatar, give: arsGive, skin: arsSkin, equip: arsEquip, getIn, blrValid, flood: { set: floodSet, off: floodOff, level: floodLevel, ladder: floodLadder, roofAt: floodRoofAt, put: floodPut, get state(){ return FLOOD; } }, makeVehicle, getOut, video: seasonVideo, garComet, camOut, phone: { msg: (th, text, from) => phMsg(th, text, from), post: (h, n, t, img) => phPost(h, n, t, img) }, hush(on){ PED.hush = !!on; }, still(){ vy = 0; grounded = true; }, get KIT(){ return KIT; }, get SW(){ return SW; }, cityV: () => cityV, swTop: (mx, mz) => bTop(mx, mz), heat: () => HEAT,
     pk: { get state(){ return PK; }, rope(on){ PK.rope = !!on; }, low(x0, x1, z0, z1, h){ const b = { x0, x1, z0, z1, h: h || 1 }; PK.lows.push(b); return b; }, gap(x0, x1, z0, z1){ const b = { x0, x1, z0, z1 }; PK.gaps.push(b); return b; }, drop(b){ [PK.lows, PK.gaps].forEach(L => { const i = L.indexOf(b); if (i >= 0) L.splice(i, 1); }); }, set onLand(f){ PK.onLand = f; }, set onSlide(f){ PK.onSlide = f; } }, get ars(){ return ARS; }, weapons: SSW, skins: SSKIN, get fighting(){ return !!(EV && EV.opts && EV.opts.ss); },
     dlgPlay, dlgNext, dlgSkip, closePanel, phoneClose, panel(html){ panelBody.innerHTML = html; panel.scrollTop = 0; panel.classList.add('on'); return panelBody; }
   }; }
@@ -15567,7 +15680,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // every couple of seconds: achievements, the real night, and the phone light
   let nightChecked = false;
   function littleStep(dt, now){
-    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { isleStep(dt, now); } catch (e) { console.error(e); } try { mtnStep(dt, now); } catch (e) { console.error(e); } try { floodStep(dt); } catch (e) { console.error(e); } try { pkStep(dt); } catch (e) { console.error(e); } try { seasonStep(dt, now); } catch (e) { console.error(e); } try { winterStep(dt, now); } catch (e) { console.error(e); }
+    sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { isleStep(dt, now); } catch (e) { console.error(e); } try { mtnStep(dt, now); } catch (e) { console.error(e); } try { floodStep(dt); } catch (e) { console.error(e); } try { pkStep(dt); } catch (e) { console.error(e); } try { phxStep(dt); } catch (e) { console.error(e); } try { seasonStep(dt, now); } catch (e) { console.error(e); } try { winterStep(dt, now); } catch (e) { console.error(e); }
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.dz) deathStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.fin) finalStep(dt, now);
