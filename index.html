@@ -9781,7 +9781,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (phMoreApps(t, B)) return true;
     // the same apps at home as outside; the ones that need the city say so instead of vanishing
     if (!inWorld && (t === 'map' || t === 'jobs')) { B.innerHTML = `<div class="phcard"><b>${t === 'map' ? 'Maps' : 'Jobs'}</b><small>You’re at home. ${t === 'map' ? 'The map, pins and “Bring me a car” work once you’re out in the city.' : 'People post jobs from the street. Head out and check again.'}</small><div class="phrow"><button type="button" class="y" data-goout>Head out to the city</button></div></div>`; B.querySelector('[data-goout]').onclick = () => { phoneClose(); travel('city'); }; return true; }
-    if (t === 'homes') { B.innerHTML = '<div class="phcard"><b>Homes</b><small>Buy a place at its key box or sales office. Your home is where you sleep and where you wake up.</small></div>' + Object.keys(HOMES).map(k => { const H = HOMES[k], own = HOME.own.includes(k); return `<div class="phcard"><b>${esc(H.n)}${HOME.cur === k ? ' · home' : ''}</b><small>${esc(H.d)}</small><small>${own ? 'You own this.' : inr(H.p)}</small><div class="phrow">${own ? `<button type="button" class="y" data-hg="${k}">Take me there</button>` : HSPOT[k] ? `<button type="button" data-hg="${k}">Show me the way</button>` : '<small>Head into the city to find it.</small>'}</div></div>`; }).join('');
+    if (t === 'homes') { B.innerHTML = '<div class="phcard"><b>Homes</b><small>Buy a place at its key box or sales office. Your main home is where you start when you open the site.</small></div>' + `<div class="phcard"><b>Your bedroom${HOME.cur ? '' : ' · main home'}</b><small>Your room at your parents’ place.</small><div class="phrow">${HOME.cur ? '<button type="button" data-hm="room">Make this my main home</button>' : ''}</div></div>` + Object.keys(HOMES).map(k => { const H = HOMES[k], own = HOME.own.includes(k); return `<div class="phcard"><b>${esc(H.n)}${HOME.cur === k ? ' · main home' : ''}</b><small>${esc(H.d)}</small><small>${own ? 'You own this.' : inr(H.p)}</small><div class="phrow">${own ? `<button type="button" class="y" data-hg="${k}">Take me there</button>${HOME.cur === k ? '' : `<button type="button" data-hm="${k}">Make this my main home</button>`}` : HSPOT[k] ? `<button type="button" data-hg="${k}">Show me the way</button>` : '<small>Head into the city to find it.</small>'}</div></div>`; }).join('');
+      B.querySelectorAll('[data-hm]').forEach(b => b.onclick = () => { const k = b.dataset.hm; HOME.cur = k === 'room' ? null : k; homeSave(); say(k === 'room' ? 'Your bedroom is your main home again.' : `${HOMES[k].n} is your main home now.`, 2200); phShow('homes'); });
       B.querySelectorAll('[data-hg]').forEach(b => b.onclick = () => { const k = b.dataset.hg; phoneClose(); if (HOME.own.includes(k)) homeGo(k); else { const a = HSPOT[k]; if (a) { PH.wp = a.slice(); say(`Pinned on your map: ${HOMES[k].n}.`, 2200); } } }); return true; }
     if (t === 'bank') { const tx = CASH.tx.slice(-12).reverse();
       B.innerHTML = `<div class="phbank"><small>Available balance</small><b>${bal()}</b><span>Savings ·· 4417</span></div><div class="phrow"><button type="button" data-bk="mum">Send Mum ₹500</button></div><div class="phcard"><b>Recent</b>${tx.length ? tx.map(([n, w, ts]) => `<div class="phtx"><span>${esc(w)}<small>${ago(ts)}</small></span><em class="${n >= 0 ? 'in' : ''}">${txAmt(n)}</em></div>`).join('') : '<small>No transactions yet.</small>'}</div>`;
@@ -11804,7 +11805,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     const lost = Math.min(CASH.v, Math.round(CASH.v * (.1 + Math.random() * .15)));
     setTimeout(() => fade(() => {
       const home = Math.random() < .5 || !(inWorld && zone === 'blr'); CLOCK.off = (CLOCK.off + 4 + Math.floor(Math.random() * 3)) % 24; DRUNK.l = .8;
-      if (HOME.cur && HSPOT[HOME.cur] && inWorld && zone === 'blr') { const [lx, lz] = toLocal(...HSPOT[HOME.cur]); pos.x = lx; pos.z = lz; } else if (home) travel('room'); else { const bx = (PARK_B[0] + PARK_B[1]) / 2 + 6, bz = (PARK_B[2] + PARK_B[3]) / 2 + 4, [lx, lz] = toLocal(bx, bz); if (blrValid(lx, lz)) { pos.x = lx; pos.z = lz; } }
+      if (HOME.cur && HRM[HOME.cur] && inWorld && zone === 'blr') hroomGo(HOME.cur, true); else if (home) travel('room'); else { const bx = (PARK_B[0] + PARK_B[1]) / 2 + 6, bz = (PARK_B[2] + PARK_B[3]) / 2 + 4, [lx, lz] = toLocal(bx, bz); if (blrValid(lx, lz)) { pos.x = lx; pos.z = lz; } }
       if (lost) cashAdd(-lost, 'Lost while you were out', true);
       setTimeout(() => { say(`${home ? 'You wake up in your own bed. No idea how you got here.' : 'You wake up on a park bench, hours later.'} ${lost ? `Your wallet is ${inr(lost)} lighter.` : ''}`, 4200); try { phMsg('amma', home ? 'Beta, the watchman had to help you up the stairs. We will talk about this in the morning.' : 'Where ARE you?? You didn’t come home last night. Call me RIGHT NOW.'); } catch (e) {} DRUNK.passing = false; }, 900);
     }, '#000000'), 1600);
@@ -11835,31 +11836,113 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   const homeSave = () => { try { localStorage.setItem('ru-home', JSON.stringify(HOME)); } catch (e) {} };
   function homeMenu(id){
     const H = HOMES[id], own = HOME.own.includes(id), cur = HOME.cur === id;
-    return { title: H.n, sub: H.d, items: () => own ? [{ id: 'move', n: cur ? 'This is your home' : 'Make this your home', d: cur ? 'You live here.' : 'You’ll come back here instead of your parents’ place.', p: 0, own: cur }, { id: 'sleep', n: 'Sleep (8 hours)', d: 'Sober up, skip to morning.', p: 0 }] : [{ id: 'buy', n: 'Buy it', d: 'Keys today. No deposit, no broker fee.', p: H.p }],
+    return { title: H.n, sub: H.d, items: () => own ? [{ id: 'move', n: cur ? 'This is your main home' : 'Make this my main home', d: cur ? 'You start here when you open the site.' : 'You’ll start here when you open the site, and Go home brings you here.', p: 0, own: cur }, { id: 'sleep', n: 'Sleep (8 hours)', d: 'Sober up, skip to morning.', p: 0 }] : [{ id: 'buy', n: 'Buy it', d: 'Keys today. No deposit, no broker fee.', p: H.p }],
       buy(it){
-        if (it.id === 'buy') { if (!cashSpend(it.p, H.n)) return; HOME.own.push(id); if (!HOME.cur) HOME.cur = id; homeSave(); tone(523, .1, 'triangle', .04); setTimeout(() => tone(784, .2, 'triangle', .04), 120); say(`The keys are yours. ${H.n} is your home now.`, 3200); setTimeout(() => { try { phMsg('amma', HOME.own.length === 1 ? 'You BOUGHT a place?? Without telling me?? …Send photos. And come for dinner on Sunday.' : 'Another one? Are you a landlord now?'); } catch (e) {} }, 4000); return; }
-        if (it.id === 'move') { HOME.cur = id; homeSave(); return say(`You live at ${H.n} now.`, 2200); }
+        if (it.id === 'buy') { if (!cashSpend(it.p, H.n)) return; HOME.own.push(id); homeSave(); tone(523, .1, 'triangle', .04); setTimeout(() => tone(784, .2, 'triangle', .04), 120); say(`The keys are yours. Make it your main home here or in the phone’s Homes app to start there.`, 3600); setTimeout(() => { try { phMsg('amma', HOME.own.length === 1 ? 'You BOUGHT a place?? Without telling me?? …Send photos. And come for dinner on Sunday.' : 'Another one? Are you a landlord now?'); } catch (e) {} }, 4000); return; }
+        if (it.id === 'move') { HOME.cur = id; homeSave(); return say(`${H.n} is your main home now.`, 2200); }
         if (it.id === 'sleep') { svcBox.classList.remove('on'); fade(() => { CLOCK.off = (CLOCK.off + 8) % 24; DRUNK.l = 0; setTimeout(() => say('You sleep like a log. Eight hours later, the city sounds different.', 3200), 600); }, '#000000'); }
       } };
   }
-  function homeGo(id){
-    const at = HSPOT[id]; if (!at) return say('Head out into the city first.', 2000); if (EV || A) return say('Not right now.', 1600);
-    const put = () => { const [lx, lz] = toLocal(at[0], at[1]); pos.x = lx; pos.z = lz; say(`${HOMES[id].n}.`, 1800); };
-    if (inWorld && zone === 'blr' && !BL.lvl) return fade(put, '#000000');
-    if (DRV.on) getOut(true); travel('city'); setTimeout(() => { if (inWorld && zone === 'blr') put(); }, 2600);
+  function homeGo(id, quiet){
+    if (EV || A) return say('Not right now.', 1600); const own = HOME.own.includes(id);
+    const put = () => { if (own && HRM[id]) return hroomGo(id, quiet); const at = HSPOT[id]; if (!at) return; fade(() => { const [lx, lz] = toLocal(at[0], at[1]); pos.x = lx; pos.z = lz; say(`${HOMES[id].n}.`, 1800); }, '#000000'); };
+    if (inWorld && zone === 'blr') return put();
+    if (DRV.on) getOut(true); travel('city'); let n = 0; const w = setInterval(() => { if (inWorld && zone === 'blr' && BLC.placesBuilt && !BL.cine && !document.body.classList.contains('cine')) { clearInterval(w); put(); } else if (++n > 240) clearInterval(w); }, 250);
   }
-  // furnished flats (shopInside calls this for the two flats)
+
+  // the street lobby of the two flats (shopInside calls this): mailboxes, the key box and stairs up to the flat (owners only)
   function homeInside(S, F, Wr, Dr, P, so){
     const hw = Wr / 2, id = S.id.slice(5);
-    P.push(B3(3, .7, 1, 0x5A6E8A, -hw + 2, .35, Dr - 1.2), B3(3, .7, .3, 0x5A6E8A, -hw + 2, .85, Dr - .8)); so(-hw + .5, -hw + 3.5, Dr - 1.7, Dr - .6);
-    P.push(B3(1.4, .4, .8, 0x6A4E3A, -hw + 2, .2, Dr - 2.6), B3(2.4, .03, 2.2, 0x7A3A3A, -hw + 2, .03, Dr - 2.4));
-    P.push(B3(2.2, .45, 1.6, 0x6A4E3A, hw - 1.6, .22, Dr - 1.3), B3(2.1, .2, 1.5, 0xEEF1F5, hw - 1.6, .55, Dr - 1.3), B3(1.2, .06, 1.52, 0x2E5A9A, hw - 1.3, .66, Dr - 1.3)); so(hw - 2.7, hw - .5, Dr - 2.1, Dr - .5);
-    P.push(B3(2.6, .9, .6, 0xEEF1F5, hw - 1.8, .45, 1.2), B3(2.62, .05, .62, 0x3A3D44, hw - 1.8, .92, 1.2)); so(hw - 3.1, hw - .5, .9, 1.5);
-    P.push(B3(2.2, .5, .5, 0x2A2D33, 0, .25, Dr - .4), B3(2, 1.1, .06, 0x16181D, 0, 1.25, Dr - .32)); so(-1.1, 1.1, Dr - .7, Dr - .1);
-    P.push(C3(.3, .5, 0xB8906A, -hw + .5, .25, .9, 10), S3(.45, 0x3F7A44, -hw + .5, .85, .9));
-    P.push(B3(.6, .9, .05, 0xFFE8B0, -hw + .3, 1.9, 2.4));
-    const [x, z] = F.toM(0, Dr / 2); HSPOT[id] = [x, z]; const [kx, kz] = F.toM(-hw + 1.2, 1.3); SVC.push({ x: kx, z: kz, kind: 'home:' + id });
+    for (let k = 0; k < 6; k++) P.push(B3(1.4, .2 * (k + 1), .3, 0x8A8F99, 0, .1 * (k + 1), Dr - 1.8 + k * .3)); P.push(B3(1.6, 2.6, .1, 0x3A3D44, 0, 1.3 + 1.2, Dr - .05)); so(-.75, .75, Dr - 1.95, Dr);
+    P.push(B3(.06, 1.2, 1.5, 0x8A8F99, -.75, 1.2, Dr - 1), B3(.06, 1.2, 1.5, 0x8A8F99, .75, 1.2, Dr - 1));
+    P.push(B3(1.3, .9, .25, 0x6A6E78, hw - 1, 1.3, Dr - .15)); for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) P.push(B3(.26, .22, .02, 0x9AA0AA, hw - 1.45 + c * .3, 1.05 + r * .27, Dr - .27)); so(hw - 1.7, hw - .3, Dr - .3, Dr);
+    P.push(C3(.3, .5, 0xB8906A, -hw + .5, .25, Dr - .6, 10), S3(.45, 0x3F7A44, -hw + .5, .85, Dr - .6)); so(-hw + .2, -hw + .8, Dr - .9, Dr - .3);
+    signPlane('RESIDENTS', 'STAIRS TO THE FLATS', '#2A2D33', '#FFE8B0', 1.5, .45, F.g, 0, 3.2, Dr - .1, Math.PI);
+    const lob = F.toM(0, 1.6); HSPOT[id] = lob; const [kx, kz] = F.toM(-hw + 1.2, 1.3); SVC.push({ x: kx, z: kz, kind: 'home:' + id });
     P.push(B3(.4, .5, .12, 0x8A6B4A, -hw + 1.2, 1.3, .9));
+    hroomBuild(id, lob, F.g.rotation.y); const [ex, ez] = F.toM(0, Dr - 2.3);
+    LV.entries.push({ x: ex, z: ez, r: .9, to: 'h_' + id, at: [HROOM[id].x, HROOM[id].z + HROOM[id].d / 2 - 1.4], yaw: 0, fade: true, ok: () => HOME.own.includes(id), msg: `Up the stairs. Home: ${HROOM[id].name}.` });
+  }
+  // ---------- the rooms you live in: every home you can buy has its own furnished room ----------
+  // Each room is a level (LVL['h_<id>'], like the jail) far under the map, built once by hroomBuild with the street's way in
+  // (stairs in the Old Town and Lakeside lobbies, villa 1's front door; LV.entries, owners only) and its own front door as the
+  // way out. Inside: a bed, desk, sofa, shelves, rug, plants, lamps and a window with a view, styled per home (HROOM), plus
+  // your profile things: a PC that opens RayanOS (egg hm:ros) and a pinboard and two framed papers that open the same panels
+  // as the bedroom (hm:sec:<key>). HOME.cur is your main home: entering the site starts you there (homeSpawn) and Go home
+  // brings you back; without one you start in the bedroom.
+  const HRY = -40, HROOM = {
+    old: { x: 840, z: 840, w: 7, d: 6, h: 2.9, floor: 0x9A6E44, wall: 0xEADCC4, trim: 0x6A4E3A, bed: 0x8A3A2A, sofa: 0x5A6E4A, rug: 0xB8583A, sky: ['#F4A65A', '#3A2A4A'], win: 1.8, name: 'your Old Town room' },
+    lake: { x: 880, z: 840, w: 10, d: 8, h: 3.1, floor: 0xC8B898, wall: 0xF4F2EE, trim: 0x2A2D33, bed: 0x2E5A9A, sofa: 0x8A9098, rug: 0x3A4A5A, sky: ['#8AC8F0', '#2A5A8A'], win: 3.6, name: 'flat 7C', lake: 1 },
+    villa: { x: 930, z: 840, w: 14, d: 10, h: 3.4, floor: 0xE8E2D6, wall: 0xF6EEDC, trim: 0x6A4E3A, bed: 0xEFE6D2, sofa: 0x3A6A4A, rug: 0xA87A4A, sky: ['#9FD8A8', '#4A8A5A'], win: 5, name: 'your villa', villa: 1 } };
+  const HRM = {};
+  function hroomBuild(id, out, outYaw){
+    if (HRM[id] || !BL.mapG) return HRM[id]; const R = HROOM[id], g = new THREE.Group(), hw = R.w / 2, hd = R.d / 2, P = [], sol = [], so = (x0, x1, z0, z1) => sol.push([R.x + x0, R.x + x1, R.z + z0, R.z + z1]);
+    g.position.set(R.x, HRY, R.z); BL.mapG.add(g); g.visible = false;
+    // the shell: floor, ceiling, four walls (a doorway in the front one) and skirting
+    P.push(B3(R.w, .1, R.d, R.floor, 0, -.05, 0), B3(R.w, .1, R.d, 0xF7F5F0, 0, R.h + .05, 0), B3(R.w + .4, R.h, .2, R.wall, 0, R.h / 2, -hd - .1), B3(.2, R.h, R.d, R.wall, -hw - .1, R.h / 2, 0), B3(.2, R.h, R.d, R.wall, hw + .1, R.h / 2, 0));
+    P.push(B3(hw - .6 + .2, R.h, .2, R.wall, -(hw + .6 + .2) / 2, R.h / 2, hd + .1), B3(hw - .6 + .2, R.h, .2, R.wall, (hw + .6 + .2) / 2, R.h / 2, hd + .1), B3(1.2, R.h - 2.2, .2, R.wall, 0, 2.2 + (R.h - 2.2) / 2, hd + .1));
+    P.push(B3(1.2, 2.2, .08, R.trim, 0, 1.1, hd + .04), B3(.06, .06, .14, 0xC9CFD8, .4, 1.05, hd - .02));
+    P.push(B3(R.w, .12, .04, R.trim, 0, .06, -hd + .02), B3(.04, .12, R.d, R.trim, -hw + .02, .06, 0), B3(.04, .12, R.d, R.trim, hw - .02, .06, 0));
+    // the window on the back wall, with a view that suits the place
+    const wv = tex(512, 256, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, R.sky[0]); gr.addColorStop(1, R.sky[1]); c.fillStyle = gr; c.fillRect(0, 0, w, h); let s = id.length * 7919; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
+      if (R.villa) { c.fillStyle = '#3F7A44'; for (let i = 0; i < 9; i++) { c.beginPath(); c.arc(i * 64 + 20, h * .78, 46 + (i % 3) * 10, 0, Math.PI * 2); c.fill(); } c.fillStyle = '#5A9A4A'; c.fillRect(0, h * .85, w, h); c.fillStyle = '#7FC8E8'; c.fillRect(w * .3, h * .88, w * .4, h * .1); return; }
+      for (let x = 0; x < w;) { const bw = 30 + rnd() * 50, bh = h * (.25 + rnd() * .5); c.fillStyle = `rgba(30,32,48,${.75 + rnd() * .2})`; c.fillRect(x, h - bh, bw, bh); c.fillStyle = 'rgba(255,214,140,.7)'; for (let yy = h - bh + 8; yy < h - 6; yy += 14) for (let xx = x + 5; xx < x + bw - 6; xx += 11) if (rnd() < .35) c.fillRect(xx, yy, 5, 7); x += bw + 2; }
+      if (R.lake) { c.fillStyle = '#3A7AAA'; c.fillRect(0, h * .82, w, h); c.fillStyle = 'rgba(255,255,255,.35)'; for (let i = 0; i < 30; i++) c.fillRect(rnd() * w, h * .84 + rnd() * h * .14, 18, 2); } });
+    const wh = R.villa ? 1.9 : R.lake ? 1.7 : 1.2, wy = R.villa ? 1.75 : 1.6, wm = new THREE.Mesh(new THREE.PlaneGeometry(R.win, wh), new THREE.MeshBasicMaterial({ map: wv })); wm.position.set(0, wy, -hd + .02); wm.userData.noPick = true; g.add(wm);
+    P.push(B3(R.win + .16, .08, .1, R.trim, 0, wy + wh / 2 + .04, -hd + .05), B3(R.win + .3, .06, .2, R.trim, 0, wy - wh / 2 - .03, -hd + .1), B3(.08, wh, .1, R.trim, -R.win / 2 - .04, wy, -hd + .05), B3(.08, wh, .1, R.trim, R.win / 2 + .04, wy, -hd + .05), B3(.05, wh, .06, R.trim, 0, wy, -hd + .05));
+    // the bed in the back-left corner, with a bedside table and lamp
+    const bw = R.villa || R.lake ? 1.8 : 1.1, bx = -hw + .3 + bw / 2, bz = -hd + 1.15;
+    P.push(B3(bw, .4, 2.1, R.trim, bx, .2, bz), B3(bw - .06, .2, 2.0, 0xF4F1E8, bx, .5, bz), B3(bw - .02, .08, 1.4, R.bed, bx, .62, bz + .3), B3(bw + .1, 1.0, .1, R.trim, bx, .5, -hd + .06));
+    for (let k = 0; k < (bw > 1.5 ? 2 : 1); k++) P.push(B3(bw > 1.5 ? .7 : .8, .14, .4, 0xFFFFFF, bx + (bw > 1.5 ? (k ? .42 : -.42) : 0), .67, -hd + .45));
+    so(bx - bw / 2, bx + bw / 2, -hd, bz + 1.05); const tx = bx + bw / 2 + .35; P.push(B3(.45, .5, .4, R.trim, tx, .25, -hd + .3), C3(.07, .3, 0xE8D8B0, tx, .65, -hd + .3, 8), C3(.18, .2, 0xFFF1D6, tx, .9, -hd + .3, 10, .1)); so(tx - .23, tx + .23, -hd, -hd + .5);
+    // the desk in the back-right corner, with the PC
+    const dx = hw - 1.1, dz = -hd + .45;
+    P.push(B3(1.6, .06, .7, R.trim, dx, .76, dz), B3(.06, .74, .66, R.trim, dx - .76, .37, dz), B3(.06, .74, .66, R.trim, dx + .76, .37, dz), B3(.2, .42, .42, 0x1E2026, dx + .58, .79 + .21, dz)); so(dx - .8, dx + .8, -hd, dz + .36);
+    P.push(B3(.5, .08, .5, 0x2A2D33, dx - .1, .48, dz + .85), B3(.5, .6, .08, 0x2A2D33, dx - .1, .82, dz + 1.08), C3(.04, .44, 0x5A5E68, dx - .1, .24, dz + .85, 6)); so(dx - .35, dx + .15, dz + .6, dz + 1.12);
+    const scr = tex(512, 320, (c, w, h) => { const gr = c.createLinearGradient(0, 0, w, h); gr.addColorStop(0, '#1E5AA8'); gr.addColorStop(1, '#8C7BFF'); c.fillStyle = gr; c.fillRect(0, 0, w, h); c.fillStyle = '#fff'; c.textAlign = 'center'; c.font = `800 ${h * .17}px ${DISPLAY}`; c.fillText('RayanOS', w / 2, h * .5); c.font = `600 ${h * .07}px sans-serif`; c.fillText('click to log in', w / 2, h * .66); });
+    const pc = new THREE.Group(); pc.position.set(dx - .15, .79, dz - .08); g.add(pc);
+    const mon = new THREE.Mesh(new THREE.BoxGeometry(.9, .55, .04), mat(0x16181D)); mon.position.set(0, .48, 0); pc.add(mon); const scm = new THREE.Mesh(new THREE.PlaneGeometry(.84, .49), new THREE.MeshBasicMaterial({ map: scr })); scm.position.set(0, .48, .021); pc.add(scm);
+    const stand = new THREE.Mesh(new THREE.BoxGeometry(.08, .22, .06), mat(0x3A3D44)); stand.position.set(0, .11, 0); pc.add(stand); const kb = new THREE.Mesh(new THREE.BoxGeometry(.6, .03, .2), mat(0x2A2D33)); kb.position.set(0, .02, .3); pc.add(kb);
+    egg(pc, 'hm:ros', 'Use the PC (RayanOS)');
+    // your profile things: a pinboard on the right-hand wall and the two papers framed on the left
+    const card = (key, title, sub, col, w, h, x, y, z, ry, lbl) => { const t = tex(Math.round(w * 400), Math.round(h * 400), (c, W, H) => { c.fillStyle = '#FFFDF6'; c.fillRect(0, 0, W, H); c.fillStyle = col; c.fillRect(0, 0, W, Math.min(H * .2, 60)); c.textAlign = 'left'; c.fillStyle = '#16181D'; c.font = `800 ${Math.min(W * .14, 46)}px ${DISPLAY}`; c.fillText(title, W * .08, H * .48); c.font = `600 ${Math.min(W * .085, 26)}px sans-serif`; c.fillStyle = '#4A4E58'; c.fillText(sub, W * .08, H * .7); }); const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshStandardMaterial({ map: t, roughness: .9 })); m.position.set(x, y, z); m.rotation.y = ry; g.add(m); egg(m, 'hm:sec:' + key + ':' + title, lbl || title); return m; };
+    const pz = 0, E = -Math.PI / 2; P.push(B3(.06, 1.25, 1.9, 0x8A6B4A, hw - .03, 1.6, pz), B3(.04, 1.15, 1.8, 0xC8A27A, hw - .06, 1.6, pz));
+    card('about', 'About me', 'who I am', '#FFC93C', .78, .5, hw - .09, 1.88, pz - .43, E); card('projects', 'Projects', 'what I build', '#3CE8E8', .78, .5, hw - .09, 1.88, pz + .43, E);
+    card('music', 'Music', 'what I listen to', '#FF6B8B', .78, .5, hw - .09, 1.32, pz - .43, E); card('contact', 'Contact', 'say hi', '#3CE870', .78, .5, hw - .09, 1.32, pz + .43, E);
+    const fz = Math.min(hd - 1.1, 1.9); [[fz + .4, 'Paper 1', 'NHSJS'], [fz - .4, 'Paper 2', 'JHSS · 2026']].forEach(([z, t, s]) => { P.push(B3(.04, .9, .7, R.trim, -hw + .02, 1.6, z)); card('research', t, s, '#8C7BFF', .6, .8, -hw + .06, 1.6, z, Math.PI / 2, `My research: ${t.toLowerCase()}`); });
+    // a bookshelf by the door, a sofa (an armchair in the walk-up), a rug, plants, a floor lamp, a painting
+    const shx = -hw + 1.2, shz = hd - .22; P.push(B3(1.4, 1.8, .35, R.trim, shx, .9, shz)); for (let y = .35; y < 1.5; y += .42) { P.push(B3(1.32, .03, .3, 0x3A2D22, shx, y, shz - .02)); for (let k = 0; k < 6; k++) P.push(B3(.12, .3, .22, [0xC0271C, 0x1E5AA8, 0xE8B04A, 0x3F7A44, 0xF4F1E8, 0x8C7BFF][(k + Math.round(y * 10)) % 6], shx - .55 + k * .2 + (k > 2 ? .1 : 0), y + .17, shz - .04)); } so(shx - .72, shx + .72, shz - .2, hd);
+    const sl = R.villa ? 2.6 : R.lake ? 2.2 : .9, sx = hw - .5, sz = hd - .5 - sl / 2;
+    P.push(B3(.8, .42, sl, R.sofa, sx, .21, sz), B3(.22, .85, sl, R.sofa, sx + .3, .45, sz), B3(.8, .6, .18, R.sofa, sx, .32, sz - sl / 2 + .09), B3(.8, .6, .18, R.sofa, sx, .32, sz + sl / 2 - .09)); so(sx - .4, sx + .45, sz - sl / 2, sz + sl / 2);
+    if (sl > 1.5) { P.push(B3(.7, .4, 1.1, R.trim, sx - 1.3, .2, sz)); so(sx - 1.65, sx - .95, sz - .55, sz + .55); }
+    P.push(B3(R.w * .42, .02, R.d * .36, R.rug, -.2, .012, .4));
+    P.push(C3(.2, .4, 0xB8906A, .95, .2, hd - .45, 10), S3(.38, 0x3F7A44, .95, .75, hd - .45)); so(.75, 1.15, hd - .65, hd - .25);
+    if (R.villa || R.lake) { P.push(C3(.24, .5, 0xD8D0C0, -hw + .45, .25, .2, 10), S3(.5, 0x4F8A44, -hw + .45, .95, .2)); so(-hw + .2, -hw + .7, -.05, .45); }
+    const lx = hw - .45, lz = sz - sl / 2 - .45; P.push(C3(.18, .04, 0x2A2D33, lx, .02, lz, 10), C3(.025, 1.5, 0x2A2D33, lx, .76, lz, 6), C3(.22, .3, 0xFFF1D6, lx, 1.58, lz, 10, .14)); so(lx - .2, lx + .2, lz - .2, lz + .2);
+    const art = tex(300, 220, (c, w, h) => { c.fillStyle = '#F4EFE3'; c.fillRect(0, 0, w, h); const cols = ['#FFC93C', '#FF6B8B', '#8C7BFF', '#3CE8E8', '#3CE870']; for (let i = 0; i < 7; i++) { c.fillStyle = cols[(i + id.length) % 5]; c.globalAlpha = .75; c.beginPath(); c.arc(40 + ((i * 97 + id.length * 13) % 220), 40 + ((i * 61) % 140), 26 + (i % 3) * 14, 0, Math.PI * 2); c.fill(); } c.globalAlpha = 1; });
+    P.push(B3(.04, .82, 1.1, R.trim, -hw + .02, 1.75, bz + .2)); const am = new THREE.Mesh(new THREE.PlaneGeometry(1.0, .72), new THREE.MeshStandardMaterial({ map: art, roughness: .9 })); am.position.set(-hw + .05, 1.75, bz + .2); am.rotation.y = Math.PI / 2; am.userData.noPick = true; g.add(am);
+    if (R.villa) { const tz = hd * .25, tx2 = -1.2; P.push(B3(1.8, .06, 1, R.trim, tx2, .76, tz), C3(.05, .74, R.trim, tx2 - .7, .37, tz - .35, 6), C3(.05, .74, R.trim, tx2 + .7, .37, tz - .35, 6), C3(.05, .74, R.trim, tx2 - .7, .37, tz + .35, 6), C3(.05, .74, R.trim, tx2 + .7, .37, tz + .35, 6)); so(tx2 - .9, tx2 + .9, tz - .5, tz + .5);
+      [[-.5, -.75], [.5, -.75], [-.5, .75], [.5, .75]].forEach(([ox, oz]) => P.push(B3(.42, .06, .42, R.sofa, tx2 + ox, .46, tz + oz), B3(.42, .5, .06, R.sofa, tx2 + ox, .72, tz + oz + (oz > 0 ? .19 : -.19)))); P.push(C3(.12, .25, 0xF4F1E8, tx2, .9, tz, 10)); }
+    // the light
+    const lt = new THREE.PointLight(0xFFE2B8, 1.1, R.w * 1.8, 2); lt.position.set(0, R.h - .35, 0); g.add(lt); const ce = new THREE.Mesh(new THREE.CylinderGeometry(.35, .35, .05, 16), glowM(0xFFF1D6, { emissiveIntensity: 1 })); ce.position.set(0, R.h - .03, 0); ce.userData.noPick = true; g.add(ce);
+    if (R.w > 9) { const l2 = new THREE.PointLight(0xFFE2B8, .7, R.w, 2); l2.position.set(-hw / 2, R.h - .4, hd / 3); g.add(l2); }
+    decor(P, g);
+    const L = LVL['h_' + id] = { id: 'h_' + id, y: HRY, drive: false, rects: [[R.x - hw + .3, R.x + hw - .3, R.z - hd + .3, R.z + hd - .25]], solid: sol, exits: [] };
+    L.exits.push({ x: R.x, z: R.z + hd - .2, r: .5, to: null, at: out, yaw: outYaw, fade: true, msg: 'Out the front door.' });
+    return HRM[id] = { g, L, R };
+  }
+  function hroomGo(id, quiet){ const H = HRM[id]; if (!H) return false; if (DRV.on) getOut(true); H.g.visible = true; lvGo({ to: 'h_' + id, at: [H.R.x, H.R.z + H.R.d / 2 - 1.4], yaw: 0, fade: true, msg: quiet ? null : `Home: ${H.R.name}.` }); return true; }
+  function homeEgg(k){ if (k === 'ros') return openROS(); if (k.startsWith('sec:')) return openPanel(k.split(':')[1]); }
+  function inHomeRoom(){ return !!(BL.lvl && Object.values(HRM).some(H => H.L === BL.lvl)); }
+  function hroomStep(){ const inR = inWorld && zone === 'blr'; Object.values(HRM).forEach(H => { const on = inR && BL.lvl === H.L; if (H.g.visible !== on) H.g.visible = on; });
+    const wb = $('#worldBack'); if (inR && !EV && !A && wb && !wb.hidden) { const t = inHomeRoom() ? 'To the bedroom' : 'Go home'; if (wb.textContent !== t && (wb.textContent === 'Go home' || wb.textContent === 'To the bedroom')) wb.textContent = t; } }
+  // Go home: your main home if you have one (and you're not already in it), otherwise the bedroom
+  function goHomeBtn(){ if (HOME.cur && HOME.own.includes(HOME.cur) && !inHomeRoom()) return homeGo(HOME.cur); leaveBlr(); }
+  // entering the site with a main home: skip the bedroom and wake up there
+  function homeSpawn(){
+    if (!HOME.cur || !HOME.own.includes(HOME.cur)) return false;
+    entered = true; entering = false; enterUI.style.display = 'none'; dock.classList.add('on'); badge.hidden = false; if (!fine) joyEl.classList.add('on');
+    homeGo(HOME.cur, true); return true;
   }
   // Palm Grove Villas: a gated compound on a big lot
   function buildVillas(b, f){
@@ -11875,10 +11958,9 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       if (i === 0) { const w2 = vw / 2; P.push(B3(.25, 3.2, vd, col, u - w2, 1.6, v0 + vd / 2), B3(.25, 3.2, vd, col, u + w2, 1.6, v0 + vd / 2), B3(vw, 3.2, .25, col, u, 1.6, v1)); F.solid(u - w2 - .1, u - w2 + .15, v0, v1); F.solid(u + w2 - .15, u + w2 + .1, v0, v1); F.solid(u - w2, u + w2, v1 - .15, v1 + .1);
         P.push(B3(w2 - .8, 3.2, .25, col, u - (w2 + .8) / 2, 1.6, v0), B3(w2 - .8, 3.2, .25, col, u + (w2 + .8) / 2, 1.6, v0)); F.solid(u - w2, u - .8, v0 - .1, v0 + .15); F.solid(u + .8, u + w2, v0 - .1, v0 + .15);
         P.push(B3(vw, .05, vd, 0xD8C8A8, u, .04, v0 + vd / 2), B3(vw, .2, vd, 0xF4F1E8, u, 3.25, v0 + vd / 2), B3(vw + .6, 3, vd + .6, col, u, 4.85, v0 + vd / 2));
-        P.push(B3(3, .7, 1, 0x3A5A7A, u - w2 + 2, .35, v1 - 1), B3(3, .7, .3, 0x3A5A7A, u - w2 + 2, .85, v1 - .6), B3(2.2, .45, 1.6, 0x6A4E3A, u + w2 - 1.6, .22, v1 - 1.2), B3(2.1, .2, 1.5, 0xEEF1F5, u + w2 - 1.6, .55, v1 - 1.2), B3(2.4, .03, 2.2, 0x8A3A3A, u - w2 + 2, .05, v1 - 2.6), B3(2, 1.1, .06, 0x16181D, u, 1.4, v1 - .2), B3(.6, .9, .05, 0xFFE8B0, u - w2 + .2, 2, v0 + 2));
-        F.solid(u - w2 + .5, u - w2 + 3.5, v1 - 1.5, v1 - .4); F.solid(u + w2 - 2.7, u + w2 - .5, v1 - 2, v1 - .4);
-        const lt = new THREE.PointLight(0xFFD9A8, .8, 10, 2); lt.position.set(u, 2.9, v0 + vd / 2); F.g.add(lt);
-        const [x, z] = F.toM(u, v0 + vd / 2); HSPOT.villa = [x, z]; }
+        P.push(B3(1.5, 2.3, .08, 0x6A4E3A, u, 1.15, v0 + .6)); F.solid(u - w2, u + w2, v0 + .6, v1);
+        const out = F.toM(u, v0 - 1.6); HSPOT.villa = out; hroomBuild('villa', out, F.g.rotation.y); const [ex, ez] = F.toM(u, v0 + .25);
+        LV.entries.push({ x: ex, z: ez, r: .8, to: 'h_villa', at: [HROOM.villa.x, HROOM.villa.z + HROOM.villa.d / 2 - 1.4], yaw: 0, fade: true, ok: () => HOME.own.includes('villa'), msg: `Home: ${HROOM.villa.name}.` }); }
       else { P.push(B3(vw, 6, vd, col, u, 3, v0 + vd / 2)); F.solid(u - vw / 2, u + vw / 2, v0, v1); for (let k = 0; k < 3; k++) P.push(B3(1.1, 1.3, .06, 0x3A5A7A, u - vw / 3 + k * vw / 3, 1.6, v0 - .03), B3(1.1, 1.3, .06, 0x3A5A7A, u - vw / 3 + k * vw / 3, 4.4, v0 - .03)); P.push(B3(1.2, 2.2, .07, 0x6A4E3A, u, 1.1, v0 - .04)); }
       const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.max(vw, vd) * .75, 2.2, 4), mat(0xA0462A, { roughness: .8 })); roof.rotation.y = Math.PI / 4; roof.scale.set(vw / Math.max(vw, vd), 1, vd / Math.max(vw, vd)); roof.position.set(u, 6 + 1.1 + (i === 0 ? .35 : 0), v0 + vd / 2); F.g.add(roof); });
     // the shared pool, palms and the sales office by the gate
@@ -14209,6 +14291,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     try { svcStep(); drunkStep(dt, now); } catch (e) {}
     try { paper2Step(now); } catch (e) {}
     try { cityLifeStep(dt); } catch (e) { console.error(e); }
+    try { hroomStep(); } catch (e) {}
     try { voiceStep(now); } catch (e) {}
     sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { isleStep(dt, now); } catch (e) { console.error(e); } try { mtnStep(dt, now); } catch (e) { console.error(e); } try { floodStep(dt); } catch (e) { console.error(e); } try { pkStep(dt); } catch (e) { console.error(e); } try { phxStep(dt); } catch (e) { console.error(e); } try { seasonStep(dt, now); } catch (e) { console.error(e); } try { winterStep(dt, now); } catch (e) { console.error(e); }
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
@@ -14772,7 +14855,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     if (entered || entering) return;
     entering = true; enterUI.style.opacity = 0; enterUI.style.pointerEvents = 'none';
     audio();
-    if (afResumeCity()) return;
+    if (homeSpawn()) return;
     tween(1.1, e => doorPivot.rotation.y = 1.75 * e, () => {
       moveCam(V(0, 1.6, 2.6), 0, -.05, 2.2, () => {
         entered = true; entering = false; enterUI.style.display = 'none';
@@ -15897,7 +15980,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // The hand position for web lines is general, so it stays; everything else is a stand-in that reports the story as off.
   const AF = { on: false, s: { started: false }, noWebT: 0, stk: null };
   function afHandPoint(fallback){ if (tpv && me && me.g.parent && me.arms && me.arms[1]) return me.arms[1].hand.getWorldPosition(V(0, 0, 0)); return fallback; }
-  function afArmF(){ return 1; } function afHurt(d){ return d; } function afPhone(){ return false; } function afBlNav(){ return null; } function afResumeCity(){ return false; }
+  function afArmF(){ return 1; } function afHurt(d){ return d; } function afPhone(){ return false; } function afBlNav(){ return null; }
   function afCanSwing(){ return true; } function xcBackLabel(){ return 'Taxi to the airport'; } function afStatusRow(){ return ''; } function afPhoneCard(){ return ''; }
   function afUndone(){ return false; } function afDadOn(){ return false; } function afKidOn(){ return false; } function afDelOn(){ return false; } function afL(){ return false; }
   function afKidLook(){ return null; } function afDadLook(){ return null; } function afCityBack(c){ xcEnter(c); }
@@ -17303,7 +17386,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     // if the bookshelf is closed, the vault (and the operating table) is sealed off, so come back into the room instead
     fade(() => { inWorld = false; zone = 'hub'; uiZone(); walkTarget = null; vy = 0; pos.copy(saved.pos); yaw = saved.yaw; pitch = saved.pitch; if (region(pos.x) === 'vault' && !vaultOpen) { pos.set(3.2, 1.6, .3); yaw = Math.PI / 2; pitch = 0; } dock.classList.add('on'); $('#worldBack').hidden = true; jumpBtn.hidden = true; $('#worldBack').textContent = 'Back to the room'; });
   }
-  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : inWorld && zone === 'mtn' ? mtnLeave() : inWorld && WD_PL[zone] ? wdLeave() : inWorld && zone === 'tidy' ? tdExit() : inWorld && zone === 'apt' ? aptLeave() : inWorld && zone === 'fly' ? aptArrive() : inWorld && zone === 'xc' ? xcLeave() : inWorld && zone === 'xin' ? xcOutside() : inWorld && zone === 'med' ? leaveMed() : inWorld && zone === 'farm' ? leaveFarm() : inWorld && zone === 'mc' ? bzLeave() : inWorld && zone === 'sp' ? spAbort() : inWorld && zone === 'blr' ? leaveBlr() : inWorld && (zone === 'twr' || zone === 'dsp') ? fade(() => travel('room'), '#06070B') : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
+  $('#worldBack').onclick = () => EV ? stopEvent() : A ? endFight() : inWorld && zone === 'mtn' ? mtnLeave() : inWorld && WD_PL[zone] ? wdLeave() : inWorld && zone === 'tidy' ? tdExit() : inWorld && zone === 'apt' ? aptLeave() : inWorld && zone === 'fly' ? aptArrive() : inWorld && zone === 'xc' ? xcLeave() : inWorld && zone === 'xin' ? xcOutside() : inWorld && zone === 'med' ? leaveMed() : inWorld && zone === 'farm' ? leaveFarm() : inWorld && zone === 'mc' ? bzLeave() : inWorld && zone === 'sp' ? spAbort() : inWorld && zone === 'blr' ? goHomeBtn() : inWorld && (zone === 'twr' || zone === 'dsp') ? fade(() => travel('room'), '#06070B') : AREAS[zone] ? fade(() => { travel('lair'); pos.set(0, 1.6, 6.2); yaw = Math.PI; pitch = -.05; }, '#06070B') : zone === 'space' ? spaceHome() : zone === 'city' ? fade(() => toRoofTop(true), '#0E1016') : zone === 'lair' ? leaveLair() : zone === 'roof' ? leaveRoof() : zone !== 'hub' ? fade(() => { toHub(); uiZone(); $('#worldBack').textContent = 'Back to the room'; }) : exitWorld();
   function enterAI(){
     fade(() => {
       if (!aiScene) buildAI();
@@ -18851,6 +18934,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       if (p.egg === 'trapdoor') return DEEP.open ? deepGo(true) : say('A heavy iron plate, set into the floor. It won’t budge from up here.', 2600);
       if (p.egg === 'deepup') return deepGo(false);
       if (typeof p.egg === 'string' && p.egg.startsWith('lx:')) return lairEgg(p.egg.slice(3));
+      if (typeof p.egg === 'string' && p.egg.startsWith('hm:')) return homeEgg(p.egg.slice(3));
       if (p.egg === 'repair') return repairJunk();
       if (p.egg === 'lairmap') { storyFlag('lairmap'); return openWallMap(); }
       if (p.egg === 'bdrone') return shootDrone(p.o);
