@@ -123,3 +123,13 @@ Messages are encrypted in the browser with AES-GCM using a key derived from the 
 ## Author
 
 Rayan Upadhyay · [GitHub](https://github.com/RayanUpadhyay)
+
+## Secrets
+
+You found the repo, so you deserve a gift for checking it out. Two cheat codes:
+
+1. Open the laptop in the bedroom and go to the Terminal.
+2. Type `sudo wardrobe --all` (or `iddqd`) to unlock every season skin.
+3. Type `sudo money --infinite` (or `motherlode`) for infinite cash. Run it again to turn it off.
+
+Neither shows up in `help`. Keep it between us.
