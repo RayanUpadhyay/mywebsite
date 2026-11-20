@@ -8490,6 +8490,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function closeLook(){ mirror = false; lookEl.classList.remove('on'); }
   lookEl.addEventListener('click', e => {
     const pb = e.target.closest('[data-pet]'); if (pb) { setPet(pb.dataset.pet); tone(660, .1, 'sine', .04); return renderLook(); }
+    const pm = e.target.closest('[data-petmode]'); if (pm) { PETX.home = pm.dataset.petmode === 'home'; petxSave(); tone(660, .1, 'sine', .04); say(PETX.home ? `${petName()} will stay home and wait for you.` : `${petName()} comes with you now.`, 2200); return renderLook(); }
     const lt = e.target.closest('[data-lktab]'); if (lt) { lookTab = lt.dataset.lktab; lookEl.scrollTop = 0; return renderLook(); }
     const b = e.target.closest('[data-lk]'); if (!b) return; const k = b.dataset.lk, v = b.dataset.v;
     if (k === 'close') return closeLook();
@@ -13570,6 +13571,23 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   const PETS = { none: { name: 'No pet' }, krypto: { name: 'Biscuit (street dog)' }, goose: { name: 'Mango (ginger cat)' }, lockjaw: { name: 'Bruno (mastiff)' } };
   let petK = 'none'; try { petK = PETS[localStorage.getItem('ru-pet')] ? localStorage.getItem('ru-pet') : 'none'; } catch (e) {}
   let pet = null, petBite = 3;
+  // Comes with you or stays home (PETX.home: then it's only in your main home, or the bedroom). It needs a walk about once a
+  // day (PETX.last): when one is due it waits by the door and Mum texts; a minute out in the city together counts. A pet
+  // that's overdue by two days hangs its head and stops wagging. While you swing it runs along the street under you instead
+  // of flying. Saved as ru-petx.
+  const PETX = { home: false, last: Date.now(), walkT: 0, nag: 0, said: 0 };
+  try { const q = JSON.parse(localStorage.getItem('ru-petx') || 'null'); if (q) { PETX.home = !!q.home; if (q.last > 0) PETX.last = q.last; if (q.nag > 0) PETX.nag = q.nag; } } catch (e) {}
+  const petxSave = () => { try { localStorage.setItem('ru-petx', JSON.stringify({ home: PETX.home, last: PETX.last, nag: PETX.nag })); } catch (e) {} };
+  const petName = () => (PETS[petK] ? PETS[petK].name.split(' (')[0] : 'Your pet'), petDue = () => Date.now() - PETX.last > 20 * 3600e3, petSad = () => Date.now() - PETX.last > 48 * 3600e3;
+  const petAtHome = () => HOME.cur && HOME.own.includes(HOME.cur) ? !!(inWorld && zone === 'blr' && HRM[HOME.cur] && BL.lvl === HRM[HOME.cur].L) : !inWorld;
+  function petWalkStep(dt){
+    if (petK === 'none' || !pet) return; const due = petDue(), home = petAtHome();
+    if (due && home && Date.now() - PETX.said > 10 * 60e3) { PETX.said = Date.now(); setTimeout(() => { say(`${petName()} is sitting by the door with the lead in ${petK === 'goose' ? 'her' : 'his'} mouth. Time for a walk.`, 3600); tone(520, .08, 'square', .03); setTimeout(() => tone(600, .08, 'square', .03), 160); }, 1500);
+      if (Date.now() - PETX.nag > 20 * 3600e3) { PETX.nag = Date.now(); petxSave(); try { phMsg('amma', `${petName()} has been staring at the door all day. Take ${petK === 'goose' ? 'her' : 'him'} out, na.`); } catch (e) {} } }
+    if (!due || PETX.home || !(inWorld && zone === 'blr') || BL.lvl || EV || A) return;
+    const moved = Math.hypot(pos.x - (PETX.px || pos.x), pos.z - (PETX.pz || pos.z)); PETX.px = pos.x; PETX.pz = pos.z; if (moved > .02 && !DRV.on) PETX.mt = performance.now(); const nowW = performance.now(), gap = Math.min(1, (nowW - (PETX.wt || nowW)) / 1000); PETX.wt = nowW; if (nowW - (PETX.mt || 0) < 2000) PETX.walkT += gap;
+    if (PETX.walkT >= 60) { PETX.walkT = 0; PETX.last = Date.now(); petxSave(); say(`${petName()} had a proper walk. ${petK === 'goose' ? 'She' : 'He'} looks very pleased with ${petK === 'goose' ? 'herself' : 'himself'}.`, 3200); tone(784, .12, 'triangle', .04); }
+  }
   function makePet(k){
     const g = new THREE.Group(), legs = [], s = k === 'lockjaw' ? 1.5 : k === 'goose' ? .75 : 1;
     const fur = mat(k === 'krypto' ? 0xF4F2EE : k === 'goose' ? 0xE89A3C : 0x7A6A55, { roughness: .9 }), dark = mat(0x16181D);
@@ -13585,19 +13603,23 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   }
   function setPet(k){ petK = k; try { localStorage.setItem('ru-pet', k); } catch (e) {} if (pet) { if (pet.g.parent) pet.g.parent.remove(pet.g); disposeDeep(pet.g); pet = null; } if (k !== 'none') pet = makePet(k); }
   function petStep(dt, now){
-    if (!pet) return; const sc = inWorld ? sceneOf() : scene; if (!sc || zone === 'void' || zone === 'collapse' || mirror && !inWorld && false) { if (pet.g.parent) pet.g.parent.remove(pet.g); return; }
+    if (!pet) return; try { petWalkStep(dt); } catch (e) {} const sc = inWorld ? sceneOf() : scene; if (!sc || zone === 'void' || zone === 'collapse' || (PETX.home && !petAtHome())) { if (pet.g.parent) pet.g.parent.remove(pet.g); return; }
     if (pet.g.parent !== sc) { if (pet.g.parent) pet.g.parent.remove(pet.g); sc.add(pet.g); pet.x = pos.x + 1; pet.z = pos.z + 1; }
     // trot after you, keeping a polite distance
-    const tx = pos.x + Math.sin(yaw) * 1.1 + Math.cos(yaw) * .6, tz = pos.z + Math.cos(yaw) * 1.1 - Math.sin(yaw) * .6, dx = tx - pet.x, dz = tz - pet.z, d = Math.hypot(dx, dz);
-    if (d > 8) { pet.x = tx; pet.z = tz; } else if (d > .3) { const sp = Math.min(d * 2.5, 6) * dt; pet.x += dx / d * sp; pet.z += dz / d * sp; pet.g.rotation.y = Math.atan2(-dx, -dz); }
-    const mv = d > .3 ? 1 : 0, t = now / 1000; pet.legs.forEach((l, i) => l.rotation.x = mv * Math.sin(t * 12 + (i % 2 ? Math.PI : 0) + (i > 1 ? Math.PI : 0)) * .6); pet.tail.rotation.y = Math.sin(t * (mv ? 14 : 6)) * .5; pet.head.rotation.x = Math.sin(t * 2) * .05;
-    pet.g.position.set(pet.x, (inWorld ? pos.y - 1.6 : 0) + (petK === 'krypto' && mv ? .3 + Math.sin(t * 3) * .1 : 0), pet.z); pet.g.visible = !(inWorld && !tpv && Math.hypot(pet.x - pos.x, pet.z - pos.z) < .4);
+    let tx = pos.x + Math.sin(yaw) * 1.1 + Math.cos(yaw) * .6, tz = pos.z + Math.cos(yaw) * 1.1 - Math.sin(yaw) * .6;
+    const sad = petSad(), wait = petDue() && petAtHome() && !A && !EV; if (wait) { const dp = inWorld && HOME.cur && HRM[HOME.cur] ? toLocal(HRM[HOME.cur].R.x + .8, HRM[HOME.cur].R.z + HRM[HOME.cur].R.d / 2 - .7) : !inWorld ? [doorPivot.position.x + .9, doorPivot.position.z - .7] : null; if (dp) { tx = dp[0]; tz = dp[1]; } }
+    const dx = tx - pet.x, dz = tz - pet.z, d = Math.hypot(dx, dz), aloft = inWorld && zone === 'blr' && (SW.on || SW.roof > 0) && !BL.lvl;
+    if (d > (aloft ? 60 : 8)) { pet.x = tx; pet.z = tz; } else if (d > .3) { const sp = Math.min(d * 2.5, aloft ? 11 : sad ? 3.5 : 6) * dt; pet.x += dx / d * sp; pet.z += dz / d * sp; pet.g.rotation.y = Math.atan2(-dx, -dz); }
+    const mv = d > .3 ? 1 : 0, t = now / 1000; pet.legs.forEach((l, i) => l.rotation.x = mv * Math.sin(t * 12 + (i % 2 ? Math.PI : 0) + (i > 1 ? Math.PI : 0)) * .6); pet.tail.rotation.y = sad ? 0 : Math.sin(t * (mv ? 14 : wait ? 18 : 6)) * .5; pet.tail.rotation.x = sad ? .4 : -.6; pet.head.rotation.x = sad ? .35 : Math.sin(t * 2) * .05;
+    if (!mv) pet.g.rotation.y = wait ? Math.atan2(-(pos.x - pet.x), -(pos.z - pet.z)) : pet.g.rotation.y;
+    pet.g.position.set(pet.x, (inWorld && !aloft ? pos.y - 1.6 : 0) + (petK === 'krypto' && mv && !aloft ? .3 + Math.sin(t * 3) * .1 : 0), pet.z); pet.g.visible = !(inWorld && !tpv && Math.hypot(pet.x - pos.x, pet.z - pos.z) < .4);
     // helping out in a fight
     if ((petBite -= dt) <= 0) { petBite = petK === 'lockjaw' ? 2.2 : 3;
       if (A && !A.over && A.boss && A.boss.hp > 0) { const n = petK === 'lockjaw' ? 8 : 5; A.boss.hp -= n; A.boss.flash = .08; A.nums.push({ x: A.boss.x, y: A.boss.y - 30, v: n, life: .8 }); tone(700, .05, 'square', .02, 400); }
       else if (EV && !EV.over && EV.dead <= 0) { const foe = EV.units.filter(u => u.team !== EV.team && u.dead <= 0 && u.hero !== 'anchor' && Math.hypot(u.x - pos.x, u.z - pos.z) < 7)[0]; if (foe) { hitUnit(foe, petK === 'lockjaw' ? 30 : 18, EV.me); if (petK === 'lockjaw' && Math.random() < .3) { pet.x = foe.x + .8; pet.z = foe.z; } } } }
   }
-  const petMenu = () => `<h3>Pet</h3><div class="lkrow">${Object.entries(PETS).map(([k, p]) => `<button type="button" class="tbtn" data-pet="${k}" aria-pressed="${petK === k}">${p.name}</button>`).join('')}</div>`;
+  const petMenu = () => `<h3>Pet</h3><div class="lkrow">${Object.entries(PETS).map(([k, p]) => `<button type="button" class="tbtn" data-pet="${k}" aria-pressed="${petK === k}">${p.name}</button>`).join('')}</div>`
+    + (petK === 'none' ? '' : `<div class="lkrow"><button type="button" class="tbtn" data-petmode="come" aria-pressed="${!PETX.home}">Comes with you</button><button type="button" class="tbtn" data-petmode="home" aria-pressed="${PETX.home}">Stays home</button></div><p class="psub">${petDue() ? `${petName()} needs a walk${petSad() ? ' and is looking a bit sad' : ''}. Take ${petK === 'goose' ? 'her' : 'him'} out in the city for a minute${PETX.home ? ' (set “Comes with you” first)' : ''}.` : `${petName()} was walked ${Math.max(0, Math.round((Date.now() - PETX.last) / 3600e3))} h ago. Next walk in about ${Math.max(1, Math.round((PETX.last + 20 * 3600e3 - Date.now()) / 3600e3))} h.`}</p>`);
   // ======================= the island: this Bangalore sits alone in a sea, with other lands and mountains across the water =======================
   // It's Rayan's Bangalore, not the real one, so it doesn't follow real geography: past the outer ring road there's a beach and
   // then open sea, with mountain ranges and the other cities on the horizon. To leave you fly (the airport, as before), take the
