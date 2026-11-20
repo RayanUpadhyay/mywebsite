@@ -41,7 +41,8 @@ One idea runs through every season and every villain: **a debt**. Somebody alway
 - **You ({N})**: Phase 1, someone who survives things. Phase 2, someone who starts over with nothing in a world that isn't theirs. The ending is a choice about whether you're willing to pay what everyone else has been charging.
 - **Inspector, then Commissioner, Devi (S2–S4)**: the saga's most human villain. Introduced as a voice on the survivors' radio in S2, organising rescues while every official channel stays silent. She watched the government let the city drown, and decided the city needed someone who'd never let go of the wheel. She is kind to you, and means it, and uses you anyway. She never explains herself in a speech; her one real line of self-justification comes in S4, in a power station at 3 a.m., to nobody in particular.
 - **Velvet (S3, S7)**: switches sides in S3. In S7 she's the first person a Mimic replaces, because walking out on Marigold made her visible. Freeing the real Velvet is the emotional centre of S7.
-- **Bhaskar (S2) and Lata (S3)**: the city's ordinary people, who keep turning up: Bhaskar's camp becomes the shelter in S4's blackout; Lata's chai stall is where the resistance meets in S7, because a Mimic can fake a face but not her tea.
+- **Arjun (S2, S3)**: your friend. It's his flat you're in when the wave hits (S2's cold open). Brine's crew pull him out of the water and put him on the ship's pumps; you find his voice note in a dry bag and free him in the finale. In S3 he's in Dubai, working off the family's debt to the Syndicate, and the Comet is his car.
+- **Bhaskar (S2) and Lata (S3)**: brother and sister, Arjun's father and aunt; the city's ordinary people, who keep turning up: Bhaskar's camp becomes the shelter in S4's blackout; Lata's chai stall is where the resistance meets in S7, because a Mimic can fake a face but not her tea.
 - **Mr. Ravindran, the Ledger (S3)**: the man who kept the books. He comes back in S4 as the only person who can read Devi's accounts, and he trades them for a new name.
 - **Dr. Neel (S5–S6)**: studied the core before anyone else, and builds the boost pack and the Kite from what he learned. He's the one who says out loud, late in S6, that every time they've won, it's been worse afterwards.
 - **The Salvager (S1)**: his buyer, whom he mentions and never names, is Cinder (S5). He's the first person to offer you a deal, which matters in S8.
@@ -52,6 +53,14 @@ One idea runs through every season and every villain: **a debt**. Somebody alway
 - **Plant early, pay off late, and never pay off what wasn't planted.** Keep a running list (below) of every plant and where it pays off.
 - **Each season reinvents the look of the whole site** (see Site themes below), so the world feels different before you've read a word.
 - **Trailers are short films, not lists.** No name cards with quotes. Characters are introduced by how they're framed; the title arrives late; the last shot is an image you'll understand only at the end of the season.
+
+### How Seasons 2 and 3 tell their stories (from research into games that do it well)
+- **A relationship is the spine** (The Last of Us). S2 is about getting Arjun home; Bhaskar hands you his son's harpoon "for when he wants it back", and the season ends on the two of them at the foot of the camp building.
+- **Quiet scenes between the fights** (The Last of Us). After each of S2's first three Parts, a short night at the camp fire: no exposition, just people (`evening` in `s02.js`). In S3, Devi brings you chai after Brass and talks about her father's cycle shop.
+- **The world tells the story** (Subnautica). Dry bags float in S2's flooded streets, each holding a phone with a voice note from the night of the wave; one is Arjun's, and it's how you learn he's alive. The phone's Flock feed and Messages carry the city's reaction to every season.
+- **The villain has a reason, early** (Spider-Man's Doctor Octopus). Brine's crew came through the tear from a world with no land left; the pumps end the only life they know. Devi is kind to you from the first scene, and her reason (her father paid men like Brass for twenty years) is the same reason she betrays you.
+- **Cover costs something** (Sleeping Dogs). S3 Part 2 opens with an undercover day collecting for the Syndicate; the second stop is Lata's cart, and you choose whether to take her money or pay it yourself. She remembers, in person and by text.
+- **Light beside heavy** (Yakuza). Shopkeepers you rescue text you afterwards; Lata's lines stay dry and stubborn even when the story isn't.
 
 ### Dialogue rules (no cringe)
 - **No catchphrases, no villain monologues, no "you and I are not so different", no "catch me if you can".** If a line would fit on a T-shirt, cut it.
@@ -70,6 +79,10 @@ One idea runs through every season and every villain: **a debt**. Somebody alway
 | The Salvager's buyer "pays in ash" | S1, after the Hauler (built) | S5: Cinder |
 | The Salvager offers to buy the core; you don't answer | S1 finale (built) | S8: Prime said yes |
 | Devi's voice on the survivors' radio | S2, the camp | S3 (the ally) and S4 (the villain) |
+| Arjun's harpoon, "he'll want it back" | S2, the camp | S2 finale: you free him from Brine's pumps |
+| "They sold us our own rescue, on credit" | S3, Lata | S3: why the Syndicate owns the city; S4: Devi holds the debts |
+| Devi's father "paid men like Brass for twenty years" | S3, the chai | S4: why she wants total control |
+| Lata's collection (took or paid) | S3 Part 2 | S7: whether Lata's stall shelters you |
 | Marigold stamps on Brine's supply crates | S2, the raiders' loot | S3: the Syndicate sold the flood |
 | The missing payroll page | S3, Velvet's hint | S4: Devi's name is on it |
 | Ravindran's missing-person posters | S3 | S4: he trades the accounts for a new name |
