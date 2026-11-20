@@ -9119,7 +9119,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function sbFight(B){ if (!B || EV || A) return; sbBtn.hidden = true; startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part: B.id, site: 'sb' + B.id }); }
   sbBtn.addEventListener('click', e => { e.stopPropagation(); sbFight(sbNear); });
   addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'f' && sbNear) sbFight(sbNear); });
-  function sbWon(part){ if (part === 'g1') return jobRaidWon(); if (false) { JOB.rep += 50; jobSave(); setTimeout(() => { secret('moon'); say(`Reputation +50 (now ${JOB.rep}).`, 3000); }, 4500); return; } const B = SBOSS.find(q => q.id === part); if (!B) return; SBK[part] = Date.now(); try { localStorage.setItem('ru-sboss', JSON.stringify(SBK)); } catch (e) {} JOB.rep += 20; jobSave(); setTimeout(() => say(`Reputation +20 (now ${JOB.rep}). Spend it on upgrades from your phone (M).`, 4200), 3000); if (SBOSS.every(q => SBK[q.id])) setTimeout(() => secret('streets'), 2500); }
+  function sbWon(part){ if (part === 'g1') return jobRaidWon(); if (false) { JOB.rep += 50; jobSave(); setTimeout(() => { secret('moon'); say(`Reputation +50 (now ${JOB.rep}).`, 3000); }, 4500); return; } const B = SBOSS.find(q => q.id === part); if (!B) return; if (!SBK[part]) try { cashAdd(2500, `Bounty on ${B.name}`); } catch (e) {} SBK[part] = Date.now(); try { localStorage.setItem('ru-sboss', JSON.stringify(SBK)); } catch (e) {} JOB.rep += 20; jobSave(); setTimeout(() => say(`Reputation +20 (now ${JOB.rep}). Spend it on upgrades from your phone (M).`, 4200), 3000); if (SBOSS.every(q => SBK[q.id])) setTimeout(() => secret('streets'), 2500); }
   // ======================= Jobs: people in the city ask for help, and stash houses get raided =======================
   // Some of the people inside the buildings you can walk into have a job for you (they have a yellow ! over their head).
   // Deliveries, a pet or a kite stuck on a roof, a thief to chase down, or a stash house to shut down. One job at a time;
@@ -9168,7 +9168,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (o.k === 'roof') jobItem(o);
     say(`New job: ${o.title}. Follow the yellow beacon.`, 3200);
   }
-  function jobEnd(ok, msg){ const q = JOB.q; JOB.q = null; jobDrop(); if (ok) { JOB.rep += q.rep; JOB.done++; jobSave(); heatDown(1); say(`${msg} Job done: reputation +${q.rep} (now ${JOB.rep}).`, 5200); [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, .18, 'triangle', .05), i * 90)); if (JOB.done >= 5) secret('jobs'); } else say(msg, 4200); }
+  function jobEnd(ok, msg){ const q = JOB.q; JOB.q = null; jobDrop(); if (ok) { JOB.rep += q.rep; JOB.done++; jobSave(); try { cashAdd(400 + q.rep * 40, 'Job paid'); } catch (e) {} heatDown(1); say(`${msg} Job done: reputation +${q.rep} (now ${JOB.rep}).`, 5200); [523, 659, 784, 1046].forEach((f, i) => setTimeout(() => tone(f, .18, 'triangle', .05), i * 90)); if (JOB.done >= 5) secret('jobs'); } else say(msg, 4200); }
   function jobDrop(){ if (JOB.thief) { if (JOB.thief.a.g.parent) JOB.thief.a.g.parent.remove(JOB.thief.a.g); JOB.thief = null; } if (JOB.item) { if (JOB.item.parent) JOB.item.parent.remove(JOB.item); JOB.item = null; } }
   function jobItem(o){ const b = o.b, g = new THREE.Group(); g.position.set((b.x0 + b.x1) / 2 + (b.x1 - b.x0) * .2, b.h, (b.z0 + b.z1) / 2); BL.mapG.add(g);
     if (o.pet === 'cat') { const fur = mat(0xD8A060); sph(.22, fur, 0, .22, 0, g, 1.5, .9, .9, 10); sph(.14, fur, .32, .38, 0, g, 1, 1, 1, 10); [-1, 1].forEach(s => { const e = new THREE.Mesh(new THREE.ConeGeometry(.05, .1, 4), fur); e.position.set(.34, .52, s * .07); g.add(e); }); const t = cyl(.03, .02, .4, fur, -.38, .35, 0, g, 6); t.rotation.z = .9; }
@@ -9389,7 +9389,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function phxRules(){
     const F = PHX.fl, S = (() => { try { return seasonGet(); } catch (e) { return {}; } })(), s1 = S.s1 || {}, s2 = S.s2 || {}, s3 = S.s3 || {}, h = cityHour(), once = (k, fn) => { if (!F[k]) { F[k] = 1; phxSave(); fn(); } };
     once('sam', () => { PHX.th.sam = [['Sam', 'yo are you alive', nowS() - 36e5, 0], ['Sam', 'text me back i have GOSSIP', nowS() - 35e5, 0]]; phxSave(); });
-    once('hi', () => { PHX.th.amma = [['Mum', 'Did you eat?', nowS() - 864e5, 0], ['Mum', 'And don’t stay out late.', nowS() - 864e5 + 6e4, 0]]; PHX.rd.amma = 2; phxSave(); });
+    once('hi', () => { const had = PHX.th.amma || []; PHX.th.amma = [['Mum', 'Did you eat?', nowS() - 864e5, 0], ['Mum', 'And don’t stay out late.', nowS() - 864e5 + 6e4, 0], ...had]; PHX.rd.amma = 2; phxSave(); });
     if (s1.intro) once('meteor', () => setTimeout(() => phMsg('amma', 'Something fell in the sea!! It’s on every channel. Stay away from the beach, I mean it.'), 4000));
     if (s1.scanner || s1.keeper) once('keeper', () => setTimeout(() => phMsg('unknown', 'You’ll know what it’s for when you need to. Keep it charged.'), 9000));
     if (s2.open && !s2.drained) once('flood', () => setTimeout(() => phMsg('amma', 'Where are you?? Lines are down, this only sent on the fourth try. Are you on a roof? Tell me you’re on a roof.'), 6000));
@@ -9682,7 +9682,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       + `<div class="phhours">${[0, 1, 2, 3, 4, 5].map(i => { const x = (Math.floor(h) + i * 2) % 24; return `<span><small>${i ? String(x).padStart(2, '0') : 'Now'}</small><b>${x >= 6 && x < 18 ? cond[0] : '🌙'}</b>${temp(x)}°</span>`; }).join('')}</div>`;
   }
   // the home screen
-  const APPS = [['msgs', 'Messages', '💬', '#34C759'], ['feed', 'Flock', '🐦', '#1D9BF0'], ['map', 'Maps', '🗺', '#E8B82E'], ['season', 'Season', '☄', '#FF7A2A'], ['camera', 'Camera', '📷', '#5A5E68'], ['weather', 'Weather', '⛅', '#3C8CE0'], ['jobs', 'Jobs', '💼', '#6B3FA0'], ['upg', 'Upgrades', '⬆', '#1F7A45'], ['contacts', 'Contacts', '👥', '#8A8F99'], ['rayan', 'Rayan', 'R', '#16181D'], ['story', 'Story', '📖', '#B8862E']];
+  const APPS = [['msgs', 'Messages', '💬', '#34C759'], ['feed', 'Flock', '🐦', '#1D9BF0'], ['map', 'Maps', '🗺', '#E8B82E'], ['season', 'Season', '☄', '#FF7A2A'], ['camera', 'Camera', '📷', '#5A5E68'], ['weather', 'Weather', '⛅', '#3C8CE0'], ['bank', 'Bank', '₹', '#0B6E4F'], ['jobs', 'Jobs', '💼', '#6B3FA0'], ['upg', 'Upgrades', '⬆', '#1F7A45'], ['contacts', 'Contacts', '👥', '#8A8F99'], ['rayan', 'Rayan', 'R', '#16181D'], ['story', 'Story', '📖', '#B8862E']];
   function phHomeScreen(B){
     const h = cityHour(), d = new Date(), stOn = storyStarted(), un = phUnreadAll(), apps = APPS.filter(([k]) => k !== 'story' || stOn);
     B.innerHTML = `<div class="phlock"><b>${String(Math.floor(h)).padStart(2, '0')}:${String(Math.floor(h % 1 * 60)).padStart(2, '0')}</b><small>${d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}</small></div>`
@@ -9695,6 +9695,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     if (t === 'home') { phHomeScreen(B); return true; }
     // the same apps at home as outside; the ones that need the city say so instead of vanishing
     if (!inWorld && (t === 'map' || t === 'jobs')) { B.innerHTML = `<div class="phcard"><b>${t === 'map' ? 'Maps' : 'Jobs'}</b><small>You’re at home. ${t === 'map' ? 'The map, pins and “Bring me a car” work once you’re out in the city.' : 'People post jobs from the street. Head out and check again.'}</small><div class="phrow"><button type="button" class="y" data-goout>Head out to the city</button></div></div>`; B.querySelector('[data-goout]').onclick = () => { phoneClose(); travel('city'); }; return true; }
+    if (t === 'bank') { const tx = CASH.tx.slice(-12).reverse();
+      B.innerHTML = `<div class="phbank"><small>Available balance</small><b>${inr(CASH.v)}</b><span>Savings ·· 4417</span></div><div class="phrow"><button type="button" data-bk="mum">Send Mum ₹500</button></div><div class="phcard"><b>Recent</b>${tx.length ? tx.map(([n, w, ts]) => `<div class="phtx"><span>${esc(w)}<small>${ago(ts)}</small></span><em class="${n > 0 ? 'in' : ''}">${n > 0 ? '+' : '−'}${inr(Math.abs(n))}</em></div>`).join('') : '<small>No transactions yet.</small>'}</div>`;
+      B.querySelector('[data-bk="mum"]').onclick = () => { if (!cashSpend(500, 'Sent to Mum')) return; phShow('bank'); setTimeout(() => { try { phMsg('amma', ['Why are you sending me money?? Buy yourself proper food.', 'I’m putting this in your savings. Don’t argue.', 'Thank you beta ❤️ Now come home.'][Math.floor(Math.random() * 3)]); } catch (e) {} }, 3000); };
+      return true; }
     if (t === 'msgs') { phMsgs(B); return true; } if (t === 'feed') { phFeed(B); return true; } if (t === 'weather') { phWeather(B); return true; }
     return false;
   }
@@ -9708,6 +9712,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 .phapps{display:grid;grid-template-columns:repeat(4,1fr);gap:16px 6px;padding:6px 4px}.phapps button{background:none;border:0;color:#fff;font:600 11px/1.2 system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;position:relative}.phapps i{display:grid;place-items:center;width:52px;height:52px;border-radius:14px;font:800 24px/1 system-ui;font-style:normal;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.3)}.phapps u,.phth u{position:absolute;top:-4px;right:12px;background:#FF3B30;color:#fff;text-decoration:none;border-radius:999px;min-width:18px;height:18px;padding:0 5px;font:800 11px/18px system-ui}
 .phth{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-bottom:1px solid #1E2128;color:#EEF1F5;padding:10px 2px;text-align:left;cursor:pointer;position:relative}.phth i{flex:none;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;font:800 17px system-ui;font-style:normal;color:#fff}.phth span{flex:1;min-width:0}.phth small{display:block;color:#9AA3AD;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.phth em{font-style:normal;font-size:11px;color:#9AA3AD;align-self:flex-start}.phth u{position:static;display:inline-block;margin-left:6px}
 .choicebox .cq{font-size:16px;line-height:1.45;margin:4px 0 0}.choicebox .cbtns{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:6px}
+.phbank{background:linear-gradient(135deg,#0B6E4F,#0E3B2E);border-radius:18px;padding:18px;margin:6px 0 10px;display:flex;flex-direction:column;gap:4px}.phbank small{color:#BFE8D6}.phbank b{font:800 34px system-ui;font-variant-numeric:tabular-nums}.phbank span{color:#BFE8D6;font-size:12px;letter-spacing:.1em}.phtx{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #1E2128}.phtx small{display:block;color:#8A939D;font-size:11px}.phtx em{font-style:normal;font-weight:800;color:#FF6A6A;white-space:nowrap}.phtx em.in{color:#3CE870}
 .phcall{display:flex;flex-direction:column;align-items:center;gap:6px;padding:30px 6px;text-align:center}.phcall>i{display:grid;place-items:center;width:84px;height:84px;border-radius:50%;font:800 34px system-ui;font-style:normal;color:#fff}.phcall b{font-size:22px;margin-top:6px}.phcall small{color:#9AA3AD;font-variant-numeric:tabular-nums}.phsub{min-height:5.5em;margin:18px 0;font-size:16px;line-height:1.4;color:#EEF1F5}.phend{width:64px;height:64px;border-radius:50%;border:0;background:#FF3B30;color:#fff;font-size:28px;cursor:pointer;transform:rotate(135deg)}.phth em{font-size:16px}
 .phchat p.typing{display:flex;gap:4px;padding:11px 12px}.phchat p.typing i{width:7px;height:7px;border-radius:50%;background:#9AA3AD;animation:txdot 1s infinite}.phchat p.typing i:nth-child(2){animation-delay:.15s}.phchat p.typing i:nth-child(3){animation-delay:.3s}@keyframes txdot{0%,60%,100%{opacity:.3;transform:none}30%{opacity:1;transform:translateY(-3px)}}.txbox{position:sticky;bottom:-12px;background:#0B0D14;margin:0 -2px;padding:8px 2px 10px}
 .phchat{display:flex;flex-direction:column;gap:6px;padding:6px 0}.phchat p{max-width:80%;background:#26292F;border-radius:16px 16px 16px 4px;padding:8px 11px;margin:0;align-self:flex-start;font-size:14px}.phchat p.me{align-self:flex-end;background:#0A84FF;border-radius:16px 16px 4px 16px}.phchat small{display:block;font-size:10px;opacity:.6;margin-top:2px}
@@ -10846,6 +10851,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     return `${KITW[w] ? KITW[w].n : 'Fists'}${A2 ? ` · ${EV.reload > 0 ? 'reloading…' : `${A2.mag}/${W.mag}`} · ${A2.res} spare` : ''}${fine ? ` · Q switch${A2 ? ' · R reload' : ''} · X or right-click to block` : ''}`; }
   function ssFightEnd(won){
     const F = EV.st.ss, o = F.o; document.body.classList.remove('ssf'); EV.holdAtk = false; BL.lastWon = won;
+    if (won) try { cashAdd(o.id === 'brawl' ? 150 : 1500, o.id === 'brawl' ? 'Someone in the crowd had money on you' : 'Fight won'); } catch (e) {}
     say(won ? (o.winLine || 'You won!') : (o.loseLine || 'You’re down. Get your breath back and try again.'), 3000); tone(won ? 523 : 140, .5, won ? 'triangle' : 'sawtooth', .05, won ? 1046 : 70);
     setTimeout(() => { if (EV) stopEvent(true); document.body.classList.remove('ssf'); if (o.end) { try { o.end(won); } catch (e) { console.error(e); } } }, 1700);
   }
@@ -11175,7 +11181,9 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   };
   const HOURS = [[0, 'night'], [5.2, 'night'], [6.3, 'dawn'], [8, 'day'], [16.6, 'day'], [18.1, 'dusk'], [19.3, 'night'], [24, 'night']], MOON = [-.35, .6, .45];
   // the city's clock: your own, unless a debug hour is set (ru-hour); the Act 5 montage is always mid-morning
-  function hourNow(){ if (typeof AF !== 'undefined' && AF && AF.on && AF.s.kNew && AF.s.act === 'krb' && AF.s.rbHr != null) return AF.s.rbHr; if (typeof AF !== 'undefined' && AF && AF.on && (AF.s.act === 'del' && AF.s.del && XC.city === 'del' || AF.s.act === 'goa' && AF.s.goa && XC.city === 'goi')) return (AF.s.act === 'goa' ? AF.s.goa : AF.s.del).hr; if (typeof AF !== 'undefined' && AF && AF.on && AF.s.act === 'goa' && XC.city === 'goi' && !AF.s.goaFree) return 6.3; try { const o = localStorage.getItem('ru-hour'); if (o !== null && o !== '' && !isNaN(+o)) return +o; } catch (e) {} const d = new Date(); return (d.getHours() + d.getMinutes() / 60 + darkOff()) % 24; }
+  const CLOCK = { off: 0 };
+  function hourNow(){ return (hourNow0() + CLOCK.off) % 24; }
+  function hourNow0(){ if (typeof AF !== 'undefined' && AF && AF.on && AF.s.kNew && AF.s.act === 'krb' && AF.s.rbHr != null) return AF.s.rbHr; if (typeof AF !== 'undefined' && AF && AF.on && (AF.s.act === 'del' && AF.s.del && XC.city === 'del' || AF.s.act === 'goa' && AF.s.goa && XC.city === 'goi')) return (AF.s.act === 'goa' ? AF.s.goa : AF.s.del).hr; if (typeof AF !== 'undefined' && AF && AF.on && AF.s.act === 'goa' && XC.city === 'goi' && !AF.s.goaFree) return 6.3; try { const o = localStorage.getItem('ru-hour'); if (o !== null && o !== '' && !isNaN(+o)) return +o; } catch (e) {} const d = new Date(); return (d.getHours() + d.getMinutes() / 60 + darkOff()) % 24; }
   function darkOff(){ try { const v = +localStorage.getItem('ru-hoff'); return isFinite(v) ? v : 0; } catch (e) { return 0; } }
   function skipTo(h, then){ if (typeof AF !== 'undefined' && AF && AF.on && afDelOn() && afL()) { afAdvance(h); } else { const now = hourNow(), add = ((h - now) % 24 + 24) % 24; try { localStorage.setItem('ru-hoff', String((darkOff() + add) % 24)); } catch (e) {} }
     fade(() => { try { if (XC.sc) xcLight(); } catch (e) {} if (then) then(); }, '#05070F'); say(h >= 19 || h < 5 ? 'Hours pass. It’s dark now.' : 'Hours pass. It’s morning.', 2400); }
@@ -11644,9 +11652,82 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   function boardTrain(){ const S = BLC.trainS, [mx] = toMap(pos.x, pos.z); PL.ride = { from: S.at, off: clamp(mx - S.x, -24, 24) }; DRV.lock = true; say(`Doors closing. Next stop: ${STN[1 - S.at].name}.`, 3000); tone(1046, .3, 'sine', .03); }
   function rideStep(){ const R = PL.ride, S = BLC.trainS; const [lx, lz] = toLocal(S.x + R.off, MZ); pos.x = lx; pos.z = lz;
     if (S.at >= 0 && S.at !== R.from && S.wait > 0) { const [ax, az] = toLocal(S.x + clamp(R.off, -14, 14), MZ + 3.3); pos.x = ax; pos.z = az; PL.ride = null; DRV.lock = false; say(`${STN[S.at].name}. Mind the gap.`, 2600); } }
-  // ---------- the street-level places: five shops ----------
+  // ======================= money: cash, the bank app, shops, bars and restaurants, bail, and being drunk =======================
+  // Cash lives in ru-cash ({ v, tx }), shown on the phone's Bank app. You earn it from jobs, fights and street bosses, and
+  // spend it at the weapon shop, the bar, the restaurant, and on bail. Shop counters are registered in SVC by shopInside
+  // and found by svcStep; the menu is svcOpen. Drinks raise DRUNK.l: the camera sways and blurs, your steps wobble (and so
+  // does your aim, because the sway moves where you look), it wears off, and too much makes you pass out. Driving drunk
+  // brings the police. Reduce effects tones the sway and blur down.
+  const CASH = { v: 2000, tx: [] };
+  try { const c = JSON.parse(localStorage.getItem('ru-cash') || 'null'); if (c && typeof c.v === 'number') { CASH.v = Math.max(0, Math.round(c.v)); CASH.tx = Array.isArray(c.tx) ? c.tx.slice(-30) : []; } } catch (e) {}
+  const cashSave = () => { try { localStorage.setItem('ru-cash', JSON.stringify({ v: CASH.v, tx: CASH.tx.slice(-30) })); } catch (e) {} };
+  const inr = n => '₹' + Math.round(n).toLocaleString('en-IN');
+  function cashAdd(n, why, quiet){ n = Math.round(n); if (!n) return; CASH.v = Math.max(0, CASH.v + n); CASH.tx.push([n, why || '', Date.now()]); cashSave(); if (!quiet) setTimeout(() => say(`${n > 0 ? '+' : '−'}${inr(Math.abs(n))} · ${why}`, 2400), 600); }
+  function cashSpend(n, why){ if (CASH.v < n) { say(`Not enough cash. You have ${inr(CASH.v)}.`, 2200); tone(160, .2, 'sawtooth', .03); return false; } cashAdd(-n, why, true); tone(1320, .05, 'square', .03); return true; }
+  // what's for sale
+  const MENUS = {
+    guns: { title: 'Ironside Arms', sub: 'Weapons go straight into your season loadout.', items: () => Object.keys(SSW).map(k => ({ id: k, n: SSW[k].n, d: SSW[k].how || '', p: { s1_blaster: 2500, s1_scatter: 4200, s1_rifle: 5600, s1_sword: 3600, s1_wrench: 1500, s1_spear: 3200, s3_baton: 1800 }[k] || 3000, own: ARS.own.includes(k) })),
+      buy(it){ if (it.own) return say('You already own that.', 1600); if (!cashSpend(it.p, it.n)) return; arsGive(it.id); say(`${it.n} is yours. It’s in your loadout.`, 2600); } },
+    bar: { title: 'The Copper Tap', sub: 'Drinks hit harder than you think. Water helps.', items: () => [{ id: 'beer', n: 'Draught beer', d: 'A cold pint.', p: 220, a: 1 }, { id: 'wine', n: 'Glass of red', d: 'House red.', p: 380, a: 1.2 }, { id: 'shot', n: 'Whisky shot', d: 'Neat.', p: 300, a: 1.5 }, { id: 'cock', n: 'House cocktail', d: 'Mostly rum.', p: 450, a: 1.8 }, { id: 'soda', n: 'Fresh lime soda', d: 'No alcohol.', p: 90, a: 0 }, { id: 'water', n: 'Water', d: 'On the house.', p: 0, a: -.6 }],
+      buy(it){ if (it.p && !cashSpend(it.p, it.n)) return; drink(it.a, it.n); } },
+    resto: { title: 'Saffron Table', sub: 'Eating sobers you up a little.', items: () => [{ id: 'dosa', n: 'Masala dosa', d: 'Crisp, with chutney and sambar.', p: 140, f: 1 }, { id: 'biryani', n: 'Chicken biryani', d: 'A huge plate.', p: 320, f: 1.5 }, { id: 'paneer', n: 'Paneer butter masala + naan', d: 'Rich.', p: 290, f: 1.4 }, { id: 'noodles', n: 'Hakka noodles', d: 'Indo-Chinese.', p: 220, f: 1.1 }, { id: 'pizza', n: 'Margherita pizza', d: 'Wood-fired.', p: 380, f: 1.3 }, { id: 'kulfi', n: 'Kulfi', d: 'Pistachio.', p: 90, f: .4 }],
+      buy(it){ if (!cashSpend(it.p, it.n)) return; DRUNK.l = Math.max(0, DRUNK.l - it.f); say(`${it.n}. ${['That hit the spot.', 'Best thing you’ve eaten all week.', 'You feel human again.'][Math.floor(Math.random() * 3)]}`, 2400); } }
+  };
+  const SVC = [], svcBtn = document.createElement('button'); svcBtn.type = 'button'; svcBtn.className = 'btn alt drvbtn svcbtn'; svcBtn.hidden = true; document.body.appendChild(svcBtn);
+  let svcNear = null;
+  const svcBox = document.createElement('div'); svcBox.className = 'game'; svcBox.setAttribute('role', 'dialog'); svcBox.innerHTML = '<div class="gbox svcbox"></div>'; document.body.appendChild(svcBox);
+  function svcOpen(kind){
+    const M = MENUS[kind]; if (!M) return; if (document.pointerLockElement) document.exitPointerLock();
+    const draw = () => { const L = M.items(); svcBox.querySelector('.gbox').innerHTML = `<div class="ghead"><h2 class="display">${esc(M.title)}</h2><button class="close" type="button" data-sv="x" aria-label="Close">✕</button></div><p class="psub">${esc(M.sub)} You have <b>${inr(CASH.v)}</b>.</p>`
+      + L.map((it, i) => `<div class="prow"><b>${esc(it.n)}<br><small>${esc(it.d)}</small></b><button class="btn" type="button" data-sv="${i}" ${it.own ? 'disabled' : ''}>${it.own ? 'Owned' : it.p ? inr(it.p) : 'Free'}</button></div>`).join('')
+      + (kind === 'bar' && DRUNK.l > .3 ? `<p class="gmsg">${DRUNK.l >= 4.5 ? 'The bartender slides you a glass of water instead.' : DRUNK.l >= 3 ? 'You’re properly drunk.' : DRUNK.l >= 1.5 ? 'You’re tipsy.' : 'You feel a little warm.'}</p>` : ''); svcBox._L = L; };
+    svcBox._M = M; svcBox._draw = draw; draw(); svcBox.classList.add('on');
+  }
+  svcBox.addEventListener('click', e => { const b = e.target.closest('[data-sv]'); if (!b) return; if (b.dataset.sv === 'x') return svcBox.classList.remove('on'); const it = svcBox._L[+b.dataset.sv]; if (it) { svcBox._M.buy(it); svcBox._draw(); } });
+  svcBox.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); svcBox.classList.remove('on'); } });
+  svcBtn.addEventListener('click', e => { e.stopPropagation(); if (svcNear) svcOpen(svcNear.kind); });
+  addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName) || EV || A) return; if (e.key.toLowerCase() === 'e' && svcNear && !svcBtn.hidden) svcOpen(svcNear.kind); });
+  function svcStep(){
+    let near = null; if (inWorld && zone === 'blr' && !EV && !A && !DRV.on && !svcBox.classList.contains('on')) { const [mx, mz] = toMap(pos.x, pos.z); near = SVC.find(q => Math.hypot(mx - q.x, mz - q.z) < 2.4 && onGround()) || null; }
+    svcNear = near; svcBtn.hidden = !near; if (near) { const t = { guns: 'Browse weapons', bar: 'Order a drink', resto: 'Order food' }[near.kind] + (fine ? ' (E)' : ''); if (svcBtn.textContent !== t) svcBtn.textContent = t; }
+  }
+  // ---------- drunk ----------
+  const DRUNK = { l: 0, sw: 0, sp: 0, heatT: 0, last: null };
+  const drunkFx = document.createElement('div'); drunkFx.className = 'drunkfx'; drunkFx.setAttribute('aria-hidden', 'true'); document.body.appendChild(drunkFx);
+  function drink(a, n){ DRUNK.l = Math.max(0, DRUNK.l + a); tone(a > 0 ? 300 : 700, .12, 'sine', .03, a > 0 ? 200 : 900);
+    say(a <= 0 ? `${n}. Your head clears a little.` : DRUNK.l >= 5 ? `${n}. The room tilts. One more and you’re on the floor.` : DRUNK.l >= 3 ? `${n}. Everything is very funny now.` : DRUNK.l >= 1.5 ? `${n}. Warm and loose.` : `${n}. Nice.`, 2600);
+    if (DRUNK.l >= 6.2) setTimeout(passOut, 1200); }
+  function passOut(){
+    if (DRUNK.passing) return; DRUNK.passing = true; svcBox.classList.remove('on'); if (DRV.on) getOut(true); say('Your legs give up. The floor comes up to meet you.', 2400);
+    const lost = Math.min(CASH.v, Math.round(CASH.v * (.1 + Math.random() * .15)));
+    setTimeout(() => fade(() => {
+      const home = Math.random() < .5 || !(inWorld && zone === 'blr'); CLOCK.off = (CLOCK.off + 4 + Math.floor(Math.random() * 3)) % 24; DRUNK.l = .8;
+      if (home) travel('room'); else { const bx = (PARK_B[0] + PARK_B[1]) / 2 + 6, bz = (PARK_B[2] + PARK_B[3]) / 2 + 4, [lx, lz] = toLocal(bx, bz); if (blrValid(lx, lz)) { pos.x = lx; pos.z = lz; } }
+      if (lost) cashAdd(-lost, 'Lost while you were out', true);
+      setTimeout(() => { say(`${home ? 'You wake up in your own bed. No idea how you got here.' : 'You wake up on a park bench, hours later.'} ${lost ? `Your wallet is ${inr(lost)} lighter.` : ''}`, 4200); try { phMsg('amma', home ? 'Beta, the watchman had to help you up the stairs. We will talk about this in the morning.' : 'Where ARE you?? You didn’t come home last night. Call me RIGHT NOW.'); } catch (e) {} DRUNK.passing = false; }, 900);
+    }, '#000000'), 1600);
+  }
+  function drunkStep(dt, now){
+    const t = now / 1000, l = DRUNK.l; if (l > 0) DRUNK.l = Math.max(0, l - dt / 85);
+    const k = lowFx ? .4 : 1, amp = Math.min(l, 5.5) * .011 * k;
+    // the sway moves where you look (and so your aim): add the change in an oscillation each frame, so it doesn't drift
+    const sw = Math.sin(t * .9) * amp + Math.sin(t * 2.3) * amp * .3, sp = Math.sin(t * 1.3 + 1) * amp * .4;
+    if (!EV || l > 0) { yaw += sw - DRUNK.sw; pitch += sp - DRUNK.sp; } DRUNK.sw = sw; DRUNK.sp = sp;
+    const blur = l > 1 ? Math.min(lowFx ? 1 : 4, (l - 1) * (lowFx ? .25 : .8)) : 0; const want = blur > .05 ? `blur(${blur.toFixed(2)}px)` : 'none'; if (drunkFx.dataset.b !== want) { drunkFx.dataset.b = want; drunkFx.style.backdropFilter = drunkFx.style.webkitBackdropFilter = want; drunkFx.style.display = blur > .05 ? 'block' : 'none'; }
+    // wobbly steps
+    if (l > 1.2 && inWorld && zone === 'blr' && !DRV.on && DRUNK.last) { const moved = Math.hypot(pos.x - DRUNK.last[0], pos.z - DRUNK.last[1]); if (moved > .002) { const n = Math.sin(t * 1.7) * Math.min(l, 5) * .22 * dt, px = Math.cos(yaw) * n, pz = -Math.sin(yaw) * n; if (blrValid(pos.x + px, pos.z + pz)) { pos.x += px; pos.z += pz; } } }
+    DRUNK.last = [pos.x, pos.z];
+    // driving drunk
+    if (DRV.on && l >= 1.5) { if ((DRUNK.heatT -= dt) <= 0) { DRUNK.heatT = 14; try { heatAdd(1, 'Drunk driving'); } catch (e) {} } } else DRUNK.heatT = 3;
+    if (l >= 6.2 && !DRUNK.passing) passOut();
+  }
+  { const st = document.createElement('style'); st.textContent = '.drunkfx{position:fixed;inset:0;z-index:2;pointer-events:none;display:none}.svcbtn{bottom:calc(150px + env(safe-area-inset-bottom,0px))}.svcbox{width:min(460px,100%)}.svcbox .prow .btn{min-width:84px}'; document.head.appendChild(st); }
+  // ---------- the street-level places: shops, a weapon dealer, a bar and a restaurant ----------
   const SHOPS = [
     { id: 'darshini', name: 'Sri Krishna Darshini', sub: 'IDLI · VADA · DOSA · KAAPI', bg: '#1F6A3A', fg: '#FFE08A', floor: 0xD8D0C0, wall: 0xE8E0B8, who: 'The man at the counter', line: 'Two idli-vada? Kaapi’s fresh. Stand anywhere, no chairs here, this is a darshini.' },
+    { id: 'guns', name: 'Ironside Arms', sub: 'LICENSED DEALER · SINCE 1988', bg: '#1E2026', fg: '#E8701A', floor: 0x4A4E58, wall: 0x3A3D44, who: 'The dealer', line: 'Look all you like. Paying is the part I care about.' },
+    { id: 'bar', name: 'The Copper Tap', sub: 'CRAFT BEER · COCKTAILS · LATE', bg: '#3A1E12', fg: '#E8B04A', floor: 0x4A3020, wall: 0x5A3A28, who: 'The bartender', line: 'What’ll it be? Water’s free, by the way.' },
+    { id: 'resto', name: 'Saffron Table', sub: 'NORTH · SOUTH · CHINESE', bg: '#8A1E1E', fg: '#FFE08A', floor: 0xD8C8A8, wall: 0xE8D8B8, who: 'The waiter', line: 'Table for one? Order at the counter, I’ll bring it over.' },
     { id: 'books', name: 'Page Turner Books', sub: 'NEW · OLD · COMICS', bg: '#3A2A1A', fg: '#F6EFDD', floor: 0x8A6B4A, wall: 0xEADFC8, who: 'The bookseller', line: 'Comics are at the back. Somebody keeps asking for a Multiverse Saga issue we never stocked.' },
     { id: 'medical', name: 'City Medicals', sub: 'OPEN 24 HOURS', bg: '#1E7A4A', fg: '#FFFFFF', floor: 0xE8ECEF, wall: 0xF4F6F8, who: 'The pharmacist', line: 'Paracetamol? Plasters? You look like you’ve been in a few fights.' },
     { id: 'barber', name: 'Style Point Saloon', sub: 'HAIR CUT · SHAVE · MASSAGE', bg: '#C8102E', fg: '#FFFFFF', floor: 0xE8E3D6, wall: 0xC8E0E8, who: 'The barber', line: 'Sit, sit. Only cutting, no copying. One style per customer.' },
@@ -11662,6 +11743,18 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       { const mb = textPlane(3, 1.2, (c, w, h) => { c.fillStyle = '#1A3A2A'; c.fillRect(0, 0, w, h); c.strokeStyle = '#8A6B4A'; c.lineWidth = 14; c.strokeRect(0, 0, w, h); c.fillStyle = '#FFE08A'; c.font = `900 ${h * .13}px ${DISPLAY}`; c.textAlign = 'center'; c.fillText('SRI KRISHNA DARSHINI', w / 2, h * .2); c.font = `700 ${h * .09}px sans-serif`; c.fillStyle = '#FFFFFF'; c.textAlign = 'left';
           [['Idli Vada', '40'], ['Masala Dosa', '60'], ['Khara Bath', '35'], ['Kesari Bath', '35'], ['Mangalore Buns', '30'], ['Filter Kaapi', '20']].forEach(([n, pr], i) => { const x = i % 2 ? w * .54 : w * .06, y = h * (.42 + (i >> 1) * .2); c.fillText(n, x, y); c.fillText('₹' + pr, x + w * .32, y); }); }, .35);
         mb.position.set(0, 2.6, Dr - .1); mb.rotation.y = Math.PI; F.g.add(mb); } person(0, Dr - .7); }
+    const counter = (kind, u, v) => { const [x, z] = F.toM(u, v); SVC.push({ x, z, kind }); };
+    if (S.id === 'guns') { P.push(B3(Wr - 2, 1.05, .8, 0x2A2D33, 0, .52, Dr - 2), B3(Wr - 2, .05, .86, 0x8A8F99, 0, 1.07, Dr - 2)); so(-hw + 1, hw - 1, Dr - 2.4, Dr - 1.6);
+      P.push(B3(Wr - 1, 2.4, .1, 0x5A4632, 0, 2.2, Dr - .1)); Object.keys(SSW).forEach((k, i) => { try { const m = mkWeapon(k); m.scale.setScalar(1.6); m.position.set(-hw + 1.4 + i * ((Wr - 2.8) / 6), 2.2, Dr - .25); m.rotation.set(0, Math.PI, Math.PI / 2); F.g.add(m); } catch (e) {} });
+      person(0, Dr - 1.2); counter('guns', 0, Dr - 2.9); }
+    if (S.id === 'bar') { P.push(B3(Wr - 2.5, 1.1, .7, 0x5A3A22, 0, .55, Dr - 2.2), B3(Wr - 2.3, .06, .8, 0x2A1A10, 0, 1.12, Dr - 2.2)); so(-hw + 1.25, hw - 1.25, Dr - 2.55, Dr - 1.85);
+      for (let i = 0; i < 4; i++) P.push(C3(.18, .7, 0x2A1A10, -hw + 2 + i * ((Wr - 4) / 3), .35, Dr - 3.1, 10), C3(.22, .06, 0xC8102E, -hw + 2 + i * ((Wr - 4) / 3), .72, Dr - 3.1, 12));
+      P.push(B3(Wr - 1.5, .05, .3, 0x3A2A1E, 0, 1.7, Dr - .3), B3(Wr - 1.5, .05, .3, 0x3A2A1E, 0, 2.3, Dr - .3)); for (let i = 0; i < 18; i++) P.push(C3(.06, .32, [0x3CE870, 0xE8B04A, 0xC8102E, 0x9FD8FF][i % 4], -hw + 1 + i * ((Wr - 2) / 18), 1.9 + (i % 2) * .6, Dr - .3, 8));
+      [[-hw + 1.6, 2.2], [hw - 1.6, 2.2]].forEach(([u, v]) => { P.push(C3(.5, .06, 0x2A1A10, u, .95, v, 14), C3(.06, .95, 0x16181D, u, .48, v, 6)); so(u - .5, u + .5, v - .5, v + .5); });
+      { const neon = textPlane(2.4, .6, (c, w, h) => { c.fillStyle = '#16181D'; c.fillRect(0, 0, w, h); c.shadowColor = '#FF5AA0'; c.shadowBlur = 24; c.fillStyle = '#FF7AB8'; c.font = `900 ${h * .5}px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('OPEN LATE', w / 2, h / 2); }); neon.position.set(0, 3.1, Dr - .12); neon.rotation.y = Math.PI; F.g.add(neon); }
+      person(0, Dr - 1.4); counter('bar', 0, Dr - 3.2); }
+    if (S.id === 'resto') { [[-hw + 2, 2.4], [0, 2.6], [hw - 2, 2.4], [-hw + 2, 4.8], [hw - 2, 4.8]].forEach(([u, v]) => { if (v > Dr - 2.2) return; P.push(B3(1.1, .05, 1.1, 0xF4F1EA, u, .78, v), C3(.06, .76, 0x5A4632, u, .38, v, 6)); [-.75, .75].forEach(o => P.push(B3(.42, .45, .42, 0x8A1E1E, u + o, .23, v))); so(u - 1, u + 1, v - .6, v + .6); });
+      P.push(B3(Wr - 3, 1.05, .7, 0xE8D8B8, 0, .52, Dr - 1.2)); so(-hw + 1.5, hw - 1.5, Dr - 1.55, Dr - .85); person(0, Dr - .5); counter('resto', 0, Dr - 1.9); }
     if (S.id === 'books') { shelf(-hw + .45, Dr / 2, Dr - 1, .8, 3, 0x6A4E3A, Math.PI / 2); shelf(hw - .45, Dr / 2, Dr - 1, .8, 3, 0x6A4E3A, Math.PI / 2); shelf(0, Dr - .5, Wr - 3, .7, 3, 0x6A4E3A);
       const cols = [0xC8102E, 0x3C7CFF, 0xFFC93C, 0x3F7A44, 0xB07CFF, 0xE8E3D6, 0xFF8A2E]; for (let i = 0; i < 40; i++) { const side = i % 2 ? 1 : -1, v = 1 + (i / 2 | 0) % 8 * ((Dr - 2) / 8), y = .75 + (i % 4) * .55; P.push(B3(.2, .42, .12, cols[i % 7], side * (hw - .5), y, v + .1)); }
       P.push(B3(2, .8, 1.2, 0x8A6B4A, 0, .4, 3)); so(-1, 1, 2.4, 3.6); for (let i = 0; i < 8; i++) P.push(B3(.3, .06, .4, cols[i % 7], -.8 + i * .23, .83, 3 + (i % 2) * .2)); P.push(B3(1.6, .95, .6, 0x5A4632, hw - 2.4, .47, 1.6)); so(hw - 3.2, hw - 1.6, 1.3, 1.9); person(hw - 2.4, 2.3); }
@@ -12396,9 +12489,11 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     g.traverse(o => o.userData.noPick = true); g.visible = false;
     LVL.jail = { id: 'jail', y: JYL, drive: false, rects: [J_CELL, J_HALL], solid: [[JX - 1.4, JX + 1.4, JZ - 4.3, JZ - 3.55], [JX + 2.45, JX + 4.75, JZ + 2.45, JZ + 3.35]], exits: [] };
     const el = JAIL.el = document.createElement('div'); el.className = 'jailhud'; el.hidden = true; document.body.appendChild(el);
+    const bb = JAIL.bail = document.createElement('button'); bb.type = 'button'; bb.className = 'btn jailbail'; bb.hidden = true; document.body.appendChild(bb); bb.addEventListener('click', e => { e.stopPropagation(); payBail(); });
+    addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; if (e.key.toLowerCase() === 'b' && !bb.hidden) { e.stopImmediatePropagation(); payBail(); } }, true);
     const ab = JAIL.btn = document.createElement('button'); ab.type = 'button'; ab.className = 'btn alt jailact'; ab.hidden = true; document.body.appendChild(ab); ab.addEventListener('click', e => { e.stopPropagation(); if (JAIL.act) JAIL.act.go(); });
     addEventListener('keydown', e => { if (e.repeat || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return; if (e.key.toLowerCase() === 'e' && JAIL.act && !ab.hidden) { e.stopImmediatePropagation(); JAIL.act.go(); } }, true);
-    const st = document.createElement('style'); st.textContent = '.jailhud{position:fixed;left:50%;top:calc(140px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:40;background:rgba(16,16,18,.82);color:#fff;border-radius:16px;padding:8px 16px;font:700 13px/1.35 system-ui,sans-serif;text-align:center;max-width:calc(100% - 24px);pointer-events:none}.jailhud b{display:block;font-size:11px;letter-spacing:.16em;color:#FFB04A}.jailact{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40}'; document.head.appendChild(st);
+    const st = document.createElement('style'); st.textContent = '.jailbail{position:fixed;left:50%;bottom:calc(205px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40;background:#1F7A45;color:#fff}.jailbail[hidden]{display:none}.jailhud{position:fixed;left:50%;top:calc(140px + env(safe-area-inset-top,0px));transform:translateX(-50%);z-index:40;background:rgba(16,16,18,.82);color:#fff;border-radius:16px;padding:8px 16px;font:700 13px/1.35 system-ui,sans-serif;text-align:center;max-width:calc(100% - 24px);pointer-events:none}.jailhud b{display:block;font-size:11px;letter-spacing:.16em;color:#FFB04A}.jailact{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:40}'; document.head.appendChild(st);
   }
   function jailGo(){
     if (JAIL.until || EV || A || !inWorld || zone !== 'blr') return; jailBuild(); if (!LVL.jail) return; if (DRV.on) getOut(true); if (phOpen()) phoneClose();
@@ -12409,6 +12504,14 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // back to square one: the bar fixed, the gap closed
   function jailReset(){ JAIL.stage = 0; JAIL.bar = 0; if (JAIL.loose) { JAIL.loose.rotation.set(0, 0, 0); JAIL.loose.position.y = 1.6; } if (LVL.jail) LVL.jail.rects = [J_CELL, J_HALL]; }
   function jailCaught(why){ say(why, 3200); tone(220, .4, 'sawtooth', .05, 110); fade(() => { const [lx, lz] = toLocal(JX, JZ - 2.4); pos.x = lx; pos.z = lz; yaw = Math.PI; jailReset(); if (JAIL.keys) { JAIL.keys = false; JAIL.keyM.visible = true; } JAIL.look = 0; JAIL.lt = 7; }, '#000000'); }
+  // bail: pay and walk out now, record and heat cleared
+  const bailCost = () => 500 + 200 * Math.min(10, JAIL.rec);
+  function payBail(){
+    if (!JAIL.until) return; const c = bailCost(); if (!cashSpend(c, 'Bail')) return;
+    const at = JAIL.at || [0, 0]; JAIL.until = 0; JAIL.act = null; JAIL.rec = 0; jailSave(); if (JAIL.btn) JAIL.btn.hidden = true; if (JAIL.bail) JAIL.bail.hidden = true; if (JAIL.el) JAIL.el.hidden = true;
+    lvGo({ to: null, at, yaw: 0, fade: true, msg: 'The desk sergeant counts the notes twice. “Go on. Don’t let me see you again.”' });
+    setTimeout(() => { if (JAIL.g) JAIL.g.visible = false; HEAT.lv = 0; try { phMsg('amma', 'The police station called me. BAIL?? Come home. Now.'); } catch (e) {} }, 1400);
+  }
   function jailOut(){
     const at = JAIL.at || [0, 0]; JAIL.until = 0; JAIL.act = null; if (JAIL.btn) JAIL.btn.hidden = true; if (JAIL.el) JAIL.el.hidden = true;
     lvGo({ to: null, at, yaw: 0, fade: true, msg: 'You walk out into the street like you own it. Then you hear the sirens.' });
@@ -12416,16 +12519,16 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   }
   function jailStep(now, dt){
     if (!JAIL.until) { if (JAIL.rec > 0 && (JAIL.decay += dt) > 90) { JAIL.decay = 0; JAIL.rec--; jailSave(); } return; }
-    const inCell = BL.lvl === LVL.jail; if (JAIL.el) JAIL.el.hidden = !inCell; if (!inCell) { if (JAIL.btn) JAIL.btn.hidden = true; return; }
+    const inCell = BL.lvl === LVL.jail; if (JAIL.el) JAIL.el.hidden = !inCell; if (JAIL.bail) { JAIL.bail.hidden = !inCell; if (inCell) { const l = `Pay bail ${inr(bailCost())}${fine ? ' (B)' : ''}`; if (JAIL.bail.textContent !== l) JAIL.bail.textContent = l; } } if (!inCell) { if (JAIL.btn) JAIL.btn.hidden = true; return; }
     JAIL.inT += dt; if (JAIL.inT > 240 && !JAIL.asleep) { JAIL.asleep = true; JAIL.look = 0; say('The guard’s head drops onto his chest. He’s snoring.', 3600); }
     const [mx, mz] = toMap(pos.x, pos.z), out = mz > JZ - .55, G = JAIL.guard, t = now / 1000;
     // the guard: back to you, watching his screen, then turning round to check on you
-    if (!JAIL.asleep) { if (JAIL.look > 0) { JAIL.look -= dt; if (JAIL.look <= 0) JAIL.lt = 5 + Math.random() * 4; } else if ((JAIL.lt -= dt) <= 0) { JAIL.look = 2.6; tone(300, .15, 'triangle', .03, 260); } }
+    if (!JAIL.asleep) { if (JAIL.look > 0) { JAIL.look -= dt; if (JAIL.look <= 0) JAIL.lt = 10 + Math.random() * 6; } else if ((JAIL.lt -= dt) <= 0) { JAIL.look = 1.8; tone(300, .15, 'triangle', .03, 260); } }
     const watching = JAIL.look > 0; if (G) { const want = watching ? 0 : Math.PI; G.g.rotation.y += (want - G.g.rotation.y) * Math.min(1, dt * 6); try { G.anim(t, 0, 0); } catch (e) {} G.g.position.y = JAIL.asleep ? -.25 : 0; }
     if (watching && out && Math.hypot(mx - (JX + 3.6), mz - (JZ + 2.1)) < 10) return jailCaught('“Oi! Back in your box.” The guard hauls you back by the collar and wedges the bar back in.');
     // what you can do from where you're standing
     let A2 = null;
-    if (JAIL.stage === 0 && Math.hypot(mx - (JX + 1.24), mz - (JZ - .55)) < 1.1) A2 = { label: `Work the loose bar (${JAIL.bar}/5)`, go(){ if (JAIL.look > 0) return jailCaught('He turns round just as the bar scrapes. “I heard that.” He wedges it back with a chair leg.'); JAIL.bar++; tone(140, .12, 'square', .04, 90); JAIL.loose.rotation.z = JAIL.bar * .07; if (JAIL.bar >= 5) { JAIL.stage = 1; JAIL.loose.rotation.z = .5; JAIL.loose.position.y = 1.45; LVL.jail.rects = [J_CELL, J_HALL, J_GAP]; say('The bar bends far enough. You can squeeze through. Keys are on the guard’s desk.', 3600); } } };
+    if (JAIL.stage === 0 && Math.hypot(mx - (JX + 1.24), mz - (JZ - .55)) < 1.1) A2 = { label: `Work the loose bar (${JAIL.bar}/3)`, go(){ if (JAIL.look > 0) return jailCaught('He turns round just as the bar scrapes. “I heard that.” He wedges it back with a chair leg.'); JAIL.bar++; tone(140, .12, 'square', .04, 90); JAIL.loose.rotation.z = JAIL.bar * .12; if (JAIL.bar >= 3) { JAIL.stage = 1; JAIL.loose.rotation.z = .5; JAIL.loose.position.y = 1.45; LVL.jail.rects = [J_CELL, J_HALL, J_GAP]; say('The bar bends far enough. You can squeeze through. Keys are on the guard’s desk.', 3600); } } };
     else if (JAIL.stage >= 1 && !JAIL.keys && Math.hypot(mx - J_KEYS[0], mz - (J_KEYS[1] - .35)) < 1.2) A2 = { label: 'Take the keys', go(){ if (JAIL.look > 0) return jailCaught('His hand closes over yours, on the keys. “Nice try.”'); JAIL.keys = true; JAIL.keyM.visible = false; tone(1200, .08, 'triangle', .03); say('Keys. Now the door at the end of the corridor.', 2600); } };
     else if (Math.hypot(mx - J_DOOR[0], mz - J_DOOR[1]) < 1.4) A2 = JAIL.keys ? { label: 'Unlock the door', go(){ tone(600, .1, 'square', .04); setTimeout(() => tone(900, .12, 'square', .04), 120); jailOut(); } } : { label: 'Locked', go(){ say('Locked. The keys are on the guard’s desk.', 2000); } };
     JAIL.act = A2; if (JAIL.btn) { JAIL.btn.hidden = !A2; if (A2) { const l = A2.label + (fine ? ' (E)' : ''); if (JAIL.btn.textContent !== l) JAIL.btn.textContent = l; } }
@@ -13879,6 +13982,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // every couple of seconds: achievements, the real night, and the phone light
   let nightChecked = false;
   function littleStep(dt, now){
+    try { svcStep(); drunkStep(dt, now); } catch (e) {}
     try { paper2Step(now); } catch (e) {}
     try { voiceStep(now); } catch (e) {}
     sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { isleStep(dt, now); } catch (e) { console.error(e); } try { mtnStep(dt, now); } catch (e) { console.error(e); } try { floodStep(dt); } catch (e) { console.error(e); } try { pkStep(dt); } catch (e) { console.error(e); } try { phxStep(dt); } catch (e) { console.error(e); } try { seasonStep(dt, now); } catch (e) { console.error(e); } try { winterStep(dt, now); } catch (e) { console.error(e); }
