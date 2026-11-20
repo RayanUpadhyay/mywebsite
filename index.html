@@ -2779,25 +2779,36 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // Dialogue boxes always speak (dlgShow); toasts speak only when they hold a quoted line (“…”) or play during a cutscene, so
   // UI hints stay quiet. Each character has a voice, pitch and speed (VCAST); unknown names get a stable one from their name.
   // While someone talks, the nearest face in view moves its mouth (MOUTHS, voiceStep). On/off in Settings, saved as ru-voices.
-  const VOICE = { on: true, voices: [], talking: null, until: 0 };
-  try { VOICE.on = localStorage.getItem('ru-voices') !== '0'; } catch (e) {}
+  // Browsers ship two kinds of voice: natural/neural ones (Edge's "Online (Natural)", Chrome's Google voices, Safari's Siri,
+  // Enhanced and Premium voices) and old robotic ones. VOICE.good holds the natural English ones, preferring Indian, British,
+  // then American English; characters differ by which natural voice they get, and pitch and speed stay close to normal (big
+  // pitch shifts are what make speech sound robotic). Lines are spoken a sentence at a time. With no natural voice, voices
+  // start off (VOICE.robotic, said in Settings) unless the player turned them on; ru-voices keeps an explicit choice.
+  const VOICE = { on: true, voices: [], good: [], robotic: false, pref: null, talking: null, until: 0 };
+  try { const v = localStorage.getItem('ru-voices'); VOICE.pref = v === '1' ? true : v === '0' ? false : null; if (VOICE.pref === false) VOICE.on = false; } catch (e) {}
+  const vNatural = v => /natural|neural|online|premium|enhanced|siri|google/i.test(v.name) || (/^com\.apple\./i.test(v.voiceURI || '') && /premium|enhanced|siri/i.test(v.voiceURI || ''));
+  const vLangRank = v => /en[-_]IN/i.test(v.lang) ? 0 : /en[-_]GB/i.test(v.lang) ? 1 : /en[-_]US/i.test(v.lang) ? 2 : 3;
   const MOUTHS = [];
   const VCAST = { narrator: [.95, .98, 'm', 1], me: [1.05, 1.05, 'm', 0], amma: [1.2, .95, 'f', 2], sam: [1.3, 1.12, 'm', 3], unknown: [.55, .82, 'm', 4], keeper: [.7, .86, 'm', 4], frank: [.8, .95, 'm', 5], leo: [1.08, 1.05, 'm', 6], rosa: [1.15, 1, 'f', 7], reyes: [.95, 1.02, 'f', 8], brine: [.6, .9, 'm', 9], sable: [1.1, 1.1, 'f', 10], marigold: [1.02, .9, 'f', 11], whitlock: [.85, .9, 'm', 12], velvet: [1.2, 1.05, 'f', 13], brass: [.7, 1, 'm', 14], salvager: [.75, .95, 'm', 15], foreman: [.62, .9, 'm', 16] };
   const VNAMES = [[/^mum$|^amma$/i, 'amma'], [/^sam$/i, 'sam'], [/keeper/i, 'keeper'], [/unknown|^\+\d/i, 'unknown'], [/frank/i, 'frank'], [/^leo\b/i, 'leo'], [/rosa/i, 'rosa'], [/reyes/i, 'reyes'], [/brine/i, 'brine'], [/sable/i, 'sable'], [/marigold/i, 'marigold'], [/whitlock/i, 'whitlock'], [/velvet|^v$/i, 'velvet'], [/brass/i, 'brass'], [/salvager/i, 'salvager'], [/foreman/i, 'foreman'], [/^me$/i, 'me']];
   const voKey = name => { name = String(name || '').replace(/^\W+/u, '').trim(); for (const [re, k] of VNAMES) if (re.test(name)) return k; return name ? 'x:' + name : 'narrator'; };
-  function vLoad(){ try { VOICE.voices = speechSynthesis.getVoices() || []; } catch (e) {} }
+  function vSort(list){ VOICE.voices = list || []; VOICE.good = VOICE.voices.filter(v => /^en/i.test(v.lang) && vNatural(v)).sort((a, b) => vLangRank(a) - vLangRank(b) || (b.localService ? 0 : 1) - (a.localService ? 0 : 1));
+    VOICE.robotic = VOICE.voices.length > 0 && !VOICE.good.length; if (VOICE.pref === null) VOICE.on = !VOICE.robotic; }
+  function vLoad(){ try { vSort(speechSynthesis.getVoices()); } catch (e) {} }
   try { if ('speechSynthesis' in window) { vLoad(); speechSynthesis.onvoiceschanged = vLoad; } } catch (e) {}
   function vPick(g, seed){
-    const all = VOICE.voices.filter(v => /^en/i.test(v.lang)); if (!all.length) return null;
-    const fem = /female|samantha|victoria|zira|karen|moira|tessa|fiona|veena|susan|serena|allison|ava|kate|libby|sonia|hazel|aria|jenny|emma/i, mal = /\bmale|daniel|alex|david|fred|rishi|oliver|george|ryan|guy|thomas|arthur|mark|james/i;
+    const all = VOICE.good.length ? VOICE.good : VOICE.voices.filter(v => /^en/i.test(v.lang)); if (!all.length) return null;
+    const fem = /female|samantha|victoria|zira|karen|moira|tessa|fiona|veena|susan|serena|allison|ava|kate|libby|sonia|hazel|aria|jenny|emma|neerja|swara|kajal|aditi|raveena|heera|ananya|natasha|maisie|michelle|nora|zoe/i, mal = /\bmale|daniel|alex|david|fred|rishi|oliver|george|ryan|guy|thomas|arthur|mark|james|prabhat|madhur|ravi|hemant|kunal|davis|william|andrew|brian|christopher|eric/i;
     let pool = all.filter(v => g === 'f' ? fem.test(v.name) && !/\bmale/i.test(v.name) : mal.test(v.name) && !/female/i.test(v.name)); if (!pool.length) pool = all; return pool[seed % pool.length];
   }
   function voiceSay(text, who){
     if (!VOICE.on || !text || !('speechSynthesis' in window)) return; const key = typeof who === 'string' && (VCAST[who] || who.startsWith('x:')) ? who : voKey(who);
     let c = VCAST[key]; if (!c) { let h = 7; for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0; c = [.75 + (h % 50) / 100, .9 + (h % 25) / 100, h % 2 ? 'f' : 'm', h % 17]; }
     const clean = nmT(String(text)).replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu, '').replace(/[“”]/g, '').replace(/\s+/g, ' ').trim(); if (!clean || clean === '…') return;
-    try { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(clean); const v = vPick(c[2], c[3]); if (v) u.voice = v; u.pitch = c[0]; u.rate = c[1]; u.volume = .9;
-      u.onstart = () => { VOICE.talking = key; }; u.onend = u.onerror = () => { VOICE.talking = null; }; VOICE.talking = key; VOICE.until = performance.now() + 900 + clean.length * 70; speechSynthesis.speak(u); } catch (e) {}
+    try { speechSynthesis.cancel(); const v = vPick(c[2], c[3]), pitch = Math.min(1.12, Math.max(.88, 1 + (c[0] - 1) * .25)), rate = Math.min(1.08, Math.max(.92, 1 + (c[1] - 1) * .4));
+      const parts = clean.match(/[^.!?…]+[.!?…]+["’)]*|[^.!?…]+$/g) || [clean]; VOICE.talking = key; VOICE.until = performance.now() + 900 + clean.length * 70;
+      parts.map(p => p.trim()).filter(Boolean).forEach((p, i, arr) => { const u = new SpeechSynthesisUtterance(p); if (v) { u.voice = v; u.lang = v.lang; } u.pitch = pitch; u.rate = rate; u.volume = .9;
+        if (!i) u.onstart = () => { VOICE.talking = key; }; if (i === arr.length - 1) u.onend = () => { VOICE.talking = null; }; u.onerror = () => { VOICE.talking = null; }; speechSynthesis.speak(u); }); } catch (e) {}
   }
   function voiceToast(text){
     if (!VOICE.on) return; const t = nmT(String(text || '')), q = t.match(/“([^”]{2,})”/);
@@ -7949,7 +7960,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     } else if (pTab === 'trophies') body = achMenu();
     else body = pRow('Reduce effects', 'No dust or screen shake, no shadows, lower resolution. For slower laptops and phones.', 'fx', lowFx ? 'On' : 'Off')
       + pRow('Fancy city graphics', 'Bloom, colour grading, haze and sun shadows in Bangalore. Prettier, much heavier.', 'fancy', fancyFx ? 'On' : 'Off')
-      + pRow('Voices', 'Characters speak their lines aloud, using your browser’s built-in speech.', 'voices', VOICE.on ? 'On' : 'Off')
+      + pRow('Voices', VOICE.robotic ? 'Voices sound robotic in this browser, so they start off. Edge, Chrome and Safari have natural-sounding ones.' : 'Characters speak their lines aloud, using your browser’s natural-sounding voices.', 'voices', VOICE.on ? 'On' : 'Off')
       + pRow('Other visitors', 'See other people exploring as ghosts. Shares only your position, area and fight hits, never your name.', 'mp', mpOn ? 'On' : 'Off')
       + (snapState ? pRow('The snap', 'Creatures and weapons are dust, and your room is wrecked.', 'unsnap', 'Undo it') : '')
       + pRow('Reset everything', 'Beaten creatures, unlocked weapons, your inventory, wear and poisoning.', 'reset', 'Reset');
