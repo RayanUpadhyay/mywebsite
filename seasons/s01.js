@@ -183,7 +183,7 @@ body.s1cs button:not(.s1skip),body.s1cs .placecard,body.s1cs .s1card{visibility:
       const gl = glowSprite(0xFF7A2A, 2.6, .55); gl.position.y = .4; g.add(gl); g.traverse(o => o.userData.noPick = true); return { i, g, gl, x: p[0], z: p[1] }; });
   }
   function scan(){
-    if (!st.scanner || R.busy) return; const [mx, mz] = R.toMap(R.pos.x, R.pos.z); if (c2Jam(mx, mz) || c3Jam(mx, mz)) return;
+    if (!st.scanner || R.busy) return; const [mx, mz] = R.toMap(R.pos.x, R.pos.z); if (c2Jam(mx, mz) || c3Jam(mx, mz)) return; if (fallJam(mx, mz)) { R.tone(300, .3, 'square', .04, 120); return R.say('The scanner squeals. The Salvager’s drone wobbles and stalls for a few seconds.', 2600); }
     const left = (frags || []).filter(Boolean).concat((c2 || []).filter(f => f.g), c3 ? c3.shards.filter(Boolean) : []); if (!left.length) return R.say('The scanner is quiet. Nothing left to find, for now.', 2400);
     let best = null, bd = 1e9; left.forEach(f => { const d = Math.hypot(f.x - mx, f.z - mz); if (d < bd) { bd = d; best = f; } });
     const a = Math.atan2(best.x - mx, -(best.z - mz)), dirs = ['north', 'north-east', 'east', 'south-east', 'south', 'south-west', 'west', 'north-west'], dir = dirs[((Math.round(a / (Math.PI / 4)) % 8) + 8) % 8];
@@ -601,6 +601,64 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
     ];
   }
   const FIGHT_IDS = ['amb', 'hau', 'for', 'sal'];
+  // ---------- falling fragments: every few minutes a piece of the meteor comes down somewhere in the city ----------
+  // A burning streak across the sky, a thump, and a column of smoke you can see from anywhere. Get there before the
+  // Salvager's recovery drone does: it flies in from the sea, and after Part 2 it's faster. Scanning near it jams it for a
+  // few seconds. The pin goes on your map only if you have no other (one waypoint at a time). Saved in st.fall.
+  st.fall = Object.assign({ got: 0, lost: 0, bonus: 0 }, st.fall || {});
+  const FALL = { next: 75, cur: null };
+  const FALL_TAUNT = ['That one’s mine, Traveller. I’ve already sold it.', 'Slow. You walk like someone who doesn’t get paid by the piece.', 'Thank you for keeping it warm.', 'Every rock that falls has a buyer. You’re just in the way.'];
+  const FALL_LOSE = ['Your drone came home empty. The Salvager’s voice on your radio: “Careful. I’ll start charging you for the fuel.”', 'You got there first. Somewhere out at sea, someone swears into a radio.'];
+  function fallSpot(mx, mz){ for (let k = 0; k < 60; k++) { const a = Math.random() * Math.PI * 2, r = 110 + Math.random() * 130, x = mx + Math.cos(a) * r, z = mz + Math.sin(a) * r; if (Math.abs(x) > 350 || Math.abs(z) > 350) continue; try { if (R.blrValid(...R.toLocal(x, z))) return [x, z]; } catch (e) {} } return null; }
+  function fallStart(mx, mz){
+    const at = fallSpot(mx, mz); if (!at) { FALL.next = 30; return; } const g = new THREE.Group(); g.userData.bcn = false; R.BL.mapG.add(g);  // not a beacon: the page's one-waypoint rule mustn't hide the smoke
+    const rock = glowSprite(0xFFB060, 16, 1); g.add(rock); const C = FALL.cur = { at, g, rock, t: 0, landed: false, from: [at[0] + 220, 260, at[1] - 140], puffs: [], drone: null };
+    R.tone(1200, 1.6, 'sawtooth', .025, 200); R.say('Something is burning across the sky.', 2200);
+  }
+  function fallLand(C){
+    C.landed = true; C.rock.visible = false; R.tone(55, 1.4, 'sawtooth', .08, 30); R.tone(90, .6, 'square', .04, 40);
+    const [x, z] = C.at, scorch = new THREE.Mesh(new THREE.CircleGeometry(2.4, 24), new THREE.MeshBasicMaterial({ color: 0x1A1612, transparent: true, opacity: .85 })); scorch.rotation.x = -Math.PI / 2; scorch.position.set(x, .04, z); C.g.add(scorch);
+    const frag = C.frag = new THREE.Mesh(new THREE.OctahedronGeometry(.45, 0), new THREE.MeshStandardMaterial({ color: 0xFF7A2A, emissive: 0xFF5A1A, emissiveIntensity: 1.4 })); frag.position.set(x, .6, z); C.g.add(frag);
+    const smoke = C.smoke = new THREE.Mesh(new THREE.CylinderGeometry(9, 1.6, 90, 14, 1, true), new THREE.MeshBasicMaterial({ color: 0x3A3430, transparent: true, opacity: .5, depthWrite: false, side: THREE.DoubleSide, fog: false })); smoke.position.set(x, 45, z); C.g.add(smoke);
+    const glow = C.glow = glowSprite(0xFF7A2A, 7, .9); glow.position.set(x, 1.2, z); C.g.add(glow);
+    C.g.traverse(o => o.userData.noPick = true);
+    // the Salvager's drone comes in from the sea
+    const d = droneMesh(); d.position.set(-380, 18, z + (Math.random() - .5) * 60); R.BL.mapG.add(d); C.drone = { g: d, sp: st.c2.done ? 11 : 8, jam: 0 };
+    if (!R.PH.wp) { R.PH.wp = C.at.slice(); C.pinned = true; }
+    setTimeout(() => R.say(`📻 The Salvager: “${FALL_TAUNT[(st.fall.got + st.fall.lost) % FALL_TAUNT.length]}”`, 4200), 1400);
+    if (!st.fall.first) { st.fall.first = 1; save(); setTimeout(() => { try { R.phone.post('bulletin', 'Bangalore Bulletin', 'Another piece of the meteor has come down inside the city. Residents are asked not to touch the debris. A private salvage firm says it is "handling collection".'); } catch (e) {} }, 6000); }
+  }
+  function fallEnd(C, won){
+    if (C.pinned && R.PH.wp && Math.hypot(R.PH.wp[0] - C.at[0], R.PH.wp[1] - C.at[1]) < 3) R.PH.wp = null;
+    if (won) { st.fall.got++; try { R.cash && R.cash(400, 'A fallen meteor fragment'); } catch (e) {} R.tone(988, .15, 'triangle', .05); setTimeout(() => R.tone(1319, .25, 'triangle', .05), 150); R.say(FALL_LOSE[st.fall.got % FALL_LOSE.length], 4200);
+      if (st.fall.got >= 5 && !st.fall.bonus) { st.fall.bonus = 1; try { R.cash && R.cash(2000, 'Five fragments beaten to the Salvager'); } catch (e) {} setTimeout(() => showCard('FALLOUT', 'Five out of his hands', 'You’ve beaten the Salvager’s drones to five fragments. +₹2,000.', 4200), 4500); } }
+    else { st.fall.lost++; R.say('📻 The Salvager: “Got it. Pleasure doing business with you.” His drone lifts the fragment out of the crater and away to sea.', 4600); R.tone(160, .4, 'sawtooth', .04, 80); }
+    save(); if (C.drone && C.drone.g.parent) { const D = C.drone; const away = () => { if (!D.g.parent) return; D.g.position.y += .8; D.g.position.x -= 1.4; if (D.g.position.y < 70) requestAnimationFrame(away); else D.g.parent.remove(D.g); }; if (won) D.g.parent.remove(D.g); else away(); }
+    if (C.g.parent) C.g.parent.remove(C.g); FALL.cur = null; FALL.next = 150 + Math.random() * 90;
+  }
+  function fallStep(dt0, t, mx, mz, free){
+    const nowR = performance.now(), dt = Math.min(.5, (nowR - (FALL.rt || nowR)) / 1000); FALL.rt = nowR;  // the real clock, so a slow frame rate doesn't slow the fall
+    const C = FALL.cur;
+    if (!C) { if (!st.met || CS || SC || talking || !free) return; if ((FALL.next -= dt) <= 0) fallStart(mx, mz); return; }
+    C.t += dt;
+    if (!C.landed) { const f = Math.min(1, C.t / 2.4), p = [C.from[0] + (C.at[0] - C.from[0]) * f, C.from[1] * (1 - f), C.from[2] + (C.at[1] - C.from[2]) * f]; C.rock.position.set(p[0], p[1], p[2]);
+      if (Math.random() < .7) { const s = glowSprite(0xFF9A4A, 7, .7); s.position.set(p[0], p[1], p[2]); R.BL.mapG.add(s); C.puffs.push({ s, l: .8 }); } if (f >= 1) fallLand(C); }
+    C.puffs = C.puffs.filter(q => { q.l -= dt; q.s.material.opacity = Math.max(0, q.l); q.s.scale.multiplyScalar(1 + dt * .6); if (q.l > 0) return true; R.BL.mapG.remove(q.s); return false; });
+    if (!C.landed) return;
+    C.frag.rotation.y = t * 1.5; C.frag.position.y = .6 + Math.sin(t * 3) * .12; C.smoke.material.opacity = .45 + Math.sin(t * 1.3) * .07; C.glow.material.opacity = .6 + Math.sin(t * 5) * .3;
+    const D = C.drone; if (D) { if (D.jam > 0) D.jam -= dt; else { const dx = C.at[0] - D.g.position.x, dz = C.at[1] - D.g.position.z, d = Math.hypot(dx, dz); D.g.position.x += dx / d * D.sp * dt; D.g.position.z += dz / d * D.sp * dt; D.g.position.y += (Math.max(4, Math.min(18, d * .12)) - D.g.position.y) * Math.min(1, dt); D.g.rotation.y = Math.atan2(dx, dz); if (d < 2.5) return fallEnd(C, false); } }
+    if (Math.hypot(mx - C.at[0], mz - C.at[1]) < 2.8 && free) return fallEnd(C, true);
+    if (C.t > 240) fallEnd(C, false);
+  }
+  function fallJam(mx, mz){ const C = FALL.cur; if (!C || !C.drone || Math.hypot(C.drone.g.position.x - mx, C.drone.g.position.z - mz) > 26) return 0; C.drone.jam = 4; return 1; }
+  // the Salvager's hoardings, around the city from the start: he's in the city before he's in a fight
+  let posters = null;
+  function buildPosters(){
+    if (posters || !R.BL.mapG) return; posters = new THREE.Group(); R.BL.mapG.add(posters); const T = R.tex(256, 320, (c, w, h) => { c.fillStyle = '#16181D'; c.fillRect(0, 0, w, h); c.fillStyle = '#FF7A2A'; c.font = '900 34px system-ui'; c.textAlign = 'center'; c.fillText('WE BUY', w / 2, 52); c.fillText('METEOR', w / 2, 92); c.fillText('FRAGMENTS', w / 2, 132);
+      c.strokeStyle = '#FF7A2A'; c.lineWidth = 8; c.beginPath(); c.moveTo(w / 2, 160); c.lineTo(w / 2, 220); c.arc(w / 2 - 22, 220, 22, 0, Math.PI); c.stroke(); c.fillStyle = '#F4F1E8'; c.font = '700 22px system-ui'; c.fillText('CASH PAID · NO QUESTIONS', w / 2, 278); c.font = '600 16px system-ui'; c.fillText('ask for the Salvager', w / 2, 304); });
+    const spots = [[6.4, -100], [-49, 6.4], [116, 61.4], [-104, 6.4], [61.4, 170], [-159, -120], [226, 6.4], [6.4, 214]]; let n = 0;
+    spots.forEach(([x, z]) => { try { if (!R.blrValid(...R.toLocal(x, z))) return; } catch (e) { return; } const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = n++ * 1.1; const P = [R.B3(.06, 1.6, .06, 0x2A2D33, -.42, .8, 0), R.B3(.06, 1.6, .06, 0x2A2D33, .42, .8, 0)]; R.decor(P, g); const m = new THREE.Mesh(new THREE.PlaneGeometry(.9, 1.12), new THREE.MeshBasicMaterial({ map: T, side: THREE.DoubleSide })); m.position.y = 1.15; g.add(m); g.traverse(o => o.userData.noPick = true); posters.add(g); });
+  }
   // ---------- every frame ----------
   let streetT = 0;
   function step(dt, now){
@@ -608,11 +666,12 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
     if (!R.inWorld) { roomHint(dt); streakStep(dt); }
     if (talking && R.DLG && R.DLG.block && performance.now() > R.DLG.until + 1500) R.dlgNext();  // lines move on by themselves; click or Space to go faster
     const inB = R.inWorld && R.zone === 'blr';
+    if (inB && R.BLC.built) buildPosters();
     if (inB && R.BLC.built && st.intro) { buildSteam(); if (st.met) buildFrags(); }
     if (steam) steamStep(dt, t);
     if (CS) { if (!inB || R.busy) { csEnd(true); return; } csStep(dt); return; }
     if (SC) { if (!inB || R.busy) { scEnd(true); return; } scStep(dt); return; }
-    if (!inB) { streetT = 0; scanBtn.hidden = true; dockBtn.hidden = true; Object.values(fightBeacons).forEach(g => g.visible = false); return; }
+    if (!inB) { streetT = 0; scanBtn.hidden = true; dockBtn.hidden = true; Object.values(fightBeacons).forEach(g => g.visible = false); if (FALL.cur) { const C = FALL.cur; if (C.drone && C.drone.g.parent) C.drone.g.parent.remove(C.drone.g); C.puffs.forEach(q => R.BL.mapG.remove(q.s)); if (C.g.parent) C.g.parent.remove(C.g); if (C.pinned && R.PH.wp && Math.hypot(R.PH.wp[0] - C.at[0], R.PH.wp[1] - C.at[1]) < 3) R.PH.wp = null; FALL.cur = null; FALL.next = 60; } return; }
     const [mx, mz] = R.toMap(R.pos.x, R.pos.z), free = !R.busy && !R.DRV.on && !R.DRV.lock && !(R.BL.cine) && !R.BL.lvl && R.onGround();
     // the first time you're out on the street (however you got there), it falls
     if (!st.intro) { streetT = free ? streetT + dt : 0; if (streetT > 1.5 && R.BLC.built) csStart(); return; }
@@ -626,8 +685,9 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
     dockBtn.hidden = !(free && (isle && Math.hypot(mx - DOCK[0], mz - DOCK[1]) < 6 || onBarge(mx, mz) && mx > BARGE[0] + 16));
     if (!R.busy) fightStep(mx, mz, free); else Object.values(fightBeacons).forEach(g => g.visible = false); if (barge && barge.lamp) barge.lamp.material.opacity = Math.sin(now / 250) > 0 ? .95 : .15;
     if (st.c3.done && !R.ars.skins.includes('s1_scout')) giveSkin('s1_scout');
-    scanBtn.hidden = !(st.scanner && free && (frags && frags.some(Boolean) || c2 && c2.some(f => f.g || f.d) || c3 && !st.c3.done));
+    scanBtn.hidden = !(st.scanner && free && (frags && frags.some(Boolean) || c2 && c2.some(f => f.g || f.d) || c3 && !st.c3.done || FALL.cur && FALL.cur.landed));
     if (free) fragStep(); if (!R.busy) c2Step(dt);
+    if (!R.busy) fallStep(dt, t, mx, mz, free);
   }
   // ---------- the Season tab on the phone ----------
   function tab(){
@@ -637,6 +697,7 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
     return `<div class="phcard"><b>Season 1 · Landfall</b><small>Day ${S.day} of 28 · ${S.left} day${S.left === 1 ? '' : 's'} left. A meteor came down off the west coast.</small><div class="phrow"><button type="button" data-s1="video">▶ Watch the Season 1 trailer</button></div></div>${rows}
       <div class="phcard"><b>Boss fights</b>${FIGHTS_LIST.map(([k, n, how]) => `<small>${st.f[k] ? '✓' : '·'} ${n}: ${st.f[k] ? 'beaten' : how}</small>`).join('')}${st.f.for ? `<small>${st.f.forClean ? '✓' : '·'} Challenge: beat the Foreman without being spotted</small>` : ''}</div>
       ${st.intro ? `<div class="phcard"><b>Scenes</b><small>Watch them again (out on the street).</small><div class="phrow"><button type="button" data-s1-scene="trailer">▶ In-game trailer</button><button type="button" data-s1="replay">▶ Landfall</button>${SCENE_LIST.filter(([id]) => st.seen.includes(id)).map(([id, n]) => `<button type="button" data-s1-scene="${id}">▶ ${n}</button>`).join('')}</div></div>` : ''}
+      <div class="phcard"><b>Fallout</b><small>Pieces of the meteor still fall on the city every few minutes. Follow the smoke and get there before the Salvager’s drone.</small><small>You: ${st.fall.got} · the Salvager: ${st.fall.lost}${st.fall.bonus ? ' · bonus earned' : ' · beat him to 5 for a bonus'}</small></div>
       <div class="phcard"><b>Tools</b><small>${st.scanner ? '✓ Scanner (yours to keep)' : 'Scanner: not yet'}</small></div>
       <div class="phcard" data-s1n><b>Your name: ${esc(R.heroName())}</b><div class="phrow"><button type="button" data-s1="name">Change it</button></div></div>`;
   }
@@ -653,5 +714,5 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
     if (isle) isleStep(dt, now / 1000); if (!inB) { dockBtn.hidden = true; return; }
     const [mx, mz] = R.toMap(R.pos.x, R.pos.z), free = !R.busy && !R.DRV.on && !R.DRV.lock && !R.BL.cine && !R.BL.lvl && R.onGround();
     dockBtn.hidden = !(free && isle && Math.hypot(mx - DOCK[0], mz - DOCK[1]) < 6); } };
-  return { step, tab, wire, debug: { get cs(){ return CS; }, st, scan, get c2(){ return c2; }, get c3(){ return c3; }, goIsle, FIGHT, startFight, scene, SCN, get SC(){ return SC; }, fightStep, trailer: () => scene('trailer', trailer()) } };
+  return { step, tab, wire, debug: { get cs(){ return CS; }, FALL, fallStart, get posters(){ return posters; }, st, scan, get c2(){ return c2; }, get c3(){ return c3; }, goIsle, FIGHT, startFight, scene, SCN, get SC(){ return SC; }, fightStep, trailer: () => scene('trailer', trailer()) } };
 };

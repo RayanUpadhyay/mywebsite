@@ -91,6 +91,13 @@ One idea runs through every season and every villain: **a debt**. Somebody alway
 | The cracked Moon | S6 | S16: it's where the meteor is pushed off course |
 | An old woman "with your eyes" | S10 | S15 |
 | Prime's ruined face | S8 | S9's ending (the mask) and S15 |
+| A payphone rings; a woman's voice says "Not yet." | City curiosity (built) | S15: the Keeper, who is you, holding the lock |
+| A crate manifest: "3 fragments. Buyer pays in ash." | City curiosity (built) | S5: Cinder was buying |
+| A newspaper dated next month, one word readable: WATER | City curiosity (built) | S2: the wave |
+| A child's drawing of a woman on the pier with her back turned | City curiosity (built) | S15: the Keeper |
+| Meera's print of someone on the bandstand roof, looking up before anything happened | Side quest "The last photographs" (built) | S15: the Keeper |
+| The numbers station: "Eighteen. Eleven." Then the song from your room's speakers | Side quest "The numbers" (built) | The lair safe (1811) now; S15: the Keeper hums the same song |
+| A ledger page: "Paid in full. Don't ask how." | Side quest "Pages of debt" (built) | S3: the Syndicate's debt book |
 
 ### Site themes (each season reinvents the whole site, from Season 2)
 The 3D world, the simple view, the side panel, the phone, the HUD and the fonts all change with the season (`SEASON_THEMES` in `index.html`). The room keeps its layout, but its accent colours follow the theme.
