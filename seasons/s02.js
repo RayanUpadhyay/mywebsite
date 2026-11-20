@@ -39,7 +39,7 @@ body.s2cs button:not(.s2skip),body.s2cs .placecard,body.s2cs .s2hearts,body.s2cs
   function showCard(small, big, sub, ms = 4200){ card.innerHTML = `<small>${small}</small><b>${big}</b>${sub ? `<span>${sub}</span>` : ''}`; card.classList.add('on'); clearTimeout(showCard.t); showCard.t = setTimeout(() => card.classList.remove('on'), ms); }
 
   // ---------- scenes with their own camera (same idea as Season 1's) ----------
-  let SC = null; const PEND = [];
+  let SC = null; const PEND = []; const C0 = () => SC || {};
   const aimAt = (c, l) => { if (R.camOut) c = R.camOut(c); const [lx, lz] = R.toLocal(c[0], c[2]); R.pos.x = lx; R.pos.z = lz; R.pos.y = c[1]; const dx = l[0] - c[0], dy = l[1] - c[1], dz = l[2] - c[2]; R.yaw = Math.atan2(-dx, -dz); R.pitch = Math.atan2(dy, Math.hypot(dx, dz)); };
   function scAdd(o){ R.BL.mapG.add(o); (SC ? SC.objs : PEND).push(o); o.traverse(q => q.userData.noPick = true); return o; }
   function scene(id, shots, done){
@@ -178,7 +178,7 @@ body.s2cs button:not(.s2skip),body.s2cs .placecard,body.s2cs .s2hearts,body.s2cs
       const flag = glow(0xFFE070, 1.4, .8); flag.position.y = 2.4; g.add(flag); g.traverse(o => o.userData.noPick = true); strand.push({ i, g, a, x, z }); }); }
   function campTalk(){
     st.camp = 1; save(); R.DRV.lock = true; document.body.classList.add('cine');
-    R.dlgPlay([['Bhaskar', 'You came off the river on that? Sit down before you fall down.'], ['Bhaskar', 'We have water, a fire, and a radio that picks up one voice. A police inspector, Devi. She reads out which roofs still have people on them.'], ['ME', 'Is anyone coming?'], ['Bhaskar', 'She says so. She’s the only one who’s said anything at all.'], ['Bhaskar', 'This hung on the wall at my son’s boat club. He won’t be needing it.'], ['Bhaskar', 'There are three more people out on the wreckage. The sharks know it too, {N}.']], { block: true, done: () => {
+    R.dlgPlay([['Bhaskar', 'You came off the river on that? Sit down before you fall down.'], ['Bhaskar', 'Wait. I know you. You’re Arjun’s friend. You were at his flat.'], ['ME', 'The window went. I don’t know where he is.'], ['Bhaskar', 'We have a radio that picks up one voice. A police inspector, Devi. She reads out the names of people on the roofs. His hasn’t come up yet.'], ['Bhaskar', 'Yet.'], ['Bhaskar', 'This is his, from the boat club. Take it. He’ll want it back.'], ['Bhaskar', 'There are three people out on the wreckage. The sharks know it too, {N}.']], { block: true, done: () => {
       document.body.classList.remove('cine'); R.DRV.lock = false; st.harpoon = 1; save(); R.tone(660, .2, 'triangle', .05); setTimeout(() => R.tone(990, .3, 'triangle', .05), 150);
       showCard('NEW TOOL', 'Harpoon gun', `${R.fine ? 'Press F' : 'Tap Harpoon'} to fire where you’re looking. One hit drives a shark off, two sink it. Yours to keep.`, 6000); buildStrand(); } });
   }
@@ -265,7 +265,7 @@ body.s2cs button:not(.s2skip),body.s2cs .placecard,body.s2cs .s2hearts,body.s2cs
   const SEA_C = () => [-436, places().ctr(places().camp)[1]];
   function c4Start(){ st.c4.start = 1; save(); const [x, z] = SEA_C(); const g = shipMesh(); g.position.set(x, LEVEL - 1.5, z); R.BL.mapG.add(g); ship = { g, x, z, h: 0, hp: 8, ph: 1, gun: 3, a: 0 }; R.PH.wp = [x + 30, z];
     scene('brine_in', [{ d: 4.2, cam: f => [ship.x + 26 - f * 6, LEVEL + 6, ship.z + 22], look: () => [ship.x, LEVEL + 6, ship.z], say: 'The pumps start, and the water begins to fall. Out of the haze comes a ship built from half the city’s wreckage.' },
-      { d: 3.8, start(){ try { const a = R.avatar(Object.assign({}, R.crowdLook(90), {})); a.g.position.set(ship.x, LEVEL + .7, ship.z + 6); scAdd(a.g); } catch (e) {} }, cam: () => [ship.x + 4, LEVEL + 2.4, ship.z + 9], look: () => [ship.x, LEVEL + 1.8, ship.z + 6], name: ['MASTER OF THE DROWNED CITY', 'CAPTAIN BRINE', '“Turn those pumps off, {N}, or I’ll sink every roof in my harbour.”'] }],
+      { d: 3.8, start(){ try { const a = R.avatar(Object.assign({}, R.crowdLook(90), {})); a.g.position.set(ship.x, LEVEL + .7, ship.z + 6); scAdd(a.g); } catch (e) {} }, cam: () => [ship.x + 4, LEVEL + 2.4, ship.z + 9], look: () => [ship.x, LEVEL + 1.8, ship.z + 6], name: ['MASTER OF THE DROWNED CITY', 'CAPTAIN BRINE', 'His crew came through the tear with him. None of them has stood on dry land in years.'] }],
       () => R.say('Phase 1: chase his ship and harpoon its hull. Dodge the cannon splashes.', 4200)); }
   function c4Step(dt, t, mx, mz){
     if (!ship) return; const S = ship, d = Math.hypot(mx - S.x, mz - S.z);
@@ -281,16 +281,18 @@ body.s2cs button:not(.s2skip),body.s2cs .placecard,body.s2cs .s2hearts,body.s2cs
     if (S.ph === 1 && S.hp > 0) return R.say(`A hit on the hull (${S.hp} more).`, 1200);
     if (S.ph === 1) { S.ph = 2; S.hp = 6; S.deckY = S.g.position.y + 2.3; if (R.DRV.on) R.getOut(true); const deck = { x0: S.x - 3, x1: S.x + 3, z0: S.z - 10, z1: S.z + 10, h: S.deckY - 1.6 + 1.6 - 1.6 }; deck.h = S.deckY; R.flood.put(deck); S.deck = deck;
       try { const a = R.avatar(R.crowdLook(90)); a.g.scale.setScalar(1.15); a.g.traverse(o => o.userData.noPick = true); R.BL.mapG.add(a.g); brine = { a, x: S.x, z: S.z + 7, sw: 2 }; } catch (e) {}
-      return R.say('The ship slews round and you leap aboard. Phase 2: Brine draws his cutlass. Harpoon him at close range!', 4200); }
+      R.say('The ship slews round and you leap aboard. Brine draws his cutlass: “Where we come from, the water never went down. You don’t get to make it go down.” Harpoon him at close range!', 5200); return; }
     if (S.ph === 2 && S.hp > 0) return R.say(`Brine staggers (${S.hp} more).`, 1200);
     if (S.ph === 2) { S.ph = 3; S.hp = 3; R.say('Phase 3: he scrambles up the mast as the water starts to drop away under the ship. Three more hits!', 4200); if (brine) brine.climb = 1; return; }
     if (S.hp <= 0) finale(); }
   function finale(){ const S = ship; st.c4.done = 1; save(); if (brine) { brine.a.g.parent && brine.a.g.parent.remove(brine.a.g); brine = null; } R.flood.state.roof = null;
     scene('brine_out', [
-      { d: 4.2, on(f){ S.g.rotation.z = f * .5; }, cam: () => [S.x + 16, LEVEL + 5, S.z + 14], look: () => [S.x, LEVEL + 6, S.z], say: 'Brine loses his grip on the rigging and drops into the falling water. His ship heels over and runs aground in the street.' },
+      { d: 4.2, on(f){ S.g.rotation.z = f * .5; }, cam: () => [S.x + 16, LEVEL + 5, S.z + 14], look: () => [S.x, LEVEL + 6, S.z], say: 'Brine loses his grip on the rigging. Falling, he isn’t looking at you. He’s looking at the water going down, the way you’d watch a house burn.' },
       { d: 6, on(f){ R.flood.level(Math.max(-.6, (R.flood.state.level || LEVEL) - f * .25)); }, cam: f => [S.x + 40, 30 - f * 8, S.z + 40], look: () => [S.x - 30, 0, S.z - 20], say: 'All across Bangalore the water drains away. Roofs become buildings again, then streets, then a city.' },
+      { d: 4.4, start(C){ try { C.aj = R.avatar(arjunLook()); C.aj.g.position.set(S.x, 1.2, S.z + 3); scAdd(C.aj.g); } catch (e) {} }, on(f, t, dt, C){ if (C.aj) { C.aj.g.position.y = 1.2 + Math.min(1, f * 1.4) * 1.2; C.aj.anim(t, f < .7 ? 1 : 0, 0); } }, cam: () => [S.x + 4, 3.2, S.z + 7], look: () => [S.x, 2.4, S.z + 3], say: 'Below deck, the pumps stop. Twenty people climb out of the hold into daylight. The ninth one is Arjun.' },
+      { d: 5.4, start(C){ const Pl = places(), [cx, cz] = Pl.ctr(Pl.camp); C.c = [cx, cz]; try { const a = R.avatar(arjunLook()); a.g.position.set(cx + .5, 0, cz); a.g.rotation.y = -Math.PI / 2; scAdd(a.g); const b2 = R.avatar(R.crowdLook(30)); b2.g.position.set(cx - .3, 0, cz); b2.g.rotation.y = Math.PI / 2; scAdd(b2.g); } catch (e) {} }, cam: f => [C0().c[0] + 3, 1.6, C0().c[1] + 3 - f * .5], look: () => [C0().c[0], 1.4, C0().c[1]], say: 'At the foot of the camp building, on dry ground for the first time in weeks, Bhaskar holds his son like he might float away again.' },
       { d: 4.6, start(){ title('SEASON 2 COMPLETE', 'HIGH WATER'); }, cam: () => [S.x + 20, 6, S.z + 18], look: () => [S.x, 1, S.z], say: 'One block never quite dries out. The sunken district stays, with Brine’s wreck in the middle of it.' }],
-      () => { st.drained = 1; save(); R.flood.off(); raiders.slice().forEach(r => { r.g.parent && r.g.parent.remove(r.g); }); raiders.length = 0; sharks.slice().forEach(dropShark); buildTrace(); R.skin('s2_brine'); R.skin('s2_diver'); showCard('SEASON 2 COMPLETE', 'High Water', 'New skins: Diver and Brine’s Coat. Season 3 · The Syndicate starts 13 January.', 8000); }); }
+      () => { st.drained = 1; save(); R.flood.off(); raiders.slice().forEach(r => { r.g.parent && r.g.parent.remove(r.g); }); raiders.length = 0; sharks.slice().forEach(dropShark); buildTrace(); R.skin('s2_brine'); R.skin('s2_diver'); if (R.phone) { setTimeout(() => R.phone.msg('bhaskar', `He’s asleep on the sofa. First time in two weeks. Thank you, ${R.heroName()}.`), 12000); setTimeout(() => R.phone.msg('arjun', 'You still owe me a cup of tea. And a window.', 'Arjun'), 30000); } showCard('SEASON 2 COMPLETE', 'High Water', 'New skins: Diver and Brine’s Coat. Season 3 · The Syndicate starts 13 January.', 8000); }); }
   // what the season leaves: Brine's wreck in a block that stays under water
   let traceG = null;
   function buildTrace(){ if (traceG || !R.BL.mapG || !places()) return; const [cx, cz] = places().ctr(places().camp), x = cx - 30, z = cz + 40, g = traceG = new THREE.Group(); g.position.set(x, 0, z); R.BL.mapG.add(g);
@@ -303,23 +305,52 @@ body.s2cs button:not(.s2skip),body.s2cs .placecard,body.s2cs .s2hearts,body.s2cs
     if (ship && ship.ph === 1 && Math.hypot(ship.x - H.p.x, ship.z - H.p.z) < 9) { shipHit(); return true; }
     if (ship && ship.ph >= 2 && brine && Math.hypot(brine.x - H.p.x, brine.z - H.p.z) < 1.8) { shipHit(); return true; } return false; }
   function splashStep(dt, mx, mz){ for (let i = splashes.length - 1; i >= 0; i--) { const q = splashes[i]; q.t -= dt; if (q.t > 0) continue; splashes.splice(i, 1); ripple(q.x, q.z, q.r); R.tone(90, .3, 'sawtooth', .04, 50); if (Math.hypot(mx - q.x, mz - q.z) < q.r) bite(q.dmg, q.why); } }
+
+  // ---------- story you find: dry bags in the water, each with a phone and a voice note from the night of the wave ----------
+  // One of them is Arjun's: Brine's crew pulled him out and have him working the ship's pumps. The rest are strangers.
+  st.bags = Array.isArray(st.bags) ? st.bags : [];
+  const BAGS = [[45, -25, 'A woman, out of breath: “The lift stopped between floors. We climbed out of the top. If you find this, we went up, not down.”', 0],
+    [-55, 35, 'A boy: “Day two. Dad says sharks can’t climb. I’m not checking.”', 0], [70, 60, 'A man, very calm: “The shop’s gone. Thirty years. I keep laughing and I don’t know why.”', 0],
+    [-30, -70, 'Someone singing an old film song to keep a baby quiet. It stops halfway, and starts again.', 0],
+    [95, -10, 'Arjun, whispering, water dripping: “If anyone finds this, they pulled me out. Brine’s ship. Twenty of us below deck on the pumps, keeping it afloat. Tell my dad I’m—” It cuts off.', 2]];
+  let bagG = [];
+  function buildBags(){ if (bagG.length || !places()) return; const [cx, cz] = places().ctr(places().camp);
+    BAGS.forEach(([ox, oz, , need], i) => { if (st.bags.includes(i)) return; let x = cx + ox, z = cz + oz; for (let k = 0; k < 20; k++) { const [lx, lz] = R.toLocal(x, z); if (R.blrValid(lx, lz)) break; x += 4; }
+      const g = new THREE.Group(); g.position.set(x, LEVEL + .1, z); const b = new THREE.Mesh(new THREE.CylinderGeometry(.22, .26, .7, 10), M(0xE8701A)); b.rotation.z = Math.PI / 2; g.add(b); const top = glow(0xFFB04A, .9, .7); top.position.y = .6; g.add(top); g.traverse(o => o.userData.noPick = true); R.BL.mapG.add(g); bagG.push({ i, g, x, z, need }); }); }
+  function bagStep(t, mx, mz){ bagG.slice().forEach(B => { const open = B.need === 2 ? st.c2.start : st.camp; B.g.visible = !!open; if (!open) return; B.g.position.y = LEVEL + .1 + Math.sin(t * 2 + B.i) * .06; B.g.rotation.y += .01;
+    if (Math.hypot(B.x - mx, B.z - mz) < 3.2) { bagG.splice(bagG.indexOf(B), 1); R.BL.mapG.remove(B.g); st.bags.push(B.i); save(); R.tone(880, .12, 'triangle', .04); const txt = BAGS[B.i][2];
+      if (B.i === 4) { st.arjun = 1; save(); scene('bag_arjun', [{ d: 5, cam: () => [mx + 2, R.pos.y + .2, mz + 2], look: () => [mx, LEVEL, mz], say: 'A phone in an orange dry bag. One voice note. You know the voice before he says a word.' }], () => { showCard('A VOICE NOTE', 'Arjun is alive', txt, 9000); if (R.phone) R.phone.post('driftbag', 'Found in the water', '🎙 ' + txt); }); }
+      else { showCard('A VOICE NOTE', `Found in the water (${st.bags.filter(k => k !== 4).length} of 4)`, txt, 7000); if (R.phone) R.phone.post('driftbag', 'Found in the water', '🎙 ' + txt); } } }); }
+  // ---------- quiet nights at the camp: after each of the first three Parts, the next time you're on the roof ----------
+  st.ev = Array.isArray(st.ev) ? st.ev : [];
+  function evening(n){
+    if (st.ev.includes(n) || SC) return; st.ev.push(n); save(); const Pl = places(), b = Pl.camp, [cx, cz] = Pl.ctr(b), y = b.h;
+    const L = n === 1 ? ['At the fire, someone splits one packet of biscuits nine ways. Nobody complains about their share.', 'Bhaskar, to the fire more than to you: “He used to sail that dinghy into the reeds and pretend he was lost. I’d pretend to look for him.”']
+      : n === 2 ? (st.arjun ? ['Bhaskar listens to the voice note four times. Then he hands the phone back.', '“Below deck, on the pumps. Of course he is. He could never sit still.” He laughs, and then he stops laughing.'] : ['The raiders’ crates are open. Rice tonight, real rice.', 'Bhaskar keeps the radio on his knee all evening, turned up loud, in case.'])
+      : ['On the radio, Devi reads out names. Bhaskar mouths each one before she says it. None of them is his.', '“Tomorrow the water starts to go down. Brine will know it the moment it does. Bring my son home, {N}.”'];
+    scene('night' + n, [{ d: 5, start(){ for (let i = 0; i < 3; i++) { try { const a = R.avatar(R.crowdLook(30 + i)); a.g.position.set(cx + Math.cos(i * 2.1) * 1.6, y, cz + Math.sin(i * 2.1) * 1.6); a.g.rotation.y = Math.atan2(Math.cos(i * 2.1), Math.sin(i * 2.1)); scAdd(a.g); } catch (e) {} } }, cam: f => [cx + 4.5 - f, y + 1.7, cz + 4], look: () => [cx, y + .9, cz], say: L[0] },
+      { d: 6, cam: f => [cx + 2.4, y + 1.5, cz + 1.6 - f * .3], look: () => [cx, y + 1.2, cz], say: L[1] }]);
+  }
+  // Arjun on the ship, and home
+  const arjunLook = () => Object.assign({}, R.crowdLook(4), { hair: 'curly', hairC: 0, build: { h: 1.04, w: .9 }, x: {} });
   // ---------- the cold open ----------
   function coldOpen(){
     const Pl = places(); if (!Pl) return; const b = Pl.tower, [cx, cz] = Pl.ctr(b), wy = Math.min(b.h - 2, 30), win = [b.x0 - .3, wy, cz], sea = [-560, 30, cz], wave = { x: -640, h: 0 };
     let ring = null, wall = null, shards = [];
     scene('open', [
       { d: 4.2, start(C){ cine.querySelector('.s2black').style.opacity = '0'; ring = scAdd(new THREE.Mesh(new THREE.RingGeometry(10, 15, 48), new THREE.MeshBasicMaterial({ color: 0xFF7A2A, transparent: true, opacity: .85, side: THREE.DoubleSide, fog: false, depthWrite: false }))); ring.position.set(TEAR[0], TEAR[1], TEAR[2]); ring.lookAt(win[0], win[1], win[2]); },
-        cam: f => [win[0] + 1.6 - f * 1.3, win[1], win[2] + .4], look: () => [-480, 60, cz], say: 'A few days after Landfall. You’re visiting a friend, high up, trying not to think about the sky.' },
+        cam: f => [win[0] + 1.6 - f * 1.3, win[1], win[2] + .4], look: () => [-480, 60, cz], say: 'A few days after Landfall. Arjun’s flat, twenty floors up. He’s making tea and arguing about cricket, and you’re trying not to look at the sky.' },
       { d: 3.6, start(){ R.tone(60, 3.4, 'sawtooth', .05, 30); wall = scAdd(new THREE.Mesh(new THREE.BoxGeometry(14, 1, 900), M(0x2E7A9A, { transparent: true, opacity: .92 }))); wall.position.set(wave.x, 0, cz); }, on(f){ ring.scale.setScalar(1 + f * 2.2); wave.h = f * 40; wall.scale.y = wave.h; wall.position.y = wave.h / 2; },
         cam: () => [win[0] - .2, win[1], win[2]], look: f => [TEAR[0], 60 + (1 - f) * 70, TEAR[2]], say: 'The tear splits wide open. And the sea comes through it.' },
       { d: 3.4, start(C){ C.shake = .2; }, on(f, t, dt, C){ wave.x = -640 + f * (win[0] + 640 - 8); wall.position.x = wave.x; C.shake = .2 + f * 1.4; if (f > .9 && !C.hit) { C.hit = 1; flashW(); R.tone(40, 2.4, 'sawtooth', .1, 20); R.tone(1800, .6, 'square', .03, 300); R.flood.set(LEVEL); for (let i = 0; i < 26; i++) { const s = scAdd(new THREE.Mesh(new THREE.PlaneGeometry(.3 + Math.random() * .4, .3 + Math.random() * .5), new THREE.MeshBasicMaterial({ color: 0xDDEEFF, transparent: true, opacity: .7, side: THREE.DoubleSide }))); s.position.set(win[0] - .4, win[1] + (Math.random() - .5) * 2, win[2] + (Math.random() - .5) * 3); shards.push({ s, v: V(1 + Math.random() * 6, (Math.random() - .3) * 4, (Math.random() - .5) * 6) }); } } shards.forEach(q => { q.s.position.addScaledVector(q.v, dt); q.s.rotation.x += dt * 6; }); },
-        cam: () => [win[0] + .2, win[1], win[2]], look: () => [-480, 25, cz], say: 'It’s coming straight at the building.' },
+        cam: () => [win[0] + .2, win[1], win[2]], look: () => [-480, 25, cz], say: '“Arjun. Come and look at this.”' },
       { d: 2.6, start(){ if (wall) wall.visible = false; }, on(f, t, dt, C){ C.shake = .3; shards.forEach(q => { q.v.y -= 9 * dt; q.s.position.addScaledVector(q.v, dt); }); if (f > .7) cine.querySelector('.s2black').style.opacity = '1'; },
-        cam: f => [win[0] - 2 - f * 6, win[1] - f * f * (win[1] - LEVEL - 1), win[2]], look: f => [win[0] - 2 - f * 6 - Math.cos(f * 7), win[1] - 6 + Math.sin(f * 7) * 10, win[2] + Math.sin(f * 5) * 6], say: 'The window bursts.' },
+        cam: f => [win[0] - 2 - f * 6, win[1] - f * f * (win[1] - LEVEL - 1), win[2]], look: f => [win[0] - 2 - f * 6 - Math.cos(f * 7), win[1] - 6 + Math.sin(f * 7) * 10, win[2] + Math.sin(f * 5) * 6], say: 'The window bursts. The last thing you see is Arjun reaching for you.' },
       { d: 4.6, start(){ setTimeout(() => { if (SC) cine.querySelector('.s2black').style.opacity = '0'; }, 1600); setTimeout(() => { if (SC) title('SEASON 2 · PART 1', 'HIGH WATER'); }, 2200); }, cam: f => { const [x, z] = start(); return [x, LEVEL + .9, z]; }, look: f => { const [x, z] = start(); return [x + 30, LEVEL + 3 + f * 2, z - 10 + f * 20]; }, say: '…You wake up on a wooden plank. Bangalore is gone. There’s only water, and the tops of the towers.' }
     ], () => { st.open = 1; save(); R.flood.set(LEVEL); const [x, z] = start(); const [lx, lz] = R.toLocal(x, z); R.pos.x = lx; R.pos.z = lz; buildBill(); const bs = bill ? bill.spot : [x - 20, z], hd = Math.atan2(bs[0] - x, bs[1] - z); R.yaw = hd + Math.PI; raft = park('raft', 0, x, z, hd, 'your plank'); st.raft = 1; save(); R.getIn(raft);
       setTimeout(() => showCard('PART 1', 'Adrift', `Paddle your plank (${R.fine ? 'W/S, A/D' : 'the stick'}). Something big and red is hanging off a billboard just ahead.`, 6500), 600); R.PH.wp = bill ? bill.spot.slice() : null; });
   }
+  const mx0 = () => mapNow()[0], mz0 = () => mapNow()[1];
   const start = () => { const Pl = places(); return Pl.waterBy(Pl.tower, [-1, 0]); };
 
   // ---------- the Season 2 trailer: the cold open, then the season. Teal-grey storm, rain, weathered serif type ----------
@@ -376,6 +407,8 @@ body.s2tr .s2bn{background:linear-gradient(90deg,rgba(14,30,38,.7),rgba(14,30,38
     if (!inited) { inited = true; drawHearts(); buildBill(); buildCamp(); if (st.boat) { const [x, z] = places().waterBy(places().camp, [0, 1]); boat = park('boat', 0xC8462E, x + 3, z + 2, 0, 'your boat'); } if (st.harpoon) buildStrand(); if (!st.boat && bill) R.PH.wp = bill.spot.slice(); if (st.gear) R.flood.state.breathTime = 60;
       if (st.c2.start && !st.c2.done && !st.c2.back) { const [cx, cz] = places().ctr(places().camp); for (let i = st.c2.crates; i < 3; i++) addRaider(cx + 40 + i * 25, cz + 50 - i * 30); }
       if (st.c4.start && !st.c4.done) st.c4.start = 0; }
+    buildBags(); bagStep(t, mx0(), mz0());
+    if (R.flood.state.roof === places().camp && st.camp) { if (st.ch1 && !st.ev.includes(1)) return evening(1); if (st.c2.done && !st.ev.includes(2)) return evening(2); if (st.c3.done && !st.ev.includes(3)) return evening(3); }
     hurtT = Math.max(0, hurtT - dt); breath.firstChild.style.width = (R.flood.state.breath * 100) + '%'; breath.hidden = !R.flood.state.under && R.flood.state.breath > .99;
     const [mx, mz] = mapNow();
     // billboard boat, the camp, the rescues
@@ -412,5 +445,5 @@ body.s2tr .s2bn{background:linear-gradient(90deg,rgba(14,30,38,.7),rgba(14,30,38
   function wire(B){ const v = B.querySelector('[data-s2="video"]'); if (v) v.onclick = () => { R.phoneClose(); if (R.video) R.video('seasons/s02-trailer.mp4'); };
     const tr = B.querySelector('[data-s2="trailer"]'); if (tr) tr.onclick = () => { if (!(R.inWorld && R.zone === 'blr') || R.busy || R.DRV.on || R.BL.lvl || !places()) return R.say('Go out into the city to watch it in the game.', 2400); R.phoneClose(); setTimeout(() => scene('trailer', trailer()), 300); }; }
   if (opts && opts.past) return { step(){ if (R.inWorld && R.zone === 'blr' && R.BLC.built) buildTrace(); } };
-  return { step, tab, wire, debug: { st, get SC(){ return SC; }, places: () => places(), sharks, fire, get boss(){ return boss; }, get ship(){ return ship; }, raiders, get iron(){ return iron; }, get pump(){ return pump; }, raiderHit: r => raiderHit(r), shipHit: () => shipHit(), crates, sharkDown: s => sharkDown(s), get bill(){ return bill; }, trailer: () => scene('trailer', trailer()), get strand(){ return strand; }, harps, addShark: (x, z, big) => addShark(x, z, big), coldOpen, dropBoat: () => dropBoat() } };
+  return { step, tab, wire, debug: { get bags(){ return bagG; }, evening, st, get SC(){ return SC; }, places: () => places(), sharks, fire, get boss(){ return boss; }, get ship(){ return ship; }, raiders, get iron(){ return iron; }, get pump(){ return pump; }, raiderHit: r => raiderHit(r), shipHit: () => shipHit(), crates, sharkDown: s => sharkDown(s), get bill(){ return bill; }, trailer: () => scene('trailer', trailer()), get strand(){ return strand; }, harps, addShark: (x, z, big) => addShark(x, z, big), coldOpen, dropBoat: () => dropBoat() } };
 };
