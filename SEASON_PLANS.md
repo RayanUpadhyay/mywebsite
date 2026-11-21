@@ -24,8 +24,10 @@ One idea runs through every season and every villain: **a debt**. Somebody alway
 | 5 The Eruption | stopping Cinder from feeding the core to the volcano | the core fires one beam at the Moon, and the Vashk outpost there wakes up |
 | 6 Dark Side | breaking the Vashk fortress | Queen Ssera's ship escapes to Earth with the truth about the Collector, and her own plan |
 | 7 Scales | exposing Ssera's shapeshifters | her rift ship tears the sky open onto Prime's Bangalore |
-| 8 Incursion | ruining Prime's face in the last fight | he wins anyway. Your Bangalore is collected; the Keeper throws you into another universe |
-| 9–14 New Bangalore | freeing a world Prime conquered years ago, one governor at a time | each victory tells Prime exactly where you are |
+| 8 Incursion | ruining Prime's face in the last fight | he wins anyway. Your Bangalore is torn half apart, and the Keeper throws you into another universe before you see what's left |
+| 9–12 New Bangalore | freeing a world Prime conquered years ago, one governor at a time | each victory tells Prime exactly where you are |
+| 13 Homecoming | getting the Splinter out of Ssera's wreck | Ssera spends the last of her life covering your escape, and you learn your people aren't dead: Prime collected them |
+| 14 New Bangalore | the last governor | Prime is close enough to come for you himself |
 | 15 Convergence | killing Prime | the Collector comes to collect his debt in person, and the cycle has to be paid for |
 | 16 Warped | (Phase 3) the world you chose to restart is not quite the same one | the meteor misses the sea and hits the Kaveri reactor |
 
@@ -98,6 +100,12 @@ One idea runs through every season and every villain: **a debt**. Somebody alway
 | Meera's print of someone on the bandstand roof, looking up before anything happened | Side quest "The last photographs" (built) | S15: the Keeper |
 | The numbers station: "Eighteen. Eleven." Then the song from your room's speakers | Side quest "The numbers" (built) | The lair safe (1811) now; S15: the Keeper hums the same song |
 | A ledger page: "Paid in full. Don't ask how." | Side quest "Pages of debt" (built) | S3: the Syndicate's debt book |
+| Ssera backs into the rift light: “We came here running.” | S7 finale | S13: the rift threw her back into her wreck; she's the beacon, and she ran from Prime |
+| A Vashk beacon on a frequency Prime watches | S12 | S13: it leads you home, to Ssera and the Splinter |
+| Ssera's mothership in the Far Range | S7 trace | S13: the Splinter is still on board |
+| A half-built suit under a dust sheet on the garage ramp, wings folded, with "needs a power cell" on a note | S6 to S8 (add it to the garage once the boost pack and the Kite exist) | S13: the Kestrel, finished with a Vashk power cell, and your first flight |
+| The Splinter | S13 | S15: it's how you kill Prime in week two |
+| Prime collected your Bangalore's people, alive | S13 finale | S15: they're inside what the Collector is owed |
 
 ### Site themes (each season reinvents the whole site, from Season 2)
 The 3D world, the simple view, the side panel, the phone, the HUD and the fonts all change with the season (`SEASON_THEMES` in `index.html`). The room keeps its layout, but its accent colours follow the theme.
@@ -115,7 +123,7 @@ The 3D world, the simple view, the side panel, the phone, the HUD and the fonts 
 | 10 | Skyline | open sky blue and cloud white; thin, airy serif |
 | 11 | Harvest | earth, wheat and rot: brown, gold and a sick grey-green |
 | 12 | (to be planned) | |
-| 13 | The Drought | bleached sand and salt white |
+| 13 | Homecoming | the site's own Landfall look (cream, ink and yellow), faded and dusty, like a photo left in the sun |
 | 14 | Festival of Lights | deep indigo and gold |
 | 15 | Convergence | monochrome, with every earlier season's accent returning one at a time |
 
@@ -152,12 +160,12 @@ The 3D world, the simple view, the side panel, the phone, the HUD and the fonts 
 | 5 | **The Eruption** | 10 Mar – 6 Apr 2027 | The new volcano becomes Ember Island and ash falls on the city; a cult uses the stolen meteor core to wake it. Ends with the core firing a beam at the Moon, and something there answering. | Cinder, leader of the Kindled | Heat suit | Ember Island | Heat Suit / Ash Walker / Cinder |
 | 6 | **Dark Side** (space; replaces Deep Freeze) | 7 Apr – 4 May 2027 | The meteor was a key, and Cinder turned it. The Vashk Dominion's fleet on the Moon invades. Take the fight to their Moon fortress. Ends with their queen's ship slipping down to Earth. | High Commander Vorrak of the Vashk Dominion | Boost pack, and the Kite (fighter) | The launch pad on Crash Isle, a crashed landing pod, and a cracked Moon | Moonwalker / Ace / Vorrak's Armour |
 | 7 | **Scales** | 5 May – 1 Jun 2027 | Queen Ssera's shapeshifters replace people in Bangalore one by one, Velvet among them. Her crashed ship is a rift ship. Ends with the sky tearing open onto another Bangalore. | Queen Ssera | Truth lens and hover-sled | The wrecked mothership in the Far Range, and the tear in the sky | Alien Hunter / Truth Lens Agent / Vashk Disguise |
-| 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore presses down from the sky. Jump between the two cities and fight your evil double. **Prime wins:** your Bangalore is destroyed, and the Keeper throws you into a new universe with a completely different map. | {N} Prime: you, from a Bangalore where you sold the core to the Salvager on the first night | Rift jumper | Your Bangalore is gone. Seasons 9–15 are on a new map | Rift Jumper / Other-Earth You / {N} Prime |
+| 8 | **Incursion** (multiversal) | 2 – 29 Jun 2027 | Another Bangalore presses down from the sky. Jump between the two cities and fight your evil double. **Prime wins:** your Bangalore is torn half apart, and the Keeper throws you into a new universe with a completely different map. | {N} Prime: you, from a Bangalore where you sold the core to the Salvager on the first night | Rift jumper | Your Bangalore is gone. Seasons 9–15 are on a new map | Rift Jumper / Other-Earth You / {N} Prime |
 | 9 | **Neon Nights** (Phase 2 begins) | 30 Jun – 27 Jul 2027 | You wake up in New Bangalore, a neon mega-city in another universe, with no ID and a device everyone wants. Vector, who runs the city's network, hunts you. Ends with the twist that Prime got here first, and Prime, masked now, beating you down. | Vector, CEO of Vector Systems | Hacking rig and hover-car | A Lowlights hideout and a neon strip in New Bangalore | Stacks Runner / Hologram / Vector |
 | 10 | **Skyline** (Phase 2 · Chapter 2) | 28 Jul – 24 Aug 2027 | Prime's viceroy lifts New Bangalore's districts into the sky, people and all, as tribute. Learn to counter, glide between floating islands, and meet this world's Keeper. Ends with a grey dust rotting the city's farms. | Baron Altitude, Prime's viceroy | Glider | An anchored sky island with New Bangalore's Keeper | Sky Diver / Updraft / Baron Altitude |
 | 11 | **Harvest** | 25 Aug – 21 Sep 2027 | A food shortage; farms spread across the island. | The Blight (rot) | Farming | New farmland | Farmer / Scarecrow / The Blight |
 | 12 | **To be re-planned** (Neon Nights moved to Season 9) | 22 Sep – 19 Oct 2027 | – | – | – | – | – |
-| 13 | **The Drought** (to be changed) | 20 Oct – 16 Nov 2027 | The sea pulls back. | The Tide-Taker | Metal detector | A land bridge and a lighthouse | Treasure Hunter / Lighthouse Keeper / Tide-Taker |
+| 13 | **Homecoming** (replaces The Drought) | 20 Oct – 16 Nov 2027 | You go back to your own Bangalore, alone and with no signal, for the Splinter: the weapon the Vashk built to kill Prime, still in Ssera's wrecked ship. Everyone is gone, and you meet no one from home. The distress beacon that led you there is Ssera herself, alive and dying in the wreck. She tells you Prime didn't kill your people, he collected them, and spends the last of her life so you can get back to New Bangalore. | Prime's collectors, and the Warden guarding the wreck | The Splinter, and the Kestrel (a flight suit you built and finally finish) | A sealed rift door on New Bangalore's waterfront | Homecomer / Unlisted / Warden's Shell |
 | 14 | **Festival of Lights** | 17 Nov – 14 Dec 2027 | An island-wide lantern festival. | The Snuffer | Fireworks you can launch | Lantern trees | Lantern Robe / Firework Suit / The Snuffer |
 | 15 | **Convergence** (Phase 2 finale) | 15 Dec 2027 – 11 Jan 2028 | You kill Prime in week two, as a surprise. Then what Prime was feeding arrives: the Collector of Worlds, with echoes of every villain you've beaten. Your final choice: close the lock yourself and become this world's Keeper (the cycle restarts, and you're the stranger at the pier), or refuse and let someone else pay. | {N} Prime (killed early), then the Collector of Worlds | Every tool you've earned | How the cycle restarts | Multiverse Traveller / Collector's Armour (plus The Keeper for owning every skin) |
 
@@ -646,7 +654,7 @@ This time, it isn't yours.
 **The finale: you lose (sets up Season 9).**
 1. The final duel goes to the wire. Your last blow drives Prime through a rift as it snaps shut, and the edge of it **burns and ruins his face**. He screams, and covers it with one gauntlet.
 2. But the last anchor holds, and Prime wins anyway. Half his face hidden behind his hand, his foot on your chest on a rooftop that is coming apart: *“You were never going to win this one. But you’ve given me something to remember you by.”*
-3. The two cities touch. Your Bangalore starts to come apart, street by street, and everything Seasons 1–7 built goes with it: Crash Isle, the sunken district, Ember Island, the cracked Moon.
+3. The two cities touch. Your Bangalore starts to come apart around you, street by street, with everything Seasons 1–7 built on it. You never see how far it goes (Season 13 shows you).
 4. The Keeper reaches you through the noise and presses the meteor core and the rift jumper into your hands: *“It can carry one. Go.”*
 5. White light.
 6. **Last shot:** you wake up alone on unfamiliar ground, under an unfamiliar sky. A different city, a different coast, different stars. A skyline of neon towers goes up further than you can see. Your Bangalore is gone. **Season 9.**
@@ -696,15 +704,16 @@ This time, it isn't yours.
 ### What this changes for Seasons 9–15
 - From Season 9 the seasons take place in **a new universe with a completely different map**. Seasons 9–15 in the list were written for Bangalore, so they need adapting.
 - **Decided so far:** you arrive with your gear, and the rift jumper and meteor core come with you.
-- **Decided since:** the new world is New Bangalore, a neon mega-city. It replaces Bangalore and the bedroom for every visitor, for good, and Bangalore doesn't come back (see Phase 2 below).
+- **Decided since:** the new world is New Bangalore, a neon mega-city. It replaces Bangalore and the bedroom for every visitor, and Bangalore only comes back once, wrecked, in Season 13 (see Phase 2 below).
 
 # Phase 2 · New Bangalore (Seasons 9–15, Phase 2 · Chapters 1–7)
 
-Phase 1 (Seasons 1–8) happened in Bangalore, and ended with Prime winning and your Bangalore destroyed. Phase 2 happens in **New Bangalore**, a neon mega-city in another universe, where the Keeper's last act threw you. You arrive with everything you'd earned (weapons, tools, vehicles and skins), plus the meteor core and the rift jumper. The big thread of Phase 2: Prime has swallowed a hundred worlds, New Bangalore is the next on the list, and this time you have to be ready.
+Phase 1 (Seasons 1–8) happened in Bangalore, and ended with Prime winning and your Bangalore torn half apart. Phase 2 happens in **New Bangalore**, a neon mega-city in another universe, where the Keeper's last act threw you. You arrive with everything you'd earned (weapons, tools, vehicles and skins), plus the meteor core and the rift jumper. The big thread of Phase 2: Prime has swallowed a hundred worlds, New Bangalore is the next on the list, and this time you have to be ready.
 
 ### What Phase 2 changes for everyone (decided)
-- **New Bangalore replaces Bangalore for good.** From Season 9 the city every visitor walks out into is New Bangalore, not Bangalore, and it stays New Bangalore after the seasons, too.
-  - Bangalore is gone, along with everything Phase 1 left on its map: Crash Isle, the sunken district, Ember Island, the garage under the tower.
+- **New Bangalore replaces Bangalore.** From Season 9 the city every visitor walks out into is New Bangalore, not Bangalore, and it stays New Bangalore after the seasons, too.
+  - Bangalore is lost to you, along with everything Phase 1 left on its map: Crash Isle, the sunken district, Ember Island, the garage under the tower.
+  - **Except for Season 13 (Homecoming):** for those four weeks you're back in your own Bangalore, emptied, and the site's front door is your old bedroom again. At the end you go back to New Bangalore, and it stays that way.
   - Season 15 doesn't bring it back.
 - **The bedroom changes too.** The site's front door becomes your new place in New Bangalore: a small apartment in the Mids, with rain and neon outside the window and a sky-train going past.
   - Everything the room is there for comes with you: the desk, the laptop (RayanOS), research, projects, music and vinyl, the walkie-talkie and the simple view.
@@ -713,7 +722,7 @@ Phase 1 (Seasons 1–8) happened in Bangalore, and ended with Prime winning and 
 - **{N} Prime is the recurring villain of Phase 2:**
   - Since Season 8 he wears a **metal mask**, forged to cover the face your last blow ruined. He calls himself the God-Emperor, and his iron mask becomes the face of Phase 2.
   - Season 9: Vector has been taking Prime's calls. At the end, Prime comes through himself and beats you down.
-  - Seasons 10–14: Prime is behind or alongside each season's villain. Prime sends agents, turns up in person at least once, and keeps getting closer.
+  - Seasons 10–14: Prime is behind or alongside each season's villain (in Season 13, his collectors are still cataloguing your empty Bangalore). Prime sends agents, turns up in person at least once, and keeps getting closer.
   - Season 15 (Convergence): you kill Prime early, in week two, and the Collector of Worlds takes over as the final villain.
 - **The build:** New Bangalore is a new world built from scratch in `index.html`, the biggest build in the series. The new bedroom is a second big piece of work. Both need to be ready by Season 9 (30 June 2027).
 
@@ -843,8 +852,69 @@ Prime beat you on the roof of Vector Tower and went back through his tear. He di
 - **Type:** elegant, airy lettering that drifts in and settles, like it's floating.
 - **Score:** soaring strings and wind, the creak of cables, and an airship's deep engine drone, building to a huge swell as the camera drops off the edge and glides.
 
-## Phase 2 · Chapters 3–6 (Seasons 11–14, to be re-planned for New Bangalore)
-The original list (The Rift, Harvest, The Drought, Festival of Lights) was written for Bangalore, and needs re-planning around New Bangalore. Prime recurs through all of them, getting closer each season.
+## Phase 2 · Chapters 3, 4 and 6 (Seasons 11, 12 and 14, to be re-planned for New Bangalore)
+The original list (The Rift, Harvest, Festival of Lights) was written for Bangalore, and needs re-planning around New Bangalore. Prime recurs through all of them, getting closer each season. Season 13 is planned below; Season 12 should plant the Vashk beacon that brings you home (see Season 13's "Why you go back").
+
+## Phase 2 · Chapter 5 (Season 13) · Homecoming (20 October – 16 November 2027)
+
+### Why you go back
+- **The signal (plant it in Season 12):** New Bangalore's Keeper (met in Season 10) picks up a Vashk distress beacon, faint, on a frequency Prime's network watches. It's coming from your old universe: from Queen Ssera's crashed ship in the Far Range (Season 7). Under the distress call, a manifest: the ship carried **the Splinter**, a weapon the Vashk built to kill Prime.
+- **Why it matters:** Prime knows every move you have, because he is you. He has never seen the Splinter.
+- **The door:** the Keeper finds the seam, where Prime's red city still touches your Bangalore. The rift jumper can make one trip through it, and one back. You go alone.
+
+### The world: your Bangalore, emptied
+- **Everyone is gone, and you meet no one from home all season.** No bodies, no survivors, no messages. Tea still on the tables at Rosa's stall. Frank's camp abandoned mid-meal. Doors open. Cars stopped in the middle of the road with the engines off.
+- **No phone:** your old phone was lost in Season 8, and your New Bangalore phone shows "No service" for the whole season. No map pins, no texts. You find your way by landmarks you know: the Meteor Watch, the dark tower, Crash Isle's dead core, Ember Island's smoke.
+- **It's the Phase 1 map, wrecked in places and perfectly intact in others:** Prime's red towers fused upside down into the skyline, rift cliffs where districts used to be, and every season's trace still standing.
+- **Prime's collectors** are the only thing moving: silent drones and walkers that go street by street, scanning and tagging what's left, a catalogue still being written. They don't attack until they've scanned you.
+- **The bedroom is the front door again, for this season only:** your old room, untouched, with dust on the vinyl. Everything the room is there for still works: the desk, the laptop, research, projects and music.
+- **The quiet is the point.** No crowd, no traffic, no music in the streets.
+
+### The surprise (decided)
+- The distress beacon isn't automatic. **It's Ssera.**
+- At the end of Season 7 she backed into the light of the opening rift. It didn't take her anywhere. It threw her back, broken, into her own crashed ship, and she has been dying slowly in its cargo bay ever since, wired into what's left of its systems, keeping the beacon going and the Splinter locked.
+- **She was waiting for Prime.** She assumed he'd come for the one weapon that could kill him, and she meant to make him pay for it. It's you.
+- She doesn't apologise for Season 7, and you don't forgive her. But she's the only one who can tell you what happened:
+  - *“He didn’t kill them. He took them. A world’s worth more with people in it.”* Prime collected your Bangalore's people, not its streets. They're alive, somewhere inside his collection.
+  - *“We built it after he took our first world. We never got close enough to use it.”*
+- It pays off her Season 7 last line, *“We came here running.”*
+
+### The suit you built: the Kestrel
+- **What it is:** a flight suit you started building yourself in Phase 1, in the garage under your tower, from what was left of the boost pack and the Kite (Season 6): a fitted armoured suit in dark navy and brushed steel, with carbon-fibre wings that fold flat against the back and snap open, jets in the wings and boots, and an amber visor.
+- **Original, like every skin:** the feel of a winged flight suit from superhero films (wings, jets, armour), but its own design: no star, no shield, no red, white and blue.
+- **Why it was never finished:** it needed a power cell nobody on Earth could make, and then the Incursion hit. It's still on the garage ramp under a dust sheet, exactly where you left it, with your notes taped to the workbench.
+- **What finishes it:** the Vashk power cell from Ssera's ship (Part 3). Neel's notes on Vashk cells (Part 2) tell you it'll fit.
+- **How it flies:**
+  - take off from anywhere outdoors, hover, and fly in any direction;
+  - fold the wings to dive, and open them to glide and pull up;
+  - a boost burst on a short cooldown, and an energy meter that recharges while you glide or stand still;
+  - land on any roof, and fight from the air (the gun and the Splinter work in flight).
+
+### Parts (outline)
+| Week | Part | What happens |
+|---|---|---|
+| 1 · 20 Oct | Return | The seam, the Crash Isle pier, the dead core. The walk into an empty city with no signal. Your old room. The first collector drones, and learning to stay out of their scans. The beacon, faint, from somewhere north. |
+| 2 · 27 Oct | The Empty City | Gather what you need from the places you knew. In the garage under your tower, under a dust sheet: **the Kestrel**, the flight suit you never finished. Neel's lab has his notes on Vashk power cells, the one thing it was missing. Then Frank's camp and Rosa's stall, all abandoned mid-moment. Climb the Meteor Watch to take a bearing on the beacon. Prime's tags are on everything. |
+| 3 · 3 Nov | The Wreck | Cross the Far Range to Ssera's mothership, past the collectors. **The Warden**, the machine Prime left guarding the wreck, in a boss fight inside the ship. In the cargo bay, the beacon's source: Ssera, alive. The reveal, and where everyone went. She gives you a power cell from the ship's core. Back in the garage, the Kestrel wakes up: **first flight**, out of the ramp and over the empty city. |
+| 4 · 10 Nov | Leaving (finale) | The Splinter needs the meteor core to wake, and waking it calls every collector in the red city. You fly the Splinter out of the Far Range in the Kestrel, with the collectors' drones chasing you through the valleys and over the fused red city. Ssera holds the ship's last power on them, which burns out what's keeping her alive, so you can reach the seam: *“Go. I ran from him long enough.”* Last shot: New Bangalore. The Splinter's readout locks onto one signal, Prime's. Under it, thousands of faint ones: everyone he collected, still alive. |
+
+### How it plays
+- **Stealth before fighting:** the collectors only turn hostile once they've scanned you. Breaking line of sight, hiding in cars and doorways, and the old scanner (Season 1) jamming them all keep you unlisted.
+- **Navigating without a phone:** landmarks, the beacon's pulse on your HUD when you face the right way, and the Meteor Watch's view.
+- **Flight (from Part 3):** the Kestrel turns the empty city into somewhere you can cross in seconds, and the finale into a chase through the air. Collector drones can follow you up; walkers can't.
+- **Old tools come home:** the scanner, the boat, the rope launcher, the Kite. Every Phase 1 tool has a use in the empty city.
+- **Places that remember:** walking into somewhere a Phase 1 character used to be (Frank's camp, Rosa's stall, the Keeper's pier) plays a short sound of how it used to be, then cuts to the quiet. You hear the place, never the people.
+- **The Splinter (kept):** a weapon with one purpose, which pays off in Season 15. Outside the finale it's shown, not used.
+
+### What you keep
+- **The Splinter:** it's how you kill Prime in Season 15's week two.
+- **The Kestrel (flight suit):** you keep it for the rest of Phase 2, so Seasons 14 and 15 can use flight across New Bangalore. Wearing it is a skin as well as a tool.
+- **Skins:** Homecomer (finish the story), Unlisted (the challenge: cross the Far Range without being scanned) and Warden's Shell (beat the Warden).
+- **The map trace (in New Bangalore, for good):** a sealed rift door on the waterfront that hums when you walk past.
+
+### Still to plan
+- How Season 12 plants the beacon, the Kestrel's final look and flight feel, the collectors' and the Warden's look, Ssera's two or three scenes (short, quiet, and true to the dialogue rules), and the trailer.
+- **The build:** it needs the Phase 1 Bangalore code kept in `index.html` after Season 9 (not deleted when New Bangalore arrives), with no crowd or traffic, a wrecked set dressing (the fused red city, rift cliffs, abandoned cars and stalls), the phone set to No service, and the old bedroom. That's much cheaper than a new map.
 
 ## Phase 2 · Chapter 7 (Season 15) · Convergence (15 December 2027 – 11 January 2028)
 
@@ -856,7 +926,7 @@ Phase 2 has built up to one fight: you against {N} Prime. Season 15 gives it to 
 | Week | Part | What happens |
 |---|---|---|
 | 1 · 15 Dec | The Last Hunt | Prime's red city finally breaks through into New Bangalore's sky. With everything you've earned across both phases, you take the fight to Prime, and this time you're ready. |
-| 2 · 22 Dec | Prime | **You kill Prime.** It's the fight the whole series has built up to, and it happens in week two, not the finale. Prime's last words, with a laugh that turns into a cough: *“You think I was the end of the line? I was running too. I fed it worlds so it wouldn’t eat mine.”* Then every screen in New Bangalore goes dark. |
+| 2 · 22 Dec | Prime | **You kill Prime**, with the Splinter from Season 13, the one weapon Prime has never seen. It's the fight the whole series has built up to, and it happens in week two, not the finale. Prime's last words, with a laugh that turns into a cough: *“You think I was the end of the line? I was running too. I fed it worlds so it wouldn’t eat mine.”* Then every screen in New Bangalore goes dark. |
 | 3 · 29 Dec | The Collector | **The new villain arrives:** **the Collector of Worlds.** It's what Prime was feeding: something vast and patient that eats universes whole. Every villain was running from a bigger one: Ssera fled Prime, and Prime fed the Collector to stay alive. It brings **echoes of every villain you've beaten**, pulled out of the worlds it ate: the Salvager, Captain Brine, Marigold, Reyes, Cinder, Vorrak, Ssera, Vector. They come back, one after another. |
 | 4 · 5 Jan | Convergence (finale) | The final showdown with the Collector, using every tool and vehicle from both phases. **Your final choice decides how the cycle restarts:** the seasons loop back to Season 1, and what you choose here changes how Landfall begins next time round. |
 
