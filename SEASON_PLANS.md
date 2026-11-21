@@ -26,7 +26,7 @@ One idea runs through every season and every villain: **a debt**. Somebody alway
 | 7 Scales | exposing Ssera's shapeshifters | her rift ship tears the sky open onto Prime's Bangalore |
 | 8 Incursion | ruining Prime's face in the last fight | he wins anyway. Your Bangalore is torn half apart, and the Keeper throws you into another universe before you see what's left |
 | 9–12 New Bangalore | freeing a world Prime conquered years ago, one governor at a time | each victory tells Prime exactly where you are |
-| 13 Homecoming | getting the Splinter out of Ssera's wreck | the shapeshifter who guarded it stays behind to hold the seam, and you learn your people aren't dead: Prime collected them |
+| 13 Homecoming | getting the Splinter out of Ssera's wreck | Ssera spends the last of her life covering your escape, and you learn your people aren't dead: Prime collected them |
 | 14 New Bangalore | the last governor | Prime is close enough to come for you himself |
 | 15 Convergence | killing Prime | the Collector comes to collect his debt in person, and the cycle has to be paid for |
 | 16 Warped | (Phase 3) the world you chose to restart is not quite the same one | the meteor misses the sea and hits the Kaveri reactor |
@@ -100,10 +100,9 @@ One idea runs through every season and every villain: **a debt**. Somebody alway
 | Meera's print of someone on the bandstand roof, looking up before anything happened | Side quest "The last photographs" (built) | S15: the Keeper |
 | The numbers station: "Eighteen. Eleven." Then the song from your room's speakers | Side quest "The numbers" (built) | The lair safe (1811) now; S15: the Keeper hums the same song |
 | A ledger page: "Paid in full. Don't ask how." | Side quest "Pages of debt" (built) | S3: the Syndicate's debt book |
-| Mum's last message is from the night of the Incursion | S8 finale | S12–13: a new text from her number, "come home"; it's the Mimic |
-| A photo of Mum in your room | The bedroom (now) | S13: the photo is missing from its frame; the Mimic took her face from it |
-| Shapeshifters copy faces down to the voice | S7 | S13: the last one wears Mum's face, and she isn't a trap |
-| Ssera fled Prime | S7 and S15 | S13: her ship carried the Splinter, built to kill him |
+| Ssera backs into the rift light: “We came here running.” | S7 finale | S13: the rift threw her back into her wreck; she's the beacon, and she ran from Prime |
+| A Vashk beacon on a frequency Prime watches | S12 | S13: it leads you home, to Ssera and the Splinter |
+| Ssera's mothership in the Far Range | S7 trace | S13: the Splinter is still on board |
 | The Splinter | S13 | S15: it's how you kill Prime in week two |
 | Prime collected your Bangalore's people, alive | S13 finale | S15: they're inside what the Collector is owed |
 
@@ -165,7 +164,7 @@ The 3D world, the simple view, the side panel, the phone, the HUD and the fonts 
 | 10 | **Skyline** (Phase 2 · Chapter 2) | 28 Jul – 24 Aug 2027 | Prime's viceroy lifts New Bangalore's districts into the sky, people and all, as tribute. Learn to counter, glide between floating islands, and meet this world's Keeper. Ends with a grey dust rotting the city's farms. | Baron Altitude, Prime's viceroy | Glider | An anchored sky island with New Bangalore's Keeper | Sky Diver / Updraft / Baron Altitude |
 | 11 | **Harvest** | 25 Aug – 21 Sep 2027 | A food shortage; farms spread across the island. | The Blight (rot) | Farming | New farmland | Farmer / Scarecrow / The Blight |
 | 12 | **To be re-planned** (Neon Nights moved to Season 9) | 22 Sep – 19 Oct 2027 | – | – | – | – | – |
-| 13 | **Homecoming** (replaces The Drought) | 20 Oct – 16 Nov 2027 | You go back to your own Bangalore for the Splinter, the weapon Queen Ssera built to kill Prime, still in her wrecked ship. Everyone is gone. A text from Mum's number guides you to the wreck, where "Mum" is waiting: the last of Ssera's shapeshifters. She tells you Prime didn't kill your people, he collected them. Ends with her holding the seam so you can get back to New Bangalore. | Prime's collectors, and the Warden guarding the wreck | The Splinter | A sealed rift door on New Bangalore's waterfront, and one bar of signal home | Homecomer / Unlisted / Warden's Shell |
+| 13 | **Homecoming** (replaces The Drought) | 20 Oct – 16 Nov 2027 | You go back to your own Bangalore, alone and with no signal, for the Splinter: the weapon the Vashk built to kill Prime, still in Ssera's wrecked ship. Everyone is gone, and you meet no one from home. The distress beacon that led you there is Ssera herself, alive and dying in the wreck. She tells you Prime didn't kill your people, he collected them, and spends the last of her life so you can get back to New Bangalore. | Prime's collectors, and the Warden guarding the wreck | The Splinter | A sealed rift door on New Bangalore's waterfront | Homecomer / Unlisted / Warden's Shell |
 | 14 | **Festival of Lights** | 17 Nov – 14 Dec 2027 | An island-wide lantern festival. | The Snuffer | Fireworks you can launch | Lantern trees | Lantern Robe / Firework Suit / The Snuffer |
 | 15 | **Convergence** (Phase 2 finale) | 15 Dec 2027 – 11 Jan 2028 | You kill Prime in week two, as a surprise. Then what Prime was feeding arrives: the Collector of Worlds, with echoes of every villain you've beaten. Your final choice: close the lock yourself and become this world's Keeper (the cycle restarts, and you're the stranger at the pier), or refuse and let someone else pay. | {N} Prime (killed early), then the Collector of Worlds | Every tool you've earned | How the cycle restarts | Multiverse Traveller / Collector's Armour (plus The Keeper for owning every skin) |
 
@@ -853,50 +852,55 @@ Prime beat you on the roof of Vector Tower and went back through his tear. He di
 - **Score:** soaring strings and wind, the creak of cables, and an airship's deep engine drone, building to a huge swell as the camera drops off the edge and glides.
 
 ## Phase 2 · Chapters 3, 4 and 6 (Seasons 11, 12 and 14, to be re-planned for New Bangalore)
-The original list (The Rift, Harvest, Festival of Lights) was written for Bangalore, and needs re-planning around New Bangalore. Prime recurs through all of them, getting closer each season. Season 13 is planned below; Season 12 should plant the text that brings you home (see Season 13's "Why you go back").
+The original list (The Rift, Harvest, Festival of Lights) was written for Bangalore, and needs re-planning around New Bangalore. Prime recurs through all of them, getting closer each season. Season 13 is planned below; Season 12 should plant the Vashk beacon that brings you home (see Season 13's "Why you go back").
 
 ## Phase 2 · Chapter 5 (Season 13) · Homecoming (20 October – 16 November 2027)
 
 ### Why you go back
-- **The weapon:** Queen Ssera was running from Prime (Season 15 makes this plain), and her rift ship crashed in your Bangalore's Far Range in Season 7. New Bangalore's Keeper (met in Season 10) tells you what was on board: **the Splinter**, a weapon Ssera's people built to kill Prime and never got to use. Prime knows every move you have, because he is you. He has never seen this.
-- **The message (plant it in Season 12):** your old phone, dead since Season 8, gets one bar of signal in a Lowlights alley. One text, from Mum's number: "come home". You assume she survived.
-- **The door:** the Keeper finds the seam, where Prime's red city still touches your Bangalore. The rift jumper can make one trip through it, and maybe one back.
+- **The signal (plant it in Season 12):** New Bangalore's Keeper (met in Season 10) picks up a Vashk distress beacon, faint, on a frequency Prime's network watches. It's coming from your old universe: from Queen Ssera's crashed ship in the Far Range (Season 7). Under the distress call, a manifest: the ship carried **the Splinter**, a weapon the Vashk built to kill Prime.
+- **Why it matters:** Prime knows every move you have, because he is you. He has never seen the Splinter.
+- **The door:** the Keeper finds the seam, where Prime's red city still touches your Bangalore. The rift jumper can make one trip through it, and one back. You go alone.
 
 ### The world: your Bangalore, emptied
-- **Everyone is gone.** No bodies, no fighting, no survivors. Tea still on the tables at Rosa's stall. Frank's camp abandoned mid-meal, the radio still on. Doors open. Cars stopped in the middle of the road with the engines off.
-- **It's the Phase 1 map, wrecked in places and perfectly intact in others:** Prime's red towers fused upside down into the skyline, rift cliffs where districts used to be, and every season's trace still standing (the dark tower, the sunken district, Ember Island, the mothership in the Far Range, Crash Isle's dead core).
+- **Everyone is gone, and you meet no one from home all season.** No bodies, no survivors, no messages. Tea still on the tables at Rosa's stall. Frank's camp abandoned mid-meal. Doors open. Cars stopped in the middle of the road with the engines off.
+- **No phone:** your old phone was lost in Season 8, and your New Bangalore phone shows "No service" for the whole season. No map pins, no texts. You find your way by landmarks you know: the Meteor Watch, the dark tower, Crash Isle's dead core, Ember Island's smoke.
+- **It's the Phase 1 map, wrecked in places and perfectly intact in others:** Prime's red towers fused upside down into the skyline, rift cliffs where districts used to be, and every season's trace still standing.
 - **Prime's collectors** are the only thing moving: silent drones and walkers that go street by street, scanning and tagging what's left, a catalogue still being written. They don't attack until they've scanned you.
-- **The bedroom is the front door again, for this season only:** your old room, untouched, with dust on the vinyl and the photos still on the wall (one of Mum is missing from its frame). Everything the room is there for still works: the desk, the laptop, research, projects and music.
-- **The quiet is the point.** No crowd, no traffic, no music in the streets. Texts from Mum's number guide you ("the Far Range. I'll meet you there.").
+- **The bedroom is the front door again, for this season only:** your old room, untouched, with dust on the vinyl. Everything the room is there for still works: the desk, the laptop, research, projects and music.
+- **The quiet is the point.** No crowd, no traffic, no music in the streets.
 
 ### The surprise (decided)
-- At the wreck, **Mum is waiting.** It isn't her.
-- She's **the last of Ssera's shapeshifters** (the Mimics from Season 7), left behind to guard the Splinter when the ship came down. When the city emptied, she was alone. She took Mum's face from the photo in your room, because she'd worked out that's who you would come home for. The texts were hers.
-- She's not a trap. She's been waiting months for the one person who could use the Splinter, and she's lonely in a way she doesn't have words for. She keeps Mum's habits a little wrong, and knows it.
-- **She tells you where everyone went:** *“He didn’t kill them. He took them. A world’s worth more with people in it.”* Prime collected your Bangalore's people, not its streets. They're alive, somewhere inside his collection.
+- The distress beacon isn't automatic. **It's Ssera.**
+- At the end of Season 7 she backed into the light of the opening rift. It didn't take her anywhere. It threw her back, broken, into her own crashed ship, and she has been dying slowly in its cargo bay ever since, wired into what's left of its systems, keeping the beacon going and the Splinter locked.
+- **She was waiting for Prime.** She assumed he'd come for the one weapon that could kill him, and she meant to make him pay for it. It's you.
+- She doesn't apologise for Season 7, and you don't forgive her. But she's the only one who can tell you what happened:
+  - *“He didn’t kill them. He took them. A world’s worth more with people in it.”* Prime collected your Bangalore's people, not its streets. They're alive, somewhere inside his collection.
+  - *“We built it after he took our first world. We never got close enough to use it.”*
+- It pays off her Season 7 last line, *“We came here running.”*
 
 ### Parts (outline)
 | Week | Part | What happens |
 |---|---|---|
-| 1 · 20 Oct | Return | The seam, the Crash Isle pier, the dead core. The walk into an empty city. Your old room. The first collector drones, and learning to stay out of their scans. A text: "the Far Range. I'll meet you there." |
-| 2 · 27 Oct | The Empty City | Gather what you need from the places you knew: the garage under your tower, Neel's lab (his notes on the Splinter's power cell), Frank's camp and Rosa's stall, abandoned mid-moment. Every stop shows the same thing: everyone left at once. Prime's tags are on everything. |
-| 3 · 3 Nov | The Wreck | Cross the Far Range to Ssera's mothership, past the collectors. **The Warden**, the machine Prime left guarding the wreck, in a boss fight inside the ship. In the cargo bay: Mum. The reveal, and where everyone went. |
-| 4 · 10 Nov | Leaving (finale) | The Splinter needs the meteor core to wake, and waking it calls every collector in the red city. Run for the seam with them closing in. The Mimic holds the seam open behind you, in Mum's face, so you can get through: *“Go on. I’ll tell her you came.”* Last shot: New Bangalore. The Splinter's readout locks onto one signal, Prime's. Under it, thousands of faint ones: everyone he collected, still alive. |
+| 1 · 20 Oct | Return | The seam, the Crash Isle pier, the dead core. The walk into an empty city with no signal. Your old room. The first collector drones, and learning to stay out of their scans. The beacon, faint, from somewhere north. |
+| 2 · 27 Oct | The Empty City | Gather what you need from the places you knew: the garage under your tower, Neel's lab (his notes on Vashk power cells), Frank's camp and Rosa's stall, all abandoned mid-moment. Climb the Meteor Watch to take a bearing on the beacon. Prime's tags are on everything. |
+| 3 · 3 Nov | The Wreck | Cross the Far Range to Ssera's mothership, past the collectors. **The Warden**, the machine Prime left guarding the wreck, in a boss fight inside the ship. In the cargo bay, the beacon's source: Ssera, alive. The reveal, and where everyone went. |
+| 4 · 10 Nov | Leaving (finale) | The Splinter needs the meteor core to wake, and waking it calls every collector in the red city. Ssera holds the ship's last power on the collectors, which burns out what's keeping her alive, so you can reach the seam: *“Go. I ran from him long enough.”* Last shot: New Bangalore. The Splinter's readout locks onto one signal, Prime's. Under it, thousands of faint ones: everyone he collected, still alive. |
 
 ### How it plays
 - **Stealth before fighting:** the collectors only turn hostile once they've scanned you. Breaking line of sight, hiding in cars and doorways, and the old scanner (Season 1) jamming them all keep you unlisted.
+- **Navigating without a phone:** landmarks, the beacon's pulse on your HUD when you face the right way, and the Meteor Watch's view.
 - **Old tools come home:** the scanner, the boat, the rope launcher, the Kite. Every Phase 1 tool has a use in the empty city.
-- **Places that remember:** walking into somewhere a Phase 1 character used to be (Frank's camp, Rosa's stall, the Keeper's pier) plays a short sound of how it used to be, then cuts to the quiet.
+- **Places that remember:** walking into somewhere a Phase 1 character used to be (Frank's camp, Rosa's stall, the Keeper's pier) plays a short sound of how it used to be, then cuts to the quiet. You hear the place, never the people.
 - **The Splinter (kept):** a weapon with one purpose, which pays off in Season 15. Outside the finale it's shown, not used.
 
 ### What you keep
 - **The Splinter:** it's how you kill Prime in Season 15's week two.
 - **Skins:** Homecomer (finish the story), Unlisted (the challenge: cross the Far Range without being scanned) and Warden's Shell (beat the Warden).
-- **The map trace (in New Bangalore, for good):** a sealed rift door on the waterfront that hums when you walk past, and one bar of signal on your phone. Weeks later, in Season 14, one more text from Mum's number: "still here".
+- **The map trace (in New Bangalore, for good):** a sealed rift door on the waterfront that hums when you walk past.
 
 ### Still to plan
-- How Season 12 plants the signal, the collectors' and the Warden's look, the Mimic's scenes (short, quiet, and true to the dialogue rules), and the trailer.
-- **The build:** it needs the Phase 1 Bangalore code kept in `index.html` after Season 9 (not deleted when New Bangalore arrives), with no crowd or traffic, a wrecked set dressing (the fused red city, rift cliffs, abandoned cars and stalls) and the old bedroom. That's much cheaper than a new map.
+- How Season 12 plants the beacon, the collectors' and the Warden's look, Ssera's two or three scenes (short, quiet, and true to the dialogue rules), and the trailer.
+- **The build:** it needs the Phase 1 Bangalore code kept in `index.html` after Season 9 (not deleted when New Bangalore arrives), with no crowd or traffic, a wrecked set dressing (the fused red city, rift cliffs, abandoned cars and stalls), the phone set to No service, and the old bedroom. That's much cheaper than a new map.
 
 ## Phase 2 · Chapter 7 (Season 15) · Convergence (15 December 2027 – 11 January 2028)
 
