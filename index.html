@@ -550,7 +550,6 @@ body.mkwon .toast{top:calc(160px + env(safe-area-inset-top,0px))}
 .hotbar kbd{font:700 11px ui-monospace,monospace;background:rgba(255,255,255,.16);border-radius:4px;padding:1px 5px}
 .hotbar .hn{white-space:nowrap}
 @media (max-width:640px){.hotbar .hn{display:none}}
-.poisonfx{position:fixed;inset:0;pointer-events:none;z-index:4;background:radial-gradient(ellipse at center,rgba(60,232,112,0) 50%,rgba(60,232,112,.5));opacity:0;transition:opacity .6s}
 .lxpad{width:min(300px,100%)}.lxcode{font:800 34px/1 ui-monospace,monospace;letter-spacing:.2em;text-align:center;padding:10px;background:var(--glass);border-radius:12px}.lxkeys{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.lxkeys button{height:52px;border-radius:14px;border:1px solid var(--line);background:var(--tile);color:var(--ink);font:800 20px system-ui,sans-serif;cursor:pointer}
 .gbox.pausebox{width:min(720px,100%);padding:0;gap:0;overflow:hidden;height:min(620px,100%)}
 .phd{display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid var(--line)}.pav{display:grid;place-items:center;flex:none;width:44px;height:44px;border-radius:50%;font:800 20px/1 "Bricolage Grotesque",sans-serif;font-style:normal;color:#16181D}.phd span{flex:1;min-width:0}.phd b{display:block;font:800 21px/1.15 "Bricolage Grotesque",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.phd small{color:var(--muted);font-size:13px}
@@ -980,7 +979,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
 <button class="btn povbtn" id="povBtn" type="button" hidden>3rd person</button>
 <div class="lookpanel" id="lookEl" role="dialog" aria-label="Style"></div>
 <div class="hotbar" id="hotbar" hidden aria-label="Your inventory"></div>
-<div class="poisonfx" id="poisonFx" aria-hidden="true"></div>
 <div class="game" id="pauseEl" role="dialog" aria-label="Paused"><div class="gbox pausebox" id="pauseBox"></div></div>
 <div class="fhud" id="fhud" hidden>
   <canvas class="ffx" id="fFx" aria-hidden="true"></canvas>
@@ -6456,7 +6454,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   if (!inv.includes(held)) held = null;
   const saveInv = () => { try { localStorage.setItem('ru-inv', JSON.stringify(inv)); held ? localStorage.setItem('ru-held', held) : localStorage.removeItem('ru-held'); } catch (e) {} };
   // claw strain builds up while you hold the claws
-  let poison = 0; try { poison = +localStorage.getItem('ru-poison') || 0; } catch (e) {}
+  const poison = 0; try { localStorage.removeItem('ru-poison'); } catch (e) {}  // claw strain ("poisoning") is gone; the name stays at 0 for the fight code that still reads it
   const GODS = new Set();
   // the "reduce effects" setting: no dust clouds or screen shake, no shadows, lower resolution
   // reduce effects: your choice is remembered; until you choose, slower devices start with it on
@@ -7876,8 +7874,8 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       }
     }
   }
-  // ---------- inventory bar, pause menu, poisoning ----------
-  const hotEl = $('#hotbar'), pauseEl = $('#pauseEl'), pauseBox = $('#pauseBox'), menuBtn = $('#menuBtn'), poisonFx = $('#poisonFx');
+  // ---------- inventory bar and pause menu ----------
+  const hotEl = $('#hotbar'), pauseEl = $('#pauseEl'), pauseBox = $('#pauseBox'), menuBtn = $('#menuBtn');
   function renderHotbar(){
     hotEl.hidden = !entered || !inv.length || !!EV;
     hotEl.innerHTML = [null, ...inv].map((id, k) => { const w = id && WEAPONS.find(x => x.id === id), dz = id && dustedWeapon(id), c = id && condition(id);
@@ -7891,14 +7889,14 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   let pTab = 'play';
   const PTABS = [['play', 'Play', '▶'], ['travel', 'Travel', '◎'], ['gear', 'Gear', '⚔'], ['trophies', 'Trophies', '★'], ['settings', 'Settings', '⚙']];
   const pTile = (act, ic, t, sub, on) => `<button type="button" class="ptile${on ? ' on' : ''}" data-pa="${act}"><i>${ic}</i><b>${t}</b><small>${sub}</small></button>`;
+  { const st = document.createElement('style'); st.textContent = '.pctl{display:flex;gap:12px;align-items:baseline;padding:7px 0;border-bottom:1px solid rgba(127,127,127,.18);font-size:14px}.pctl kbd{flex:0 0 auto;min-width:96px;font:700 12px ui-monospace,monospace;padding:4px 8px;border-radius:7px;background:rgba(127,127,127,.18);text-align:center}.phelp p{font-size:14px;line-height:1.5;margin:0 0 10px}'; document.head.appendChild(st); }
   const pRow = (t, sub, act, btn, right) => `<div class="prow"><b>${t}${sub ? `<br><small>${sub}</small>` : ''}</b>${right || ''}${act ? `<button class="btn" type="button" data-pa="${act}">${btn}</button>` : ''}</div>`;
   function renderPause(){
     let si = null; try { si = seasonInfo(); } catch (e) {}
     const nm = (() => { try { return heroName(); } catch (e) { return 'Traveller'; } })(), wearing = typeof ARS !== 'undefined' && ARS.wear && typeof SSKIN !== 'undefined' && SSKIN[ARS.wear] ? SSKIN[ARS.wear].n : (OUTFITS[look.outfit] || {}).name || 'Your own clothes';
     let body = '';
     if (pTab === 'play') {
-      const status = [poison > .02 ? pRow('Claw strain', poison >= .8 ? 'Severe: you’re losing hearts in fights. Put the claws away.' : poison >= .5 ? 'Your healing factor has stopped working.' : 'Builds up while you hold the claws, fades when you don’t.', '', '', bar(poison, '#3CE870') + `<small>${Math.round(poison * 100)}%</small>`) : '',
-        armHurt() ? pRow('Burned arm', `Your hits do ${Math.round((1 - armFactor()) * 100)}% less damage. Heals in ${Math.floor(armLeft() / 864e5)}d ${Math.floor(armLeft() % 864e5 / 36e5)}h.`, '', '', bar(1 - armLeft() / ARM_TIME, '#FF8A2E')) : '', afStatusRow()].join('');
+      const status = [armHurt() ? pRow('Burned arm', `Your hits do ${Math.round((1 - armFactor()) * 100)}% less damage. Heals in ${Math.floor(armLeft() / 864e5)}d ${Math.floor(armLeft() % 864e5 / 36e5)}h.`, '', '', bar(1 - armLeft() / ARM_TIME, '#FF8A2E')) : '', afStatusRow()].join('');
       body = `<div class="ptiles">${pTile('look', '👕', 'Style', esc(wearing))}${typeof phoneOpen === 'function' ? pTile('phone', '📱', 'Phone', 'Messages, Flock, the map') : ''}${pTile('pov', '🎥', tpv ? 'Third person' : 'First person', 'Switch the camera (V)')}${pTile('photo', '📷', 'Photo mode', 'Filters and a picture (P)')}${pTile('brief', '📄', 'At a glance', 'A one-page summary')}${pTile('ptab:travel', '◎', 'Travel', 'Go somewhere you’ve been')}</div>`
         + (EV && EV.k !== 'cv' ? pRow('You’re in an event', '', 'evleave', 'Leave') : '') + (A ? pRow('You’re in a fight', '', 'leave', 'Leave the fight') : '')
         + (status ? `<h3>Status</h3>${status}` : '');
@@ -7916,7 +7914,14 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       + pRow('Fancy city graphics', 'Bloom, colour grading, haze and sun shadows in Bangalore. Prettier, much heavier.', 'fancy', fancyFx ? 'On' : 'Off')
       + pRow('Other visitors', 'See other people exploring as ghosts. Shares only your position, area and fight hits, never your name.', 'mp', mpOn ? 'On' : 'Off')
       + (snapState ? pRow('The snap', 'Creatures and weapons are dust, and your room is wrecked.', 'unsnap', 'Undo it') : '')
-      + pRow('Reset everything', 'Beaten creatures, unlocked weapons, your inventory, wear and poisoning.', 'reset', 'Reset');
+      + pRow('Reset everything', 'Beaten creatures, unlocked weapons, your inventory and weapon wear.', 'reset', 'Reset')
+      + `<h3>Controls</h3>${(fine ? [['W A S D', 'Walk (arrow keys work too)'], ['Drag', 'Look around (click to lock the mouse)'], ['Shift', 'Run · nitro in a fast car'], ['Space', 'Jump'], ['C', 'Crouch · dive under water'], ['E', 'Talk, use a counter, get in a car, climb a ladder'], ['Click', 'Use whatever you point at: doors, dots, the laptop'], ['F', 'Punch · the season’s tool'], ['Click / right-click', 'In a fight: attack · block'], ['Q · R', 'Swap gun and melee · reload'], ['1–9 · wheel', 'Pick a weapon from your bar'], ['V', 'First or third person · chase camera when driving'], ['M', 'Phone'], ['N', 'Scanner (Season 1)'], ['B', 'Pay bail, in a cell'], ['Esc', 'Menu, or close what’s open']]
+          : [['Left stick', 'Walk'], ['Drag', 'Look around'], ['Tap', 'Use whatever you tap: doors, dots, the laptop'], ['Buttons', 'Jump, Phone, Style and the menu stay on screen; Punch, Fire, Swing, Scan and Nitro appear when they’re useful'], ['Two fingers', 'Never needed: everything has a button']]).map(([k, t]) => `<div class="pctl"><kbd>${k}</kbd><span>${t}</span></div>`).join('')}`
+      + `<h3>Help</h3><div class="phelp"><p><b>What this is.</b> Rayan Upadhyay’s personal site, built as a room you can walk round. Everything about him is here: click the glowing dots or use the dock at the bottom for About, Research, Projects, Music, Writing and Contact.</p>
+        <p><b>Rather read a normal page?</b> “Simple version” (top right) has all the same content as a plain page, and “At a glance” in the menu is the one-page summary.</p>
+        <p><b>The city.</b> Step out of the room (or use Travel) and there’s a whole Bangalore to explore: a new Season every four weeks with its own story and fights, jobs, shops, homes to buy, a phone with messages and maps, side quests and things to find. The phone’s Season and Explore apps tell you what to do next.</p>
+        <p><b>Saving.</b> Your progress lives in this browser only. Clear your site data and it starts again.</p>
+        <p><b>Stuck?</b> Go home (top right) always gets you back. Reduce effects (above) helps on slow phones and laptops.</p></div>`;
     pauseBox.innerHTML = `<div class="phd"><i class="pav" style="background:var(--sun)">${esc(nm[0] || 'T')}</i><span><b>${A ? 'Fight paused' : esc(nm)}</b><small>${si ? `Season ${si.n} · ${esc(si.name)} · week ${si.week}` : 'Paused'}</small></span><button class="pres" type="button" data-pa="close">Resume ▶</button><button class="close" type="button" data-pa="close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
       <div class="pmain"><nav class="pnav">${PTABS.map(([k, n, ic]) => `<button type="button" data-ptab="${k}" class="${pTab === k ? 'on' : ''}"><i>${ic}</i>${n}</button>`).join('')}</nav><div class="pbody">${body}</div></div>`;
   }
@@ -7944,17 +7949,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     renderer.shadowMap.enabled = fine && !lowFx && GOV.lvl < 4;
     [scene, lairScene, world, roofScene, spaceScene].forEach(sc => sc && sc.traverse(o => { if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => m.needsUpdate = true); }));
   }
-  // runs every frame: poisoning, the bar on the right, the menu button and the weapon in your hand
-  let poisonSaveT = 0, poisonWarned = 0;
+  // runs every frame: the bar on the right, the menu button and the weapon in your hand
   function inventoryFrame(dt){
     if (!entered) return;
-    const clawsOut = held === 'claws' && !dustedWeapon('claws');
-    poison = clamp(poison + (clawsOut ? dt / 300 : -dt / 180), 0, 1);
-    if ((poisonSaveT -= dt) <= 0) { poisonSaveT = 2; try { localStorage.setItem('ru-poison', poison.toFixed(3)); } catch (e) {} }
-    const lvl = poison >= .8 ? 2 : poison >= .5 ? 1 : 0;
-    if (lvl > poisonWarned) say(lvl === 2 ? 'Severe claw strain! You\u2019ll lose hearts in fights. Put the claws away for a while.' : 'Claw strain: your healing factor has stopped working.', 4200);
-    poisonWarned = lvl;
-    poisonFx.style.opacity = poison >= .4 ? Math.min(1, (poison - .4) * 1.6) : 0;
     if (hotEl.hidden !== (!inv.length || !!EV)) renderHotbar();
     if (menuBtn.hidden) { menuBtn.hidden = false; povBtn.hidden = false; povBtn.textContent = tpv ? '1st person' : '3rd person'; }
     if (!A) idleView();
@@ -11747,7 +11744,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     decor(P, g);
     const L = LVL.h_mansion2 = { id: 'h_mansion2', y: HRY, drive: false, rects: [[U.x - hw + .3, U.x + hw - .3, U.z - hd + .3, U.z + hd - .3]], solid: sol, exits: [{ x: U.x + hw - 1.2, z: U.z + hd - 5.8, r: .55, to: 'h_mansion', at: [R.x + R.w / 2 - 2.7, R.z + R.d / 2 - .9], yaw: Math.PI / 2, fade: true, msg: 'Down the stairs.' }] };
     HRM.mansion2 = { g, L, R: Object.assign({}, U, { name: 'upstairs at Hillcrest' }) };
-    return [U.x + hw - 1.2, U.z + hd - 6.9];
+    return [U.x + hw - 3.6, U.z + .5];  // clear floor beside the stairwell (not in the reading chair), well away from the way down
   }
   // ---------- the rooms you live in: every home you can buy has its own furnished room ----------
   // Each room is a level (LVL['h_<id>'], like the jail) far under the map, built once by hroomBuild with the street's way in
@@ -12381,13 +12378,14 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     if (F) { const wall = F.children.find(o => o.isMesh && o.geometry.parameters && o.geometry.parameters.width === 40 && Math.abs(o.position.z - 14.1) < .01); if (wall) { wall.visible = false; const wm = wall.material; box(22.1, 4.2, .3, wm, -8.95, 2.1, 14.1, F); box(16.1, 4.2, .3, wm, 11.95, 2.1, 14.1, F); box(1.6, 1.4, .3, wm, 3, 3.5, 14.1, F); }
       F.children.forEach(o => { if (o.isMesh && Math.abs(o.position.x - 3) < .01 && Math.abs(o.position.z - 13.95) < .05) o.visible = false; });
       const P = [], so = r => FLAT.solid.push(r);
-      P.push(B3(11.2, .04, 12.6, 0xB08A5A, 3, .02, 20.8), B3(11.2, .06, 12.6, 0xF4F1E8, 3, 4.12, 20.8), B3(.2, 4.2, 12.6, 0xE8DCC8, -2.8, 2.1, 20.8), B3(.2, 4.2, 12.6, 0xE8DCC8, 8.8, 2.1, 20.8), B3(.2, 4.2, 5.5, 0xE8DCC8, 5, 2.1, 17.3));
+      P.push(B3(11.2, .04, 13.3, 0xB08A5A, 3, .035, 20.45),  // reaches the wall at the door (no gap onto the city below) and sits 1.5 cm above the tower's own floor (no flicker)
+         B3(11.2, .06, 12.6, 0xF4F1E8, 3, 4.12, 20.8), B3(.2, 4.2, 12.6, 0xE8DCC8, -2.8, 2.1, 20.8), B3(.2, 4.2, 12.6, 0xE8DCC8, 8.8, 2.1, 20.8), B3(.2, 4.2, 5.5, 0xE8DCC8, 5, 2.1, 17.3));
       P.push(B3(3.2, .7, 1, 0x5A6E8A, -.8, .35, 19), B3(3.2, .7, .3, 0x5A6E8A, -.8, .85, 18.6)); so([-2.4, .8, 18.4, 19.5]); so([4.9, 5.1, 14.5, 20.05]); P.push(B3(1.4, .4, .8, 0x6A4E3A, -.8, .2, 21)); so([-1.5, -.1, 20.6, 21.4]);
       P.push(B3(2.4, .5, .5, 0x2A2D33, -.8, .25, 23.8), B3(2.2, 1.2, .08, 0x16181D, -.8, 1.2, 23.9)); so([-2, .4, 23.5, 24.1]); P.push(B3(.5, 2.2, 2, 0x6A4E3A, -2.4, 1.1, 16)); so([-2.7, -2.1, 15, 17]);
-      P.push(B3(4.8, .03, 3.4, 0x7A3A3A, -.8, .03, 21.2));
+      P.push(B3(4.8, .03, 3.4, 0x7A3A3A, -.8, .07, 21.2));
       P.push(B3(.7, .9, 4.6, 0xEEF1F5, 8.3, .45, 17.2), B3(.72, .05, 4.6, 0x3A3D44, 8.3, .92, 17.2), B3(.8, 1.9, .8, 0xDCE3EA, 8.2, .95, 20.2), B3(.5, .04, .4, 0x16181D, 8.3, .95, 16), B3(.4, .1, .3, 0xB8BCC4, 8.3, .92, 18.4)); so([7.9, 8.8, 14.9, 19.5]); so([7.8, 8.8, 19.8, 20.6]);
       P.push(B3(1.6, .06, 1, 0x8A6B4A, 5.8, .78, 22.5), C3(.06, .76, 0x2A2D33, 5.8, .38, 22.5, 6)); so([5, 6.6, 22, 23]); [[5.1, 22.5], [6.5, 22.5]].forEach(([x, z]) => P.push(B3(.45, .45, .45, 0x6A4E3A, x, .23, z)));
-      P.push(B3(11.2, .04, 2.2, 0xC8BCA4, 3, .02, 26.1), B3(11.2, .45, .16, 0xE8DCC8, 3, .225, 27.2), B3(11.2, .06, .1, 0x2A2D33, 3, 1.05, 27.2), ...Array.from({ length: 29 }, (_, i) => B3(.03, .6, .03, 0x2A2D33, -2.6 + i * .4, .75, 27.2)), B3(.12, 3, .12, 0x5A5E68, -2.6, 1.5, 25), B3(.12, 3, .12, 0x5A5E68, 8.6, 1.5, 25), B3(11.2, .12, .12, 0x5A5E68, 3, 3, 25));
+      P.push(B3(11.2, .04, 2.2, 0xC8BCA4, 3, .045, 26.1), B3(11.2, .45, .16, 0xE8DCC8, 3, .225, 27.2), B3(11.2, .06, .1, 0x2A2D33, 3, 1.05, 27.2), ...Array.from({ length: 29 }, (_, i) => B3(.03, .6, .03, 0x2A2D33, -2.6 + i * .4, .75, 27.2)), B3(.12, 3, .12, 0x5A5E68, -2.6, 1.5, 25), B3(.12, 3, .12, 0x5A5E68, 8.6, 1.5, 25), B3(11.2, .12, .12, 0x5A5E68, 3, 3, 25));
       P.push(C3(.3, .5, 0xB8906A, -2, .25, 26.6, 10), S3(.45, 0x3F7A44, -2, .8, 26.6), C3(.3, .5, 0xB8906A, 8, .25, 26.6, 10), S3(.45, 0x3F7A44, 8, .8, 26.6), B3(.5, .45, .5, 0xF4F1E8, 3, .23, 26.3)); so([-2.4, -1.6, 26.2, 27]); so([7.6, 8.4, 26.2, 27]);
       // a home, not a showroom: a bed, a desk, books, pictures, curtains, washing on the line, a fan and warm lights
       P.push(B3(2.2, .4, 1.4, 0x6A4E3A, 7.5, .2, 24.2), B3(2.1, .2, 1.35, 0xEEF1F5, 7.5, .5, 24.2), B3(.5, .15, 1.1, 0xFFFFFF, 8.35, .67, 24.2), B3(1.3, .06, 1.38, 0x2E5A9A, 6.95, .62, 24.2), B3(.08, .9, 1.4, 0x5A4632, 8.62, .65, 24.2)); so([6.4, 8.7, 23.45, 24.95]);
@@ -12397,7 +12395,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       P.push(B3(.03, .7, 1, 0xF4F1E8, 8.68, 1.9, 24.2), B3(.035, .6, .9, 0x3C7CA8, 8.67, 1.9, 24.2));
       P.push(B3(.7, 3, .1, 0xC8864A, -2.25, 1.6, 25.05), B3(.7, 3, .1, 0xC8864A, 8.25, 1.6, 25.05), B3(11, .05, .05, 0x8A8F99, 3, 3.15, 25.05));
       P.push(B3(.015, .015, 1.9, 0xEEF1F5, -2.45, 2.8, 26.1)); [[25.4, 0xC8102E], [25.9, 0x2E5A9A], [26.4, 0xF2C230], [26.85, 0x1F7A45]].forEach(([z, c]) => P.push(B3(.02, .55, .4, c, -2.45, 2.48, z)));  // the washing hangs along the side wall, above head height, not across the view
-      P.push(B3(.9, .4, .3, 0x6A4E3A, 1.4, .2, 15), B3(1.1, .01, .7, 0x8A6B4A, 3, .045, 15.2), C3(.15, .25, 0xC9CFD8, 8.3, 1.08, 16.1, 12), B3(.05, .06, .05, 0x16181D, 8.3, 1.24, 16.1), B3(.12, .5, 1.2, 0x8A6B4A, 8.72, 1.6, 17.6)); so([.9, 1.9, 14.8, 15.2]);
+      P.push(B3(.9, .4, .3, 0x6A4E3A, 1.4, .2, 15), B3(1.1, .01, .7, 0x8A6B4A, 3, .07, 15.2), C3(.15, .25, 0xC9CFD8, 8.3, 1.08, 16.1, 12), B3(.05, .06, .05, 0x16181D, 8.3, 1.24, 16.1), B3(.12, .5, 1.2, 0x8A6B4A, 8.72, 1.6, 17.6)); so([.9, 1.9, 14.8, 15.2]);
       for (let k = 0; k < 6; k++) P.push(C3(.04, .1, [0xC8102E, 0xF2C230, 0x8A4A1E, 0x1F7A45, 0xE07A1E, 0xEEF1F5][k], 8.6, 1.42 + (k % 2) * .25, 17.2 + (k >> 1) * .35, 8));
       decor(P, F);
       [[3, 18.5], [3, 23.5]].forEach(([x, z]) => { const l = new THREE.PointLight(0xFFD9A8, .7, 13, 2); l.position.set(x, 3.6, z); F.add(l); const t = new THREE.Mesh(new THREE.BoxGeometry(1.2, .05, .05), new THREE.MeshBasicMaterial({ color: 0xF4FBFF })); t.position.set(x, 4.05, z); F.add(t); });
