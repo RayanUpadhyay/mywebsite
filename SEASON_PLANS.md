@@ -103,6 +103,7 @@ One idea runs through every season and every villain: **a debt**. Somebody alway
 | Ssera backs into the rift light: “We came here running.” | S7 finale | S13: the rift threw her back into her wreck; she's the beacon, and she ran from Prime |
 | A Vashk beacon on a frequency Prime watches | S12 | S13: it leads you home, to Ssera and the Splinter |
 | Ssera's mothership in the Far Range | S7 trace | S13: the Splinter is still on board |
+| A half-built suit under a dust sheet on the garage ramp, wings folded, with "needs a power cell" on a note | S6 to S8 (add it to the garage once the boost pack and the Kite exist) | S13: the Kestrel, finished with a Vashk power cell, and your first flight |
 | The Splinter | S13 | S15: it's how you kill Prime in week two |
 | Prime collected your Bangalore's people, alive | S13 finale | S15: they're inside what the Collector is owed |
 
@@ -164,7 +165,7 @@ The 3D world, the simple view, the side panel, the phone, the HUD and the fonts 
 | 10 | **Skyline** (Phase 2 · Chapter 2) | 28 Jul – 24 Aug 2027 | Prime's viceroy lifts New Bangalore's districts into the sky, people and all, as tribute. Learn to counter, glide between floating islands, and meet this world's Keeper. Ends with a grey dust rotting the city's farms. | Baron Altitude, Prime's viceroy | Glider | An anchored sky island with New Bangalore's Keeper | Sky Diver / Updraft / Baron Altitude |
 | 11 | **Harvest** | 25 Aug – 21 Sep 2027 | A food shortage; farms spread across the island. | The Blight (rot) | Farming | New farmland | Farmer / Scarecrow / The Blight |
 | 12 | **To be re-planned** (Neon Nights moved to Season 9) | 22 Sep – 19 Oct 2027 | – | – | – | – | – |
-| 13 | **Homecoming** (replaces The Drought) | 20 Oct – 16 Nov 2027 | You go back to your own Bangalore, alone and with no signal, for the Splinter: the weapon the Vashk built to kill Prime, still in Ssera's wrecked ship. Everyone is gone, and you meet no one from home. The distress beacon that led you there is Ssera herself, alive and dying in the wreck. She tells you Prime didn't kill your people, he collected them, and spends the last of her life so you can get back to New Bangalore. | Prime's collectors, and the Warden guarding the wreck | The Splinter | A sealed rift door on New Bangalore's waterfront | Homecomer / Unlisted / Warden's Shell |
+| 13 | **Homecoming** (replaces The Drought) | 20 Oct – 16 Nov 2027 | You go back to your own Bangalore, alone and with no signal, for the Splinter: the weapon the Vashk built to kill Prime, still in Ssera's wrecked ship. Everyone is gone, and you meet no one from home. The distress beacon that led you there is Ssera herself, alive and dying in the wreck. She tells you Prime didn't kill your people, he collected them, and spends the last of her life so you can get back to New Bangalore. | Prime's collectors, and the Warden guarding the wreck | The Splinter, and the Kestrel (a flight suit you built and finally finish) | A sealed rift door on New Bangalore's waterfront | Homecomer / Unlisted / Warden's Shell |
 | 14 | **Festival of Lights** | 17 Nov – 14 Dec 2027 | An island-wide lantern festival. | The Snuffer | Fireworks you can launch | Lantern trees | Lantern Robe / Firework Suit / The Snuffer |
 | 15 | **Convergence** (Phase 2 finale) | 15 Dec 2027 – 11 Jan 2028 | You kill Prime in week two, as a surprise. Then what Prime was feeding arrives: the Collector of Worlds, with echoes of every villain you've beaten. Your final choice: close the lock yourself and become this world's Keeper (the cycle restarts, and you're the stranger at the pier), or refuse and let someone else pay. | {N} Prime (killed early), then the Collector of Worlds | Every tool you've earned | How the cycle restarts | Multiverse Traveller / Collector's Armour (plus The Keeper for owning every skin) |
 
@@ -878,28 +879,41 @@ The original list (The Rift, Harvest, Festival of Lights) was written for Bangal
   - *“We built it after he took our first world. We never got close enough to use it.”*
 - It pays off her Season 7 last line, *“We came here running.”*
 
+### The suit you built: the Kestrel
+- **What it is:** a flight suit you started building yourself in Phase 1, in the garage under your tower, from what was left of the boost pack and the Kite (Season 6): a fitted armoured suit in dark navy and brushed steel, with carbon-fibre wings that fold flat against the back and snap open, jets in the wings and boots, and an amber visor.
+- **Original, like every skin:** the feel of a winged flight suit from superhero films (wings, jets, armour), but its own design: no star, no shield, no red, white and blue.
+- **Why it was never finished:** it needed a power cell nobody on Earth could make, and then the Incursion hit. It's still on the garage ramp under a dust sheet, exactly where you left it, with your notes taped to the workbench.
+- **What finishes it:** the Vashk power cell from Ssera's ship (Part 3). Neel's notes on Vashk cells (Part 2) tell you it'll fit.
+- **How it flies:**
+  - take off from anywhere outdoors, hover, and fly in any direction;
+  - fold the wings to dive, and open them to glide and pull up;
+  - a boost burst on a short cooldown, and an energy meter that recharges while you glide or stand still;
+  - land on any roof, and fight from the air (the gun and the Splinter work in flight).
+
 ### Parts (outline)
 | Week | Part | What happens |
 |---|---|---|
 | 1 · 20 Oct | Return | The seam, the Crash Isle pier, the dead core. The walk into an empty city with no signal. Your old room. The first collector drones, and learning to stay out of their scans. The beacon, faint, from somewhere north. |
-| 2 · 27 Oct | The Empty City | Gather what you need from the places you knew: the garage under your tower, Neel's lab (his notes on Vashk power cells), Frank's camp and Rosa's stall, all abandoned mid-moment. Climb the Meteor Watch to take a bearing on the beacon. Prime's tags are on everything. |
-| 3 · 3 Nov | The Wreck | Cross the Far Range to Ssera's mothership, past the collectors. **The Warden**, the machine Prime left guarding the wreck, in a boss fight inside the ship. In the cargo bay, the beacon's source: Ssera, alive. The reveal, and where everyone went. |
-| 4 · 10 Nov | Leaving (finale) | The Splinter needs the meteor core to wake, and waking it calls every collector in the red city. Ssera holds the ship's last power on the collectors, which burns out what's keeping her alive, so you can reach the seam: *“Go. I ran from him long enough.”* Last shot: New Bangalore. The Splinter's readout locks onto one signal, Prime's. Under it, thousands of faint ones: everyone he collected, still alive. |
+| 2 · 27 Oct | The Empty City | Gather what you need from the places you knew. In the garage under your tower, under a dust sheet: **the Kestrel**, the flight suit you never finished. Neel's lab has his notes on Vashk power cells, the one thing it was missing. Then Frank's camp and Rosa's stall, all abandoned mid-moment. Climb the Meteor Watch to take a bearing on the beacon. Prime's tags are on everything. |
+| 3 · 3 Nov | The Wreck | Cross the Far Range to Ssera's mothership, past the collectors. **The Warden**, the machine Prime left guarding the wreck, in a boss fight inside the ship. In the cargo bay, the beacon's source: Ssera, alive. The reveal, and where everyone went. She gives you a power cell from the ship's core. Back in the garage, the Kestrel wakes up: **first flight**, out of the ramp and over the empty city. |
+| 4 · 10 Nov | Leaving (finale) | The Splinter needs the meteor core to wake, and waking it calls every collector in the red city. You fly the Splinter out of the Far Range in the Kestrel, with the collectors' drones chasing you through the valleys and over the fused red city. Ssera holds the ship's last power on them, which burns out what's keeping her alive, so you can reach the seam: *“Go. I ran from him long enough.”* Last shot: New Bangalore. The Splinter's readout locks onto one signal, Prime's. Under it, thousands of faint ones: everyone he collected, still alive. |
 
 ### How it plays
 - **Stealth before fighting:** the collectors only turn hostile once they've scanned you. Breaking line of sight, hiding in cars and doorways, and the old scanner (Season 1) jamming them all keep you unlisted.
 - **Navigating without a phone:** landmarks, the beacon's pulse on your HUD when you face the right way, and the Meteor Watch's view.
+- **Flight (from Part 3):** the Kestrel turns the empty city into somewhere you can cross in seconds, and the finale into a chase through the air. Collector drones can follow you up; walkers can't.
 - **Old tools come home:** the scanner, the boat, the rope launcher, the Kite. Every Phase 1 tool has a use in the empty city.
 - **Places that remember:** walking into somewhere a Phase 1 character used to be (Frank's camp, Rosa's stall, the Keeper's pier) plays a short sound of how it used to be, then cuts to the quiet. You hear the place, never the people.
 - **The Splinter (kept):** a weapon with one purpose, which pays off in Season 15. Outside the finale it's shown, not used.
 
 ### What you keep
 - **The Splinter:** it's how you kill Prime in Season 15's week two.
+- **The Kestrel (flight suit):** you keep it for the rest of Phase 2, so Seasons 14 and 15 can use flight across New Bangalore. Wearing it is a skin as well as a tool.
 - **Skins:** Homecomer (finish the story), Unlisted (the challenge: cross the Far Range without being scanned) and Warden's Shell (beat the Warden).
 - **The map trace (in New Bangalore, for good):** a sealed rift door on the waterfront that hums when you walk past.
 
 ### Still to plan
-- How Season 12 plants the beacon, the collectors' and the Warden's look, Ssera's two or three scenes (short, quiet, and true to the dialogue rules), and the trailer.
+- How Season 12 plants the beacon, the Kestrel's final look and flight feel, the collectors' and the Warden's look, Ssera's two or three scenes (short, quiet, and true to the dialogue rules), and the trailer.
 - **The build:** it needs the Phase 1 Bangalore code kept in `index.html` after Season 9 (not deleted when New Bangalore arrives), with no crowd or traffic, a wrecked set dressing (the fused red city, rift cliffs, abandoned cars and stalls), the phone set to No service, and the old bedroom. That's much cheaper than a new map.
 
 ## Phase 2 · Chapter 7 (Season 15) · Convergence (15 December 2027 – 11 January 2028)
