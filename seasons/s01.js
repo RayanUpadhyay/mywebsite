@@ -659,6 +659,45 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
     const spots = [[6.4, -100], [-49, 6.4], [116, 61.4], [-104, 6.4], [61.4, 170], [-159, -120], [226, 6.4], [6.4, 214]]; let n = 0;
     spots.forEach(([x, z]) => { try { if (!R.blrValid(...R.toLocal(x, z))) return; } catch (e) { return; } const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = n++ * 1.1; const P = [R.B3(.06, 1.6, .06, 0x2A2D33, -.42, .8, 0), R.B3(.06, 1.6, .06, 0x2A2D33, .42, .8, 0)]; R.decor(P, g); const m = new THREE.Mesh(new THREE.PlaneGeometry(.9, 1.12), new THREE.MeshBasicMaterial({ map: T, side: THREE.DoubleSide })); m.position.y = 1.15; g.add(m); g.traverse(o => o.userData.noPick = true); posters.add(g); });
   }
+  // ---------- scrapper camps: small fights across the city, once you've beaten the ambush ----------
+  // After the beach, the Salvager's crews spread out and set up camps at crossroads all over the city, stripping what the
+  // meteor knocked loose. Each is a short fight (R.fight) round a pile of crates and glowing scrap; clearing one pays and
+  // the pile goes. The camps sit on road crossings, which are open enough to fight in. Saved in st.camps.
+  st.camps = Array.isArray(st.camps) ? st.camps : [];
+  const CAMP_DEF = [
+    { id: 'k1', n: 'the scrapyard by the lake', c: [-165, -55], mix: ['ss_scrap', 'ss_scrap', 'ss_drone'] },
+    { id: 'k2', n: 'the market crossing', c: [55, 110], mix: ['ss_crew', 'ss_crew', 'ss_scrap'] },
+    { id: 'k3', n: 'the east junction', c: [275, -110], mix: ['ss_drone', 'ss_drone', 'ss_drone', 'ss_scrap'] },
+    { id: 'k4', n: 'the south crossroads', c: [-55, 275], mix: ['ss_scrap', 'ss_crew', 'ss_crew', 'ss_drone'] },
+    { id: 'k5', n: 'the temple road', c: [165, -220], mix: ['ss_scrap', 'ss_scrap', 'ss_scrap', 'brute'] },
+    { id: 'k6', n: 'the old mill corner', c: [-275, 165], mix: ['ss_crew', 'ss_crew', 'ss_drone', 'ss_drone', 'brute'] }
+  ];
+  const CAMP_LINE = ['Tell the boss the rock-kid is here.', 'This is salvage. Salvage is legal. Mostly.', 'He pays by the kilo. You’re costing us kilos.', 'Nobody said anything about a fight.', 'Grab what you can and run.', 'Last one standing gets the bonus.'];
+  let camps = null;
+  function campsBuild(){
+    if (camps || !R.BL.mapG) return; camps = [];
+    const ok = (x, z) => { try { return R.blrValid(...R.toLocal(x, z)); } catch (e) { return false; } };
+    CAMP_DEF.forEach((C, i) => { let at = null; for (let r = 0; r <= 165 && !at; r += 55) for (const [dx, dz] of [[0, 0], [r, 0], [-r, 0], [0, r], [0, -r], [r, r], [-r, -r], [r, -r], [-r, r]]) { const x = C.c[0] + dx, z = C.c[1] + dz; if (Math.abs(x) > 340 || Math.abs(z) > 340) continue; if ([[0, 0], [7, 0], [-7, 0], [0, 7], [0, -7]].every(([a, b]) => ok(x + a, z + b))) { at = [x, z]; break; } }
+      if (!at) return; const g = new THREE.Group(); g.position.set(at[0] + 3.5, 0, at[1] + 3.5); R.BL.mapG.add(g); const P = [R.B3(1.2, .9, .9, 0x6A5A3A, 0, .45, 0), R.B3(1, .8, .8, 0x5A4A2A, 1.1, .4, .6), R.B3(.9, .7, .9, 0x6A5A3A, -.4, 1.25, .2)]; R.decor(P, g);
+      for (let k = 0; k < 3; k++) { const m = new THREE.Mesh(new THREE.OctahedronGeometry(.22, 0), new THREE.MeshStandardMaterial({ color: 0xFF7A2A, emissive: 0xFF5A1A, emissiveIntensity: 1.2 })); m.position.set(-.8 + k * .5, .25, -.8); g.add(m); }
+      g.traverse(o => o.userData.noPick = true);
+      const k = 'camp_' + C.id, o = FIGHT[k] = { id: k, title: 'Scrapper camp', where: C.n, at, goal: 'Clear the camp', cover: [[3.5, 3.5, 'none', 1.6], [-5, 4, 'crate'], [5, -4, 'crate']], units: FIGHT.amb.units,
+        intro: `A scrapper crew at ${C.n}. ${CAMP_LINE[i]}`,
+        setup(F){ C.mix.forEach((h, j) => { const a = j / C.mix.length * Math.PI * 2; F.add(h, Math.cos(a) * 9, Math.sin(a) * 9, h === 'ss_crew' ? { cover: 1 } : undefined); }); },
+        hud(F){ return `Scrapper camp · ${F.foes().length} left`; },
+        step(dt, F){ if (!F.foes().length) F.win(); },
+        end(won){ if (won) { if (!st.camps.includes(C.id)) st.camps.push(C.id); save(); unBeacon(k); g.visible = false; try { R.cash && R.cash(600, 'Scrapper camp cleared'); } catch (e) {} const n = st.camps.length;
+          setTimeout(() => showCard('CAMP CLEARED', `${n} of ${CAMP_DEF.length}`, n === CAMP_DEF.length ? 'Every camp is down. The Salvager will have noticed. +₹3,000.' : '+₹600. The scrap goes back to the people it fell on.', 3800), 1200);
+          if (n === CAMP_DEF.length) { try { R.cash && R.cash(3000, 'Every scrapper camp cleared'); } catch (e) {} setTimeout(() => R.say('📻 The Salvager: “Six crews. You know those were people with families? …Never mind. I’ll hire more.”', 5200), 5600); } }
+          else lost(k); } };
+      if (st.camps.includes(C.id)) g.visible = false; camps.push({ C, at, k, g }); });
+  }
+  function campStep(mx, mz, free){
+    if (!st.f.amb || !camps) { if (camps) camps.forEach(E => unBeacon(E.k)); return; }
+    camps.forEach(E => { if (st.camps.includes(E.C.id)) { unBeacon(E.k); return; } const b = beacon(E.k, E.at, 'SCRAPPERS', 0xFF9A2A); if (b) b.visible = true;
+      const d = Math.hypot(mx - E.at[0], mz - E.at[1]); if (d > 18) armed[E.k] = true; if (armed[E.k] !== false && free && d < 9) { armed[E.k] = false; R.fightReg(FIGHT[E.k]); R.fight(FIGHT[E.k]); } });
+  }
+  function campNearest(){ if (!camps) return null; const [mx, mz] = R.toMap(R.pos.x, R.pos.z); return camps.filter(E => !st.camps.includes(E.C.id)).sort((a, b) => Math.hypot(a.at[0] - mx, a.at[1] - mz) - Math.hypot(b.at[0] - mx, b.at[1] - mz))[0] || null; }
   // ---------- every frame ----------
   let streetT = 0;
   function step(dt, now){
@@ -666,7 +705,7 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
     if (!R.inWorld) { roomHint(dt); streakStep(dt); }
     if (talking && R.DLG && R.DLG.block && performance.now() > R.DLG.until + 1500) R.dlgNext();  // lines move on by themselves; click or Space to go faster
     const inB = R.inWorld && R.zone === 'blr';
-    if (inB && R.BLC.built) buildPosters();
+    if (inB && R.BLC.built) { buildPosters(); campsBuild(); }
     if (inB && R.BLC.built && st.intro) { buildSteam(); if (st.met) buildFrags(); }
     if (steam) steamStep(dt, t);
     if (CS) { if (!inB || R.busy) { csEnd(true); return; } csStep(dt); return; }
@@ -688,6 +727,7 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
     scanBtn.hidden = !(st.scanner && free && (frags && frags.some(Boolean) || c2 && c2.some(f => f.g || f.d) || c3 && !st.c3.done || FALL.cur && FALL.cur.landed));
     if (free) fragStep(); if (!R.busy) c2Step(dt);
     if (!R.busy) fallStep(dt, t, mx, mz, free);
+    if (!R.busy) campStep(mx, mz, free);
   }
   // ---------- the Season tab on the phone ----------
   function tab(){
@@ -697,6 +737,7 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
     return `<div class="phcard"><b>Season 1 · Landfall</b><small>Day ${S.day} of 28 · ${S.left} day${S.left === 1 ? '' : 's'} left. A meteor came down off the west coast.</small><div class="phrow"><button type="button" data-s1="video">▶ Watch the Season 1 trailer</button></div></div>${rows}
       <div class="phcard"><b>Boss fights</b>${FIGHTS_LIST.map(([k, n, how]) => `<small>${st.f[k] ? '✓' : '·'} ${n}: ${st.f[k] ? 'beaten' : how}</small>`).join('')}${st.f.for ? `<small>${st.f.forClean ? '✓' : '·'} Challenge: beat the Foreman without being spotted</small>` : ''}</div>
       ${st.intro ? `<div class="phcard"><b>Scenes</b><small>Watch them again (out on the street).</small><div class="phrow"><button type="button" data-s1-scene="trailer">▶ In-game trailer</button><button type="button" data-s1="replay">▶ Landfall</button>${SCENE_LIST.filter(([id]) => st.seen.includes(id)).map(([id, n]) => `<button type="button" data-s1-scene="${id}">▶ ${n}</button>`).join('')}</div></div>` : ''}
+      ${st.f.amb ? `<div class="phcard"><b>Scrapper camps</b><small>The Salvager’s crews have camps at crossroads across the city. Cleared: ${st.camps.length} of ${CAMP_DEF.length}.</small>${st.camps.length < CAMP_DEF.length ? '<div class="phrow"><button type="button" data-s1="camp">Pin the nearest camp</button></div>' : ''}</div>` : ''}
       <div class="phcard"><b>Fallout</b><small>Pieces of the meteor still fall on the city every few minutes. Follow the smoke and get there before the Salvager’s drone.</small><small>You: ${st.fall.got} · the Salvager: ${st.fall.lost}${st.fall.bonus ? ' · bonus earned' : ' · beat him to 5 for a bonus'}</small></div>
       <div class="phcard"><b>Tools</b><small>${st.scanner ? '✓ Scanner (yours to keep)' : 'Scanner: not yet'}</small></div>
       <div class="phcard" data-s1n><b>Your name: ${esc(R.heroName())}</b><div class="phrow"><button type="button" data-s1="name">Change it</button></div></div>`;
@@ -707,6 +748,7 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
   function wire(B){ B.querySelectorAll('[data-s1-scene]').forEach(b => b.onclick = () => { if (!(R.inWorld && R.zone === 'blr') || R.busy || R.DRV.on || R.DRV.lock || R.BL.lvl || !R.onGround()) return R.say('Go out onto the street to watch it again.', 2400); const id = b.dataset.s1Scene; if (id !== 'trailer') R.fightReg(FIGHT[id.split('_')[0]]); R.phoneClose(); setTimeout(() => scene(id, id === 'trailer' ? trailer() : SCN[id]()), 300); });
     const tv = B.querySelector('[data-s1="video"]'); if (tv) tv.onclick = () => { R.phoneClose(); if (R.video) R.video('seasons/s01-trailer.mp4'); };
     const rp = B.querySelector('[data-s1="replay"]'); if (rp) rp.onclick = () => { if (!(R.inWorld && R.zone === 'blr') || R.busy || R.DRV.on || R.DRV.lock || R.BL.lvl || !R.onGround()) return R.say('Go out onto the street to watch it again.', 2400); R.phoneClose(); setTimeout(() => csStart(true), 300); };
+    const cp = B.querySelector('[data-s1="camp"]'); if (cp) cp.onclick = () => { const E = campNearest(); if (!E) return R.say('Head out into the city first.', 2000); R.PH.wp = E.at.slice(); R.phoneClose(); R.say(`Pinned: the scrapper camp at ${E.C.n}.`, 2200); };
     const b = B.querySelector('[data-s1="name"]'); if (b) b.onclick = () => { const v = prompt('Your name (up to 16 characters):', R.heroName() === 'Traveller' ? '' : R.heroName()); if (v == null) return; if (v.trim() && !R.cleanName(v)) return R.say('Pick a different name.', 2000); R.setName(v); B.querySelector('[data-s1n] b').textContent = 'Your name: ' + R.heroName(); }; }
   // after the season: only what it left on the map. Crash Isle with its lit core, and its ferry stop
   if (opts && opts.past) return { step(dt, now){
@@ -714,5 +756,5 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
     if (isle) isleStep(dt, now / 1000); if (!inB) { dockBtn.hidden = true; return; }
     const [mx, mz] = R.toMap(R.pos.x, R.pos.z), free = !R.busy && !R.DRV.on && !R.DRV.lock && !R.BL.cine && !R.BL.lvl && R.onGround();
     dockBtn.hidden = !(free && isle && Math.hypot(mx - DOCK[0], mz - DOCK[1]) < 6); } };
-  return { step, tab, wire, debug: { get cs(){ return CS; }, FALL, fallStart, get posters(){ return posters; }, st, scan, get c2(){ return c2; }, get c3(){ return c3; }, goIsle, FIGHT, startFight, scene, SCN, get SC(){ return SC; }, fightStep, trailer: () => scene('trailer', trailer()) } };
+  return { step, tab, wire, debug: { get cs(){ return CS; }, FALL, fallStart, get camps(){ return camps; }, get posters(){ return posters; }, st, scan, get c2(){ return c2; }, get c3(){ return c3; }, goIsle, FIGHT, startFight, scene, SCN, get SC(){ return SC; }, fightStep, trailer: () => scene('trailer', trailer()) } };
 };
