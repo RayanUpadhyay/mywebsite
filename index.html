@@ -3356,6 +3356,9 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     // secret: unlock every season skin (try it on the laptop in the room)
     if ((c === 'sudo' && /^travel\s+--secret$/.test(arg.trim())) || c === 'xyzzy') { tone(392, .12, 'sine', .04); setTimeout(() => tone(587, .14, 'sine', .04), 140); setTimeout(() => tone(880, .3, 'sine', .04), 300);
       setTimeout(() => { try { secretGo(); } catch (e) {} }, 1600); return P('<span class="y">route found.</span> it isn’t on any map, and the map would like to keep it that way. hold on to something…'); }
+    if ((c === 'sudo' && /^unlock\s+--forever$/.test(arg.trim())) || c === 'kaleidoscope') { try { localStorage.setItem('ru-allskins', '1'); arsUnlockAll(); } catch (e) { return P('<span class="er">unlock: permission denied</span>'); }
+      tone(659, .1, 'square', .04); setTimeout(() => tone(880, .12, 'square', .04), 110); setTimeout(() => tone(1319, .22, 'square', .04), 230);
+      return P(`<span class="y">unlocked, permanently.</span> every suit, all ${Object.keys(SSKIN).length * Object.keys(SVAR).length} suit variants and all ${Object.keys(WSK).length} weapon skins are yours, including any that later seasons add. open Style › Skins.`); }
     if ((c === 'sudo' && /^money\s+--infinite$/.test(arg.trim())) || c === 'motherlode') { let on; try { on = cashInfinite(); } catch (e) { return P('<span class="er">money: the bank said no</span>'); }
       tone(on ? 880 : 330, .12, 'square', .04); setTimeout(() => tone(on ? 1320 : 220, .18, 'square', .04), 120);
       return P(on ? '<span class="y">ka-ching.</span> the bank\'s database just got a lot more generous. balance: ∞. (run it again to go back to being broke.)' : '<span class="y">audit complete.</span> the glitch is patched. balance: back to normal.'); }
@@ -10804,6 +10807,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const varOf = k => { const v = ARS.wvar && ARS.wvar[k]; return v && SVAR[v] && ARS.vars.includes(k + '_' + v) ? v : ''; };
   const skinOutfit = k => varOf(k) ? k + '_' + varOf(k) : k;
   function arsVar(k, v){ const id = k + '_' + v; if (!SSKIN[k] || !SVAR[v] || ARS.vars.includes(id)) return false; ARS.vars.push(id); arsSave(); say(`New variant: ${SSKIN[k].n} · ${SVAR[v].n}. Pick it in Style › Skins.`, 4200); tone(880, .2, 'triangle', .05, 1320); return true; }
+  // the secret `sudo unlock --forever` (or `kaleidoscope`): every suit, suit variant and weapon skin, now and in later seasons.
+  // The flag lives in its own key (ru-allskins), which nothing resets, and is re-applied on every load.
+  function arsUnlockAll(){ Object.keys(SSKIN).forEach(k => { if (!ARS.skins.includes(k)) ARS.skins.push(k); Object.keys(SVAR).forEach(v => { if (!ARS.vars.includes(k + '_' + v)) ARS.vars.push(k + '_' + v); }); }); Object.keys(WSK).forEach(k => { if (!ARS.wskOwn.includes(k)) ARS.wskOwn.push(k); }); arsSave(); try { if (typeof LAX !== 'undefined' && LAX) LAX.sig = ''; } catch (e) {} }
+  try { if (localStorage.getItem('ru-allskins') === '1') arsUnlockAll(); } catch (e) {}
   function varSet(k, v){ if (!SSKIN[k]) return; if (v && !ARS.vars.includes(k + '_' + v)) return; if (v) ARS.wvar[k] = v; else delete ARS.wvar[k]; arsSave(); idleShown = undefined; }
   // the wardrobe and the loadout, at the bottom of the phone's Season tab
   function arsTab(){

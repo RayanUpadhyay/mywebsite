@@ -126,11 +126,12 @@ Rayan Upadhyay · [GitHub](https://github.com/RayanUpadhyay)
 
 ## Secrets
 
-You found the repo, so you deserve a gift for checking it out. Two cheat codes:
+You found the repo, so you deserve a gift for checking it out. A few cheat codes:
 
 1. Open the laptop in the bedroom and go to the Terminal.
 2. Type `sudo wardrobe --all` (or `iddqd`) to unlock every season skin.
-3. Type `sudo money --infinite` (or `motherlode`) for infinite cash. Run it again to turn it off.
-4. Type `sudo travel --secret` (or `xyzzy`) to visit Lanternfall, a city that isn't on any map. Walk back through the glowing gate to get home.
+3. Type `sudo unlock --forever` (or `kaleidoscope`) to unlock every suit, every suit variant and every weapon skin for good, including any that later seasons add.
+4. Type `sudo money --infinite` (or `motherlode`) for infinite cash. Run it again to turn it off.
+5. Type `sudo travel --secret` (or `xyzzy`) to visit Lanternfall, a city that isn't on any map. Walk back through the glowing gate to get home.
 
 None of them show up in `help`. Keep it between us.
