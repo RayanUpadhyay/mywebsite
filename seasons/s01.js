@@ -700,8 +700,14 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
   function campNearest(){ if (!camps) return null; const [mx, mz] = R.toMap(R.pos.x, R.pos.z); return camps.filter(E => !st.camps.includes(E.C.id)).sort((a, b) => Math.hypot(a.at[0] - mx, a.at[1] - mz) - Math.hypot(b.at[0] - mx, b.at[1] - mz))[0] || null; }
   // ---------- every frame ----------
   let streetT = 0;
+  // weapon skins earned in this season, checked against the saved state (also after the season, for saves that earned them)
+  let wskT = 0;
+  function wskCheck(){ const n = performance.now(); if (n < wskT || !R.wskin) return; wskT = n + 2000;
+    if ((st.camps || []).length >= 3) R.wskin('scrap');
+    if (st.fall && (st.fall.got || 0) >= 10) R.wskin('meteor');
+    if (st.c3 && st.c3.done) R.wskin('crystal'); }
   function step(dt, now){
-    const t = now / 1000;
+    const t = now / 1000; wskCheck();
     if (!R.inWorld) { roomHint(dt); streakStep(dt); }
     if (talking && R.DLG && R.DLG.block && performance.now() > R.DLG.until + 1500) R.dlgNext();  // lines move on by themselves; click or Space to go faster
     const inB = R.inWorld && R.zone === 'blr';
@@ -752,6 +758,7 @@ body.s1cs::before,body.s1cs::after{content:"";position:fixed;left:0;right:0;heig
     const b = B.querySelector('[data-s1="name"]'); if (b) b.onclick = () => { const v = prompt('Your name (up to 16 characters):', R.heroName() === 'Traveller' ? '' : R.heroName()); if (v == null) return; if (v.trim() && !R.cleanName(v)) return R.say('Pick a different name.', 2000); R.setName(v); B.querySelector('[data-s1n] b').textContent = 'Your name: ' + R.heroName(); }; }
   // after the season: only what it left on the map. Crash Isle with its lit core, and its ferry stop
   if (opts && opts.past) return { step(dt, now){
+    wskCheck();
     const inB = R.inWorld && R.zone === 'blr'; if (inB && R.BLC.built) { buildIsle(); coreBeam(); addStop(); }
     if (isle) isleStep(dt, now / 1000); if (!inB) { dockBtn.hidden = true; return; }
     const [mx, mz] = R.toMap(R.pos.x, R.pos.z), free = !R.busy && !R.DRV.on && !R.DRV.lock && !R.BL.cine && !R.BL.lvl && R.onGround();
