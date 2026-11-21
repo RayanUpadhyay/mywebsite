@@ -6451,7 +6451,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // your inventory: weapons you've taken from the lair go with you everywhere
   let inv = [], held = null;
   try { inv = JSON.parse(localStorage.getItem('ru-inv') || '[]').filter(id => WEAPONS.some(w => w.id === id) && isUnlocked(id)); held = localStorage.getItem('ru-held') || null; } catch (e) {}
-  if (!inv.includes(held)) held = null;
+  // season weapons (ids like s1_blaster) live in ru-arsenal; whether you still own one is checked once that has loaded
+  const isSW = id => /^s\d_/.test(id || '');
+  if (!inv.includes(held) && !isSW(held)) held = null;
+  // everything you can hold: the lair weapons you took plus the season weapons you own (bought or won)
+  function invAll(){ const L = inv.filter(id => !dustedWeapon(id)); try { Object.keys(SSW).forEach(k => { if (ARS.own.includes(k)) L.push(k); }); } catch (e) {} return L; }
+  const wName = id => { const w = WEAPONS.find(x => x.id === id); if (w) return w.name; try { if (SSW[id]) return SSW[id].n; } catch (e) {} return 'Hands free'; };
   const saveInv = () => { try { localStorage.setItem('ru-inv', JSON.stringify(inv)); held ? localStorage.setItem('ru-held', held) : localStorage.removeItem('ru-held'); } catch (e) {} };
   // claw strain builds up while you hold the claws
   const poison = 0; try { localStorage.removeItem('ru-poison'); } catch (e) {}  // claw strain ("poisoning") is gone; the name stays at 0 for the fight code that still reads it
@@ -7012,7 +7017,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function mkWeapon(id){
     if (id === 'defib' || String(id).startsWith('thr_')) return kitMesh(id);
-    if (/^s1_/.test(id)) return ssWeaponMesh(id);
+    if (/^s\d_/.test(id)) return ssWeaponMesh(id);
     const g = new THREE.Group(), metal = (c) => mat(c, { metalness: .75, roughness: .3 });
     if (id === 'knife') { cyl(.018, .02, .12, mat(0x2A1E16), 0, 0, 0, g, 8); box(.03, .2, .006, metal(0xD8DEE4), 0, .16, 0, g); return g; }
     if (id === 'cleaver') { cyl(.02, .022, .13, mat(0x3A2A1E), 0, 0, 0, g, 8); box(.11, .17, .008, metal(0xC9CFD8), .035, .15, 0, g); box(.11, .015, .009, metal(0xEEF2F6), .035, .065, 0, g); return g; }
@@ -7419,11 +7424,12 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // what's in your hands (null = nothing)
   function hold(id, quiet){
     if (EV) return;
-    if (id && (!inv.includes(id) || dustedWeapon(id))) return;
+    if (id && isSW(id) ? A || !ARS.own.includes(id) : id && (!inv.includes(id) || dustedWeapon(id))) return;
     if (held === id) return;
     held = id; saveInv(); renderHotbar(); idleShown = undefined;
+    if (isSW(id)) arsEquip(id);
     if (A && !A.over) switchWeapon(id);
-    if (!quiet) { const w = WEAPONS.find(x => x.id === id); tone(520, .06, 'triangle', .04, 780); say(w ? `${w.name} in hand.` : 'Hands free.', 1400); }
+    if (!quiet) { tone(520, .06, 'triangle', .04, 780); say(id ? `${wName(id)} in hand.${armedPublic() ? ' Carrying it in the street is illegal: someone will call the police.' : ''}` : 'Hands free.', id && armedPublic() ? 2600 : 1400); }
   }
   function lairIdle(dt, now){
     const t = now / 1000;
@@ -7877,13 +7883,13 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   // ---------- inventory bar and pause menu ----------
   const hotEl = $('#hotbar'), pauseEl = $('#pauseEl'), pauseBox = $('#pauseBox'), menuBtn = $('#menuBtn');
   function renderHotbar(){
-    hotEl.hidden = !entered || !inv.length || !!EV;
-    hotEl.innerHTML = [null, ...inv].map((id, k) => { const w = id && WEAPONS.find(x => x.id === id), dz = id && dustedWeapon(id), c = id && condition(id);
-      return `<button type="button" data-h="${id || ''}" class="${held === id ? 'on' : ''}${dz ? ' dust' : ''}" title="${w ? esc(w.name) : 'Hands free'}"><kbd>${k}</kbd><span class="hn">${w ? esc(w.name) + (dz ? ' (dust)' : c.broken ? ' (broken)' : '') : 'Hands free'}</span></button>`; }).join('');
+    const all = invAll(); hotEl.hidden = !entered || !all.length || !!EV || !fine; if (typeof wwBtnSync === 'function') wwBtnSync();
+    hotEl.innerHTML = [null, ...all].slice(0, 10).map((id, k) => { const w = id && WEAPONS.find(x => x.id === id), c = w && condition(id);
+      return `<button type="button" data-h="${id || ''}" class="${held === id ? 'on' : ''}" title="${esc(wName(id))}"><kbd>${k}</kbd><span class="hn">${esc(wName(id))}${c && c.broken ? ' (broken)' : ''}</span></button>`; }).join('');
   }
   hotEl.addEventListener('click', e => { const b = e.target.closest('[data-h]'); if (b) hold(b.dataset.h || null); });
-  addEventListener('keydown', e => { if (!entered || /INPUT|TEXTAREA/.test(e.target.tagName) || pauseEl.classList.contains('on') || inWorld && zone === 'farm') return; if (/^[0-9]$/.test(e.key)) { const n = +e.key; if (n === 0) hold(null); else if (inv[n - 1]) hold(inv[n - 1]); } });
-  canvas.addEventListener('wheel', e => { if (!entered || !inv.length || inWorld && zone === 'farm') return; const list = [null, ...inv.filter(id => !dustedWeapon(id))], i = Math.max(0, list.indexOf(held)); hold(list[(i + (e.deltaY > 0 ? 1 : -1) + list.length) % list.length]); }, { passive: true });
+  addEventListener('keydown', e => { if (!entered || /INPUT|TEXTAREA/.test(e.target.tagName) || pauseEl.classList.contains('on') || inWorld && zone === 'farm') return; if (/^[0-9]$/.test(e.key)) { const n = +e.key, all = invAll(); if (n === 0) hold(null); else if (all[n - 1]) hold(all[n - 1]); } });
+  canvas.addEventListener('wheel', e => { if (!entered || !invAll().length || inWorld && zone === 'farm' || EV || typeof WW !== 'undefined' && WW.open) return; const list = [null, ...invAll()], i = Math.max(0, list.indexOf(held)); hold(list[(i + (e.deltaY > 0 ? 1 : -1) + list.length) % list.length]); }, { passive: true });
   function bar(v, col){ return `<span class="pbar"><i style="width:${Math.round(v * 100)}%;background:${col}"></i></span>`; }
   // the menu: a header with who you are and what season it is, tabs down the side (along the top on phones), and the tab's cards
   let pTab = 'play';
@@ -7905,21 +7911,23 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
       body = A ? '<p class="gmsg">Not during a fight.</p>' : EV ? '<p class="gmsg">Leave the event first.</p>' : zone === 'space' && inWorld ? '<p class="gmsg">Too far out to open a portal from here.</p>'
         : `<p class="psub">Open a portal to anywhere you’ve been.</p><div class="ptiles">${dests.map(d => `<button type="button" class="ptile" data-pa="go:${d.id}"><i>◎</i><b>${esc(d.name)}</b><small>Go</small></button>`).join('')}</div>`;
     } else if (pTab === 'gear') {
-      const rows = [null, ...inv].map(id => { const w = id && WEAPONS.find(x => x.id === id), dz = id && dustedWeapon(id), c = id ? condition(id) : { d: 1 };
+      const rows = [null, ...inv, ...invAll().filter(isSW)].map(id => { if (isSW(id)) { const W = SSW[id]; return `<div class="prow"><b>${esc(W.n)}<br><small>${W.gun ? 'Gun' : 'Melee'} · ${esc(W.how || '')}</small></b><button class="btn" type="button" data-ph="${id}" ${held === id || A ? 'disabled' : ''}>${held === id ? 'In hand' : 'Hold'}</button></div>`; }
+        const w = id && WEAPONS.find(x => x.id === id), dz = id && dustedWeapon(id), c = id ? condition(id) : { d: 1 };
         return `<div class="prow"><b>${w ? esc(w.name) : 'Hands free'}<br><small>${w ? (dz ? 'Not with you right now' : `${esc(w.from)}${c.broken ? ' · broken, repairing' : ''}`) : 'Fight hand-to-hand'}</small></b>${w && !dz ? bar(c.d, c.d > .5 ? '#7CF29A' : c.d > .2 ? '#FFC93C' : '#FF5A6E') + `<small>${Math.round(c.d * 100)}%</small>` : ''}<button class="btn" type="button" data-ph="${id || ''}" ${held === id || dz ? 'disabled' : ''}>${held === id ? 'In hand' : 'Hold'}</button></div>`; }).join('');
       let lo = ''; try { const own = Object.keys(SSW).filter(k => ARS.own.includes(k)); if (own.length) lo = '<h3>Season loadout</h3><p class="psub">One gun and one melee weapon go into every season fight.</p>' + ['gun', 'mel'].map(slot => { const L = own.filter(k => !!SSW[k].gun === (slot === 'gun')); return L.length ? `<div class="pchips"><small>${slot === 'gun' ? 'Gun' : 'Melee'}</small>${L.map(k => `<button type="button" class="tbtn" data-pa="eq:${k}" aria-pressed="${ARS[slot] === k}">${esc(SSW[k].n)}</button>`).join('')}</div>` : ''; }).join(''); } catch (e) {}
-      body = `<h3>Inventory</h3>${inv.length ? rows : '<p class="psub">Nothing in your inventory yet.</p>'}${lo}`;
+      body = `<h3>Inventory</h3><p class="psub">${fine ? 'Hold Tab for the weapon wheel, or use the number keys.' : 'Tap ⚔ for the weapon wheel.'} Carrying a weapon out in the street is illegal: someone calls the police, and if they catch you you go to jail. Put it away (Hands free) before you go out.</p>${invAll().length ? rows : '<p class="psub">Nothing in your inventory yet. Ironside Arms sells weapons, and the seasons’ fights award them.</p>'}${lo}`;
     } else if (pTab === 'trophies') body = achMenu();
     else body = pRow('Reduce effects', 'No dust or screen shake, no shadows, lower resolution. For slower laptops and phones.', 'fx', lowFx ? 'On' : 'Off')
       + pRow('Fancy city graphics', 'Bloom, colour grading, haze and sun shadows in Bangalore. Prettier, much heavier.', 'fancy', fancyFx ? 'On' : 'Off')
       + pRow('Other visitors', 'See other people exploring as ghosts. Shares only your position, area and fight hits, never your name.', 'mp', mpOn ? 'On' : 'Off')
       + (snapState ? pRow('The snap', 'Creatures and weapons are dust, and your room is wrecked.', 'unsnap', 'Undo it') : '')
       + pRow('Reset everything', 'Beaten creatures, unlocked weapons, your inventory and weapon wear.', 'reset', 'Reset')
-      + `<h3>Controls</h3>${(fine ? [['W A S D', 'Walk (arrow keys work too)'], ['Drag', 'Look around (click to lock the mouse)'], ['Shift', 'Run · nitro in a fast car'], ['Space', 'Jump'], ['C', 'Crouch · dive under water'], ['E', 'Talk, use a counter, get in a car, climb a ladder'], ['Click', 'Use whatever you point at: doors, dots, the laptop'], ['F', 'Punch · the season’s tool'], ['Click / right-click', 'In a fight: attack · block'], ['Q · R', 'Swap gun and melee · reload'], ['1–9 · wheel', 'Pick a weapon from your bar'], ['V', 'First or third person · chase camera when driving'], ['M', 'Phone'], ['N', 'Scanner (Season 1)'], ['B', 'Pay bail, in a cell'], ['Esc', 'Menu, or close what’s open']]
-          : [['Left stick', 'Walk'], ['Drag', 'Look around'], ['Tap', 'Use whatever you tap: doors, dots, the laptop'], ['Buttons', 'Jump, Phone, Style and the menu stay on screen; Punch, Fire, Swing, Scan and Nitro appear when they’re useful'], ['Two fingers', 'Never needed: everything has a button']]).map(([k, t]) => `<div class="pctl"><kbd>${k}</kbd><span>${t}</span></div>`).join('')}`
+      + `<h3>Controls</h3>${(fine ? [['W A S D', 'Walk (arrow keys work too)'], ['Drag', 'Look around (click to lock the mouse)'], ['Shift', 'Run · nitro in a fast car'], ['Space', 'Jump'], ['C', 'Crouch · dive under water'], ['E', 'Talk, use a counter, get in a car, climb a ladder'], ['Click', 'Use whatever you point at: doors, dots, the laptop'], ['F', 'Punch · the season’s tool'], ['Click / right-click', 'In a fight: attack · block'], ['Q · R', 'Swap gun and melee · reload'], ['Tab', 'Weapon wheel: hold, point at a weapon, let go'], ['0–9 · mouse wheel', 'Pick a weapon from your bar (0 puts it away)'], ['V', 'First or third person · chase camera when driving'], ['M', 'Phone'], ['N', 'Scanner (Season 1)'], ['B', 'Pay bail, in a cell'], ['Esc', 'Menu, or close what’s open']]
+          : [['Left stick', 'Walk'], ['Drag', 'Look around'], ['Tap', 'Use whatever you tap: doors, dots, the laptop'], ['Buttons', 'Jump, Phone, Style and the menu stay on screen; Punch, Fire, Swing, Scan and Nitro appear when they’re useful'], ['⚔', 'Weapon wheel: tap a weapon, or Hands to put it away'], ['Two fingers', 'Never needed: everything has a button']]).map(([k, t]) => `<div class="pctl"><kbd>${k}</kbd><span>${t}</span></div>`).join('')}`
       + `<h3>Help</h3><div class="phelp"><p><b>What this is.</b> Rayan Upadhyay’s personal site, built as a room you can walk round. Everything about him is here: click the glowing dots or use the dock at the bottom for About, Research, Projects, Music, Writing and Contact.</p>
         <p><b>Rather read a normal page?</b> “Simple version” (top right) has all the same content as a plain page, and “At a glance” in the menu is the one-page summary.</p>
         <p><b>The city.</b> Step out of the room (or use Travel) and there’s a whole Bangalore to explore: a new Season every four weeks with its own story and fights, jobs, shops, homes to buy, a phone with messages and maps, side quests and things to find. The phone’s Season and Explore apps tell you what to do next.</p>
+        <p><b>Weapons.</b> Everything you own is in Gear and on the weapon wheel. Keep weapons put away in the street: carrying one in public gets the police called, and being caught means jail.</p>
         <p><b>Saving.</b> Your progress lives in this browser only. Clear your site data and it starts again.</p>
         <p><b>Stuck?</b> Go home (top right) always gets you back. Reduce effects (above) helps on slow phones and laptops.</p></div>`;
     pauseBox.innerHTML = `<div class="phd"><i class="pav" style="background:var(--sun)">${esc(nm[0] || 'T')}</i><span><b>${A ? 'Fight paused' : esc(nm)}</b><small>${si ? `Season ${si.n} · ${esc(si.name)} · week ${si.week}` : 'Paused'}</small></span><button class="pres" type="button" data-pa="close">Resume ▶</button><button class="close" type="button" data-pa="close" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
@@ -9201,9 +9209,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     HEAT.cops.push(v); }
   function copsClear(){ HEAT.cops.forEach(v => { if (v.g.parent) v.g.parent.remove(v.g); }); HEAT.cops = []; }
   const roadOK = (x, z) => blrValid(...toLocal(x, z)) && !PILLARS.some(q => Math.hypot(toLocal(x, z)[0] - q.x, toLocal(x, z)[1] - q.z) < q.r);
-  function busted(){ if (JAIL.rec >= 3) { HEAT.lv = 0; copsClear(); if (DRV.on) getOut(true); return jailGo(); } const lost = Math.min(JOB.rep, 15); JOB.rep -= lost; jobSave(); HEAT.lv = 0; copsClear(); if (DRV.on) getOut(true);
+  function busted(){ if (JAIL.rec >= 3 || armedRecently()) { const gun = armedRecently(); HEAT.lv = 0; copsClear(); if (DRV.on) getOut(true); if (gun) { const w = wName(held); hold(null, true); ARMED.last = -1e9; ARMED.t = 0; ARMED.calls = 0; JAIL.rec = Math.max(JAIL.rec, 3); jailSave(); setTimeout(() => say(`Arrested for carrying ${w === 'Hands free' ? 'a weapon' : 'the ' + w} in public. They let you keep it, holstered.`, 4200), 400); } return jailGo(); } const lost = Math.min(JOB.rep, 15); JOB.rep -= lost; jobSave(); HEAT.lv = 0; copsClear(); if (DRV.on) getOut(true);
     fade(() => say(`Busted. You spend an hour explaining that you’re one of the good guys.${lost ? ` Reputation -${lost}.` : ''}`, 4600), '#0B0D14'); tone(220, .5, 'sawtooth', .05, 110); }
   function heatStep(dt, now){
+    try { armedStep(); wwBtnSync(); } catch (e) {}
     const inB = inWorld && zone === 'blr' && !EV && !A && !BL.lvl && Math.abs(BL.off.y) < .01;
     HEAT.el.hidden = !(HEAT.lv > 0 && inWorld && (zone === 'blr' || zone === 'twr') && !EV);
     if (!HEAT.el.hidden) { HEAT.el.innerHTML = `<i>${'★'.repeat(HEAT.lv)}${'☆'.repeat(5 - HEAT.lv)}</i>${HEAT.cops.length ? 'Police nearby' : 'Wanted'}`; HEAT.el.classList.toggle('flash', Math.floor(now / 350) % 2 === 0); }
@@ -10602,6 +10611,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   var ARS = { own: [], gun: '', mel: '', skins: [], wear: '' };
   try { const a = JSON.parse(localStorage.getItem('ru-arsenal') || '{}'); if (a && typeof a === 'object') Object.assign(ARS, a); } catch (e) {}
   ['own', 'skins'].forEach(k => { if (!Array.isArray(ARS[k])) ARS[k] = []; });
+  if (isSW(held) && !ARS.own.includes(held)) held = null;
   function arsSave(){ try { localStorage.setItem('ru-arsenal', JSON.stringify(ARS)); } catch (e) {} }
   const SSW = {
     s1_blaster: { n: 'Blaster pistol', s: 'Blaster', gun: 1, mag: 14, res: 70, cd: .2, dmg: .75, spd: 36, col: 0x7FE8FF, spread: .025, pel: 1, life: 1.1, rl: 1, snd: 1500, how: 'Fast, light shots.' },
@@ -10640,6 +10650,77 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   }
   function arsWire(B){ B.querySelectorAll('[data-ars-eq]').forEach(b => b.onclick = () => { arsEquip(b.dataset.arsEq); seasonTab(B); }); B.querySelectorAll('[data-ars-wear]').forEach(b => b.onclick = () => { arsWear(b.dataset.arsWear); seasonTab(B); say(ARS.wear ? `You’re wearing ${SSKIN[ARS.wear].n}.` : 'Back in your own clothes.', 1800); }); }
 
+  // ======================= the weapon wheel, and carrying weapons in public =======================
+  // Hold Tab (or tap ⚔ on a touch screen) for a wheel of everything you own: Hands free, the lair weapons you took and the
+  // season weapons. Point at a slice (mouse or finger) and let go, or click it. In a season fight it picks among your
+  // season weapons. Out in the street, a weapon in your hand is illegal: after a few seconds someone calls it in (police
+  // heat), it gets worse the longer you keep it out, and if the police catch you while you've been armed you go to jail
+  // whatever your record. The web-shooters don't count (they're how you swing).
+  var WW = { open: false, list: [], sel: -1, mx: 0, my: 0, el: null, btn: null };
+  var ARMED = { t: 0, last: -1e9, warned: 0, calls: 0, rt: 0 };
+  const armedNow = () => !!held && held !== 'web' && held !== 'fists';
+  function armedPublic(){ return armedNow() && inWorld && zone === 'blr' && !EV && !A && !BL.lvl && !DRV.on && Math.abs(BL.off.y) < .01 && !(FLOOD && FLOOD.on) && !JAIL.until; }
+  // a few seconds after you draw a weapon in the street someone rings the police, and again every so often while it's out
+  function armedStep(){
+    const now = performance.now(), dt = ARMED.rt ? Math.min(.5, (now - ARMED.rt) / 1000) : 0; ARMED.rt = now;
+    if (!armedPublic()) { ARMED.t = Math.max(0, ARMED.t - dt * 2); if (!armedNow()) { ARMED.calls = 0; ARMED.warned = 0; } return; }
+    ARMED.last = now; ARMED.t += dt;
+    if (!ARMED.warned) { ARMED.warned = 1; say(`People are staring at the ${wName(held)}. Carrying a weapon in public is illegal: put it away (${fine ? '0, or Tab' : '⚔'}) before someone calls the police.`, 4200); }
+    const due = ARMED.calls ? 5 + ARMED.calls * 10 : 5;
+    if (ARMED.t > due) { ARMED.calls++; HEAT.cd = 0; const was = HEAT.lv; heatAdd(ARMED.calls > 1 ? 1 : 2, ARMED.calls > 1 ? `You’re still waving the ${wName(held)} about.` : `Someone saw your ${wName(held)} and called it in.`); if (HEAT.lv < Math.min(4, was + 1)) HEAT.lv = Math.min(4, was + 1); HEAT.cool = 0; }
+  }
+  const armedRecently = () => performance.now() - ARMED.last < 25000;
+  // what the wheel offers right now
+  function wwItems(){
+    if (EV && EV.opts && EV.opts.ss) return ['fists', ...Object.keys(SSW).filter(k => ARS.own.includes(k))];
+    if (EV || A) return [];
+    return [null, ...invAll()];
+  }
+  const wwCur = () => EV && EV.opts && EV.opts.ss ? EV.wpn : held;
+  function wwPick(id){
+    if (EV && EV.opts && EV.opts.ss) { if (id !== 'fists') arsEquip(id); ssUse(id); return; }
+    hold(id === 'fists' ? null : id);
+  }
+  function wwRender(){
+    const L = WW.list, n = L.length, R = 120;
+    WW.el.querySelector('.wwring').innerHTML = L.map((id, i) => { const a = i / n * Math.PI * 2 - Math.PI / 2, x = Math.cos(a) * R, y = Math.sin(a) * R, W = id && SSW[id];
+      const ic = !id || id === 'fists' ? '✊' : W ? (W.gun ? '🔫' : '🗡️') : id === 'web' ? '🕸️' : id === 'shield' ? '🛡️' : '⚔️';
+      return `<button type="button" class="wws${i === WW.sel ? ' on' : ''}${wwCur() === id || (!id && !wwCur()) ? ' cur' : ''}" data-ww="${i}" style="transform:translate(${x.toFixed(1)}px,${y.toFixed(1)}px)"><i>${ic}</i><small>${esc(W ? W.s : id === 'fists' || !id ? 'Hands' : wName(id).split(' ').slice(-1)[0])}</small></button>`; }).join('');
+    const id = WW.sel >= 0 ? L[WW.sel] : wwCur(), W = id && SSW[id];
+    let sub = !id || id === 'fists' ? 'Nothing in your hands' : W ? (W.gun ? 'Gun' : 'Melee') : 'From the lair';
+    if (W && W.gun && EV && EV.st && EV.st.ss && EV.st.ss.ammo && EV.st.ss.ammo[id]) { const a = EV.st.ss.ammo[id]; sub = `${a.mag} / ${a.res}`; }
+    WW.el.querySelector('.wwmid').innerHTML = `<b>${esc(!id || id === 'fists' ? 'Hands free' : wName(id))}</b><small>${esc(sub)}</small>${!EV && id && id !== 'fists' && id !== 'web' ? '<em>Illegal in public</em>' : ''}`;
+  }
+  function wwOpen(){
+    if (WW.open || !entered || pauseEl.classList.contains('on') || document.body.classList.contains('cine') || phOpen()) return;
+    WW.list = wwItems(); if (WW.list.length < 2) { if (!WW.list.length) return; say('Nothing to switch to yet. Ironside Arms sells weapons.', 2000); return; }
+    WW.open = true; WW.mx = WW.my = 0; WW.sel = WW.list.indexOf(wwCur()); if (WW.sel < 0) WW.sel = 0;
+    if (A) A.hold = false; Object.keys(akeys).forEach(k => akeys[k] = false);
+    wwRender(); WW.el.classList.add('on'); tone(700, .05, 'sine', .03);
+  }
+  function wwClose(pick){ if (!WW.open) return; WW.open = false; WW.el.classList.remove('on'); if (pick && WW.sel >= 0 && WW.list[WW.sel] !== wwCur()) wwPick(WW.list[WW.sel]); }
+  function wwPoint(dx, dy){ if (Math.hypot(dx, dy) < 18) return; const n = WW.list.length, a = (Math.atan2(dy, dx) + Math.PI / 2 + Math.PI * 2) % (Math.PI * 2), i = Math.round(a / (Math.PI * 2) * n) % n; if (i !== WW.sel) { WW.sel = i; wwRender(); tone(1100, .02, 'sine', .015); } }
+  WW.el = document.createElement('div'); WW.el.className = 'wwheel'; WW.el.innerHTML = '<div class="wwdisc"><div class="wwring"></div><div class="wwmid"></div></div>'; document.body.appendChild(WW.el);
+  WW.btn = document.createElement('button'); WW.btn.type = 'button'; WW.btn.className = 'wwbtn'; WW.btn.textContent = '⚔'; WW.btn.setAttribute('aria-label', 'Weapon wheel'); WW.btn.hidden = true; document.body.appendChild(WW.btn);
+  WW.btn.addEventListener('click', e => { e.stopPropagation(); WW.open ? wwClose(false) : wwOpen(); });
+  WW.el.addEventListener('click', e => { const b = e.target.closest('[data-ww]'); if (b) { WW.sel = +b.dataset.ww; wwClose(true); } else if (!e.target.closest('.wwmid')) wwClose(false); });
+  WW.el.addEventListener('pointermove', e => { if (!WW.open || document.pointerLockElement || e.pointerType !== 'mouse') return; const r = WW.el.querySelector('.wwdisc').getBoundingClientRect(); wwPoint(e.clientX - r.left - r.width / 2, e.clientY - r.top - r.height / 2); });
+  document.addEventListener('mousemove', e => { if (!WW.open || !document.pointerLockElement) return; WW.mx = clamp(WW.mx + e.movementX, -160, 160); WW.my = clamp(WW.my + e.movementY, -160, 160); wwPoint(WW.mx, WW.my); }, true);
+  addEventListener('keydown', e => { if (e.key !== 'Tab' || !entered || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || pauseEl.classList.contains('on') || phOpen() || !(e.target === document.body || e.target === canvas)) return; e.preventDefault(); if (!e.repeat) wwOpen(); });
+  addEventListener('keyup', e => { if (e.key === 'Tab' && WW.open) { e.preventDefault(); wwClose(true); } if (e.key === 'Escape' && WW.open) wwClose(false); });
+  addEventListener('blur', () => wwClose(false));
+  function wwBtnSync(){ if (!WW.btn) return; const show = entered && !fine && wwItems().length > 1 && !document.body.classList.contains('cine'); if (WW.btn.hidden === show) WW.btn.hidden = !show; WW.btn.classList.toggle('armed', armedNow() && !EV); }
+  { const s = document.createElement('style'); s.textContent = `.wwheel{position:fixed;inset:0;z-index:40;display:none;align-items:center;justify-content:center;background:radial-gradient(circle,rgba(8,10,16,.25) 0,rgba(8,10,16,.7) 70%)}.wwheel.on{display:flex}
+.wwdisc{position:relative;width:340px;height:340px;max-width:calc(100vw - 32px);max-height:calc(100vw - 32px);border-radius:50%;background:rgba(14,16,22,.72);border:2px solid rgba(255,255,255,.12);box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.wwring{position:absolute;left:50%;top:50%;width:0;height:0}
+.wws{position:absolute;left:-36px;top:-36px;width:72px;height:72px;border-radius:50%;border:2px solid rgba(255,255,255,.14);background:rgba(30,33,40,.92);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;font:700 11px "Instrument Sans",system-ui,sans-serif;padding:0}
+.wws i{font-style:normal;font-size:24px;line-height:1}.wws small{font-size:10.5px;max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wws.cur{border-color:rgba(255,201,60,.6)}.wws.on{background:#FFC93C;color:#16181D;border-color:#FFC93C;transform-origin:center}
+.wwmid{position:absolute;left:50%;top:50%;width:150px;transform:translate(-50%,-50%);text-align:center;color:#fff;font:600 12px/1.3 "Instrument Sans",system-ui,sans-serif;pointer-events:none}.wwmid b{display:block;font-size:15px}.wwmid small{display:block;opacity:.75}.wwmid em{display:block;margin-top:4px;font-style:normal;color:#FF8A6E;font-size:11px}
+@media (max-width:420px){.wws{left:-31px;top:-31px;width:62px;height:62px}.wwdisc{width:310px;height:310px}.wwmid{width:120px}}
+.wwbtn{position:fixed;right:calc(14px + env(safe-area-inset-right,0px));top:calc(50% - 26px);width:52px;height:52px;border-radius:50%;border:2px solid rgba(255,255,255,.2);background:rgba(11,13,20,.8);color:#fff;font-size:22px;z-index:7;cursor:pointer;touch-action:manipulation}.wwbtn[hidden]{display:none}.wwbtn.armed{border-color:#FF6A4A;box-shadow:0 0 0 3px rgba(255,106,74,.3)}
+body.photo .wwbtn,body.cine .wwbtn{display:none}`; document.head.appendChild(s); }
+
   // ---------- the fight ----------
   const SSF = {}; ST_FRAIL.q = [1, 1, 1];
   HEROES.ss_drone = { name: 'Scrapper drone', hp: 34, kind: 'ranged', dmg: 4, cd: 1.1, col: 0xFF8A2E, speed: 5.4, r: .6, fly: 1, grounded: 1 };
@@ -10659,6 +10740,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function ssAvatar(h){ const H = HEROES[h]; return avatar(heroLook(h), { s: H && H.scale || 1 }); }
   function ssFight(o){
     if (!o || !o.id || !o.at || EV || A || !BL.sc || !inWorld || zone !== 'blr') return false;
+    if (isSW(held) && ARS.own.includes(held)) arsEquip(held); wwClose(false);
     const part = 'q' + o.id; ssReg(o); SSF[part] = o; DIST[part] = { x: o.at[0], z: o.at[1], name: o.where || o.title }; ST_TITLE[part] = o.title || 'A fight';
     if (DRV.on) getOut(true); startEvent('st', 'me', 'rayan', { solo: true, diff: evDiff, part, site: part, ss: 1 });
     if (o.intro) setTimeout(() => { if (EV && EV.opts && EV.opts.ss) say(o.intro, 5200); }, 300);
@@ -11585,7 +11667,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   // what's for sale
   const MENUS = {
     guns: { title: 'Ironside Arms', sub: 'Weapons go straight into your season loadout.', items: () => Object.keys(SSW).map(k => ({ id: k, n: SSW[k].n, d: SSW[k].how || '', p: { s1_blaster: 2500, s1_scatter: 4200, s1_rifle: 5600, s1_sword: 3600, s1_wrench: 1500, s1_spear: 3200, s3_baton: 1800 }[k] || 3000, own: ARS.own.includes(k) })),
-      buy(it){ if (it.own) return say('You already own that.', 1600); if (!cashSpend(it.p, it.n)) return; arsGive(it.id); say(`${it.n} is yours. It’s in your loadout.`, 2600); } },
+      buy(it){ if (it.own) return say('You already own that.', 1600); if (!cashSpend(it.p, it.n)) return; arsGive(it.id); renderHotbar(); say(`${it.n} is yours. It’s in your inventory (${fine ? 'Tab' : '⚔'} for the weapon wheel). Keep it put away in the street: carrying it in public gets you arrested.`, 4200); } },
     bar: { title: 'The Copper Tap', sub: 'Drinks hit harder than you think. Water helps.', items: () => [{ id: 'beer', n: 'Draught beer', d: 'A cold pint.', p: 220, a: 1 }, { id: 'wine', n: 'Glass of red', d: 'House red.', p: 380, a: 1.2 }, { id: 'shot', n: 'Whisky shot', d: 'Neat.', p: 300, a: 1.5 }, { id: 'cock', n: 'House cocktail', d: 'Mostly rum.', p: 450, a: 1.8 }, { id: 'soda', n: 'Fresh lime soda', d: 'No alcohol.', p: 90, a: 0 }, { id: 'water', n: 'Water', d: 'On the house.', p: 0, a: -.6 }],
       buy(it){ if (it.p && !cashSpend(it.p, it.n)) return; drink(it.a, it.n); } },
     resto: { title: 'Saffron Table', sub: 'Eating sobers you up a little.', items: () => [{ id: 'dosa', n: 'Masala dosa', d: 'Crisp, with chutney and sambar.', p: 140, f: 1 }, { id: 'biryani', n: 'Chicken biryani', d: 'A huge plate.', p: 320, f: 1.5 }, { id: 'paneer', n: 'Paneer butter masala + naan', d: 'Rich.', p: 290, f: 1.4 }, { id: 'noodles', n: 'Hakka noodles', d: 'Indo-Chinese.', p: 220, f: 1.1 }, { id: 'pizza', n: 'Margherita pizza', d: 'Wood-fired.', p: 380, f: 1.3 }, { id: 'kulfi', n: 'Kulfi', d: 'Pistachio.', p: 90, f: .4 }],
@@ -19019,6 +19101,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
   let down = null, hovered = null;
   canvas.addEventListener('pointerdown', e => { if (inWorld && zone === 'sp' && SPF.sc && e.pointerType === 'mouse' && fine) { if (document.pointerLockElement === canvas) { SPF.fireHeld = true; spFire(); } else canvas.requestPointerLock(); return; } if (inWorld && zone === 'mc' && !EV && !A && BZ.sc && e.pointerType === 'mouse' && fine) { if (document.pointerLockElement === canvas) { if (e.button === 2) bzBlast(); else bzPunch(); } else canvas.requestPointerLock(); return; } if (EV && EV.intro) { dlgNext(); return; } if (EV && !EV.over && e.pointerType === 'mouse' && fine) { if (document.pointerLockElement === canvas) { if (e.button === 2) setEvBlock(true); else { EV.holdAtk = true; evAttack(); } } else canvas.requestPointerLock(); return; } if (A && !A.over && e.pointerType === 'mouse' && fine) { if (e.button === 2) { setBlock(true); return; } if (document.pointerLockElement === canvas) { const p = pick(innerWidth / 2, innerHeight / 2); if (usable(p)) { document.exitPointerLock(); act(p); } else { A.hold = true; attack(); } } else canvas.requestPointerLock(); return; } if (tourI >= 0) endTour(true); down = { x: e.clientX, y: e.clientY, lx: e.clientX, ly: e.clientY, moved: false }; canvas.setPointerCapture(e.pointerId); });
   canvas.addEventListener('pointermove', e => {
+    if (WW.open) return;
     if (document.pointerLockElement === canvas) { yaw -= e.movementX * .0022; pitch = clamp(pitch - e.movementY * .0022, -1.2, 1.2); return; }
     if (A && !down) return;
     if (down) {
