@@ -2774,55 +2774,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   function hasHeroName(){ try { return !!(localStorage.getItem('ru-heroname') || '').trim(); } catch (e) { return false; } }
   function nmT(t){ return typeof t === 'string' ? t.replace(/\{N\}/g, heroName()) : t; }
   function say(text, ms = 3200){
-    const scd = document.getElementById('scard'); if (scd.classList.contains('on')) { setTimeout(() => say(text, ms), 6200); return; } toast.textContent = nmT(text); toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('on'), ms); try { voiceToast(text); } catch (e) {} }
-  // ---------- voices: characters speak their lines with the browser's built-in speech ----------
-  // Dialogue boxes always speak (dlgShow); toasts speak only when they hold a quoted line (“…”) or play during a cutscene, so
-  // UI hints stay quiet. Each character has a voice, pitch and speed (VCAST); unknown names get a stable one from their name.
-  // While someone talks, the nearest face in view moves its mouth (MOUTHS, voiceStep). On/off in Settings, saved as ru-voices.
-  // Browsers ship two kinds of voice: natural/neural ones (Edge's "Online (Natural)", Chrome's Google voices, Safari's Siri,
-  // Enhanced and Premium voices) and old robotic ones. VOICE.good holds the natural English ones, preferring Indian, British,
-  // then American English; characters differ by which natural voice they get, and pitch and speed stay close to normal (big
-  // pitch shifts are what make speech sound robotic). Lines are spoken a sentence at a time. With no natural voice, voices
-  // start off (VOICE.robotic, said in Settings) unless the player turned them on; ru-voices keeps an explicit choice.
-  const VOICE = { on: true, voices: [], good: [], robotic: false, pref: null, talking: null, until: 0 };
-  try { const v = localStorage.getItem('ru-voices'); VOICE.pref = v === '1' ? true : v === '0' ? false : null; if (VOICE.pref === false) VOICE.on = false; } catch (e) {}
-  const vNatural = v => /natural|neural|online|premium|enhanced|siri|google/i.test(v.name) || (/^com\.apple\./i.test(v.voiceURI || '') && /premium|enhanced|siri/i.test(v.voiceURI || ''));
-  const vLangRank = v => /en[-_]IN/i.test(v.lang) ? 0 : /en[-_]GB/i.test(v.lang) ? 1 : /en[-_]US/i.test(v.lang) ? 2 : 3;
-  const MOUTHS = [];
-  const VCAST = { narrator: [.95, .98, 'm', 1], me: [1.05, 1.05, 'm', 0], amma: [1.2, .95, 'f', 2], sam: [1.3, 1.12, 'm', 3], unknown: [.55, .82, 'm', 4], keeper: [.7, .86, 'm', 4], frank: [.8, .95, 'm', 5], leo: [1.08, 1.05, 'm', 6], rosa: [1.15, 1, 'f', 7], reyes: [.95, 1.02, 'f', 8], brine: [.6, .9, 'm', 9], sable: [1.1, 1.1, 'f', 10], marigold: [1.02, .9, 'f', 11], whitlock: [.85, .9, 'm', 12], velvet: [1.2, 1.05, 'f', 13], brass: [.7, 1, 'm', 14], salvager: [.75, .95, 'm', 15], foreman: [.62, .9, 'm', 16] };
-  const VNAMES = [[/^mum$|^amma$/i, 'amma'], [/^sam$/i, 'sam'], [/keeper/i, 'keeper'], [/unknown|^\+\d/i, 'unknown'], [/frank/i, 'frank'], [/^leo\b/i, 'leo'], [/rosa/i, 'rosa'], [/reyes/i, 'reyes'], [/brine/i, 'brine'], [/sable/i, 'sable'], [/marigold/i, 'marigold'], [/whitlock/i, 'whitlock'], [/velvet|^v$/i, 'velvet'], [/brass/i, 'brass'], [/salvager/i, 'salvager'], [/foreman/i, 'foreman'], [/^me$/i, 'me']];
-  const voKey = name => { name = String(name || '').replace(/^\W+/u, '').trim(); for (const [re, k] of VNAMES) if (re.test(name)) return k; return name ? 'x:' + name : 'narrator'; };
-  function vSort(list){ VOICE.voices = list || []; VOICE.good = VOICE.voices.filter(v => /^en/i.test(v.lang) && vNatural(v)).sort((a, b) => vLangRank(a) - vLangRank(b) || (b.localService ? 0 : 1) - (a.localService ? 0 : 1));
-    VOICE.robotic = VOICE.voices.length > 0 && !VOICE.good.length; if (VOICE.pref === null) VOICE.on = !VOICE.robotic; }
-  function vLoad(){ try { vSort(speechSynthesis.getVoices()); } catch (e) {} }
-  try { if ('speechSynthesis' in window) { vLoad(); speechSynthesis.onvoiceschanged = vLoad; } } catch (e) {}
-  function vPick(g, seed){
-    const all = VOICE.good.length ? VOICE.good : VOICE.voices.filter(v => /^en/i.test(v.lang)); if (!all.length) return null;
-    const fem = /female|samantha|victoria|zira|karen|moira|tessa|fiona|veena|susan|serena|allison|ava|kate|libby|sonia|hazel|aria|jenny|emma|neerja|swara|kajal|aditi|raveena|heera|ananya|natasha|maisie|michelle|nora|zoe/i, mal = /\bmale|daniel|alex|david|fred|rishi|oliver|george|ryan|guy|thomas|arthur|mark|james|prabhat|madhur|ravi|hemant|kunal|davis|william|andrew|brian|christopher|eric/i;
-    let pool = all.filter(v => g === 'f' ? fem.test(v.name) && !/\bmale/i.test(v.name) : mal.test(v.name) && !/female/i.test(v.name)); if (!pool.length) pool = all; return pool[seed % pool.length];
-  }
-  function voiceSay(text, who){
-    if (!VOICE.on || !text || !('speechSynthesis' in window)) return; const key = typeof who === 'string' && (VCAST[who] || who.startsWith('x:')) ? who : voKey(who);
-    let c = VCAST[key]; if (!c) { let h = 7; for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0; c = [.75 + (h % 50) / 100, .9 + (h % 25) / 100, h % 2 ? 'f' : 'm', h % 17]; }
-    const clean = nmT(String(text)).replace(/[\u{1F300}-\u{1FAFF}☀-➿]/gu, '').replace(/[“”]/g, '').replace(/\s+/g, ' ').trim(); if (!clean || clean === '…') return;
-    try { speechSynthesis.cancel(); const v = vPick(c[2], c[3]), pitch = Math.min(1.12, Math.max(.88, 1 + (c[0] - 1) * .25)), rate = Math.min(1.08, Math.max(.92, 1 + (c[1] - 1) * .4));
-      const parts = clean.match(/[^.!?…]+[.!?…]+["’)]*|[^.!?…]+$/g) || [clean]; VOICE.talking = key; VOICE.until = performance.now() + 900 + clean.length * 70;
-      parts.map(p => p.trim()).filter(Boolean).forEach((p, i, arr) => { const u = new SpeechSynthesisUtterance(p); if (v) { u.voice = v; u.lang = v.lang; } u.pitch = pitch; u.rate = rate; u.volume = .9;
-        if (!i) u.onstart = () => { VOICE.talking = key; }; if (i === arr.length - 1) u.onend = () => { VOICE.talking = null; }; u.onerror = () => { VOICE.talking = null; }; speechSynthesis.speak(u); }); } catch (e) {}
-  }
-  function voiceToast(text){
-    if (!VOICE.on) return; const t = nmT(String(text || '')), q = t.match(/“([^”]{2,})”/);
-    if (q) { const sp = t.slice(0, q.index).match(/([A-Z][\w .’'-]{0,24}?)(?:’s voice[^:]*)?[:,]?\s*$/); return voiceSay(q[1], sp ? sp[1] : 'narrator'); }
-    if (document.body.classList.contains('cine') && t.length > 12) voiceSay(t, 'narrator');
-  }
-  function voiceStep(now){
-    const live = VOICE.talking && (performance.now() < VOICE.until || (() => { try { return speechSynthesis.speaking; } catch (e) { return false; } })());
-    if (!live && VOICE.talking && performance.now() > VOICE.until + 4000) VOICE.talking = null;
-    let best = null, bd = 9; if (live) { const cp = camera.getWorldPosition(new THREE.Vector3()), dir = camera.getWorldDirection(new THREE.Vector3()), wp = new THREE.Vector3();
-      for (let i = MOUTHS.length - 1; i >= 0; i--) { const m = MOUTHS[i]; let o = m, root = null; while (o) { root = o; o = o.parent; } if (!root || !root.isScene) { if (!m.parent) MOUTHS.splice(i, 1); continue; }
-        m.getWorldPosition(wp); const d = wp.distanceTo(cp); if (d < .6 || d > bd) continue; if (wp.sub(cp).normalize().dot(dir) < .55) continue; bd = d; best = m; } }
-    MOUTHS.forEach(m => { const want = m === best ? 1 + 3.2 * Math.abs(Math.sin(now / 1000 * 17)) : 1; m.scale.y += (want - m.scale.y) * .5; });
-  }
+    const scd = document.getElementById('scard'); if (scd.classList.contains('on')) { setTimeout(() => say(text, ms), 6200); return; } toast.textContent = nmT(text); toast.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => toast.classList.remove('on'), ms); }
   badge.onclick = () => {
     const list = Object.keys(SECRETS).map(k => found.has(k)
       ? `<div class="card"><h3 class="display">${SECRETS[k][0]}</h3><p>${SECRETS[k][1]}</p></div>`
@@ -7961,7 +7913,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     } else if (pTab === 'trophies') body = achMenu();
     else body = pRow('Reduce effects', 'No dust or screen shake, no shadows, lower resolution. For slower laptops and phones.', 'fx', lowFx ? 'On' : 'Off')
       + pRow('Fancy city graphics', 'Bloom, colour grading, haze and sun shadows in Bangalore. Prettier, much heavier.', 'fancy', fancyFx ? 'On' : 'Off')
-      + pRow('Voices', VOICE.robotic ? 'Voices sound robotic in this browser, so they start off. Edge, Chrome and Safari have natural-sounding ones.' : 'Characters speak their lines aloud, using your browser’s natural-sounding voices.', 'voices', VOICE.on ? 'On' : 'Off')
       + pRow('Other visitors', 'See other people exploring as ghosts. Shares only your position, area and fight hits, never your name.', 'mp', mpOn ? 'On' : 'Off')
       + (snapState ? pRow('The snap', 'Creatures and weapons are dust, and your room is wrecked.', 'unsnap', 'Undo it') : '')
       + pRow('Reset everything', 'Beaten creatures, unlocked weapons, your inventory, wear and poisoning.', 'reset', 'Reset');
@@ -7976,7 +7927,6 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const a = e.target.closest('[data-pa]'); if (!a) return;
     const act2 = a.dataset.pa;
     if (act2 === 'close') closePause();
-    if (act2 === 'voices') { VOICE.on = !VOICE.on; try { localStorage.setItem('ru-voices', VOICE.on ? '1' : '0'); speechSynthesis.cancel(); } catch (er) {} if (VOICE.on) voiceSay('Voices on.', 'narrator'); return renderPause(); }
     if (act2.startsWith('ptab:')) { pTab = act2.slice(5); return renderPause(); }
     if (act2 === 'phone') { closePause(); setTimeout(() => phoneOpen(), 60); }
     if (act2.startsWith('eq:')) { try { arsEquip(act2.slice(3)); } catch (er) {} return renderPause(); }
@@ -8376,7 +8326,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const head = new THREE.Group(); head.position.y = 1.72 + (bulk - 1) * .1; g.add(head);
     const skull = part(new THREE.SphereGeometry(.15, 16, 12), skinM, 0, 0, 0, head); skull.scale.set(.95, 1.1, .95);
     [-1, 1].forEach(sd => part(new THREE.BoxGeometry(.03, .02, .01), dark, sd * .05, .02, -.142, head));
-    { const mo = part(new THREE.BoxGeometry(.05, .012, .012), dark, 0, -.065, -.138, head); MOUTHS.push(mo); }
+    { const mo = part(new THREE.BoxGeometry(.05, .012, .012), dark, 0, -.065, -.138, head); void mo; }
     const hs = k.hair;
     if (!k.mask || k.mask === 'visor' || k.mask === 'capcowl' || k.mask === 'hood') {
       if (hs === 'short') { const c = part(new THREE.SphereGeometry(.158, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2.1), hairM, 0, .02, .01, head); c.scale.set(1, 1.05, 1.02); }
@@ -9497,7 +9447,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     const ringT = setInterval(() => { if (done) return clearInterval(ringT); tone(440, .35, 'sine', .03); setTimeout(() => tone(480, .35, 'sine', .03), 40); if (++ring >= 2) { clearInterval(ringT);
       if (noSig) { draw('Call failed · No service'); return setTimeout(end, 1800); }
       t0 = performance.now(); next(); PHX.callT = setInterval(() => { const el = B.querySelector('[data-cst]'); if (el && t0) { const s2 = Math.floor((performance.now() - t0) / 1000); el.textContent = `${Math.floor(s2 / 60)}:${String(s2 % 60).padStart(2, '0')}`; } }, 500); } }, 1300);
-    const next = () => { if (done) return; i++; if (i >= L.length) { const el = B.querySelector('.phsub'); if (el) el.textContent = '(they hung up)'; return setTimeout(end, 1200); } draw('0:00', L[i]); try { if (typeof voiceSay === 'function') voiceSay(L[i], th); } catch (e) {} setTimeout(next, 1600 + L[i].length * 45); };
+    const next = () => { if (done) return; i++; if (i >= L.length) { const el = B.querySelector('.phsub'); if (el) el.textContent = '(they hung up)'; return setTimeout(end, 1200); } draw('0:00', L[i]); setTimeout(next, 1600 + L[i].length * 45); };
   }
   // a small choice dialog (job offers on the phone, the hiring board): askChoice(id, then, { q, a: [[value, label]], h })
   const choiceBox = document.createElement('div'); choiceBox.className = 'game choicebox'; choiceBox.setAttribute('role', 'dialog'); choiceBox.innerHTML = '<div class="gbox"></div>'; document.body.appendChild(choiceBox);
@@ -10864,7 +10814,6 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     const w = dlgEl.querySelector('.dlgw'); w.textContent = nm; w.style.color = SPK[nm] || (raw === 'ME' ? '#FFC93C' : '#E8E3D6');
     dlgEl.querySelector('.dlgt').textContent = tx; dlgEl.querySelector('.dlgh').textContent = DLG.block ? (fine ? 'Click or Space: next' : 'Tap: next') : '';
     dlgEl.querySelector('.dlgskip').hidden = !DLG.block; dlgEl.classList.toggle('side', !DLG.block); dlgEl.hidden = false;
-    try { voiceSay(tx, raw === 'ME' ? 'me' : nm); } catch (e) {}
     DLG.until = performance.now() + (DLG.block ? 2200 : 1600) + tx.length * 45; tone(raw === 'ME' ? 520 : 330, .04, 'sine', .02, raw === 'ME' ? 600 : 300);
   }
   function dlgPlay(lines, opts = {}){
@@ -14385,7 +14334,6 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     try { roomDoorStep(); } catch (e) {}
     try { secretStep(dt, now); } catch (e) { console.error(e); }
     try { expStep(dt, now); } catch (e) { console.error(e); }
-    try { voiceStep(now); } catch (e) {}
     sagaStep(dt, now); droneStep(dt, now); blrStep(dt, now); twrStep(dt, now); vaultStep(dt, now); cardStep(dt, now); clueStep(dt, now); upgFrame(dt); storyFrame(dt, now); storyWorldStep(); cityStep(dt, now); placeStep(dt, now); arcadeStep(); a5Frame(dt, now); tlStep(now); if (lairScene && !upBenchG) buildUpBench(); dspStep(dt, now); wreckStep(now); kitStep(dt); tdFrame(dt, now); aptFrame(dt, now); xcFrame(dt, now); try { isleStep(dt, now); } catch (e) { console.error(e); } try { mtnStep(dt, now); } catch (e) { console.error(e); } try { floodStep(dt); } catch (e) { console.error(e); } try { pkStep(dt); } catch (e) { console.error(e); } try { phxStep(dt); } catch (e) { console.error(e); } try { seasonStep(dt, now); } catch (e) { console.error(e); } try { winterStep(dt, now); } catch (e) { console.error(e); }
     if (EV && EV.k === 'st' && EV.st && EV.st.lp) lpStep(dt, now);
     if (EV && EV.k === 'st' && EV.st && EV.st.dz) deathStep(dt, now);
