@@ -6548,9 +6548,10 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
   const ropeOn = () => !!(PK && PK.rope && inWorld && zone === 'blr' && !FLOOD.on);
   function bTop(mx, mz){
     if (!bTops.size && BL.bld) BL.bld.forEach(b => { for (let gx = Math.floor(b.x0 / 16); gx <= Math.floor(b.x1 / 16); gx++) for (let gz = Math.floor(b.z0 / 16); gz <= Math.floor(b.z1 / 16); gz++) { const k = gx + ',' + gz; if (!bTops.has(k)) bTops.set(k, []); bTops.get(k).push(b); } });
+    { const wd = Math.hypot(mx - TW.x, mz - TW.z); if (wd < 2.6) return 60.5; if (wd < 5.7) return 56.2; if (wd < TW.r) return 0; }  // the Meteor Watch (WATCH): the shaft and lantern, the deck round it, and open park (Broker Tower's old lot record is ignored)
     const L = bTops.get(Math.floor(mx / 16) + ',' + Math.floor(mz / 16)); let t = 0; if (L) for (const b of L) if ((!b.hide || b.keep) && mx > b.x0 && mx < b.x1 && mz > b.z0 && mz < b.z1) { const h = (SG.wreck || []).includes(b.key) && !newTL() ? b.h * .22 : b.h; if (h > t) t = h; } if (BL.bld && inTowerZone(mx, mz, -.8) && TW.roof + .2 > t) t = TW.roof + .2; return t;
   }
-  const swBlocked = (mx, mz, feet) => Math.abs(mx) > 372 || Math.abs(mz) > 372 || inTowerZone(mx, mz, 1) && feet < TW.roof + .3 || bTop(mx, mz) > feet + .45;
+  const swBlocked = (mx, mz, feet) => Math.abs(mx) > 372 || Math.abs(mz) > 372 || bTop(mx, mz) > feet + .45;  // (the Meteor Watch's shaft and deck count as a building, in bTop)
   // the swing body is a little column, not a point: test its edges so your head never ends up inside a wall
   const swBodyBlocked = (mx, mz, feet) => swBlocked(mx, mz, feet) || swBlocked(mx + .45, mz, feet) || swBlocked(mx - .45, mz, feet) || swBlocked(mx, mz + .45, feet) || swBlocked(mx, mz - .45, feet);
   const swRoofOK = (x, z) => { const [mx, mz] = toMap(x, z); return !swBlocked(mx, mz, SW.roof); };
@@ -10292,6 +10293,7 @@ body.pain .painfx{animation:painpulse 1.4s ease-in-out infinite}
     (SG.wreck || []).forEach(key => { const b = BL.bld.find(q => q.key === key); if (b) { setWreck(b, 1); wreckRubble(b); } });
     // street lamps along the roads
     const lampPts = []; L.slice(1, -1).forEach(l => { for (let t = -370; t <= 370; t += 30) { lampPts.push([l + 5.6, t], [t, l + 5.6]); } });
+    for (let i = lampPts.length - 1; i >= 0; i--) { const [x, z] = lampPts[i]; if (offMap(x, z) || inTowerZone(x, z, 3)) lampPts.splice(i, 1); }  // none in the lake or the Meteor Watch park (same as their light pools)
     const poles = new THREE.InstancedMesh(new THREE.CylinderGeometry(.08, .1, 5, 6), mat(0x3A3D44), lampPts.length), heads = new THREE.InstancedMesh(new THREE.SphereGeometry(.28, 8, 6), glowM(0xFFC98A, { emissiveIntensity: 1.6 }), lampPts.length), m4 = new THREE.Matrix4();
     lampPts.forEach(([x, z], i) => { m4.makeTranslation(x, 2.5, z); poles.setMatrixAt(i, m4); m4.makeTranslation(x, 5.1, z); heads.setMatrixAt(i, m4); }); g.add(poles, heads);
     const signAt = (txt, col, x, y, z, w = 14) => { const s = new THREE.Sprite(new THREE.SpriteMaterial({ transparent: true, depthWrite: false, map: tex(768, 128, (c, W, H) => { c.fillStyle = 'rgba(11,13,20,.85)'; c.fillRect(0, 0, W, H); c.fillStyle = col; c.font = `900 72px ${DISPLAY}`; c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText(txt, W / 2, H / 2 + 4); }) })); s.scale.set(w, w * 128 / 768, 1); s.position.set(x, y, z); g.add(s); return s; };
@@ -11674,10 +11676,78 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     P.push(B3(1.3, .9, .25, 0x6A6E78, hw - 1, 1.3, Dr - .15)); for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) P.push(B3(.26, .22, .02, 0x9AA0AA, hw - 1.45 + c * .3, 1.05 + r * .27, Dr - .27)); so(hw - 1.7, hw - .3, Dr - .3, Dr);
     P.push(C3(.3, .5, 0xB8906A, -hw + .5, .25, Dr - .6, 10), S3(.45, 0x3F7A44, -hw + .5, .85, Dr - .6)); so(-hw + .2, -hw + .8, Dr - .9, Dr - .3);
     signPlane('RESIDENTS', 'STAIRS TO THE FLATS', '#2A2D33', '#FFE8B0', 1.5, .45, F.g, 0, 3.2, Dr - .16, Math.PI);
-    const lob = F.toM(0, 1.6); HSPOT[id] = lob; const [kx, kz] = F.toM(-hw + 1.2, 1.3); SVC.push({ x: kx, z: kz, kind: 'home:' + id });
-    P.push(B3(.4, .5, .12, 0x8A6B4A, -hw + 1.2, 1.3, .9));
-    hroomBuild(id, lob, F.g.rotation.y); const [ex, ez] = F.toM(0, Dr - 2.3); HENT.push({ x: ex, z: ez, id });
-    LV.entries.push({ x: ex, z: ez, r: .9, to: 'h_' + id, at: [HROOM[id].x, HROOM[id].z + HROOM[id].d / 2 - 1.4], yaw: 0, fade: true, ok: () => HOME.own.includes(id), msg: `Up the stairs. Home: ${HROOM[id].name}.` });
+    const lob = F.toM(0, 1.6); HSPOT[id] = lob;
+    // the sales desk: a counter, a brochure stand, a lamp, and the board on the wall
+    P.push(B3(1.7, 1, .6, 0x6A4E3A, -hw + 1.5, .5, 1.7), B3(1.8, .06, .7, 0xE8E2D6, -hw + 1.5, 1.03, 1.7), B3(.3, .02, .22, 0xFFFDF6, -hw + 1.1, 1.07, 1.62), B3(.3, .02, .22, 0xC0271C, -hw + 1.5, 1.07, 1.62), C3(.03, .9, 0x2A2D33, -hw + .5, .45, .9, 6), B3(.4, .5, .1, 0x2A6A4A, -hw + .5, 1.1, .9), C3(.04, .3, 0xD9A93A, -hw + 2.1, 1.2, 1.8, 6), C3(.12, .14, 0xFFF1D6, -hw + 2.1, 1.4, 1.8, 10, .06)); so(-hw + .6, -hw + 2.4, 1.35, 2.05);
+    saleBoard(F.g, -hw + .08, 1.85, 2.9, Math.PI / 2, id, 'Ask at the desk');
+    const [kx, kz] = F.toM(-hw + 1.5, 1.05); SVC.push({ x: kx, z: kz, kind: 'home:' + id });
+    // the door at the foot of the stairs
+    const dg = lotDoors(F); HDOOR[id] = HDOOR[id] || {}; HDOOR[id].out = doorMesh(dg, -.62, Dr - 1.97, 1.24, 2.2, 0x6A4E3A, 1, 'hm:door:' + id, 'The door to the flats'); P.push(B3(.1, 2.3, .14, 0xE8E2D6, -.68, 1.15, Dr - 1.97), B3(.1, 2.3, .14, 0xE8E2D6, .68, 1.15, Dr - 1.97), B3(1.46, .12, .14, 0xE8E2D6, 0, 2.3, Dr - 1.97));
+    hroomBuild(id, lob, F.g.rotation.y); const [ex, ez] = F.toM(0, Dr - 2.45); HENT.push({ x: ex, z: ez, id });
+    LV.entries.push({ x: ex, z: ez, r: .8, to: 'h_' + id, at: [HROOM[id].x, HROOM[id].z + HROOM[id].d / 2 - 1.4], yaw: 0, fade: true, ok: () => HOME.own.includes(id) && doorIsOpen(HDOOR[id].out), msg: `Up the stairs. Home: ${HROOM[id].name}.` });
+  }
+  // ---------- front doors you open, sale boards, and what makes each home its own ----------
+  // Every home's way in is a real door (HDOOR[id].out, in the street lobby, at villa 1 or on the mansion), and every room
+  // has one on the inside (HDOOR[id].in). Click to open or close (eggs hm:door:<id> and hm:rdoor:<id>); the way in only
+  // works for owners with the door open, the way out only with the inside door open, and doors close behind you. A door
+  // you don't own stays locked and says where to buy the place. HFX holds the homes' moving bits (the fan, the fish).
+  const HDOOR = {}, HFX = { t: 0 };
+  function doorMesh(parent, x, z, w, h, col, dir, eggId, label){
+    const pv = new THREE.Group(); pv.position.set(x, 0, z); parent.add(pv); pv.userData.dir = dir;
+    const d = new THREE.Mesh(new THREE.BoxGeometry(w, h, .07), mat(col, { roughness: .55 })); d.position.set(w / 2, h / 2, 0); pv.add(d);
+    [[.07], [-.07]].forEach(([oz]) => { const k = new THREE.Mesh(new THREE.SphereGeometry(.05, 8, 6), mat(0xD9A93A, { metalness: .8, roughness: .3 })); k.position.set(w - .13, 1.05, oz); pv.add(k); });
+    const p = new THREE.Mesh(new THREE.BoxGeometry(w * .62, h * .3, .02), mat(col, { roughness: .4 })); p.position.set(w / 2, h * .68, .045); pv.add(p); const p2 = p.clone(); p2.position.y = h * .28; pv.add(p2);
+    egg(pv, eggId, label); return pv;
+  }
+  const doorIsOpen = pv => !!pv && Math.abs(pv.rotation.y) > .8;
+  function doorSwing(pv, open){ if (!pv || pv.userData.busy) return; const a = pv.rotation.y, b = open ? 1.65 * pv.userData.dir : 0; pv.userData.busy = true; tone(open ? 420 : 300, .12, 'triangle', .04); setTimeout(() => tone(open ? 520 : 240, .08, 'triangle', .03), 120); tween(.55, e => pv.rotation.y = a + (b - a) * e, () => { pv.userData.busy = false; }); }
+  // a for-sale board: the home, the price, where to ask
+  function saleBoard(parent, x, y, z, ry, id, where){
+    const H = HOMES[id], t = tex(360, 270, (c, w, h) => { c.fillStyle = '#FFFDF6'; c.fillRect(0, 0, w, h); c.fillStyle = '#C0271C'; c.fillRect(0, 0, w, 64); c.fillStyle = '#fff'; c.font = `900 40px ${DISPLAY}`; c.textAlign = 'center'; c.fillText('FOR SALE', w / 2, 46);
+      c.fillStyle = '#16181D'; c.font = `800 ${H.n.length > 22 ? 22 : 26}px ${DISPLAY}`; c.fillText(H.n, w / 2, 112); c.fillStyle = '#1F7A45'; c.font = `900 44px ${DISPLAY}`; c.fillText(inr(H.p), w / 2, 172); c.fillStyle = '#4A4E58'; c.font = '600 20px sans-serif'; c.fillText(where, w / 2, 222); });
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(1.2, .9), new THREE.MeshBasicMaterial({ map: t })); m.position.set(x, y, z); m.rotation.y = ry; m.userData.noPick = true; parent.add(m);
+    const own = new THREE.Mesh(new THREE.PlaneGeometry(1.1, .26), new THREE.MeshBasicMaterial({ map: tex(300, 70, (c, w, h) => { c.fillStyle = '#1F7A45'; c.fillRect(0, 0, w, h); c.fillStyle = '#fff'; c.font = `900 40px ${DISPLAY}`; c.textAlign = 'center'; c.fillText('SOLD', w / 2, 50); }) })); own.position.set(x, y + .02, z); own.rotation.y = ry; own.translateZ(.01); own.rotation.z = -.15; own.userData.noPick = true; own.visible = false; parent.add(own); (HFX.sold = HFX.sold || []).push({ m: own, id });
+  }
+  // a group that sits exactly on a lot's frame but isn't made unclickable with the rest of it (so its doors can be clicked)
+  const lotDoors = F => { const g = new THREE.Group(); g.position.copy(F.g.position); g.rotation.copy(F.g.rotation); BL.mapG.add(g); return g; };
+  function homeLocked(id){ return say(id === 'mansion' ? `Locked. Hillcrest is for sale: ${inr(HOMES.mansion.p)} at the gatehouse.` : id === 'villa' ? `Locked. Villa 1 is for sale: ${inr(HOMES.villa.p)} at the sales office by the gate.` : `Residents only. The flat’s for sale: ${inr(HOMES[id].p)} at the desk in the lobby.`, 3200); }
+  // the homes' own things you can click
+  const FX_SAY = { radio: 'An old FM radio. One station, and it only plays film songs from the nineties.', tank: 'Three goldfish. They’ve seen things.', scope: 'Through the telescope: boats on the lake, a man fishing off the wall, and far out to the west, the steam where the meteor came down.', tread: 'Two minutes on the treadmill. That counts.', piano: 'You play the four notes you know. The room makes them sound expensive.' };
+  function homeFx(k){
+    if (k === 'fan') { HFX.fanOn = !HFX.fanOn; tone(HFX.fanOn ? 200 : 140, .2, 'sine', .03); return say(HFX.fanOn ? 'The fan wobbles into life.' : 'The fan slows to a stop.', 1600); }
+    if (k === 'tv' || k === 'screen') { const S = HFX[k]; if (!S) return; S.on = !S.on; S.m.material.map = S.on ? S.onT : S.offT; S.m.material.needsUpdate = true; tone(S.on ? 880 : 300, .08, 'square', .03); return say(S.on ? (k === 'tv' ? 'India 214 for 3, thirty-four overs. Nobody in this flat is getting anything done tonight.' : 'The projector whirs. Tonight: a monster film with a very fake meteor.') : 'Off.', 2600); }
+    if (k === 'radio') [523, 659, 784, 659, 587, 523].forEach((f, i) => setTimeout(() => tone(f, .22, 'sine', .04), i * 230));
+    if (k === 'piano') [262, 330, 392, 523].forEach((f, i) => setTimeout(() => tone(f, .5, 'triangle', .05), i * 260));
+    if (FX_SAY[k]) say(FX_SAY[k], 3600);
+  }
+  // upstairs at Hillcrest: the master bedroom, a walk-in wardrobe, a library wall and a home cinema (LVL h_mansion2)
+  function mansionUp(R){
+    const U = { x: R.x, z: R.z + 40, w: R.w, d: R.d, h: 3.6 }, g = new THREE.Group(), hw = U.w / 2, hd = U.d / 2, P = [], sol = [], so = (x0, x1, z0, z1) => sol.push([U.x + x0, U.x + x1, U.z + z0, U.z + z1]);
+    g.position.set(U.x, HRY, U.z); BL.mapG.add(g); g.visible = false; const wall = 0xE8DCC8, trim = 0x5A3A22;
+    P.push(B3(U.w, .1, U.d, 0x8A5A3A, 0, -.05, 0), B3(U.w, .1, U.d, 0xF7F5F0, 0, U.h + .05, 0), B3(U.w + .4, U.h, .2, wall, 0, U.h / 2, -hd - .1), B3(U.w + .4, U.h, .2, wall, 0, U.h / 2, hd + .1), B3(.2, U.h, U.d, wall, -hw - .1, U.h / 2, 0), B3(.2, U.h, U.d, wall, hw + .1, U.h / 2, 0));
+    P.push(B3(U.w, .12, .04, trim, 0, .06, -hd + .02), B3(U.w, .12, .04, trim, 0, .06, hd - .02), B3(.04, .12, U.d, trim, -hw + .02, .06, 0), B3(.04, .12, U.d, trim, hw - .02, .06, 0));
+    const view = tex(512, 256, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#8AC8F0'); gr.addColorStop(1, '#CFE6F0'); c.fillStyle = gr; c.fillRect(0, 0, w, h); c.fillStyle = '#3F7A44'; for (let i = 0; i < 9; i++) { c.beginPath(); c.arc(i * 64 + 20, h * .82, 40 + (i % 3) * 12, 0, 7); c.fill(); } });
+    [-5, 5].forEach(x => { const m = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.7), new THREE.MeshBasicMaterial({ map: view })); m.position.set(x, 1.9, -hd + .02); m.userData.noPick = true; g.add(m); P.push(B3(2.76, .08, .1, trim, x, 2.79, -hd + .05), B3(2.9, .06, .2, trim, x, 1.02, -hd + .1), B3(.08, 1.7, .1, trim, x - 1.34, 1.9, -hd + .05), B3(.08, 1.7, .1, trim, x + 1.34, 1.9, -hd + .05)); });
+    // the master bed between the windows
+    P.push(B3(2.3, .45, 2.4, trim, 0, .22, -hd + 1.4), B3(2.2, .25, 2.3, 0xF4F1E8, 0, .55, -hd + 1.4), B3(2.24, .1, 1.6, 0x7A1E2E, 0, .7, -hd + 1.75), B3(2.8, 1.7, .14, 0x7A1E2E, 0, .85, -hd + .1), B3(.8, .16, .45, 0xFFFFFF, -.5, .75, -hd + .5), B3(.8, .16, .45, 0xFFFFFF, .5, .75, -hd + .5)); so(-1.2, 1.2, -hd, -hd + 2.65);
+    [-1.75, 1.75].forEach(x => { P.push(B3(.55, .55, .45, trim, x, .27, -hd + .35), C3(.08, .35, 0xE8D8B0, x, .72, -hd + .35, 8), C3(.2, .22, 0xFFF1D6, x, 1.0, -hd + .35, 10, .12)); so(x - .3, x + .3, -hd, -hd + .6); });
+    // the walk-in wardrobe on the left wall
+    P.push(B3(.65, 2.5, 4, 0x5A3A22, -hw + .33, 1.25, -1)); for (let i = 0; i < 4; i++) P.push(B3(.02, 2.3, .95, 0x6A4A32, -hw + .67, 1.25, -2.5 + i * 1), B3(.03, .3, .03, 0xD9A93A, -hw + .7, 1.25, -2.1 + i * 1)); so(-hw, -hw + .7, -3, 1);
+    // the library wall on the right, and a reading chair
+    P.push(B3(.4, 3.2, 6, trim, hw - .2, 1.6, -2.6)); for (let y = .4; y < 3.1; y += .45) { P.push(B3(.34, .03, 5.9, 0x3A2D22, hw - .22, y, -2.6)); for (let k = 0; k < 18; k++) P.push(B3(.24, .32, .16, [0xC0271C, 0x1E5AA8, 0xE8B04A, 0x3F7A44, 0xF4F1E8, 0x8C7BFF][(k + Math.round(y * 7)) % 6], hw - .24, y + .18, -5.4 + k * .32)); } so(hw - .45, hw, -5.6, .4);
+    P.push(B3(.9, .45, .9, 0x3A5A2A, hw - 1.6, .22, -.6), B3(.9, .7, .2, 0x3A5A2A, hw - 1.6, .6, -.15), C3(.025, 1.5, 0x2A2D33, hw - .9, .76, .1, 6), C3(.2, .28, 0xFFF1D6, hw - .9, 1.58, .1, 10, .13)); so(hw - 2.1, hw - 1.1, -1.1, 0);
+    // the home cinema in the far corner: a screen on the back wall and two rows of seats
+    const scrOff = tex(512, 288, (c, w, h) => { c.fillStyle = '#0A0B10'; c.fillRect(0, 0, w, h); }), scrOn = tex(512, 288, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, '#1A1030'); gr.addColorStop(1, '#4A2A1A'); c.fillStyle = gr; c.fillRect(0, 0, w, h); c.fillStyle = '#FF8A2E'; c.beginPath(); c.arc(w * .3, h * .3, 14, 0, 7); c.fill(); c.strokeStyle = '#FFB060'; c.lineWidth = 6; c.beginPath(); c.moveTo(w * .3, h * .3); c.lineTo(w * .05, h * .05); c.stroke(); c.fillStyle = '#1A1A1A'; for (let i = 0; i < 12; i++) c.fillRect(i * 44, h - 60 - (i % 4) * 22, 40, 80); c.fillStyle = '#F4F1E8'; c.font = '900 26px sans-serif'; c.textAlign = 'center'; c.fillText('THE THING FROM THE SEA', w / 2, h - 18); });
+    const scr = new THREE.Mesh(new THREE.PlaneGeometry(3.4, 1.9), new THREE.MeshBasicMaterial({ map: scrOff })); scr.position.set(-hw + 3.4, 1.8, hd - .06); scr.rotation.y = Math.PI; g.add(scr); egg(scr, 'hm:fx:screen', 'The home cinema'); HFX.screen = { m: scr, on: false, onT: scrOn, offT: scrOff }; P.push(B3(3.6, 2.1, .06, 0x16181D, -hw + 3.4, 1.8, hd - .03));
+    [hd - 3.4, hd - 2.3].forEach((z, r) => { for (let k = 0; k < 3; k++) { const x = -hw + 2.2 + k * 1.2; P.push(B3(.9, .45, .8, 0x7A1E2E, x, .22, z), B3(.9, .65, .2, 0x7A1E2E, x, .6 + r * .1, z - .4)); } so(-hw + 1.7, -hw + 5.1, z - .5, z + .4); });
+    // the stairwell, with a railing round it
+    P.push(B3(1.9, .02, 4.1, 0x16181D, hw - 1.2, .01, hd - 3.2)); for (let z = hd - 5.2; z <= hd - 1.1; z += .5) P.push(B3(.05, 1, .05, trim, hw - 2.2, .5, z)); P.push(B3(.08, .08, 4.2, trim, hw - 2.2, 1.0, hd - 3.15), B3(1.9, .08, .08, trim, hw - 1.25, 1.0, hd - 5.25)); so(hw - 2.25, hw, hd - 5.3, hd);
+    P.push(B3(U.w * .4, .02, U.d * .3, 0x8A2A2A, -1, .012, .6), C3(.24, .5, 0xD8D0C0, -hw + .5, .25, 2.2, 10), S3(.5, 0x4F8A44, -hw + .5, .95, 2.2)); so(-hw + .2, -hw + .8, 1.9, 2.5);
+    const lt = new THREE.PointLight(0xFFE2B8, 1, U.w * 1.4, 2); lt.position.set(0, U.h - .35, 0); g.add(lt); const l2 = new THREE.PointLight(0xFFE2B8, .6, 10, 2); l2.position.set(-hw + 3, U.h - .4, hd - 3); g.add(l2);
+    decor(P, g);
+    const L = LVL.h_mansion2 = { id: 'h_mansion2', y: HRY, drive: false, rects: [[U.x - hw + .3, U.x + hw - .3, U.z - hd + .3, U.z + hd - .3]], solid: sol, exits: [{ x: U.x + hw - 1.2, z: U.z + hd - 5.8, r: .55, to: 'h_mansion', at: [R.x + R.w / 2 - 2.7, R.z + R.d / 2 - .9], yaw: Math.PI / 2, fade: true, msg: 'Down the stairs.' }] };
+    HRM.mansion2 = { g, L, R: Object.assign({}, U, { name: 'upstairs at Hillcrest' }) };
+    return [U.x + hw - 1.2, U.z + hd - 6.9];
   }
   // ---------- the rooms you live in: every home you can buy has its own furnished room ----------
   // Each room is a level (LVL['h_<id>'], like the jail) far under the map, built once by hroomBuild with the street's way in
@@ -11698,7 +11768,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     // the shell: floor, ceiling, four walls (a doorway in the front one) and skirting
     P.push(B3(R.w, .1, R.d, R.floor, 0, -.05, 0), B3(R.w, .1, R.d, 0xF7F5F0, 0, R.h + .05, 0), B3(R.w + .4, R.h, .2, R.wall, 0, R.h / 2, -hd - .1), B3(.2, R.h, R.d, R.wall, -hw - .1, R.h / 2, 0), B3(.2, R.h, R.d, R.wall, hw + .1, R.h / 2, 0));
     P.push(B3(hw - .6 + .2, R.h, .2, R.wall, -(hw + .6 + .2) / 2, R.h / 2, hd + .1), B3(hw - .6 + .2, R.h, .2, R.wall, (hw + .6 + .2) / 2, R.h / 2, hd + .1), B3(1.2, R.h - 2.2, .2, R.wall, 0, 2.2 + (R.h - 2.2) / 2, hd + .1));
-    P.push(B3(1.2, 2.2, .08, R.trim, 0, 1.1, hd + .04), B3(.06, .06, .14, 0xC9CFD8, .4, 1.05, hd - .02));
+    HDOOR[id] = HDOOR[id] || {}; HDOOR[id].in = doorMesh(g, -.6, hd - .02, 1.2, 2.2, R.trim, 1, 'hm:rdoor:' + id, 'Your front door');
     P.push(B3(R.w, .12, .04, R.trim, 0, .06, -hd + .02), B3(.04, .12, R.d, R.trim, -hw + .02, .06, 0), B3(.04, .12, R.d, R.trim, hw - .02, .06, 0));
     // the window on the back wall, with a view that suits the place
     const wv = tex(512, 256, (c, w, h) => { const gr = c.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, R.sky[0]); gr.addColorStop(1, R.sky[1]); c.fillStyle = gr; c.fillRect(0, 0, w, h); let s = id.length * 7919; const rnd = () => (s = (s * 16807) % 2147483647) / 2147483647;
@@ -11709,9 +11779,9 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     P.push(B3(R.win + .16, .08, .1, R.trim, 0, wy + wh / 2 + .04, -hd + .05), B3(R.win + .3, .06, .2, R.trim, 0, wy - wh / 2 - .03, -hd + .1), B3(.08, wh, .1, R.trim, -R.win / 2 - .04, wy, -hd + .05), B3(.08, wh, .1, R.trim, R.win / 2 + .04, wy, -hd + .05), B3(.05, wh, .06, R.trim, 0, wy, -hd + .05));
     // the bed in the back-left corner, with a bedside table and lamp
     const bw = R.villa || R.lake ? 1.8 : 1.1, bx = -hw + .3 + bw / 2, bz = -hd + 1.15;
-    P.push(B3(bw, .4, 2.1, R.trim, bx, .2, bz), B3(bw - .06, .2, 2.0, 0xF4F1E8, bx, .5, bz), B3(bw - .02, .08, 1.4, R.bed, bx, .62, bz + .3), B3(bw + .1, 1.0, .1, R.trim, bx, .5, -hd + .06));
-    for (let k = 0; k < (bw > 1.5 ? 2 : 1); k++) P.push(B3(bw > 1.5 ? .7 : .8, .14, .4, 0xFFFFFF, bx + (bw > 1.5 ? (k ? .42 : -.42) : 0), .67, -hd + .45));
-    so(bx - bw / 2, bx + bw / 2, -hd, bz + 1.05); const tx = bx + bw / 2 + .35; P.push(B3(.45, .5, .4, R.trim, tx, .25, -hd + .3), C3(.07, .3, 0xE8D8B0, tx, .65, -hd + .3, 8), C3(.18, .2, 0xFFF1D6, tx, .9, -hd + .3, 10, .1)); so(tx - .23, tx + .23, -hd, -hd + .5);
+    if (!R.mansion) P.push(B3(bw, .4, 2.1, R.trim, bx, .2, bz), B3(bw - .06, .2, 2.0, 0xF4F1E8, bx, .5, bz), B3(bw - .02, .08, 1.4, R.bed, bx, .62, bz + .3), B3(bw + .1, 1.0, .1, R.trim, bx, .5, -hd + .06));
+    for (let k = 0; k < (R.mansion ? 0 : bw > 1.5 ? 2 : 1); k++) P.push(B3(bw > 1.5 ? .7 : .8, .14, .4, 0xFFFFFF, bx + (bw > 1.5 ? (k ? .42 : -.42) : 0), .67, -hd + .45));
+    if (!R.mansion) so(bx - bw / 2, bx + bw / 2, -hd, bz + 1.05); const tx = bx + bw / 2 + .35; if (!R.mansion) P.push(B3(.45, .5, .4, R.trim, tx, .25, -hd + .3), C3(.07, .3, 0xE8D8B0, tx, .65, -hd + .3, 8), C3(.18, .2, 0xFFF1D6, tx, .9, -hd + .3, 10, .1)); so(tx - .23, tx + .23, -hd, -hd + .5);
     // the desk in the back-right corner, with the PC
     const dx = hw - 1.1, dz = -hd + .45;
     P.push(B3(1.6, .06, .7, R.trim, dx, .76, dz), B3(.06, .74, .66, R.trim, dx - .76, .37, dz), B3(.06, .74, .66, R.trim, dx + .76, .37, dz), B3(.2, .42, .42, 0x1E2026, dx + .58, .79 + .21, dz)); so(dx - .8, dx + .8, -hd, dz + .36);
@@ -11730,16 +11800,37 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     // a bookshelf by the door, a sofa (an armchair in the walk-up), a rug, plants, a floor lamp, a painting
     const shx = -hw + 1.2, shz = hd - .22; P.push(B3(1.4, 1.8, .35, R.trim, shx, .9, shz)); for (let y = .35; y < 1.5; y += .42) { P.push(B3(1.32, .03, .3, 0x3A2D22, shx, y, shz - .02)); for (let k = 0; k < 6; k++) P.push(B3(.12, .3, .22, [0xC0271C, 0x1E5AA8, 0xE8B04A, 0x3F7A44, 0xF4F1E8, 0x8C7BFF][(k + Math.round(y * 10)) % 6], shx - .55 + k * .2 + (k > 2 ? .1 : 0), y + .17, shz - .04)); } so(shx - .72, shx + .72, shz - .2, hd);
     const sl = R.villa ? 2.6 : R.lake ? 2.2 : .9, sx = hw - .5, sz = hd - .5 - sl / 2;
-    P.push(B3(.8, .42, sl, R.sofa, sx, .21, sz), B3(.22, .85, sl, R.sofa, sx + .3, .45, sz), B3(.8, .6, .18, R.sofa, sx, .32, sz - sl / 2 + .09), B3(.8, .6, .18, R.sofa, sx, .32, sz + sl / 2 - .09)); so(sx - .4, sx + .45, sz - sl / 2, sz + sl / 2);
-    if (sl > 1.5) { P.push(B3(.7, .4, 1.1, R.trim, sx - 1.3, .2, sz)); so(sx - 1.65, sx - .95, sz - .55, sz + .55); }
+    if (!R.mansion) { P.push(B3(.8, .42, sl, R.sofa, sx, .21, sz), B3(.22, .85, sl, R.sofa, sx + .3, .45, sz), B3(.8, .6, .18, R.sofa, sx, .32, sz - sl / 2 + .09), B3(.8, .6, .18, R.sofa, sx, .32, sz + sl / 2 - .09)); so(sx - .4, sx + .45, sz - sl / 2, sz + sl / 2); }
+    if (sl > 1.5 && !R.mansion) { P.push(B3(.7, .4, 1.1, R.trim, sx - 1.3, .2, sz)); so(sx - 1.65, sx - .95, sz - .55, sz + .55); }
     P.push(B3(R.w * .42, .02, R.d * .36, R.rug, -.2, .012, .4));
     P.push(C3(.2, .4, 0xB8906A, .95, .2, hd - .45, 10), S3(.38, 0x3F7A44, .95, .75, hd - .45)); so(.75, 1.15, hd - .65, hd - .25);
     if (R.villa || R.lake) { P.push(C3(.24, .5, 0xD8D0C0, -hw + .45, .25, .2, 10), S3(.5, 0x4F8A44, -hw + .45, .95, .2)); so(-hw + .2, -hw + .7, -.05, .45); }
-    const lx = hw - .45, lz = sz - sl / 2 - .45; P.push(C3(.18, .04, 0x2A2D33, lx, .02, lz, 10), C3(.025, 1.5, 0x2A2D33, lx, .76, lz, 6), C3(.22, .3, 0xFFF1D6, lx, 1.58, lz, 10, .14)); so(lx - .2, lx + .2, lz - .2, lz + .2);
+    const lx = hw - .45, lz = sz - sl / 2 - .45; if (!R.mansion) P.push(C3(.18, .04, 0x2A2D33, lx, .02, lz, 10), C3(.025, 1.5, 0x2A2D33, lx, .76, lz, 6), C3(.22, .3, 0xFFF1D6, lx, 1.58, lz, 10, .14)); if (!R.mansion) so(lx - .2, lx + .2, lz - .2, lz + .2);
     const art = tex(300, 220, (c, w, h) => { c.fillStyle = '#F4EFE3'; c.fillRect(0, 0, w, h); const cols = ['#FFC93C', '#FF6B8B', '#8C7BFF', '#3CE8E8', '#3CE870']; for (let i = 0; i < 7; i++) { c.fillStyle = cols[(i + id.length) % 5]; c.globalAlpha = .75; c.beginPath(); c.arc(40 + ((i * 97 + id.length * 13) % 220), 40 + ((i * 61) % 140), 26 + (i % 3) * 14, 0, Math.PI * 2); c.fill(); } c.globalAlpha = 1; });
     P.push(B3(.04, .82, 1.1, R.trim, -hw + .02, 1.75, bz + .2)); const am = new THREE.Mesh(new THREE.PlaneGeometry(1.0, .72), new THREE.MeshStandardMaterial({ map: art, roughness: .9 })); am.position.set(-hw + .05, 1.75, bz + .2); am.rotation.y = Math.PI / 2; am.userData.noPick = true; g.add(am);
     if (R.villa) { const tz = hd * .25, tx2 = -1.2; P.push(B3(1.8, .06, 1, R.trim, tx2, .76, tz), C3(.05, .74, R.trim, tx2 - .7, .37, tz - .35, 6), C3(.05, .74, R.trim, tx2 + .7, .37, tz - .35, 6), C3(.05, .74, R.trim, tx2 - .7, .37, tz + .35, 6), C3(.05, .74, R.trim, tx2 + .7, .37, tz + .35, 6)); so(tx2 - .9, tx2 + .9, tz - .5, tz + .5);
       [[-.5, -.75], [.5, -.75], [-.5, .75], [.5, .75]].forEach(([ox, oz]) => P.push(B3(.42, .06, .42, R.sofa, tx2 + ox, .46, tz + oz), B3(.42, .5, .06, R.sofa, tx2 + ox, .72, tz + oz + (oz > 0 ? .19 : -.19)))); P.push(C3(.12, .25, 0xF4F1E8, tx2, .9, tz, 10)); }
+    if (id === 'old') { // a ceiling fan, fairy lights along the back wall, and an old radio on the shelf
+      const fan = new THREE.Group(); fan.position.set(0, R.h - .35, .3); g.add(fan); const hub = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, .14, 12), mat(0xEDE6D8)); fan.add(hub); const rod = new THREE.Mesh(new THREE.CylinderGeometry(.02, .02, .3, 6), mat(0xEDE6D8)); rod.position.y = .2; fan.add(rod);
+      const blades = new THREE.Group(); fan.add(blades); for (let i = 0; i < 3; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(.85, .02, .16), mat(0x8A6B4A)); b.position.x = .5; const p = new THREE.Group(); p.rotation.y = i / 3 * Math.PI * 2; p.add(b); blades.add(p); } egg(fan, 'hm:fx:fan', 'The ceiling fan'); HFX.fanG = blades; HFX.fanOn = true;
+      for (let i = 0; i < 14; i++) { const x = -hw + .4 + i * (R.w - .8) / 13, b = new THREE.Mesh(new THREE.SphereGeometry(.045, 6, 4), glowM([0xFFD27A, 0xFF8A8A, 0x8CE0FF, 0xA8F08C][i % 4], { emissiveIntensity: 1.4 })); b.position.set(x, R.h - .3 - Math.sin(i / 13 * Math.PI) * .18, -hd + .08); b.userData.noPick = true; g.add(b); }
+      const rd = new THREE.Group(); rd.position.set(shx + .35, 1.86, shz - .05); g.add(rd); const rb = new THREE.Mesh(new THREE.BoxGeometry(.4, .22, .16), mat(0x8A3A2A)); rd.add(rb); const sp = new THREE.Mesh(new THREE.CircleGeometry(.06, 12), mat(0x2A2D33)); sp.position.set(-.08, 0, -.081); sp.rotation.y = Math.PI; rd.add(sp); egg(rd, 'hm:fx:radio', 'An old radio'); }
+    if (id === 'lake') { // a fish tank, a telescope at the window, a TV
+      P.push(B3(1.2, .75, .5, 0x2A2D33, -hw + .32, .37, -.9)); so(-hw, -hw + .62, -1.55, -.25);
+      const tk = new THREE.Group(); tk.position.set(-hw + .32, 1.05, -.9); g.add(tk); const gl = new THREE.Mesh(new THREE.BoxGeometry(.46, .55, 1.15), new THREE.MeshStandardMaterial({ color: 0x5AB8E8, transparent: true, opacity: .45, emissive: 0x1A6A9A, emissiveIntensity: .6 })); tk.add(gl);
+      HFX.fish = []; for (let i = 0; i < 3; i++) { const f = new THREE.Mesh(new THREE.BoxGeometry(.06, .05, .12), glowM(0xFF8A2E, { emissiveIntensity: .7 })); tk.add(f); HFX.fish.push(f); } egg(tk, 'hm:fx:tank', 'The fish tank');
+      const sc = new THREE.Group(); sc.position.set(1.4, 0, -hd + .9); g.add(sc); [[-.2, .1], [.2, .1], [0, -.22]].forEach(([x, z]) => { const l = new THREE.Mesh(new THREE.CylinderGeometry(.015, .015, 1.3, 5), mat(0x2A2D33)); l.position.set(x * .5, .62, z * .5); l.rotation.set(-z * .5, 0, x * .5); sc.add(l); }); const tube = new THREE.Mesh(new THREE.CylinderGeometry(.05, .07, .7, 10), mat(0xD9A93A, { metalness: .7, roughness: .3 })); tube.position.set(0, 1.3, -.1); tube.rotation.x = 1.25; sc.add(tube); egg(sc, 'hm:fx:scope', 'The telescope'); so(1.2, 1.6, -hd + .6, -hd + 1.2);
+      const off = tex(320, 180, (c, w, h) => { c.fillStyle = '#0A0B10'; c.fillRect(0, 0, w, h); }), on = tex(320, 180, (c, w, h) => { c.fillStyle = '#2E7A3A'; c.fillRect(0, 0, w, h); c.fillStyle = '#C8B88A'; c.fillRect(w * .44, h * .2, w * .12, h * .7); c.fillStyle = 'rgba(10,12,20,.8)'; c.fillRect(0, h - 34, w, 34); c.fillStyle = '#fff'; c.font = '800 18px sans-serif'; c.fillText('IND 214/3  ·  34.2 ov', 12, h - 11); });
+      P.push(B3(1.9, .45, .45, 0x2A2D33, -1.9, .22, hd - .25)); so(-2.85, -.95, hd - .5, hd); const tv = new THREE.Mesh(new THREE.PlaneGeometry(1.6, .9), new THREE.MeshBasicMaterial({ map: off })); tv.position.set(-1.9, 1.15, hd - .2); tv.rotation.y = Math.PI; g.add(tv); P.push(B3(1.68, .98, .05, 0x16181D, -1.9, 1.15, hd - .17)); egg(tv, 'hm:fx:tv', 'The TV'); HFX.tv = { m: tv, on: false, onT: on, offT: off }; }
+    if (id === 'villa') { // a tree growing indoors, and a home gym corner
+      P.push(C3(.85, .6, 0xA89A86, -3.4, .3, -1.4, 18), C3(.18, 2.4, 0x6A4E3A, -3.4, 1.5, -1.4, 8), S3(1.2, 0x3F7A44, -3.4, 3.0, -1.4), S3(.8, 0x4F8A44, -2.8, 2.6, -1.0)); so(-4.3, -2.5, -2.3, -.5);
+      P.push(B3(.8, .2, 1.9, 0x2A2D33, 3.4, .1, -hd + 1.4), B3(.06, 1.1, .06, 0x5A5E68, 3.05, .65, -hd + .6), B3(.06, 1.1, .06, 0x5A5E68, 3.75, .65, -hd + .6), B3(.8, .3, .1, 0x16181D, 3.4, 1.25, -hd + .6), B3(.6, .06, 1.6, 0x16181D, 3.4, .22, -hd + 1.5)); so(2.9, 3.9, -hd + .4, -hd + 2.4);
+      P.push(B3(.5, .9, .3, 0x5A5E68, 4.5, .45, -hd + .5)); for (let k = 0; k < 3; k++) P.push(B3(.4, .08, .12, 0x16181D, 4.5, .3 + k * .25, -hd + .45)); so(4.2, 4.8, -hd + .3, -hd + .7);
+      const tr = new THREE.Mesh(new THREE.BoxGeometry(.8, 1.4, 1.9), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); tr.position.set(3.4, .7, -hd + 1.4); g.add(tr); egg(tr, 'hm:fx:tread', 'The treadmill'); }
+    if (R.mansion) { // the lounge by the fire, and the grand staircase up to the first floor
+      P.push(B3(2.4, .42, .85, R.sofa, -hw + 3.4, .21, -1.2, Math.PI / 2), B3(2.4, .8, .22, R.sofa, -hw + 3.85, .45, -1.2, Math.PI / 2), B3(.9, .4, .9, 0x5A3A22, -hw + 2.2, .2, -1.2)); so(-hw + 2.9, -hw + 4, -2.4, 0); so(-hw + 1.75, -hw + 2.65, -1.65, -.75);
+      for (let k = 0; k < 10; k++) P.push(B3(1.6, .36 * (k + 1), .4, 0xD8D0C0, hw - 1.2, .18 * (k + 1), hd - 1.6 - k * .4)); P.push(B3(.06, 1, 4.2, 0x5A3A22, hw - 2.05, 2.4, hd - 3.4), B3(.08, 3.8, .08, 0x5A3A22, hw - 2.05, 1.9, hd - 1.4)); so(hw - 2.1, hw - .3, hd - 5.6, hd - 1.4);
+      const pk = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.3, 2), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false })); pk.position.set(2.6, .65, -hd + 2.1); g.add(pk); egg(pk, 'hm:fx:piano', 'The grand piano'); }
     if (R.mansion) { // a fireplace on the left wall, a grand piano by the window, a chandelier, columns by the door
       P.push(B3(.5, 1.3, 2.2, 0xD8D0C0, -hw + .25, .65, -1.2), B3(.3, .7, 1.2, 0x16181D, -hw + .4, .45, -1.2), B3(.7, .12, 2.6, 0xD8D0C0, -hw + .35, 1.36, -1.2)); so(-hw, -hw + .6, -2.4, 0);
       P.push(B3(1.5, .25, 1.9, 0x16181D, 2.6, .85, -hd + 2.2), C3(.05, .75, 0x16181D, 2.0, .38, -hd + 1.5, 6), C3(.05, .75, 0x16181D, 3.2, .38, -hd + 1.5, 6), C3(.05, .75, 0x16181D, 2.6, .38, -hd + 2.9, 6), B3(1.4, .05, .25, 0xF4F1E8, 2.6, 1.0, -hd + 1.35), B3(.5, .45, .35, 0x16181D, 2.6, .22, -hd + .75)); so(1.8, 3.4, -hd + 1.2, -hd + 3.2);
@@ -11751,11 +11842,15 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     if (R.w > 9) { const l2 = new THREE.PointLight(0xFFE2B8, .7, R.w, 2); l2.position.set(-hw / 2, R.h - .4, hd / 3); g.add(l2); }
     decor(P, g);
     const L = LVL['h_' + id] = { id: 'h_' + id, y: HRY, drive: false, rects: [[R.x - hw + .3, R.x + hw - .3, R.z - hd + .3, R.z + hd - .25]], solid: sol, exits: [] };
-    L.exits.push({ x: R.x, z: R.z + hd - .2, r: .5, to: null, at: out, yaw: outYaw, fade: true, msg: 'Out the front door.' });
+    L.exits.push({ x: R.x, z: R.z + hd - .2, r: .5, to: null, at: out, yaw: outYaw, fade: true, ok: () => doorIsOpen(HDOOR[id].in), msg: 'Out the front door.' });
+    if (R.mansion) { const up = mansionUp(R); L.exits.push({ x: R.x + hw - 1.2, z: R.z + hd - 1.0, r: .6, to: 'h_mansion2', at: up, yaw: 0, fade: true, msg: 'Up the grand staircase.' }); }
     return HRM[id] = { g, L, R };
   }
   function hroomGo(id, quiet){ const H = HRM[id]; if (!H) return false; if (DRV.on) getOut(true); H.g.visible = true; lvGo({ to: 'h_' + id, at: [H.R.x, H.R.z + H.R.d / 2 - 1.4], yaw: 0, fade: true, msg: quiet ? null : `Home: ${H.R.name}.` }); return true; }
-  function homeEgg(k){ if (k === 'ros') return openROS(); if (k.startsWith('sec:')) return openPanel(k.split(':')[1]); }
+  function homeEgg(k){ if (k === 'ros') return openROS(); if (k.startsWith('sec:')) return openPanel(k.split(':')[1]);
+    if (k.startsWith('door:')) { const id = k.slice(5), D = HDOOR[id]; if (!D || !D.out) return; if (!HOME.own.includes(id)) { tone(160, .15, 'square', .03); return homeLocked(id); } return doorSwing(D.out, !doorIsOpen(D.out)); }
+    if (k.startsWith('rdoor:')) { const D = HDOOR[k.slice(6)]; if (D && D.in) doorSwing(D.in, !doorIsOpen(D.in)); return; }
+    if (k.startsWith('fx:')) return homeFx(k.slice(3)); }
   function inHomeRoom(){ return !!(BL.lvl && Object.values(HRM).some(H => H.L === BL.lvl)); }
   // places on the phone map (always shown, with an icon and, zoomed in, a name): the shops from SHOPS (found through their
   // addPlace entries, shop-<id>), the villas and the bus stops
@@ -11772,8 +11867,12 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     BL.mapG.children.forEach(g => { if (g === JOB.beacon || !(g.isGroup || g.type === 'Object3D') || !isBeacon(g)) return; const L = act ? 5 : 0;
       if (g.userData.wpl !== L) { g.userData.wpl = L; g.traverse(o => o.layers.set(L)); } });
   }
-  function hroomStep(){ try { wpFocusStep(); } catch (e) {} const inR = inWorld && zone === 'blr';
-    if (inR && !BL.lvl && !EV) { const [mx, mz] = toMap(pos.x, pos.z); HENT.forEach(e => { const d = Math.hypot(mx - e.x, mz - e.z); if (d < 1.6 && !HOME.own.includes(e.id) && !e.said) { e.said = true; say(e.id === 'mansion' ? `The front door is locked. Hillcrest is for sale: ${inr(HOMES.mansion.p)} at the gatehouse.` : e.id === 'villa' ? `Villa 1 is locked. It’s for sale: ${inr(HOMES.villa.p)} at the sales office by the gate.` : `Residents only. The flat’s for sale: ${inr(HOMES[e.id].p)} at the key box by the front.`, 3400); } else if (d > 3.5) e.said = false; }); } Object.values(HRM).forEach(H => { const on = inR && BL.lvl === H.L; if (H.g.visible !== on) H.g.visible = on; });
+  function hroomStep(){ try { wpFocusStep(); } catch (e) {}
+    try { const now = performance.now(), dt = Math.min(.1, (now - (HFX.t || now)) / 1000); HFX.t = now;
+      Object.entries(HDOOR).forEach(([id, D]) => { const H = HRM[id], inside = !!(H && BL.lvl === H.L); if (D.out && inside && doorIsOpen(D.out) && !D.out.userData.busy) D.out.rotation.y = 0; if (D.in && !inside && doorIsOpen(D.in) && !D.in.userData.busy && !(id === 'mansion' && HRM.mansion2 && BL.lvl === HRM.mansion2.L)) D.in.rotation.y = 0; });
+      if (HFX.fanG && HFX.fanOn) HFX.fanG.rotation.y += dt * 7; if (HFX.fish) HFX.fish.forEach((f, i) => { const a = now / 1000 * (.6 + i * .2) + i * 2; f.position.set(Math.sin(a * 1.3) * .1, Math.sin(a * 2 + i) * .15, Math.cos(a) * .45); f.rotation.y = a + Math.PI / 2; });
+      (HFX.sold || []).forEach(q => { q.m.visible = HOME.own.includes(q.id); }); } catch (e) {} const inR = inWorld && zone === 'blr';
+    if (inR && !BL.lvl && !EV) { const [mx, mz] = toMap(pos.x, pos.z); HENT.forEach(e => { const d = Math.hypot(mx - e.x, mz - e.z); if (d < 1.6 && HOME.own.includes(e.id) && !e.saidOwn && HDOOR[e.id] && !doorIsOpen(HDOOR[e.id].out)) { e.saidOwn = true; say('Your front door. Click it to open.', 2200); } if (d > 3.5) e.saidOwn = false; if (d < 1.6 && !HOME.own.includes(e.id) && !e.said) { e.said = true; say(e.id === 'mansion' ? `The front door is locked. Hillcrest is for sale: ${inr(HOMES.mansion.p)} at the gatehouse.` : e.id === 'villa' ? `Villa 1 is locked. It’s for sale: ${inr(HOMES.villa.p)} at the sales office by the gate.` : `Residents only. The flat’s for sale: ${inr(HOMES[e.id].p)} at the key box by the front.`, 3400); } else if (d > 3.5) e.said = false; }); } Object.values(HRM).forEach(H => { const on = inR && BL.lvl === H.L; if (H.g.visible !== on) H.g.visible = on; });
     const wb = $('#worldBack'); if (inR && !EV && !A && wb && !wb.hidden) { const t = inHomeRoom() ? 'To the bedroom' : 'Go home'; if (wb.textContent !== t && (wb.textContent === 'Go home' || wb.textContent === 'To the bedroom')) wb.textContent = t; } }
   // Go home: your main home if you have one (and you're not already in it), otherwise the bedroom
   function goHomeBtn(){ if (HOME.cur && HOME.own.includes(HOME.cur) && !inHomeRoom()) return homeGo(HOME.cur); leaveBlr(); }
@@ -11915,7 +12014,7 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     const beam = EXP.beam = new THREE.Mesh(new THREE.ConeGeometry(2.2, 40, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xFFE29A, transparent: true, opacity: .2, depthWrite: false, side: THREE.DoubleSide })); beam.geometry.translate(0, -20, 0); beam.rotation.z = Math.PI / 2 + .12; const bg = EXP.beamG = new THREE.Group(); bg.position.set(W.x, W.h + 3.7, W.z); bg.add(beam); G.add(bg);
     signPlane('METEOR WATCH', 'BUILT AFTER 18.11 · OPEN TO ALL', '#16181D', '#FFE29A', 2.4, .7, G, W.x, 3.1, W.z + 2.5, 0);
     decor(P, G); blrBox(W.x - 2.5, W.x + 2.5, W.z - 2.5, W.z + 2.5);
-    LVL.watch = { id: 'watch', y: W.h, drive: false, rects: [[W.x - 5.5, W.x + 5.5, W.z - 5.5, W.z + 5.5]], solid: [[W.x - 2.5, W.x + 2.5, W.z - 2.5, W.z + 2.5]], exits: [{ x: W.x, z: W.z + 2.75, r: .45, to: null, at: [W.x, W.z + 5.8], yaw: Math.PI, fade: true, msg: 'Back down the stairs.' }] };
+    LVL.watch = { id: 'watch', y: W.h, drive: false, rects: [[W.x - 3.9, W.x + 3.9, W.z - 3.9, W.z + 3.9], [W.x - 2.2, W.x + 2.2, W.z - 5.2, W.z + 5.2], [W.x - 5.2, W.x + 5.2, W.z - 2.2, W.z + 2.2]], solid: [[W.x - 2.5, W.x + 2.5, W.z - 2.5, W.z + 2.5]], exits: [{ x: W.x, z: W.z + 2.75, r: .45, to: null, at: [W.x, W.z + 5.8], yaw: Math.PI, fade: true, msg: 'Back down the stairs.' }] };
     LV.entries.push({ x: W.x, z: W.z + 3.1, r: 1, to: 'watch', at: [W.x, W.z + 3.7], yaw: Math.PI, fade: true, msg: 'Three hundred steps up. The whole city opens out below you.' });
     addPlace('watch', 'The Meteor Watch', () => onLvl('watch'), { lvl: 'watch', x: W.x, z: W.z + 4, yaw: Math.PI });
     // the curiosities: a small scene each, and a glint you can see from about thirty metres
@@ -11996,15 +12095,16 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
     P.push(B3(mw, 8, md, 0xF4ECDA, 0, 4, v0 + md / 2), B3(mw + .6, .4, md + .6, 0xD8D0C0, 0, 8.2, v0 + md / 2), B3(mw, .3, 2.2, 0xD8D0C0, 0, .15, v0 - 1.1)); F.solid(-mw / 2, mw / 2, v0, v1);
     for (let u = -mw / 2 + 1.5; u <= mw / 2 - 1.4; u += (mw - 3) / 5) P.push(C3(.3, 7.6, 0xFFFFFF, u, 3.8, v0 - 1.6, 12)); P.push(B3(mw, .5, 2.4, 0xFFFFFF, 0, 7.8, v0 - 1.1));
     for (let row = 0; row < 2; row++) for (let u = -mw / 2 + 2; u <= mw / 2 - 2; u += 2.6) if (!(row === 0 && Math.abs(u) < 1.5)) P.push(B3(1.1, 1.6, .06, 0x3A5A7A, u, 1.6 + row * 3.8, v0 - .03));
-    P.push(B3(1.6, 2.6, .08, 0x5A3A22, 0, 1.3, v0 - .04), B3(.08, .08, .14, 0xD9A93A, .55, 1.3, v0 - .1));
+    P.push(B3(1.9, .14, .2, 0xFFFFFF, 0, 2.76, v0 - .1), B3(.14, 2.76, .2, 0xFFFFFF, -.9, 1.38, v0 - .1), B3(.14, 2.76, .2, 0xFFFFFF, .9, 1.38, v0 - .1));
+    { const dg = lotDoors(F); HDOOR.mansion = HDOOR.mansion || {}; HDOOR.mansion.out = doorMesh(dg, -.8, v0 - .14, 1.6, 2.6, 0x5A3A22, 1, 'hm:door:mansion', 'Hillcrest’s front door'); }
     const roof = new THREE.Mesh(new THREE.ConeGeometry(1, 1, 4), mat(0x6A3A2A, { roughness: .8 })); roof.rotation.y = Math.PI / 4; roof.scale.set(mw * .74, 3, md * .74); roof.position.set(0, 9.9, v0 + md / 2); F.g.add(roof);
     // the pool beside the house, palms, and the gatehouse
     const px = mw / 2 - 2 < hw - 6 ? mw / 2 + 3 : hw - 5, pv = v1 + 2.5; if (pv + 3 < D - 1) { P.push(B3(5, .25, 4, 0xEEF1F5, Math.min(hw - 4, 3), .12, Math.min(D - 3, pv + 1))); const pw = new THREE.Mesh(new THREE.PlaneGeometry(4.6, 3.6), new THREE.MeshStandardMaterial({ color: 0x3CA8E8, roughness: .05, metalness: .3, emissive: 0x0A3A5A, emissiveIntensity: .3 })); pw.rotation.x = -Math.PI / 2; pw.position.set(Math.min(hw - 4, 3), .26, Math.min(D - 3, pv + 1)); F.g.add(pw); F.solid(Math.min(hw - 4, 3) - 2.5, Math.min(hw - 4, 3) + 2.5, Math.min(D - 3, pv + 1) - 2, Math.min(D - 3, pv + 1) + 2); } void px;
     [[-hw + 1.4, 1.6], [hw - 1.4, 1.6], [-hw + 1.4, D * .45], [hw - 1.4, D * .45]].forEach(([u, v]) => { P.push(C3(.17, 5, 0x8A6B4A, u, 2.5, v, 6)); for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; P.push(B3(.28, .05, 1.8, 0x3F8A3A, u + Math.sin(a) * .8, 5, v + Math.cos(a) * .8, a)); } });
-    P.push(B3(2.2, 2.4, 2, 0xD8D0C0, -hw + 2.2, 1.2, 1.6), B3(2.4, .2, 2.2, 0x6A3A2A, -hw + 2.2, 2.5, 1.6)); F.solid(-hw + 1.1, -hw + 3.3, .6, 2.6); const [gx, gz] = F.toM(-hw + 2.2, 3.1); SVC.push({ x: gx, z: gz, kind: 'home:mansion' });
+    P.push(B3(2.2, 2.4, 2, 0xD8D0C0, -hw + 2.2, 1.2, 1.6), B3(2.4, .2, 2.2, 0x6A3A2A, -hw + 2.2, 2.5, 1.6)); F.solid(-hw + 1.1, -hw + 3.3, .6, 2.6); P.push(B3(1.6, .9, .55, 0x5A3A22, -hw + 2.2, .45, 2.95), B3(1.7, .06, .65, 0xE8E2D6, -hw + 2.2, .93, 2.95)); F.solid(-hw + 1.4, -hw + 3, 2.65, 3.25); const [gx, gz] = F.toM(-hw + 2.2, 3.6); SVC.push({ x: gx, z: gz, kind: 'home:mansion' }); P.push(B3(.08, 1.4, .08, 0x2A2D33, -hw + 4.4, .7, .9)); saleBoard(F.g, -hw + 4.4, 1.75, .86, Math.PI, 'mansion', 'Ask at the gatehouse');
     decor(P, F.g); signPlane('HILLCREST', 'A PRIVATE ESTATE · FOR SALE', '#16181D', '#D9A93A', 4.2, .9, F.g, 0, 3.9, -.1, Math.PI);
-    const out = F.toM(0, v0 - 3.4); HSPOT.mansion = out; hroomBuild('mansion', out, F.g.rotation.y); const [ex, ez] = F.toM(0, v0 - .5);
-    HENT.push({ x: ex, z: ez, id: 'mansion' }); LV.entries.push({ x: ex, z: ez, r: .9, to: 'h_mansion', at: [HROOM.mansion.x, HROOM.mansion.z + HROOM.mansion.d / 2 - 1.4], yaw: 0, fade: true, ok: () => HOME.own.includes('mansion'), msg: 'Home: Hillcrest Mansion. Your footsteps echo.' });
+    const out = F.toM(0, v0 - 3.4); HSPOT.mansion = out; hroomBuild('mansion', out, F.g.rotation.y); const [ex, ez] = F.toM(0, v0 - .8);
+    HENT.push({ x: ex, z: ez, id: 'mansion' }); LV.entries.push({ x: ex, z: ez, r: .9, to: 'h_mansion', at: [HROOM.mansion.x, HROOM.mansion.z + HROOM.mansion.d / 2 - 1.4], yaw: 0, fade: true, ok: () => HOME.own.includes('mansion') && doorIsOpen(HDOOR.mansion.out), msg: 'Home: Hillcrest Mansion. Your footsteps echo.' });
     F.g.traverse(o => { if (o.isMesh) o.userData.noPick = true; });
   }
   // Palm Grove Villas: a gated compound on a big lot
@@ -12021,15 +12121,17 @@ body.ssf .kitui{bottom:calc(266px + env(safe-area-inset-bottom,0px))}
       if (i === 0) { const w2 = vw / 2; P.push(B3(.25, 3.2, vd, col, u - w2, 1.6, v0 + vd / 2), B3(.25, 3.2, vd, col, u + w2, 1.6, v0 + vd / 2), B3(vw, 3.2, .25, col, u, 1.6, v1)); F.solid(u - w2 - .1, u - w2 + .15, v0, v1); F.solid(u + w2 - .15, u + w2 + .1, v0, v1); F.solid(u - w2, u + w2, v1 - .15, v1 + .1);
         P.push(B3(w2 - .8, 3.2, .25, col, u - (w2 + .8) / 2, 1.6, v0), B3(w2 - .8, 3.2, .25, col, u + (w2 + .8) / 2, 1.6, v0)); F.solid(u - w2, u - .8, v0 - .1, v0 + .15); F.solid(u + .8, u + w2, v0 - .1, v0 + .15);
         P.push(B3(vw, .05, vd, 0xD8C8A8, u, .04, v0 + vd / 2), B3(vw, .2, vd, 0xF4F1E8, u, 3.25, v0 + vd / 2), B3(vw + .6, 3, vd + .6, col, u, 4.85, v0 + vd / 2));
-        P.push(B3(1.4, 2.25, .08, 0xB07A44, u, 1.13, v0 + .6), B3(1.62, .12, .14, 0xF4F1E8, u, 2.32, v0 + .58), B3(.1, 2.3, .14, 0xF4F1E8, u - .76, 1.15, v0 + .58), B3(.1, 2.3, .14, 0xF4F1E8, u + .76, 1.15, v0 + .58), B3(.06, .06, .14, 0xC9CFD8, u + .5, 1.05, v0 + .52)); F.solid(u - w2, u + w2, v0 + .6, v1); signPlane('VILLA 1', 'PRIVATE', '#2E5A3A', '#F4E8C0', .7, .26, F.g, u, 1.7, v0 + .54, Math.PI);
-        const out = F.toM(u, v0 - 1.6); HSPOT.villa = out; hroomBuild('villa', out, F.g.rotation.y); const [ex, ez] = F.toM(u, v0 + .25);
-        HENT.push({ x: ex, z: ez, id: 'villa' }); LV.entries.push({ x: ex, z: ez, r: .8, to: 'h_villa', at: [HROOM.villa.x, HROOM.villa.z + HROOM.villa.d / 2 - 1.4], yaw: 0, fade: true, ok: () => HOME.own.includes('villa'), msg: `Home: ${HROOM.villa.name}.` }); }
+        P.push(B3(1.62, .12, .16, 0xF4F1E8, u, 2.36, v0), B3(.1, 2.36, .16, 0xF4F1E8, u - .78, 1.18, v0), B3(.1, 2.36, .16, 0xF4F1E8, u + .78, 1.18, v0), B3(2.4, .1, 1.4, 0xC8BCA4, u, .05, v0 - .8), B3(.06, 1.2, .06, 0x3A3D44, u - 1.3, .6, v0 - .4), B3(.3, .2, .3, 0xFFE8B0, u - 1.3, 1.3, v0 - .4)); F.solid(u - w2, u + w2, v0 - .1, v1); signPlane('VILLA 1', 'PRIVATE', '#2E5A3A', '#F4E8C0', .7, .26, F.g, u, 2.7, v0 - .1, Math.PI);
+        { const dg = lotDoors(F); HDOOR.villa = HDOOR.villa || {}; HDOOR.villa.out = doorMesh(dg, u - .7, v0 - .1, 1.4, 2.25, 0xB07A44, 1, 'hm:door:villa', 'Villa 1’s front door'); }
+        const out = F.toM(u, v0 - 1.6); HSPOT.villa = out; hroomBuild('villa', out, F.g.rotation.y); const [ex, ez] = F.toM(u, v0 - .7);
+        HENT.push({ x: ex, z: ez, id: 'villa' }); LV.entries.push({ x: ex, z: ez, r: .8, to: 'h_villa', at: [HROOM.villa.x, HROOM.villa.z + HROOM.villa.d / 2 - 1.4], yaw: 0, fade: true, ok: () => HOME.own.includes('villa') && doorIsOpen(HDOOR.villa.out), msg: `Home: ${HROOM.villa.name}.` }); }
       else { P.push(B3(vw, 6, vd, col, u, 3, v0 + vd / 2)); F.solid(u - vw / 2, u + vw / 2, v0, v1); for (let k = 0; k < 3; k++) P.push(B3(1.1, 1.3, .06, 0x3A5A7A, u - vw / 3 + k * vw / 3, 1.6, v0 - .03), B3(1.1, 1.3, .06, 0x3A5A7A, u - vw / 3 + k * vw / 3, 4.4, v0 - .03)); P.push(B3(1.2, 2.2, .07, 0x6A4E3A, u, 1.1, v0 - .04)); }
       const roof = new THREE.Mesh(new THREE.ConeGeometry(Math.max(vw, vd) * .75, 2.2, 4), mat(0xA0462A, { roughness: .8 })); roof.rotation.y = Math.PI / 4; roof.scale.set(vw / Math.max(vw, vd), 1, vd / Math.max(vw, vd)); roof.position.set(u, 6 + 1.1 + (i === 0 ? .35 : 0), v0 + vd / 2); F.g.add(roof); });
     // the shared pool, palms and the sales office by the gate
     const pv = D / 2 - .4; P.push(B3(3.2, .25, 5, 0xEEF1F5, 0, .12, pv)); const water = new THREE.Mesh(new THREE.PlaneGeometry(2.8, 4.6), new THREE.MeshStandardMaterial({ color: 0x3CA8E8, roughness: .05, metalness: .3, emissive: 0x0A3A5A, emissiveIntensity: .3 })); water.rotation.x = -Math.PI / 2; water.position.set(0, .26, pv); F.g.add(water); F.solid(-1.6, 1.6, pv - 2.5, pv + 2.5);
     [[-hw + 1.2, 1.2], [hw - 1.2, 1.2], [-hw + 1.2, D - 1.2], [hw - 1.2, D - 1.2], [-2.2, D / 2], [2.2, D / 2 + 3]].forEach(([u, v]) => { P.push(C3(.15, 4, 0x8A6B4A, u, 2, v, 6)); for (let k = 0; k < 6; k++) { const a = k / 6 * Math.PI * 2; P.push(B3(.25, .05, 1.6, 0x3F8A3A, u + Math.sin(a) * .7, 4, v + Math.cos(a) * .7, a)); } });
     P.push(B3(2, 1.05, .8, 0xC8B89A, hw - 3.5, .52, 1.5), B3(2.2, .1, 1, 0x6A4E3A, hw - 3.5, 1.1, 1.5)); F.solid(hw - 4.5, hw - 2.5, 1.1, 1.9); const [sx, sz] = F.toM(hw - 3.5, 2.4); SVC.push({ x: sx, z: sz, kind: 'home:villa' });
+    P.push(C3(.04, 2.4, 0xEEF1F5, hw - 1.6, 1.2, 2.6, 6), C3(1.3, .12, 0x2E5A3A, hw - 1.6, 2.4, 2.6, 16, .05), B3(.45, .45, .45, 0xEEF1F5, hw - 2.1, .22, 3.2), B3(.45, .45, .45, 0xEEF1F5, hw - 1.1, .22, 3.2)); saleBoard(F.g, hw - 3.5, 1.75, 1.08, Math.PI, 'villa', 'At this desk');
     decor(P, F.g); signPlane('PALM GROVE VILLAS', 'A GATED COMMUNITY · VILLAS FOR SALE', '#2E5A3A', '#F4E8C0', 4.6, .9, F.g, 0, 3.6, -.1, Math.PI);
     F.g.traverse(o => { if (o.isMesh) o.userData.noPick = true; });
   }
