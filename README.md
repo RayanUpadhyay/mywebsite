@@ -122,7 +122,7 @@ Messages are encrypted in the browser with AES-GCM using a key derived from the 
 
 ## Author
 
-Rayan Upadhyay · [GitHub](https://github.com/RayanUpadhyay)
+Rayan Upadhyay · [LinkedIn](https://www.linkedin.com/in/rayan-upadhyay-91b73b37b/) · [GitHub](https://github.com/RayanUpadhyay)
 
 ## Secrets
 
